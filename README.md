@@ -1,8 +1,6 @@
 # cy
 
-> Instead of asking, “How smart can we make our machines?” let’s ask “How smart can our machines make us?”
->
-> _Tom Gruber, Siri_
+> _Instead of asking, “How smart can we make our machines?” let’s ask “How smart can our machines make us?” - Tom Gruber, Siri_
 
 ## features
 
