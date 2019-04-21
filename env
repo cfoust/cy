@@ -15,9 +15,12 @@ if ! docker ps -f name="$container" | grep -q "$container"; then
   # Don't connect our TTY to the container
   args+="--detach "
 
+  # Go caching mechanism
+  args+="--env GOCACHE=/app/cy/.cache "
+
   # Mount in the current directory
-  args+="--volume=$this_dir:$this_dir "
-  args+="-w $this_dir "
+  args+="--volume=$this_dir:/app/cy/ "
+  args+="-w /app/cy/ "
 
   # Make it so file reads/writes are done with the current user
   uid="$(id -u)"
