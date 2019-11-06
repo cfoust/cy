@@ -1,13 +1,22 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+	"os/exec"
+	"os"
+)
 
 func main() {
-	sum := 0
+	arguments := os.Args[1:]
 
-	for i := 0; i < 10; i++ {
-		sum += i
+	cmd := exec.Command(arguments[0], arguments[1:]...)
+
+	out, err := cmd.Output()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	fmt.Println(sum)
+	fmt.Printf("%s\n", out)
 }
+
