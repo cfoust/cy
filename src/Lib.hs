@@ -3,9 +3,11 @@ module Lib
   )
 where
 
+import           Control.Monad
+import           System.Environment
+import           System.Exit
 import           System.Posix.Pty
 import           System.Process
-import           System.Exit
 import qualified Data.ByteString.Char8         as C
 
 -- Continue polling IO and piping stdin/stdout until the program exits.
@@ -15,17 +17,11 @@ pipeIO (pty, handle) = do
   b <- readPty pty
   C.putStrLn b
   code <- getProcessExitCode handle
-  case code of
-    Nothing -> pipeIO (pty, handle)
-    Just n  -> return ()
+  when (code == Nothing) $ pipeIO (pty, handle)
 
 proxyShell :: IO ()
 proxyShell = do
-  (pty, handle) <- spawnWithPty
-    (Just [("SHELL", "/bin/bash"), ("HOME", "/home/caleb")])
-    True
-    "bash"
-    []
-    (20, 10)
-  writePty pty (C.pack "touch blah\n")
+  env           <- getEnvironment
+  (pty, handle) <- spawnWithPty (Just env) True "bash" [] (20, 10)
+  writePty pty (C.pack "touch blah && sleep 5 && exit\n")
   pipeIO (pty, handle)
