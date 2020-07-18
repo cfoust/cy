@@ -3,7 +3,14 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: posix-pty-0.2.2@sha256:dd777df258b3b95fe01612c1204cde972ad1323c3289591ecc844ecb29e55e2b,1826
+    pantry-tree:
+      size: 512
+      sha256: 1165406e7998cf570fad6274a406c0e8c08357a1e60668f9cc8c0f269f457e30
+  original:
+    hackage: posix-pty-0.2.2
 snapshots:
 - completed:
     size: 531707

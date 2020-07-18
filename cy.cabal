@@ -4,11 +4,11 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7b8002aec6711e230d8cc4ab2d9a0ca736e4b5b35f3efe7f91d5aa178dfba7f6
+-- hash: 1c4fc1d05347ac77604a2b8612afc3b41729005fc7abb761c7808d04ec2c97ea
 
 name:           cy
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/cy#readme>
+description:    Please see the README on GitHub at <https://github.com/cfoust/cy#readme>
 homepage:       https://github.com/githubuser/cy#readme
 bug-reports:    https://github.com/githubuser/cy/issues
 author:         Author name here
@@ -34,6 +34,9 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , bytestring
+    , posix-pty
+    , process
   default-language: Haskell2010
 
 executable cy-exe
@@ -45,7 +48,10 @@ executable cy-exe
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , bytestring
     , cy
+    , posix-pty
+    , process
   default-language: Haskell2010
 
 test-suite cy-test
@@ -58,5 +64,8 @@ test-suite cy-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , bytestring
     , cy
+    , posix-pty
+    , process
   default-language: Haskell2010
