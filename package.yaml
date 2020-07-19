@@ -25,6 +25,9 @@ dependencies:
 - bytestring
 - utf8-string
 - posix-pty
+- signal
+- unix
+- terminal-size
 
 library:
   source-dirs: src

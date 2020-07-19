@@ -11,6 +11,20 @@ packages:
       sha256: 1165406e7998cf570fad6274a406c0e8c08357a1e60668f9cc8c0f269f457e30
   original:
     hackage: posix-pty-0.2.2
+- completed:
+    hackage: signal-0.1.0.4@sha256:103c6b7f87fd1567466fa8af9151b48ccc6dd0f8f5dfb1e81bae558b68e7d596,1108
+    pantry-tree:
+      size: 263
+      sha256: e1625055e0ef88e9066883981a21b8ae768089f198e21c39e9bb97c007266631
+  original:
+    hackage: signal-0.1.0.4
+- completed:
+    hackage: terminal-size-0.3.2.1@sha256:7b2d8e0475a46961d07ddfb91dee618de70eff55d9ba0402ebeac1f9dcf9b18b,1259
+    pantry-tree:
+      size: 580
+      sha256: bdd64a618bdb54e93ed043f8c21d56b5447bfa5e706cda2b54e5b2a5efd6d297
+  original:
+    hackage: terminal-size-0.3.2.1
 snapshots:
 - completed:
     size: 531707

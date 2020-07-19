@@ -36,6 +36,8 @@ packages:
 #
 extra-deps:
 - posix-pty-0.2.2
+- signal-0.1.0.4
+- terminal-size-0.3.2.1
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
