@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.7 && < 5
 - process
 - bytestring
+- utf8-string
 - posix-pty
 
 library:

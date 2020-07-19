@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1c4fc1d05347ac77604a2b8612afc3b41729005fc7abb761c7808d04ec2c97ea
+-- hash: d17f364fd28d65555aec8292caeb342d82dc983573160bff97aa47451062d13f
 
 name:           cy
 version:        0.1.0.0
@@ -37,6 +37,7 @@ library
     , bytestring
     , posix-pty
     , process
+    , utf8-string
   default-language: Haskell2010
 
 executable cy-exe
@@ -52,6 +53,7 @@ executable cy-exe
     , cy
     , posix-pty
     , process
+    , utf8-string
   default-language: Haskell2010
 
 test-suite cy-test
@@ -68,4 +70,5 @@ test-suite cy-test
     , cy
     , posix-pty
     , process
+    , utf8-string
   default-language: Haskell2010

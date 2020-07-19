@@ -3,25 +3,58 @@ module Lib
   )
 where
 
+import           Control.Concurrent             ( forkIO )
 import           Control.Monad
 import           System.Environment
 import           System.Exit
+import           System.IO
 import           System.Posix.Pty
 import           System.Process
 import qualified Data.ByteString.Char8         as C
+import           Data.ByteString.Lazy.UTF8     as BLU
 
--- Continue polling IO and piping stdin/stdout until the program exits.
-pipeIO :: (Pty, ProcessHandle) -> IO ()
-pipeIO (pty, handle) = do
-  threadWaitReadPty pty
-  b <- readPty pty
-  C.putStrLn b
+
+isDone :: ProcessHandle -> IO Bool
+isDone handle = do
   code <- getProcessExitCode handle
-  when (code == Nothing) $ pipeIO (pty, handle)
+  return (code == Nothing)
+
+-- stdin -> pty
+pipeStdin :: Pty -> ProcessHandle -> IO ()
+pipeStdin pty handle = do
+  done <- isDone handle
+  if done
+    then return ()
+    else do
+      haveInput <- hWaitForInput stdin 200
+      when haveInput $ do
+        chars <- hGetContents stdin
+        writePty pty (C.pack chars)
+      pipeStdin pty handle
+
+-- pty -> stdout
+pipeStdout :: Pty -> ProcessHandle -> IO ()
+pipeStdout pty handle = do
+  done <- isDone handle
+  if done
+    then return ()
+    else do
+      threadWaitReadPty pty
+      chars <- readPty pty
+      hPrint stdout chars
+      pipeStdout pty handle
 
 proxyShell :: IO ()
 proxyShell = do
-  env           <- getEnvironment
+  env <- getEnvironment
+
+  -- Make it so we can proxy characters from stdin right away
+  hSetBuffering stdin NoBuffering
+  hSetEcho stdin False
+
   (pty, handle) <- spawnWithPty (Just env) True "bash" [] (20, 10)
-  writePty pty (C.pack "touch blah && sleep 5 && exit\n")
-  pipeIO (pty, handle)
+
+  forkIO $ pipeStdin pty handle
+  forkIO $ pipeStdout pty handle
+  waitForProcess handle
+  return ()
