@@ -22,12 +22,13 @@ import           System.Console.Terminal.Size   ( size
 import           Control.Concurrent.Chan
 
 
-data Mutation = Mutation Bool C.ByteString
+type Mutation = (Bool, C.ByteString)
 
-handleMutation :: Chan Mutation -> IO ()
-handleMutation channel = do
-  next <- readChan channel
-  handleMutation channel
+handleMutation :: Chan Mutation -> Handle -> IO ()
+handleMutation channel outFile = do
+  (isOut, chars) <- readChan channel
+  C.hPut outFile chars
+  handleMutation channel outFile
 
 -- |Check whether the process referenced by `handle` has exited.
 isDone :: ProcessHandle -> IO Bool
@@ -59,7 +60,7 @@ pipeStdout pty channel process = do
       threadWaitReadPty pty
       chars <- readPty pty
       C.hPut stdout chars
-      writeChan channel (Mutation True chars)
+      writeChan channel (True, chars)
       pipeStdout pty channel process
 
 -- |Signal handler for SIGWINCH.
@@ -91,8 +92,9 @@ proxyShell = do
   installHandler sigWINCH $ handleSize pty
 
   dataChan <- newChan
-
-  forkIO $ handleMutation dataChan
+  outFile  <- openBinaryFile "test.borg" WriteMode
+  hSetBuffering outFile NoBuffering
+  forkIO $ handleMutation dataChan outFile
   forkIO $ pipeStdin pty dataChan process
   forkIO $ pipeStdout pty dataChan process
   waitForProcess process
