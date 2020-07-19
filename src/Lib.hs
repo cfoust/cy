@@ -24,6 +24,7 @@ import           Control.Concurrent.Chan
 
 type Mutation = (Bool, C.ByteString)
 
+-- |Write out stdin/stdout mutations we receive to a file.
 handleMutation :: Chan Mutation -> Handle -> IO ()
 handleMutation channel outFile = do
   (isOut, chars) <- readChan channel
@@ -47,6 +48,7 @@ pipeStdin pty channel process = do
       when haveInput $ do
         char <- hGetChar stdin
         writePty pty (C.singleton char)
+        writeChan channel (False, (C.singleton char))
       pipeStdin pty channel process
 
 -- |Pass any bytes we get from the pseudo-tty's stdout back to the actual
