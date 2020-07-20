@@ -14,6 +14,9 @@ import           System.Posix.Signals           ( sigCHLD
                                                 , sigHUP
                                                 , sigTERM
                                                 , sigQUIT
+                                                , blockSignals
+                                                , addSignal
+                                                , emptySignalSet
                                                 )
 import           System.Posix.Signals.Exts      ( sigWINCH )
 import           System.IO
@@ -78,10 +81,6 @@ handleSize pty signal = do
     Just x  -> resizePty pty (height x, width x)
     Nothing -> return ()
 
-doNothing :: Signal -> IO ()
-doNothing signal = do
-  return ()
-
 -- |Spawn a new shell process and proxy its stdin/stdout.
 proxyShell :: IO ()
 proxyShell = do
@@ -102,7 +101,8 @@ proxyShell = do
 
   installHandler sigWINCH $ handleSize pty
   -- Ignore the rest of the signals; these are handled by the underlying tty.
-  mapM_ (\x -> installHandler x doNothing) [sigCHLD, sigHUP, sigQUIT, sigTERM]
+  blockSignals
+    $ foldr addSignal emptySignalSet [sigCHLD, sigHUP, sigQUIT, sigTERM]
 
   dataChan <- newChan
   outFile  <- openBinaryFile "test.borg" WriteMode
