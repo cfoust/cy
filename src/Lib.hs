@@ -3,6 +3,7 @@ module Lib
   )
 where
 
+import           System.Posix.IO                ( stdInput )
 import           Control.Concurrent             ( forkIO )
 import           Control.Monad
 import           System.Environment
@@ -12,11 +13,14 @@ import           System.Signal                  ( installHandler
                                                 )
 import           System.Posix.Signals           ( sigCHLD
                                                 , sigHUP
+                                                , sigINT
                                                 , sigTERM
                                                 , sigQUIT
                                                 , blockSignals
+                                                , setSignalMask
                                                 , addSignal
                                                 , emptySignalSet
+                                                , fullSignalSet
                                                 )
 import           System.Posix.Signals.Exts      ( sigWINCH )
 import           System.IO
@@ -27,6 +31,7 @@ import           System.Console.Terminal.Size   ( size
                                                 , height
                                                 , width
                                                 )
+import qualified System.Posix.Terminal         as T
 import           Control.Concurrent.Chan
 
 
@@ -97,12 +102,32 @@ proxyShell = do
         Just x  -> (width x, height x)
         Nothing -> (20, 20)
 
+  -- Disable a bunch of stuff
+  oldAttributes <- T.getTerminalAttributes stdInput
+
+  let newTermSettings =
+        flip T.withoutMode T.IgnoreBreak
+          . flip T.withoutMode T.InterruptOnBreak
+          . flip T.withoutMode T.CheckParity
+          . flip T.withoutMode T.StripHighBit
+          . flip T.withoutMode T.MapLFtoCR
+          . flip T.withoutMode T.IgnoreCR
+          . flip T.withoutMode T.MapCRtoLF
+          . flip T.withoutMode T.StartStopOutput
+          . flip T.withoutMode T.ProcessOutput
+          . flip T.withoutMode T.EnableEcho
+          . flip T.withoutMode T.EchoLF
+          . flip T.withoutMode T.ProcessInput
+          . flip T.withoutMode T.KeyboardInterrupts
+          . flip T.withoutMode T.ExtendedFunctions
+          . flip T.withoutMode T.EnableParity
+          $ oldAttributes
+
+  T.setTerminalAttributes stdInput newTermSettings T.Immediately
+
   (pty, process) <- spawnWithPty (Just env) True "bash" [] newSize
 
   installHandler sigWINCH $ handleSize pty
-  -- Ignore the rest of the signals; these are handled by the underlying tty.
-  blockSignals
-    $ foldr addSignal emptySignalSet [sigCHLD, sigHUP, sigQUIT, sigTERM]
 
   dataChan <- newChan
   outFile  <- openBinaryFile "test.borg" WriteMode
@@ -111,4 +136,5 @@ proxyShell = do
   forkIO $ pipeStdin pty dataChan process
   forkIO $ pipeStdout pty dataChan process
   waitForProcess process
+  T.setTerminalAttributes stdInput oldAttributes T.Immediately
   return ()
