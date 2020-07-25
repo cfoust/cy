@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
-module Lib
+module Proxy
   ( proxyShell
   )
 where
@@ -34,33 +34,16 @@ import           Data.Int
 import           Data.Time                      ( nominalDiffTimeToSeconds
                                                 , UTCTime
                                                 )
-
-
-data Mutation =
-  Input C.ByteString
-  | Output C.ByteString
-  | WindowSize Int Int
-  deriving Generic
-instance Binary Mutation
-
-data TimeMutation = TimeMutation Int64 Mutation
-  deriving Generic
-
-instance Binary TimeMutation
-
-intToWord32 :: Int -> Word32
-intToWord32 x = fromInteger $ toInteger x
-
-millisSinceEpoch :: UTCTime -> Int64
-millisSinceEpoch =
-  floor . (1e3 *) . nominalDiffTimeToSeconds . utcTimeToPOSIXSeconds
+import           Mutations                      ( Mutation(..)
+                                                , stampMutation
+                                                )
 
 -- |Write out stdin/stdout mutations we receive to a file.
 handleMutation :: Chan Mutation -> Handle -> IO ()
 handleMutation channel outFile = do
   mutation <- readChan channel
-  stamp    <- getCurrentTime
-  L.hPut outFile $ encode (TimeMutation (millisSinceEpoch stamp) mutation)
+  stamped  <- stampMutation mutation
+  L.hPut outFile $ encode stamped
   handleMutation channel outFile
 
 -- |Check whether the process referenced by `handle` has exited.

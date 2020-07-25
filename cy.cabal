@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d002dc3390c98d359af1311d1a82f2cecb654128273b259b84a102172c3a1ea7
+-- hash: 0f917e8e60a908a104d022e13594f1bf85b4cf3c46f16a37235c53cfc5e84250
 
 name:           cy
 version:        0.1.0.0
@@ -27,7 +27,8 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      Mutations
+      Proxy
   other-modules:
       Paths_cy
   hs-source-dirs:

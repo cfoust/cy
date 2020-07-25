@@ -1,6 +1,6 @@
 module Main where
 
-import Lib
+import           Proxy                          ( proxyShell )
 
 main :: IO ()
 main = proxyShell
