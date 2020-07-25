@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a475afbe6618c6bc2e260f46c5b973b266531ed1d4e6f75c749f83ca636f7b57
+-- hash: d002dc3390c98d359af1311d1a82f2cecb654128273b259b84a102172c3a1ea7
 
 name:           cy
 version:        0.1.0.0
@@ -40,6 +40,7 @@ library
     , process
     , signal
     , terminal-size
+    , time
     , unix
     , utf8-string
   default-language: Haskell2010
@@ -60,6 +61,7 @@ executable cy-exe
     , process
     , signal
     , terminal-size
+    , time
     , unix
     , utf8-string
   default-language: Haskell2010
@@ -81,6 +83,7 @@ test-suite cy-test
     , process
     , signal
     , terminal-size
+    , time
     , unix
     , utf8-string
   default-language: Haskell2010

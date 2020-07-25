@@ -12,17 +12,6 @@ import           System.Exit
 import           System.Signal                  ( installHandler
                                                 , Signal
                                                 )
-import           System.Posix.Signals           ( sigCHLD
-                                                , sigHUP
-                                                , sigINT
-                                                , sigTERM
-                                                , sigQUIT
-                                                , blockSignals
-                                                , setSignalMask
-                                                , addSignal
-                                                , emptySignalSet
-                                                , fullSignalSet
-                                                )
 import           System.Posix.Signals.Exts      ( sigWINCH )
 import           System.IO
 import           System.Posix.Pty
@@ -38,6 +27,13 @@ import           Control.Concurrent.Chan
 import           Data.Binary
 import           Data.Word
 import           GHC.Generics                   ( Generic )
+import           Data.Time.Clock.POSIX          ( getCurrentTime
+                                                , utcTimeToPOSIXSeconds
+                                                )
+import           Data.Int
+import           Data.Time                      ( nominalDiffTimeToSeconds
+                                                , UTCTime
+                                                )
 
 
 data Mutation =
@@ -45,20 +41,26 @@ data Mutation =
   | Output C.ByteString
   | WindowSize Int Int
   deriving Generic
+instance Binary Mutation
 
+data TimeMutation = TimeMutation Int64 Mutation
+  deriving Generic
+
+instance Binary TimeMutation
 
 intToWord32 :: Int -> Word32
 intToWord32 x = fromInteger $ toInteger x
-instance Binary Mutation
 
-mutationToBytes :: Mutation -> L.ByteString
-mutationToBytes mutation = encode mutation
+millisSinceEpoch :: UTCTime -> Int64
+millisSinceEpoch =
+  floor . (1e3 *) . nominalDiffTimeToSeconds . utcTimeToPOSIXSeconds
 
 -- |Write out stdin/stdout mutations we receive to a file.
 handleMutation :: Chan Mutation -> Handle -> IO ()
 handleMutation channel outFile = do
   mutation <- readChan channel
-  L.hPut outFile $ mutationToBytes mutation
+  stamp    <- getCurrentTime
+  L.hPut outFile $ encode (TimeMutation (millisSinceEpoch stamp) mutation)
   handleMutation channel outFile
 
 -- |Check whether the process referenced by `handle` has exited.
@@ -71,29 +73,29 @@ isDone handle = do
 pipeStdin :: Pty -> Chan Mutation -> ProcessHandle -> IO ()
 pipeStdin pty channel process = do
   done <- isDone process
-  if done
-    then return ()
-    else do
-      haveInput <- hWaitForInput stdin 200
-      when haveInput $ do
-        char <- hGetChar stdin
-        writePty pty (C.singleton char)
-        writeChan channel (Input (C.singleton char))
-      pipeStdin pty channel process
+  when done $ return ()
+  haveInput <- hWaitForInput stdin 200
+
+  when haveInput $ do
+    char <- hGetChar stdin
+    writePty pty (C.singleton char)
+    writeChan channel (Input (C.singleton char))
+
+  pipeStdin pty channel process
 
 -- |Pass any bytes we get from the pseudo-tty's stdout back to the actual
 -- |stdout.
 pipeStdout :: Pty -> Chan Mutation -> ProcessHandle -> IO ()
 pipeStdout pty channel process = do
   done <- isDone process
-  if done
-    then return ()
-    else do
-      threadWaitReadPty pty
-      chars <- readPty pty
-      C.hPut stdout chars
-      writeChan channel (Output chars)
-      pipeStdout pty channel process
+  when done $ return ()
+
+  threadWaitReadPty pty
+  chars <- readPty pty
+  C.hPut stdout chars
+  writeChan channel (Output chars)
+
+  pipeStdout pty channel process
 
 -- |Signal handler for SIGWINCH.
 handleSize :: Pty -> Chan Mutation -> Signal -> IO ()
@@ -152,9 +154,10 @@ proxyShell = do
 
   outFile <- openBinaryFile "test.borg" WriteMode
   hSetBuffering outFile NoBuffering
+
   forkIO $ handleMutation dataChan outFile
   forkIO $ pipeStdin pty dataChan process
   forkIO $ pipeStdout pty dataChan process
   waitForProcess process
+
   T.setTerminalAttributes stdInput oldAttributes T.Immediately
-  return ()
