@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a2c7d897d83f0c7268791ffebc4d08ca0bc88e63208f63b6dceb0beba7562eb0
+-- hash: a475afbe6618c6bc2e260f46c5b973b266531ed1d4e6f75c749f83ca636f7b57
 
 name:           cy
 version:        0.1.0.0
@@ -34,6 +34,7 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , binary
     , bytestring
     , posix-pty
     , process
@@ -52,6 +53,7 @@ executable cy-exe
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , binary
     , bytestring
     , cy
     , posix-pty
@@ -72,6 +74,7 @@ test-suite cy-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , binary
     , bytestring
     , cy
     , posix-pty

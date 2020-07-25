@@ -26,6 +26,7 @@ dependencies:
 - utf8-string
 - posix-pty
 - signal
+- binary
 - unix
 - terminal-size
 

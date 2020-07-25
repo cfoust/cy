@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 module Lib
   ( proxyShell
   )
@@ -27,30 +28,37 @@ import           System.IO
 import           System.Posix.Pty
 import           System.Process
 import qualified Data.ByteString.Char8         as C
+import qualified Data.ByteString.Lazy          as L
 import           System.Console.Terminal.Size   ( size
                                                 , height
                                                 , width
                                                 )
 import qualified System.Posix.Terminal         as T
 import           Control.Concurrent.Chan
+import           Data.Binary
+import           Data.Word
+import           GHC.Generics                   ( Generic )
 
 
 data Mutation =
   Input C.ByteString
   | Output C.ByteString
   | WindowSize Int Int
+  deriving Generic
 
-mutationToBytes :: Mutation -> C.ByteString
-mutationToBytes mutation = case mutation of
-  Input  x                -> x
-  Output x                -> x
-  WindowSize rows columns -> C.pack "asd"
+
+intToWord32 :: Int -> Word32
+intToWord32 x = fromInteger $ toInteger x
+instance Binary Mutation
+
+mutationToBytes :: Mutation -> L.ByteString
+mutationToBytes mutation = encode mutation
 
 -- |Write out stdin/stdout mutations we receive to a file.
 handleMutation :: Chan Mutation -> Handle -> IO ()
 handleMutation channel outFile = do
   mutation <- readChan channel
-  C.hPut outFile $ mutationToBytes mutation
+  L.hPut outFile $ mutationToBytes mutation
   handleMutation channel outFile
 
 -- |Check whether the process referenced by `handle` has exited.
@@ -88,11 +96,13 @@ pipeStdout pty channel process = do
       pipeStdout pty channel process
 
 -- |Signal handler for SIGWINCH.
-handleSize :: Pty -> Signal -> IO ()
-handleSize pty signal = do
+handleSize :: Pty -> Chan Mutation -> Signal -> IO ()
+handleSize pty channel signal = do
   winSize <- size
   case winSize of
-    Just x  -> resizePty pty (height x, width x)
+    Just x -> do
+      resizePty pty (height x, width x)
+      writeChan channel (WindowSize (height x) (width x))
     Nothing -> return ()
 
 -- |Spawn a new shell process and proxy its stdin/stdout.
@@ -136,10 +146,11 @@ proxyShell = do
 
   (pty, process) <- spawnWithPty (Just env) True "bash" [] newSize
 
-  installHandler sigWINCH $ handleSize pty
+  dataChan       <- newChan
 
-  dataChan <- newChan
-  outFile  <- openBinaryFile "test.borg" WriteMode
+  installHandler sigWINCH $ handleSize pty dataChan
+
+  outFile <- openBinaryFile "test.borg" WriteMode
   hSetBuffering outFile NoBuffering
   forkIO $ handleMutation dataChan outFile
   forkIO $ pipeStdin pty dataChan process
