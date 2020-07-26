@@ -20,7 +20,7 @@ import           Data.Time                      ( nominalDiffTimeToSeconds
                                                 , UTCTime
                                                 )
 
-
+-- |A Mutation is just input, output, or changing the window size (from SIGWINCH).
 data Mutation =
   Input C.ByteString
   | Output C.ByteString
@@ -28,6 +28,7 @@ data Mutation =
   deriving Generic
 instance Binary Mutation
 
+-- |A timestamped Mutation in millis since epoch.
 data TimeMutation = TimeMutation Int64 Mutation
   deriving Generic
 instance Binary TimeMutation

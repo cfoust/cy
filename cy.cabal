@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2443883f7ccd83521132ac10236c12b1e1c2eb0626bd8ac59771317b782c965d
+-- hash: 61ad8490402b552805598af8a9f9eeac834e8e43b6c0c047ea65b3e59452a86d
 
 name:           cy
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+      Emulator.Types
       Proxy
       Types
   other-modules:
