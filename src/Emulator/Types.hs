@@ -1,6 +1,8 @@
 module Emulator.Types where
 
 import           Data.Word
+import qualified Data.Text                     as T
+
 
 data CellStyle = SimpleStyle {
   -- TODO: enforce 0-7 on these two
@@ -18,8 +20,10 @@ data CellStyle = SimpleStyle {
 -- state machine.
 -- Reference:
 -- https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
-data ANSIMutation =
-  Unhandled
+data TerminalMutation =
+  -- Anything we don't care about just goes in here
+  Typing T.Text
+
   -- TOP-LEVEL (UNESCAPED) COMMANDS
   ---------------------------------
   | TerminalBell

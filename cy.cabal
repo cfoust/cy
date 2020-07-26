@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 61ad8490402b552805598af8a9f9eeac834e8e43b6c0c047ea65b3e59452a86d
+-- hash: a478338723aea97df9d5537979743c64f07580d5ac3d90f44f15adcc3bb0b4e3
 
 name:           cy
 version:        0.1.0.0
@@ -42,6 +42,7 @@ library
     , process
     , signal
     , terminal-size
+    , text
     , time
     , unix
     , utf8-string
@@ -63,6 +64,7 @@ executable cy-exe
     , process
     , signal
     , terminal-size
+    , text
     , time
     , unix
     , utf8-string
@@ -85,6 +87,7 @@ test-suite cy-test
     , process
     , signal
     , terminal-size
+    , text
     , time
     , unix
     , utf8-string

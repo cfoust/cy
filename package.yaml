@@ -27,6 +27,7 @@ dependencies:
 - process
 - signal
 - terminal-size
+- text
 - time
 - unix
 - utf8-string
