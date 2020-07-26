@@ -30,7 +30,7 @@ instance Binary Mutation
 
 -- |A timestamped Mutation in millis since epoch.
 data TimeMutation = TimeMutation Int64 Mutation
-  deriving Generic
+  deriving (Generic, Show)
 instance Binary TimeMutation
 
 stampMutation :: Mutation -> IO TimeMutation

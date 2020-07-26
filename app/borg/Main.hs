@@ -1,6 +1,18 @@
 module Main where
 
-import           Proxy                          ( proxyShell )
+import           System.IO
+import qualified Data.ByteString.Lazy          as L
+import           Types
+import           Data.Binary
+
+parseFile :: Binary a => L.ByteString -> [a] -> [a]
+parseFile s results = case result of
+  Left  _                     -> results
+  Right (remainder, _, value) -> parseFile remainder (value : results)
+  where result = decodeOrFail s
 
 main :: IO ()
-main = proxyShell
+main = do
+  outFile <- openBinaryFile "test.borg" ReadMode
+  str     <- L.hGetContents outFile
+  print $ (parseFile str [] :: [TimeMutation])
