@@ -14,6 +14,8 @@ data CellStyle = CellStyle {
 -- state machine.
 -- Reference:
 -- https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
+-- http://ascii-table.com/ansi-escape-sequences.php
+-- https://www.real-world-systems.com/docs/ANSIcode.html
 data TerminalMutation =
   -- Anything we don't care about just goes in here
   Raw T.Text

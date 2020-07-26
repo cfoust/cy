@@ -8,7 +8,7 @@ import           Data.Binary
 parseFile :: Binary a => L.ByteString -> [a] -> [a]
 parseFile s results = case result of
   Left  _                     -> results
-  Right (remainder, _, value) -> parseFile remainder (value : results)
+  Right (remainder, _, value) -> parseFile remainder (results ++ [value])
   where result = decodeOrFail s
 
 main :: IO ()
