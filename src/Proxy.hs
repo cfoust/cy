@@ -26,15 +26,7 @@ import qualified System.Posix.Terminal         as T
 import           Control.Concurrent.Chan
 import           Data.Binary
 import           Data.Word
-import           GHC.Generics                   ( Generic )
-import           Data.Time.Clock.POSIX          ( getCurrentTime
-                                                , utcTimeToPOSIXSeconds
-                                                )
-import           Data.Int
-import           Data.Time                      ( nominalDiffTimeToSeconds
-                                                , UTCTime
-                                                )
-import           Mutations                      ( Mutation(..)
+import           Types                          ( Mutation(..)
                                                 , stampMutation
                                                 )
 

@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
-module Mutations
+module Types
   ( Mutation(..)
   , TimeMutation
   , stampMutation
