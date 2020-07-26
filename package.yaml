@@ -38,7 +38,17 @@ library:
 executables:
   cy-exe:
     main:                Main.hs
-    source-dirs:         app
+    source-dirs:         app/record
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - cy
+
+  cy-borg:
+    main:                Main.hs
+    source-dirs:         app/borg
     ghc-options:
     - -threaded
     - -rtsopts

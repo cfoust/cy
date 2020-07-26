@@ -25,7 +25,7 @@ data Mutation =
   Input C.ByteString
   | Output C.ByteString
   | WindowSize Int Int
-  deriving Generic
+  deriving (Generic, Show)
 instance Binary Mutation
 
 -- |A timestamped Mutation in millis since epoch.

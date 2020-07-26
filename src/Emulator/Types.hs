@@ -4,16 +4,10 @@ import           Data.Word
 import qualified Data.Text                     as T
 
 
-data CellStyle = SimpleStyle {
-  -- TODO: enforce 0-7 on these two
-  simpleFg :: Word8,
-  simpleBg :: Word8,
-  -- Whether this is the dim or bold variant
-  simpleDim :: Bool
-} | XTermStyle {
-  -- TODO: enforce 0-255 on these two
-  xtermFg :: Word8,
-  xTermBg :: Word8
+data CellStyle = CellStyle {
+  cellFg :: Word8,
+  cellBg :: Word8,
+  cellIsDim :: Bool
 } deriving (Show)
 
 -- This file attempts to capture all of the possible inputs to the terminal
@@ -22,7 +16,7 @@ data CellStyle = SimpleStyle {
 -- https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
 data TerminalMutation =
   -- Anything we don't care about just goes in here
-  Typing T.Text
+  Raw T.Text
 
   -- TOP-LEVEL (UNESCAPED) COMMANDS
   ---------------------------------

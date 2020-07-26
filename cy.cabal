@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a478338723aea97df9d5537979743c64f07580d5ac3d90f44f15adcc3bb0b4e3
+-- hash: 7fa5b173b3ed88cb6fd7dcf5c2f80792e6ae9e9b61c202bdc174ae798d876822
 
 name:           cy
 version:        0.1.0.0
@@ -48,12 +48,34 @@ library
     , utf8-string
   default-language: Haskell2010
 
+executable cy-borg
+  main-is: Main.hs
+  other-modules:
+      Paths_cy
+  hs-source-dirs:
+      app/borg
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , binary
+    , bytestring
+    , cy
+    , posix-pty
+    , process
+    , signal
+    , terminal-size
+    , text
+    , time
+    , unix
+    , utf8-string
+  default-language: Haskell2010
+
 executable cy-exe
   main-is: Main.hs
   other-modules:
       Paths_cy
   hs-source-dirs:
-      app
+      app/record
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
