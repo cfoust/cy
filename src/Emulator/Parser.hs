@@ -15,6 +15,15 @@ import           Emulator.Types
 data CommonCode = CommonCode [Int] Char
   deriving Show
 
+translateStyleCode :: CellStyle -> Int -> CellStyle
+translateStyleCode x 1  = x { cellIsBold = True }
+translateStyleCode x 22 = x { cellIsBold = False }
+translateStyleCode x _  = x
+
+translateStyle :: [Int] -> CellStyle
+translateStyle []    = cellDefault
+translateStyle codes = foldl translateStyleCode (cellDefault) codes
+
 translateCode :: CommonCode -> TerminalMutation
 translateCode (CommonCode []         'A') = CursorUpLines 1
 translateCode (CommonCode [count]    'A') = CursorUpLines count
@@ -26,8 +35,8 @@ translateCode (CommonCode []         'D') = CursorLeftCols 1
 translateCode (CommonCode [count]    'D') = CursorLeftCols count
 translateCode (CommonCode []         'H') = CursorHome
 translateCode (CommonCode [row, col] 'H') = CursorPosition row col
-translateCode (CommonCode []         'h') = ShowCursor
-translateCode (CommonCode []         'l') = HideCursor
+translateCode (CommonCode [25]       'h') = ShowCursor
+translateCode (CommonCode [25]       'l') = HideCursor
 translateCode (CommonCode []         's') = SaveCursor
 translateCode (CommonCode []         'u') = RestoreCursor
 translateCode (CommonCode []         'J') = ClearScreen
@@ -39,6 +48,7 @@ translateCode (CommonCode [0]        'K') = ClearLineCursorEnd
 translateCode (CommonCode [1]        'K') = ClearLineCursorBeginning
 translateCode (CommonCode [2]        'K') = ClearEntireLine
 translateCode (CommonCode []         'm') = ResetStyle
+translateCode (CommonCode codes      'm') = SetStyle $ translateStyle codes
 translateCode x                           = trace (show x) Unrecognized
 
 commonCode = do

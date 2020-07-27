@@ -3,12 +3,46 @@ module Emulator.Types where
 import           Data.Word
 import qualified Data.Text                     as T
 
+data Color =
+  Black
+  | Red
+  | Green
+  | Yellow
+  | Blue
+  | Magenta
+  | Cyan
+  | White
+  | XTerm256 Int
+  | RGB Int Int Int
+
+colorMap =
+  [ (0, Black)
+  , (1, Red)
+  , (2, Green)
+  , (3, Yellow)
+  , (4, Blue)
+  , (5, Magenta)
+  , (6, Cyan)
+  , (7, White)
+  ]
+
+findColor :: Int -> Maybe Color
+findColor = flip lookup colorMap
 
 data CellStyle = CellStyle {
   cellFg :: Word8,
   cellBg :: Word8,
-  cellIsDim :: Bool
+  cellIsBold :: Bool,
+  cellIsBlinking :: Bool,
+  cellIsUnderlined :: Bool
 } deriving (Show)
+
+cellDefault = CellStyle { cellFg           = 0
+                        , cellBg           = 0
+                        , cellIsBold       = False
+                        , cellIsBlinking   = False
+                        , cellIsUnderlined = False
+                        }
 
 -- This file attempts to capture all of the possible inputs to the terminal
 -- state machine.
