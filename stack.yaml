@@ -35,6 +35,7 @@ packages:
 # forks / in-progress versions pinned to a git hash. For example:
 #
 extra-deps:
+- parsec-3.1.14.0
 - posix-pty-0.2.2
 - signal-0.1.0.4
 - terminal-size-0.3.2.1

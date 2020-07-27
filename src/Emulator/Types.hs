@@ -19,6 +19,8 @@ data CellStyle = CellStyle {
 data TerminalMutation =
   -- Anything we don't care about just goes in here
   Raw T.Text
+  -- We have no idea what this is
+  | Unparsed
 
   -- TOP-LEVEL (UNESCAPED) COMMANDS
   ---------------------------------
@@ -75,3 +77,4 @@ data TerminalMutation =
   | ResetStyle
   | SetBold
   | SetDim
+  deriving Show

@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 module Types
   ( Mutation(..)
-  , TimeMutation
+  , TimeMutation(..)
   , stampMutation
   )
 where
