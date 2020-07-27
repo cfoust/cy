@@ -52,6 +52,8 @@ data TerminalMutation =
   | CursorColumn Int
   | SaveCursor
   | RestoreCursor
+  | ShowCursor
+  | HideCursor
 
   -- ERASING
   ----------
