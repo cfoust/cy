@@ -9,6 +9,7 @@ import           Text.Parsec.Text
 import           Control.Monad
 import qualified Data.Text                     as T
 
+import           Debug.Trace
 import           Emulator.Types
 
 data CommonCode = CommonCode [Int] Char
@@ -33,16 +34,16 @@ translateCode (CommonCode []      'K') = ClearLineCursorEnd
 translateCode (CommonCode [0]     'K') = ClearLineCursorEnd
 translateCode (CommonCode [1]     'K') = ClearLineCursorBeginning
 translateCode (CommonCode [2]     'K') = ClearEntireLine
-translateCode _                        = Unparsed
+translateCode _                        = Unrecognized
 
 commonCode = do
   string "\ESC["
   optionMaybe (char '?')
-  params <- sepBy ansiNum (char ';')
+  params <- parserTraced "id" $ sepBy ansiNum (char ';')
   c      <- letter
   return $ CommonCode (map read params) c
 
-ansiNum = many digit
+ansiNum = many1 digit
 
 command =
   try (commonCode >>= return . translateCode)

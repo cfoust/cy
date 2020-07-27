@@ -20,7 +20,7 @@ data TerminalMutation =
   -- Anything we don't care about just goes in here
   Raw T.Text
   -- We have no idea what this is
-  | Unparsed
+  | Unrecognized
 
   -- TOP-LEVEL (UNESCAPED) COMMANDS
   ---------------------------------
