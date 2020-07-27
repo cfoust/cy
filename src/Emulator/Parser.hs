@@ -11,6 +11,7 @@ import qualified Data.Text                     as T
 
 import           Debug.Trace
 import           Emulator.Types
+import           Data.Maybe
 
 data CommonCode = CommonCode [Int] Char
   deriving Show
@@ -18,7 +19,10 @@ data CommonCode = CommonCode [Int] Char
 translateStyleCode :: CellStyle -> Int -> CellStyle
 translateStyleCode x 1  = x { cellIsBold = True }
 translateStyleCode x 22 = x { cellIsBold = False }
-translateStyleCode x _  = x
+translateStyleCode x code
+  | code >= 30 && code <= 37 = x { cellFg = fromJust (findColor (code - 30)) }
+  | code >= 40 && code <= 47 = x { cellBg = fromJust (findColor (code - 40)) }
+translateStyleCode x _ = x
 
 translateStyle :: [Int] -> CellStyle
 translateStyle []    = cellDefault

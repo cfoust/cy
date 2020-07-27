@@ -14,6 +14,7 @@ data Color =
   | White
   | XTerm256 Int
   | RGB Int Int Int
+  deriving (Show)
 
 colorMap =
   [ (0, Black)
@@ -30,15 +31,15 @@ findColor :: Int -> Maybe Color
 findColor = flip lookup colorMap
 
 data CellStyle = CellStyle {
-  cellFg :: Word8,
-  cellBg :: Word8,
+  cellFg :: Color,
+  cellBg :: Color,
   cellIsBold :: Bool,
   cellIsBlinking :: Bool,
   cellIsUnderlined :: Bool
 } deriving (Show)
 
-cellDefault = CellStyle { cellFg           = 0
-                        , cellBg           = 0
+cellDefault = CellStyle { cellFg           = White
+                        , cellBg           = Black
                         , cellIsBold       = False
                         , cellIsBlinking   = False
                         , cellIsUnderlined = False
