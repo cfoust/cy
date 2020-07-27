@@ -25,8 +25,12 @@ translateStyleCode x code
 translateStyleCode x _ = x
 
 translateStyle :: [Int] -> CellStyle
-translateStyle []    = cellDefault
-translateStyle codes = foldl translateStyleCode (cellDefault) codes
+translateStyle []               = cellDefault
+translateStyle [38, 5, x]       = cellDefault { cellFg = XTerm256 x }
+translateStyle [48, 5, x]       = cellDefault { cellBg = XTerm256 x }
+translateStyle [38, 2, r, g, b] = cellDefault { cellFg = RGB r g b }
+translateStyle [48, 2, r, g, b] = cellDefault { cellBg = RGB r g b }
+translateStyle codes            = foldl translateStyleCode (cellDefault) codes
 
 translateCode :: CommonCode -> TerminalMutation
 translateCode (CommonCode []         'A') = CursorUpLines 1
