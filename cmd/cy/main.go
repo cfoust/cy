@@ -11,7 +11,6 @@ import (
 
 	"github.com/cfoust/cy/pkg/cy"
 
-	//"github.com/danielgatis/go-vte/vtparser"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/xo/terminfo"
@@ -32,8 +31,7 @@ func main() {
 	ti.Fprintf(buf, terminfo.CursorHome)
 	os.Stdout.Write(buf.Bytes())
 
-	c := cy.New()
-	err = c.Run("bash")
+	c, err := cy.Run("bash")
 	if err != nil {
 		log.Panic().Err(err).Msg("could not run cy")
 	}
@@ -77,5 +75,10 @@ func main() {
 	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }()
 
 	go func() { _, _ = io.Copy(c, os.Stdin) }()
-	_, _ = io.Copy(os.Stdout, c)
+	go func() { _, _ = io.Copy(os.Stdout, c) }()
+
+	err = c.Wait()
+	if err != nil {
+		log.Panic().Err(err).Msg("cy failed to exit")
+	}
 }

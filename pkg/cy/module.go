@@ -14,13 +14,7 @@ type Cy struct {
 	pty     *pty.Pty
 	session *session.Session
 	writes  chan []byte
-}
-
-func New() *Cy {
-	return &Cy{
-		session: session.New(),
-		writes:  make(chan []byte),
-	}
+	done    chan error
 }
 
 // read from pty:
@@ -28,7 +22,7 @@ func New() *Cy {
 // 2. send to virtual.
 // 3. if not alt, write to main.
 
-func (c *Cy) readPty(p *pty.Pty) {
+func (c *Cy) readPty() {
 	buffer := make([]byte, 4096)
 
 	for {
@@ -36,7 +30,7 @@ func (c *Cy) readPty(p *pty.Pty) {
 		//return
 		//}
 
-		numBytes, err := p.Read(buffer)
+		numBytes, err := c.pty.Read(buffer)
 		if err == io.EOF {
 			return
 		}
@@ -57,17 +51,39 @@ func (c *Cy) readPty(p *pty.Pty) {
 
 // Initialize cy using the command to start a pseudo-tty. This function only
 // returns once the underlying pty is done.
-func (c *Cy) Run(command string) error {
-	p, err := pty.Run(command)
-	if err != nil {
-		return err
+func Run(command string) (*Cy, error) {
+	started := make(chan error)
+	ptyDone := make(chan error)
+
+	c := &Cy{
+		session: session.New(),
+		writes:  make(chan []byte),
+		done:    ptyDone,
 	}
 
-	c.pty = p
+	go func() {
+		p, err := pty.Run(command)
+		if err != nil {
+			started <- err
+		}
 
-	go c.readPty(p)
+		c.pty = p
 
-	return p.Wait()
+		started <- nil
+	}()
+
+	err := <-started
+	if err != nil {
+		return nil, err
+	}
+
+	go c.readPty()
+
+	go func() {
+		c.done <- c.pty.Wait()
+	}()
+
+	return c, nil
 }
 
 func (c *Cy) write(data []byte) {
@@ -84,6 +100,10 @@ func (c *Cy) Write(p []byte) (n int, err error) {
 	// TODO(cfoust): 05/18/23 if alt, process input
 	c.session.Input(p)
 	return c.pty.Write(p)
+}
+
+func (c *Cy) Wait() error {
+	return <-c.done
 }
 
 func (c *Cy) Resize(pty *os.File) error {

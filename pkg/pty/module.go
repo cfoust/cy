@@ -13,7 +13,6 @@ type Pty struct {
 	done chan error
 }
 
-// Initialize cy using the command to start a pseudo-tty.
 func Run(command string) (*Pty, error) {
 	started := make(chan error)
 	shellDone := make(chan error)
