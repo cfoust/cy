@@ -23,12 +23,51 @@ func New() *Cy {
 	}
 }
 
+// read from pty:
+// 1. record in session.
+// 2. send to virtual.
+// 3. if not alt, write to main.
+
+func (c *Cy) readPty(p *pty.Pty) {
+	buffer := make([]byte, 4096)
+
+	for {
+		//if ctx.Err() != nil {
+		//return
+		//}
+
+		numBytes, err := p.Read(buffer)
+		if err == io.EOF {
+			return
+		}
+		if err != nil {
+			// TODO(cfoust): 05/17/23
+			return
+		}
+		if numBytes == 0 {
+			continue
+		}
+
+		copied := make([]byte, numBytes)
+		copy(copied, buffer[:numBytes])
+		c.session.Output(copied)
+		c.write(copied)
+	}
+}
+
 // Initialize cy using the command to start a pseudo-tty. This function only
 // returns once the underlying pty is done.
 func (c *Cy) Run(command string) error {
-	p := pty.New()
+	p, err := pty.Run(command)
+	if err != nil {
+		return err
+	}
+
 	c.pty = p
-	return p.Run(command)
+
+	go c.readPty(p)
+
+	return p.Wait()
 }
 
 func (c *Cy) write(data []byte) {
@@ -42,7 +81,9 @@ func (c *Cy) Read(p []byte) (n int, err error) {
 }
 
 func (c *Cy) Write(p []byte) (n int, err error) {
-	return 0, nil
+	// TODO(cfoust): 05/18/23 if alt, process input
+	c.session.Input(p)
+	return c.pty.Write(p)
 }
 
 func (c *Cy) Resize(pty *os.File) error {
