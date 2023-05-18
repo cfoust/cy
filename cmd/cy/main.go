@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/cy"
+	"github.com/cfoust/cy/pkg/session"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -80,5 +81,12 @@ func main() {
 	err = c.Wait()
 	if err != nil {
 		log.Panic().Err(err).Msg("cy failed to exit")
+	}
+
+	for _, event := range c.Session().Events() {
+		if data, ok := event.Data.(session.OutputEvent); ok {
+			os.Stdout.Write(data.Bytes)
+			time.Sleep(50 * time.Millisecond)
+		}
 	}
 }

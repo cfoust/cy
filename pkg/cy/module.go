@@ -106,6 +106,10 @@ func (c *Cy) Wait() error {
 	return <-c.done
 }
 
+func (c *Cy) Session() *session.Session {
+	return c.session
+}
+
 func (c *Cy) Resize(pty *os.File) error {
 	width, height, err := term.GetSize(int(os.Stdin.Fd()))
 	if err != nil {

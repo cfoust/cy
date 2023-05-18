@@ -63,6 +63,13 @@ func (s *Session) store(data EventData) {
 	})
 }
 
+func (s *Session) Events() []Event {
+	s.mutex.Lock()
+	events := s.events
+	s.mutex.Unlock()
+	return events
+}
+
 func (s *Session) Input(data []byte) {
 	s.store(InputEvent{Bytes: data})
 }
