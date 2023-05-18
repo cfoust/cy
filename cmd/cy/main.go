@@ -110,8 +110,6 @@ func proxyShell(ctx context.Context, command string, events chan Event) error {
 				return
 			case <-ch:
 				width, height, err := term.GetSize(int(os.Stdin.Fd()))
-				// TODO(cfoust): 05/17/23 don't send event if
-				// size has not actually changed
 				if err != nil {
 					log.Error().Err(err).Msg("failed to get terminal dimensions")
 					return
@@ -278,7 +276,7 @@ func main() {
 	for _, event := range eventList {
 		if data, ok := event.Data.(OutputEvent); ok {
 			os.Stdout.Write(data.Bytes)
-			time.Sleep(250 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 		}
 		//if data, ok := event.Data.(OutputEvent); ok {
 			//dispatcher := &dispatcher{}
