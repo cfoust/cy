@@ -12,7 +12,7 @@ import (
 	"bytes"
 
 	"github.com/creack/pty"
-	"github.com/danielgatis/go-vte/vtparser"
+	//"github.com/danielgatis/go-vte/vtparser"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/xo/terminfo"
@@ -270,24 +270,32 @@ func main() {
 		log.Panic().Err(err).Msg("shell exited with error")
 	}
 
+	buf = new(bytes.Buffer)
+	ti.Fprintf(buf, terminfo.ClearScreen)
+	ti.Fprintf(buf, terminfo.CursorHome)
+	os.Stdout.Write(buf.Bytes())
+
 	for _, event := range eventList {
-		log.Info().Msgf("%+v", event)
 		if data, ok := event.Data.(OutputEvent); ok {
-			dispatcher := &dispatcher{}
-			parser := vtparser.New(
-				dispatcher.Print,
-				dispatcher.Execute,
-				dispatcher.Put,
-				dispatcher.Unhook,
-				dispatcher.Hook,
-				dispatcher.OscDispatch,
-				dispatcher.CsiDispatch,
-				dispatcher.EscDispatch,
-			)
-			for _, b := range data.Bytes {
-				parser.Advance(b)
-			}
+			os.Stdout.Write(data.Bytes)
+			time.Sleep(250 * time.Millisecond)
 		}
+		//if data, ok := event.Data.(OutputEvent); ok {
+			//dispatcher := &dispatcher{}
+			//parser := vtparser.New(
+				//dispatcher.Print,
+				//dispatcher.Execute,
+				//dispatcher.Put,
+				//dispatcher.Unhook,
+				//dispatcher.Hook,
+				//dispatcher.OscDispatch,
+				//dispatcher.CsiDispatch,
+				//dispatcher.EscDispatch,
+			//)
+			//for _, b := range data.Bytes {
+				//parser.Advance(b)
+			//}
+		//}
 	}
 
 	log.Info().Msgf("done")
