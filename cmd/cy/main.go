@@ -2,18 +2,20 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"os/signal"
 	"syscall"
 	"time"
-	"fmt"
+	"bytes"
 
 	"github.com/creack/pty"
 	"github.com/danielgatis/go-vte/vtparser"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/xo/terminfo"
 	"golang.org/x/term"
 )
 
@@ -201,7 +203,6 @@ func record(ctx context.Context, command string) (<-chan Event, <-chan error) {
 	return events, done
 }
 
-
 type dispatcher struct{}
 
 func (p *dispatcher) Print(r rune) {
@@ -240,6 +241,16 @@ func main() {
 	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
 	log.Logger = log.Output(consoleWriter)
 
+	ti, err := terminfo.LoadFromEnv()
+	if err != nil {
+		log.Panic().Err(err).Msg("could not read terminal info")
+	}
+
+	buf := new(bytes.Buffer)
+	ti.Fprintf(buf, terminfo.ClearScreen)
+	ti.Fprintf(buf, terminfo.CursorHome)
+	os.Stdout.Write(buf.Bytes())
+
 	events, done := record(context.Background(), "/bin/bash")
 
 	eventList := make([]Event, 0)
@@ -254,7 +265,7 @@ func main() {
 		}
 	}()
 
-	err := <-done
+	err = <-done
 	if err != nil {
 		log.Panic().Err(err).Msg("shell exited with error")
 	}
