@@ -3,6 +3,7 @@ package session
 import (
 	"time"
 
+	"github.com/cfoust/cy/pkg/util"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -60,7 +61,6 @@ func (s *Session) store(data EventData) {
 		Stamp: time.Now(),
 		Data:  data,
 	})
-
 }
 
 func (s *Session) Input(data []byte) {
@@ -77,3 +77,5 @@ func (s *Session) Resize(width, height int) {
 		Height: height,
 	})
 }
+
+var _ util.Resizable = (*Session)(nil)
