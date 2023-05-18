@@ -8,8 +8,10 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"fmt"
 
 	"github.com/creack/pty"
+	"github.com/danielgatis/go-vte/vtparser"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/term"
@@ -97,16 +99,29 @@ func proxyShell(ctx context.Context, command string, events chan Event) error {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGWINCH)
 	go func() {
+		currentHeight := 0
+		currentWidth := 0
+
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-ch:
 				width, height, err := term.GetSize(int(os.Stdin.Fd()))
+				// TODO(cfoust): 05/17/23 don't send event if
+				// size has not actually changed
 				if err != nil {
 					log.Error().Err(err).Msg("failed to get terminal dimensions")
 					return
 				}
+
+				if width == currentWidth && height == currentHeight {
+					continue
+				}
+
+				currentWidth = width
+				currentHeight = height
+
 				events <- Event{
 					Stamp: time.Now(),
 					Data: ResizeEvent{
@@ -186,6 +201,41 @@ func record(ctx context.Context, command string) (<-chan Event, <-chan error) {
 	return events, done
 }
 
+
+type dispatcher struct{}
+
+func (p *dispatcher) Print(r rune) {
+	fmt.Printf("[Print] %c\n", r)
+}
+
+func (p *dispatcher) Execute(b byte) {
+	fmt.Printf("[Execute] %02x\n", b)
+}
+
+func (p *dispatcher) Put(b byte) {
+	fmt.Printf("[Put] %02x\n", b)
+}
+
+func (p *dispatcher) Unhook() {
+	fmt.Printf("[Unhook]\n")
+}
+
+func (p *dispatcher) Hook(params []int64, intermediates []byte, ignore bool, r rune) {
+	fmt.Printf("[Hook] params=%v, intermediates=%v, ignore=%v, r=%v\n", params, intermediates, ignore, r)
+}
+
+func (p *dispatcher) OscDispatch(params [][]byte, bellTerminated bool) {
+	fmt.Printf("[OscDispatch] params=%v, bellTerminated=%v\n", params, bellTerminated)
+}
+
+func (p *dispatcher) CsiDispatch(params []int64, intermediates []byte, ignore bool, r rune) {
+	fmt.Printf("[CsiDispatch] params=%v, intermediates=%v, ignore=%v, r=%v\n", params, intermediates, ignore, r)
+}
+
+func (p *dispatcher) EscDispatch(intermediates []byte, ignore bool, b byte) {
+	fmt.Printf("[EscDispatch] intermediates=%v, ignore=%v, byte=%02x\n", intermediates, ignore, b)
+}
+
 func main() {
 	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
 	log.Logger = log.Output(consoleWriter)
@@ -211,6 +261,22 @@ func main() {
 
 	for _, event := range eventList {
 		log.Info().Msgf("%+v", event)
+		if data, ok := event.Data.(OutputEvent); ok {
+			dispatcher := &dispatcher{}
+			parser := vtparser.New(
+				dispatcher.Print,
+				dispatcher.Execute,
+				dispatcher.Put,
+				dispatcher.Unhook,
+				dispatcher.Hook,
+				dispatcher.OscDispatch,
+				dispatcher.CsiDispatch,
+				dispatcher.EscDispatch,
+			)
+			for _, b := range data.Bytes {
+				parser.Advance(b)
+			}
+		}
 	}
 
 	log.Info().Msgf("done")
