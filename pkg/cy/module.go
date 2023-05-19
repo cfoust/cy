@@ -8,6 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/pty"
 	"github.com/cfoust/cy/pkg/session"
+	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/xo/terminfo"
 	"golang.org/x/term"
@@ -17,8 +18,9 @@ type Cy struct {
 	ti      *terminfo.Terminfo
 	pty     *pty.Pty
 	session *session.Session
-	writes  chan []byte
 	done    chan error
+
+	buffer *util.WaitBuffer
 
 	showUI bool
 
@@ -81,7 +83,7 @@ func Run(command string) (*Cy, error) {
 
 	c := &Cy{
 		session: session.New(),
-		writes:  make(chan []byte),
+		buffer:  util.NewWaitBuffer(),
 		done:    ptyDone,
 		ti:      ti,
 
@@ -116,20 +118,23 @@ func Run(command string) (*Cy, error) {
 }
 
 func (c *Cy) write(data []byte) {
-	c.writes <- data
+	c.buffer.Write(data)
 }
 
-func (c *Cy) Read(p []byte) (n int, err error) {
-	data := <-c.writes
-	copy(p, data)
+func (c *Cy) Read(p []byte) (int, error) {
+	n, err := c.buffer.Read(p)
 
-	// Mirror all writes to the conceptual shell
-	_, err = c.Raw.Write(data)
 	if err != nil {
 		return 0, err
 	}
 
-	return len(data), nil
+	// Mirror all writes to the conceptual shell
+	_, err = c.Raw.Write(p[:n])
+	if err != nil {
+		return 0, err
+	}
+
+	return n, nil
 }
 
 // Calculate the minimum string to transform `src` in to `dst`.
@@ -161,6 +166,25 @@ func Swap(
 
 			info.Fprintf(data, terminfo.CursorAddress, y, x)
 
+			if hasMode {
+				mode := dstCell.Mode
+				if mode&emu.AttrReverse != 0 {
+					info.Fprintf(data, terminfo.EnterReverseMode)
+				}
+
+				if mode&emu.AttrUnderline != 0 {
+					info.Fprintf(data, terminfo.EnterUnderlineMode)
+				}
+
+				if mode&emu.AttrItalic != 0 {
+					info.Fprintf(data, terminfo.EnterItalicsMode)
+				}
+
+				if mode&emu.AttrBlink != 0 {
+					info.Fprintf(data, terminfo.EnterBlinkMode)
+				}
+			}
+
 			if hasFG || hasBG {
 				info.Fprintf(data, terminfo.SetAForeground, int(dstCell.FG))
 				info.Fprintf(data, terminfo.SetABackground, int(dstCell.BG))
@@ -174,9 +198,8 @@ func Swap(
 
 	info.Fprintf(data, terminfo.CursorNormal)
 
-	//srcCursor := src.Cursor()
 	dstCursor := dst.Cursor()
-
+	// TODO(cfoust): 05/19/23 cursor mode?
 	info.Fprintf(data, terminfo.CursorAddress, dstCursor.Y, dstCursor.X)
 
 	return data.Bytes()
@@ -195,6 +218,7 @@ func (c *Cy) Write(p []byte) (n int, err error) {
 			}
 
 			c.write(Swap(c.ti, dst, src))
+			return len(p), nil
 		}
 	}
 

@@ -20,6 +20,17 @@ const (
 	attrWrap
 )
 
+// TODO(cfoust): 05/19/23 combine this with above
+const (
+	AttrReverse = 1 << iota
+	AttrUnderline
+	AttrBold
+	AttrGfx
+	AttrItalic
+	AttrBlink
+	AttrWrap
+)
+
 const (
 	cursorDefault = 1 << iota
 	cursorWrapNext
