@@ -10,6 +10,7 @@ type Resizable interface {
 	Resize(width, height int)
 }
 
+// A buffer where Read() blocks until the next Write().
 type WaitBuffer struct {
 	deadlock.Mutex
 	data   []byte

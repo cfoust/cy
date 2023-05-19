@@ -1,10 +1,10 @@
 package cy
 
 import (
-	"bytes"
 	"io"
 	"os"
 
+	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/pty"
 	"github.com/cfoust/cy/pkg/session"
@@ -32,19 +32,10 @@ type Cy struct {
 	UI emu.Terminal
 }
 
-// read from pty:
-// 1. record in session.
-// 2. send to virtual.
-// 3. if not alt, write to main.
-
 func (c *Cy) readPty() {
 	buffer := make([]byte, 4096)
 
 	for {
-		//if ctx.Err() != nil {
-		//return
-		//}
-
 		numBytes, err := c.pty.Read(buffer)
 		if err == io.EOF {
 			return
@@ -137,76 +128,7 @@ func (c *Cy) Read(p []byte) (int, error) {
 	return n, nil
 }
 
-// Calculate the minimum string to transform `src` in to `dst`.
-func Swap(
-	info *terminfo.Terminfo,
-	dst, src emu.View,
-) []byte {
-	width, height := src.Size()
-	data := new(bytes.Buffer)
-
-	info.Fprintf(data, terminfo.ClearScreen)
-	info.Fprintf(data, terminfo.CursorHome)
-	info.Fprintf(data, terminfo.CursorInvisible)
-
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			dstCell := dst.Cell(x, y)
-			srcCell := src.Cell(x, y)
-
-			hasChar := dstCell.Char != srcCell.Char
-			hasMode := dstCell.Mode != srcCell.Mode
-			hasFG := dstCell.FG != srcCell.FG
-			hasBG := dstCell.BG != srcCell.BG
-			isDifferent := hasChar || hasMode || hasFG || hasBG
-
-			if !isDifferent {
-				continue
-			}
-
-			info.Fprintf(data, terminfo.CursorAddress, y, x)
-
-			if hasMode {
-				mode := dstCell.Mode
-				if mode&emu.AttrReverse != 0 {
-					info.Fprintf(data, terminfo.EnterReverseMode)
-				}
-
-				if mode&emu.AttrUnderline != 0 {
-					info.Fprintf(data, terminfo.EnterUnderlineMode)
-				}
-
-				if mode&emu.AttrItalic != 0 {
-					info.Fprintf(data, terminfo.EnterItalicsMode)
-				}
-
-				if mode&emu.AttrBlink != 0 {
-					info.Fprintf(data, terminfo.EnterBlinkMode)
-				}
-			}
-
-			if hasFG || hasBG {
-				info.Fprintf(data, terminfo.SetAForeground, int(dstCell.FG))
-				info.Fprintf(data, terminfo.SetABackground, int(dstCell.BG))
-			}
-
-			data.Write([]byte(string(dstCell.Char)))
-
-			info.Fprintf(data, terminfo.ExitAttributeMode)
-		}
-	}
-
-	info.Fprintf(data, terminfo.CursorNormal)
-
-	dstCursor := dst.Cursor()
-	// TODO(cfoust): 05/19/23 cursor mode?
-	info.Fprintf(data, terminfo.CursorAddress, dstCursor.Y, dstCursor.X)
-
-	return data.Bytes()
-}
-
 func (c *Cy) Write(p []byte) (n int, err error) {
-	// TODO(cfoust): 05/18/23 if alt, process input
 	for _, b := range p {
 		if b == 6 {
 			c.showUI = !c.showUI
@@ -217,7 +139,7 @@ func (c *Cy) Write(p []byte) (n int, err error) {
 				dst = c.Shell
 			}
 
-			c.write(Swap(c.ti, dst, src))
+			c.write(anim.SwapView(c.ti, dst, src))
 			return len(p), nil
 		}
 	}
@@ -245,7 +167,6 @@ func (c *Cy) Resize(pty *os.File) error {
 	}
 
 	c.session.Resize(width, height)
-
 	c.Raw.Resize(width, height)
 	c.Shell.Resize(width, height)
 	c.UI.Resize(width, height)
