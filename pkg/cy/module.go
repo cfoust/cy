@@ -132,14 +132,54 @@ func (c *Cy) Read(p []byte) (n int, err error) {
 	return len(data), nil
 }
 
-func (c *Cy) Swap(dst, src emu.Terminal) {
+// Calculate the minimum string to transform `src` in to `dst`.
+func Swap(
+	info *terminfo.Terminfo,
+	dst, src emu.View,
+) []byte {
 	width, height := src.Size()
+	data := new(bytes.Buffer)
+
+	info.Fprintf(data, terminfo.ClearScreen)
+	info.Fprintf(data, terminfo.CursorHome)
+	info.Fprintf(data, terminfo.CursorInvisible)
+
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			glyph := dst.Cell(x, y)
-			c.write([]byte(string(glyph.Char)))
+			dstCell := dst.Cell(x, y)
+			srcCell := src.Cell(x, y)
+
+			hasChar := dstCell.Char != srcCell.Char
+			hasMode := dstCell.Mode != srcCell.Mode
+			hasFG := dstCell.FG != srcCell.FG
+			hasBG := dstCell.BG != srcCell.BG
+			isDifferent := hasChar || hasMode || hasFG || hasBG
+
+			if !isDifferent {
+				continue
+			}
+
+			info.Fprintf(data, terminfo.CursorAddress, y, x)
+
+			if hasFG || hasBG {
+				info.Fprintf(data, terminfo.SetAForeground, int(dstCell.FG))
+				info.Fprintf(data, terminfo.SetABackground, int(dstCell.BG))
+			}
+
+			data.Write([]byte(string(dstCell.Char)))
+
+			info.Fprintf(data, terminfo.ExitAttributeMode)
 		}
 	}
+
+	info.Fprintf(data, terminfo.CursorNormal)
+
+	//srcCursor := src.Cursor()
+	dstCursor := dst.Cursor()
+
+	info.Fprintf(data, terminfo.CursorAddress, dstCursor.Y, dstCursor.X)
+
+	return data.Bytes()
 }
 
 func (c *Cy) Write(p []byte) (n int, err error) {
@@ -154,11 +194,7 @@ func (c *Cy) Write(p []byte) (n int, err error) {
 				dst = c.Shell
 			}
 
-			buf := new(bytes.Buffer)
-			c.ti.Fprintf(buf, terminfo.ClearScreen)
-			c.ti.Fprintf(buf, terminfo.CursorHome)
-			c.write(buf.Bytes())
-			c.Swap(dst, src)
+			c.write(Swap(c.ti, dst, src))
 		}
 	}
 
