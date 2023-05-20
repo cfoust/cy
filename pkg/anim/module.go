@@ -2,6 +2,7 @@ package anim
 
 import (
 	"bytes"
+	"unicode"
 
 	"github.com/cfoust/cy/pkg/emu"
 
@@ -40,6 +41,19 @@ func NewImage(width, height int) Image {
 	return image
 }
 
+func (i Image) Clone() Image {
+	width, height := i.Size()
+	cloned := NewImage(width, height)
+
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			cloned.grid[y][x] = i.grid[y][x]
+		}
+	}
+
+	return cloned
+}
+
 func CaptureImage(view emu.View) Image {
 	image := Image{}
 
@@ -69,8 +83,6 @@ func Swap(
 	width, height := src.Size()
 	data := new(bytes.Buffer)
 
-	info.Fprintf(data, terminfo.ClearScreen)
-	info.Fprintf(data, terminfo.CursorHome)
 	info.Fprintf(data, terminfo.CursorInvisible)
 
 	for y := 0; y < height; y++ {
@@ -149,18 +161,42 @@ type Animation interface {
 }
 
 type CyFade struct {
-	start, end *Image
+	start Image
 }
 
 var _ Animation = (*CyFade)(nil)
 
-func Fade(start, end *Image) Animation {
+func Fade(start Image) Animation {
 	return &CyFade{
 		start: start,
-		end:   end,
 	}
 }
 
 func (c *CyFade) Update(delta float32) Image {
-	return *c.start
+	output := c.start.Clone()
+
+	end := 'a' + int32((delta/0.8)*25)
+	mapping := make(map[rune]rune)
+	for i := 'a'; i < end; i++ {
+		target := 'c'
+		if (i % 2) == 1 {
+			target = 'y'
+		}
+
+		mapping[i] = target
+		mapping[unicode.ToUpper(i)] = unicode.ToUpper(target)
+	}
+
+	width, height := output.Size()
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			current := output.grid[y][x].Char
+
+			if mapped, ok := mapping[current]; ok {
+				output.grid[y][x].Char = mapped
+			}
+		}
+	}
+
+	return output
 }

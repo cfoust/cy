@@ -3,6 +3,7 @@ package cy
 import (
 	"io"
 	"os"
+	"time"
 
 	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/emu"
@@ -133,13 +134,26 @@ func (c *Cy) Write(p []byte) (n int, err error) {
 		if b == 6 {
 			c.showUI = !c.showUI
 
-			src := c.Raw
-			dst := c.UI
 			if !c.showUI {
-				dst = c.Shell
+				c.write(anim.SwapView(c.ti, c.Shell, c.Raw))
+				return len(p), nil
 			}
 
-			c.write(anim.SwapView(c.ti, dst, src))
+			go func() {
+				fade := anim.Fade(anim.CaptureImage(c.Raw))
+				steps := 30
+				for i := 0; i < steps; i++ {
+					c.write(
+						anim.Swap(
+							c.ti,
+							fade.Update(float32(i)/float32(steps)),
+							anim.CaptureImage(c.Raw),
+						),
+					)
+					time.Sleep(100 * time.Millisecond)
+				}
+			}()
+
 			return len(p), nil
 		}
 	}
