@@ -2,6 +2,7 @@ package anim
 
 import (
 	"bytes"
+	"fmt"
 	"unicode"
 
 	"github.com/cfoust/cy/pkg/emu"
@@ -47,7 +48,8 @@ func (i Image) Clone() Image {
 
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			cloned.grid[y][x] = i.grid[y][x]
+			copied := i.grid[y][x]
+			cloned.grid[y][x] = copied
 		}
 	}
 
@@ -73,6 +75,33 @@ func CaptureImage(view emu.View) Image {
 	image.height = height
 
 	return image
+}
+
+func setColor(info *terminfo.Terminfo, color emu.Color, isBg bool) []byte {
+	data := new(bytes.Buffer)
+	num := uint32(color)
+	maxColors := uint32(info.Nums[terminfo.MaxColors])
+
+	if num > maxColors {
+		r := color >> 16
+		g := (color >> 8) & 0xff
+		b := color & 0xff
+
+		if isBg {
+			fmt.Fprintf(data, "\x1b[48;2;%d;%d;%dm", r, g, b)
+		} else {
+			fmt.Fprintf(data, "\x1b[38;2;%d;%d;%dm", r, g, b)
+		}
+	} else {
+		code := terminfo.SetABackground
+		if !isBg {
+			code = terminfo.SetAForeground
+		}
+
+		info.Fprintf(data, code, int(color))
+	}
+
+	return data.Bytes()
 }
 
 // Calculate the minimum string to transform `src` in to `dst`.
@@ -122,8 +151,8 @@ func Swap(
 			}
 
 			if hasFG || hasBG {
-				info.Fprintf(data, terminfo.SetAForeground, int(dstCell.FG))
-				info.Fprintf(data, terminfo.SetABackground, int(dstCell.BG))
+				data.Write(setColor(info, dstCell.FG, false))
+				data.Write(setColor(info, dstCell.BG, true))
 			}
 
 			data.Write([]byte(string(dstCell.Char)))
@@ -175,7 +204,7 @@ func Fade(start Image) Animation {
 func (c *CyFade) Update(delta float32) Image {
 	output := c.start.Clone()
 
-	end := 'a' + int32((delta/0.8)*25)
+	end := 'a' + int32(delta*25)
 	mapping := make(map[rune]rune)
 	for i := 'a'; i < end; i++ {
 		target := 'c'
@@ -190,11 +219,14 @@ func (c *CyFade) Update(delta float32) Image {
 	width, height := output.Size()
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			current := output.grid[y][x].Char
+			current := output.grid[y][x]
 
-			if mapped, ok := mapping[current]; ok {
-				output.grid[y][x].Char = mapped
+			if mapped, ok := mapping[current.Char]; ok {
+				current.Char = mapped
+				current.FG = c.start.grid[y][x].FG
 			}
+
+			output.grid[y][x] = current
 		}
 	}
 
