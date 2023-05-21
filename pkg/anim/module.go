@@ -131,29 +131,25 @@ func Swap(
 
 			info.Fprintf(data, terminfo.CursorAddress, y, x)
 
-			if hasMode {
-				mode := dstCell.Mode
-				if mode&emu.AttrReverse != 0 {
-					info.Fprintf(data, terminfo.EnterReverseMode)
-				}
-
-				if mode&emu.AttrUnderline != 0 {
-					info.Fprintf(data, terminfo.EnterUnderlineMode)
-				}
-
-				if mode&emu.AttrItalic != 0 {
-					info.Fprintf(data, terminfo.EnterItalicsMode)
-				}
-
-				if mode&emu.AttrBlink != 0 {
-					info.Fprintf(data, terminfo.EnterBlinkMode)
-				}
+			mode := dstCell.Mode
+			if mode&emu.AttrReverse != 0 {
+				info.Fprintf(data, terminfo.EnterReverseMode)
 			}
 
-			if hasFG || hasBG {
-				data.Write(setColor(info, dstCell.FG, false))
-				data.Write(setColor(info, dstCell.BG, true))
+			if mode&emu.AttrUnderline != 0 {
+				info.Fprintf(data, terminfo.EnterUnderlineMode)
 			}
+
+			if mode&emu.AttrItalic != 0 {
+				info.Fprintf(data, terminfo.EnterItalicsMode)
+			}
+
+			if mode&emu.AttrBlink != 0 {
+				info.Fprintf(data, terminfo.EnterBlinkMode)
+			}
+
+			data.Write(setColor(info, dstCell.FG, false))
+			data.Write(setColor(info, dstCell.BG, true))
 
 			data.Write([]byte(string(dstCell.Char)))
 
@@ -219,7 +215,7 @@ func (c *CyFade) Update(delta float32) Image {
 	width, height := output.Size()
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			current := output.grid[y][x]
+			current := c.start.grid[y][x]
 
 			if mapped, ok := mapping[current.Char]; ok {
 				current.Char = mapped

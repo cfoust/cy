@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/cy"
+	//"github.com/cfoust/cy/pkg/session"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
