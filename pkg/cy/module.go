@@ -128,22 +128,42 @@ func (c *Cy) Write(p []byte) (n int, err error) {
 				return len(p), nil
 			}
 
-			//c.write(anim.SwapView(c.ti, c.UI, c.Raw))
-			//c.write(anim.SwapView(c.ti, c.Shell, c.Raw))
+			events := c.session.Events()
 
 			go func() {
-				fade := anim.Fade(anim.CaptureImage(c.Raw))
-				steps := 30
-				for i := 0; i < steps; i++ {
+				for i := len(events) - 1; i >= 0; i-- {
+					computed := emu.New()
+					width, height := c.Raw.Size()
+					computed.Resize(width, height)
+
+					for _, event := range events[:i] {
+						if data, ok := event.Data.(session.OutputEvent); ok {
+							computed.Write(data.Bytes)
+						}
+					}
+
 					c.write(
-						anim.Swap(
+						anim.SwapView(
 							c.ti,
-							fade.Update(float32(i)/float32(steps)),
-							anim.CaptureImage(c.Raw),
+							computed,
+							c.Raw,
 						),
 					)
-					time.Sleep(5 * time.Millisecond)
+					time.Sleep(100 * time.Millisecond)
 				}
+
+				//fade := anim.Fade(anim.CaptureImage(c.Raw))
+				//steps := 30
+				//for i := 0; i < steps; i++ {
+				//c.write(
+				//anim.Swap(
+				//c.ti,
+				//fade.Update(float32(i)/float32(steps)),
+				//anim.CaptureImage(c.Raw),
+				//),
+				//)
+				//time.Sleep(5 * time.Millisecond)
+				//}
 			}()
 
 			return len(p), nil
