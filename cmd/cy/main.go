@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/cy"
-	//"github.com/cfoust/cy/pkg/session"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -27,8 +26,9 @@ const (
 )
 
 // Much of the socket creation code is ported from tmux. (see tmux.c)
+// Part laziness, part I wanted cy to be as familiar as possible.
 
-func makeLabel() (string, error) {
+func getSocketPath() (string, error) {
 	uid := os.Getuid()
 	directory := fmt.Sprintf(CY_SOCKET_TEMPLATE, uid)
 
@@ -63,7 +63,13 @@ func makeLabel() (string, error) {
 	return label, nil
 }
 
-func startServer() error {
+func serve(path string) error {
+	return nil
+}
+
+func connect(path string) error {
+	// If socket exists, attempt to connect.
+	// If it does not, start a server.
 	return nil
 }
 
@@ -72,14 +78,17 @@ func main() {
 
 	if envPath, ok := os.LookupEnv(CY_SOCKET_ENV); ok {
 		socketPath = envPath
-	}
-
-	if socketPath == "" {
-		label, err := makeLabel()
+	} else {
+		label, err := getSocketPath()
 		if err != nil {
-			log.Panic().Err(err).Msg("failed to daemonize")
+			log.Panic().Err(err).Msg("failed to detect socket path")
 		}
 		socketPath = label
+	}
+
+	err := connect(socketPath)
+	if err != nil {
+		log.Panic().Err(err).Msg("failed to daemonize")
 	}
 
 	cntxt := &daemon.Context{}
@@ -153,4 +162,6 @@ func main() {
 
 	c.Wait()
 	term.Restore(int(os.Stdin.Fd()), oldState)
+
+	log.Info().Msgf("%+v", socketPath)
 }
