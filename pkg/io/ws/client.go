@@ -44,6 +44,8 @@ func (c *WSClient) Receive() <-chan []byte {
 
 			typ, message, err := c.Conn.Read(ctx)
 			if err != nil {
+				// TODO(cfoust): 05/27/23 error handling?
+				c.Cancel()
 				return
 			}
 

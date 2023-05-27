@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"net"
 	"net/http"
 
@@ -51,7 +52,7 @@ func (ws *WSServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 var _ http.Handler = (*WSServer)(nil)
 
-func Serve(socketPath string, server Server) error {
+func Serve(ctx context.Context, socketPath string, server Server) error {
 	l, err := net.Listen("unix", socketPath)
 	if err != nil {
 		return err
@@ -61,6 +62,13 @@ func Serve(socketPath string, server Server) error {
 	httpServer := http.Server{
 		Handler: ws,
 	}
+
+	go func() {
+		select {
+		case <-ctx.Done():
+			httpServer.Shutdown(ctx)
+		}
+	}()
 
 	return httpServer.Serve(l)
 }
