@@ -6,14 +6,15 @@ import (
 	"net/http"
 	"time"
 
-	C "github.com/cfoust/cy/pkg/io/channel"
+	P "github.com/cfoust/cy/pkg/io/pipe"
 	"github.com/cfoust/cy/pkg/util"
 
 	"nhooyr.io/websocket"
 )
 
 type Client interface {
-	C.Pipe[[]byte]
+	Ctx() context.Context
+	P.Pipe[[]byte]
 	Close(code websocket.StatusCode, reason string) error
 }
 
@@ -32,9 +33,9 @@ func (c *WSClient) Send(data []byte) error {
 	return c.Conn.Write(ctx, websocket.MessageBinary, data)
 }
 
-func (c *WSClient) Receive() <-chan C.Packet[[]byte] {
+func (c *WSClient) Receive() <-chan P.Packet[[]byte] {
 	ctx := c.Ctx()
-	out := make(chan C.Packet[[]byte])
+	out := make(chan P.Packet[[]byte])
 	go func() {
 		for {
 			if ctx.Err() != nil {
@@ -52,7 +53,7 @@ func (c *WSClient) Receive() <-chan C.Packet[[]byte] {
 				continue
 			}
 
-			out <- C.Packet[[]byte]{
+			out <- P.Packet[[]byte]{
 				Contents: message,
 			}
 		}

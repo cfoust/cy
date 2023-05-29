@@ -1,8 +1,4 @@
-package channel
-
-import (
-	"context"
-)
+package pipe
 
 type Packet[T any] struct {
 	Contents T
@@ -10,8 +6,6 @@ type Packet[T any] struct {
 }
 
 type Pipe[T any] interface {
-	Ctx() context.Context
 	Send(data T) error
 	Receive() <-chan Packet[T]
 }
-

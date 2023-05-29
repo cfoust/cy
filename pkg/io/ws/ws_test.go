@@ -51,7 +51,7 @@ func TestServer(t *testing.T) {
 		case <-timeout.Done():
 			ok <- false
 		case msg := <-reads:
-			ok <- string(msg) == "test"
+			ok <- string(msg.Contents) == "test"
 		}
 	}()
 
