@@ -32,6 +32,9 @@ The `cy` project has a few main goals:
 As of writing, `cy` is just a collection of partially-implemented ideas. The following features comprise a basic MVP that is still in the works.
 
 * [ ] **Server**
+    * [X] Socket-based WebSocket server
+    * [ ] Server communication protocol with `msgpack`
+        * [ ] Is this also the `.borg` file format?
     * [ ] Daemonize on startup and create a socket if no server exists
     * [ ] Allow for clients to connect to the server using `cy` without arguments
 * [ ] **Development**
