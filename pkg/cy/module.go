@@ -15,11 +15,6 @@ import (
 	"golang.org/x/term"
 )
 
-type Size struct {
-	Rows int
-	Cols int
-}
-
 type Cy struct {
 	ti      *terminfo.Terminfo
 	pty     *pty.Pty
@@ -70,6 +65,7 @@ func (c *Cy) readPty() {
 // Initialize cy using the command to start a pseudo-tty. This function only
 // returns once the underlying pty is done.
 func Run(command string) (*Cy, error) {
+	return nil, nil
 }
 
 func (c *Cy) write(data []byte) {

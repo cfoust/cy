@@ -1,4 +1,4 @@
-package cy
+package wm
 
 import (
 	"context"
@@ -11,6 +11,11 @@ import (
 
 	"github.com/sasha-s/go-deadlock"
 )
+
+type Size struct {
+	Rows int
+	Cols int
+}
 
 type PaneContext struct {
 	Directory string
