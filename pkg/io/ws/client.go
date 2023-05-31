@@ -87,8 +87,8 @@ func Connect(ctx context.Context, socketPath string) (Client, error) {
 	}
 
 	client := WSClient{
-		Lifetime: util.NewSession(ctx),
-		Conn:    c,
+		Lifetime: util.NewLifetime(ctx),
+		Conn:     c,
 	}
 
 	go func() {

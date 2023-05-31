@@ -1,9 +1,5 @@
 package wm
 
-import (
-	"github.com/sasha-s/go-deadlock"
-)
-
 // cy uses a tree to represent panes and groups of them:
 // projects
 // - cy
@@ -34,27 +30,15 @@ type NodeData interface {
 }
 
 type Node struct {
-	deadlock.RWMutex
 	Name string
-	Data NodeData
-}
-
-func (n *Node) SetName(name string) {
-	n.Lock()
-	defer n.Unlock()
-	n.Name = name
-}
-
-func (n *Node) GetName() string {
-	n.RLock()
-	name := n.Name
-	n.Unlock()
-	return name
+	// If nil, this is a child of the root node.
+	Parent *Node
+	Data   NodeData
 }
 
 type Group []Node
 
-func (g Group) Type() NodeType { return NodeTypeGroup }
+func (g *Group) Type() NodeType { return NodeTypeGroup }
 
 var _ NodeData = (*Group)(nil)
 
