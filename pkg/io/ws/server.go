@@ -31,7 +31,7 @@ func (ws *WSServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer c.Close(websocket.StatusInternalError, "operational fault during relay")
 
 	client := WSClient{
-		Session: util.NewSession(r.Context()),
+		Lifetime: util.NewSession(r.Context()),
 		Conn:    c,
 	}
 

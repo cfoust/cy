@@ -5,33 +5,33 @@ import (
 	"time"
 )
 
-type Session struct {
+type Lifetime struct {
 	context   context.Context
 	cancel    context.CancelFunc
 	startTime time.Time
 }
 
-func NewSession(ctx context.Context) Session {
+func NewLifetime(ctx context.Context) Lifetime {
 	ctx, cancel := context.WithCancel(ctx)
-	return Session{
+	return Lifetime{
 		context:   ctx,
 		cancel:    cancel,
 		startTime: time.Now(),
 	}
 }
 
-func (s *Session) Started() time.Time {
+func (s *Lifetime) Started() time.Time {
 	return s.startTime
 }
 
-func (s *Session) Ctx() context.Context {
+func (s *Lifetime) Ctx() context.Context {
 	return s.context
 }
 
-func (s *Session) IsDone() bool {
+func (s *Lifetime) IsDone() bool {
 	return s.context.Err() != nil
 }
 
-func (s *Session) Cancel() {
+func (s *Lifetime) Cancel() {
 	s.cancel()
 }

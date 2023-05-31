@@ -15,6 +15,11 @@ import (
 	"golang.org/x/term"
 )
 
+type Size struct {
+	Rows int
+	Cols int
+}
+
 type Cy struct {
 	ti      *terminfo.Terminfo
 	pty     *pty.Pty
@@ -65,48 +70,6 @@ func (c *Cy) readPty() {
 // Initialize cy using the command to start a pseudo-tty. This function only
 // returns once the underlying pty is done.
 func Run(command string) (*Cy, error) {
-	started := make(chan error)
-	ptyDone := make(chan error)
-
-	ti, err := terminfo.LoadFromEnv()
-	if err != nil {
-		return nil, err
-	}
-
-	c := &Cy{
-		session: session.New(),
-		buffer:  util.NewWaitBuffer(),
-		done:    ptyDone,
-		ti:      ti,
-
-		Raw:   emu.New(),
-		Shell: emu.New(),
-		UI:    emu.New(),
-	}
-
-	go func() {
-		p, err := pty.Run(command)
-		if err != nil {
-			started <- err
-		}
-
-		c.pty = p
-
-		started <- nil
-	}()
-
-	err = <-started
-	if err != nil {
-		return nil, err
-	}
-
-	go c.readPty()
-
-	go func() {
-		c.done <- c.pty.Wait()
-	}()
-
-	return c, nil
 }
 
 func (c *Cy) write(data []byte) {

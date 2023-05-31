@@ -24,6 +24,7 @@ func (t *mappedPipe[S, T]) Receive() <-chan Packet[T] {
 			select {
 			case msg, done := <-before:
 				if done {
+					close(after)
 					return
 				}
 

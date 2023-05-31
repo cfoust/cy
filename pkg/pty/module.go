@@ -1,6 +1,7 @@
 package pty
 
 import (
+	"context"
 	"io"
 	"os"
 	"os/exec"
@@ -13,7 +14,12 @@ type Pty struct {
 	done chan error
 }
 
-func Run(command string) (*Pty, error) {
+func Run(
+	ctx context.Context,
+	command string,
+	args []string,
+	directory string,
+) (*Pty, error) {
 	started := make(chan error)
 	shellDone := make(chan error)
 	p := &Pty{
@@ -21,7 +27,9 @@ func Run(command string) (*Pty, error) {
 	}
 
 	go func() {
-		shell := exec.Command(command)
+		shell := exec.CommandContext(ctx, command, args...)
+		shell.Dir = directory
+
 		fd, err := pty.Start(shell)
 		if err != nil {
 			started <- err

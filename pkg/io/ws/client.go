@@ -19,7 +19,7 @@ type Client interface {
 }
 
 type WSClient struct {
-	util.Session
+	util.Lifetime
 	Conn *websocket.Conn
 }
 
@@ -87,7 +87,7 @@ func Connect(ctx context.Context, socketPath string) (Client, error) {
 	}
 
 	client := WSClient{
-		Session: util.NewSession(ctx),
+		Lifetime: util.NewSession(ctx),
 		Conn:    c,
 	}
 
