@@ -25,16 +25,39 @@ type PaneContext struct {
 	Args      []string
 }
 
+type PaneStatus int
+
+const (
+	PaneStatusStarting PaneStatus = iota
+	PaneStatusHealthy
+	PaneStatusFailed
+)
+
 // A virtual terminal consisting of a program that is always restarted.
 type Pane struct {
 	util.Lifetime
-	deadlock.Mutex
+	deadlock.RWMutex
+
+	status PaneStatus
 
 	context PaneContext
 	session *session.Session
 	pty     *pty.Pty
 
 	Terminal emu.Terminal
+}
+
+func (p *Pane) GetStatus() PaneStatus {
+	p.RLock()
+	status := p.status
+	p.RUnlock()
+	return status
+}
+
+func (p *Pane) setStatus(status PaneStatus) {
+	p.Lock()
+	p.status = status
+	p.Unlock()
 }
 
 func (p *Pane) pollIO() error {
@@ -70,6 +93,8 @@ func (p *Pane) run() error {
 	context := p.context
 
 	go func() {
+		p.setStatus(PaneStatusStarting)
+
 		pty, err := pty.Run(
 			p.Ctx(),
 			context.Command,
@@ -85,6 +110,7 @@ func (p *Pane) run() error {
 		go p.pollIO()
 
 		started <- nil
+		p.setStatus(PaneStatusHealthy)
 	}()
 
 	err := <-started
@@ -93,6 +119,11 @@ func (p *Pane) run() error {
 	}
 
 	return p.pty.Wait()
+}
+
+func (p *Pane) Write(data []byte) (n int, err error) {
+	p.session.Input(data)
+	return p.pty.Write(data)
 }
 
 const (
@@ -134,6 +165,7 @@ func (p *Pane) spin() {
 			numErrors += 1
 
 			if elapsed < SPIN_THRESHOLD && numErrors == SPIN_NUM_TRIES {
+				p.setStatus(PaneStatusFailed)
 				p.Terminal.Write([]byte(fmt.Sprintf(
 					"\ncommand %s failed, backing off",
 					p.context.Command,
@@ -147,6 +179,7 @@ func (p *Pane) spin() {
 func NewPane(ctx context.Context, context PaneContext, size Size) *Pane {
 	pane := Pane{
 		Lifetime: util.NewLifetime(ctx),
+		status:   PaneStatusStarting,
 		context:  context,
 		Terminal: emu.New(emu.WithSize(
 			size.Cols,
