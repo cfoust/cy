@@ -22,8 +22,8 @@ func (t *mappedPipe[S, T]) Receive() <-chan Packet[T] {
 	go func() {
 		for {
 			select {
-			case msg, done := <-before:
-				if done {
+			case msg, more := <-before:
+				if !more {
 					close(after)
 					return
 				}

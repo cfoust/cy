@@ -19,6 +19,10 @@ func Decode(data []byte) (Message, error) {
 
 	var msg Message = nil
 	switch type_ {
+	case MessageTypeHandshake:
+		msg = &HandshakeMessage{}
+	case MessageTypeError:
+		msg = &ErrorMessage{}
 	case MessageTypeInput:
 		msg = &InputMessage{}
 	case MessageTypeOutput:

@@ -67,6 +67,7 @@ func Serve(ctx context.Context, socketPath string, server Server) error {
 		select {
 		case <-ctx.Done():
 			httpServer.Shutdown(ctx)
+			l.Close()
 		}
 	}()
 

@@ -3,6 +3,7 @@ package cy
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/cfoust/cy/pkg/io/pipe"
@@ -62,7 +63,7 @@ func (c *Client) closeError(reason error) error {
 	return c.conn.Close()
 }
 
-func (c *Client) applyHandshake(handshake P.HandshakeMessage) error {
+func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	c.Lock()
 	defer c.Unlock()
 
@@ -99,16 +100,22 @@ func (c *Cy) HandleClient(conn ws.Client) {
 
 	select {
 	case <-handshakeCtx.Done():
+		client.closeError(fmt.Errorf("no handshake received"))
 		return
-	case message := <-events:
-		if handshake, ok := message.Contents.(P.HandshakeMessage); ok {
-			err := client.applyHandshake(handshake)
-			if err != nil {
-				client.closeError(err)
-				return
-			}
+	case message, more := <-events:
+		var err error
+		if handshake, ok := message.Contents.(*P.HandshakeMessage); ok {
+			err = client.initialize(handshake)
+		} else if !more {
+			err = fmt.Errorf("closed by remote")
 		} else {
-			client.closeError(fmt.Errorf("must send handshake first"))
+			err = fmt.Errorf("must send handshake first")
+		}
+
+		log.Printf("%+v %+v %+v", message.Contents, more, err)
+
+		if err != nil {
+			client.closeError(err)
 			return
 		}
 	}
