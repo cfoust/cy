@@ -20,8 +20,18 @@ type TestServer struct {
 	socketPath string
 }
 
-func (t *TestServer) Connect() (ws.Client, error) {
-	return ws.Connect(t.baseCtx, t.socketPath)
+func (t *TestServer) Connect() (ws.Client, pipe.Pipe[P.Message], error) {
+	client, err := ws.Connect(t.baseCtx, t.socketPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	io := pipe.Map[[]byte](
+		client,
+		P.Encode,
+		P.Decode,
+	)
+	return client, io, nil
 }
 
 func setupServer(ctx context.Context) (*TestServer, error) {
@@ -58,14 +68,8 @@ func TestHandshake(t *testing.T) {
 	server, err := setupServer(ctx)
 	assert.NoError(t, err)
 
-	client, err := server.Connect()
+	client, io, err := server.Connect()
 	assert.NoError(t, err)
-
-	io := pipe.Map[[]byte](
-		client,
-		P.Encode,
-		P.Decode,
-	)
 
 	io.Send(P.HandshakeMessage{
 		TERM:    "xterm-256color",
@@ -85,14 +89,8 @@ func TestBadHandshake(t *testing.T) {
 	server, err := setupServer(ctx)
 	assert.NoError(t, err)
 
-	client, err := server.Connect()
+	client, io, err := server.Connect()
 	assert.NoError(t, err)
-
-	io := pipe.Map[[]byte](
-		client,
-		P.Encode,
-		P.Decode,
-	)
 
 	err = io.Send(P.InputMessage{
 		Data: []byte("hello"),
