@@ -8,8 +8,8 @@ import (
 
 func TestSerialization(t *testing.T) {
 	before := SizeMessage{
-		Width:  80,
-		Height: 26,
+		Rows:    80,
+		Columns: 26,
 	}
 
 	encoded, err := Encode(before)

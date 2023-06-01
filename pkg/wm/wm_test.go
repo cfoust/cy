@@ -16,7 +16,7 @@ func TestHealthy(t *testing.T) {
 		},
 		Size{
 			Rows: 26,
-			Cols: 80,
+			Columns: 80,
 		},
 	)
 
@@ -37,7 +37,7 @@ func TestFailLoop(t *testing.T) {
 		},
 		Size{
 			Rows: 26,
-			Cols: 80,
+			Columns: 80,
 		},
 	)
 

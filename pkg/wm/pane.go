@@ -15,8 +15,8 @@ import (
 )
 
 type Size struct {
-	Rows int
-	Cols int
+	Rows    int
+	Columns int
 }
 
 type PaneContext struct {
@@ -167,7 +167,7 @@ func (p *Pane) spin() {
 			if elapsed < SPIN_THRESHOLD && numErrors == SPIN_NUM_TRIES {
 				p.setStatus(PaneStatusFailed)
 				p.Terminal.Write([]byte(fmt.Sprintf(
-					"\ncommand %s failed, backing off",
+					"\ncommand '%s' failed, backing off",
 					p.context.Command,
 				)))
 				return
@@ -182,13 +182,13 @@ func NewPane(ctx context.Context, context PaneContext, size Size) *Pane {
 		status:   PaneStatusStarting,
 		context:  context,
 		Terminal: emu.New(emu.WithSize(
-			size.Cols,
+			size.Columns,
 			size.Rows,
 		)),
 		session: session.New(),
 	}
 
-	pane.session.Resize(size.Cols, size.Rows)
+	pane.session.Resize(size.Columns, size.Rows)
 
 	go pane.spin()
 

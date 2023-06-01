@@ -15,7 +15,7 @@ import (
 type Client interface {
 	Ctx() context.Context
 	P.Pipe[[]byte]
-	Close(code websocket.StatusCode, reason string) error
+	Close() error
 }
 
 type WSClient struct {
@@ -62,8 +62,8 @@ func (c *WSClient) Receive() <-chan P.Packet[[]byte] {
 	return out
 }
 
-func (c *WSClient) Close(code websocket.StatusCode, reason string) error {
-	return c.Close(code, reason)
+func (c *WSClient) Close() error {
+	return c.Conn.Close(websocket.StatusNormalClosure, "")
 }
 
 var _ Client = (*WSClient)(nil)
