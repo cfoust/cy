@@ -31,7 +31,41 @@ func (c *Cy) addClient(conn Connection) *Client {
 	c.clients = append(c.clients, client)
 	c.Unlock()
 
+	go c.pollClient(client)
+
 	return client
+}
+
+func (c *Cy) pollClient(client *Client) {
+	conn := client.conn
+	events := conn.Receive()
+
+	defer c.removeClient(client)
+
+	// First we need to wait for the client's handshake to know how to
+	// handle its terminal
+	handshakeCtx, cancel := context.WithTimeout(conn.Ctx(), 1*time.Second)
+	defer cancel()
+
+	select {
+	case <-handshakeCtx.Done():
+		client.closeError(fmt.Errorf("no handshake received"))
+		return
+	case message, more := <-events:
+		var err error
+		if handshake, ok := message.Contents.(*P.HandshakeMessage); ok {
+			err = client.initialize(handshake)
+		} else if !more {
+			err = fmt.Errorf("closed by remote")
+		} else {
+			err = fmt.Errorf("must send handshake first")
+		}
+
+		if err != nil {
+			client.closeError(err)
+			return
+		}
+	}
 }
 
 func (c *Cy) removeClient(client *Client) {
@@ -78,43 +112,13 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 }
 
 func (c *Cy) HandleWSClient(rawConn ws.RawClient) {
-	conn := ws.MapClient[[]byte](
+	c.addClient(ws.MapClient[[]byte](
 		rawConn,
 		P.Encode,
 		P.Decode,
-	)
+	))
 
-	events := conn.Receive()
-
-	client := c.addClient(conn)
-	defer c.removeClient(client)
-
-	// First we need to wait for the client's handshake to know how to
-	// handle the terminal
-	handshakeCtx, cancel := context.WithTimeout(conn.Ctx(), 1*time.Second)
-	defer cancel()
-
-	select {
-	case <-handshakeCtx.Done():
-		client.closeError(fmt.Errorf("no handshake received"))
-		return
-	case message, more := <-events:
-		var err error
-		if handshake, ok := message.Contents.(*P.HandshakeMessage); ok {
-			err = client.initialize(handshake)
-		} else if !more {
-			err = fmt.Errorf("closed by remote")
-		} else {
-			err = fmt.Errorf("must send handshake first")
-		}
-
-		if err != nil {
-			client.closeError(err)
-			return
-		}
-	}
-
-	<-conn.Ctx().Done()
+	<-rawConn.Ctx().Done()
 }
 
 var _ ws.Server = (*Cy)(nil)
