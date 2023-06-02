@@ -3,10 +3,8 @@ package cy
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
-	"github.com/cfoust/cy/pkg/io/pipe"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/wm"
@@ -15,21 +13,20 @@ import (
 	"github.com/xo/terminfo"
 )
 
+type Connection ws.Client[P.Message]
+
 type Client struct {
 	deadlock.RWMutex
-
-	conn     ws.Client
+	conn     Connection
 	location *wm.Node
 	size     wm.Size
 	info     *terminfo.Terminfo
-	io       pipe.Pipe[P.Message]
 }
 
-func (c *Cy) addClient(conn ws.Client, io pipe.Pipe[P.Message]) *Client {
+func (c *Cy) addClient(conn Connection) *Client {
 	c.Lock()
 	client := &Client{
 		conn: conn,
-		io:   io,
 	}
 	c.clients = append(c.clients, client)
 	c.Unlock()
@@ -52,10 +49,9 @@ func (c *Cy) removeClient(client *Client) {
 }
 
 func (c *Client) closeError(reason error) error {
-	err := c.io.Send(P.ErrorMessage{
+	err := c.conn.Send(P.ErrorMessage{
 		Message: fmt.Sprintf("error: %s", reason),
 	})
-
 	if err != nil {
 		return err
 	}
@@ -81,21 +77,21 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	return nil
 }
 
-func (c *Cy) HandleClient(conn ws.Client) {
-	ctx := conn.Ctx()
-	io := pipe.Map[[]byte](
-		conn,
+func (c *Cy) HandleWSClient(rawConn ws.RawClient) {
+	conn := ws.MapClient[[]byte](
+		rawConn,
 		P.Encode,
 		P.Decode,
 	)
-	events := io.Receive()
 
-	client := c.addClient(conn, io)
+	events := conn.Receive()
+
+	client := c.addClient(conn)
 	defer c.removeClient(client)
 
 	// First we need to wait for the client's handshake to know how to
 	// handle the terminal
-	handshakeCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	handshakeCtx, cancel := context.WithTimeout(conn.Ctx(), 1*time.Second)
 	defer cancel()
 
 	select {
@@ -111,8 +107,6 @@ func (c *Cy) HandleClient(conn ws.Client) {
 		} else {
 			err = fmt.Errorf("must send handshake first")
 		}
-
-		log.Printf("%+v %+v %+v", message.Contents, more, err)
 
 		if err != nil {
 			client.closeError(err)

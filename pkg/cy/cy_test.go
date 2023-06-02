@@ -20,7 +20,7 @@ type TestServer struct {
 	socketPath string
 }
 
-func (t *TestServer) Connect() (ws.Client, pipe.Pipe[P.Message], error) {
+func (t *TestServer) Connect() (ws.RawClient, pipe.Pipe[P.Message], error) {
 	client, err := ws.Connect(t.baseCtx, t.socketPath)
 	if err != nil {
 		return nil, nil, err

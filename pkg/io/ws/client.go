@@ -12,11 +12,13 @@ import (
 	"nhooyr.io/websocket"
 )
 
-type Client interface {
+type Client[T any] interface {
 	Ctx() context.Context
-	P.Pipe[[]byte]
+	P.Pipe[T]
 	Close() error
 }
+
+type RawClient Client[[]byte]
 
 type WSClient struct {
 	util.Lifetime
@@ -66,9 +68,9 @@ func (c *WSClient) Close() error {
 	return c.Conn.Close(websocket.StatusNormalClosure, "")
 }
 
-var _ Client = (*WSClient)(nil)
+var _ RawClient = (*WSClient)(nil)
 
-func Connect(ctx context.Context, socketPath string) (Client, error) {
+func Connect(ctx context.Context, socketPath string) (RawClient, error) {
 	// https://gist.github.com/teknoraver/5ffacb8757330715bcbcc90e6d46ac74
 	httpClient := http.Client{
 		Transport: &http.Transport{

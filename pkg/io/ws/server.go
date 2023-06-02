@@ -11,7 +11,7 @@ import (
 )
 
 type Server interface {
-	HandleClient(client Client)
+	HandleWSClient(client RawClient)
 }
 
 type WSServer struct {
@@ -37,7 +37,7 @@ func (ws *WSServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	done := make(chan bool)
 	go func() {
-		ws.server.HandleClient(&client)
+		ws.server.HandleWSClient(&client)
 		done <- true
 	}()
 
