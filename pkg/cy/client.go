@@ -1,10 +1,12 @@
 package cy
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"time"
 
+	"github.com/cfoust/cy/pkg/emu"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/wm"
@@ -17,10 +19,14 @@ type Connection ws.Client[P.Message]
 
 type Client struct {
 	deadlock.RWMutex
-	conn     Connection
+	conn Connection
+	info *terminfo.Terminfo
+
 	location *wm.Node
-	size     wm.Size
-	info     *terminfo.Terminfo
+
+	// This is a "model" of what the client is seeing so that we can
+	// animate between states
+	raw emu.Terminal
 }
 
 func (c *Cy) addClient(conn Connection) *Client {
@@ -66,6 +72,11 @@ func (c *Cy) pollClient(client *Client) {
 			return
 		}
 	}
+
+	buf := new(bytes.Buffer)
+	client.info.Fprintf(buf, terminfo.ClearScreen)
+	client.info.Fprintf(buf, terminfo.CursorHome)
+	client.output(buf.Bytes())
 }
 
 func (c *Cy) removeClient(client *Client) {
@@ -80,6 +91,17 @@ func (c *Cy) removeClient(client *Client) {
 	}
 	c.clients = newClients
 	c.Unlock()
+}
+
+func (c *Client) output(data []byte) error {
+	_, err := c.raw.Write(data)
+	if err != nil {
+	    return err
+	}
+
+	return c.conn.Send(P.OutputMessage{
+		Data: data,
+	})
 }
 
 func (c *Client) closeError(reason error) error {
@@ -97,17 +119,19 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	c.Lock()
 	defer c.Unlock()
 
-	c.size = wm.Size{
-		Rows:    handshake.Rows,
-		Columns: handshake.Columns,
-	}
-
 	info, err := terminfo.Load(handshake.TERM)
 	if err != nil {
 		return err
 	}
-
 	c.info = info
+
+	c.raw = emu.New(
+		emu.WithSize(
+			handshake.Columns,
+			handshake.Rows,
+		),
+	)
+
 	return nil
 }
 

@@ -1,23 +1,19 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"syscall"
-	"time"
 
 	"github.com/cfoust/cy/pkg/cy"
+	P "github.com/cfoust/cy/pkg/io/protocol"
+	"github.com/cfoust/cy/pkg/io/ws"
 
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/sevlyar/go-daemon"
-	"github.com/xo/terminfo"
-	"golang.org/x/term"
 )
 
 const (
@@ -63,14 +59,81 @@ func getSocketPath() (string, error) {
 	return label, nil
 }
 
-func serve(path string) error {
-	return nil
+func startServer(path string) error {
+	cntxt := &daemon.Context{}
+
+	d, err := cntxt.Reborn()
+	if err != nil {
+		log.Panic().Err(err).Msg("failed to daemonize")
+	}
+	if d != nil {
+		return nil
+	}
+	//defer cntxt.Release()
+
+	cy := cy.Cy{}
+	return ws.Serve(context.Background(), path, &cy)
 }
 
+type ClientIO struct {
+	conn cy.Connection
+}
+
+func (c *ClientIO) Write(p []byte) (n int, err error) {
+	err = c.conn.Send(P.InputMessage{
+		Data: p,
+	})
+
+	return len(p), err
+}
+
+var _ io.Writer = (*ClientIO)(nil)
+
 func connect(path string) error {
-	// If socket exists, attempt to connect.
-	// If it does not, start a server.
-	return nil
+	log.Info().Msgf("%+v", path)
+	rawConn, err := ws.Connect(context.Background(), path)
+	if err != nil {
+		err = startServer(path)
+		if err != nil {
+			return err
+		}
+
+		return connect(path)
+	}
+
+	log.Info().Msgf("connected to cy")
+	conn := ws.MapClient[[]byte](
+		rawConn,
+		P.Encode,
+		P.Decode,
+	)
+
+	conn.Send(P.HandshakeMessage{
+		TERM: "xterm256-color",
+	})
+
+	writer := ClientIO{
+		conn: conn,
+	}
+
+	go func() { _, _ = io.Copy(&writer, os.Stdin) }()
+
+	for {
+		select {
+		case <-rawConn.Ctx().Done():
+			log.Info().Msgf("connection done")
+			return nil
+		case packet := <-conn.Receive():
+			if packet.Error != nil {
+				return packet.Error
+			}
+			log.Info().Msgf("%+v", packet.Contents)
+
+			if msg, ok := packet.Contents.(*P.OutputMessage); ok {
+				os.Stdout.Write(msg.Data)
+			}
+		}
+	}
 }
 
 func main() {
@@ -88,80 +151,64 @@ func main() {
 
 	err := connect(socketPath)
 	if err != nil {
-		log.Panic().Err(err).Msg("failed to daemonize")
+		log.Panic().Err(err).Msg("failed to start cy")
 	}
 
-	cntxt := &daemon.Context{}
+	//consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	//log.Logger = log.Output(consoleWriter)
 
-	d, err := cntxt.Reborn()
-	if err != nil {
-		log.Panic().Err(err).Msg("failed to daemonize")
-	}
-	if d != nil {
-		return
-	}
-	defer cntxt.Release()
+	//ti, err := terminfo.LoadFromEnv()
+	//if err != nil {
+	//log.Panic().Err(err).Msg("could not read terminal info")
+	//}
 
-	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
-	log.Logger = log.Output(consoleWriter)
+	//buf := new(bytes.Buffer)
+	//ti.Fprintf(buf, terminfo.ClearScreen)
+	//ti.Fprintf(buf, terminfo.CursorHome)
+	//os.Stdout.Write(buf.Bytes())
 
-	ti, err := terminfo.LoadFromEnv()
-	if err != nil {
-		log.Panic().Err(err).Msg("could not read terminal info")
-	}
+	//ch := make(chan os.Signal, 1)
+	//signal.Notify(ch, syscall.SIGWINCH)
+	//go func() {
+	//currentHeight := 0
+	//currentWidth := 0
 
-	buf := new(bytes.Buffer)
-	ti.Fprintf(buf, terminfo.ClearScreen)
-	ti.Fprintf(buf, terminfo.CursorHome)
-	os.Stdout.Write(buf.Bytes())
+	//for {
+	//select {
+	//case <-context.Background().Done():
+	//return
+	//case <-ch:
+	//width, height, err := term.GetSize(int(os.Stdin.Fd()))
+	//if err != nil {
+	//log.Error().Err(err).Msg("failed to get terminal dimensions")
+	//return
+	//}
 
-	c, err := cy.Run("bash")
-	if err != nil {
-		log.Panic().Err(err).Msg("could not run cy")
-	}
+	//if width == currentWidth && height == currentHeight {
+	//continue
+	//}
 
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGWINCH)
-	go func() {
-		currentHeight := 0
-		currentWidth := 0
+	//c.Resize(os.Stdin)
 
-		for {
-			select {
-			case <-context.Background().Done():
-				return
-			case <-ch:
-				width, height, err := term.GetSize(int(os.Stdin.Fd()))
-				if err != nil {
-					log.Error().Err(err).Msg("failed to get terminal dimensions")
-					return
-				}
+	//currentWidth = width
+	//currentHeight = height
+	//}
+	//}
+	//}()
+	//ch <- syscall.SIGWINCH
+	//defer func() { signal.Stop(ch); close(ch) }()
 
-				if width == currentWidth && height == currentHeight {
-					continue
-				}
+	//// Change to raw mode
+	//oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	//if err != nil {
+	//log.Panic().Err(err).Msg("could not enter raw mode")
+	//}
 
-				c.Resize(os.Stdin)
+	//go func() { _, _ = io.Copy(c, os.Stdin) }()
+	//go func() { _, _ = io.Copy(os.Stdout, c) }()
 
-				currentWidth = width
-				currentHeight = height
-			}
-		}
-	}()
-	ch <- syscall.SIGWINCH
-	defer func() { signal.Stop(ch); close(ch) }()
+	//c.Wait()
+	//term.Restore(int(os.Stdin.Fd()), oldState)
 
-	// Change to raw mode
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		log.Panic().Err(err).Msg("could not enter raw mode")
-	}
-
-	go func() { _, _ = io.Copy(c, os.Stdin) }()
-	go func() { _, _ = io.Copy(os.Stdout, c) }()
-
-	c.Wait()
-	term.Restore(int(os.Stdin.Fd()), oldState)
-
-	log.Info().Msgf("%+v", socketPath)
+	//log.Info().Msgf("%+v", socketPath)
 }
