@@ -12,7 +12,7 @@ import (
 
 type EchoServer struct{}
 
-func (e *EchoServer) HandleWSClient(client Client) {
+func (e *EchoServer) HandleWSClient(client RawClient) {
 	client.Send([]byte("test"))
 }
 

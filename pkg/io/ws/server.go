@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"os"
 
 	"github.com/cfoust/cy/pkg/util"
 
@@ -68,6 +69,7 @@ func Serve(ctx context.Context, socketPath string, server Server) error {
 		case <-ctx.Done():
 			httpServer.Shutdown(ctx)
 			l.Close()
+			os.Remove(socketPath)
 		}
 	}()
 

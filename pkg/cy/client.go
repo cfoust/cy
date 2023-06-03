@@ -1,7 +1,7 @@
 package cy
 
 import (
-	"bytes"
+	//"bytes"
 	"context"
 	"fmt"
 	"time"
@@ -73,10 +73,12 @@ func (c *Cy) pollClient(client *Client) {
 		}
 	}
 
-	buf := new(bytes.Buffer)
-	client.info.Fprintf(buf, terminfo.ClearScreen)
-	client.info.Fprintf(buf, terminfo.CursorHome)
-	client.output(buf.Bytes())
+	//buf := new(bytes.Buffer)
+	//client.info.Fprintf(buf, terminfo.ClearScreen)
+	//client.info.Fprintf(buf, terminfo.CursorHome)
+	//client.output(buf.Bytes())
+
+	client.output([]byte("a"))
 }
 
 func (c *Cy) removeClient(client *Client) {
@@ -96,7 +98,7 @@ func (c *Cy) removeClient(client *Client) {
 func (c *Client) output(data []byte) error {
 	_, err := c.raw.Write(data)
 	if err != nil {
-	    return err
+		return err
 	}
 
 	return c.conn.Send(P.OutputMessage{

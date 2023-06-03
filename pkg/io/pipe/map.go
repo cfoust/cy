@@ -28,6 +28,14 @@ func (t *mappedPipe[S, T]) Receive() <-chan Packet[T] {
 					return
 				}
 
+				if msg.Error != nil {
+					after <- Packet[T]{
+						Error: msg.Error,
+					}
+					close(after)
+					return
+				}
+
 				decoded, err := t.decode(msg.Contents)
 				after <- Packet[T]{
 					Contents: decoded,

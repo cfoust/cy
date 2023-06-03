@@ -61,20 +61,30 @@ func getSocketPath() (string, error) {
 	return label, nil
 }
 
-func startServer(path string) error {
-	cntxt := &daemon.Context{}
+func serve(path string) error {
+	log.Info().Msgf("serving cy")
+	cy := cy.Cy{}
+	return ws.Serve(context.Background(), path, &cy)
+}
+
+func startServer(path string) (*os.Process, error) {
+	cntxt := &daemon.Context{
+		LogFileName: "cy.log",
+	}
 
 	d, err := cntxt.Reborn()
+	if daemon.WasReborn() {
+		log.Info().Msgf("reborn")
+	}
 	if err != nil {
 		log.Panic().Err(err).Msg("failed to daemonize")
 	}
 	if d != nil {
-		return nil
+		return d, nil
 	}
-	//defer cntxt.Release()
+	defer cntxt.Release()
 
-	cy := cy.Cy{}
-	return ws.Serve(context.Background(), path, &cy)
+	return nil, err
 }
 
 type ClientIO struct {
@@ -92,10 +102,10 @@ func (c *ClientIO) Write(p []byte) (n int, err error) {
 var _ io.Writer = (*ClientIO)(nil)
 
 func connect(path string) error {
-	log.Info().Msgf("%+v", path)
 	rawConn, err := ws.Connect(context.Background(), path)
 	if err != nil {
-		err = startServer(path)
+		_, err := startServer(path)
+		log.Info().Msgf("startServer returned")
 		if err != nil {
 			return err
 		}
@@ -167,6 +177,7 @@ func connect(path string) error {
 			log.Info().Msgf("connection done")
 			return nil
 		case packet := <-conn.Receive():
+			log.Info().Msgf("%+v", packet.Error)
 			if packet.Error != nil {
 				return packet.Error
 			}
@@ -179,6 +190,8 @@ func connect(path string) error {
 }
 
 func main() {
+	log.Logger = log.Logger.With().Int("pid", os.Getpid()).Logger()
+
 	var socketPath string
 
 	if envPath, ok := os.LookupEnv(CY_SOCKET_ENV); ok {
@@ -189,6 +202,14 @@ func main() {
 			log.Panic().Err(err).Msg("failed to detect socket path")
 		}
 		socketPath = label
+	}
+
+	if daemon.WasReborn() {
+		err := serve(socketPath)
+		if err != nil {
+			log.Panic().Err(err).Msg("failed to start cy")
+		}
+		return
 	}
 
 	err := connect(socketPath)
