@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"syscall"
 
@@ -14,6 +15,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/sevlyar/go-daemon"
+	"golang.org/x/term"
 )
 
 const (
@@ -109,14 +111,55 @@ func connect(path string) error {
 	)
 
 	conn.Send(P.HandshakeMessage{
-		TERM: "xterm256-color",
+		TERM: os.Getenv("TERM"),
 	})
 
 	writer := ClientIO{
 		conn: conn,
 	}
 
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		return err
+	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
+
 	go func() { _, _ = io.Copy(&writer, os.Stdin) }()
+
+	// Hanadle window size changes
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGWINCH)
+	go func() {
+		currentHeight := 0
+		currentWidth := 0
+
+		for {
+			select {
+			case <-context.Background().Done():
+				return
+			case <-ch:
+				width, height, err := term.GetSize(int(os.Stdin.Fd()))
+				if err != nil {
+					log.Error().Err(err).Msg("failed to get terminal dimensions")
+					return
+				}
+
+				if width == currentWidth && height == currentHeight {
+					continue
+				}
+
+				conn.Send(P.SizeMessage{
+					Rows:    height,
+					Columns: width,
+				})
+
+				currentWidth = width
+				currentHeight = height
+			}
+		}
+	}()
+	ch <- syscall.SIGWINCH
+	defer func() { signal.Stop(ch); close(ch) }()
 
 	for {
 		select {
@@ -127,7 +170,6 @@ func connect(path string) error {
 			if packet.Error != nil {
 				return packet.Error
 			}
-			log.Info().Msgf("%+v", packet.Contents)
 
 			if msg, ok := packet.Contents.(*P.OutputMessage); ok {
 				os.Stdout.Write(msg.Data)
@@ -153,62 +195,4 @@ func main() {
 	if err != nil {
 		log.Panic().Err(err).Msg("failed to start cy")
 	}
-
-	//consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
-	//log.Logger = log.Output(consoleWriter)
-
-	//ti, err := terminfo.LoadFromEnv()
-	//if err != nil {
-	//log.Panic().Err(err).Msg("could not read terminal info")
-	//}
-
-	//buf := new(bytes.Buffer)
-	//ti.Fprintf(buf, terminfo.ClearScreen)
-	//ti.Fprintf(buf, terminfo.CursorHome)
-	//os.Stdout.Write(buf.Bytes())
-
-	//ch := make(chan os.Signal, 1)
-	//signal.Notify(ch, syscall.SIGWINCH)
-	//go func() {
-	//currentHeight := 0
-	//currentWidth := 0
-
-	//for {
-	//select {
-	//case <-context.Background().Done():
-	//return
-	//case <-ch:
-	//width, height, err := term.GetSize(int(os.Stdin.Fd()))
-	//if err != nil {
-	//log.Error().Err(err).Msg("failed to get terminal dimensions")
-	//return
-	//}
-
-	//if width == currentWidth && height == currentHeight {
-	//continue
-	//}
-
-	//c.Resize(os.Stdin)
-
-	//currentWidth = width
-	//currentHeight = height
-	//}
-	//}
-	//}()
-	//ch <- syscall.SIGWINCH
-	//defer func() { signal.Stop(ch); close(ch) }()
-
-	//// Change to raw mode
-	//oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	//if err != nil {
-	//log.Panic().Err(err).Msg("could not enter raw mode")
-	//}
-
-	//go func() { _, _ = io.Copy(c, os.Stdin) }()
-	//go func() { _, _ = io.Copy(os.Stdout, c) }()
-
-	//c.Wait()
-	//term.Restore(int(os.Stdin.Fd()), oldState)
-
-	//log.Info().Msgf("%+v", socketPath)
 }
