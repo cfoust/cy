@@ -64,7 +64,6 @@ func getSocketPath() (string, error) {
 }
 
 func serve(path string) error {
-	log.Info().Msgf("serving cy")
 	cy := cy.Cy{}
 	return ws.Serve[P.Message](context.Background(), path, P.Protocol, &cy)
 }
@@ -75,9 +74,6 @@ func startServer(path string) error {
 	}
 
 	d, err := cntxt.Reborn()
-	if daemon.WasReborn() {
-		log.Info().Msgf("reborn")
-	}
 	if err != nil {
 		log.Panic().Err(err).Msg("failed to daemonize")
 	}
@@ -117,8 +113,6 @@ func buildHandshake() (*P.HandshakeMessage, error) {
 }
 
 func poll(conn cy.Connection) error {
-	log.Info().Msgf("connected to cy")
-
 	handshake, err := buildHandshake()
 	if err != nil {
 		return err
@@ -173,11 +167,12 @@ func poll(conn cy.Connection) error {
 	ch <- syscall.SIGWINCH
 	defer func() { signal.Stop(ch); close(ch) }()
 
+	events := conn.Receive()
 	for {
 		select {
 		case <-conn.Ctx().Done():
 			return nil
-		case packet := <-conn.Receive():
+		case packet := <-events:
 			if packet.Error != nil {
 				return packet.Error
 			}
