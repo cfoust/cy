@@ -7,7 +7,9 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
+	"time"
 
 	"github.com/cfoust/cy/pkg/cy"
 	P "github.com/cfoust/cy/pkg/io/protocol"
@@ -64,10 +66,10 @@ func getSocketPath() (string, error) {
 func serve(path string) error {
 	log.Info().Msgf("serving cy")
 	cy := cy.Cy{}
-	return ws.Serve(context.Background(), path, &cy)
+	return ws.Serve[P.Message](context.Background(), path, P.Protocol, &cy)
 }
 
-func startServer(path string) (*os.Process, error) {
+func startServer(path string) error {
 	cntxt := &daemon.Context{
 		LogFileName: "cy.log",
 	}
@@ -80,11 +82,11 @@ func startServer(path string) (*os.Process, error) {
 		log.Panic().Err(err).Msg("failed to daemonize")
 	}
 	if d != nil {
-		return d, nil
+		return nil
 	}
 	defer cntxt.Release()
 
-	return nil, err
+	return err
 }
 
 type ClientIO struct {
@@ -101,28 +103,28 @@ func (c *ClientIO) Write(p []byte) (n int, err error) {
 
 var _ io.Writer = (*ClientIO)(nil)
 
-func connect(path string) error {
-	rawConn, err := ws.Connect(context.Background(), path)
+func buildHandshake() (*P.HandshakeMessage, error) {
+	columns, rows, err := term.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
-		_, err := startServer(path)
-		log.Info().Msgf("startServer returned")
-		if err != nil {
-			return err
-		}
-
-		return connect(path)
+		return nil, err
 	}
 
-	log.Info().Msgf("connected to cy")
-	conn := ws.MapClient[[]byte](
-		rawConn,
-		P.Encode,
-		P.Decode,
-	)
+	return &P.HandshakeMessage{
+		TERM:    os.Getenv("TERM"),
+		Rows:    rows,
+		Columns: columns,
+	}, nil
+}
 
-	conn.Send(P.HandshakeMessage{
-		TERM: os.Getenv("TERM"),
-	})
+func poll(conn cy.Connection) error {
+	log.Info().Msgf("connected to cy")
+
+	handshake, err := buildHandshake()
+	if err != nil {
+		return err
+	}
+
+	conn.Send(*handshake)
 
 	writer := ClientIO{
 		conn: conn,
@@ -173,11 +175,9 @@ func connect(path string) error {
 
 	for {
 		select {
-		case <-rawConn.Ctx().Done():
-			log.Info().Msgf("connection done")
+		case <-conn.Ctx().Done():
 			return nil
 		case packet := <-conn.Receive():
-			log.Info().Msgf("%+v", packet.Error)
 			if packet.Error != nil {
 				return packet.Error
 			}
@@ -186,6 +186,88 @@ func connect(path string) error {
 				os.Stdout.Write(msg.Data)
 			}
 		}
+	}
+}
+
+const (
+	ENOENT       = "no such file or directory"
+	ECONNREFUSED = "connection refused"
+)
+
+var ErrorLockFailed = fmt.Errorf("failed to lock file")
+
+func getLock(socketPath string) (*os.File, error) {
+	lockPath := socketPath + ".lock"
+
+	fd, err := os.OpenFile(lockPath, os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := syscall.Flock(int(fd.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+		fd.Close()
+		return nil, ErrorLockFailed
+	}
+
+	return fd, nil
+}
+
+func connect(socketPath string) (cy.Connection, error) {
+	// mimics client_connect() in tmux's client.c
+	var lock *os.File = nil
+
+	defer func() {
+		if lock != nil {
+			lock.Close()
+		}
+	}()
+
+	locked := false
+	for {
+		conn, err := ws.Connect(context.Background(), P.Protocol, socketPath)
+		if err == nil {
+			return conn, nil
+		}
+
+		message := err.Error()
+		if !strings.Contains(message, ENOENT) && !strings.Contains(message, ECONNREFUSED) {
+			return nil, err
+		}
+
+		if !locked {
+			lock, err = getLock(socketPath)
+			if err != nil {
+				if err == ErrorLockFailed {
+					continue
+				}
+
+				lock = nil
+
+				return nil, err
+			}
+
+			/*
+			 * FROM TMUX:
+			 * Always retry at least once, even if we got the lock,
+			 * because another client could have taken the lock,
+			 * started the server and released the lock between our
+			 * connect() and flock().
+			 */
+			locked = true
+			continue
+		}
+
+		if err := os.Remove(socketPath); err != nil && !strings.Contains(err.Error(), ENOENT) {
+			return nil, err
+		}
+
+		// Now we can start the server
+		err = startServer(socketPath)
+		if err != nil {
+			return nil, err
+		}
+
+		time.Sleep(50 * time.Millisecond)
 	}
 }
 
@@ -212,8 +294,13 @@ func main() {
 		return
 	}
 
-	err := connect(socketPath)
+	conn, err := connect(socketPath)
 	if err != nil {
 		log.Panic().Err(err).Msg("failed to start cy")
+	}
+
+	err = poll(conn)
+	if err != nil {
+		log.Panic().Err(err).Msg("failed while polling")
 	}
 }
