@@ -1,3 +1,4 @@
 .stack-work/
 **.borg
 /.DS_Store
+**.log
