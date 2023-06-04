@@ -11,15 +11,16 @@ import (
 	"nhooyr.io/websocket"
 )
 
-type Server interface {
-	HandleWSClient(client RawClient)
+type Server[T any] interface {
+	HandleWSClient(client Client[T])
 }
 
-type WSServer struct {
-	server Server
+type WSServer[T any] struct {
+	server   Server[T]
+	protocol Protocol[T]
 }
 
-func (ws *WSServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (ws *WSServer[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		OriginPatterns:  []string{"*"},
 		CompressionMode: websocket.CompressionDisabled,
@@ -31,9 +32,10 @@ func (ws *WSServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	defer c.Close(websocket.StatusInternalError, "operational fault during relay")
 
-	client := WSClient{
+	client := WSClient[T]{
 		Lifetime: util.NewLifetime(r.Context()),
 		Conn:     c,
+		protocol: ws.protocol,
 	}
 
 	done := make(chan bool)
@@ -51,15 +53,15 @@ func (ws *WSServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-var _ http.Handler = (*WSServer)(nil)
+var _ http.Handler = (*WSServer[[]byte])(nil)
 
-func Serve(ctx context.Context, socketPath string, server Server) error {
+func Serve[T any](ctx context.Context, socketPath string, protocol Protocol[T], server Server[T]) error {
 	l, err := net.Listen("unix", socketPath)
 	if err != nil {
 		return err
 	}
 
-	ws := &WSServer{server: server}
+	ws := &WSServer[T]{server: server, protocol: protocol}
 	httpServer := http.Server{
 		Handler: ws,
 	}

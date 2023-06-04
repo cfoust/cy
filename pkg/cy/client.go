@@ -137,14 +137,9 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	return nil
 }
 
-func (c *Cy) HandleWSClient(rawConn ws.RawClient) {
-	c.addClient(ws.MapClient[[]byte](
-		rawConn,
-		P.Encode,
-		P.Decode,
-	))
-
-	<-rawConn.Ctx().Done()
+func (c *Cy) HandleWSClient(conn ws.Client[P.Message]) {
+	c.addClient(conn)
+	<-conn.Ctx().Done()
 }
 
-var _ ws.Server = (*Cy)(nil)
+var _ ws.Server[P.Message] = (*Cy)(nil)

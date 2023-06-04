@@ -12,6 +12,23 @@ import (
 	"nhooyr.io/websocket"
 )
 
+type Protocol[T any] interface {
+	Encode(data T) ([]byte, error)
+	Decode(data []byte) (T, error)
+}
+
+type rawProtocol struct{}
+
+func (p rawProtocol) Encode(data []byte) ([]byte, error) {
+	return data, nil
+}
+
+func (p rawProtocol) Decode(data []byte) ([]byte, error) {
+	return data, nil
+}
+
+var RawProtocol Protocol[[]byte] = rawProtocol{}
+
 type Client[T any] interface {
 	Ctx() context.Context
 	P.Pipe[T]
@@ -20,24 +37,31 @@ type Client[T any] interface {
 
 type RawClient Client[[]byte]
 
-type WSClient struct {
+type WSClient[T any] struct {
 	util.Lifetime
-	Conn *websocket.Conn
+	Conn     *websocket.Conn
+	protocol Protocol[T]
 }
 
 const (
 	WRITE_TIMEOUT = 1 * time.Second
 )
 
-func (c *WSClient) Send(data []byte) error {
+func (c *WSClient[T]) Send(data T) error {
 	ctx, cancel := context.WithTimeout(c.Ctx(), WRITE_TIMEOUT)
 	defer cancel()
-	return c.Conn.Write(ctx, websocket.MessageBinary, data)
+
+	encoded, err := c.protocol.Encode(data)
+	if err != nil {
+		return err
+	}
+
+	return c.Conn.Write(ctx, websocket.MessageBinary, encoded)
 }
 
-func (c *WSClient) Receive() <-chan P.Packet[[]byte] {
+func (c *WSClient[T]) Receive() <-chan P.Packet[T] {
 	ctx := c.Ctx()
-	out := make(chan P.Packet[[]byte])
+	out := make(chan P.Packet[T])
 	go func() {
 		for {
 			if ctx.Err() != nil {
@@ -46,7 +70,7 @@ func (c *WSClient) Receive() <-chan P.Packet[[]byte] {
 
 			typ, message, err := c.Conn.Read(ctx)
 			if err != nil {
-				out <- P.Packet[[]byte]{
+				out <- P.Packet[T]{
 					Error: err,
 				}
 				// TODO(cfoust): 05/27/23 error handling?
@@ -58,8 +82,11 @@ func (c *WSClient) Receive() <-chan P.Packet[[]byte] {
 				continue
 			}
 
-			out <- P.Packet[[]byte]{
-				Contents: message,
+			decoded, err := c.protocol.Decode(message)
+
+			out <- P.Packet[T]{
+				Contents: decoded,
+				Error:    err,
 			}
 		}
 	}()
@@ -67,13 +94,13 @@ func (c *WSClient) Receive() <-chan P.Packet[[]byte] {
 	return out
 }
 
-func (c *WSClient) Close() error {
+func (c *WSClient[T]) Close() error {
 	return c.Conn.Close(websocket.StatusNormalClosure, "")
 }
 
-var _ RawClient = (*WSClient)(nil)
+var _ RawClient = (*WSClient[[]byte])(nil)
 
-func Connect(ctx context.Context, socketPath string) (RawClient, error) {
+func Connect[T any](ctx context.Context, protocol Protocol[T], socketPath string) (Client[T], error) {
 	// https://gist.github.com/teknoraver/5ffacb8757330715bcbcc90e6d46ac74
 	httpClient := http.Client{
 		Transport: &http.Transport{
@@ -91,7 +118,8 @@ func Connect(ctx context.Context, socketPath string) (RawClient, error) {
 		return nil, err
 	}
 
-	client := WSClient{
+	client := WSClient[T]{
+		protocol: protocol,
 		Lifetime: util.NewLifetime(ctx),
 		Conn:     c,
 	}

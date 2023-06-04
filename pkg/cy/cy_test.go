@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cfoust/cy/pkg/io/pipe"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 
@@ -20,18 +19,13 @@ type TestServer struct {
 	socketPath string
 }
 
-func (t *TestServer) Connect() (ws.RawClient, pipe.Pipe[P.Message], error) {
-	client, err := ws.Connect(t.baseCtx, t.socketPath)
+func (t *TestServer) Connect() (Connection, error) {
+	client, err := ws.Connect(t.baseCtx, P.Protocol, t.socketPath)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	io := pipe.Map[[]byte](
-		client,
-		P.Encode,
-		P.Decode,
-	)
-	return client, io, nil
+	return client, nil
 }
 
 func setupServer(ctx context.Context) (*TestServer, error) {
@@ -45,7 +39,7 @@ func setupServer(ctx context.Context) (*TestServer, error) {
 	cy := Cy{}
 
 	go func() {
-		ws.Serve(ctx, socketPath, &cy)
+		ws.Serve[P.Message](ctx, socketPath, P.Protocol, &cy)
 		os.RemoveAll(dir)
 	}()
 
@@ -68,10 +62,10 @@ func TestHandshake(t *testing.T) {
 	server, err := setupServer(ctx)
 	assert.NoError(t, err)
 
-	client, io, err := server.Connect()
+	client, err := server.Connect()
 	assert.NoError(t, err)
 
-	io.Send(P.HandshakeMessage{
+	client.Send(P.HandshakeMessage{
 		TERM:    "xterm-256color",
 		Rows:    26,
 		Columns: 80,
@@ -89,17 +83,17 @@ func TestBadHandshake(t *testing.T) {
 	server, err := setupServer(ctx)
 	assert.NoError(t, err)
 
-	client, io, err := server.Connect()
+	client, err := server.Connect()
 	assert.NoError(t, err)
 
-	err = io.Send(P.InputMessage{
+	err = client.Send(P.InputMessage{
 		Data: []byte("hello"),
 	})
 	assert.NoError(t, err)
 
 	go func() {
 		for {
-			<-io.Receive()
+			<-client.Receive()
 		}
 	}()
 

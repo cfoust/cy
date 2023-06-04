@@ -12,11 +12,11 @@ import (
 
 type EchoServer struct{}
 
-func (e *EchoServer) HandleWSClient(client RawClient) {
+func (e *EchoServer) HandleWSClient(client Client[[]byte]) {
 	client.Send([]byte("test"))
 }
 
-var _ Server = (*EchoServer)(nil)
+var _ Server[[]byte] = (*EchoServer)(nil)
 
 func TestServer(t *testing.T) {
 	dir, err := os.MkdirTemp("", "example")
@@ -34,11 +34,11 @@ func TestServer(t *testing.T) {
 
 	go func() {
 		echo := EchoServer{}
-		Serve(ctx, socketPath, &echo)
+		Serve[[]byte](ctx, socketPath, RawProtocol, &echo)
 	}()
 
 	ok := make(chan bool, 1)
-	c, err := Connect(ctx, socketPath)
+	c, err := Connect(ctx, RawProtocol, socketPath)
 	assert.NoError(t, err)
 	go func() {
 		time.Sleep(100 * time.Millisecond)

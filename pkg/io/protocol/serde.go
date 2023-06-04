@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/cfoust/cy/pkg/io/ws"
+
 	"github.com/ugorji/go/codec"
 )
 
@@ -58,3 +60,15 @@ func Encode(message Message) ([]byte, error) {
 
 	return result.Bytes(), nil
 }
+
+type protocol struct{}
+
+func (p protocol) Encode(message Message) ([]byte, error) {
+	return Encode(message)
+}
+
+func (p protocol) Decode(data []byte) (Message, error) {
+	return Decode(data)
+}
+
+var Protocol ws.Protocol[Message] = protocol{}
