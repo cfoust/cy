@@ -78,7 +78,18 @@ func (c *Cy) pollClient(client *Client) {
 	client.info.Fprintf(buf, terminfo.CursorHome)
 	client.output(buf.Bytes())
 
-	client.output([]byte("welcome to cy"))
+	for {
+		select {
+		case <-conn.Ctx().Done():
+			return
+		case packet := <-events:
+			switch packet.Contents.Type() {
+			case P.MessageTypeInput:
+				msg := packet.Contents.(*P.InputMessage)
+				client.output(msg.Data)
+			}
+		}
+	}
 }
 
 func (c *Cy) removeClient(client *Client) {

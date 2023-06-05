@@ -71,6 +71,7 @@ func serve(path string) error {
 func startServer(path string) error {
 	cntxt := &daemon.Context{
 		LogFileName: "cy.log",
+		PidFileName: "cy.pid",
 	}
 
 	d, err := cntxt.Reborn()
