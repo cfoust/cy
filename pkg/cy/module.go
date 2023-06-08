@@ -26,7 +26,10 @@ func (c *Cy) findInitialPane() *wm.Node {
 	defer c.RUnlock()
 
 	if len(c.clients) > 0 {
-		return c.clients[0].GetNode()
+		node := c.clients[0].GetNode()
+		if node != nil {
+			return node
+		}
 	}
 
 	leaves := wm.GetLeaves(c.tree)
@@ -37,7 +40,8 @@ func (c *Cy) findInitialPane() *wm.Node {
 	return leaves[0]
 }
 
-// Given a node, get a list of all clients attached to it and find the minimum pane
+// Given a node, get a list of all clients attached to it and find the minimum
+// pane size.
 func (c *Cy) refreshPane(node *wm.Node) {
 	pane, ok := node.Data.(*wm.Pane)
 	if !ok {

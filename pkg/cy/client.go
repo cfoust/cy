@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"log"
 
 	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/emu"
@@ -39,6 +40,7 @@ type Client struct {
 func (c *Cy) addClient(conn Connection) *Client {
 	c.Lock()
 	client := &Client{
+		cy: c,
 		conn: conn,
 	}
 	c.clients = append(c.clients, client)
@@ -87,6 +89,7 @@ func (c *Cy) pollClient(client *Client) {
 
 	node := c.findInitialPane()
 	if node == nil {
+		log.Printf("could not find initial pane")
 		// TODO(cfoust): 06/08/23 handle this
 		return
 	}
@@ -233,7 +236,9 @@ func (c *Client) Attach(node *wm.Node) error {
 	c.node = node
 	c.Unlock()
 
-	c.cy.refreshPane(oldNode)
+	if oldNode != nil {
+		c.cy.refreshPane(oldNode)
+	}
 	c.cy.refreshPane(node)
 
 	go c.pollPane(attachment.Ctx(), pane)

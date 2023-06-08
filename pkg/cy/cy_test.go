@@ -10,6 +10,7 @@ import (
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/util"
+	"github.com/cfoust/cy/pkg/wm"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -129,6 +130,13 @@ func TestEmpty(t *testing.T) {
 	server := setupServer(t)
 	defer server.Release()
 
-	_, _, err := server.Standard()
+	cy := server.cy
+
+	_, client, err := server.Standard()
 	assert.NoError(t, err)
+
+	time.Sleep(100 * time.Millisecond)
+
+	leaves := wm.GetLeaves(cy.tree)
+	assert.Equal(t, client.GetNode(), leaves[0])
 }
