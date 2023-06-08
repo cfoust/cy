@@ -9,18 +9,19 @@ import (
 
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
+	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/stretchr/testify/assert"
 )
 
 type TestServer struct {
-	baseCtx    context.Context
+	util.Lifetime
 	cy         *Cy
 	socketPath string
 }
 
 func (t *TestServer) Connect() (Connection, error) {
-	client, err := ws.Connect(t.baseCtx, P.Protocol, t.socketPath)
+	client, err := ws.Connect(t.Ctx(), P.Protocol, t.socketPath)
 	if err != nil {
 		return nil, err
 	}
@@ -28,39 +29,38 @@ func (t *TestServer) Connect() (Connection, error) {
 	return client, nil
 }
 
-func setupServer(ctx context.Context) (*TestServer, error) {
+func (t *TestServer) Release() {
+	t.Cancel()
+}
+
+func setupServer(t *testing.T) *TestServer {
 	dir, err := os.MkdirTemp("", "example")
-	if err != nil {
-		return nil, err
-	}
+	assert.NoError(t, err)
 
 	socketPath := filepath.Join(dir, "socket")
 
 	cy := Cy{}
 
-	go func() {
-		ws.Serve[P.Message](ctx, socketPath, P.Protocol, &cy)
-		os.RemoveAll(dir)
-	}()
-
 	server := TestServer{
-		baseCtx:    ctx,
+		Lifetime:   util.NewLifetime(context.Background()),
 		cy:         &cy,
 		socketPath: socketPath,
 	}
 
+	go func() {
+		ws.Serve[P.Message](server.Ctx(), socketPath, P.Protocol, &cy)
+		os.RemoveAll(dir)
+	}()
+
 	// TODO(cfoust): 06/01/23 no more race condition on socket creation
 	time.Sleep(100 * time.Millisecond)
 
-	return &server, nil
+	return &server
 }
 
 func TestHandshake(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	server, err := setupServer(ctx)
-	assert.NoError(t, err)
+	server := setupServer(t)
+	defer server.Release()
 
 	client, err := server.Connect()
 	assert.NoError(t, err)
@@ -77,11 +77,8 @@ func TestHandshake(t *testing.T) {
 }
 
 func TestBadHandshake(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	server, err := setupServer(ctx)
-	assert.NoError(t, err)
+	server := setupServer(t)
+	defer server.Release()
 
 	client, err := server.Connect()
 	assert.NoError(t, err)

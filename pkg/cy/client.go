@@ -83,6 +83,11 @@ func (c *Cy) pollClient(client *Client) {
 		case <-conn.Ctx().Done():
 			return
 		case packet := <-events:
+			if packet.Error != nil {
+				// TODO(cfoust): 06/08/23 handle gracefully
+				continue
+			}
+
 			switch packet.Contents.Type() {
 			case P.MessageTypeInput:
 				msg := packet.Contents.(*P.InputMessage)
