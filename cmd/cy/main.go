@@ -64,8 +64,12 @@ func getSocketPath() (string, error) {
 }
 
 func serve(path string) error {
-	cy := cy.Cy{}
-	return ws.Serve[P.Message](context.Background(), path, P.Protocol, &cy)
+	cy, err := cy.Start(context.Background())
+	if err != nil {
+	    return err
+	}
+
+	return ws.Serve[P.Message](cy.Ctx(), path, P.Protocol, cy)
 }
 
 func startServer(path string) error {

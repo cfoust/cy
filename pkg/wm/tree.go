@@ -36,9 +36,28 @@ type Node struct {
 	Data   NodeData
 }
 
-type Group []Node
+type Group struct {
+	// TODO(cfoust): 06/08/23 bindings
+
+	children []*Node
+}
 
 func (g *Group) Type() NodeType { return NodeTypeGroup }
+
+func (g *Group) Add(node *Node) {
+	g.children = append(g.children, node)
+}
+
+func NewGroup() *Group {
+	return &Group{}
+}
+
+func Wrap(name string, data NodeData) *Node {
+	return &Node{
+		Name: name,
+		Data: data,
+	}
+}
 
 var _ NodeData = (*Group)(nil)
 

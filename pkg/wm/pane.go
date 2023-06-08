@@ -19,6 +19,11 @@ type Size struct {
 	Columns int
 }
 
+var DEFAULT_SIZE = Size{
+	Rows:    26,
+	Columns: 80,
+}
+
 type PaneContext struct {
 	Directory string
 	Command   string
