@@ -10,7 +10,6 @@ import (
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/util"
-	"github.com/cfoust/cy/pkg/wm"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -129,9 +128,6 @@ func TestBadHandshake(t *testing.T) {
 func TestEmpty(t *testing.T) {
 	server := setupServer(t)
 	defer server.Release()
-
-	cy := server.cy
-	assert.Equal(t, cy.tree, (*wm.Node)(nil))
 
 	_, _, err := server.Standard()
 	assert.NoError(t, err)

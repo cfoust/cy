@@ -48,6 +48,10 @@ func (g *Group) Add(node *Node) {
 	g.children = append(g.children, node)
 }
 
+func (g *Group) Children() []*Node {
+	return g.children
+}
+
 func NewGroup() *Group {
 	return &Group{}
 }
@@ -64,3 +68,20 @@ var _ NodeData = (*Group)(nil)
 func (p *Pane) Type() NodeType { return NodeTypePane }
 
 var _ NodeData = (*Pane)(nil)
+
+// Get all of the leaf nodes (panes) of the tree.
+func GetLeaves(tree *Node) (results []*Node) {
+	data := tree.Data
+
+	if data.Type() == NodeTypePane {
+		results = append(results, tree)
+		return
+	}
+
+	group := data.(*Group)
+	for _, child := range group.Children() {
+		results = append(results, GetLeaves(child)...)
+	}
+
+	return results
+}

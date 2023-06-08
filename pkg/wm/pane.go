@@ -14,16 +14,6 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
-type Size struct {
-	Rows    int
-	Columns int
-}
-
-var DEFAULT_SIZE = Size{
-	Rows:    26,
-	Columns: 80,
-}
-
 type PaneContext struct {
 	Directory string
 	Command   string
@@ -48,8 +38,34 @@ type Pane struct {
 	context PaneContext
 	session *session.Session
 	pty     *pty.Pty
+	changes *util.Publisher[time.Time]
 
 	Terminal emu.Terminal
+}
+
+// Subscribe to state updates.
+func (p *Pane) Subscribe() *util.Subscriber[time.Time] {
+	return p.changes.Subscribe()
+}
+
+func (p *Pane) GetSize() Size {
+	p.Terminal.Lock()
+	cols, rows := p.Terminal.Size()
+	p.Terminal.Unlock()
+
+	return Size{
+		Rows:    rows,
+		Columns: cols,
+	}
+}
+
+func (p *Pane) notifyChange() {
+	p.changes.Publish(time.Now())
+}
+
+func (p *Pane) Resize(size Size) {
+	p.Terminal.Resize(size.Columns, size.Rows)
+	p.notifyChange()
 }
 
 func (p *Pane) GetStatus() PaneStatus {
@@ -89,6 +105,9 @@ func (p *Pane) pollIO() error {
 		if err != nil {
 			return err
 		}
+
+		// Let any clients know that this pane changed
+		p.notifyChange()
 	}
 }
 
@@ -186,11 +205,14 @@ func NewPane(ctx context.Context, context PaneContext, size Size) *Pane {
 		Lifetime: util.NewLifetime(ctx),
 		status:   PaneStatusStarting,
 		context:  context,
+		session:  session.New(),
+
 		Terminal: emu.New(emu.WithSize(
 			size.Columns,
 			size.Rows,
 		)),
-		session: session.New(),
+
+		changes: util.NewPublisher[time.Time](),
 	}
 
 	pane.session.Resize(size.Columns, size.Rows)

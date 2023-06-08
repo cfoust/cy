@@ -18,6 +18,57 @@ type Cy struct {
 	clients []*Client
 }
 
+// Get the pane that new clients attach to. If there are other clients, we
+// attach to the pane of the first other client. Otherwise we attach to the
+// first pane we find, depth-first.
+func (c *Cy) findInitialPane() *wm.Node {
+	c.RLock()
+	defer c.RUnlock()
+
+	if len(c.clients) > 0 {
+		return c.clients[0].GetNode()
+	}
+
+	leaves := wm.GetLeaves(c.tree)
+	if len(leaves) == 0 {
+		return nil
+	}
+
+	return leaves[0]
+}
+
+// Given a node, get a list of all clients attached to it and find the minimum pane
+func (c *Cy) refreshPane(node *wm.Node) {
+	pane, ok := node.Data.(*wm.Pane)
+	if !ok {
+		return
+	}
+
+	c.Lock()
+	defer c.Unlock()
+
+	// Get a list of all clients attached to this node
+	attached := make([]*Client, 0)
+	for _, client := range c.clients {
+		if node == client.GetNode() {
+			attached = append(attached, client)
+		}
+	}
+
+	// Don't do anything if no clients are attached to this pane
+	if len(attached) == 0 {
+		return
+	}
+
+	// Set the pane's size to the maximum that all clients can fit
+	size := attached[0].GetSize()
+	for _, client := range attached {
+		size = wm.GetMaximum(size, client.GetSize())
+	}
+
+	pane.Resize(size)
+}
+
 func Start(ctx context.Context) (*Cy, error) {
 	cy := Cy{
 		Lifetime: util.NewLifetime(ctx),

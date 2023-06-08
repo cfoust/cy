@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/emu"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
+	"github.com/cfoust/cy/pkg/util"
 	"github.com/cfoust/cy/pkg/wm"
 
 	"github.com/sasha-s/go-deadlock"
@@ -20,9 +22,14 @@ type Connection ws.Client[P.Message]
 type Client struct {
 	deadlock.RWMutex
 	conn Connection
+
+	cy *Cy
+
 	info *terminfo.Terminfo
 
-	location *wm.Node
+	attachment *util.Lifetime
+	node       *wm.Node
+	updates    *util.Subscriber[time.Time]
 
 	// This is a "model" of what the client is seeing so that we can
 	// animate between states
@@ -78,6 +85,14 @@ func (c *Cy) pollClient(client *Client) {
 	client.info.Fprintf(buf, terminfo.CursorHome)
 	client.output(buf.Bytes())
 
+	node := c.findInitialPane()
+	if node == nil {
+		// TODO(cfoust): 06/08/23 handle this
+		return
+	}
+
+	client.Attach(node)
+
 	for {
 		select {
 		case <-conn.Ctx().Done():
@@ -91,7 +106,13 @@ func (c *Cy) pollClient(client *Client) {
 			switch packet.Contents.Type() {
 			case P.MessageTypeInput:
 				msg := packet.Contents.(*P.InputMessage)
-				client.output(msg.Data)
+				node := client.GetNode()
+				if node == nil {
+					continue
+				}
+
+				pane := node.Data.(*wm.Pane)
+				pane.Write(msg.Data)
 			}
 		}
 	}
@@ -149,6 +170,73 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 			handshake.Rows,
 		),
 	)
+
+	return nil
+}
+
+func (c *Client) GetNode() *wm.Node {
+	c.RLock()
+	node := c.node
+	c.RUnlock()
+
+	return node
+}
+
+func (c *Client) GetSize() wm.Size {
+	c.raw.Lock()
+	cols, rows := c.raw.Size()
+	c.raw.Unlock()
+
+	return wm.Size{
+		Rows:    rows,
+		Columns: cols,
+	}
+}
+
+func (c *Client) pollPane(ctx context.Context, pane *wm.Pane) error {
+	subscriber := pane.Subscribe()
+	defer subscriber.Done()
+
+	changes := subscriber.Recv()
+
+	for {
+		c.output(anim.SwapView(
+			c.info,
+			c.raw,
+			pane.Terminal,
+		))
+
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-changes:
+			continue
+		}
+	}
+}
+
+func (c *Client) Attach(node *wm.Node) error {
+	pane, ok := node.Data.(*wm.Pane)
+	if !ok {
+		return fmt.Errorf("node was not a pane")
+	}
+
+	attachment := util.NewLifetime(c.conn.Ctx())
+
+	c.Lock()
+	if c.attachment != nil {
+		c.attachment.Cancel()
+	}
+	c.attachment = &attachment
+
+	oldNode := c.node
+	c.node = node
+	c.Unlock()
+
+	c.cy.refreshPane(oldNode)
+	c.cy.refreshPane(node)
+
+	go c.pollPane(attachment.Ctx(), pane)
 
 	return nil
 }

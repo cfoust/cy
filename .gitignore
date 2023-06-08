@@ -2,3 +2,4 @@
 **.borg
 /.DS_Store
 **.log
+**.pid
