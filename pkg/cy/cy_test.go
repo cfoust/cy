@@ -140,3 +140,16 @@ func TestEmpty(t *testing.T) {
 	leaves := wm.GetLeaves(cy.tree)
 	assert.Equal(t, client.GetNode(), leaves[0])
 }
+
+func TestSize(t *testing.T) {
+	server := setupServer(t)
+	defer server.Release()
+
+	_, _, err := server.Attach(40, 80)
+	assert.NoError(t, err)
+
+	_, _, err = server.Standard()
+	assert.NoError(t, err)
+
+	time.Sleep(100 * time.Millisecond)
+}

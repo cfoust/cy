@@ -13,7 +13,6 @@ import (
 	"github.com/cfoust/cy/pkg/util"
 	"github.com/cfoust/cy/pkg/wm"
 
-	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 	"github.com/xo/terminfo"
 )
@@ -113,7 +112,6 @@ func (c *Cy) pollClient(client *Client) {
 					continue
 				}
 
-				log.Info().Msgf("passing input %+v", msg.Data)
 				pane := node.Data.(*wm.Pane)
 				pane.Write(msg.Data)
 			}
@@ -197,9 +195,6 @@ func (c *Client) GetSize() wm.Size {
 }
 
 func (c *Client) pollPane(ctx context.Context, pane *wm.Pane) error {
-	log.Info().Msgf("polling pane %+v", pane)
-	defer log.Info().Msgf("done polling pane %+v", pane)
-
 	subscriber := pane.Subscribe()
 	defer subscriber.Done()
 
