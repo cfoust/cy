@@ -19,6 +19,7 @@ func Run(
 	command string,
 	args []string,
 	directory string,
+	rows, cols int,
 ) (*Pty, error) {
 	started := make(chan error)
 	shellDone := make(chan error)
@@ -30,7 +31,13 @@ func Run(
 		shell := exec.CommandContext(ctx, command, args...)
 		shell.Dir = directory
 
-		fd, err := pty.Start(shell)
+		fd, err := pty.StartWithSize(
+			shell,
+			&pty.Winsize{
+				Rows: uint16(rows),
+				Cols: uint16(cols),
+			},
+		)
 		if err != nil {
 			started <- err
 		}
@@ -63,8 +70,11 @@ func (c *Pty) Write(p []byte) (n int, err error) {
 	return c.ptmx.Write(p)
 }
 
-func (p *Pty) Resize(f *os.File) error {
-	return pty.InheritSize(f, p.ptmx)
+func (p *Pty) Resize(rows, cols int) error {
+	return pty.Setsize(p.ptmx, &pty.Winsize{
+		Rows: uint16(rows),
+		Cols: uint16(cols),
+	})
 }
 
 var _ io.ReadWriter = (*Pty)(nil)

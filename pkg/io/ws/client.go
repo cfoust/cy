@@ -118,6 +118,9 @@ func Connect[T any](ctx context.Context, protocol Protocol[T], socketPath string
 		return nil, err
 	}
 
+	// TODO(cfoust): 06/09/23 be smarter about this
+	c.SetReadLimit(32768 * 256)
+
 	client := WSClient[T]{
 		protocol: protocol,
 		Lifetime: util.NewLifetime(ctx),

@@ -65,6 +65,7 @@ func (p *Pane) notifyChange() {
 
 func (p *Pane) Resize(size Size) {
 	p.Terminal.Resize(size.Columns, size.Rows)
+	p.pty.Resize(size.Rows, size.Columns)
 	p.notifyChange()
 }
 
@@ -119,11 +120,14 @@ func (p *Pane) run() error {
 	go func() {
 		p.setStatus(PaneStatusStarting)
 
+		cols, rows := p.Terminal.Size()
 		pty, err := pty.Run(
 			p.Ctx(),
 			context.Command,
 			context.Args,
 			context.Directory,
+			rows,
+			cols,
 		)
 		if err != nil {
 			started <- err
