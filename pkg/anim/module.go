@@ -82,6 +82,10 @@ func setColor(info *terminfo.Terminfo, color emu.Color, isBg bool) []byte {
 	num := uint32(color)
 	maxColors := uint32(info.Nums[terminfo.MaxColors])
 
+	if (!isBg && color == emu.DefaultFG) || (isBg && color == emu.DefaultBG) {
+		return make([]byte, 0)
+	}
+
 	if num > maxColors {
 		r := color >> 16
 		g := (color >> 8) & 0xff
