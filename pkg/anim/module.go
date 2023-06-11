@@ -113,7 +113,7 @@ func Swap(
 	info *terminfo.Terminfo,
 	dst, src Image,
 ) []byte {
-	cols, rows := dst.Size()
+	cols, rows := src.Size()
 	data := new(bytes.Buffer)
 
 	info.Fprintf(data, terminfo.CursorInvisible)
