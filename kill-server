@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Kill the cy server and any "go run"s (usually cy.)
+# This is super hacky and probably only works for me right now.
+
+set -e
+
+pkill -f b001.exe || true
+pkill -f 'go run' || true
+rm -rf /tmp/cy-501/
