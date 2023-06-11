@@ -81,10 +81,7 @@ func (c *Cy) pollClient(client *Client) {
 		}
 	}
 
-	buf := new(bytes.Buffer)
-	client.info.Fprintf(buf, terminfo.ClearScreen)
-	client.info.Fprintf(buf, terminfo.CursorHome)
-	client.output(buf.Bytes())
+	client.clearScreen()
 
 	node := c.findInitialPane()
 	if node == nil {
@@ -140,6 +137,13 @@ func (c *Cy) removeClient(client *Client) {
 	c.Unlock()
 }
 
+func (c *Client) clearScreen() {
+	buf := new(bytes.Buffer)
+	c.info.Fprintf(buf, terminfo.ClearScreen)
+	c.info.Fprintf(buf, terminfo.CursorHome)
+	c.output(buf.Bytes())
+}
+
 func (c *Client) output(data []byte) error {
 	_, err := c.raw.Write(data)
 	if err != nil {
@@ -164,6 +168,7 @@ func (c *Client) closeError(reason error) error {
 
 func (c *Client) Resize(rows, cols int) {
 	c.raw.Resize(cols, rows)
+	c.clearScreen()
 
 	node := c.node
 	if node == nil {
@@ -221,8 +226,8 @@ func (c *Client) pollPane(ctx context.Context, pane *wm.Pane) error {
 	for {
 		c.output(anim.SwapView(
 			c.info,
-			pane.Terminal,
 			c.raw,
+			pane.Terminal,
 		))
 
 		select {

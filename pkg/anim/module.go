@@ -11,12 +11,12 @@ import (
 )
 
 type Image struct {
-	grid          [][]emu.Glyph
-	width, height int
+	grid       [][]emu.Glyph
+	cols, rows int
 }
 
 func (i Image) Size() (int, int) {
-	return i.width, i.height
+	return i.cols, i.rows
 }
 
 func (i Image) Cell(x, y int) emu.Glyph {
@@ -36,8 +36,8 @@ func NewImage(width, height int) Image {
 		image.grid = append(image.grid, line)
 	}
 
-	image.width = width
-	image.height = height
+	image.cols = width
+	image.rows = height
 
 	return image
 }
@@ -62,17 +62,17 @@ func CaptureImage(view emu.View) Image {
 	view.Lock()
 	defer view.Unlock()
 
-	width, height := view.Size()
-	for y := 0; y < height; y++ {
-		line := make([]emu.Glyph, width)
-		for x := 0; x < width; x++ {
-			line[x] = view.Cell(x, y)
+	cols, rows := view.Size()
+	for row := 0; row < rows; row++ {
+		line := make([]emu.Glyph, cols)
+		for col := 0; col < cols; col++ {
+			line[col] = view.Cell(col, row)
 		}
 		image.grid = append(image.grid, line)
 	}
 
-	image.width = width
-	image.height = height
+	image.cols = cols
+	image.rows = rows
 
 	return image
 }
@@ -113,29 +113,23 @@ func Swap(
 	info *terminfo.Terminfo,
 	dst, src Image,
 ) []byte {
-	width, height := dst.Size()
+	cols, rows := dst.Size()
 	data := new(bytes.Buffer)
 
 	info.Fprintf(data, terminfo.CursorInvisible)
 
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			dstCell := dst.Cell(x, y)
-			srcCell := src.Cell(x, y)
+	for row := 0; row < rows; row++ {
+		for col := 0; col < cols; col++ {
+			dstCell := dst.Cell(col, row)
+			srcCell := src.Cell(col, row)
 
-			hasChar := dstCell.Char != srcCell.Char
-			hasMode := dstCell.Mode != srcCell.Mode
-			hasFG := dstCell.FG != srcCell.FG
-			hasBG := dstCell.BG != srcCell.BG
-			isDifferent := hasChar || hasMode || hasFG || hasBG
-
-			if !isDifferent {
+			if dstCell == srcCell {
 				continue
 			}
 
-			info.Fprintf(data, terminfo.CursorAddress, y, x)
+			info.Fprintf(data, terminfo.CursorAddress, row, col)
 
-			mode := dstCell.Mode
+			mode := srcCell.Mode
 			if mode&emu.AttrReverse != 0 {
 				info.Fprintf(data, terminfo.EnterReverseMode)
 			}
@@ -152,10 +146,10 @@ func Swap(
 				info.Fprintf(data, terminfo.EnterBlinkMode)
 			}
 
-			data.Write(setColor(info, dstCell.FG, false))
-			data.Write(setColor(info, dstCell.BG, true))
+			data.Write(setColor(info, srcCell.FG, false))
+			data.Write(setColor(info, srcCell.BG, true))
 
-			data.Write([]byte(string(dstCell.Char)))
+			data.Write([]byte(string(srcCell.Char)))
 
 			info.Fprintf(data, terminfo.ExitAttributeMode)
 		}
@@ -177,9 +171,9 @@ func SwapView(
 		CaptureImage(src),
 	))
 
-	dstCursor := dst.Cursor()
+	srcCursor := src.Cursor()
 	// TODO(cfoust): 05/19/23 cursor mode?
-	info.Fprintf(data, terminfo.CursorAddress, dstCursor.Y, dstCursor.X)
+	info.Fprintf(data, terminfo.CursorAddress, srcCursor.Y, srcCursor.X)
 
 	return data.Bytes()
 }
