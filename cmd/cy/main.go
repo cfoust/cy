@@ -66,7 +66,7 @@ func getSocketPath() (string, error) {
 func serve(path string) error {
 	cy, err := cy.Start(context.Background())
 	if err != nil {
-	    return err
+		return err
 	}
 
 	return ws.Serve[P.Message](cy.Ctx(), path, P.Protocol, cy)
@@ -137,35 +137,35 @@ func poll(conn cy.Connection) error {
 
 	go func() { _, _ = io.Copy(&writer, os.Stdin) }()
 
-	// Hanadle window size changes
+	// Handle window size changes
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGWINCH)
 	go func() {
-		currentHeight := 0
-		currentWidth := 0
+		currentRows := 0
+		currentCols := 0
 
 		for {
 			select {
 			case <-context.Background().Done():
 				return
 			case <-ch:
-				width, height, err := term.GetSize(int(os.Stdin.Fd()))
+				columns, rows, err := term.GetSize(int(os.Stdin.Fd()))
 				if err != nil {
 					log.Error().Err(err).Msg("failed to get terminal dimensions")
 					return
 				}
 
-				if width == currentWidth && height == currentHeight {
+				if columns == currentCols && rows == currentRows {
 					continue
 				}
 
 				conn.Send(P.SizeMessage{
-					Rows:    height,
-					Columns: width,
+					Rows:    rows,
+					Columns: columns,
 				})
 
-				currentWidth = width
-				currentHeight = height
+				currentCols = columns
+				currentRows = rows
 			}
 		}
 	}()
