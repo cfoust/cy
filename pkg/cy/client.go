@@ -39,7 +39,7 @@ type Client struct {
 func (c *Cy) addClient(conn Connection) *Client {
 	c.Lock()
 	client := &Client{
-		cy: c,
+		cy:   c,
 		conn: conn,
 	}
 	c.clients = append(c.clients, client)
@@ -105,6 +105,13 @@ func (c *Cy) pollClient(client *Client) {
 			}
 
 			switch packet.Contents.Type() {
+			case P.MessageTypeSize:
+				msg := packet.Contents.(*P.SizeMessage)
+				client.Resize(
+					msg.Rows,
+					msg.Columns,
+				)
+
 			case P.MessageTypeInput:
 				msg := packet.Contents.(*P.InputMessage)
 				node := client.GetNode()
@@ -153,6 +160,17 @@ func (c *Client) closeError(reason error) error {
 	}
 
 	return c.conn.Close()
+}
+
+func (c *Client) Resize(rows, cols int) {
+	c.raw.Resize(cols, rows)
+
+	node := c.node
+	if node == nil {
+		return
+	}
+
+	c.cy.refreshPane(node)
 }
 
 func (c *Client) initialize(handshake *P.HandshakeMessage) error {
