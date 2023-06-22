@@ -5,7 +5,7 @@ package janet
 #cgo LDFLAGS: -lm -ldl
 
 #include <janet.h>
-#include <src.h>
+#include <api.h>
 */
 import "C"
 
@@ -15,12 +15,6 @@ import (
 	"reflect"
 	"runtime"
 )
-
-//export ExecGo
-func ExecGo(callback *C.char) int64 {
-	fmt.Printf(C.GoString(callback))
-	return 0
-}
 
 type Result struct {
 	Error error
@@ -42,6 +36,17 @@ func (v *VM) doString(code string) {
 	env := C.janet_core_env(nil)
 	C.apply_env(env)
 	C.janet_dostring(env, C.CString(code), C.CString("main"), nil)
+}
+
+var globalVM *VM = nil
+
+func wrapError(message string) C.Janet {
+	return C.wrap_error_result(C.CString(message))
+}
+
+//export ExecGo
+func ExecGo(argc int, argv *C.Janet) C.Janet {
+	return wrapError("test")
 }
 
 // Wait for code calls and process them.
@@ -111,10 +116,15 @@ func (v *VM) RegisterCallback(name string, callback interface{}) error {
 	return nil
 }
 
-func New(ctx context.Context) *VM {
+func New(ctx context.Context) (*VM, error) {
+	if globalVM != nil {
+		return nil, fmt.Errorf("vm already initialized")
+	}
+
 	vm := VM{
 		calls: make(chan Call),
 	}
 	go vm.poll(ctx)
-	return &vm
+	globalVM = &vm
+	return &vm, nil
 }
