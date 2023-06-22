@@ -5,26 +5,22 @@ package janet
 #cgo LDFLAGS: -lm -ldl
 
 #include <janet.h>
-
-void startVM() {
-	// Initialize the virtual machine. Do this before any calls to Janet functions.
-	janet_init();
-
-	// Get the core janet environment. This contains all of the C functions in the core
-	// as well as the code in src/boot/boot.janet.
-	JanetTable *env = janet_core_env(NULL);
-
-	// One of several ways to begin the Janet vm.
-	janet_dostring(env, "(print `hello, world!`)", "main", NULL);
-}
-
+#include <src.h>
 */
 import "C"
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 	"runtime"
 )
+
+//export ExecGo
+func ExecGo(callback *C.char) int64 {
+	fmt.Printf(C.GoString(callback))
+	return 0
+}
 
 type Result struct {
 	Error error
@@ -44,8 +40,7 @@ type VM struct {
 
 func (v *VM) doString(code string) {
 	env := C.janet_core_env(nil)
-
-	// One of several ways to begin the Janet vm.
+	C.apply_env(env)
 	C.janet_dostring(env, C.CString(code), C.CString("main"), nil)
 }
 
@@ -69,13 +64,51 @@ func (v *VM) poll(ctx context.Context) {
 	}
 }
 
-func (v *VM) Execute(code string) {
+func (v *VM) Execute(code string) error {
 	result := make(chan Result)
 	v.calls <- Call{
 		Code:   code,
 		Result: result,
 	}
-	<-result
+	return (<-result).Error
+}
+
+func isValidType(type_ reflect.Type) bool {
+	switch type_.Kind() {
+	case reflect.Int, reflect.Float32, reflect.String:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v *VM) RegisterCallback(name string, callback interface{}) error {
+	type_ := reflect.TypeOf(callback)
+	if type_.Kind() != reflect.Func {
+		return fmt.Errorf("callback must be a function")
+	}
+
+	for i := 0; i < type_.NumIn(); i++ {
+		argType := type_.In(i)
+
+		if !isValidType(argType) {
+			return fmt.Errorf(
+				"arg %d's type %s not supported",
+				i,
+				argType.String(),
+			)
+		}
+	}
+
+	if type_.NumOut() > 1 {
+		return fmt.Errorf("callback has too many return values")
+	}
+
+	if type_.NumOut() == 1 && !isValidType(type_.Out(0)) {
+		return fmt.Errorf("callback has invalid return type")
+	}
+
+	return nil
 }
 
 func New(ctx context.Context) *VM {
