@@ -1,17 +1,6 @@
 package janet
 
-/*
-#cgo CFLAGS: -std=c99
-#cgo LDFLAGS: -lm -ldl
-
-#include <stdlib.h>
-#include <janet.h>
-#include <api.h>
-*/
-import "C"
-
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,17 +18,33 @@ func cmp[T any](t *testing.T, before T) {
 	assert.Equal(t, before, after, "should yield same result")
 }
 
-func TestPrimitive(t *testing.T) {
+func TestTranslation(t *testing.T) {
+	// Starting a VM in this test is not enough; we're creating values on
+	// the heap and need to guarantee that Janet was initialized
+	initJanet()
+	defer deInitJanet()
+
 	cmp(t, 2)
 	cmp(t, 2.02)
 	cmp(t, true)
 	cmp(t, "test")
+
+	type Value struct {
+		One   int
+		Two   bool
+		Three string
+	}
+	cmp(t, Value{
+		One:   2,
+		Two:   true,
+		Three: "test",
+	})
 }
 
-func TestMain(m *testing.M) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	vm, _ := New(ctx)
-	vm.Execute("")
-	m.Run()
-}
+//func TestMain(m *testing.M) {
+//ctx, cancel := context.WithCancel(context.Background())
+//defer cancel()
+//vm, _ := New(ctx)
+//vm.Execute("")
+//m.Run()
+//}

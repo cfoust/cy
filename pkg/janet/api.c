@@ -40,3 +40,9 @@ Janet access_argv(Janet *argv, int offset) {
 const char *cast_janet_string(const uint8_t *jstr) {
     return (const char *)jstr;
 }
+
+const char *_pretty_print(Janet value) {
+    JanetBuffer *buffer = janet_buffer(32768);
+    janet_pretty(buffer, 20, 0, value);
+    return (const char *)buffer->data;
+}

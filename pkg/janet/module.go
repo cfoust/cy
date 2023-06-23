@@ -41,12 +41,20 @@ func (v *VM) doString(code string) {
 var globalVM *VM = nil
 
 func wrapError(message string) C.Janet {
-	return C.wrap_error_result(C.CString(message))
+	return C.wrap_result_error(C.CString(message))
 }
 
 //export ExecGo
 func ExecGo(argc int, argv *C.Janet) C.Janet {
 	return wrapError("test")
+}
+
+func initJanet() {
+	C.janet_init()
+}
+
+func deInitJanet() {
+	C.janet_deinit()
 }
 
 // Wait for code calls and process them.
@@ -55,8 +63,8 @@ func (v *VM) poll(ctx context.Context) {
 	// all Janet code in the same OS thread.
 	runtime.LockOSThread()
 
-	C.janet_init()
-	defer C.janet_deinit()
+	initJanet()
+	defer deInitJanet()
 
 	for {
 		select {
