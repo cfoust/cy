@@ -17,7 +17,7 @@ void apply_env(JanetTable *env) {
 
 Janet wrap_result_value(Janet value) {
     Janet parts[2] = {
-        janet_wrap_keyword(janet_cstring("value")),
+        janet_ckeywordv("value"),
         value,
     };
 
@@ -26,7 +26,7 @@ Janet wrap_result_value(Janet value) {
 
 Janet wrap_result_error(const char *message) {
     Janet parts[2] = {
-        janet_wrap_keyword(janet_cstring("error")),
+        janet_ckeywordv("error"),
         janet_wrap_string(janet_cstring(message)),
     };
 
@@ -45,4 +45,8 @@ const char *_pretty_print(Janet value) {
     JanetBuffer *buffer = janet_buffer(32768);
     janet_pretty(buffer, 20, 0, value);
     return (const char *)buffer->data;
+}
+
+Janet wrap_keyword(const char *str) {
+    return janet_ckeywordv(str);
 }

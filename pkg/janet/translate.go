@@ -15,13 +15,12 @@ import (
 	"reflect"
 	"strings"
 	"unsafe"
-	"log"
 )
 
 // Wrap a string as a Janet keyword.
 func wrapKeyword(word string) C.Janet {
 	str := C.CString(word)
-	keyword := C.janet_wrap_keyword(C.janet_cstring(str))
+	keyword := C.wrap_keyword(str)
 	C.free(unsafe.Pointer(str))
 	return keyword
 }
@@ -119,10 +118,7 @@ func assertType(value C.Janet, expected C.JanetType) (err error) {
 
 func prettyPrint(value C.Janet) string {
 	ptr := C._pretty_print(value)
-	str := strings.Clone(C.GoString(ptr))
-	//C.free(unsafe.Pointer(ptr))
-
-	return str
+	return strings.Clone(C.GoString(ptr))
 }
 
 func unmarshal(source C.Janet, dest interface{}) error {
@@ -171,14 +167,12 @@ func unmarshal(source C.Janet, dest interface{}) error {
 		}
 
 		struct_ := C.janet_unwrap_struct(source)
-		log.Printf("%+v", prettyPrint(source))
 		for i := 0; i < type_.NumField(); i++ {
 			field := type_.Field(i)
 			fieldValue := value.Field(i)
 
 			key_ := wrapKeyword(field.Name)
 			value_ := C.janet_struct_get(struct_, key_)
-			log.Printf("%+v %+v %+v", prettyPrint(source), prettyPrint(key_), prettyPrint(value_))
 			err := unmarshal(value_, fieldValue.Addr().Interface())
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal struct field %s: %s", field.Name, err.Error())
