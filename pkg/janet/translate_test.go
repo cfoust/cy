@@ -33,11 +33,21 @@ func TestTranslation(t *testing.T) {
 		One   int
 		Two   bool
 		Three string
+		Ints  [6]int
+		Bools []bool
 	}
+
+	bools := make([]bool, 2)
+	bools[0] = true
 	cmp(t, Value{
 		One:   2,
 		Two:   true,
 		Three: "test",
+		Ints: [6]int{
+			2,
+			3,
+		},
+		Bools: bools,
 	})
 }
 

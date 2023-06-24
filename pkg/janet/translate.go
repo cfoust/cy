@@ -71,6 +71,25 @@ func marshal(item interface{}) (result C.Janet, err error) {
 			C.janet_struct_put(struct_, key_, value_)
 		}
 		result = C.janet_wrap_struct(C.janet_struct_end(struct_))
+	case reflect.Array, reflect.Slice:
+		numElements := 0
+		if type_.Kind() == reflect.Array {
+			numElements = type_.Len()
+		} else {
+			numElements = value.Len()
+		}
+
+		array := C.janet_array(C.int(numElements))
+		for i := 0; i < numElements; i++ {
+			value_, indexErr := marshal(value.Index(i).Interface())
+			if indexErr != nil {
+				err = indexErr
+				return
+			}
+
+			C.janet_array_push(array, value_)
+		}
+		result = C.janet_wrap_array(array)
 	default:
 		err = fmt.Errorf("unimplemented type: %s", type_.String())
 		return
@@ -178,6 +197,45 @@ func unmarshal(source C.Janet, dest interface{}) error {
 				return fmt.Errorf("failed to unmarshal struct field %s: %s", field.Name, err.Error())
 			}
 		}
+	case reflect.Array:
+		if err := assertType(source, C.JANET_ARRAY); err != nil {
+			return err
+		}
+
+		wantElements := type_.Len()
+		haveElements := int(C.janet_length(source))
+		if haveElements != wantElements {
+			return fmt.Errorf("janet array had %d elements, wanted %d", haveElements, wantElements)
+		}
+
+		for i := 0; i < type_.Len(); i++ {
+			value_ := C.janet_get(source, C.janet_wrap_integer(C.int(i)))
+			err := unmarshal(value_, value.Index(i).Addr().Interface())
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal array index %d: %s", i, err.Error())
+			}
+		}
+	case reflect.Slice:
+		if err := assertType(source, C.JANET_ARRAY); err != nil {
+			return err
+		}
+
+		haveElements := int(C.janet_length(source))
+
+		element := type_.Elem()
+		slice := reflect.MakeSlice(type_, 0, 0)
+
+		for i := 0; i < int(haveElements); i++ {
+			value_ := C.janet_get(source, C.janet_wrap_integer(C.int(i)))
+			entry := reflect.New(element)
+			err := unmarshal(value_, entry.Interface())
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal slice index %d: %s", i, err.Error())
+			}
+			slice = reflect.Append(slice, entry.Elem())
+		}
+
+		value.Set(slice)
 	default:
 		return fmt.Errorf("unimplemented type: %s", type_.String())
 	}
