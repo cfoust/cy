@@ -25,6 +25,24 @@ func wrapKeyword(word string) C.Janet {
 	return keyword
 }
 
+func isValidType(type_ reflect.Type) bool {
+	switch type_.Kind() {
+	case reflect.Int, reflect.Float64, reflect.Bool, reflect.String:
+		return true
+	case reflect.Struct:
+		for i := 0; i < type_.NumField(); i++ {
+			if !isValidType(type_.Field(i).Type) {
+				return false
+			}
+		}
+		return true
+	case reflect.Array, reflect.Slice:
+		return isValidType(type_.Elem())
+	default:
+		return false
+	}
+}
+
 // Marshal a Go value into a Janet value.
 func marshal(item interface{}) (result C.Janet, err error) {
 	result = C.janet_wrap_nil()
