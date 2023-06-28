@@ -34,15 +34,16 @@ As of writing, `cy` is just a collection of partially-implemented ideas. The fol
 * [ ] **Server**
     * [X] Socket-based WebSocket server
     * [X] Server communication protocol with `msgpack`
-        * [ ] Is this also the `.borg` file format?
     * [X] Daemonize on startup and create a socket if no server exists
     * [ ] Allow for clients to connect to the server using `cy` without arguments
 * [ ] **Development**
+    * [ ] Configuration files
+        * [X] Integrate Janet
     * [ ] Binding engine
     * [ ] Horizontally/vertically centered panes
     * [ ] [oakthree](https://github.com/cfoust/tmux-oakthree)-esque editor/shell split
-    * [ ] Stretch: configuration files (just use Janet?)
 * [ ] **Replay**
     * [ ] Record all sessions and save in custom file format
+        * [ ] Is this also the `.borg` file format?
     * [ ] Allow users to search through history
     * [ ] Don't record bytes matching regex (IPs etc)
