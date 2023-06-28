@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/creack/pty"
-	//"github.com/danielgatis/go-vte/vtparser"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/term"
 )
