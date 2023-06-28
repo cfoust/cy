@@ -39,7 +39,7 @@ type VM struct {
 func (v *VM) doString(code string) {
 	env := C.janet_core_env(nil)
 	C.apply_env(env)
-	C.janet_dostring(env, C.CString(code), C.CString("main"), nil)
+	C.janet_dostring(env, C.CString(code), C.CString("."), nil)
 }
 
 var globalVM *VM = nil
