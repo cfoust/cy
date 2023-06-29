@@ -3,11 +3,14 @@ package cy
 import (
 	"context"
 
+	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/util"
 	"github.com/cfoust/cy/pkg/wm"
 
 	"github.com/sasha-s/go-deadlock"
 )
+
+type JanetCall interface{}
 
 type Cy struct {
 	util.Lifetime
@@ -16,6 +19,7 @@ type Cy struct {
 	// The tree of groups and panes.
 	tree    *wm.Node
 	clients []*Client
+	binds   *bind.Engine[JanetCall]
 }
 
 // Get the pane that new clients attach to. If there are other clients, we
@@ -76,6 +80,7 @@ func (c *Cy) refreshPane(node *wm.Node) {
 func Start(ctx context.Context) (*Cy, error) {
 	cy := Cy{
 		Lifetime: util.NewLifetime(ctx),
+		binds:    bind.NewEngine[JanetCall](ctx),
 	}
 
 	pane := wm.NewPane(

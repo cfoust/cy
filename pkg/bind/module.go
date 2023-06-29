@@ -214,13 +214,13 @@ func (c *Client[T]) Recv() <-chan Event {
 	return c.events
 }
 
-func (e *Engine[T]) AddClient() *Client[T] {
+func (e *Engine[T]) AddClient(ctx context.Context) *Client[T] {
 	client := Client[T]{
-		Lifetime:      util.NewLifetime(e.Ctx()),
+		Lifetime:      util.NewLifetime(ctx),
 		events:        make(chan Event),
 		engine:        e,
 		scope:         e.Root(),
-		scopeLifetime: util.NewLifetime(e.Ctx()),
+		scopeLifetime: util.NewLifetime(ctx),
 	}
 
 	e.Lock()

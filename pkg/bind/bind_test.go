@@ -35,7 +35,7 @@ func sendKeys(client *Client[int], keys ...interface{}) {
 
 func TestIdle(t *testing.T) {
 	engine := NewEngine[int](context.Background())
-	client := engine.AddClient()
+	client := engine.AddClient(context.Background())
 
 	go func() {
 		for {

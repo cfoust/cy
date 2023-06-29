@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/anim"
+	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
@@ -21,26 +22,31 @@ type Connection ws.Client[P.Message]
 
 type Client struct {
 	deadlock.RWMutex
+	util.Lifetime
+
 	conn Connection
 
 	cy *Cy
 
-	info *terminfo.Terminfo
-
 	attachment *util.Lifetime
 	node       *wm.Node
-	updates    *util.Subscriber[time.Time]
+	binds      *bind.Client[JanetCall]
 
 	// This is a "model" of what the client is seeing so that we can
 	// animate between states
-	raw emu.Terminal
+	raw  emu.Terminal
+	info *terminfo.Terminfo
 }
 
 func (c *Cy) addClient(conn Connection) *Client {
+	clientCtx := conn.Ctx()
+
 	c.Lock()
 	client := &Client{
-		cy:   c,
-		conn: conn,
+		Lifetime: util.NewLifetime(clientCtx),
+		cy:       c,
+		conn:     conn,
+		binds:    c.binds.AddClient(clientCtx),
 	}
 	c.clients = append(c.clients, client)
 	c.Unlock()
@@ -48,6 +54,29 @@ func (c *Cy) addClient(conn Connection) *Client {
 	go c.pollClient(client)
 
 	return client
+}
+
+func (c *Client) pollEvents() {
+	for {
+		select {
+		case <-c.Ctx().Done():
+			return
+		case event := <-c.binds.Recv():
+			switch event := event.(type) {
+			case bind.ActionEvent[JanetCall]:
+				// TODO(cfoust): 06/29/23
+				continue
+			case bind.RawEvent:
+				node := c.GetNode()
+				if node == nil {
+					continue
+				}
+
+				pane := node.Data.(*wm.Pane)
+				pane.Write(event.Data)
+			}
+		}
+	}
 }
 
 func (c *Cy) pollClient(client *Client) {
@@ -58,7 +87,7 @@ func (c *Cy) pollClient(client *Client) {
 
 	// First we need to wait for the client's handshake to know how to
 	// handle its terminal
-	handshakeCtx, cancel := context.WithTimeout(conn.Ctx(), 1*time.Second)
+	handshakeCtx, cancel := context.WithTimeout(client.Ctx(), 1*time.Second)
 	defer cancel()
 
 	select {
@@ -80,6 +109,8 @@ func (c *Cy) pollClient(client *Client) {
 			return
 		}
 	}
+
+	go client.pollEvents()
 
 	client.clearScreen()
 
@@ -111,13 +142,7 @@ func (c *Cy) pollClient(client *Client) {
 
 			case P.MessageTypeInput:
 				msg := packet.Contents.(*P.InputMessage)
-				node := client.GetNode()
-				if node == nil {
-					continue
-				}
-
-				pane := node.Data.(*wm.Pane)
-				pane.Write(msg.Data)
+				client.binds.Input(msg.Data)
 			}
 		}
 	}
@@ -245,7 +270,7 @@ func (c *Client) Attach(node *wm.Node) error {
 		return fmt.Errorf("node was not a pane")
 	}
 
-	attachment := util.NewLifetime(c.conn.Ctx())
+	attachment := util.NewLifetime(c.Ctx())
 
 	c.Lock()
 	if c.attachment != nil {
