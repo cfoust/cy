@@ -26,7 +26,7 @@ type ScopeOptions struct {
 }
 
 var DEFAULT_SCOPE_OPTIONS = ScopeOptions{
-	IdleTimeout:   200 * time.Millisecond,
+	IdleTimeout:   1000 * time.Millisecond, // same as vim
 	StickyWrites:  false,
 	StickyActions: false,
 }
