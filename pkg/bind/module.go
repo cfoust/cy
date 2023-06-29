@@ -66,6 +66,7 @@ func (s *Scope[T]) Options() ScopeOptions {
 func NewScope[T any]() *Scope[T] {
 	return &Scope[T]{
 		mappings: make(map[string]Result[T]),
+		options:  DEFAULT_SCOPE_OPTIONS,
 	}
 }
 
@@ -121,9 +122,10 @@ type Client[T any] struct {
 	util.Lifetime
 	deadlock.RWMutex
 
-	engine *Engine[T]
-	scope  *Scope[T]
-	events chan Event
+	engine        *Engine[T]
+	scope         *Scope[T]
+	events        chan Event
+	scopeLifetime util.Lifetime
 }
 
 func (c *Client[T]) Scope() *Scope[T] {
@@ -133,12 +135,31 @@ func (c *Client[T]) Scope() *Scope[T] {
 }
 
 func (c *Client[T]) setScope(scope *Scope[T]) {
+	c.scopeLifetime.Cancel()
+
 	c.Lock()
 	c.scope = scope
+	c.scopeLifetime = util.NewLifetime(c.Ctx())
+	timeout := scope.options.IdleTimeout
 	c.Unlock()
+
 	c.events <- ScopeEvent[T]{
 		Next: scope,
 	}
+
+	if timeout == 0 {
+		return
+	}
+
+	go func() {
+		timer := time.NewTimer(timeout)
+		select {
+		case <-timer.C:
+			c.gotoRoot()
+		case <-c.scopeLifetime.Ctx().Done():
+			return
+		}
+	}()
 }
 
 func (c *Client[T]) gotoRoot() {
@@ -195,10 +216,11 @@ func (c *Client[T]) Recv() <-chan Event {
 
 func (e *Engine[T]) AddClient() *Client[T] {
 	client := Client[T]{
-		Lifetime: util.NewLifetime(e.Ctx()),
-		events:   make(chan Event),
-		engine:   e,
-		scope:    e.Root(),
+		Lifetime:      util.NewLifetime(e.Ctx()),
+		events:        make(chan Event),
+		engine:        e,
+		scope:         e.Root(),
+		scopeLifetime: util.NewLifetime(e.Ctx()),
 	}
 
 	e.Lock()

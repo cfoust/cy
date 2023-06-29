@@ -47,7 +47,7 @@ func TestIdle(t *testing.T) {
 
 	root := engine.Root()
 	root.Bind(
-		"ctrl-a",
+		"ctrl+a",
 		Result[int]{
 			Scope: scope,
 		},
