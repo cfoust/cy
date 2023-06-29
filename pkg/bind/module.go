@@ -17,15 +17,17 @@ type Result[T any] struct {
 
 type ScopeOptions struct {
 	// The duration after which the client will return to the root scope if
-	// no keys are pressed
+	// no keys are pressed. Zero means never.
 	IdleTimeout time.Duration
-	// If false, results lacking a destination scope will send client back
-	// to the root scope, otherwise they will stay.
+	// If true, triggering an action does not return the client to the root scope.
 	StickyActions bool
+	// If true, unmatched key presses will not return the client to the root scope.
+	StickyWrites bool
 }
 
 var DEFAULT_SCOPE_OPTIONS = ScopeOptions{
 	IdleTimeout:   200 * time.Millisecond,
+	StickyWrites:  false,
 	StickyActions: false,
 }
 
@@ -45,6 +47,26 @@ func (s *Scope[T]) Lookup(key string) *Result[T] {
 	}
 
 	return nil
+}
+
+func (s *Scope[T]) Bind(key string, action Result[T]) {
+	s.Lock()
+	defer s.Unlock()
+
+	s.mappings[key] = action
+}
+
+func (s *Scope[T]) Options() ScopeOptions {
+	s.RLock()
+	defer s.RUnlock()
+
+	return s.options
+}
+
+func NewScope[T any]() *Scope[T] {
+	return &Scope[T]{
+		mappings: make(map[string]Result[T]),
+	}
 }
 
 type Event interface{}
@@ -72,6 +94,12 @@ type Engine[T any] struct {
 	root    *Scope[T]
 }
 
+func (e *Engine[T]) Root() *Scope[T] {
+	e.RLock()
+	defer e.RUnlock()
+	return e.root
+}
+
 func NewEngine[T any](ctx context.Context) *Engine[T] {
 	options := DEFAULT_SCOPE_OPTIONS
 	options.IdleTimeout = 0
@@ -85,6 +113,7 @@ func NewEngine[T any](ctx context.Context) *Engine[T] {
 	return &Engine[T]{
 		Lifetime: util.NewLifetime(ctx),
 		root:     &root,
+		clients:  make(map[*Client[T]]struct{}),
 	}
 }
 
@@ -100,7 +129,6 @@ type Client[T any] struct {
 func (c *Client[T]) Scope() *Scope[T] {
 	c.RLock()
 	defer c.RUnlock()
-
 	return c.scope
 }
 
@@ -113,24 +141,42 @@ func (c *Client[T]) setScope(scope *Scope[T]) {
 	}
 }
 
+func (c *Client[T]) gotoRoot() {
+	c.setScope(c.engine.Root())
+}
+
 func (c *Client[T]) process(msg parse.Msg, data []byte) {
 	scope := c.Scope()
+	if scope == nil {
+		return
+	}
 
-	if key, ok := msg.(parse.KeyMsg); ok {
-		result := scope.Lookup(key.String())
-		if result == nil {
-			// TODO go back to root?
-			c.events <- RawEvent{
-				Data: data,
-			}
-			return
+	// TODO(cfoust): 06/29/23 MouseMsg
+	key, ok := msg.(parse.KeyMsg)
+	if !ok {
+		return
+	}
+
+	result := scope.Lookup(key.String())
+	if result == nil {
+		if !scope.options.StickyWrites {
+			c.gotoRoot()
 		}
 
-		if result.Scope != nil {
-			c.setScope(result.Scope)
-		} else {
-			// go back to root
+		c.events <- RawEvent{
+			Data: data,
 		}
+		return
+	}
+
+	c.events <- ActionEvent[T]{
+		Action: result.Action,
+	}
+
+	if result.Scope != nil {
+		c.setScope(result.Scope)
+	} else if !scope.options.StickyActions {
+		c.gotoRoot()
 	}
 }
 
@@ -151,6 +197,8 @@ func (e *Engine[T]) AddClient() *Client[T] {
 	client := Client[T]{
 		Lifetime: util.NewLifetime(e.Ctx()),
 		events:   make(chan Event),
+		engine:   e,
+		scope:    e.Root(),
 	}
 
 	e.Lock()
