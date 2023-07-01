@@ -32,16 +32,13 @@ The `cy` project has a few main goals:
 As of writing, `cy` is just a collection of partially-implemented ideas. The following features comprise a basic MVP that is still in the works.
 
 * [ ] **Server**
-    * [X] Socket-based WebSocket server
-    * [X] Server communication protocol with `msgpack`
-    * [X] Daemonize on startup and create a socket if no server exists
     * [ ] Allow for clients to connect to the server using `cy` without arguments
 * [ ] **Development**
-    * [ ] Configuration files
-        * [X] Integrate Janet
-    * [ ] Binding engine
-    * [ ] Horizontally/vertically centered panes
-    * [ ] [oakthree](https://github.com/cfoust/tmux-oakthree)-esque editor/shell split
+    * [ ] Populate Janet execution environment with cy standard library
+    * [ ] On startup, attempt to read cy configuration files
+    * [ ] Implement [oakthree](https://github.com/cfoust/tmux-oakthree)
+    * [ ] [fzf](https://github.com/junegunn/fzf/tree/master)-search from Janet
+    * [ ] Pane margins and centering
 * [ ] **Replay**
     * [ ] Record all sessions and save in custom file format
         * [ ] Is this also the `.borg` file format?
