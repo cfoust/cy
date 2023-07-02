@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"reflect"
 	"runtime"
+	"unsafe"
 
 	"github.com/sasha-s/go-deadlock"
 )
@@ -42,7 +43,6 @@ type VM struct {
 
 func (v *VM) doString(code string) {
 	env := C.janet_core_env(nil)
-	C.apply_env(env)
 	C.janet_dostring(env, C.CString(code), C.CString("."), nil)
 }
 
@@ -90,6 +90,13 @@ func (v *VM) poll(ctx context.Context) {
 
 	env := C.janet_core_env(nil)
 	C.apply_env(env)
+	C.janet_dobytes(
+		env,
+		(*C.uchar)(unsafe.Pointer(&(GO_BOOT_FILE)[0])),
+		C.int(len(GO_BOOT_FILE)),
+		C.CString("go-boot.janet"),
+		nil,
+	)
 
 	for {
 		select {

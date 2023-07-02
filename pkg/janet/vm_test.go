@@ -17,7 +17,7 @@ func TestCallback(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	err = vm.Execute(`(go/exec "test")`)
+	err = vm.Execute(`(go/callback "test")`)
 	assert.NoError(t, err)
 
 	assert.True(t, ok, "should have been called")
