@@ -13,6 +13,8 @@ import _ "embed"
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"reflect"
 	"runtime"
 	"unsafe"
@@ -29,9 +31,8 @@ type Result struct {
 
 type Call struct {
 	// Execute some code as a string.
-	Code string
-	// Path to a .janet file to execute.
-	Path   string
+	Code   []byte
+	Source string
 	Result chan<- Result
 }
 
@@ -41,9 +42,17 @@ type VM struct {
 	callbacks map[string]interface{}
 }
 
-func (v *VM) doString(code string) {
+func (v *VM) runCode(code []byte, source string) {
 	env := C.janet_core_env(nil)
-	C.janet_dostring(env, C.CString(code), C.CString("."), nil)
+	sourcePtr := C.CString(source)
+	C.janet_dobytes(
+		env,
+		(*C.uchar)(unsafe.Pointer(&(code)[0])),
+		C.int(len(code)),
+		sourcePtr,
+		nil,
+	)
+	C.free(unsafe.Pointer(sourcePtr))
 }
 
 var globalVM *VM = nil
@@ -79,6 +88,22 @@ func deInitJanet() {
 	C.janet_deinit()
 }
 
+func readFile(filename string) ([]byte, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	buffer, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	return buffer, nil
+}
+
 // Wait for code calls and process them.
 func (v *VM) poll(ctx context.Context) {
 	// All Janet state is thread-local, so we explicitly want to execute
@@ -90,20 +115,14 @@ func (v *VM) poll(ctx context.Context) {
 
 	env := C.janet_core_env(nil)
 	C.apply_env(env)
-	C.janet_dobytes(
-		env,
-		(*C.uchar)(unsafe.Pointer(&(GO_BOOT_FILE)[0])),
-		C.int(len(GO_BOOT_FILE)),
-		C.CString("go-boot.janet"),
-		nil,
-	)
+	v.runCode(GO_BOOT_FILE, "go-boot.janet")
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case call := <-v.calls:
-			v.doString(call.Code)
+			v.runCode(call.Code, "")
 			call.Result <- Result{}
 		}
 	}
@@ -112,7 +131,7 @@ func (v *VM) poll(ctx context.Context) {
 func (v *VM) Execute(code string) error {
 	result := make(chan Result)
 	v.calls <- Call{
-		Code:   code,
+		Code:   []byte(code),
 		Result: result,
 	}
 	return (<-result).Error
