@@ -8,6 +8,7 @@ package janet
 #include <api.h>
 */
 import "C"
+import _ "embed"
 
 import (
 	"context"
@@ -17,6 +18,9 @@ import (
 
 	"github.com/sasha-s/go-deadlock"
 )
+
+//go:embed go-boot.janet
+var GO_BOOT_FILE []byte
 
 type Result struct {
 	Error error
@@ -83,6 +87,9 @@ func (v *VM) poll(ctx context.Context) {
 
 	initJanet()
 	defer deInitJanet()
+
+	env := C.janet_core_env(nil)
+	C.apply_env(env)
 
 	for {
 		select {
@@ -196,7 +203,7 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 	return
 }
 
-func (v *VM) RegisterCallback(name string, callback interface{}) error {
+func (v *VM) Callback(name string, callback interface{}) error {
 	type_ := reflect.TypeOf(callback)
 	if type_.Kind() != reflect.Func {
 		return fmt.Errorf("callback must be a function")

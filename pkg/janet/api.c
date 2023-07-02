@@ -7,7 +7,7 @@ static Janet cfun_go_exec(int32_t argc, Janet *argv) {
 }
 
 static const JanetReg cfuns[] = {
-    {"go", cfun_go_exec, "(go/go)\n\nExecute a Go callback."},
+    {"go/exec", cfun_go_exec, "(go/exec)\n\nExecute a Go callback."},
     {NULL, NULL, NULL}
 };
 
