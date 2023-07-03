@@ -11,8 +11,6 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
-type JanetCall interface{}
-
 type Cy struct {
 	util.Lifetime
 	deadlock.RWMutex
@@ -79,13 +77,13 @@ func (c *Cy) refreshPane(node *wm.Node) {
 	pane.Resize(size)
 }
 
-func Start(ctx context.Context) (*Cy, error) {
+func Start(ctx context.Context, configFile string) (*Cy, error) {
 	cy := Cy{
 		Lifetime: util.NewLifetime(ctx),
 		binds:    bind.NewEngine[JanetCall](ctx),
 	}
 
-	vm, err := janet.New(ctx)
+	vm, err := cy.initJanet(ctx, configFile)
 	if err != nil {
 		return nil, err
 	}
