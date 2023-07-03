@@ -33,7 +33,7 @@ func TestVM(t *testing.T) {
 
 	t.Run("try a callback", func(t *testing.T) {
 		ok = false
-		err = vm.Execute(`(go/callback "test")`)
+		err = vm.Execute(`(test)`)
 		assert.NoError(t, err)
 
 		assert.True(t, ok, "should have been called")
@@ -45,7 +45,7 @@ func TestVM(t *testing.T) {
 		filename := filepath.Join(t.TempDir(), "test.janet")
 		err := writeFile(
 			filename,
-			[]byte(`(go/callback "test")`),
+			[]byte(`(test)`),
 		)
 		assert.NoError(t, err)
 

@@ -34,6 +34,7 @@ type Call struct {
 	Code   []byte
 	Source string
 	Result chan<- Result
+	Unsafe bool
 }
 
 type VM struct {
@@ -157,11 +158,26 @@ func (v *VM) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case call := <-v.calls:
+			if call.Unsafe {
+				v.runCodeUnsafe(call.Code, call.Source)
+				call.Result <- Result{}
+				continue
+			}
 			call.Result <- Result{
 				Error: v.runCode(call.Code, call.Source),
 			}
 		}
 	}
+}
+
+func (v *VM) executeUnsafe(code string) error {
+	result := make(chan Result)
+	v.calls <- Call{
+		Code:   []byte(code),
+		Result: result,
+		Unsafe: true,
+	}
+	return (<-result).Error
 }
 
 func (v *VM) Execute(code string) error {
@@ -325,6 +341,10 @@ func (v *VM) Callback(name string, callback interface{}) error {
 	v.Lock()
 	v.callbacks[name] = callback
 	v.Unlock()
+
+	v.executeUnsafe(fmt.Sprintf(`
+(def %s (go/make-callback "%s"))
+`, name, name))
 
 	return nil
 }
