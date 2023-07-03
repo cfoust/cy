@@ -41,7 +41,7 @@
     (set (env :exit) true))
 
   (defn on-compile-error [msg fiber where line col]
-    (set err (capture-stderr bad-compile msg nil where line col))
+    (set err (go/capture-stderr bad-compile msg nil where line col))
     (set err-fiber fiber)
     (set (env :exit) true))
 

@@ -2,12 +2,26 @@ package janet
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCallback(t *testing.T) {
+func writeFile(path string, data []byte) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	_, err = f.Write(data)
+	return err
+}
+
+func TestVM(t *testing.T) {
+	// TODO(cfoust): 07/02/23 gracefully handle the Janet vm already being
+	// initialized and break these into separate tests
 	vm, err := New(context.Background())
 	assert.NoError(t, err)
 
@@ -17,8 +31,27 @@ func TestCallback(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	err = vm.Execute(`(go/callback "test")`)
-	assert.NoError(t, err)
+	t.Run("try a callback", func(t *testing.T) {
+		ok = false
+		err = vm.Execute(`(go/callback "test")`)
+		assert.NoError(t, err)
 
-	assert.True(t, ok, "should have been called")
+		assert.True(t, ok, "should have been called")
+	})
+
+	t.Run("execute a file", func(t *testing.T) {
+		ok = false
+
+		filename := filepath.Join(t.TempDir(), "test.janet")
+		err := writeFile(
+			filename,
+			[]byte(`(go/callback "test")`),
+		)
+		assert.NoError(t, err)
+
+		err = vm.ExecuteFile(filename)
+		assert.NoError(t, err)
+
+		assert.True(t, ok, "should have been called")
+	})
 }

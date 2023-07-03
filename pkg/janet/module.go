@@ -122,7 +122,7 @@ func (v *VM) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case call := <-v.calls:
-			v.runCode(call.Code, "")
+			v.runCode(call.Code, call.Source)
 			call.Result <- Result{}
 		}
 	}
@@ -132,6 +132,21 @@ func (v *VM) Execute(code string) error {
 	result := make(chan Result)
 	v.calls <- Call{
 		Code:   []byte(code),
+		Result: result,
+	}
+	return (<-result).Error
+}
+
+func (v *VM) ExecuteFile(path string) error {
+	bytes, err := readFile(path)
+	if err != nil {
+		return err
+	}
+
+	result := make(chan Result)
+	v.calls <- Call{
+		Code:   bytes,
+		Source: path,
 		Result: result,
 	}
 	return (<-result).Error
