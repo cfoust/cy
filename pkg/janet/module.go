@@ -170,23 +170,24 @@ func (v *VM) poll(ctx context.Context) {
 	}
 }
 
-func (v *VM) executeUnsafe(code string) error {
+func (v *VM) execute(call Call) error {
 	result := make(chan Result)
-	v.calls <- Call{
-		Code:   []byte(code),
-		Result: result,
-		Unsafe: true,
-	}
+	call.Result = result
+	v.calls <- call
 	return (<-result).Error
 }
 
-func (v *VM) Execute(code string) error {
-	result := make(chan Result)
-	v.calls <- Call{
+func (v *VM) executeUnsafe(code string) error {
+	return v.execute(Call{
 		Code:   []byte(code),
-		Result: result,
-	}
-	return (<-result).Error
+		Unsafe: true,
+	})
+}
+
+func (v *VM) Execute(code string) error {
+	return v.execute(Call{
+		Code: []byte(code),
+	})
 }
 
 func (v *VM) ExecuteFile(path string) error {
@@ -195,13 +196,10 @@ func (v *VM) ExecuteFile(path string) error {
 		return err
 	}
 
-	result := make(chan Result)
-	v.calls <- Call{
+	return v.execute(Call{
 		Code:   bytes,
 		Source: path,
-		Result: result,
-	}
-	return (<-result).Error
+	})
 }
 
 func isErrorType(type_ reflect.Type) bool {
