@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/util"
 	"github.com/cfoust/cy/pkg/wm"
 
@@ -20,6 +21,7 @@ type Cy struct {
 	tree    *wm.Node
 	clients []*Client
 	binds   *bind.Engine[JanetCall]
+	janet   *janet.VM
 }
 
 // Get the pane that new clients attach to. If there are other clients, we
@@ -82,6 +84,13 @@ func Start(ctx context.Context) (*Cy, error) {
 		Lifetime: util.NewLifetime(ctx),
 		binds:    bind.NewEngine[JanetCall](ctx),
 	}
+
+	vm, err := janet.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	cy.janet = vm
 
 	pane := wm.NewPane(
 		cy.Ctx(),

@@ -134,7 +134,7 @@ func readFile(filename string) ([]byte, error) {
 }
 
 // Wait for code calls and process them.
-func (v *VM) poll(ctx context.Context) {
+func (v *VM) poll(ctx context.Context, ready chan bool) {
 	// All Janet state is thread-local, so we explicitly want to execute
 	// all Janet code in the same OS thread.
 	runtime.LockOSThread()
@@ -152,6 +152,8 @@ func (v *VM) poll(ctx context.Context) {
 	C.janet_resolve(env, C.janet_csymbol(C.CString("go/evaluate")), &evaluate)
 	C.janet_gcroot(evaluate)
 	v.evaluate = evaluate
+
+	ready <- true
 
 	for {
 		select {
@@ -356,7 +358,11 @@ func New(ctx context.Context) (*VM, error) {
 		calls:     make(chan Call),
 		callbacks: make(map[string]interface{}),
 	}
-	go vm.poll(ctx)
+
+	vmReady := make(chan bool)
+	go vm.poll(ctx, vmReady)
+	<-vmReady
+
 	globalVM = &vm
 	return &vm, nil
 }
