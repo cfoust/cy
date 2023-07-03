@@ -50,3 +50,16 @@ const char *_pretty_print(Janet value) {
 Janet wrap_keyword(const char *str) {
     return janet_ckeywordv(str);
 }
+
+Janet evaluate(Janet evaluate, const uint8_t *bytes, int32_t len, const char *sourcePath) {
+    Janet args[2] = {
+        janet_wrap_string(janet_string(bytes, len)),
+        janet_cstringv(sourcePath),
+    };
+
+    JanetFiber *fiber = NULL;
+    JanetFunction *evaluateFn = janet_unwrap_function(evaluate);
+    Janet result;
+    janet_pcall(evaluateFn, 2, args, &result, &fiber);
+    return result;
+}

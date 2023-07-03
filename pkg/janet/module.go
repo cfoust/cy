@@ -40,9 +40,11 @@ type VM struct {
 	deadlock.RWMutex
 	calls     chan Call
 	callbacks map[string]interface{}
+	evaluate  C.Janet
 }
 
-func (v *VM) runCode(code []byte, source string) {
+// Run code without using our evaluation function. This can panic.
+func (v *VM) runCodeUnsafe(code []byte, source string) {
 	env := C.janet_core_env(nil)
 	sourcePtr := C.CString(source)
 	C.janet_dobytes(
@@ -53,6 +55,32 @@ func (v *VM) runCode(code []byte, source string) {
 		nil,
 	)
 	C.free(unsafe.Pointer(sourcePtr))
+}
+
+// Run code with our custom evaluator.
+func (v *VM) runCode(code []byte, source string) error {
+	sourcePtr := C.CString(source)
+	result := C.evaluate(
+		v.evaluate,
+		(*C.uchar)(unsafe.Pointer(&(code)[0])),
+		C.int(len(code)),
+		sourcePtr,
+	)
+	C.free(unsafe.Pointer(sourcePtr))
+
+	resultType := C.janet_type(result)
+
+	if resultType == C.JANET_STRING {
+		var message string
+		err := unmarshal(result, &message)
+		if err != nil {
+			return err
+		}
+
+		return fmt.Errorf(message)
+	}
+
+	return nil
 }
 
 var globalVM *VM = nil
@@ -113,17 +141,25 @@ func (v *VM) poll(ctx context.Context) {
 	initJanet()
 	defer deInitJanet()
 
+	// Set up the core environment
 	env := C.janet_core_env(nil)
 	C.apply_env(env)
-	v.runCode(GO_BOOT_FILE, "go-boot.janet")
+	v.runCodeUnsafe(GO_BOOT_FILE, "go-boot.janet")
+
+	// Then store our evaluation function
+	var evaluate C.Janet
+	C.janet_resolve(env, C.janet_csymbol(C.CString("go/evaluate")), &evaluate)
+	C.janet_gcroot(evaluate)
+	v.evaluate = evaluate
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case call := <-v.calls:
-			v.runCode(call.Code, call.Source)
-			call.Result <- Result{}
+			call.Result <- Result{
+				Error: v.runCode(call.Code, call.Source),
+			}
 		}
 	}
 }

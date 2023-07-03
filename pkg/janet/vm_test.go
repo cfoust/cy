@@ -54,4 +54,9 @@ func TestVM(t *testing.T) {
 
 		assert.True(t, ok, "should have been called")
 	})
+
+	t.Run("catches a syntax error", func(t *testing.T) {
+		err = vm.Execute(`(asd`)
+		assert.Error(t, err)
+	})
 }
