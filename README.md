@@ -34,8 +34,8 @@ As of writing, `cy` is just a collection of partially-implemented ideas. The fol
 * [ ] **Server**
     * [ ] Allow for clients to connect to the server using `cy` without arguments
 * [ ] **Development**
-    * [ ] Populate Janet execution environment with cy standard library
-    * [ ] On startup, attempt to read cy configuration files
+    * [X] Populate Janet execution environment with cy standard library
+    * [X] On startup, attempt to read cy configuration files
     * [ ] Implement [oakthree](https://github.com/cfoust/tmux-oakthree)
     * [ ] [fzf](https://github.com/junegunn/fzf/tree/master)-search from Janet
     * [ ] Pane margins and centering
