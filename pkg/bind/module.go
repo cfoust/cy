@@ -15,27 +15,20 @@ type Result[T any] struct {
 	Action T
 }
 
-type ScopeOptions struct {
-	// The duration after which the client will return to the root scope if
-	// no keys are pressed. Zero means never.
-	IdleTimeout time.Duration
-	// If true, triggering an action does not return the client to the root scope.
-	StickyActions bool
-	// If true, unmatched key presses will not return the client to the root scope.
-	StickyWrites bool
+type Bind[T any] struct {
+	Sequence    []string
+	Description string
+	Action      T
 }
 
-var DEFAULT_SCOPE_OPTIONS = ScopeOptions{
-	IdleTimeout:   1000 * time.Millisecond, // same as vim
-	StickyWrites:  false,
-	StickyActions: false,
+type Trie[T any] struct {
+	mapping map[string]*Trie[T]
 }
 
 type Scope[T any] struct {
 	deadlock.RWMutex
-	name     string
-	mappings map[string]Result[T]
-	options  ScopeOptions
+	binds []Bind[T]
+	name  string
 }
 
 func (s *Scope[T]) Lookup(key string) *Result[T] {
