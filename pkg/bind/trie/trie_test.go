@@ -8,12 +8,28 @@ import (
 
 func TestTrie(t *testing.T) {
 	trie := New[int]()
-	path := []string{
+	trie.Set([]string{
 		"one",
 		"two",
-	}
-	trie.Set(path, 2)
-	_, matched := trie.Get(path)
+	}, 2)
 
+	_, matched := trie.Get([]string{
+		"one",
+		"two",
+	})
 	assert.Equal(t, true, matched)
+
+	trie.Set([]string{
+		"one",
+		"three",
+	}, 1)
+
+	trie.Set([]string{
+		"two",
+	}, 1)
+
+	assert.Equal(t, 3, len(trie.Leaves()))
+	assert.Equal(t, 2, len(trie.Partial([]string{
+		"one",
+	})))
 }
