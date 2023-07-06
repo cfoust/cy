@@ -92,6 +92,7 @@ func (e *Engine[T]) setState(ctx context.Context, state []string) {
 	e.clearTimeout()
 
 	e.Lock()
+	e.state = state
 	e.keyTimeout = util.NewLifetime(ctx)
 	e.Unlock()
 
@@ -104,6 +105,12 @@ func (e *Engine[T]) setState(ctx context.Context, state []string) {
 			return
 		}
 	}()
+}
+
+func (e *Engine[T]) getState() []string {
+	e.RLock()
+	defer e.RUnlock()
+	return e.state
 }
 
 func (e *Engine[T]) processKey(ctx context.Context, in input) {

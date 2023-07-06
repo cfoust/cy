@@ -3,6 +3,7 @@ package bind
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/cfoust/cy/pkg/bind/parse"
 	"github.com/stretchr/testify/assert"
@@ -35,7 +36,7 @@ func sendKeys(client *Engine[int], keys ...interface{}) {
 	}
 }
 
-func TestIdle(t *testing.T) {
+func TestAction(t *testing.T) {
 	engine := NewEngine[int]()
 	go engine.Poll(context.Background())
 
@@ -59,4 +60,37 @@ func TestIdle(t *testing.T) {
 		Action: 2,
 		Source: scope,
 	}, event)
+}
+
+func TestIdle(t *testing.T) {
+	engine := NewEngine[int]()
+
+	go engine.Poll(context.Background())
+
+	go func() {
+		for {
+			<-engine.Recv()
+		}
+	}()
+
+	scope := NewScope[int]()
+	scope.Set(
+		[]string{"ctrl+a", "a"},
+		2,
+	)
+
+	engine.SetScopes(scope)
+
+	sendKeys(
+		engine,
+		parse.KeyCtrlA,
+	)
+
+	assert.Equal(t, []string{
+		"ctrl+a",
+	}, engine.getState())
+
+	time.Sleep(time.Second + 50*time.Millisecond)
+
+	assert.Equal(t, engine.getState(), []string{})
 }
