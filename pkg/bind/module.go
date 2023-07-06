@@ -11,8 +11,8 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
-type Bindable[T any] interface {
-	Binds() *trie.Trie[T]
+func NewScope[T any]() *trie.Trie[T] {
+	return trie.New[T]()
 }
 
 type Event interface{}
@@ -20,12 +20,12 @@ type Event interface{}
 // An action was triggered
 type ActionEvent[T any] struct {
 	Action T
-	Source Bindable[T]
+	Source *trie.Trie[T]
 }
 
 type Match[T any] struct {
 	Bind   trie.Leaf[T]
-	Source Bindable[T]
+	Source *trie.Trie[T]
 }
 
 // There are partial matches
@@ -51,7 +51,7 @@ type Engine[T any] struct {
 	in  chan input
 	out chan Event
 
-	scopes []Bindable[T]
+	scopes []*trie.Trie[T]
 
 	// Track the timeout for a user to enter another key
 	keyTimeout util.Lifetime
@@ -63,7 +63,7 @@ type Engine[T any] struct {
 func NewEngine[T any]() *Engine[T] {
 	return &Engine[T]{
 		in:         make(chan input),
-		out:        make(chan Event),
+		out:        make(chan Event, 100),
 		keyTimeout: util.NewLifetime(context.Background()),
 	}
 }
@@ -122,7 +122,7 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) {
 
 	// Later scopes override earlier ones
 	for i := len(scopes) - 1; i >= 0; i-- {
-		scope := scopes[i].Binds()
+		scope := scopes[i]
 		value, matched := scope.Get(sequence)
 		if !matched {
 			continue
@@ -132,6 +132,7 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) {
 		e.clearState()
 		e.out <- ActionEvent[T]{
 			Action: value,
+			Source: scope,
 		}
 		return
 	}
@@ -139,7 +140,7 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) {
 	// Otherwise we might have a partial match
 	matches := make([]Match[T], 0)
 	for i := len(scopes) - 1; i >= 0; i-- {
-		scope := scopes[i].Binds()
+		scope := scopes[i]
 
 		for _, match := range scope.Partial(sequence) {
 			matches = append(matches, Match[T]{
@@ -162,6 +163,13 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) {
 	e.out <- RawEvent{
 		Data: in.Data,
 	}
+}
+
+func (e *Engine[T]) SetScopes(scopes ...*trie.Trie[T]) {
+	e.clearState()
+	e.Lock()
+	e.scopes = scopes
+	e.Unlock()
 }
 
 func (e *Engine[T]) Poll(ctx context.Context) {

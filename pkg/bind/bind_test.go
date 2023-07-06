@@ -3,13 +3,12 @@ package bind
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/cfoust/cy/pkg/bind/parse"
 	"github.com/stretchr/testify/assert"
 )
 
-func sendKeys(client *Client[int], keys ...interface{}) {
+func sendKeys(client *Engine[int], keys ...interface{}) {
 	msgs := make([]parse.KeyMsg, 0)
 
 	for _, key := range keys {
@@ -29,36 +28,35 @@ func sendKeys(client *Client[int], keys ...interface{}) {
 	}
 
 	for _, msg := range msgs {
-		client.process(msg, []byte{})
+		client.processKey(context.Background(), input{
+			Message: msg,
+			Data:    []byte{},
+		})
 	}
 }
 
 func TestIdle(t *testing.T) {
-	engine := NewEngine[int](context.Background())
-	client := engine.AddClient(context.Background())
-
-	go func() {
-		for {
-			<-client.Recv()
-		}
-	}()
+	engine := NewEngine[int]()
+	go engine.Poll(context.Background())
 
 	scope := NewScope[int]()
-
-	root := engine.Root()
-	root.Bind(
-		"ctrl+a",
-		Result[int]{
-			Scope: scope,
-		},
+	scope.Set(
+		[]string{"ctrl+a"},
+		2,
 	)
 
-	sendKeys(
-		client,
+	engine.SetScopes(scope)
+
+	go sendKeys(
+		engine,
 		parse.KeyCtrlA,
 	)
-	assert.Equal(t, client.Scope(), scope)
 
-	time.Sleep(250 * time.Millisecond)
-	assert.Equal(t, client.Scope(), root)
+	<-engine.Recv()
+	<-engine.Recv()
+	event := <-engine.Recv()
+	assert.Equal(t, ActionEvent[int]{
+		Action: 2,
+		Source: scope,
+	}, event)
 }
