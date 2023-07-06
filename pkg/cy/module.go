@@ -3,7 +3,6 @@ package cy
 import (
 	"context"
 
-	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/util"
 	"github.com/cfoust/cy/pkg/wm"
@@ -18,7 +17,6 @@ type Cy struct {
 	// The tree of groups and panes.
 	tree    *wm.Node
 	clients []*Client
-	binds   *bind.Engine[JanetCall]
 	janet   *janet.VM
 }
 
@@ -80,7 +78,6 @@ func (c *Cy) refreshPane(node *wm.Node) {
 func Start(ctx context.Context, configFile string) (*Cy, error) {
 	cy := Cy{
 		Lifetime: util.NewLifetime(ctx),
-		binds:    bind.NewEngine[JanetCall](ctx),
 	}
 
 	vm, err := cy.initJanet(ctx, configFile)

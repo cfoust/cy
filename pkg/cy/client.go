@@ -30,7 +30,7 @@ type Client struct {
 
 	attachment *util.Lifetime
 	node       *wm.Node
-	binds      *bind.Client[JanetCall]
+	binds      *bind.Engine[JanetCall]
 
 	// This is a "model" of what the client is seeing so that we can
 	// animate between states
@@ -46,7 +46,7 @@ func (c *Cy) addClient(conn Connection) *Client {
 		Lifetime: util.NewLifetime(clientCtx),
 		cy:       c,
 		conn:     conn,
-		binds:    c.binds.AddClient(clientCtx),
+		binds:    bind.NewEngine[JanetCall](),
 	}
 	c.clients = append(c.clients, client)
 	c.Unlock()
@@ -111,6 +111,7 @@ func (c *Cy) pollClient(client *Client) {
 	}
 
 	go client.pollEvents()
+	go client.binds.Poll(client.Ctx())
 
 	client.clearScreen()
 
