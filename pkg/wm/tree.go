@@ -1,5 +1,10 @@
 package wm
 
+import (
+	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/bind/trie"
+)
+
 // cy uses a tree to represent panes and groups of them:
 // projects
 // - cy
@@ -12,11 +17,12 @@ package wm
 // - shell
 // - shell
 // - shell
-//
-// both groups and panes can have local bindings
-// whenever a key is pressed, cy starts at the root node (global bindings) and
-// traverses inwards down to where the user is until the key matches a binding
-// or ultimately is passed as input
+
+type Callback struct {
+	Docstring string
+}
+
+type BindScope = trie.Trie[Callback]
 
 type NodeType int
 
@@ -33,6 +39,7 @@ type Node struct {
 	Name string
 	// If nil, this is a child of the root node.
 	Parent *Node
+	Binds  *BindScope
 	Data   NodeData
 }
 
@@ -58,8 +65,9 @@ func NewGroup() *Group {
 
 func Wrap(name string, data NodeData) *Node {
 	return &Node{
-		Name: name,
-		Data: data,
+		Name:  name,
+		Data:  data,
+		Binds: bind.NewScope[Callback](),
 	}
 }
 
