@@ -5,62 +5,14 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind/parse"
+	"github.com/cfoust/cy/pkg/bind/trie"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/sasha-s/go-deadlock"
 )
 
-type Result[T any] struct {
-	Scope  *Scope[T]
-	Action T
-}
-
-type Bind[T any] struct {
-	Sequence    []string
-	Description string
-	Action      T
-}
-
-type Trie[T any] struct {
-	mapping map[string]*Trie[T]
-}
-
-type Scope[T any] struct {
-	deadlock.RWMutex
-	binds []Bind[T]
-	name  string
-}
-
-func (s *Scope[T]) Lookup(key string) *Result[T] {
-	s.RLock()
-	defer s.RUnlock()
-
-	if mapping, ok := s.mappings[key]; ok {
-		return &mapping
-	}
-
-	return nil
-}
-
-func (s *Scope[T]) Bind(key string, action Result[T]) {
-	s.Lock()
-	defer s.Unlock()
-
-	s.mappings[key] = action
-}
-
-func (s *Scope[T]) Options() ScopeOptions {
-	s.RLock()
-	defer s.RUnlock()
-
-	return s.options
-}
-
-func NewScope[T any]() *Scope[T] {
-	return &Scope[T]{
-		mappings: make(map[string]Result[T]),
-		options:  DEFAULT_SCOPE_OPTIONS,
-	}
+type Bindable[T any] interface {
+	Binds() *trie.Trie[T]
 }
 
 type Event interface{}
@@ -68,11 +20,18 @@ type Event interface{}
 // An action was triggered
 type ActionEvent[T any] struct {
 	Action T
+	Source Bindable[T]
 }
 
-// The scope changed
-type ScopeEvent[T any] struct {
-	Next *Scope[T]
+type Match[T any] struct {
+	Bind   trie.Leaf[T]
+	Source Bindable[T]
+}
+
+// There are partial matches
+type PartialEvent[T any] struct {
+	Prefix  []string
+	Matches []Match[T]
 }
 
 // All input that did not match anything in the scope
@@ -80,152 +39,150 @@ type RawEvent struct {
 	Data []byte
 }
 
+// Contains data for a single input event
+type input struct {
+	Message parse.Msg
+	Data    []byte
+}
+
 type Engine[T any] struct {
-	util.Lifetime
 	deadlock.RWMutex
 
-	clients map[*Client[T]]struct{}
-	root    *Scope[T]
+	in  chan input
+	out chan Event
+
+	scopes []Bindable[T]
+
+	// Track the timeout for a user to enter another key
+	keyTimeout util.Lifetime
+
+	// Holds the sequence of keys the user has entered
+	state []string
 }
 
-func (e *Engine[T]) Root() *Scope[T] {
-	e.RLock()
-	defer e.RUnlock()
-	return e.root
-}
-
-func NewEngine[T any](ctx context.Context) *Engine[T] {
-	options := DEFAULT_SCOPE_OPTIONS
-	options.IdleTimeout = 0
-
-	root := Scope[T]{
-		name:     "*",
-		mappings: make(map[string]Result[T]),
-		options:  options,
-	}
-
+func NewEngine[T any]() *Engine[T] {
 	return &Engine[T]{
-		Lifetime: util.NewLifetime(ctx),
-		root:     &root,
-		clients:  make(map[*Client[T]]struct{}),
+		in:         make(chan input),
+		out:        make(chan Event),
+		keyTimeout: util.NewLifetime(context.Background()),
 	}
 }
 
-type Client[T any] struct {
-	util.Lifetime
-	deadlock.RWMutex
-
-	engine        *Engine[T]
-	scope         *Scope[T]
-	events        chan Event
-	scopeLifetime util.Lifetime
+func (e *Engine[T]) Recv() <-chan Event {
+	return e.out
 }
 
-func (c *Client[T]) Scope() *Scope[T] {
-	c.RLock()
-	defer c.RUnlock()
-	return c.scope
+func (e *Engine[T]) clearTimeout() {
+	if !e.keyTimeout.IsDone() {
+		e.keyTimeout.Cancel()
+	}
 }
 
-func (c *Client[T]) setScope(scope *Scope[T]) {
-	c.scopeLifetime.Cancel()
+func (e *Engine[T]) clearState() {
+	e.clearTimeout()
 
-	c.Lock()
-	c.scope = scope
-	c.scopeLifetime = util.NewLifetime(c.Ctx())
-	timeout := scope.options.IdleTimeout
-	c.Unlock()
+	e.Lock()
+	e.state = make([]string, 0)
+	e.Unlock()
 
-	c.events <- ScopeEvent[T]{
-		Next: scope,
-	}
+	e.out <- PartialEvent[T]{}
+}
 
-	if timeout == 0 {
-		return
-	}
+func (e *Engine[T]) setState(ctx context.Context, state []string) {
+	e.clearTimeout()
+
+	e.Lock()
+	e.keyTimeout = util.NewLifetime(ctx)
+	e.Unlock()
 
 	go func() {
-		timer := time.NewTimer(timeout)
+		timer := time.NewTimer(1 * time.Second)
 		select {
 		case <-timer.C:
-			c.gotoRoot()
-		case <-c.scopeLifetime.Ctx().Done():
+			e.clearState()
+		case <-e.keyTimeout.Ctx().Done():
 			return
 		}
 	}()
 }
 
-func (c *Client[T]) gotoRoot() {
-	c.setScope(c.engine.Root())
-}
-
-func (c *Client[T]) process(msg parse.Msg, data []byte) {
-	scope := c.Scope()
-	if scope == nil {
-		return
-	}
-
+func (e *Engine[T]) processKey(ctx context.Context, in input) {
 	// TODO(cfoust): 06/29/23 MouseMsg
-	key, ok := msg.(parse.KeyMsg)
+	key, ok := in.Message.(parse.KeyMsg)
 	if !ok {
 		return
 	}
 
-	result := scope.Lookup(key.String())
-	if result == nil {
-		if !scope.options.StickyWrites {
-			c.gotoRoot()
+	e.RLock()
+	state := e.state
+	scopes := e.scopes
+	e.RUnlock()
+
+	sequence := append(state, key.String())
+
+	// Later scopes override earlier ones
+	for i := len(scopes) - 1; i >= 0; i-- {
+		scope := scopes[i].Binds()
+		value, matched := scope.Get(sequence)
+		if !matched {
+			continue
 		}
 
-		c.events <- RawEvent{
-			Data: data,
+		// Exact match, let's stop
+		e.clearState()
+		e.out <- ActionEvent[T]{
+			Action: value,
 		}
 		return
 	}
 
-	c.events <- ActionEvent[T]{
-		Action: result.Action,
+	// Otherwise we might have a partial match
+	matches := make([]Match[T], 0)
+	for i := len(scopes) - 1; i >= 0; i-- {
+		scope := scopes[i].Binds()
+
+		for _, match := range scope.Partial(sequence) {
+			matches = append(matches, Match[T]{
+				Bind:   match,
+				Source: scopes[i],
+			})
+		}
 	}
 
-	if result.Scope != nil {
-		c.setScope(result.Scope)
-	} else if !scope.options.StickyActions {
-		c.gotoRoot()
+	if len(matches) > 0 {
+		e.out <- PartialEvent[T]{
+			Prefix:  sequence,
+			Matches: matches,
+		}
+		e.setState(ctx, sequence)
+		return
+	}
+
+	e.clearState()
+	e.out <- RawEvent{
+		Data: in.Data,
+	}
+}
+
+func (e *Engine[T]) Poll(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case in := <-e.in:
+			e.processKey(ctx, in)
+		}
 	}
 }
 
 // Process input and produce events.
-func (c *Client[T]) Input(data []byte) {
+func (e *Engine[T]) Input(data []byte) {
 	for i, w := 0, 0; i < len(data); i += w {
 		var msg parse.Msg
 		w, msg = parse.DetectOneMsg(data[i:])
-		c.process(msg, data[i:])
+		e.in <- input{
+			Message: msg,
+			Data:    data[i:],
+		}
 	}
-}
-
-func (c *Client[T]) Recv() <-chan Event {
-	return c.events
-}
-
-func (e *Engine[T]) AddClient(ctx context.Context) *Client[T] {
-	client := Client[T]{
-		Lifetime:      util.NewLifetime(ctx),
-		events:        make(chan Event),
-		engine:        e,
-		scope:         e.Root(),
-		scopeLifetime: util.NewLifetime(ctx),
-	}
-
-	e.Lock()
-	e.clients[&client] = struct{}{}
-	e.Unlock()
-
-	go func() {
-		<-client.Ctx().Done()
-		e.Lock()
-		delete(e.clients, &client)
-		e.Unlock()
-	}()
-
-	return &client
 }

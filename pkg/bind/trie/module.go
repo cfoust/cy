@@ -1,6 +1,11 @@
 package trie
 
+import (
+	"github.com/sasha-s/go-deadlock"
+)
+
 type Trie[T any] struct {
+	deadlock.RWMutex
 	next map[string]interface{}
 }
 
@@ -60,6 +65,9 @@ type Leaf[T any] struct {
 }
 
 func (t *Trie[T]) Leaves() (leaves []Leaf[T]) {
+	t.RLock()
+	defer t.RUnlock()
+
 	for key := range t.next {
 		if leaf, ok := t.getLeaf(key); ok {
 			leaves = append(
@@ -100,6 +108,9 @@ func (t *Trie[T]) Leaves() (leaves []Leaf[T]) {
 
 // Get a list of all partial matches for a sequence, if any.
 func (t *Trie[T]) Partial(sequence []string) (result []Leaf[T]) {
+	t.RLock()
+	defer t.RUnlock()
+
 	parent := t.access(sequence, false)
 	if parent == nil {
 		return
@@ -109,6 +120,9 @@ func (t *Trie[T]) Partial(sequence []string) (result []Leaf[T]) {
 }
 
 func (t *Trie[T]) Get(sequence []string) (value T, matched bool) {
+	t.RLock()
+	defer t.RUnlock()
+
 	lastIndex := len(sequence) - 1
 	last := sequence[lastIndex]
 	parent := t.access(sequence[:lastIndex], false)
@@ -127,6 +141,9 @@ func (t *Trie[T]) Get(sequence []string) (value T, matched bool) {
 }
 
 func (t *Trie[T]) Set(sequence []string, value T) {
+	t.Lock()
+	defer t.Unlock()
+
 	if len(sequence) == 0 {
 		return
 	}
