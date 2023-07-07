@@ -29,19 +29,83 @@ type Result struct {
 	Error error
 }
 
-type Call struct {
-	// Execute some code as a string.
-	Code   []byte
-	Source string
-	Result chan<- Result
-	Unsafe bool
+type CallOptions struct {
+	// Whether to allow the code to mutate the current environment.
+	UpdateEnv bool
 }
+
+var DEFAULT_CALL_OPTIONS = CallOptions{
+	UpdateEnv: true,
+}
+
+type Call struct {
+	Code       []byte
+	SourcePath string
+	Options    CallOptions
+}
+
+func CallBytes(data []byte) Call {
+	return Call{
+		Code:    data,
+		Options: DEFAULT_CALL_OPTIONS,
+	}
+}
+
+func CallString(code string) Call {
+	return Call{
+		Code:    []byte(code),
+		Options: DEFAULT_CALL_OPTIONS,
+	}
+}
+
+type CallRequest struct {
+	Call   Call
+	Result chan Result
+}
+
+// A request for a Janet value to be marked as freeable
 
 type VM struct {
 	deadlock.RWMutex
-	calls     chan Call
 	callbacks map[string]interface{}
 	evaluate  C.Janet
+
+	execs   chan CallRequest
+	unlocks chan *Value
+
+	env *Environment
+}
+
+var ERROR_FREED = fmt.Errorf("cannot use freed value")
+
+type Value struct {
+	deadlock.RWMutex
+
+	vm       *VM
+	janet    C.Janet
+	wasFreed bool
+}
+
+func (v *Value) IsFree() bool {
+	v.RLock()
+	defer v.RUnlock()
+	return v.wasFreed
+}
+
+func (v *Value) Free() {
+	v.Lock()
+	defer v.Unlock()
+	if v.wasFreed {
+		return
+	}
+	v.wasFreed = true
+
+	v.vm.unlocks <- v
+}
+
+type Environment struct {
+	value *Value
+	table *C.JanetTable
 }
 
 // Run code without using our evaluation function. This can panic.
@@ -58,13 +122,29 @@ func (v *VM) runCodeUnsafe(code []byte, source string) {
 	C.free(unsafe.Pointer(sourcePtr))
 }
 
+func (v *VM) packValue(janet C.Janet) *Value {
+	C.janet_gcroot(janet)
+	return &Value{
+		vm:    v,
+		janet: janet,
+	}
+}
+
 // Run code with our custom evaluator.
-func (v *VM) runCode(code []byte, source string) error {
-	sourcePtr := C.CString(source)
+func (v *VM) runCode(call Call) error {
+	sourcePtr := C.CString(call.SourcePath)
+
+	var env *C.JanetTable = C.janet_core_env(nil)
+
+	if v.env != nil {
+		env = v.env.table
+	}
+
 	result := C.evaluate(
 		v.evaluate,
-		(*C.uchar)(unsafe.Pointer(&(code)[0])),
-		C.int(len(code)),
+		env,
+		(*C.uchar)(unsafe.Pointer(&(call.Code)[0])),
+		C.int(len(call.Code)),
 		sourcePtr,
 	)
 	C.free(unsafe.Pointer(sourcePtr))
@@ -79,6 +159,17 @@ func (v *VM) runCode(code []byte, source string) error {
 		}
 
 		return fmt.Errorf(message)
+	}
+
+	if resultType != C.JANET_TABLE {
+		return fmt.Errorf("evaluate returned unexpected type")
+	}
+
+	if call.Options.UpdateEnv {
+		v.env = &Environment{
+			value: v.packValue(result),
+			table: C.janet_unwrap_table(result),
+		}
 	}
 
 	return nil
@@ -159,37 +250,28 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 		select {
 		case <-ctx.Done():
 			return
-		case call := <-v.calls:
-			if call.Unsafe {
-				v.runCodeUnsafe(call.Code, call.Source)
-				call.Result <- Result{}
-				continue
+		case req := <-v.execs:
+			call := req.Call
+			req.Result <- Result{
+				Error: v.runCode(call),
 			}
-			call.Result <- Result{
-				Error: v.runCode(call.Code, call.Source),
-			}
+		case req := <-v.unlocks:
+			C.janet_gcunroot(req.janet)
 		}
 	}
 }
 
-func (v *VM) execute(call Call) error {
-	result := make(chan Result)
-	call.Result = result
-	v.calls <- call
-	return (<-result).Error
-}
-
-func (v *VM) executeUnsafe(code string) error {
-	return v.execute(Call{
-		Code:   []byte(code),
-		Unsafe: true,
-	})
+func (v *VM) ExecuteCall(call Call) error {
+	req := CallRequest{
+		Call:   call,
+		Result: make(chan Result),
+	}
+	v.execs <- req
+	return (<-req.Result).Error
 }
 
 func (v *VM) Execute(code string) error {
-	return v.execute(Call{
-		Code: []byte(code),
-	})
+	return v.ExecuteCall(CallString(code))
 }
 
 func (v *VM) ExecuteFile(path string) error {
@@ -198,10 +280,10 @@ func (v *VM) ExecuteFile(path string) error {
 		return err
 	}
 
-	return v.execute(Call{
-		Code:   bytes,
-		Source: path,
-	})
+	call := CallBytes(bytes)
+	call.SourcePath = path
+
+	return v.ExecuteCall(call)
 }
 
 func isErrorType(type_ reflect.Type) bool {
@@ -342,9 +424,11 @@ func (v *VM) Callback(name string, callback interface{}) error {
 	v.callbacks[name] = callback
 	v.Unlock()
 
-	v.executeUnsafe(fmt.Sprintf(`
+	call := CallString(fmt.Sprintf(`
 (def %s (go/make-callback "%s"))
 `, name, name))
+	call.Options.UpdateEnv = true
+	v.ExecuteCall(call)
 
 	return nil
 }
@@ -355,7 +439,8 @@ func New(ctx context.Context) (*VM, error) {
 	}
 
 	vm := VM{
-		calls:     make(chan Call),
+		execs:     make(chan CallRequest),
+		unlocks:   make(chan *Value),
 		callbacks: make(map[string]interface{}),
 	}
 

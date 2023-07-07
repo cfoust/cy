@@ -30,8 +30,8 @@
 
 (defn go/evaluate
   "Compile and evaluate a script and return its environment."
-  [user-script &opt source]
-  (def env (make-env root-env))
+  [user-script source-env &opt source]
+  (def env (make-env source-env))
 
   (var err nil)
   (var err-fiber nil)

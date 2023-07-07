@@ -18,7 +18,7 @@ import (
 	"github.com/xo/terminfo"
 )
 
-type Connection ws.Client[P.Message]
+type Connection = ws.Client[P.Message]
 
 type Client struct {
 	deadlock.RWMutex
@@ -30,7 +30,7 @@ type Client struct {
 
 	attachment *util.Lifetime
 	node       *wm.Node
-	binds      *bind.Engine[JanetCall]
+	binds      *bind.Engine[wm.Callback]
 
 	// This is a "model" of what the client is seeing so that we can
 	// animate between states
@@ -46,7 +46,7 @@ func (c *Cy) addClient(conn Connection) *Client {
 		Lifetime: util.NewLifetime(clientCtx),
 		cy:       c,
 		conn:     conn,
-		binds:    bind.NewEngine[JanetCall](),
+		binds:    bind.NewEngine[wm.Callback](),
 	}
 	c.clients = append(c.clients, client)
 	c.Unlock()
@@ -63,7 +63,7 @@ func (c *Client) pollEvents() {
 			return
 		case event := <-c.binds.Recv():
 			switch event := event.(type) {
-			case bind.ActionEvent[JanetCall]:
+			case bind.ActionEvent[wm.Callback]:
 				// TODO(cfoust): 06/29/23
 				continue
 			case bind.RawEvent:
@@ -282,6 +282,16 @@ func (c *Client) Attach(node *wm.Node) error {
 	oldNode := c.node
 	c.node = node
 	c.Unlock()
+
+	// Update bindings
+	scopes := make([]*wm.BindScope, 0)
+	current := node
+	for current != nil {
+		scopes = append([]*wm.BindScope{
+			current.Binds,
+		}, scopes...)
+	}
+	c.binds.SetScopes(scopes...)
 
 	if oldNode != nil {
 		c.cy.refreshPane(oldNode)

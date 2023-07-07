@@ -59,4 +59,12 @@ func TestVM(t *testing.T) {
 		err = vm.Execute(`(asd`)
 		assert.Error(t, err)
 	})
+
+	t.Run("defining a symbol", func(t *testing.T) {
+		err = vm.Execute(`(def some-int 2)`)
+		assert.NoError(t, err)
+
+		err = vm.Execute(`(+ some-int some-int)`)
+		assert.NoError(t, err)
+	})
 }
