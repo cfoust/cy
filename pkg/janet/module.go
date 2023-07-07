@@ -92,6 +92,17 @@ func (v *Value) IsFree() bool {
 	return v.wasFreed
 }
 
+// Free, but synchronously.
+func (v *Value) free() {
+	v.Lock()
+	defer v.Unlock()
+	if v.wasFreed {
+		return
+	}
+	v.wasFreed = true
+	C.janet_gcunroot(v.janet)
+}
+
 func (v *Value) Free() {
 	v.Lock()
 	defer v.Unlock()
@@ -166,6 +177,10 @@ func (v *VM) runCode(call Call) error {
 	}
 
 	if call.Options.UpdateEnv {
+		if v.env != nil {
+			v.env.value.free()
+		}
+
 		v.env = &Environment{
 			value: v.packValue(result),
 			table: C.janet_unwrap_table(result),
