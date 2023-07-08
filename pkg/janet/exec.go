@@ -48,10 +48,7 @@ func CallString(code string) Call {
 	}
 }
 
-type CallRequest struct {
-	Call   Call
-	Result chan Result
-}
+type CallRequest RPC[Call, error]
 
 // Run code without using our evaluation function. This can panic.
 func (v *VM) runCodeUnsafe(code []byte, source string) {
@@ -118,11 +115,11 @@ func (v *VM) runCode(call Call) error {
 
 func (v *VM) ExecuteCall(call Call) error {
 	req := CallRequest{
-		Call:   call,
-		Result: make(chan Result),
+		Params: call,
+		Result: make(chan error),
 	}
-	v.execs <- req
-	return (<-req.Result).Error
+	v.requests <- req
+	return <-req.Result
 }
 
 func (v *VM) Execute(code string) error {

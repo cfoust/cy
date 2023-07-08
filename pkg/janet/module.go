@@ -21,13 +21,19 @@ import (
 //go:embed go-boot.janet
 var GO_BOOT_FILE []byte
 
+type Request interface{}
+
+type RPC[A any, B any] struct {
+	Params A
+	Result chan B
+}
+
 type VM struct {
 	deadlock.RWMutex
 	callbacks map[string]interface{}
 	evaluate  C.Janet
 
-	execs   chan CallRequest
-	unlocks chan *Value
+	requests chan Request
 
 	env *Table
 }
@@ -66,13 +72,13 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 		select {
 		case <-ctx.Done():
 			return
-		case req := <-v.execs:
-			call := req.Call
-			req.Result <- Result{
-				Error: v.runCode(call),
+		case req := <-v.requests:
+			switch req := req.(type) {
+			case CallRequest:
+				req.Result <- v.runCode(req.Params)
+			case UnlockRequest:
+				req.Params.unroot()
 			}
-		case req := <-v.unlocks:
-			C.janet_gcunroot(req.janet)
 		}
 	}
 }
@@ -83,8 +89,7 @@ func New(ctx context.Context) (*VM, error) {
 	}
 
 	vm := VM{
-		execs:     make(chan CallRequest),
-		unlocks:   make(chan *Value),
+		requests:  make(chan Request),
 		callbacks: make(map[string]interface{}),
 	}
 

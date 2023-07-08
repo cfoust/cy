@@ -33,6 +33,8 @@ func (v *VM) value(janet C.Janet) *Value {
 	}
 }
 
+type UnlockRequest RPC[*Value, error]
+
 func (v *Value) IsFree() bool {
 	v.RLock()
 	defer v.RUnlock()
@@ -51,7 +53,9 @@ func (v *Value) Free() {
 	}
 	v.wasFreed = true
 
-	v.vm.unlocks <- v
+	v.vm.requests <- UnlockRequest{
+		Params: v,
+	}
 }
 
 func (v *Value) Unmarshal(dest interface{}) error {
