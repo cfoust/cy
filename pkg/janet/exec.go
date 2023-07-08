@@ -90,7 +90,7 @@ func (v *VM) runCode(call Call) error {
 
 	if resultType == C.JANET_STRING {
 		var message string
-		err := unmarshal(result, &message)
+		err := v.unmarshal(result, &message)
 		if err != nil {
 			return err
 		}
@@ -108,7 +108,7 @@ func (v *VM) runCode(call Call) error {
 		}
 
 		v.env = &Table{
-			Value: v.packValue(result),
+			Value: v.value(result),
 			table: C.janet_unwrap_table(result),
 		}
 	}

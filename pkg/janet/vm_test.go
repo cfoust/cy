@@ -19,6 +19,18 @@ func writeFile(path string, data []byte) error {
 	return err
 }
 
+func cmp[T any](t *testing.T, vm *VM, before T) {
+	value, err := vm.marshal(before)
+	assert.NoError(t, err)
+
+	var after T
+	err = vm.unmarshal(value, &after)
+	assert.NoError(t, err)
+
+	t.Logf("%+v", after)
+	assert.Equal(t, before, after, "should yield same result")
+}
+
 func TestVM(t *testing.T) {
 	// TODO(cfoust): 07/02/23 gracefully handle the Janet vm already being
 	// initialized and break these into separate tests
@@ -37,6 +49,18 @@ func TestVM(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.True(t, ok, "should have been called")
+	})
+
+	t.Run("try a callback with a function", func(t *testing.T) {
+		var fun *Function
+		err = vm.Callback("test-callback", func(f *Function) {
+			fun = f
+		})
+		assert.NoError(t, err)
+
+		err = vm.Execute(`(test-callback (fn [&] (pp "hello")))`)
+		assert.NoError(t, err)
+		assert.NotNil(t, fun)
 	})
 
 	t.Run("execute a file", func(t *testing.T) {
@@ -66,5 +90,36 @@ func TestVM(t *testing.T) {
 
 		err = vm.Execute(`(+ some-int some-int)`)
 		assert.NoError(t, err)
+	})
+
+	t.Run("translation", func(t *testing.T) {
+		initJanet()
+		defer deInitJanet()
+
+		cmp(t, vm, 2)
+		cmp(t, vm, 2.02)
+		cmp(t, vm, true)
+		cmp(t, vm, "test")
+
+		type Value struct {
+			One   int
+			Two   bool
+			Three string
+			Ints  [6]int
+			Bools []bool
+		}
+
+		bools := make([]bool, 2)
+		bools[0] = true
+		cmp(t, vm, Value{
+			One:   2,
+			Two:   true,
+			Three: "test",
+			Ints: [6]int{
+				2,
+				3,
+			},
+			Bools: bools,
+		})
 	})
 }

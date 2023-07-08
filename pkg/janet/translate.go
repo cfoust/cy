@@ -29,6 +29,12 @@ func isValidType(type_ reflect.Type) bool {
 	switch type_.Kind() {
 	case reflect.Int, reflect.Float64, reflect.Bool, reflect.String:
 		return true
+	case reflect.Pointer:
+		if _, ok := reflect.New(type_.Elem()).Interface().(*Function); ok {
+			return true
+		}
+
+		return false
 	case reflect.Struct:
 		for i := 0; i < type_.NumField(); i++ {
 			if !isValidType(type_.Field(i).Type) {
@@ -44,7 +50,7 @@ func isValidType(type_ reflect.Type) bool {
 }
 
 // Marshal a Go value into a Janet value.
-func marshal(item interface{}) (result C.Janet, err error) {
+func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 	result = C.janet_wrap_nil()
 
 	type_ := reflect.TypeOf(item)
@@ -80,7 +86,7 @@ func marshal(item interface{}) (result C.Janet, err error) {
 
 			key_ := wrapKeyword(field.Name)
 
-			value_, fieldErr := marshal(fieldValue.Interface())
+			value_, fieldErr := v.marshal(fieldValue.Interface())
 			if fieldErr != nil {
 				err = fmt.Errorf("could not marshal value '%s': %s", field.Name, fieldErr.Error())
 				return
@@ -99,7 +105,7 @@ func marshal(item interface{}) (result C.Janet, err error) {
 
 		array := C.janet_array(C.int(numElements))
 		for i := 0; i < numElements; i++ {
-			value_, indexErr := marshal(value.Index(i).Interface())
+			value_, indexErr := v.marshal(value.Index(i).Interface())
 			if indexErr != nil {
 				err = indexErr
 				return
@@ -158,7 +164,7 @@ func prettyPrint(value C.Janet) string {
 	return strings.Clone(C.GoString(ptr))
 }
 
-func unmarshal(source C.Janet, dest interface{}) error {
+func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 	type_ := reflect.TypeOf(dest)
 	value := reflect.ValueOf(dest)
 
@@ -198,6 +204,22 @@ func unmarshal(source C.Janet, dest interface{}) error {
 		}
 		strPtr := C.GoString(C.cast_janet_string(C.janet_unwrap_string(source)))
 		value.SetString(strings.Clone(strPtr))
+	case reflect.Pointer:
+		// TODO(cfoust): 07/08/23 this is messy, fix it
+		if _, ok := reflect.New(type_).Elem().Interface().(*Function); ok {
+			if err := assertType(source, C.JANET_FUNCTION); err != nil {
+				return err
+			}
+
+			function := &Function{
+				Value:    v.value(source),
+				function: C.janet_unwrap_function(source),
+			}
+			value.Set(reflect.ValueOf(function))
+			return nil
+		}
+
+		return fmt.Errorf("unimplemented pointer type: %s (%s)", type_.String(), type_.Kind().String())
 	case reflect.Struct:
 		if err := assertType(source, C.JANET_STRUCT); err != nil {
 			return err
@@ -210,7 +232,7 @@ func unmarshal(source C.Janet, dest interface{}) error {
 
 			key_ := wrapKeyword(field.Name)
 			value_ := C.janet_struct_get(struct_, key_)
-			err := unmarshal(value_, fieldValue.Addr().Interface())
+			err := v.unmarshal(value_, fieldValue.Addr().Interface())
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal struct field %s: %s", field.Name, err.Error())
 			}
@@ -228,7 +250,7 @@ func unmarshal(source C.Janet, dest interface{}) error {
 
 		for i := 0; i < type_.Len(); i++ {
 			value_ := C.janet_get(source, C.janet_wrap_integer(C.int(i)))
-			err := unmarshal(value_, value.Index(i).Addr().Interface())
+			err := v.unmarshal(value_, value.Index(i).Addr().Interface())
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal array index %d: %s", i, err.Error())
 			}
@@ -246,7 +268,7 @@ func unmarshal(source C.Janet, dest interface{}) error {
 		for i := 0; i < int(haveElements); i++ {
 			value_ := C.janet_get(source, C.janet_wrap_integer(C.int(i)))
 			entry := reflect.New(element)
-			err := unmarshal(value_, entry.Interface())
+			err := v.unmarshal(value_, entry.Interface())
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal slice index %d: %s", i, err.Error())
 			}
@@ -255,7 +277,7 @@ func unmarshal(source C.Janet, dest interface{}) error {
 
 		value.Set(slice)
 	default:
-		return fmt.Errorf("unimplemented type: %s", type_.String())
+		return fmt.Errorf("unimplemented type: %s (%s)", type_.String(), type_.Kind().String())
 	}
 
 	return nil

@@ -56,7 +56,7 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 
 	target := args[0]
 	var name string
-	err := unmarshal(target, &name)
+	err := v.unmarshal(target, &name)
 	if err != nil {
 		resultErr = err
 		return
@@ -84,7 +84,7 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 			return
 		}
 
-		err := unmarshal(args[i], argValue.Interface())
+		err := v.unmarshal(args[i], argValue.Interface())
 		if err != nil {
 			resultErr = fmt.Errorf("error processing argument %d: %s", i, err.Error())
 			return
@@ -107,7 +107,7 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 			return
 		}
 
-		value, err := marshal(results[0].Interface())
+		value, err := v.marshal(results[0].Interface())
 		if err != nil {
 			resultErr = fmt.Errorf("failed to marshal return value: %s", err.Error())
 			return
@@ -118,7 +118,7 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 	}
 
 	// numResults must be 2
-	value, err := marshal(results[0].Interface())
+	value, err := v.marshal(results[0].Interface())
 	if err != nil {
 		resultErr = fmt.Errorf("failed to marshal return value: %s", err.Error())
 		return
@@ -143,9 +143,10 @@ func (v *VM) Callback(name string, callback interface{}) error {
 
 		if !isValidType(argType) {
 			return fmt.Errorf(
-				"arg %d's type %s not supported",
+				"arg %d's type %s (%s) not supported",
 				i,
 				argType.String(),
+				argType.Kind().String(),
 			)
 		}
 	}

@@ -25,7 +25,7 @@ type Value struct {
 	wasFreed bool
 }
 
-func (v *VM) packValue(janet C.Janet) *Value {
+func (v *VM) value(janet C.Janet) *Value {
 	C.janet_gcroot(janet)
 	return &Value{
 		vm:    v,
@@ -59,7 +59,7 @@ func (v *Value) Unmarshal(dest interface{}) error {
 		return ERROR_FREED
 	}
 
-	return unmarshal(v.janet, dest)
+	return v.vm.unmarshal(v.janet, dest)
 }
 
 type Table struct {
@@ -71,4 +71,3 @@ type Function struct {
 	*Value
 	function *C.JanetFunction
 }
-
