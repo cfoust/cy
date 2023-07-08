@@ -25,6 +25,14 @@ type Value struct {
 	wasFreed bool
 }
 
+func (v *VM) packValue(janet C.Janet) *Value {
+	C.janet_gcroot(janet)
+	return &Value{
+		vm:    v,
+		janet: janet,
+	}
+}
+
 func (v *Value) IsFree() bool {
 	v.RLock()
 	defer v.RUnlock()
@@ -63,3 +71,4 @@ type Function struct {
 	*Value
 	function *C.JanetFunction
 }
+

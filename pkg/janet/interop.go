@@ -21,6 +21,12 @@ func wrapError(message string) C.Janet {
 	return C.wrap_result_error(C.CString(message))
 }
 
+func isErrorType(type_ reflect.Type) bool {
+	value := reflect.New(type_)
+	_, ok := value.Interface().(*error)
+	return ok
+}
+
 //export ExecGo
 func ExecGo(argc int, argv *C.Janet) C.Janet {
 	if globalVM == nil {
