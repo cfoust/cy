@@ -150,12 +150,15 @@ func janetTypeString(type_ C.JanetType) string {
 	return mapping
 }
 
-func assertType(value C.Janet, expected C.JanetType) (err error) {
-	if C.janet_checktype(value, expected) == 1 {
-		return
+func assertType(value C.Janet, expected ...C.JanetType) (err error) {
+	for _, type_ := range expected {
+		if C.janet_checktype(value, type_) == 1 {
+			return
+		}
 	}
 
 	actual := C.janet_type(value)
+	// TODO(cfoust): 07/08/23 this is wrong
 	return fmt.Errorf("expected number, got %s", janetTypeString(actual))
 }
 
@@ -256,7 +259,10 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 			}
 		}
 	case reflect.Slice:
-		if err := assertType(source, C.JANET_ARRAY); err != nil {
+		if err := assertType(
+			source,
+			C.JANET_ARRAY,
+			C.JANET_TUPLE); err != nil {
 			return err
 		}
 
