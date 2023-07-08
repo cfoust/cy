@@ -58,9 +58,12 @@ func TestVM(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		err = vm.Execute(`(test-callback (fn [&] (pp "hello")))`)
+		err = vm.Execute(`(test-callback (fn [first second &] (pp "hello")))`)
 		assert.NoError(t, err)
 		assert.NotNil(t, fun)
+
+		err = fun.Call("2312", 2)
+		assert.NoError(t, err)
 	})
 
 	t.Run("execute a file", func(t *testing.T) {

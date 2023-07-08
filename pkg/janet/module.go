@@ -28,6 +28,13 @@ type RPC[A any, B any] struct {
 	Result chan B
 }
 
+func makeRPC[A any, B any](params A) RPC[A, B] {
+	return RPC[A, B]{
+		Params: params,
+		Result: make(chan B),
+	}
+}
+
 type VM struct {
 	deadlock.RWMutex
 	callbacks map[string]interface{}
@@ -78,6 +85,12 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 				req.Result <- v.runCode(req.Params)
 			case UnlockRequest:
 				req.Params.unroot()
+			case FunctionRequest:
+				params := req.Params
+				req.Result <- v.runFunction(
+					params.Function.function,
+					params.Args,
+				)
 			}
 		}
 	}

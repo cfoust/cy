@@ -75,3 +75,22 @@ type Function struct {
 	*Value
 	function *C.JanetFunction
 }
+
+type FunctionParams struct {
+	Args     []interface{}
+	Function *Function
+}
+type FunctionRequest RPC[FunctionParams, error]
+
+func (f *Function) Call(params ...interface{}) error {
+	req := FunctionRequest{
+		Params: FunctionParams{
+			Args:     params,
+			Function: f,
+		},
+		Result: make(chan error),
+	}
+
+	f.vm.requests <- req
+	return <-req.Result
+}

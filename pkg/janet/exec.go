@@ -113,6 +113,29 @@ func (v *VM) runCode(call Call) error {
 	return nil
 }
 
+func (v *VM) runFunction(fun *C.JanetFunction, args []interface{}) error {
+	cArgs := make([]C.Janet, 0)
+	for _, arg := range args {
+		value, err := v.marshal(arg)
+		if err != nil {
+			return err
+		}
+		cArgs = append(cArgs, value)
+	}
+
+	var fiber *C.JanetFiber = nil
+	var result C.Janet
+	C.janet_pcall(
+		fun,
+		C.int(len(args)),
+		(*C.Janet)(unsafe.Pointer(&cArgs[0])),
+		&result,
+		&fiber,
+	)
+
+	return nil
+}
+
 func (v *VM) ExecuteCall(call Call) error {
 	req := CallRequest{
 		Params: call,
