@@ -30,7 +30,7 @@ type Client struct {
 
 	attachment *util.Lifetime
 	node       *wm.Node
-	binds      *bind.Engine[wm.Callback]
+	binds      *bind.Engine[wm.Binding]
 
 	// This is a "model" of what the client is seeing so that we can
 	// animate between states
@@ -46,7 +46,7 @@ func (c *Cy) addClient(conn Connection) *Client {
 		Lifetime: util.NewLifetime(clientCtx),
 		cy:       c,
 		conn:     conn,
-		binds:    bind.NewEngine[wm.Callback](),
+		binds:    bind.NewEngine[wm.Binding](),
 	}
 	c.clients = append(c.clients, client)
 	c.Unlock()
@@ -63,8 +63,8 @@ func (c *Client) pollEvents() {
 			return
 		case event := <-c.binds.Recv():
 			switch event := event.(type) {
-			case bind.ActionEvent[wm.Callback]:
-				// TODO(cfoust): 06/29/23
+			case bind.ActionEvent[wm.Binding]:
+				event.Action.Callback.Call()
 				continue
 			case bind.RawEvent:
 				node := c.GetNode()

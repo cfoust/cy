@@ -80,13 +80,6 @@ func Start(ctx context.Context, configFile string) (*Cy, error) {
 		Lifetime: util.NewLifetime(ctx),
 	}
 
-	vm, err := cy.initJanet(ctx, configFile)
-	if err != nil {
-		return nil, err
-	}
-
-	cy.janet = vm
-
 	pane := wm.NewPane(
 		cy.Ctx(),
 		wm.PaneContext{
@@ -96,9 +89,16 @@ func Start(ctx context.Context, configFile string) (*Cy, error) {
 	)
 
 	group := wm.NewGroup()
-	group.Add(wm.Wrap("", pane))
+	rootNode := wm.Wrap("", nil, group)
+	group.Add(wm.Wrap("", rootNode, pane))
+	cy.tree = rootNode
 
-	cy.tree = wm.Wrap("", group)
+	vm, err := cy.initJanet(ctx, configFile)
+	if err != nil {
+		return nil, err
+	}
+
+	cy.janet = vm
 
 	return &cy, nil
 }

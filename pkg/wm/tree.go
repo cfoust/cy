@@ -3,6 +3,7 @@ package wm
 import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/bind/trie"
+	"github.com/cfoust/cy/pkg/janet"
 )
 
 // cy uses a tree to represent panes and groups of them:
@@ -18,11 +19,12 @@ import (
 // - shell
 // - shell
 
-type Callback struct {
-	Docstring string
+type Binding struct {
+	Description string
+	Callback    *janet.Function
 }
 
-type BindScope = trie.Trie[Callback]
+type BindScope = trie.Trie[Binding]
 
 type NodeType int
 
@@ -63,11 +65,12 @@ func NewGroup() *Group {
 	return &Group{}
 }
 
-func Wrap(name string, data NodeData) *Node {
+func Wrap(name string, parent *Node, data NodeData) *Node {
 	return &Node{
-		Name:  name,
-		Data:  data,
-		Binds: bind.NewScope[Callback](),
+		Name:   name,
+		Data:   data,
+		Parent: parent,
+		Binds:  bind.NewScope[Binding](),
 	}
 }
 

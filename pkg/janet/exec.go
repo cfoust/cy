@@ -123,12 +123,17 @@ func (v *VM) runFunction(fun *C.JanetFunction, args []interface{}) error {
 		cArgs = append(cArgs, value)
 	}
 
+	argPtr := unsafe.Pointer(nil)
+	if len(args) > 0 {
+		argPtr = unsafe.Pointer(&cArgs[0])
+	}
+
 	var fiber *C.JanetFiber = nil
 	var result C.Janet
 	C.janet_pcall(
 		fun,
 		C.int(len(args)),
-		(*C.Janet)(unsafe.Pointer(&cArgs[0])),
+		(*C.Janet)(argPtr),
 		&result,
 		&fiber,
 	)
