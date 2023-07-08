@@ -290,6 +290,7 @@ func (c *Client) Attach(node *wm.Node) error {
 		scopes = append([]*wm.BindScope{
 			current.Binds,
 		}, scopes...)
+		current = current.Parent
 	}
 	c.binds.SetScopes(scopes...)
 
