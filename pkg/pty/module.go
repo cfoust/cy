@@ -6,11 +6,14 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/cfoust/cy/pkg/pty/dir"
+
 	"github.com/creack/pty"
 )
 
 type Pty struct {
 	ptmx *os.File
+	proc *os.Process
 	done chan error
 }
 
@@ -28,11 +31,11 @@ func Run(
 	}
 
 	go func() {
-		shell := exec.CommandContext(ctx, command, args...)
-		shell.Dir = directory
+		cmd := exec.CommandContext(ctx, command, args...)
+		cmd.Dir = directory
 
 		fd, err := pty.StartWithSize(
-			shell,
+			cmd,
 			&pty.Winsize{
 				Rows: uint16(rows),
 				Cols: uint16(cols),
@@ -45,9 +48,10 @@ func Run(
 		started <- nil
 
 		p.ptmx = fd
+		p.proc = cmd.Process
 
 		defer fd.Close()
-		shellDone <- shell.Wait()
+		shellDone <- cmd.Wait()
 	}()
 
 	err := <-started
@@ -68,6 +72,11 @@ func (c *Pty) Read(p []byte) (n int, err error) {
 
 func (c *Pty) Write(p []byte) (n int, err error) {
 	return c.ptmx.Write(p)
+}
+
+// Get the current working directory of the process.
+func (c *Pty) Path() (string, error) {
+	return dir.ForPid(c.proc.Pid)
 }
 
 func (p *Pty) Resize(rows, cols int) error {
