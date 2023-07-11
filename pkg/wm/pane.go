@@ -14,7 +14,7 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
-type PaneContext struct {
+type PaneOptions struct {
 	Directory string
 	Command   string
 	Args      []string
@@ -32,16 +32,19 @@ const (
 type Pane struct {
 	util.Lifetime
 	deadlock.RWMutex
+	*metaData
 
 	status PaneStatus
 
-	context PaneContext
+	context PaneOptions
 	session *session.Session
 	pty     *pty.Pty
 	changes *util.Publisher[time.Time]
 
 	Terminal emu.Terminal
 }
+
+var _ Node = (*Pane)(nil)
 
 // Subscribe to state updates.
 func (p *Pane) Subscribe() *util.Subscriber[time.Time] {
@@ -215,7 +218,7 @@ func (p *Pane) spin() {
 	}
 }
 
-func NewPane(ctx context.Context, context PaneContext, size Size) *Pane {
+func newPane(ctx context.Context, context PaneOptions, size Size) *Pane {
 	pane := Pane{
 		Lifetime: util.NewLifetime(ctx),
 		status:   PaneStatusStarting,

@@ -1,9 +1,14 @@
 package wm
 
 import (
+	"context"
+	"sync/atomic"
+
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/bind/trie"
 	"github.com/cfoust/cy/pkg/janet"
+
+	"github.com/sasha-s/go-deadlock"
 )
 
 // cy uses a tree to represent panes and groups of them:
@@ -26,73 +31,92 @@ type Binding struct {
 
 type BindScope = trie.Trie[Binding]
 
-type NodeType int
+type NodeID = int32
 
-const (
-	NodeTypeGroup NodeType = iota
-	NodeTypePane
-)
-
-type NodeData interface {
-	Type() NodeType
+type metaData struct {
+	id    NodeID
+	name  string
+	binds *BindScope
 }
 
-type Node struct {
-	Name string
-	// If nil, this is a child of the root node.
-	Parent *Node
-	Binds  *BindScope
-	Data   NodeData
+func (m *metaData) Id() int32 {
+	return m.id
+}
+
+func (m *metaData) Name() string {
+	return m.name
+}
+
+func (m *metaData) SetName(name string) {
+	m.name = name
+}
+
+func (m *metaData) Binds() *BindScope {
+	return m.binds
+}
+
+type Node interface {
+	Id() NodeID
+	Name() string
+	SetName(string)
+	Binds() *BindScope
 }
 
 type Group struct {
-	// TODO(cfoust): 06/08/23 bindings
-
-	children []*Node
+	*metaData
+	tree     *Tree
+	children []Node
 }
 
-func (g *Group) Type() NodeType { return NodeTypeGroup }
+var _ Node = (*Group)(nil)
 
-func (g *Group) Add(node *Node) {
-	g.children = append(g.children, node)
-}
-
-func (g *Group) Children() []*Node {
+func (g *Group) Children() []Node {
 	return g.children
 }
 
-func NewGroup() *Group {
-	return &Group{}
+func (g *Group) NewPane(
+	ctx context.Context,
+	options PaneOptions,
+	size Size,
+) *Pane {
+	pane := newPane(ctx, options, size)
+	pane.metaData = g.tree.newMetadata()
+	g.tree.storeNode(pane)
+	return pane
 }
 
-func Wrap(name string, parent *Node, data NodeData) *Node {
-	return &Node{
-		Name:   name,
-		Data:   data,
-		Parent: parent,
-		Binds:  bind.NewScope[Binding](),
+func (g *Group) NewGroup() *Group {
+	metaData := g.tree.newMetadata()
+	group := &Group{
+		metaData: metaData,
+		tree:     g.tree,
 	}
+	g.tree.storeNode(group)
+	return group
 }
 
-var _ NodeData = (*Group)(nil)
+type Tree struct {
+	deadlock.RWMutex
+	root      *metaData
+	nodes     map[int32]Node
+	nodeIndex atomic.Int32
+}
 
-func (p *Pane) Type() NodeType { return NodeTypePane }
+func (t *Tree) newMetadata() *metaData {
+	t.Lock()
+	defer t.Unlock()
 
-var _ NodeData = (*Pane)(nil)
-
-// Get all of the leaf nodes (panes) of the tree.
-func GetLeaves(tree *Node) (results []*Node) {
-	data := tree.Data
-
-	if data.Type() == NodeTypePane {
-		results = append(results, tree)
-		return
+	node := &metaData{
+		id:    t.nodeIndex.Add(1),
+		binds: bind.NewScope[Binding](),
 	}
 
-	group := data.(*Group)
-	for _, child := range group.Children() {
-		results = append(results, GetLeaves(child)...)
-	}
+	return node
+}
 
-	return results
+func (t *Tree) storeNode(node Node) {
+	t.Lock()
+	defer t.Unlock()
+
+	t.nodes[node.Id()] = node
 }

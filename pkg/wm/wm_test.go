@@ -11,7 +11,7 @@ import (
 func TestHealthy(t *testing.T) {
 	pane := NewPane(
 		context.Background(),
-		PaneContext{
+		PaneOptions{
 			Command: "/bin/sh",
 		},
 		Size{
@@ -28,7 +28,7 @@ func TestHealthy(t *testing.T) {
 func TestFailLoop(t *testing.T) {
 	pane := NewPane(
 		context.Background(),
-		PaneContext{
+		PaneOptions{
 			Command: "/bin/sh",
 			Args: []string{
 				"-c",
