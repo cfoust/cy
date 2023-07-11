@@ -14,6 +14,7 @@ import (
 	"github.com/cfoust/cy/pkg/util"
 	"github.com/cfoust/cy/pkg/wm"
 
+	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 	"github.com/xo/terminfo"
 )
@@ -64,7 +65,10 @@ func (c *Client) pollEvents() {
 		case event := <-c.binds.Recv():
 			switch event := event.(type) {
 			case bind.ActionEvent[wm.Binding]:
-				event.Action.Callback.Call()
+				err := event.Action.Callback.CallContext(c)
+				if err != nil {
+					log.Error().Err(err).Msgf("failed to run callback")
+				}
 				continue
 			case bind.RawEvent:
 				node := c.GetNode()

@@ -48,6 +48,18 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 		},
 	)
 
+	err = vm.Callback(
+		"pane/current",
+		func(context interface{}) string {
+			_, ok := context.(*Client)
+			if !ok {
+				return ""
+			}
+
+			return "ok"
+		},
+	)
+
 	err = vm.ExecuteCall(janet.Call{
 		Code:       CY_BOOT_FILE,
 		SourcePath: "cy-boot.janet",

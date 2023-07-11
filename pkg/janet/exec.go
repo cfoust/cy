@@ -131,7 +131,7 @@ func (v *VM) runFunction(fun *C.JanetFunction, args []interface{}) error {
 
 	var fiber *C.JanetFiber = nil
 	var result C.Janet
-	C.janet_pcall(
+	signal := C.janet_pcall(
 		fun,
 		C.int(len(args)),
 		(*C.Janet)(argPtr),
@@ -139,7 +139,14 @@ func (v *VM) runFunction(fun *C.JanetFunction, args []interface{}) error {
 		&fiber,
 	)
 
-	return nil
+	switch signal {
+	case C.JANET_SIGNAL_OK:
+		return nil
+	case C.JANET_SIGNAL_ERROR:
+		return fmt.Errorf("error while running Janet function")
+	default:
+		return nil
+	}
 }
 
 func (v *VM) ExecuteCall(call Call) error {
