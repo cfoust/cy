@@ -74,6 +74,11 @@ func (g *Group) Children() []Node {
 	return g.children
 }
 
+func (g *Group) addNode(node Node) {
+	g.tree.storeNode(node)
+	g.children = append(g.children, node)
+}
+
 func (g *Group) NewPane(
 	ctx context.Context,
 	options PaneOptions,
@@ -81,24 +86,23 @@ func (g *Group) NewPane(
 ) *Pane {
 	pane := newPane(ctx, options, size)
 	pane.metaData = g.tree.newMetadata()
-	g.tree.storeNode(pane)
+	g.addNode(pane)
 	return pane
 }
 
 func (g *Group) NewGroup() *Group {
-	metaData := g.tree.newMetadata()
 	group := &Group{
-		metaData: metaData,
+		metaData: g.tree.newMetadata(),
 		tree:     g.tree,
 	}
-	g.tree.storeNode(group)
+	g.addNode(group)
 	return group
 }
 
 type Tree struct {
 	deadlock.RWMutex
-	root      *metaData
-	nodes     map[int32]Node
+	root      *Group
+	nodes     map[NodeID]Node
 	nodeIndex atomic.Int32
 }
 
@@ -119,4 +123,21 @@ func (t *Tree) storeNode(node Node) {
 	defer t.Unlock()
 
 	t.nodes[node.Id()] = node
+}
+
+func (t *Tree) Root() *Group {
+	return t.root
+}
+
+func NewTree() *Tree {
+	tree := &Tree{
+		nodes: make(map[NodeID]Node),
+	}
+
+	tree.root = &Group{
+		metaData: tree.newMetadata(),
+		tree:     tree,
+	}
+
+	return tree
 }

@@ -9,13 +9,14 @@ import (
 )
 
 func TestHealthy(t *testing.T) {
-	pane := NewPane(
+	tree := NewTree()
+	pane := tree.Root().NewPane(
 		context.Background(),
 		PaneOptions{
 			Command: "/bin/sh",
 		},
 		Size{
-			Rows: 26,
+			Rows:    26,
 			Columns: 80,
 		},
 	)
@@ -26,7 +27,8 @@ func TestHealthy(t *testing.T) {
 }
 
 func TestFailLoop(t *testing.T) {
-	pane := NewPane(
+	tree := NewTree()
+	pane := tree.Root().NewPane(
 		context.Background(),
 		PaneOptions{
 			Command: "/bin/sh",
@@ -36,7 +38,7 @@ func TestFailLoop(t *testing.T) {
 			},
 		},
 		Size{
-			Rows: 26,
+			Rows:    26,
 			Columns: 80,
 		},
 	)
