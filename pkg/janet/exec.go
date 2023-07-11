@@ -31,6 +31,7 @@ var DEFAULT_CALL_OPTIONS = CallOptions{
 type Call struct {
 	Code       []byte
 	SourcePath string
+	Context    interface{}
 	Options    CallOptions
 }
 

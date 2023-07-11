@@ -42,7 +42,8 @@ type VM struct {
 
 	requests chan Request
 
-	env *Table
+	context interface{}
+	env     *Table
 }
 
 func initJanet() {
@@ -82,15 +83,20 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 		case req := <-v.requests:
 			switch req := req.(type) {
 			case CallRequest:
-				req.Result <- v.runCode(req.Params)
+				params := req.Params
+				v.context = params.Context
+				req.Result <- v.runCode(params)
+				v.context = nil
 			case UnlockRequest:
 				req.Params.unroot()
 			case FunctionRequest:
 				params := req.Params
+				v.context = params.Context
 				req.Result <- v.runFunction(
 					params.Function.function,
 					params.Args,
 				)
+				v.context = nil
 			}
 		}
 	}

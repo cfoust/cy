@@ -58,12 +58,28 @@ func TestVM(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		err = vm.Execute(`(test-callback (fn [first second &] (pp "hello")))`)
+		err = vm.Execute(`(test-callback (fn [first second &] (+ 2 2)))`)
 		assert.NoError(t, err)
 		assert.NotNil(t, fun)
 
 		err = fun.Call("2312", 2)
 		assert.NoError(t, err)
+	})
+
+	t.Run("try a callback with context", func(t *testing.T) {
+		state := 0
+		err = vm.Callback("test-context", func(context interface{}) {
+			if value, ok := context.(int); ok {
+				state = value
+			}
+		})
+		assert.NoError(t, err)
+
+		call := CallString(`(test-context)`)
+		call.Context = 1
+		err = vm.ExecuteCall(call)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, state)
 	})
 
 	t.Run("execute a file", func(t *testing.T) {

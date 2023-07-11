@@ -79,18 +79,24 @@ type Function struct {
 type FunctionParams struct {
 	Args     []interface{}
 	Function *Function
+	Context  interface{}
 }
 type FunctionRequest RPC[FunctionParams, error]
 
-func (f *Function) Call(params ...interface{}) error {
+func (f *Function) CallContext(context interface{}, params ...interface{}) error {
 	req := FunctionRequest{
 		Params: FunctionParams{
 			Args:     params,
 			Function: f,
+			Context:  context,
 		},
 		Result: make(chan error),
 	}
 
 	f.vm.requests <- req
 	return <-req.Result
+}
+
+func (f *Function) Call(params ...interface{}) error {
+	return f.CallContext(nil, params...)
 }

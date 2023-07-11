@@ -76,6 +76,17 @@ func (p *Pane) GetStatus() PaneStatus {
 	return status
 }
 
+func (p *Pane) Path() (string, error) {
+	p.RLock()
+	defer p.RUnlock()
+
+	if p.pty == nil {
+		return "", nil
+	}
+
+	return p.pty.Path()
+}
+
 func (p *Pane) setStatus(status PaneStatus) {
 	p.Lock()
 	p.status = status

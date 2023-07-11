@@ -75,22 +75,36 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 	callbackType := reflect.TypeOf(callback)
 	callbackArgs := make([]reflect.Value, 0)
 
+	argIndex := 0
+
 	for i := 0; i < callbackType.NumIn(); i++ {
 		argType := callbackType.In(i)
 		argValue := reflect.New(argType)
 
-		if i >= len(args) {
+		// Context allows for passing arbitrary vm-wide state to certain callbacks
+		if isInterface(argType) {
+			context := v.context
+			if context == nil {
+				callbackArgs = append(callbackArgs, reflect.New(argType).Elem())
+			} else {
+				callbackArgs = append(callbackArgs, reflect.ValueOf(v.context))
+			}
+			continue
+		}
+
+		if argIndex >= len(args) {
 			resultErr = fmt.Errorf("%s requires at least %d arguments", name, callbackType.NumIn())
 			return
 		}
 
-		err := v.unmarshal(args[i], argValue.Interface())
+		err := v.unmarshal(args[argIndex], argValue.Interface())
 		if err != nil {
-			resultErr = fmt.Errorf("error processing argument %d: %s", i, err.Error())
+			resultErr = fmt.Errorf("error processing argument %d: %s", argIndex, err.Error())
 			return
 		}
 
 		callbackArgs = append(callbackArgs, argValue.Elem())
+		argIndex++
 	}
 
 	results := reflect.ValueOf(callback).Call(callbackArgs)
@@ -132,6 +146,10 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 	return
 }
 
+func isInterface(type_ reflect.Type) bool {
+	return type_.Kind() == reflect.Interface
+}
+
 func (v *VM) Callback(name string, callback interface{}) error {
 	type_ := reflect.TypeOf(callback)
 	if type_.Kind() != reflect.Func {
@@ -141,7 +159,7 @@ func (v *VM) Callback(name string, callback interface{}) error {
 	for i := 0; i < type_.NumIn(); i++ {
 		argType := type_.In(i)
 
-		if !isValidType(argType) {
+		if !isValidType(argType) && !isInterface(argType) {
 			return fmt.Errorf(
 				"arg %d's type %s (%s) not supported",
 				i,

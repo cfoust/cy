@@ -66,7 +66,7 @@ func setupServer(t *testing.T) *TestServer {
 
 	socketPath := filepath.Join(dir, "socket")
 
-	cy, err := Start(context.Background())
+	cy, err := Start(context.Background(), "")
 	assert.NoError(t, err)
 
 	server := TestServer{
