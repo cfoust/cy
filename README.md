@@ -39,8 +39,8 @@ As of writing, `cy` is just a collection of partially-implemented ideas. The fol
     * [ ] Structured logs go to a pane
     * [ ] Logging API in Janet
     * [ ] Error reporting for callback execution
-    * [ ] Implement [oakthree](https://github.com/cfoust/tmux-oakthree)
     * [ ] [fzf](https://github.com/junegunn/fzf/tree/master)-search from Janet
+    * [ ] Implement [oakthree](https://github.com/cfoust/tmux-oakthree)
     * [ ] Pane margins and centering
 * [ ] **Replay**
     * [ ] Record all sessions and save in custom file format
