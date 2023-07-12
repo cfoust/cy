@@ -45,12 +45,15 @@
     (set err-fiber fiber)
     (set (env :exit) true))
 
-  (run-context
-    {:env env
-     :chunks (go/chunk-string user-script)
-     :source source
-     :on-parse-error on-parse-error
-     :on-compile-error on-compile-error
-     })
+  (try
+    (do
+      (run-context
+        {:env env
+         :chunks (go/chunk-string user-script)
+         :source source
+         :on-parse-error on-parse-error
+         :fiber-flags :y
+         :on-compile-error on-compile-error}))
+    ([exec-err] (set err exec-err)))
 
   (if (nil? err) env err))

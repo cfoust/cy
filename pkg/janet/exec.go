@@ -75,14 +75,33 @@ func (v *VM) runCode(call Call) error {
 		env = v.env.table
 	}
 
-	result := C.evaluate(
-		v.evaluate,
-		env,
-		(*C.uchar)(unsafe.Pointer(&(call.Code)[0])),
-		C.int(len(call.Code)),
-		sourcePtr,
+	args := []C.Janet{
+		C.janet_wrap_string(
+			C.janet_string(
+				(*C.uchar)(unsafe.Pointer(&(call.Code)[0])),
+				C.int(len(call.Code)),
+			),
+		),
+		C.janet_wrap_table(env),
+		C.janet_wrap_string(
+			C.janet_cstring(sourcePtr),
+		),
+	}
+
+	var fiber *C.JanetFiber = nil
+	var result C.Janet
+	signal := C.janet_pcall(
+		C.janet_unwrap_function(v.evaluate),
+		C.int(len(args)),
+		(*C.Janet)(unsafe.Pointer(&args[0])),
+		&result,
+		&fiber,
 	)
 	C.free(unsafe.Pointer(sourcePtr))
+
+	if signal != C.JANET_SIGNAL_OK {
+		return fmt.Errorf("failed to evaluate Janet code")
+	}
 
 	resultType := C.janet_type(result)
 

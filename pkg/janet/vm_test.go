@@ -43,7 +43,7 @@ func TestVM(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	t.Run("try a callback", func(t *testing.T) {
+	t.Run("callback", func(t *testing.T) {
 		ok = false
 		err = vm.Execute(`(test)`)
 		assert.NoError(t, err)
@@ -51,7 +51,7 @@ func TestVM(t *testing.T) {
 		assert.True(t, ok, "should have been called")
 	})
 
-	t.Run("try a callback with a function", func(t *testing.T) {
+	t.Run("callback with a function", func(t *testing.T) {
 		var fun *Function
 		err = vm.Callback("test-callback", func(f *Function) {
 			fun = f
@@ -66,7 +66,7 @@ func TestVM(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("try a callback with context", func(t *testing.T) {
+	t.Run("callback with context", func(t *testing.T) {
 		state := 0
 		err = vm.Callback("test-context", func(context interface{}) {
 			if value, ok := context.(int); ok {
@@ -80,6 +80,19 @@ func TestVM(t *testing.T) {
 		err = vm.ExecuteCall(call)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, state)
+	})
+
+	t.Run("callback with nil return", func(t *testing.T) {
+		value := 0
+		err = vm.Callback("test-nil", func(param *int) *int {
+			value = *param
+			return param
+		})
+		assert.NoError(t, err)
+
+		err = vm.Execute(`(test-nil 1)`)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, value)
 	})
 
 	t.Run("execute a file", func(t *testing.T) {

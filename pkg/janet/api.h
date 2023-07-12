@@ -7,10 +7,3 @@ Janet wrap_result_error(const char *message);
 const char *cast_janet_string(const uint8_t *jstr);
 const char *_pretty_print(Janet value);
 Janet wrap_keyword(const char *str);
-Janet evaluate(
-        Janet evaluate,
-        JanetTable *env,
-        const uint8_t *bytes,
-        int32_t len,
-        const char *sourcePath
-);

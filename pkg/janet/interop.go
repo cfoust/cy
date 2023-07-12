@@ -13,6 +13,7 @@ import _ "embed"
 import (
 	"fmt"
 	"reflect"
+	"unsafe"
 )
 
 var globalVM *VM = nil
@@ -97,14 +98,30 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 			return
 		}
 
-		err := v.unmarshal(args[argIndex], argValue.Interface())
-		if err != nil {
-			resultErr = fmt.Errorf("error processing argument %d: %s", argIndex, err.Error())
-			return
+		arg := args[argIndex]
+		argIndex++
+
+		isPointer := argType.Kind() == reflect.Pointer
+
+		if isJanetFunction(argType) {
+			isPointer = false
 		}
 
-		callbackArgs = append(callbackArgs, argValue.Elem())
-		argIndex++
+		if isPointer && C.janet_checktype(arg, C.JANET_NIL) == 1 {
+			argValue = reflect.NewAt(argType.Elem(), unsafe.Pointer(nil))
+		} else {
+			err := v.unmarshal(arg, argValue.Interface())
+			if err != nil {
+				resultErr = fmt.Errorf("error processing argument %d: %s", argIndex, err.Error())
+				return
+			}
+
+			if !isPointer {
+				argValue = argValue.Elem()
+			}
+		}
+
+		callbackArgs = append(callbackArgs, argValue)
 	}
 
 	results := reflect.ValueOf(callback).Call(callbackArgs)
@@ -150,6 +167,14 @@ func isInterface(type_ reflect.Type) bool {
 	return type_.Kind() == reflect.Interface
 }
 
+func isParamType(type_ reflect.Type) bool {
+	if type_.Kind() == reflect.Pointer && isValidType(type_.Elem()) {
+		return true
+	}
+
+	return isValidType(type_)
+}
+
 func (v *VM) Callback(name string, callback interface{}) error {
 	type_ := reflect.TypeOf(callback)
 	if type_.Kind() != reflect.Func {
@@ -159,7 +184,7 @@ func (v *VM) Callback(name string, callback interface{}) error {
 	for i := 0; i < type_.NumIn(); i++ {
 		argType := type_.In(i)
 
-		if !isValidType(argType) && !isInterface(argType) {
+		if !isParamType(argType) && !isInterface(argType) {
 			return fmt.Errorf(
 				"arg %d's type %s (%s) not supported",
 				i,
@@ -178,13 +203,13 @@ func (v *VM) Callback(name string, callback interface{}) error {
 	// The first return value can be an error or valid type
 	if numResults == 1 {
 		first := type_.Out(0)
-		if !isValidType(first) && !isErrorType(first) {
+		if !isParamType(first) && !isErrorType(first) {
 			return fmt.Errorf("first callback return type must be valid type or error")
 		}
 	}
 
 	if numResults == 2 {
-		if !isValidType(type_.Out(0)) {
+		if !isParamType(type_.Out(0)) {
 			return fmt.Errorf("first callback return type must be valid type")
 		}
 

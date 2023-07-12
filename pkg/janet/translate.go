@@ -49,6 +49,11 @@ func isValidType(type_ reflect.Type) bool {
 	}
 }
 
+func isJanetFunction(type_ reflect.Type) bool {
+	_, ok := reflect.New(type_).Elem().Interface().(*Function)
+	return ok
+}
+
 // Marshal a Go value into a Janet value.
 func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 	result = C.janet_wrap_nil()
