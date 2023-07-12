@@ -36,6 +36,9 @@ As of writing, `cy` is just a collection of partially-implemented ideas. The fol
 * [ ] **Development**
     * [X] Populate Janet execution environment with cy standard library
     * [X] On startup, attempt to read cy configuration files
+    * [ ] Structured logs go to a pane
+    * [ ] Logging API in Janet
+    * [ ] Error reporting for callback execution
     * [ ] Implement [oakthree](https://github.com/cfoust/tmux-oakthree)
     * [ ] [fzf](https://github.com/junegunn/fzf/tree/master)-search from Janet
     * [ ] Pane margins and centering
