@@ -2,6 +2,7 @@ package cy
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/wm"
@@ -49,18 +50,23 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 			id := node.Id()
 			return &id
 		},
-		"pane/path": func(id int32) (string, error) {
+		"pane/path": func(id int32) (*string, error) {
 			node, ok := c.tree.NodeById(id)
 			if !ok {
-				return "", nil
+				return nil, fmt.Errorf("node not found: %d", id)
 			}
 
 			pane, ok := node.(*wm.Pane)
 			if !ok {
-				return "", nil
+				return nil, fmt.Errorf("node was not pane")
 			}
 
-			return pane.Path()
+			path, err := pane.Path()
+			if err != nil {
+				return nil, err
+			}
+
+			return &path, nil
 		},
 	}
 

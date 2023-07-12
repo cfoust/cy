@@ -85,14 +85,23 @@ func TestVM(t *testing.T) {
 	t.Run("callback with nil return", func(t *testing.T) {
 		value := 0
 		err = vm.Callback("test-nil", func(param *int) *int {
-			value = *param
+			if param == nil {
+				value = 1
+				return nil
+			}
+
+			value = 2
 			return param
 		})
 		assert.NoError(t, err)
 
-		err = vm.Execute(`(test-nil 1)`)
+		err = vm.Execute(`(test-nil nil)`)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, value)
+
+		err = vm.Execute(`(test-nil 2)`)
+		assert.NoError(t, err)
+		assert.Equal(t, 2, value)
 	})
 
 	t.Run("execute a file", func(t *testing.T) {

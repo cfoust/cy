@@ -47,6 +47,19 @@ func ExecGo(argc int, argv *C.Janet) C.Janet {
 	return C.wrap_result_value(result)
 }
 
+func handleReturn(v *VM, value reflect.Value) (C.Janet, error) {
+	isPointer := value.Kind() == reflect.Pointer
+	if isPointer {
+		if value.IsNil() {
+			return C.janet_wrap_nil(), nil
+		}
+
+		value = value.Elem()
+	}
+
+	return v.marshal(value.Interface())
+}
+
 func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 	result = C.janet_wrap_nil()
 
@@ -107,6 +120,10 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 			isPointer = false
 		}
 
+		if isPointer {
+			argValue = reflect.New(argType.Elem())
+		}
+
 		if isPointer && C.janet_checktype(arg, C.JANET_NIL) == 1 {
 			argValue = reflect.NewAt(argType.Elem(), unsafe.Pointer(nil))
 		} else {
@@ -131,14 +148,16 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 	}
 
 	if numResults == 1 {
+		lastResult := results[0]
+
 		if isErrorType(callbackType.Out(0)) {
-			if err, ok := results[0].Interface().(error); ok {
+			if err, ok := lastResult.Interface().(error); ok {
 				resultErr = err
 			}
 			return
 		}
 
-		value, err := v.marshal(results[0].Interface())
+		value, err := handleReturn(v, results[0])
 		if err != nil {
 			resultErr = fmt.Errorf("failed to marshal return value: %s", err.Error())
 			return
@@ -149,7 +168,7 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 	}
 
 	// numResults must be 2
-	value, err := v.marshal(results[0].Interface())
+	value, err := handleReturn(v, results[0])
 	if err != nil {
 		resultErr = fmt.Errorf("failed to marshal return value: %s", err.Error())
 		return
