@@ -27,7 +27,7 @@ func wrapKeyword(word string) C.Janet {
 
 func isValidType(type_ reflect.Type) bool {
 	switch type_.Kind() {
-	case reflect.Int, reflect.Float64, reflect.Bool, reflect.String:
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Float64, reflect.Bool, reflect.String:
 		return true
 	case reflect.Pointer:
 		if _, ok := reflect.New(type_.Elem()).Interface().(*Function); ok {
@@ -63,7 +63,7 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 	}
 
 	switch type_.Kind() {
-	case reflect.Int:
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32:
 		result = C.janet_wrap_integer(C.int(value.Int()))
 	case reflect.Float64:
 		result = C.janet_wrap_number(C.double(value.Float()))
@@ -179,7 +179,7 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 	value = value.Elem()
 
 	switch type_.Kind() {
-	case reflect.Int:
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32:
 		if err := assertType(source, C.JANET_NUMBER); err != nil {
 			return err
 		}

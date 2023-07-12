@@ -35,20 +35,18 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			return nil
 		},
-		"pane/current": func(context interface{}) string {
+		"pane/current": func(context interface{}) int32 {
 			client, ok := context.(*Client)
 			if !ok {
-				return ""
+				return 0
 			}
 
 			node := client.node
 			if node == nil {
-				return ""
+				return 0
 			}
 
-			_, ok = node.(*wm.Pane)
-
-			return "ok"
+			return node.Id()
 		},
 	}
 
