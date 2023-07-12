@@ -68,7 +68,10 @@ func (p *Pane) notifyChange() {
 
 func (p *Pane) Resize(size Size) {
 	p.Terminal.Resize(size.Columns, size.Rows)
-	p.pty.Resize(size.Rows, size.Columns)
+	// TODO(cfoust): 07/12/23 Make pane thread safe
+	if p.pty != nil {
+		p.pty.Resize(size.Rows, size.Columns)
+	}
 	p.notifyChange()
 }
 

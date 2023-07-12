@@ -210,5 +210,7 @@ func NewTree() *Tree {
 		tree:     tree,
 	}
 
+	tree.storeNode(tree.root)
+
 	return tree
 }
