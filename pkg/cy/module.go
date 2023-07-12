@@ -13,17 +13,17 @@ import (
 type Cy struct {
 	util.Lifetime
 	deadlock.RWMutex
+	janet *janet.VM
 
 	// The tree of groups and panes.
-	tree    *wm.Node
+	tree    *wm.Tree
 	clients []*Client
-	janet   *janet.VM
 }
 
 // Get the pane that new clients attach to. If there are other clients, we
 // attach to the pane of the first other client. Otherwise we attach to the
 // first pane we find, depth-first.
-func (c *Cy) findInitialPane() *wm.Node {
+func (c *Cy) findInitialPane() wm.Node {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -34,7 +34,7 @@ func (c *Cy) findInitialPane() *wm.Node {
 		}
 	}
 
-	leaves := wm.GetLeaves(c.tree)
+	leaves := c.tree.Leaves()
 	if len(leaves) == 0 {
 		return nil
 	}
@@ -44,8 +44,8 @@ func (c *Cy) findInitialPane() *wm.Node {
 
 // Given a node, get a list of all clients attached to it and find the minimum
 // pane size.
-func (c *Cy) refreshPane(node *wm.Node) {
-	pane, ok := node.Data.(*wm.Pane)
+func (c *Cy) refreshPane(node wm.Node) {
+	pane, ok := node.(*wm.Pane)
 	if !ok {
 		return
 	}
@@ -76,22 +76,19 @@ func (c *Cy) refreshPane(node *wm.Node) {
 }
 
 func Start(ctx context.Context, configFile string) (*Cy, error) {
+	tree := wm.NewTree()
 	cy := Cy{
 		Lifetime: util.NewLifetime(ctx),
+		tree:     tree,
 	}
 
-	pane := wm.NewPane(
+	tree.Root().NewPane(
 		cy.Ctx(),
-		wm.PaneContext{
+		wm.PaneOptions{
 			Command: "/bin/bash",
 		},
 		wm.DEFAULT_SIZE,
 	)
-
-	group := wm.NewGroup()
-	rootNode := wm.Wrap("", nil, group)
-	group.Add(wm.Wrap("", rootNode, pane))
-	cy.tree = rootNode
 
 	vm, err := cy.initJanet(ctx, configFile)
 	if err != nil {

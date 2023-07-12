@@ -2,7 +2,6 @@ package cy
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/wm"
@@ -21,22 +20,12 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 		return nil, err
 	}
 
-	err = vm.Callback(
-		"log",
-		func(text string) {
+	callbacks := map[string]interface{}{
+		"log": func(text string) {
 			log.Info().Msgf(text)
 		},
-	)
-
-	err = vm.Callback(
-		"key/bind",
-		func(sequence []string, doc string, callback *janet.Function) error {
-			root := c.tree
-			if root == nil {
-				return fmt.Errorf("missing root node")
-			}
-
-			root.Binds.Set(
+		"key/bind": func(sequence []string, doc string, callback *janet.Function) error {
+			c.tree.Root().Binds().Set(
 				sequence,
 				wm.Binding{
 					Description: doc,
@@ -46,19 +35,29 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			return nil
 		},
-	)
-
-	err = vm.Callback(
-		"pane/current",
-		func(context interface{}) string {
-			_, ok := context.(*Client)
+		"pane/current": func(context interface{}) string {
+			client, ok := context.(*Client)
 			if !ok {
 				return ""
 			}
 
+			node := client.node
+			if node == nil {
+				return ""
+			}
+
+			_, ok = node.(*wm.Pane)
+
 			return "ok"
 		},
-	)
+	}
+
+	for name, callback := range callbacks {
+		err := vm.Callback(name, callback)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	err = vm.ExecuteCall(janet.Call{
 		Code:       CY_BOOT_FILE,

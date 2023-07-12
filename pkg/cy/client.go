@@ -30,7 +30,7 @@ type Client struct {
 	cy *Cy
 
 	attachment *util.Lifetime
-	node       *wm.Node
+	node       wm.Node
 	binds      *bind.Engine[wm.Binding]
 
 	// This is a "model" of what the client is seeing so that we can
@@ -76,7 +76,7 @@ func (c *Client) pollEvents() {
 					continue
 				}
 
-				pane := node.Data.(*wm.Pane)
+				pane := node.(*wm.Pane)
 				pane.Write(event.Data)
 			}
 		}
@@ -228,7 +228,7 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	return nil
 }
 
-func (c *Client) GetNode() *wm.Node {
+func (c *Client) GetNode() wm.Node {
 	c.RLock()
 	node := c.node
 	c.RUnlock()
@@ -269,8 +269,8 @@ func (c *Client) pollPane(ctx context.Context, pane *wm.Pane) error {
 	}
 }
 
-func (c *Client) Attach(node *wm.Node) error {
-	pane, ok := node.Data.(*wm.Pane)
+func (c *Client) Attach(node wm.Node) error {
+	pane, ok := node.(*wm.Pane)
 	if !ok {
 		return fmt.Errorf("node was not a pane")
 	}
@@ -289,12 +289,9 @@ func (c *Client) Attach(node *wm.Node) error {
 
 	// Update bindings
 	scopes := make([]*wm.BindScope, 0)
-	current := node
-	for current != nil {
-		scopes = append([]*wm.BindScope{
-			current.Binds,
-		}, scopes...)
-		current = current.Parent
+	path := c.cy.tree.PathTo(node)
+	for _, pathNode := range path {
+		scopes = append(scopes, pathNode.Binds())
 	}
 	c.binds.SetScopes(scopes...)
 

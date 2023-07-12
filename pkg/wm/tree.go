@@ -126,7 +126,70 @@ func (t *Tree) storeNode(node Node) {
 }
 
 func (t *Tree) Root() *Group {
+	t.RLock()
+	defer t.RUnlock()
+
 	return t.root
+}
+
+func findPath(current, needle Node) (result []Node) {
+	if current == needle {
+		result = append(result, current)
+		return
+	}
+
+	switch node := current.(type) {
+	case *Pane:
+		return
+	case *Group:
+		for _, child := range node.Children() {
+			path := findPath(child, needle)
+			if len(path) == 0 {
+				return
+			}
+
+			result = append(
+				[]Node{current},
+				path...,
+			)
+			return
+		}
+	}
+
+	return
+}
+
+// Get the path from the root node to the given node.
+func (t *Tree) PathTo(node Node) []Node {
+	t.RLock()
+	defer t.RUnlock()
+
+	return findPath(t.root, node)
+}
+
+func getLeaves(node Node) (result []Node) {
+	switch node := node.(type) {
+	case *Pane:
+		result = append(result, node)
+		return
+	case *Group:
+		for _, child := range node.Children() {
+			result = append(
+				result,
+				getLeaves(child)...,
+			)
+			return
+		}
+	}
+
+	return
+}
+
+func (t *Tree) Leaves() []Node {
+	t.RLock()
+	defer t.RUnlock()
+
+	return getLeaves(t.root)
 }
 
 func NewTree() *Tree {
