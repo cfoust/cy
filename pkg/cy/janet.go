@@ -48,6 +48,19 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			return node.Id()
 		},
+		"pane/path": func(id int32) (string, error) {
+			node, ok := c.tree.NodeById(id)
+			if !ok {
+				return "", nil
+			}
+
+			pane, ok := node.(*wm.Pane)
+			if !ok {
+				return "", nil
+			}
+
+			return pane.Path()
+		},
 	}
 
 	for name, callback := range callbacks {

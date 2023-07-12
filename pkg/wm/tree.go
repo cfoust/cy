@@ -192,6 +192,14 @@ func (t *Tree) Leaves() []Node {
 	return getLeaves(t.root)
 }
 
+func (t *Tree) NodeById(id NodeID) (Node, bool) {
+	t.RLock()
+	defer t.RUnlock()
+
+	node, ok := t.nodes[id]
+	return node, ok
+}
+
 func NewTree() *Tree {
 	tree := &Tree{
 		nodes: make(map[NodeID]Node),
