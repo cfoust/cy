@@ -179,6 +179,12 @@ func (e *Engine[T]) SetScopes(scopes ...*trie.Trie[T]) {
 	e.Unlock()
 }
 
+func (e *Engine[T]) Scopes() []*trie.Trie[T] {
+	e.RLock()
+	defer e.RUnlock()
+	return e.scopes
+}
+
 func (e *Engine[T]) Poll(ctx context.Context) {
 	for {
 		select {

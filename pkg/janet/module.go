@@ -78,8 +78,8 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 	C.apply_env(env)
 	v.runCodeUnsafe(GO_BOOT_FILE, "go-boot.janet")
 
-	// We need to be able to grab the id of the VM from ExecGo in order to
-	// decide which vm's callbacks to use
+	// Store the VM's ID in the environment so calls to ExecGo can be
+	// directed appropriately
 	C.janet_table_put(
 		env,
 		C.janet_wrap_keyword(C.janet_ckeyword(VM_ID)),

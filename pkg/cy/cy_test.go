@@ -10,6 +10,7 @@ import (
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/util"
+	"github.com/cfoust/cy/pkg/wm"
 
 	"github.com/stretchr/testify/require"
 )
@@ -47,6 +48,8 @@ func (t *TestServer) Attach(rows, cols int) (Connection, *Client, error) {
 		Rows:    rows,
 		Columns: cols,
 	})
+
+	time.Sleep(100 * time.Millisecond)
 
 	return conn, client, nil
 }
@@ -151,4 +154,27 @@ func TestSize(t *testing.T) {
 	require.NoError(t, err)
 
 	time.Sleep(100 * time.Millisecond)
+}
+
+func TestScopes(t *testing.T) {
+	server := setupServer(t)
+	defer server.Release()
+
+	_, client, err := server.Standard()
+	require.NoError(t, err)
+	require.Equal(t, 2, len(client.binds.Scopes()))
+
+	cy := server.cy
+
+	group := cy.tree.Root().NewGroup()
+	pane := group.NewPane(
+		server.Ctx(),
+		wm.PaneOptions{
+			Command: "/bin/bash",
+		},
+		wm.DEFAULT_SIZE,
+	)
+	err = client.Attach(pane)
+	require.NoError(t, err)
+	require.Equal(t, 3, len(client.binds.Scopes()))
 }

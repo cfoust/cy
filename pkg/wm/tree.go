@@ -145,7 +145,7 @@ func findPath(current, needle Node) (result []Node) {
 		for _, child := range node.Children() {
 			path := findPath(child, needle)
 			if len(path) == 0 {
-				return
+				continue
 			}
 
 			result = append(

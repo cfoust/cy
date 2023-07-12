@@ -275,6 +275,11 @@ func (c *Client) Attach(node wm.Node) error {
 		return fmt.Errorf("node was not a pane")
 	}
 
+	path := c.cy.tree.PathTo(node)
+	if len(path) == 0 {
+		return fmt.Errorf("failed to find path to node")
+	}
+
 	attachment := util.NewLifetime(c.Ctx())
 
 	c.Lock()
@@ -289,7 +294,6 @@ func (c *Client) Attach(node wm.Node) error {
 
 	// Update bindings
 	scopes := make([]*wm.BindScope, 0)
-	path := c.cy.tree.PathTo(node)
 	for _, pathNode := range path {
 		scopes = append(scopes, pathNode.Binds())
 	}
