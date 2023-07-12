@@ -36,21 +36,50 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			return nil
 		},
-		"group/root": func() wm.NodeID {
+		"tree/root": func() wm.NodeID {
 			return c.tree.Root().Id()
 		},
+		"tree/parent": func(id wm.NodeID) *wm.NodeID {
+			node, ok := c.tree.NodeById(id)
+			if !ok {
+				return nil
+			}
+
+			path := c.tree.PathTo(node)
+			if len(path) <= 1 {
+				return nil
+			}
+
+			parentId := path[len(path)-2].Id()
+			return &parentId
+		},
+		"tree/group?": func(id wm.NodeID) bool {
+			_, ok := c.tree.GroupById(id)
+			return ok
+		},
+		"tree/pane?": func(id wm.NodeID) bool {
+			_, ok := c.tree.PaneById(id)
+			return ok
+		},
 		"group/new": func(parentId wm.NodeID) (wm.NodeID, error) {
-			node, ok := c.tree.NodeById(parentId)
+			group, ok := c.tree.GroupById(parentId)
 			if !ok {
 				return 0, fmt.Errorf("node not found: %d", parentId)
 			}
 
-			group, ok := node.(*wm.Group)
+			return group.NewGroup().Id(), nil
+		},
+		"group/children": func(parentId wm.NodeID) ([]wm.NodeID, error) {
+			group, ok := c.tree.GroupById(parentId)
 			if !ok {
-				return 0, fmt.Errorf("node was not group")
+				return nil, fmt.Errorf("node not found: %d", parentId)
 			}
 
-			return group.NewGroup().Id(), nil
+			nodes := make([]wm.NodeID, 0)
+			for _, child := range group.Children() {
+				nodes = append(nodes, child.Id())
+			}
+			return nodes, nil
 		},
 		"pane/current": func(context interface{}) *wm.NodeID {
 			client, ok := context.(*Client)
@@ -67,14 +96,9 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 			return &id
 		},
 		"pane/path": func(id wm.NodeID) (*string, error) {
-			node, ok := c.tree.NodeById(id)
+			pane, ok := c.tree.PaneById(id)
 			if !ok {
-				return nil, fmt.Errorf("node not found: %d", id)
-			}
-
-			pane, ok := node.(*wm.Pane)
-			if !ok {
-				return nil, fmt.Errorf("node was not pane")
+				return nil, fmt.Errorf("pane not found: %d", id)
 			}
 
 			path, err := pane.Path()
@@ -85,14 +109,9 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 			return &path, nil
 		},
 		"pane/new": func(groupId wm.NodeID, path string) (wm.NodeID, error) {
-			node, ok := c.tree.NodeById(groupId)
+			group, ok := c.tree.GroupById(groupId)
 			if !ok {
 				return 0, fmt.Errorf("node not found: %d", groupId)
-			}
-
-			group, ok := node.(*wm.Group)
-			if !ok {
-				return 0, fmt.Errorf("node was not group")
 			}
 
 			return group.NewPane(

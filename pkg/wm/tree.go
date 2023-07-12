@@ -63,6 +63,7 @@ type Node interface {
 }
 
 type Group struct {
+	deadlock.RWMutex
 	*metaData
 	tree     *Tree
 	children []Node
@@ -71,12 +72,17 @@ type Group struct {
 var _ Node = (*Group)(nil)
 
 func (g *Group) Children() []Node {
+	g.RLock()
+	defer g.RUnlock()
+
 	return g.children
 }
 
 func (g *Group) addNode(node Node) {
 	g.tree.storeNode(node)
+	g.Lock()
 	g.children = append(g.children, node)
+	g.Unlock()
 }
 
 func (g *Group) NewPane(
@@ -198,6 +204,40 @@ func (t *Tree) NodeById(id NodeID) (Node, bool) {
 
 	node, ok := t.nodes[id]
 	return node, ok
+}
+
+func (t *Tree) PaneById(id NodeID) (*Pane, bool) {
+	t.RLock()
+	defer t.RUnlock()
+
+	node, ok := t.nodes[id]
+	if !ok {
+		return nil, false
+	}
+
+	pane, ok := node.(*Pane)
+	if !ok {
+		return nil, false
+	}
+
+	return pane, true
+}
+
+func (t *Tree) GroupById(id NodeID) (*Group, bool) {
+	t.RLock()
+	defer t.RUnlock()
+
+	node, ok := t.nodes[id]
+	if !ok {
+		return nil, false
+	}
+
+	group, ok := node.(*Group)
+	if !ok {
+		return nil, false
+	}
+
+	return group, true
 }
 
 func NewTree() *Tree {
