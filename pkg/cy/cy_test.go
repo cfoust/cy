@@ -10,9 +10,8 @@ import (
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/util"
-	"github.com/cfoust/cy/pkg/wm"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type TestServer struct {
@@ -62,12 +61,12 @@ func (t *TestServer) Release() {
 
 func setupServer(t *testing.T) *TestServer {
 	dir, err := os.MkdirTemp("", "example")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	socketPath := filepath.Join(dir, "socket")
 
 	cy, err := Start(context.Background(), "")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	server := TestServer{
 		Lifetime:   util.NewLifetime(context.Background()),
@@ -91,7 +90,7 @@ func TestHandshake(t *testing.T) {
 	defer server.Release()
 
 	conn, _, err := server.Connect()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	conn.Send(P.HandshakeMessage{
 		TERM:    "xterm-256color",
@@ -101,7 +100,7 @@ func TestHandshake(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	assert.NoError(t, conn.Ctx().Err())
+	require.NoError(t, conn.Ctx().Err())
 }
 
 func TestBadHandshake(t *testing.T) {
@@ -109,12 +108,12 @@ func TestBadHandshake(t *testing.T) {
 	defer server.Release()
 
 	conn, _, err := server.Connect()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = conn.Send(P.InputMessage{
 		Data: []byte("hello"),
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	go func() {
 		for {
@@ -123,7 +122,7 @@ func TestBadHandshake(t *testing.T) {
 	}()
 
 	<-conn.Ctx().Done()
-	assert.Error(t, conn.Ctx().Err())
+	require.Error(t, conn.Ctx().Err())
 }
 
 func TestEmpty(t *testing.T) {
@@ -133,12 +132,12 @@ func TestEmpty(t *testing.T) {
 	cy := server.cy
 
 	_, client, err := server.Standard()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	time.Sleep(100 * time.Millisecond)
 
-	leaves := wm.GetLeaves(cy.tree)
-	assert.Equal(t, client.GetNode(), leaves[0])
+	leaves := cy.tree.Leaves()
+	require.Equal(t, client.GetNode(), leaves[0])
 }
 
 func TestSize(t *testing.T) {
@@ -146,10 +145,10 @@ func TestSize(t *testing.T) {
 	defer server.Release()
 
 	_, _, err := server.Attach(40, 80)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	_, _, err = server.Standard()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	time.Sleep(100 * time.Millisecond)
 }

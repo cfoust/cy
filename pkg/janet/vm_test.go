@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func writeFile(path string, data []byte) error {
@@ -21,34 +21,34 @@ func writeFile(path string, data []byte) error {
 
 func cmp[T any](t *testing.T, vm *VM, before T) {
 	value, err := vm.marshal(before)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var after T
 	err = vm.unmarshal(value, &after)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	t.Logf("%+v", after)
-	assert.Equal(t, before, after, "should yield same result")
+	require.Equal(t, before, after, "should yield same result")
 }
 
 func TestVM(t *testing.T) {
 	// TODO(cfoust): 07/02/23 gracefully handle the Janet vm already being
 	// initialized and break these into separate tests
 	vm, err := New(context.Background())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	ok := false
 	err = vm.Callback("test", func() {
 		ok = true
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	t.Run("callback", func(t *testing.T) {
 		ok = false
 		err = vm.Execute(`(test)`)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
-		assert.True(t, ok, "should have been called")
+		require.True(t, ok, "should have been called")
 	})
 
 	t.Run("callback with a function", func(t *testing.T) {
@@ -56,14 +56,14 @@ func TestVM(t *testing.T) {
 		err = vm.Callback("test-callback", func(f *Function) {
 			fun = f
 		})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = vm.Execute(`(test-callback (fn [first second &] (+ 2 2)))`)
-		assert.NoError(t, err)
-		assert.NotNil(t, fun)
+		require.NoError(t, err)
+		require.NotNil(t, fun)
 
 		err = fun.Call("2312", 2)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("callback with context", func(t *testing.T) {
@@ -73,13 +73,13 @@ func TestVM(t *testing.T) {
 				state = value
 			}
 		})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		call := CallString(`(test-context)`)
 		call.Context = 1
 		err = vm.ExecuteCall(call)
-		assert.NoError(t, err)
-		assert.Equal(t, 1, state)
+		require.NoError(t, err)
+		require.Equal(t, 1, state)
 	})
 
 	t.Run("callback with nil return", func(t *testing.T) {
@@ -93,15 +93,15 @@ func TestVM(t *testing.T) {
 			value = 2
 			return param
 		})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = vm.Execute(`(test-nil nil)`)
-		assert.NoError(t, err)
-		assert.Equal(t, 1, value)
+		require.NoError(t, err)
+		require.Equal(t, 1, value)
 
 		err = vm.Execute(`(test-nil 2)`)
-		assert.NoError(t, err)
-		assert.Equal(t, 2, value)
+		require.NoError(t, err)
+		require.Equal(t, 2, value)
 	})
 
 	t.Run("execute a file", func(t *testing.T) {
@@ -112,25 +112,25 @@ func TestVM(t *testing.T) {
 			filename,
 			[]byte(`(test)`),
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = vm.ExecuteFile(filename)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
-		assert.True(t, ok, "should have been called")
+		require.True(t, ok, "should have been called")
 	})
 
 	t.Run("catches a syntax error", func(t *testing.T) {
 		err = vm.Execute(`(asd`)
-		assert.Error(t, err)
+		require.Error(t, err)
 	})
 
 	t.Run("defining a symbol", func(t *testing.T) {
 		err = vm.Execute(`(def some-int 2)`)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = vm.Execute(`(+ some-int some-int)`)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("translation", func(t *testing.T) {
