@@ -14,26 +14,23 @@
   ["ctrl+l"]
   "move to the next pane"
   (fn [&]
-    (try
-      (do
-        (def children
-          (-?>>
-            (pane/current)
-            (tree/parent)
-            (group/children)
-            (filter tree/pane?)))
+    (def children
+      (-?>>
+        (pane/current)
+        (tree/parent)
+        (group/children)
+        (filter tree/pane?)))
 
-        (when (nil? children) (break))
+    (when (nil? children) (break))
 
-        (def index (index-of (pane/current) children))
+    (def index (index-of (pane/current) children))
 
-        (def next-panes
-          (array/concat
-            (array)
-            (array/slice children (+ index 1))
-            (array/slice children 0 index)))
+    (def next-panes
+      (array/concat
+        (array)
+        (array/slice children (+ index 1))
+        (array/slice children 0 index)))
 
-        (when (= 0 (length next-panes)) (break))
-        (def [next] next-panes)
-        (pane/attach next))
-      ([err] (log err)))))
+    (when (= 0 (length next-panes)) (break))
+    (def [next] next-panes)
+    (pane/attach next)))
