@@ -11,6 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/session"
 	"github.com/cfoust/cy/pkg/util"
 
+	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -108,7 +109,10 @@ func newPane(ctx context.Context, app app.App, size geom.Size) *Pane {
 
 	pane.session.Resize(size.Columns, size.Rows)
 
-	go pane.pollIO(ctx)
+	go func() {
+		err := pane.pollIO(ctx)
+		log.Error().Err(err).Msgf("error while polling IO")
+	}()
 
 	return &pane
 }

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/util"
 	"github.com/cfoust/cy/pkg/util/dir"
 
 	"github.com/creack/pty"
@@ -34,6 +35,8 @@ type Cmd struct {
 	status  CmdStatus
 	options CmdOptions
 	size    geom.Size
+
+	statusUpdates *util.Publisher[CmdStatus]
 
 	ptmx *os.File
 	proc *os.Process
@@ -81,6 +84,7 @@ func (c *Cmd) setStatus(status CmdStatus) {
 	c.Lock()
 	c.status = status
 	c.Unlock()
+	c.statusUpdates.Publish(status)
 }
 
 func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
@@ -208,14 +212,50 @@ func (c *Cmd) spin(ctx context.Context) {
 	}
 }
 
-func NewCmd(ctx context.Context, options CmdOptions, size geom.Size) *Cmd {
-	pane := Cmd{
-		status:  CmdStatusStarting,
-		options: options,
-		size:    size,
+func (c *Cmd) Subscribe() *util.Subscriber[CmdStatus] {
+	return c.statusUpdates.Subscribe()
+}
+
+func (c *Cmd) waitHealthy(ctx context.Context) error {
+	changes := c.Subscribe()
+	defer changes.Done()
+
+	errc := make(chan error)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				errc <- ctx.Err()
+				return
+			case status := <-changes.Recv():
+				switch status {
+				case CmdStatusHealthy:
+					errc <- nil
+					return
+				case CmdStatusFailed:
+					errc <- fmt.Errorf("starting cmd failed: %d", status)
+					return
+				}
+			}
+		}
+	}()
+	return <-errc
+}
+
+func NewCmd(ctx context.Context, options CmdOptions, size geom.Size) (*Cmd, error) {
+	cmd := Cmd{
+		status:        CmdStatusStarting,
+		options:       options,
+		size:          size,
+		statusUpdates: util.NewPublisher[CmdStatus](),
 	}
 
-	go pane.spin(ctx)
+	go cmd.spin(ctx)
 
-	return &pane
+	err := cmd.waitHealthy(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cmd, nil
 }

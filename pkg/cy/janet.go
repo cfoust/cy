@@ -121,14 +121,19 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 				return 0, fmt.Errorf("node not found: %d", groupId)
 			}
 
-			return group.NewCmd(
+			cmd, err := group.NewCmd(
 				c.Ctx(),
 				app.CmdOptions{
 					Command:   "/bin/bash",
 					Directory: path,
 				},
 				geom.DEFAULT_SIZE,
-			).Id(), nil
+			)
+			if err != nil {
+				return 0, err
+			}
+
+			return cmd.Id(), nil
 		},
 		"pane/attach": func(context interface{}, id wm.NodeID) error {
 			client, ok := context.(*Client)

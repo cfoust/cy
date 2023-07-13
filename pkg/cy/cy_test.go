@@ -168,13 +168,14 @@ func TestScopes(t *testing.T) {
 	cy := server.cy
 
 	group := cy.tree.Root().NewGroup()
-	pane := group.NewCmd(
+	pane, err := group.NewCmd(
 		server.Ctx(),
 		app.CmdOptions{
 			Command: "/bin/bash",
 		},
 		geom.DEFAULT_SIZE,
 	)
+	require.NoError(t, err)
 	err = client.Attach(pane)
 	require.NoError(t, err)
 	require.Equal(t, 3, len(client.binds.Scopes()))

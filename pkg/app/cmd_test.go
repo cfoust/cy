@@ -7,11 +7,11 @@ import (
 
 	"github.com/cfoust/cy/pkg/geom"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHealthy(t *testing.T) {
-	cmd := NewCmd(
+	cmd, err := NewCmd(
 		context.Background(),
 		CmdOptions{
 			Command: "/bin/sh",
@@ -21,14 +21,15 @@ func TestHealthy(t *testing.T) {
 			Columns: 80,
 		},
 	)
+	require.NoError(t, err)
 
 	time.Sleep(100 * time.Millisecond)
 
-	assert.Equal(t, cmd.GetStatus(), CmdStatusHealthy)
+	require.Equal(t, cmd.GetStatus(), CmdStatusHealthy)
 }
 
 func TestFailLoop(t *testing.T) {
-	cmd := NewCmd(
+	cmd, _ := NewCmd(
 		context.Background(),
 		CmdOptions{
 			Command: "/bin/sh",
@@ -43,7 +44,7 @@ func TestFailLoop(t *testing.T) {
 		},
 	)
 
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
-	assert.Equal(t, cmd.GetStatus(), CmdStatusFailed)
+	require.Equal(t, cmd.GetStatus(), CmdStatusFailed)
 }
