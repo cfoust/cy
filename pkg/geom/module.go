@@ -1,4 +1,4 @@
-package wm
+package geom
 
 type Size struct {
 	Rows    int

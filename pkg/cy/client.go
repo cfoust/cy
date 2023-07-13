@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/util"
@@ -236,12 +237,12 @@ func (c *Client) GetNode() wm.Node {
 	return node
 }
 
-func (c *Client) GetSize() wm.Size {
+func (c *Client) GetSize() geom.Size {
 	c.raw.Lock()
 	cols, rows := c.raw.Size()
 	c.raw.Unlock()
 
-	return wm.Size{
+	return geom.Size{
 		Rows:    rows,
 		Columns: cols,
 	}

@@ -4,8 +4,10 @@ import (
 	"context"
 	"sync/atomic"
 
+	"github.com/cfoust/cy/pkg/app"
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/bind/trie"
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 
 	"github.com/sasha-s/go-deadlock"
@@ -87,10 +89,10 @@ func (g *Group) addNode(node Node) {
 
 func (g *Group) NewPane(
 	ctx context.Context,
-	options PaneOptions,
-	size Size,
+	app app.App,
+	size geom.Size,
 ) *Pane {
-	pane := newPane(ctx, options, size)
+	pane := newPane(ctx, app, size)
 	pane.metaData = g.tree.newMetadata()
 	g.addNode(pane)
 	return pane
