@@ -6,8 +6,8 @@
   [prefix "j"]
   "create a new shell"
   (fn [&]
-    (def path (pane/path (pane/current)))
-    (def shell (pane/new shells path))
+    (def path (cmd/path (pane/current)))
+    (def shell (cmd/new shells path))
     (pane/attach shell)))
 
 (key/bind

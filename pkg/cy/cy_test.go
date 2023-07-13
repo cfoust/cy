@@ -7,10 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cfoust/cy/pkg/app"
+	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/util"
-	"github.com/cfoust/cy/pkg/wm"
 
 	"github.com/stretchr/testify/require"
 )
@@ -167,12 +168,12 @@ func TestScopes(t *testing.T) {
 	cy := server.cy
 
 	group := cy.tree.Root().NewGroup()
-	pane := group.NewPane(
+	pane := group.NewCmd(
 		server.Ctx(),
-		wm.PaneOptions{
+		app.CmdOptions{
 			Command: "/bin/bash",
 		},
-		wm.DEFAULT_SIZE,
+		geom.DEFAULT_SIZE,
 	)
 	err = client.Attach(pane)
 	require.NoError(t, err)

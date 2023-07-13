@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cfoust/cy/pkg/app"
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/wm"
 
@@ -95,32 +97,37 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 			id := node.Id()
 			return &id
 		},
-		"pane/path": func(id wm.NodeID) (*string, error) {
+		"cmd/path": func(id wm.NodeID) (*string, error) {
 			pane, ok := c.tree.PaneById(id)
 			if !ok {
 				return nil, fmt.Errorf("pane not found: %d", id)
 			}
 
-			path, err := pane.Path()
+			cmd, ok := pane.App().(*app.Cmd)
+			if !ok {
+				return nil, fmt.Errorf("pane was not a cmd")
+			}
+
+			path, err := cmd.Path()
 			if err != nil {
 				return nil, err
 			}
 
 			return &path, nil
 		},
-		"pane/new": func(groupId wm.NodeID, path string) (wm.NodeID, error) {
+		"cmd/new": func(groupId wm.NodeID, path string) (wm.NodeID, error) {
 			group, ok := c.tree.GroupById(groupId)
 			if !ok {
 				return 0, fmt.Errorf("node not found: %d", groupId)
 			}
 
-			return group.NewPane(
+			return group.NewCmd(
 				c.Ctx(),
-				wm.PaneOptions{
+				app.CmdOptions{
 					Command:   "/bin/bash",
 					Directory: path,
 				},
-				wm.DEFAULT_SIZE,
+				geom.DEFAULT_SIZE,
 			).Id(), nil
 		},
 		"pane/attach": func(context interface{}, id wm.NodeID) error {

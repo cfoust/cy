@@ -3,6 +3,8 @@ package cy
 import (
 	"context"
 
+	"github.com/cfoust/cy/pkg/app"
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/util"
 	"github.com/cfoust/cy/pkg/wm"
@@ -69,7 +71,7 @@ func (c *Cy) refreshPane(node wm.Node) {
 	// Set the pane's size to the maximum that all clients can fit
 	size := attached[0].GetSize()
 	for _, client := range attached {
-		size = wm.GetMaximum(size, client.GetSize())
+		size = geom.GetMaximum(size, client.GetSize())
 	}
 
 	pane.Resize(size)
@@ -82,12 +84,12 @@ func Start(ctx context.Context, configFile string) (*Cy, error) {
 		tree:     tree,
 	}
 
-	tree.Root().NewPane(
+	tree.Root().NewCmd(
 		cy.Ctx(),
-		wm.PaneOptions{
+		app.CmdOptions{
 			Command: "/bin/bash",
 		},
-		wm.DEFAULT_SIZE,
+		geom.DEFAULT_SIZE,
 	)
 
 	vm, err := cy.initJanet(ctx, configFile)

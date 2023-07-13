@@ -98,6 +98,14 @@ func (g *Group) NewPane(
 	return pane
 }
 
+func (g *Group) NewCmd(ctx context.Context, options app.CmdOptions, size geom.Size) *Pane {
+	cmd := app.NewCmd(ctx, options, size)
+	pane := newPane(ctx, cmd, size)
+	pane.metaData = g.tree.newMetadata()
+	g.addNode(pane)
+	return pane
+}
+
 func (g *Group) NewGroup() *Group {
 	group := &Group{
 		metaData: g.tree.newMetadata(),

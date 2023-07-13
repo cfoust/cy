@@ -32,6 +32,10 @@ func (p *Pane) Subscribe() *util.Subscriber[time.Time] {
 	return p.changes.Subscribe()
 }
 
+func (p *Pane) App() app.App {
+	return p.app
+}
+
 func (p *Pane) GetSize() geom.Size {
 	p.Terminal.Lock()
 	cols, rows := p.Terminal.Size()
