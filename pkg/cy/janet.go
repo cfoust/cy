@@ -8,8 +8,6 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/wm"
-
-	"github.com/rs/zerolog/log"
 )
 
 import _ "embed"
@@ -25,7 +23,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 	callbacks := map[string]interface{}{
 		"log": func(text string) {
-			log.Info().Msgf(text)
+			c.log.Info().Msgf(text)
 		},
 		"key/bind": func(sequence []string, doc string, callback *janet.Function) error {
 			c.tree.Root().Binds().Set(

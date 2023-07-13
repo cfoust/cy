@@ -2,6 +2,8 @@ package cy
 
 import (
 	"context"
+	"os"
+	"time"
 
 	"github.com/cfoust/cy/pkg/app"
 	"github.com/cfoust/cy/pkg/geom"
@@ -9,6 +11,8 @@ import (
 	"github.com/cfoust/cy/pkg/util"
 	"github.com/cfoust/cy/pkg/wm"
 
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -20,6 +24,8 @@ type Cy struct {
 	// The tree of groups and panes.
 	tree    *wm.Tree
 	clients []*Client
+
+	log zerolog.Logger
 }
 
 // Get the pane that new clients attach to. If there are other clients, we
@@ -79,6 +85,7 @@ func (c *Cy) refreshPane(node wm.Node) {
 
 func Start(ctx context.Context, configFile string) (*Cy, error) {
 	tree := wm.NewTree()
+
 	cy := Cy{
 		Lifetime: util.NewLifetime(ctx),
 		tree:     tree,
@@ -91,6 +98,16 @@ func Start(ctx context.Context, configFile string) (*Cy, error) {
 		},
 		geom.DEFAULT_SIZE,
 	)
+
+	logs := app.NewStream()
+	tree.Root().NewPane(
+		cy.Ctx(),
+		logs,
+		geom.DEFAULT_SIZE,
+	)
+
+	consoleWriter := zerolog.ConsoleWriter{Out: logs.Writer(), TimeFormat: time.RFC3339}
+	cy.log = log.Output(zerolog.MultiLevelWriter(consoleWriter, os.Stdout))
 
 	vm, err := cy.initJanet(ctx, configFile)
 	if err != nil {
