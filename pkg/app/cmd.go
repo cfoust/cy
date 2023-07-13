@@ -180,6 +180,10 @@ func (c *Cmd) Write(data []byte) (n int, err error) {
 	ptmx := c.ptmx
 	c.RUnlock()
 
+	if ptmx == nil {
+		return 0, nil
+	}
+
 	return ptmx.Write(data)
 }
 
