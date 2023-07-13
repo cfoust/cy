@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"time"
@@ -110,8 +111,10 @@ func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 
 		started <- nil
 
+		c.Lock()
 		c.ptmx = fd
 		c.proc = cmd.Process
+		c.Unlock()
 
 		defer fd.Close()
 		shellDone <- cmd.Wait()
@@ -153,11 +156,31 @@ func (c *Cmd) run(ctx context.Context) error {
 }
 
 func (c *Cmd) Read(p []byte) (n int, err error) {
-	return c.ptmx.Read(p)
+	c.RLock()
+	ptmx := c.ptmx
+	c.RUnlock()
+
+	if ptmx == nil {
+		return 0, nil
+	}
+
+	n, err = ptmx.Read(p)
+	if err == io.EOF {
+		c.Lock()
+		c.ptmx = nil
+		c.Unlock()
+		return 0, nil
+	}
+
+	return n, err
 }
 
 func (c *Cmd) Write(data []byte) (n int, err error) {
-	return c.ptmx.Write(data)
+	c.RLock()
+	ptmx := c.ptmx
+	c.RUnlock()
+
+	return ptmx.Write(data)
 }
 
 const (
