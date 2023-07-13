@@ -33,6 +33,13 @@ func (s *Stream) Read(p []byte) (n int, err error) {
 
 func NewStream() *Stream {
 	r, w := io.Pipe()
+
+	go func() {
+		// Set the terminal to CRLF mode so that carriage returns go
+		// back to the first column
+		w.Write([]byte("\033[20h"))
+	}()
+
 	return &Stream{
 		r: r,
 		w: w,
