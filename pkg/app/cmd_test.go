@@ -1,21 +1,22 @@
-package wm
+package app
 
 import (
 	"context"
 	"testing"
 	"time"
 
+	"github.com/cfoust/cy/pkg/geom"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestHealthy(t *testing.T) {
-	tree := NewTree()
-	pane := tree.Root().NewPane(
+	cmd := NewCmd(
 		context.Background(),
-		PaneOptions{
+		CmdOptions{
 			Command: "/bin/sh",
 		},
-		Size{
+		geom.Size{
 			Rows:    26,
 			Columns: 80,
 		},
@@ -23,21 +24,20 @@ func TestHealthy(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	assert.Equal(t, pane.GetStatus(), PaneStatusHealthy)
+	assert.Equal(t, cmd.GetStatus(), CmdStatusHealthy)
 }
 
 func TestFailLoop(t *testing.T) {
-	tree := NewTree()
-	pane := tree.Root().NewPane(
+	cmd := NewCmd(
 		context.Background(),
-		PaneOptions{
+		CmdOptions{
 			Command: "/bin/sh",
 			Args: []string{
 				"-c",
 				"exit 1",
 			},
 		},
-		Size{
+		geom.Size{
 			Rows:    26,
 			Columns: 80,
 		},
@@ -45,5 +45,5 @@ func TestFailLoop(t *testing.T) {
 
 	time.Sleep(500 * time.Millisecond)
 
-	assert.Equal(t, pane.GetStatus(), PaneStatusFailed)
+	assert.Equal(t, cmd.GetStatus(), CmdStatusFailed)
 }

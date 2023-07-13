@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"time"
@@ -34,6 +33,7 @@ type Cmd struct {
 
 	status  CmdStatus
 	options CmdOptions
+	size    geom.Size
 
 	ptmx *os.File
 	proc *os.Process
@@ -42,7 +42,17 @@ type Cmd struct {
 
 var _ App = (*Cmd)(nil)
 
+func (c *Cmd) getSize() geom.Size {
+	c.RLock()
+	defer c.RUnlock()
+	return c.size
+}
+
 func (c *Cmd) Resize(size geom.Size) error {
+	c.Lock()
+	c.size = size
+	c.Unlock()
+
 	return pty.Setsize(c.ptmx, &pty.Winsize{
 		Rows: uint16(size.Rows),
 		Cols: uint16(size.Columns),
@@ -57,7 +67,14 @@ func (c *Cmd) GetStatus() CmdStatus {
 }
 
 func (c *Cmd) Path() (string, error) {
-	return dir.ForPid(c.proc.Pid)
+	c.RLock()
+	proc := c.proc
+	c.RUnlock()
+	if proc == nil {
+		return "", fmt.Errorf("process not yet started")
+	}
+
+	return dir.ForPid(proc.Pid)
 }
 
 func (c *Cmd) setStatus(status CmdStatus) {
@@ -66,22 +83,21 @@ func (c *Cmd) setStatus(status CmdStatus) {
 	c.Unlock()
 }
 
-func (c *Cmd) runPty(ctx context.Context) error {
+func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 	started := make(chan error)
 	shellDone := make(chan error)
-	p := &rawPty{
-		done: shellDone,
-	}
+	options := c.options
+	size := c.size
 
 	go func() {
-		cmd := exec.CommandContext(ctx, command, args...)
-		cmd.Dir = directory
+		cmd := exec.CommandContext(ctx, options.Command, options.Args...)
+		cmd.Dir = options.Directory
 
 		fd, err := pty.StartWithSize(
 			cmd,
 			&pty.Winsize{
-				Rows: uint16(rows),
-				Cols: uint16(cols),
+				Rows: uint16(size.Rows),
+				Cols: uint16(size.Columns),
 			},
 		)
 		if err != nil {
@@ -90,8 +106,8 @@ func (c *Cmd) runPty(ctx context.Context) error {
 
 		started <- nil
 
-		p.ptmx = fd
-		p.proc = cmd.Process
+		c.ptmx = fd
+		c.proc = cmd.Process
 
 		defer fd.Close()
 		shellDone <- cmd.Wait()
@@ -102,34 +118,26 @@ func (c *Cmd) runPty(ctx context.Context) error {
 		return nil, err
 	}
 
-	return p, nil
+	return shellDone, nil
 }
 
 // Run the pane's command and only return when it's finished.
-func (c *Cmd) run(ctx context.Context, options CmdOptions) error {
+func (c *Cmd) run(ctx context.Context) error {
 	started := make(chan error)
 
+	var shellDone chan error
 	go func() {
 		c.setStatus(CmdStatusStarting)
 
-		pty, err := pty.Run(
-			p.Ctx(),
-			options.Command,
-			options.Args,
-			options.Directory,
-			rows,
-			cols,
-		)
+		done, err := c.runPty(ctx)
 		if err != nil {
 			started <- err
 		}
 
-		p.pty = pty
-
-		go c.pollIO()
+		shellDone = done
 
 		started <- nil
-		p.setStatus(CmdStatusHealthy)
+		c.setStatus(CmdStatusHealthy)
 	}()
 
 	err := <-started
@@ -137,7 +145,7 @@ func (c *Cmd) run(ctx context.Context, options CmdOptions) error {
 		return err
 	}
 
-	return p.pty.Wait()
+	return <-shellDone
 }
 
 func (c *Cmd) Read(p []byte) (n int, err error) {
@@ -156,7 +164,7 @@ const (
 // Run the pane's pty command over and over (exiting a shell or an editor will
 // just start it again.) If it fails more than SPIN_NUM_TRIES in under
 // SPIN_THRESHOLD, don't restart it.
-func (c *Cmd) spin(ctx context.Context, options CmdOptions) {
+func (c *Cmd) spin(ctx context.Context) {
 	errChan := make(chan error)
 
 	startTime := time.Now()
@@ -202,10 +210,12 @@ func (c *Cmd) spin(ctx context.Context, options CmdOptions) {
 
 func NewCmd(ctx context.Context, options CmdOptions, size geom.Size) *Cmd {
 	pane := Cmd{
-		status: CmdStatusStarting,
+		status:  CmdStatusStarting,
+		options: options,
+		size:    size,
 	}
 
-	go pane.spin(ctx, options)
+	go pane.spin(ctx)
 
 	return &pane
 }
