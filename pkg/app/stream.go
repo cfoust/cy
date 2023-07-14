@@ -2,8 +2,6 @@ package app
 
 import (
 	"io"
-
-	"github.com/cfoust/cy/pkg/geom"
 )
 
 type Stream struct {
@@ -19,7 +17,7 @@ func (s *Stream) Writer() io.Writer {
 }
 
 // Resizing does nothing to a stream.
-func (s *Stream) Resize(size geom.Size) error {
+func (s *Stream) Resize(size Size) error {
 	return nil
 }
 

@@ -15,12 +15,6 @@ type Tea struct {
 
 var _ App = (*Tea)(nil)
 
-// Return the handle that allows you to write to this stream.
-func (s *Tea) Writer() io.Writer {
-	return s.writes
-}
-
-// Resizing does nothing to a stream.
 func (s *Tea) Resize(size Size) error {
 	s.program.Send(tea.WindowSizeMsg{
 		Width:  size.Columns,
