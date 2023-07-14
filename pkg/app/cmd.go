@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/util"
 	"github.com/cfoust/cy/pkg/util/dir"
 
@@ -35,7 +34,7 @@ type Cmd struct {
 
 	status  CmdStatus
 	options CmdOptions
-	size    geom.Size
+	size    Size
 
 	statusUpdates *util.Publisher[CmdStatus]
 
@@ -46,13 +45,13 @@ type Cmd struct {
 
 var _ App = (*Cmd)(nil)
 
-func (c *Cmd) getSize() geom.Size {
+func (c *Cmd) getSize() Size {
 	c.RLock()
 	defer c.RUnlock()
 	return c.size
 }
 
-func (c *Cmd) Resize(size geom.Size) error {
+func (c *Cmd) Resize(size Size) error {
 	c.Lock()
 	c.size = size
 	c.Unlock()
@@ -275,7 +274,7 @@ func (c *Cmd) waitHealthy(ctx context.Context) error {
 	return <-errc
 }
 
-func NewCmd(ctx context.Context, options CmdOptions, size geom.Size) (*Cmd, error) {
+func NewCmd(ctx context.Context, options CmdOptions, size Size) (*Cmd, error) {
 	cmd := Cmd{
 		status:        CmdStatusStarting,
 		options:       options,

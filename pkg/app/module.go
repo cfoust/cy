@@ -6,7 +6,9 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 )
 
+type Size = geom.Size
+
 type App interface {
 	io.ReadWriter
-	Resize(size geom.Size) error
+	Resize(size Size) error
 }
