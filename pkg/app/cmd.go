@@ -97,6 +97,10 @@ func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 	go func() {
 		cmd := exec.CommandContext(ctx, options.Command, options.Args...)
 		cmd.Dir = options.Directory
+		cmd.Env = append(
+			os.Environ(),
+			"TERM=tmux-256color",
+		)
 
 		fd, err := pty.StartWithSize(
 			cmd,
