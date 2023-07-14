@@ -10,12 +10,16 @@ import (
 )
 
 type Terminal struct {
-	emu.Terminal
-	app     App
-	changes *util.Publisher[time.Time]
+	terminal emu.Terminal
+	app      App
+	changes  *util.Publisher[time.Time]
 }
 
 var _ App = (*Terminal)(nil)
+
+func (t *Terminal) Emu() emu.Terminal {
+	return t.terminal
+}
 
 func (t *Terminal) notifyChange() {
 	t.changes.Publish(time.Now())
@@ -26,7 +30,7 @@ func (t *Terminal) Subscribe() *util.Subscriber[time.Time] {
 }
 
 func (t *Terminal) Resize(size Size) error {
-	t.Terminal.Resize(size.Columns, size.Rows)
+	t.terminal.Resize(size.Columns, size.Rows)
 	t.app.Resize(size)
 	t.notifyChange()
 	return nil
@@ -64,7 +68,7 @@ func (t *Terminal) poll(ctx context.Context) error {
 		copied := make([]byte, numBytes)
 		copy(copied, buffer[:numBytes])
 
-		_, err = t.Terminal.Write(copied)
+		_, err = t.terminal.Write(copied)
 		if err != nil {
 			return err
 		}
@@ -76,7 +80,7 @@ func (t *Terminal) poll(ctx context.Context) error {
 
 func NewTerminal(ctx context.Context, app App, size Size) *Terminal {
 	terminal := &Terminal{
-		Terminal: emu.New(emu.WithSize(
+		terminal: emu.New(emu.WithSize(
 			size.Columns,
 			size.Rows,
 		)),

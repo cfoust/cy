@@ -249,7 +249,7 @@ func (c *Client) GetSize() geom.Size {
 }
 
 func (c *Client) pollPane(ctx context.Context, pane *wm.Pane) error {
-	subscriber := pane.Subscribe()
+	subscriber := pane.Terminal().Subscribe()
 	defer subscriber.Done()
 
 	changes := subscriber.Recv()
@@ -258,7 +258,7 @@ func (c *Client) pollPane(ctx context.Context, pane *wm.Pane) error {
 		c.output(anim.SwapView(
 			c.info,
 			c.raw,
-			pane.Terminal,
+			pane.Terminal().Emu(),
 		))
 
 		select {
