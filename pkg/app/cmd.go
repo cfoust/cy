@@ -99,6 +99,8 @@ func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 		cmd.Dir = options.Directory
 		cmd.Env = append(
 			os.Environ(),
+			// XXX temporary; to get around the waits in termenv
+			// https://github.com/muesli/termenv/blob/master/termenv_unix.go#L230
 			"TERM=tmux-256color",
 		)
 
