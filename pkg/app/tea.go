@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"io"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -36,12 +37,13 @@ func (s *Tea) Read(p []byte) (n int, err error) {
 	return s.reads.Read(p)
 }
 
-func NewTea(model tea.Model, size Size) *Tea {
+func NewTea(ctx context.Context, model tea.Model, size Size) *Tea {
 	reads, out := io.Pipe()
 	in, writes := io.Pipe()
 
 	program := tea.NewProgram(
 		model,
+		tea.WithContext(ctx),
 		tea.WithAltScreen(),
 		tea.WithOutput(out),
 		tea.WithInput(in),
@@ -54,8 +56,6 @@ func NewTea(model tea.Model, size Size) *Tea {
 		writes:  writes,
 		program: program,
 	}
-
-	tea.Resize(size)
 
 	return tea
 }
