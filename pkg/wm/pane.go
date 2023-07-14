@@ -15,12 +15,12 @@ type Pane struct {
 
 	recorder *app.Recorder
 	terminal *app.Terminal
-	app      app.App
+	app      app.IO
 }
 
 var _ Node = (*Pane)(nil)
 
-func (p *Pane) App() app.App {
+func (p *Pane) App() app.IO {
 	return p.app
 }
 
@@ -36,7 +36,7 @@ func (p *Pane) Write(data []byte) (n int, err error) {
 	return p.app.Write(data)
 }
 
-func newPane(ctx context.Context, subApp app.App, size geom.Size) *Pane {
+func newPane(ctx context.Context, subApp app.IO, size geom.Size) *Pane {
 	recorder := app.NewRecorder(subApp)
 	terminal := app.NewTerminal(
 		ctx,

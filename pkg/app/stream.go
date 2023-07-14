@@ -9,7 +9,7 @@ type Stream struct {
 	w *io.PipeWriter
 }
 
-var _ App = (*Stream)(nil)
+var _ IO = (*Stream)(nil)
 
 // Return the handle that allows you to write to this stream.
 func (s *Stream) Writer() io.Writer {

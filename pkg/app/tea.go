@@ -13,7 +13,7 @@ type Tea struct {
 	program *tea.Program
 }
 
-var _ App = (*Tea)(nil)
+var _ IO = (*Tea)(nil)
 
 func (s *Tea) Resize(size Size) error {
 	s.program.Send(tea.WindowSizeMsg{

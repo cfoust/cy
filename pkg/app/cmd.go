@@ -43,7 +43,7 @@ type Cmd struct {
 	done chan error
 }
 
-var _ App = (*Cmd)(nil)
+var _ IO = (*Cmd)(nil)
 
 func (c *Cmd) getSize() Size {
 	c.RLock()

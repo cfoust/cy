@@ -89,7 +89,7 @@ func (g *Group) addNode(node Node) {
 
 func (g *Group) NewPane(
 	ctx context.Context,
-	app app.App,
+	app app.IO,
 	size geom.Size,
 ) *Pane {
 	pane := newPane(ctx, app, size)

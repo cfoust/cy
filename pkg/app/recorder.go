@@ -45,10 +45,10 @@ type Event struct {
 type Recorder struct {
 	events []Event
 	mutex  deadlock.RWMutex
-	app    App
+	app    IO
 }
 
-var _ App = (*Recorder)(nil)
+var _ IO = (*Recorder)(nil)
 
 func New() *Recorder {
 	return &Recorder{}
@@ -96,7 +96,7 @@ func (s *Recorder) Resize(size Size) error {
 	return nil
 }
 
-func NewRecorder(app App) *Recorder {
+func NewRecorder(app IO) *Recorder {
 	return &Recorder{
 		events: make([]Event, 0),
 		app:    app,

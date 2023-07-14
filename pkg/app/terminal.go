@@ -11,13 +11,13 @@ import (
 
 type Terminal struct {
 	terminal emu.Terminal
-	app      App
+	app      IO
 	changes  *util.Publisher[time.Time]
 }
 
-var _ App = (*Terminal)(nil)
+var _ Screen = (*Terminal)(nil)
 
-func (t *Terminal) Emu() emu.Terminal {
+func (t *Terminal) View() emu.View {
 	return t.terminal
 }
 
@@ -25,7 +25,7 @@ func (t *Terminal) notifyChange() {
 	t.changes.Publish(time.Now())
 }
 
-func (t *Terminal) Subscribe() *util.Subscriber[time.Time] {
+func (t *Terminal) Updates() *Notifier {
 	return t.changes.Subscribe()
 }
 
@@ -78,7 +78,7 @@ func (t *Terminal) poll(ctx context.Context) error {
 	}
 }
 
-func NewTerminal(ctx context.Context, app App, size Size) *Terminal {
+func NewTerminal(ctx context.Context, app IO, size Size) *Terminal {
 	terminal := &Terminal{
 		terminal: emu.New(emu.WithSize(
 			size.Columns,
