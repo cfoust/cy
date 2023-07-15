@@ -42,12 +42,6 @@ func (t *Terminal) Write(data []byte) (n int, err error) {
 	return t.app.Write(data)
 }
 
-// Terminals swallow all of their output to influence the display state, so
-// this does nothing.
-func (t *Terminal) Read(p []byte) (n int, err error) {
-	return 0, nil
-}
-
 func (t *Terminal) poll(ctx context.Context) error {
 	buffer := make([]byte, 4096)
 
