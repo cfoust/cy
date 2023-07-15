@@ -5,6 +5,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/cfoust/cy/pkg/geom/ttystate"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/util"
 )
@@ -17,8 +18,8 @@ type Terminal struct {
 
 var _ Screen = (*Terminal)(nil)
 
-func (t *Terminal) View() emu.View {
-	return t.terminal
+func (t *Terminal) State() *ttystate.TTYState {
+	return ttystate.Capture(t.terminal)
 }
 
 func (t *Terminal) notifyChange() {

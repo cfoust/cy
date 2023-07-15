@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/ttystate"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/util"
@@ -249,16 +249,16 @@ func (c *Client) GetSize() geom.Size {
 }
 
 func (c *Client) pollPane(ctx context.Context, pane *wm.Pane) error {
-	subscriber := pane.Terminal().Subscribe()
+	subscriber := pane.Terminal().Updates()
 	defer subscriber.Done()
 
 	changes := subscriber.Recv()
 
 	for {
-		c.output(anim.SwapView(
+		c.output(ttystate.Swap(
 			c.info,
-			c.raw,
-			pane.Terminal().Emu(),
+			ttystate.Capture(c.raw),
+			pane.Terminal().State(),
 		))
 
 		select {

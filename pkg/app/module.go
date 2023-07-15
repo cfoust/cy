@@ -4,8 +4,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/ttystate"
 	"github.com/cfoust/cy/pkg/util"
 )
 
@@ -26,7 +26,7 @@ type IO interface {
 // A Screen is the "end" of a chain of IO, or the result that the user sees.
 type Screen interface {
 	io.Writer
-	View() emu.View
+	State() *ttystate.TTYState
 	Updates() *Notifier
 	Resizable
 }
