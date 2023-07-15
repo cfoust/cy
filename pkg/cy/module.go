@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/cfoust/cy/pkg/app"
+	"github.com/cfoust/cy/pkg/ui/io"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/util"
@@ -93,13 +93,13 @@ func Start(ctx context.Context, configFile string) (*Cy, error) {
 
 	tree.Root().NewCmd(
 		cy.Ctx(),
-		app.CmdOptions{
+		io.CmdOptions{
 			Command: "/bin/bash",
 		},
 		geom.DEFAULT_SIZE,
 	)
 
-	logs := app.NewStream()
+	logs := io.NewStream()
 	tree.Root().NewPane(
 		cy.Ctx(),
 		logs,

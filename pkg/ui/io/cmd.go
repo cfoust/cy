@@ -1,4 +1,4 @@
-package app
+package io
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/util"
+	"github.com/cfoust/cy/pkg/ui"
 	"github.com/cfoust/cy/pkg/util/dir"
 
 	"github.com/creack/pty"
@@ -34,7 +35,7 @@ type Cmd struct {
 
 	status  CmdStatus
 	options CmdOptions
-	size    Size
+	size    ui.Size
 
 	statusUpdates *util.Publisher[CmdStatus]
 
@@ -43,15 +44,15 @@ type Cmd struct {
 	done chan error
 }
 
-var _ IO = (*Cmd)(nil)
+var _ ui.IO = (*Cmd)(nil)
 
-func (c *Cmd) getSize() Size {
+func (c *Cmd) getSize() ui.Size {
 	c.RLock()
 	defer c.RUnlock()
 	return c.size
 }
 
-func (c *Cmd) Resize(size Size) error {
+func (c *Cmd) Resize(size ui.Size) error {
 	c.Lock()
 	c.size = size
 	c.Unlock()
@@ -274,7 +275,7 @@ func (c *Cmd) waitHealthy(ctx context.Context) error {
 	return <-errc
 }
 
-func NewCmd(ctx context.Context, options CmdOptions, size Size) (*Cmd, error) {
+func NewCmd(ctx context.Context, options CmdOptions, size ui.Size) (*Cmd, error) {
 	cmd := Cmd{
 		status:        CmdStatusStarting,
 		options:       options,

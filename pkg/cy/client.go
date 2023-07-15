@@ -9,7 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/geom/ttystate"
+	"github.com/cfoust/cy/pkg/geom/tty"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/util"
@@ -255,9 +255,9 @@ func (c *Client) pollPane(ctx context.Context, pane *wm.Pane) error {
 	changes := subscriber.Recv()
 
 	for {
-		c.output(ttystate.Swap(
+		c.output(tty.Swap(
 			c.info,
-			ttystate.Capture(c.raw),
+			tty.Capture(c.raw),
 			pane.Terminal().State(),
 		))
 

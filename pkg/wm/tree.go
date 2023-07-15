@@ -4,7 +4,8 @@ import (
 	"context"
 	"sync/atomic"
 
-	"github.com/cfoust/cy/pkg/app"
+	"github.com/cfoust/cy/pkg/ui"
+	"github.com/cfoust/cy/pkg/ui/io"
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/bind/trie"
 	"github.com/cfoust/cy/pkg/geom"
@@ -89,7 +90,7 @@ func (g *Group) addNode(node Node) {
 
 func (g *Group) NewPane(
 	ctx context.Context,
-	app app.IO,
+	app ui.IO,
 	size geom.Size,
 ) *Pane {
 	pane := newPane(ctx, app, size)
@@ -98,8 +99,8 @@ func (g *Group) NewPane(
 	return pane
 }
 
-func (g *Group) NewCmd(ctx context.Context, options app.CmdOptions, size geom.Size) (*Pane, error) {
-	cmd, err := app.NewCmd(ctx, options, size)
+func (g *Group) NewCmd(ctx context.Context, options io.CmdOptions, size geom.Size) (*Pane, error) {
+	cmd, err := io.NewCmd(ctx, options, size)
 	if err != nil {
 		return nil, err
 	}

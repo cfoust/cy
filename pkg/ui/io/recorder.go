@@ -1,7 +1,9 @@
-package app
+package io
 
 import (
 	"time"
+
+	"github.com/cfoust/cy/pkg/ui"
 
 	"github.com/sasha-s/go-deadlock"
 )
@@ -45,10 +47,10 @@ type Event struct {
 type Recorder struct {
 	events []Event
 	mutex  deadlock.RWMutex
-	app    IO
+	app    ui.IO
 }
 
-var _ IO = (*Recorder)(nil)
+var _ ui.IO = (*Recorder)(nil)
 
 func New() *Recorder {
 	return &Recorder{}
@@ -87,7 +89,7 @@ func (s *Recorder) Read(p []byte) (n int, err error) {
 	return
 }
 
-func (s *Recorder) Resize(size Size) error {
+func (s *Recorder) Resize(size ui.Size) error {
 	s.store(ResizeEvent{
 		Columns: size.Columns,
 		Rows:    size.Rows,
@@ -96,7 +98,7 @@ func (s *Recorder) Resize(size Size) error {
 	return nil
 }
 
-func NewRecorder(app IO) *Recorder {
+func NewRecorder(app ui.IO) *Recorder {
 	return &Recorder{
 		events: make([]Event, 0),
 		app:    app,

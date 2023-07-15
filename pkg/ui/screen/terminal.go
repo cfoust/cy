@@ -1,36 +1,37 @@
-package app
+package screen
 
 import (
 	"context"
 	"io"
 	"time"
 
-	"github.com/cfoust/cy/pkg/geom/ttystate"
+	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/ui"
 	"github.com/cfoust/cy/pkg/util"
 )
 
 type Terminal struct {
 	terminal emu.Terminal
-	app      IO
+	app      ui.IO
 	changes  *util.Publisher[time.Time]
 }
 
-var _ Screen = (*Terminal)(nil)
+var _ ui.Screen = (*Terminal)(nil)
 
-func (t *Terminal) State() *ttystate.TTYState {
-	return ttystate.Capture(t.terminal)
+func (t *Terminal) State() *tty.State {
+	return tty.Capture(t.terminal)
 }
 
 func (t *Terminal) notifyChange() {
 	t.changes.Publish(time.Now())
 }
 
-func (t *Terminal) Updates() *Notifier {
+func (t *Terminal) Updates() *ui.Notifier {
 	return t.changes.Subscribe()
 }
 
-func (t *Terminal) Resize(size Size) error {
+func (t *Terminal) Resize(size ui.Size) error {
 	t.terminal.Resize(size.Columns, size.Rows)
 	t.app.Resize(size)
 	t.notifyChange()
@@ -79,7 +80,7 @@ func (t *Terminal) poll(ctx context.Context) error {
 	}
 }
 
-func NewTerminal(ctx context.Context, app IO, size Size) *Terminal {
+func NewTerminal(ctx context.Context, app ui.IO, size ui.Size) *Terminal {
 	terminal := &Terminal{
 		terminal: emu.New(emu.WithSize(
 			size.Columns,

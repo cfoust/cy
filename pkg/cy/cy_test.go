@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cfoust/cy/pkg/app"
+	"github.com/cfoust/cy/pkg/ui/io"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
@@ -170,7 +170,7 @@ func TestScopes(t *testing.T) {
 	group := cy.tree.Root().NewGroup()
 	pane, err := group.NewCmd(
 		server.Ctx(),
-		app.CmdOptions{
+		io.CmdOptions{
 			Command: "/bin/bash",
 		},
 		geom.DEFAULT_SIZE,

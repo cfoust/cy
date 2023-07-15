@@ -1,11 +1,11 @@
-package app
+package ui
 
 import (
 	"io"
 	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/geom/ttystate"
+	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/util"
 )
 
@@ -26,7 +26,7 @@ type IO interface {
 // A Screen is the "end" of a chain of IO, or the result that the user sees.
 type Screen interface {
 	io.Writer
-	State() *ttystate.TTYState
+	State() *tty.State
 	Updates() *Notifier
 	Resizable
 }

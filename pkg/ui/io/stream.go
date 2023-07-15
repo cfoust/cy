@@ -1,7 +1,9 @@
-package app
+package io
 
 import (
 	"io"
+
+	"github.com/cfoust/cy/pkg/ui"
 )
 
 type Stream struct {
@@ -9,7 +11,7 @@ type Stream struct {
 	w *io.PipeWriter
 }
 
-var _ IO = (*Stream)(nil)
+var _ ui.IO = (*Stream)(nil)
 
 // Return the handle that allows you to write to this stream.
 func (s *Stream) Writer() io.Writer {
@@ -17,7 +19,7 @@ func (s *Stream) Writer() io.Writer {
 }
 
 // Resizing does nothing to a stream.
-func (s *Stream) Resize(size Size) error {
+func (s *Stream) Resize(size ui.Size) error {
 	return nil
 }
 

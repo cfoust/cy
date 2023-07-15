@@ -1,4 +1,4 @@
-package ttystate
+package tty
 
 import (
 	"bytes"
@@ -10,26 +10,26 @@ import (
 	"github.com/xo/terminfo"
 )
 
-type TTYState struct {
+type State struct {
 	Image         image.Image
 	Cursor        emu.Cursor
 	CursorVisible bool
 }
 
-func New(columns, rows int) *TTYState {
-	return &TTYState{
+func New(columns, rows int) *State {
+	return &State{
 		Image:         image.New(columns, rows),
 		CursorVisible: true,
 	}
 }
 
-func Capture(view emu.View) *TTYState {
+func Capture(view emu.View) *State {
 	view.Lock()
 	cursor := view.Cursor()
 	cursorVisible := view.CursorVisible()
 	view.Unlock()
 
-	return &TTYState{
+	return &State{
 		Image:         image.Capture(view),
 		Cursor:        cursor,
 		CursorVisible: cursorVisible,
@@ -123,7 +123,7 @@ func swapImage(
 
 func Swap(
 	info *terminfo.Terminfo,
-	dst, src *TTYState,
+	dst, src *State,
 ) []byte {
 	data := new(bytes.Buffer)
 	data.Write(swapImage(info, dst.Image, src.Image))
