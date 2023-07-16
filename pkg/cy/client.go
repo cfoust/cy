@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
@@ -13,6 +14,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/rs/zerolog/log"
@@ -34,6 +36,7 @@ type Client struct {
 	binds *bind.Engine[tree.Binding]
 
 	muxClient *server.Client
+	renderer  *stream.Renderer
 
 	raw  emu.Terminal
 	info *terminfo.Terminfo
@@ -55,6 +58,29 @@ func (c *Cy) addClient(conn Connection) *Client {
 	go c.pollClient(clientCtx, client)
 
 	return client
+}
+
+func (c *Client) pollRender() {
+	buffer := make([]byte, 4096)
+
+	for {
+		numBytes, err := c.renderer.Read(buffer)
+		if err == io.EOF {
+			return
+		}
+		if err != nil {
+			// TODO(cfoust): 07/16/23
+			return
+		}
+		if c.Ctx().Err() != nil {
+			return
+		}
+		if numBytes == 0 {
+			continue
+		}
+
+		c.output(buffer[:numBytes])
+	}
 }
 
 func (c *Client) pollEvents() {
@@ -238,6 +264,14 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 			handshake.Rows,
 		),
 	)
+	c.renderer = stream.NewRenderer(
+		c.Ctx(),
+		info,
+		c.raw,
+		c.muxClient,
+	)
+
+	go c.pollRender()
 
 	return nil
 }

@@ -25,8 +25,18 @@ var _ mux.Screen = (*Client)(nil)
 
 func (c *Client) State() *tty.State {
 	c.RLock()
+	screen := c.screen
+	size := c.size
 	defer c.RUnlock()
-	return c.screen.State()
+
+	if screen == nil {
+		return tty.New(
+			size.Columns,
+			size.Rows,
+		)
+	}
+
+	return screen.State()
 }
 
 func (c *Client) Updates() *mux.Updater {
