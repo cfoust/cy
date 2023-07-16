@@ -103,7 +103,9 @@ func (s *Server) AddClient(
 ) *Client {
 	s.Lock()
 	client := &Client{
-		size: initialSize,
+		size:      initialSize,
+		publisher: mux.NewPublisher(),
+		server:    s,
 	}
 	s.clients = append(s.clients, client)
 	s.Unlock()
