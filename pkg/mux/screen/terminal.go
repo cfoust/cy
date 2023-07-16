@@ -3,17 +3,16 @@ package screen
 import (
 	"context"
 	"io"
-	"time"
 
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/util"
 )
 
 type Terminal struct {
 	terminal emu.Terminal
 	stream   Stream
-	changes  *util.Publisher[time.Time]
+	changes  *mux.UpdatePublisher
 }
 
 var _ Screen = (*Terminal)(nil)
@@ -23,10 +22,10 @@ func (t *Terminal) State() *tty.State {
 }
 
 func (t *Terminal) notifyChange() {
-	t.changes.Publish(time.Now())
+	t.changes.Publish(t.State())
 }
 
-func (t *Terminal) Updates() *Notifier {
+func (t *Terminal) Updates() *Updater {
 	return t.changes.Subscribe()
 }
 
@@ -84,7 +83,7 @@ func NewTerminal(ctx context.Context, stream Stream, size Size) *Terminal {
 			size.Columns,
 			size.Rows,
 		)),
-		changes: util.NewPublisher[time.Time](),
+		changes: mux.NewPublisher(),
 		stream:  stream,
 	}
 

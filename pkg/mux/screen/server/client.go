@@ -110,5 +110,20 @@ func (s *Server) AddClient(
 	s.clients = append(s.clients, client)
 	s.Unlock()
 
+	go func() {
+		<-ctx.Done()
+		s.Lock()
+		newClients := make([]*Client, 0)
+		for _, other := range s.clients {
+			if client == other {
+				continue
+			}
+
+			newClients = append(newClients, other)
+		}
+		s.clients = newClients
+		s.Unlock()
+	}()
+
 	return client
 }

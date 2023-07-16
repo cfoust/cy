@@ -6,5 +6,5 @@ import (
 
 type Screen = mux.Screen
 type Stream = mux.Stream
-type Notifier = mux.Updater
+type Updater = mux.Updater
 type Size = mux.Size

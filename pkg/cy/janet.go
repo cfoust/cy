@@ -6,8 +6,8 @@ import (
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
-	"github.com/cfoust/cy/pkg/wm"
 )
 
 import _ "embed"
@@ -28,7 +28,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 		"key/bind": func(sequence []string, doc string, callback *janet.Function) error {
 			c.tree.Root().Binds().Set(
 				sequence,
-				wm.Binding{
+				tree.Binding{
 					Description: doc,
 					Callback:    callback,
 				},
@@ -36,10 +36,10 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			return nil
 		},
-		"tree/root": func() wm.NodeID {
+		"tree/root": func() tree.NodeID {
 			return c.tree.Root().Id()
 		},
-		"tree/parent": func(id wm.NodeID) *wm.NodeID {
+		"tree/parent": func(id tree.NodeID) *tree.NodeID {
 			node, ok := c.tree.NodeById(id)
 			if !ok {
 				return nil
@@ -53,15 +53,15 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 			parentId := path[len(path)-2].Id()
 			return &parentId
 		},
-		"tree/group?": func(id wm.NodeID) bool {
+		"tree/group?": func(id tree.NodeID) bool {
 			_, ok := c.tree.GroupById(id)
 			return ok
 		},
-		"tree/pane?": func(id wm.NodeID) bool {
+		"tree/pane?": func(id tree.NodeID) bool {
 			_, ok := c.tree.PaneById(id)
 			return ok
 		},
-		"group/new": func(parentId wm.NodeID) (wm.NodeID, error) {
+		"group/new": func(parentId tree.NodeID) (tree.NodeID, error) {
 			group, ok := c.tree.GroupById(parentId)
 			if !ok {
 				return 0, fmt.Errorf("node not found: %d", parentId)
@@ -69,19 +69,19 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			return group.NewGroup().Id(), nil
 		},
-		"group/children": func(parentId wm.NodeID) ([]wm.NodeID, error) {
+		"group/children": func(parentId tree.NodeID) ([]tree.NodeID, error) {
 			group, ok := c.tree.GroupById(parentId)
 			if !ok {
 				return nil, fmt.Errorf("node not found: %d", parentId)
 			}
 
-			nodes := make([]wm.NodeID, 0)
+			nodes := make([]tree.NodeID, 0)
 			for _, child := range group.Children() {
 				nodes = append(nodes, child.Id())
 			}
 			return nodes, nil
 		},
-		"pane/current": func(context interface{}) *wm.NodeID {
+		"pane/current": func(context interface{}) *tree.NodeID {
 			client, ok := context.(*Client)
 			if !ok {
 				return nil
@@ -95,7 +95,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 			id := node.Id()
 			return &id
 		},
-		"cmd/path": func(id wm.NodeID) (*string, error) {
+		"cmd/path": func(id tree.NodeID) (*string, error) {
 			pane, ok := c.tree.PaneById(id)
 			if !ok {
 				return nil, fmt.Errorf("pane not found: %d", id)
@@ -113,7 +113,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			return &path, nil
 		},
-		"cmd/new": func(groupId wm.NodeID, path string) (wm.NodeID, error) {
+		"cmd/new": func(groupId tree.NodeID, path string) (tree.NodeID, error) {
 			group, ok := c.tree.GroupById(groupId)
 			if !ok {
 				return 0, fmt.Errorf("node not found: %d", groupId)
@@ -133,7 +133,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			return cmd.Id(), nil
 		},
-		"pane/attach": func(context interface{}, id wm.NodeID) error {
+		"pane/attach": func(context interface{}, id tree.NodeID) error {
 			client, ok := context.(*Client)
 			if !ok {
 				return fmt.Errorf("missing client context")

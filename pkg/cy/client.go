@@ -8,13 +8,12 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
-	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/geom/tty"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/mux/screen/server"
+	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/util"
-	"github.com/cfoust/cy/pkg/wm"
 
 	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
@@ -31,9 +30,10 @@ type Client struct {
 
 	cy *Cy
 
-	attachment *util.Lifetime
-	node       wm.Node
-	binds      *bind.Engine[wm.Binding]
+	node  tree.Node
+	binds *bind.Engine[tree.Binding]
+
+	muxClient *server.Client
 
 	raw  emu.Terminal
 	info *terminfo.Terminfo
@@ -47,12 +47,12 @@ func (c *Cy) addClient(conn Connection) *Client {
 		Lifetime: util.NewLifetime(clientCtx),
 		cy:       c,
 		conn:     conn,
-		binds:    bind.NewEngine[wm.Binding](),
+		binds:    bind.NewEngine[tree.Binding](),
 	}
 	c.clients = append(c.clients, client)
 	c.Unlock()
 
-	go c.pollClient(client)
+	go c.pollClient(clientCtx, client)
 
 	return client
 }
@@ -64,26 +64,26 @@ func (c *Client) pollEvents() {
 			return
 		case event := <-c.binds.Recv():
 			switch event := event.(type) {
-			case bind.ActionEvent[wm.Binding]:
+			case bind.ActionEvent[tree.Binding]:
 				err := event.Action.Callback.CallContext(c)
 				if err != nil {
 					log.Error().Err(err).Msgf("failed to run callback")
 				}
 				continue
 			case bind.RawEvent:
-				node := c.GetNode()
+				node := c.Node()
 				if node == nil {
 					continue
 				}
 
-				pane := node.(*wm.Pane)
+				pane := node.(*tree.Pane)
 				pane.Write(event.Data)
 			}
 		}
 	}
 }
 
-func (c *Cy) pollClient(client *Client) {
+func (c *Cy) pollClient(ctx context.Context, client *Client) {
 	conn := client.conn
 	events := conn.Receive()
 
@@ -153,6 +153,12 @@ func (c *Cy) pollClient(client *Client) {
 	}
 }
 
+func (c *Client) Node() tree.Node {
+	c.RLock()
+	defer c.RUnlock()
+	return c.node
+}
+
 func (c *Cy) removeClient(client *Client) {
 	c.Lock()
 	newClients := make([]*Client, 0)
@@ -205,7 +211,7 @@ func (c *Client) Resize(rows, cols int) {
 		return
 	}
 
-	c.cy.refreshPane(node)
+	c.muxClient.Resize(mux.Size{})
 }
 
 func (c *Client) initialize(handshake *P.HandshakeMessage) error {
@@ -218,6 +224,14 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	}
 	c.info = info
 
+	c.muxClient = c.cy.muxServer.AddClient(
+		c.Ctx(),
+		info,
+		mux.Size{
+			Columns: handshake.Columns,
+			Rows:    handshake.Rows,
+		},
+	)
 	c.raw = emu.New(
 		emu.WithSize(
 			handshake.Columns,
@@ -228,49 +242,8 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	return nil
 }
 
-func (c *Client) GetNode() wm.Node {
-	c.RLock()
-	node := c.node
-	c.RUnlock()
-
-	return node
-}
-
-func (c *Client) GetSize() geom.Size {
-	c.raw.Lock()
-	cols, rows := c.raw.Size()
-	c.raw.Unlock()
-
-	return geom.Size{
-		Rows:    rows,
-		Columns: cols,
-	}
-}
-
-func (c *Client) pollPane(ctx context.Context, pane *wm.Pane) error {
-	subscriber := pane.Screen().Updates()
-	defer subscriber.Done()
-
-	changes := subscriber.Recv()
-
-	for {
-		c.output(tty.Swap(
-			c.info,
-			tty.Capture(c.raw),
-			pane.Screen().State(),
-		))
-
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-changes:
-			continue
-		}
-	}
-}
-
-func (c *Client) Attach(node wm.Node) error {
-	pane, ok := node.(*wm.Pane)
+func (c *Client) Attach(node tree.Node) error {
+	pane, ok := node.(*tree.Pane)
 	if !ok {
 		return fmt.Errorf("node was not a pane")
 	}
@@ -280,31 +253,18 @@ func (c *Client) Attach(node wm.Node) error {
 		return fmt.Errorf("failed to find path to node")
 	}
 
-	attachment := util.NewLifetime(c.Ctx())
+	c.muxClient.Attach(c.Ctx(), pane.Screen())
 
 	c.Lock()
-	if c.attachment != nil {
-		c.attachment.Cancel()
-	}
-	c.attachment = &attachment
-
-	oldNode := c.node
 	c.node = node
 	c.Unlock()
 
 	// Update bindings
-	scopes := make([]*wm.BindScope, 0)
+	scopes := make([]*tree.BindScope, 0)
 	for _, pathNode := range path {
 		scopes = append(scopes, pathNode.Binds())
 	}
 	c.binds.SetScopes(scopes...)
-
-	if oldNode != nil {
-		c.cy.refreshPane(oldNode)
-	}
-	c.cy.refreshPane(node)
-
-	go c.pollPane(attachment.Ctx(), pane)
 
 	return nil
 }

@@ -7,9 +7,10 @@ import (
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux/screen/server"
+	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
-	"github.com/cfoust/cy/pkg/wm"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -21,8 +22,10 @@ type Cy struct {
 	deadlock.RWMutex
 	janet *janet.VM
 
+	muxServer *server.Server
+
 	// The tree of groups and panes.
-	tree    *wm.Tree
+	tree    *tree.Tree
 	clients []*Client
 
 	log zerolog.Logger
@@ -31,12 +34,12 @@ type Cy struct {
 // Get the pane that new clients attach to. If there are other clients, we
 // attach to the pane of the first other client. Otherwise we attach to the
 // first pane we find, depth-first.
-func (c *Cy) findInitialPane() wm.Node {
+func (c *Cy) findInitialPane() tree.Node {
 	c.RLock()
 	defer c.RUnlock()
 
 	if len(c.clients) > 0 {
-		node := c.clients[0].GetNode()
+		node := c.clients[0].Node()
 		if node != nil {
 			return node
 		}
@@ -50,45 +53,13 @@ func (c *Cy) findInitialPane() wm.Node {
 	return leaves[0]
 }
 
-// Given a node, get a list of all clients attached to it and find the minimum
-// pane size.
-func (c *Cy) refreshPane(node wm.Node) {
-	pane, ok := node.(*wm.Pane)
-	if !ok {
-		return
-	}
-
-	c.Lock()
-	defer c.Unlock()
-
-	// Get a list of all clients attached to this node
-	attached := make([]*Client, 0)
-	for _, client := range c.clients {
-		if node == client.GetNode() {
-			attached = append(attached, client)
-		}
-	}
-
-	// Don't do anything if no clients are attached to this pane
-	if len(attached) == 0 {
-		return
-	}
-
-	// Set the pane's size to the maximum that all clients can fit
-	size := attached[0].GetSize()
-	for _, client := range attached {
-		size = geom.GetMaximum(size, client.GetSize())
-	}
-
-	pane.Resize(size)
-}
-
 func Start(ctx context.Context, configFile string) (*Cy, error) {
-	tree := wm.NewTree()
+	tree := tree.NewTree()
 
 	cy := Cy{
-		Lifetime: util.NewLifetime(ctx),
-		tree:     tree,
+		Lifetime:  util.NewLifetime(ctx),
+		tree:      tree,
+		muxServer: server.New(),
 	}
 
 	tree.Root().NewCmd(
