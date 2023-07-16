@@ -2,7 +2,6 @@ package mux
 
 import (
 	"io"
-	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -11,7 +10,12 @@ import (
 
 type Size = geom.Size
 
-type Notifier = util.Subscriber[time.Time]
+type Updater = util.Subscriber[*tty.State]
+type UpdatePublisher = util.Publisher[*tty.State]
+
+func NewPublisher() *UpdatePublisher {
+	return util.NewPublisher[*tty.State]()
+}
 
 type Resizable interface {
 	Resize(size Size) error
@@ -27,6 +31,6 @@ type Stream interface {
 type Screen interface {
 	io.Writer
 	State() *tty.State
-	Updates() *Notifier
+	Updates() *Updater
 	Resizable
 }

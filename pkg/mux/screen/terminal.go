@@ -32,7 +32,12 @@ func (t *Terminal) Updates() *Notifier {
 
 func (t *Terminal) Resize(size Size) error {
 	t.terminal.Resize(size.Columns, size.Rows)
-	t.stream.Resize(size)
+
+	err := t.stream.Resize(size)
+	if err != nil {
+		return err
+	}
+
 	t.notifyChange()
 	return nil
 }

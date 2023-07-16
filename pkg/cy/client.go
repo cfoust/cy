@@ -35,11 +35,8 @@ type Client struct {
 	node       wm.Node
 	binds      *bind.Engine[wm.Binding]
 
-	// This is a "model" of what the client is seeing so that we can
-	// animate between states
-	raw    emu.Terminal
-	info   *terminfo.Terminfo
-	stream mux.Stream
+	raw  emu.Terminal
+	info *terminfo.Terminfo
 }
 
 func (c *Cy) addClient(conn Connection) *Client {

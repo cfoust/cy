@@ -1,4 +1,4 @@
-package wm
+package tree
 
 import (
 	"context"
