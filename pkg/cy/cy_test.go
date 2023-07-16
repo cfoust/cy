@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cfoust/cy/pkg/ui/io"
+	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"

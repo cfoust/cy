@@ -34,9 +34,3 @@
     (when (= 0 (length next-panes)) (break))
     (def [next] next-panes)
     (pane/attach next)))
-
-(key/bind
-  [prefix "e"]
-  "go to error"
-  (fn [&]
-    (log "test test test")))

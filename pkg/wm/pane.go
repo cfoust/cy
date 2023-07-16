@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/ui"
-	"github.com/cfoust/cy/pkg/ui/io"
-	"github.com/cfoust/cy/pkg/ui/screen"
+	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/mux/stream"
 
 	"github.com/sasha-s/go-deadlock"
 )
@@ -15,40 +15,40 @@ type Pane struct {
 	deadlock.RWMutex
 	*metaData
 
-	recorder *io.Recorder
-	terminal *screen.Terminal
-	io       ui.IO
+	recorder *stream.Recorder
+	screen   mux.Screen
+	stream   stream.Stream
 }
 
 var _ Node = (*Pane)(nil)
 
-func (p *Pane) App() ui.IO {
-	return p.io
+func (p *Pane) App() stream.Stream {
+	return p.stream
 }
 
-func (p *Pane) Terminal() *screen.Terminal {
-	return p.terminal
+func (p *Pane) Screen() mux.Screen {
+	return p.screen
 }
 
 func (p *Pane) Resize(size geom.Size) {
-	p.terminal.Resize(size)
+	p.screen.Resize(size)
 }
 
 func (p *Pane) Write(data []byte) (n int, err error) {
-	return p.io.Write(data)
+	return p.stream.Write(data)
 }
 
-func newPane(ctx context.Context, subApp ui.IO, size geom.Size) *Pane {
-	recorder := io.NewRecorder(subApp)
+func newPane(ctx context.Context, subStream stream.Stream, size geom.Size) *Pane {
+	recorder := stream.NewRecorder(subStream)
 	terminal := screen.NewTerminal(
 		ctx,
 		recorder,
 		size,
 	)
 	pane := Pane{
-		terminal: terminal,
+		screen:   terminal,
 		recorder: recorder,
-		io:       subApp,
+		stream:   subStream,
 	}
 
 	return &pane

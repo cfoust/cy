@@ -1,4 +1,4 @@
-package io
+package stream
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/ui"
+	"github.com/cfoust/cy/pkg/mux/screen"
 
 	"github.com/xo/terminfo"
 )
@@ -20,15 +20,15 @@ import (
 // changed.
 type Renderer struct {
 	target emu.Terminal
-	screen ui.Screen
+	screen screen.Screen
 	r      *io.PipeReader
 	w      *io.PipeWriter
 	info   *terminfo.Terminfo
 }
 
-var _ ui.IO = (*Renderer)(nil)
+var _ Stream = (*Renderer)(nil)
 
-func (r *Renderer) Resize(size ui.Size) error {
+func (r *Renderer) Resize(size Size) error {
 	r.target.Resize(size.Columns, size.Rows)
 	return r.screen.Resize(size)
 }
@@ -71,7 +71,7 @@ func NewRenderer(
 	ctx context.Context,
 	info *terminfo.Terminfo,
 	target emu.Terminal,
-	screen ui.Screen,
+	screen Screen,
 ) *Renderer {
 	r, w := io.Pipe()
 

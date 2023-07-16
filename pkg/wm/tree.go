@@ -4,12 +4,12 @@ import (
 	"context"
 	"sync/atomic"
 
-	"github.com/cfoust/cy/pkg/ui"
-	"github.com/cfoust/cy/pkg/ui/io"
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/bind/trie"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/mux/stream"
 
 	"github.com/sasha-s/go-deadlock"
 )
@@ -90,17 +90,17 @@ func (g *Group) addNode(node Node) {
 
 func (g *Group) NewPane(
 	ctx context.Context,
-	app ui.IO,
+	stream mux.Stream,
 	size geom.Size,
 ) *Pane {
-	pane := newPane(ctx, app, size)
+	pane := newPane(ctx, stream, size)
 	pane.metaData = g.tree.newMetadata()
 	g.addNode(pane)
 	return pane
 }
 
-func (g *Group) NewCmd(ctx context.Context, options io.CmdOptions, size geom.Size) (*Pane, error) {
-	cmd, err := io.NewCmd(ctx, options, size)
+func (g *Group) NewCmd(ctx context.Context, options stream.CmdOptions, size geom.Size) (*Pane, error) {
+	cmd, err := stream.NewCmd(ctx, options, size)
 	if err != nil {
 		return nil, err
 	}

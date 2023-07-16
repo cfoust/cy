@@ -1,4 +1,4 @@
-package ui
+package mux
 
 import (
 	"io"
@@ -17,8 +17,8 @@ type Resizable interface {
 	Resize(size Size) error
 }
 
-// An IO accepts input (Write) and resize events and produces output (Read).
-type IO interface {
+// A Stream accepts input (Write) and resize events and produces output (Read).
+type Stream interface {
 	io.ReadWriter
 	Resizable
 }

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cfoust/cy/pkg/ui/io"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/wm"
 )
 
@@ -101,7 +101,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 				return nil, fmt.Errorf("pane not found: %d", id)
 			}
 
-			cmd, ok := pane.App().(*io.Cmd)
+			cmd, ok := pane.App().(*stream.Cmd)
 			if !ok {
 				return nil, fmt.Errorf("pane was not a cmd")
 			}
@@ -121,7 +121,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			cmd, err := group.NewCmd(
 				c.Ctx(),
-				io.CmdOptions{
+				stream.CmdOptions{
 					Command:   "/bin/bash",
 					Directory: path,
 				},

@@ -1,37 +1,35 @@
-package io
+package stream
 
 import (
 	"io"
-
-	"github.com/cfoust/cy/pkg/ui"
 )
 
-type Stream struct {
+type Reader struct {
 	r *io.PipeReader
 	w *io.PipeWriter
 }
 
-var _ ui.IO = (*Stream)(nil)
+var _ Stream = (*Reader)(nil)
 
 // Return the handle that allows you to write to this stream.
-func (s *Stream) Writer() io.Writer {
+func (s *Reader) Writer() io.Writer {
 	return s.w
 }
 
 // Resizing does nothing to a stream.
-func (s *Stream) Resize(size ui.Size) error {
+func (s *Reader) Resize(size Size) error {
 	return nil
 }
 
-func (s *Stream) Write(data []byte) (n int, err error) {
+func (s *Reader) Write(data []byte) (n int, err error) {
 	return 0, nil
 }
 
-func (s *Stream) Read(p []byte) (n int, err error) {
+func (s *Reader) Read(p []byte) (n int, err error) {
 	return s.r.Read(p)
 }
 
-func NewStream() *Stream {
+func NewReader() *Reader {
 	r, w := io.Pipe()
 
 	go func() {
@@ -40,7 +38,7 @@ func NewStream() *Stream {
 		w.Write([]byte("\033[20h"))
 	}()
 
-	return &Stream{
+	return &Reader{
 		r: r,
 		w: w,
 	}

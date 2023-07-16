@@ -12,6 +12,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
+	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/util"
 	"github.com/cfoust/cy/pkg/wm"
 
@@ -36,8 +37,9 @@ type Client struct {
 
 	// This is a "model" of what the client is seeing so that we can
 	// animate between states
-	raw  emu.Terminal
-	info *terminfo.Terminfo
+	raw    emu.Terminal
+	info   *terminfo.Terminfo
+	stream mux.Stream
 }
 
 func (c *Cy) addClient(conn Connection) *Client {
@@ -249,7 +251,7 @@ func (c *Client) GetSize() geom.Size {
 }
 
 func (c *Client) pollPane(ctx context.Context, pane *wm.Pane) error {
-	subscriber := pane.Terminal().Updates()
+	subscriber := pane.Screen().Updates()
 	defer subscriber.Done()
 
 	changes := subscriber.Recv()
@@ -258,7 +260,7 @@ func (c *Client) pollPane(ctx context.Context, pane *wm.Pane) error {
 		c.output(tty.Swap(
 			c.info,
 			tty.Capture(c.raw),
-			pane.Terminal().State(),
+			pane.Screen().State(),
 		))
 
 		select {

@@ -1,10 +1,8 @@
-package io
+package stream
 
 import (
 	"context"
 	"io"
-
-	"github.com/cfoust/cy/pkg/ui"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -15,9 +13,9 @@ type Tea struct {
 	program *tea.Program
 }
 
-var _ ui.IO = (*Tea)(nil)
+var _ Stream = (*Tea)(nil)
 
-func (s *Tea) Resize(size ui.Size) error {
+func (s *Tea) Resize(size Size) error {
 	s.program.Send(tea.WindowSizeMsg{
 		Width:  size.Columns,
 		Height: size.Rows,
@@ -33,7 +31,7 @@ func (s *Tea) Read(p []byte) (n int, err error) {
 	return s.reads.Read(p)
 }
 
-func NewTea(ctx context.Context, model tea.Model, size ui.Size) *Tea {
+func NewTea(ctx context.Context, model tea.Model, size Size) *Tea {
 	reads, out := io.Pipe()
 	in, writes := io.Pipe()
 
