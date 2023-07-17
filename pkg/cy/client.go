@@ -61,6 +61,7 @@ func (c *Cy) addClient(conn Connection) *Client {
 }
 
 func (c *Client) pollRender() {
+	// TODO(cfoust): 07/16/23 replace with io.Copy
 	buffer := make([]byte, 4096)
 
 	for {

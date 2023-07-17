@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 
 	"github.com/xo/terminfo"
@@ -72,15 +73,14 @@ func swapImage(
 	info *terminfo.Terminfo,
 	dst, src image.Image,
 ) []byte {
-	size := src.Size()
-	cols := size.Columns
-	rows := size.Rows
 	data := new(bytes.Buffer)
 
 	info.Fprintf(data, terminfo.CursorInvisible)
 
-	for row := 0; row < rows; row++ {
-		for col := 0; col < cols; col++ {
+	max := geom.GetMaximum(dst.Size(), src.Size())
+
+	for row := 0; row < max.Rows; row++ {
+		for col := 0; col < max.Columns; col++ {
 			dstCell := dst.Cell(col, row)
 			srcCell := src.Cell(col, row)
 

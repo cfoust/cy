@@ -92,6 +92,8 @@ func (c *Client) Attach(ctx context.Context, screen mux.Screen) {
 	c.server.refreshPane(screen)
 
 	go c.pollScreen(attachment.Ctx(), screen)
+
+	c.publisher.Publish(c.State())
 }
 
 func (c *Client) Screen() mux.Screen {

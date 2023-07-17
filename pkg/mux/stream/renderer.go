@@ -12,12 +12,11 @@ import (
 )
 
 // A Renderer produces the stream of bytes necessary to render a Screen to a
-// destination terminal.  Conceptually, it is the opposite of a Screen, which
+// destination terminal. Conceptually, it is the opposite of a Screen, which
 // takes an IO and feeds it to a virtual terminal emulator. A Renderer takes a
-// Screen and makes an IO.  This is useful because an IO may produce many more
-// screen updates than are actually necessary to change the screen; a Renderer
-// can make optimizations to only update the parts of the screen that have
-// changed.
+// Screen and makes an IO. This is useful because an IO may produce many more
+// writes than are actually necessary to change the screen; a Renderer can make
+// optimizations to only update the parts of the screen that have changed.
 type Renderer struct {
 	target emu.Terminal
 	screen screen.Screen
