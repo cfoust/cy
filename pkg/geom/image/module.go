@@ -19,12 +19,12 @@ func (i Image) Cell(x, y int) emu.Glyph {
 	return i[y][x]
 }
 
-func New(columns, rows int) Image {
+func New(size geom.Size) Image {
 	image := Image{}
 
-	for y := 0; y < rows; y++ {
+	for y := 0; y < size.Rows; y++ {
 		line := make([]emu.Glyph, 0)
-		for x := 0; x < columns; x++ {
+		for x := 0; x < size.Columns; x++ {
 			line = append(line, emu.Glyph{
 				Char: ' ',
 			})
@@ -37,15 +37,8 @@ func New(columns, rows int) Image {
 
 func (i Image) Clone() Image {
 	size := i.Size()
-	cloned := New(size.Columns, size.Rows)
-
-	for y := 0; y < size.Rows; y++ {
-		for x := 0; x < size.Columns; x++ {
-			copied := i[y][x]
-			cloned[y][x] = copied
-		}
-	}
-
+	cloned := New(size)
+	Copy(cloned, 0, 0, i)
 	return cloned
 }
 
@@ -84,6 +77,32 @@ func Copy(dst Image, dstRow, dstCol int, src Image) {
 	for row := dstRow; row < lastRow; row++ {
 		for col := dstRow; col < lastCol; col++ {
 			dst[row][col] = src[row-dstRow][col-dstCol]
+		}
+	}
+}
+
+// Like Copy, but does not overwrite a cell in dst if a cell in src is empty
+// and has the default background.
+func Compose(dst Image, dstRow, dstCol int, src Image) {
+	srcSize := src.Size()
+	dstSize := dst.Size()
+
+	lastRow := geom.Min(
+		dstRow+srcSize.Rows,
+		dstSize.Rows,
+	)
+	lastCol := geom.Min(
+		dstCol+srcSize.Columns,
+		dstSize.Columns,
+	)
+
+	for row := dstRow; row < lastRow; row++ {
+		for col := dstRow; col < lastCol; col++ {
+			srcCell := src[row-dstRow][col-dstCol]
+			if srcCell.Char == ' ' && srcCell.BG == emu.DefaultBG {
+				continue
+			}
+			dst[row][col] = srcCell
 		}
 	}
 }

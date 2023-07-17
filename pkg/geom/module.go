@@ -5,6 +5,13 @@ type Size struct {
 	Columns int
 }
 
+type Vec4 struct {
+	R int
+	C int
+	W int
+	H int
+}
+
 var DEFAULT_SIZE = Size{
 	Rows:    26,
 	Columns: 80,

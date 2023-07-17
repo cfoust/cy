@@ -30,10 +30,7 @@ func (c *Client) State() *tty.State {
 	defer c.RUnlock()
 
 	if screen == nil {
-		return tty.New(
-			size.Columns,
-			size.Rows,
-		)
+		return tty.New(size)
 	}
 
 	return screen.State()

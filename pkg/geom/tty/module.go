@@ -17,9 +17,9 @@ type State struct {
 	CursorVisible bool
 }
 
-func New(columns, rows int) *State {
+func New(size geom.Size) *State {
 	return &State{
-		Image:         image.New(columns, rows),
+		Image:         image.New(size),
 		CursorVisible: true,
 	}
 }
