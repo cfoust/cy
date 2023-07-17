@@ -46,6 +46,7 @@ func (t *Terminal) Write(data []byte) (n int, err error) {
 }
 
 func (t *Terminal) poll(ctx context.Context) error {
+	// TODO(cfoust): 07/17/23 replace with io.Copy
 	buffer := make([]byte, 4096)
 
 	for {
