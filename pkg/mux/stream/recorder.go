@@ -93,7 +93,7 @@ func (s *Recorder) Resize(size Size) error {
 		Rows:    size.Rows,
 	})
 
-	return nil
+	return s.stream.Resize(size)
 }
 
 func NewRecorder(stream Stream) *Recorder {

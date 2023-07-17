@@ -9,6 +9,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/mux"
@@ -167,10 +168,10 @@ func (c *Cy) pollClient(ctx context.Context, client *Client) {
 			switch packet.Contents.Type() {
 			case P.MessageTypeSize:
 				msg := packet.Contents.(*P.SizeMessage)
-				client.Resize(
-					msg.Rows,
-					msg.Columns,
-				)
+				client.Resize(geom.Size{
+					Rows:    msg.Rows,
+					Columns: msg.Columns,
+				})
 
 			case P.MessageTypeInput:
 				msg := packet.Contents.(*P.InputMessage)
@@ -229,16 +230,9 @@ func (c *Client) closeError(reason error) error {
 	return c.conn.Close()
 }
 
-func (c *Client) Resize(rows, cols int) {
-	c.raw.Resize(cols, rows)
-	c.clearScreen()
-
-	node := c.node
-	if node == nil {
-		return
-	}
-
-	c.muxClient.Resize(mux.Size{})
+func (c *Client) Resize(size geom.Size) {
+	c.muxClient.Resize(size)
+	c.renderer.Resize(size)
 }
 
 func (c *Client) initialize(handshake *P.HandshakeMessage) error {
@@ -251,26 +245,14 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	}
 	c.info = info
 
-	c.muxClient = c.cy.muxServer.AddClient(
-		c.Ctx(),
-		info,
-		mux.Size{
-			Columns: handshake.Columns,
-			Rows:    handshake.Rows,
-		},
-	)
-	c.raw = emu.New(
-		emu.WithSize(
-			handshake.Columns,
-			handshake.Rows,
-		),
-	)
-	c.renderer = stream.NewRenderer(
-		c.Ctx(),
-		info,
-		c.raw,
-		c.muxClient,
-	)
+	size := mux.Size{
+		Columns: handshake.Columns,
+		Rows:    handshake.Rows,
+	}
+
+	c.muxClient = c.cy.muxServer.AddClient(c.Ctx(), info, size)
+	c.raw = emu.New(emu.WithSize(size))
+	c.renderer = stream.NewRenderer(c.Ctx(), info, c.raw, c.muxClient)
 
 	go c.pollRender()
 

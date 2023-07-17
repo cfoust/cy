@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+
+	"github.com/cfoust/cy/pkg/geom"
 )
 
 // Terminal represents the virtual terminal emulator.
@@ -68,10 +70,10 @@ func WithWriter(w io.Writer) TerminalOption {
 	}
 }
 
-func WithSize(cols, rows int) TerminalOption {
+func WithSize(size geom.Size) TerminalOption {
 	return func(info *TerminalInfo) {
-		info.cols = cols
-		info.rows = rows
+		info.cols = size.Columns
+		info.rows = size.Rows
 	}
 }
 

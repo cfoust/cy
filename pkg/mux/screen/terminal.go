@@ -5,8 +5,8 @@ import (
 	"io"
 
 	"github.com/cfoust/cy/pkg/emu"
-	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/mux"
 )
 
 type Terminal struct {
@@ -79,12 +79,9 @@ func (t *Terminal) poll(ctx context.Context) error {
 
 func NewTerminal(ctx context.Context, stream Stream, size Size) *Terminal {
 	terminal := &Terminal{
-		terminal: emu.New(emu.WithSize(
-			size.Columns,
-			size.Rows,
-		)),
-		changes: mux.NewPublisher(),
-		stream:  stream,
+		terminal: emu.New(emu.WithSize(size)),
+		changes:  mux.NewPublisher(),
+		stream:   stream,
 	}
 
 	// TODO(cfoust): 07/14/23 error handling
