@@ -66,3 +66,24 @@ func Capture(view emu.View) Image {
 
 	return image
 }
+
+// Copy the cell contents from src to dst starting at [dstRow, dstCol],
+func Copy(dst Image, dstRow, dstCol int, src Image) {
+	srcSize := src.Size()
+	dstSize := dst.Size()
+
+	lastRow := geom.Min(
+		dstRow+srcSize.Rows,
+		dstSize.Rows,
+	)
+	lastCol := geom.Min(
+		dstCol+srcSize.Columns,
+		dstSize.Columns,
+	)
+
+	for row := dstRow; row < lastRow; row++ {
+		for col := dstRow; col < lastCol; col++ {
+			dst[row][col] = src[row-dstRow][col-dstCol]
+		}
+	}
+}

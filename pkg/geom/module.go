@@ -10,7 +10,7 @@ var DEFAULT_SIZE = Size{
 	Columns: 80,
 }
 
-func min(a, b int) int {
+func Min(a, b int) int {
 	if a < b {
 		return a
 	}
@@ -21,7 +21,7 @@ func min(a, b int) int {
 // Find the largest rectangle that both rectangle `a` and `b` can fit.
 func GetMaximum(a, b Size) Size {
 	return Size{
-		Rows:    min(a.Rows, b.Rows),
-		Columns: min(a.Columns, b.Columns),
+		Rows:    Min(a.Rows, b.Rows),
+		Columns: Min(a.Columns, b.Columns),
 	}
 }
