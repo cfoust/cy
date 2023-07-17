@@ -70,10 +70,10 @@ func WithWriter(w io.Writer) TerminalOption {
 	}
 }
 
-func WithSize(size geom.Size) TerminalOption {
+func WithSize(size geom.Vec2) TerminalOption {
 	return func(info *TerminalInfo) {
-		info.cols = size.Columns
-		info.rows = size.Rows
+		info.cols = size.C
+		info.rows = size.R
 	}
 }
 

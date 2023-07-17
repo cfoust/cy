@@ -39,8 +39,8 @@ func (c *CyFade) Update(delta float32) image.Image {
 	}
 
 	size := output.Size()
-	for y := 0; y < size.Rows; y++ {
-		for x := 0; x < size.Columns; x++ {
+	for y := 0; y < size.R; y++ {
+		for x := 0; x < size.C; x++ {
 			current := c.start[y][x]
 
 			if mapped, ok := mapping[current.Char]; ok {

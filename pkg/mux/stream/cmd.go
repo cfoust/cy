@@ -57,8 +57,8 @@ func (c *Cmd) Resize(size Size) error {
 	c.Unlock()
 
 	return pty.Setsize(c.ptmx, &pty.Winsize{
-		Rows: uint16(size.Rows),
-		Cols: uint16(size.Columns),
+		Rows: uint16(size.R),
+		Cols: uint16(size.C),
 	})
 }
 
@@ -106,8 +106,8 @@ func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 		fd, err := pty.StartWithSize(
 			cmd,
 			&pty.Winsize{
-				Rows: uint16(size.Rows),
-				Cols: uint16(size.Columns),
+				Rows: uint16(size.R),
+				Cols: uint16(size.C),
 			},
 		)
 		if err != nil {

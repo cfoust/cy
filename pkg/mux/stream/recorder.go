@@ -89,8 +89,8 @@ func (s *Recorder) Read(p []byte) (n int, err error) {
 
 func (s *Recorder) Resize(size Size) error {
 	s.store(ResizeEvent{
-		Columns: size.Columns,
-		Rows:    size.Rows,
+		Columns: size.C,
+		Rows:    size.R,
 	})
 
 	return s.stream.Resize(size)

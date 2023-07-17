@@ -36,7 +36,7 @@ func (g *Group) addNode(node Node) {
 func (g *Group) NewPane(
 	ctx context.Context,
 	stream mux.Stream,
-	size geom.Size,
+	size geom.Vec2,
 ) *Pane {
 	pane := newPane(ctx, stream, size)
 	pane.metaData = g.tree.newMetadata()
@@ -44,7 +44,7 @@ func (g *Group) NewPane(
 	return pane
 }
 
-func (g *Group) NewCmd(ctx context.Context, options stream.CmdOptions, size geom.Size) (*Pane, error) {
+func (g *Group) NewCmd(ctx context.Context, options stream.CmdOptions, size geom.Vec2) (*Pane, error) {
 	cmd, err := stream.NewCmd(ctx, options, size)
 	if err != nil {
 		return nil, err

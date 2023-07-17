@@ -30,7 +30,7 @@ func (p *Pane) Screen() mux.Screen {
 	return p.screen
 }
 
-func (p *Pane) Resize(size geom.Size) {
+func (p *Pane) Resize(size geom.Vec2) {
 	p.screen.Resize(size)
 }
 
@@ -38,7 +38,7 @@ func (p *Pane) Write(data []byte) (n int, err error) {
 	return p.stream.Write(data)
 }
 
-func newPane(ctx context.Context, subStream stream.Stream, size geom.Size) *Pane {
+func newPane(ctx context.Context, subStream stream.Stream, size geom.Vec2) *Pane {
 	recorder := stream.NewRecorder(subStream)
 	terminal := screen.NewTerminal(
 		ctx,

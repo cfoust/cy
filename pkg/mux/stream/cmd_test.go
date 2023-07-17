@@ -16,7 +16,7 @@ func TestHealthy(t *testing.T) {
 		CmdOptions{
 			Command: "/bin/sh",
 		},
-		geom.Size{
+		geom.Vec2{
 			Rows:    26,
 			Columns: 80,
 		},
@@ -38,7 +38,7 @@ func TestFailLoop(t *testing.T) {
 				"exit 1",
 			},
 		},
-		geom.Size{
+		geom.Vec2{
 			Rows:    26,
 			Columns: 80,
 		},

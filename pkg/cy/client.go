@@ -168,9 +168,9 @@ func (c *Cy) pollClient(ctx context.Context, client *Client) {
 			switch packet.Contents.Type() {
 			case P.MessageTypeSize:
 				msg := packet.Contents.(*P.SizeMessage)
-				client.Resize(geom.Size{
-					Rows:    msg.Rows,
-					Columns: msg.Columns,
+				client.Resize(geom.Vec2{
+					R: msg.Rows,
+					C: msg.Columns,
 				})
 
 			case P.MessageTypeInput:
@@ -230,7 +230,7 @@ func (c *Client) closeError(reason error) error {
 	return c.conn.Close()
 }
 
-func (c *Client) Resize(size geom.Size) {
+func (c *Client) Resize(size geom.Vec2) {
 	c.muxClient.Resize(size)
 	c.renderer.Resize(size)
 }
@@ -246,8 +246,8 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	c.info = info
 
 	size := mux.Size{
-		Columns: handshake.Columns,
-		Rows:    handshake.Rows,
+		C: handshake.Columns,
+		R: handshake.Rows,
 	}
 
 	c.muxClient = c.cy.muxServer.AddClient(c.Ctx(), info, size)

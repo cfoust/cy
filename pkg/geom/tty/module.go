@@ -17,7 +17,7 @@ type State struct {
 	CursorVisible bool
 }
 
-func New(size geom.Size) *State {
+func New(size geom.Vec2) *State {
 	return &State{
 		Image:         image.New(size),
 		CursorVisible: true,
@@ -79,8 +79,8 @@ func swapImage(
 
 	max := geom.GetMaximum(dst.Size(), src.Size())
 
-	for row := 0; row < max.Rows; row++ {
-		for col := 0; col < max.Columns; col++ {
+	for row := 0; row < max.R; row++ {
+		for col := 0; col < max.C; col++ {
 			dstCell := dst.Cell(col, row)
 			srcCell := src.Cell(col, row)
 

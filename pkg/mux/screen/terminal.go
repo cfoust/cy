@@ -30,7 +30,7 @@ func (t *Terminal) Updates() *Updater {
 }
 
 func (t *Terminal) Resize(size Size) error {
-	t.terminal.Resize(size.Columns, size.Rows)
+	t.terminal.Resize(size.C, size.R)
 
 	err := t.stream.Resize(size)
 	if err != nil {

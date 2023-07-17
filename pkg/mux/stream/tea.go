@@ -17,8 +17,8 @@ var _ Stream = (*Tea)(nil)
 
 func (s *Tea) Resize(size Size) error {
 	s.program.Send(tea.WindowSizeMsg{
-		Width:  size.Columns,
-		Height: size.Rows,
+		Width:  size.C,
+		Height: size.R,
 	})
 	return nil
 }

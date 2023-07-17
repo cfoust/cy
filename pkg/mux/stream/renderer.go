@@ -28,7 +28,7 @@ type Renderer struct {
 var _ Stream = (*Renderer)(nil)
 
 func (r *Renderer) Resize(size Size) error {
-	r.target.Resize(size.Columns, size.Rows)
+	r.target.Resize(size.C, size.R)
 	return r.screen.Resize(size)
 }
 

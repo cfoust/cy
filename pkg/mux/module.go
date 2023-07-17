@@ -8,7 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/util"
 )
 
-type Size = geom.Size
+type Size = geom.Vec2
 
 type Updater = util.Subscriber[*tty.State]
 type UpdatePublisher = util.Publisher[*tty.State]

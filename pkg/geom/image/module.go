@@ -8,10 +8,10 @@ import (
 // An Image is a simple buffer of terminal state.
 type Image [][]emu.Glyph
 
-func (i Image) Size() geom.Size {
-	return geom.Size{
-		Rows:    len(i),
-		Columns: len(i[0]),
+func (i Image) Size() geom.Vec2 {
+	return geom.Vec2{
+		R: len(i),
+		C: len(i[0]),
 	}
 }
 
@@ -19,12 +19,12 @@ func (i Image) Cell(x, y int) emu.Glyph {
 	return i[y][x]
 }
 
-func New(size geom.Size) Image {
+func New(size geom.Vec2) Image {
 	image := Image{}
 
-	for y := 0; y < size.Rows; y++ {
+	for y := 0; y < size.R; y++ {
 		line := make([]emu.Glyph, 0)
-		for x := 0; x < size.Columns; x++ {
+		for x := 0; x < size.C; x++ {
 			line = append(line, emu.Glyph{
 				Char: ' ',
 			})
@@ -66,12 +66,12 @@ func Copy(dst Image, dstRow, dstCol int, src Image) {
 	dstSize := dst.Size()
 
 	lastRow := geom.Min(
-		dstRow+srcSize.Rows,
-		dstSize.Rows,
+		dstRow+srcSize.R,
+		dstSize.R,
 	)
 	lastCol := geom.Min(
-		dstCol+srcSize.Columns,
-		dstSize.Columns,
+		dstCol+srcSize.C,
+		dstSize.C,
 	)
 
 	for row := dstRow; row < lastRow; row++ {
@@ -88,12 +88,12 @@ func Compose(dst Image, dstRow, dstCol int, src Image) {
 	dstSize := dst.Size()
 
 	lastRow := geom.Min(
-		dstRow+srcSize.Rows,
-		dstSize.Rows,
+		dstRow+srcSize.R,
+		dstSize.R,
 	)
 	lastCol := geom.Min(
-		dstCol+srcSize.Columns,
-		dstSize.Columns,
+		dstCol+srcSize.C,
+		dstSize.C,
 	)
 
 	for row := dstRow; row < lastRow; row++ {
