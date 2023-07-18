@@ -53,6 +53,8 @@ func initialModel(renderer *lipgloss.Renderer, options []string) model {
 	ti.Focus()
 	ti.CharLimit = 20
 	ti.Width = 20
+	ti.Prompt = ""
+	ti.Placeholder = "fuzzy: projects"
 
 	return model{
 		options: options,
@@ -82,7 +84,9 @@ func (m model) View() string {
 		Width(20)
 
 	inactive := basic.Copy().Background(lipgloss.Color("#968C83"))
-	active := basic.Copy().Background(lipgloss.Color("#EAA549"))
+	active := basic.Copy().
+		Background(lipgloss.Color("#EAA549")).
+		Foreground(lipgloss.Color("#20111B"))
 
 	var options []string
 	for _, option := range m.options {
@@ -96,6 +100,9 @@ func (m model) View() string {
 			style.Render(option),
 		)
 	}
+
+	m.textInput.Cursor.Style = m.renderer.NewStyle().
+		Background(lipgloss.Color("#EAA549"))
 
 	return lipgloss.JoinVertical(lipgloss.Left,
 		basic.Render(m.textInput.View()),
