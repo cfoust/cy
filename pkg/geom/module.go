@@ -7,7 +7,7 @@ type Vec2 struct {
 	C int
 }
 
-type Vec4 struct {
+type Rect struct {
 	// row (y)
 	R int
 	// column (x)
