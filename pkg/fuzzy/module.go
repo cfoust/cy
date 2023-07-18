@@ -23,10 +23,16 @@ func (f *Fuzzy) Resize(size mux.Size) error {
 	return nil
 }
 
-func NewFuzzy(ctx context.Context, options []string) *Fuzzy {
+func NewFuzzy(ctx context.Context, profile termenv.Profile, options []string) *Fuzzy {
 	stream := stream.NewTea(
 		ctx,
-		ui{options: options},
+		ui{
+			options: options,
+			renderer: lipgloss.NewRenderer(
+				nil,
+				termenv.WithProfile(profile),
+			),
+		},
 		geom.DEFAULT_SIZE,
 	)
 
@@ -36,7 +42,8 @@ func NewFuzzy(ctx context.Context, options []string) *Fuzzy {
 }
 
 type ui struct {
-	options []string
+	options  []string
+	renderer *lipgloss.Renderer
 }
 
 var _ tea.Model = (*ui)(nil)
@@ -49,15 +56,8 @@ func (m ui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-var ()
-
 func (m ui) View() string {
-	renderer := lipgloss.NewRenderer(nil, termenv.WithProfile(termenv.TrueColor))
-	titleStyle := renderer.NewStyle().
-		MarginLeft(1).
-		MarginRight(5).
-		Padding(0, 1).
-		Italic(true).
+	titleStyle := m.renderer.NewStyle().
 		Foreground(lipgloss.Color("#FFF7DB")).
 		Background(lipgloss.Color("#F25D94"))
 
