@@ -13,7 +13,6 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
-	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -101,13 +100,8 @@ func (c *Client) pollEvents() {
 				}
 				continue
 			case bind.RawEvent:
-				node := c.Node()
-				if node == nil {
-					continue
-				}
-
-				pane := node.(*tree.Pane)
-				pane.Write(event.Data)
+				// TODO(cfoust): 07/18/23 error handling
+				c.renderer.Write(event.Data)
 			}
 		}
 	}
@@ -247,12 +241,11 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	}
 	c.info = info
 
-	size := mux.Size{
-		C: handshake.Columns,
-		R: handshake.Rows,
-	}
-
-	c.muxClient = c.cy.muxServer.AddClient(c.Ctx(), info, size)
+	c.muxClient = c.cy.muxServer.AddClient(
+		c.Ctx(),
+		info,
+		handshake.Size,
+	)
 
 	layers := screen.NewLayers()
 
@@ -272,10 +265,10 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 				"three",
 			},
 		),
-		true,
+		false,
 	)
 
-	c.raw = emu.New(emu.WithSize(size))
+	c.raw = emu.New(emu.WithSize(handshake.Size))
 	c.renderer = stream.NewRenderer(c.Ctx(), info, c.raw, layers)
 
 	go c.pollRender()

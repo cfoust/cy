@@ -2,7 +2,6 @@ package fuzzy
 
 import (
 	"context"
-	"strings"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
@@ -53,8 +52,7 @@ func (m ui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 var ()
 
 func (m ui) View() string {
-	var b strings.Builder
-	renderer := lipgloss.NewRenderer(&b, termenv.WithProfile(termenv.TrueColor))
+	renderer := lipgloss.NewRenderer(nil, termenv.WithProfile(termenv.TrueColor))
 	titleStyle := renderer.NewStyle().
 		MarginLeft(1).
 		MarginRight(5).

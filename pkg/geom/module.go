@@ -7,6 +7,8 @@ type Vec2 struct {
 	C int
 }
 
+type Size = Vec2
+
 type Rect struct {
 	// row (y)
 	R int

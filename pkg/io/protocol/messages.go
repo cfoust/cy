@@ -1,5 +1,11 @@
 package protocol
 
+import (
+	"github.com/cfoust/cy/pkg/geom"
+
+	"github.com/muesli/termenv"
+)
+
 type MessageType int
 
 const (
@@ -40,8 +46,8 @@ func (i SizeMessage) Type() MessageType { return MessageTypeSize }
 type HandshakeMessage struct {
 	// The value of the TERM environment variable.
 	TERM    string
-	Rows    int
-	Columns int
+	Size    geom.Vec2
+	Profile termenv.Profile
 }
 
 func (i HandshakeMessage) Type() MessageType { return MessageTypeHandshake }

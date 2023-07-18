@@ -131,5 +131,13 @@ func Swap(
 	// TODO(cfoust): 05/19/23 cursor mode?
 	info.Fprintf(data, terminfo.CursorAddress, src.Cursor.Y, src.Cursor.X)
 
+	if src.CursorVisible && !dst.CursorVisible {
+		info.Fprintf(data, terminfo.CursorVisible)
+	}
+
+	if !src.CursorVisible && dst.CursorVisible {
+		info.Fprintf(data, terminfo.CursorInvisible)
+	}
+
 	return data.Bytes()
 }

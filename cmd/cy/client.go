@@ -10,9 +10,11 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/cy"
+	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 
+	"github.com/muesli/termenv"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/term"
 )
@@ -42,10 +44,15 @@ func buildHandshake() (*P.HandshakeMessage, error) {
 		return nil, err
 	}
 
+	output := termenv.NewOutput(os.Stdout)
+
 	return &P.HandshakeMessage{
-		TERM:    os.Getenv("TERM"),
-		Rows:    rows,
-		Columns: columns,
+		TERM: os.Getenv("TERM"),
+		Size: geom.Size{
+			R: rows,
+			C: columns,
+		},
+		Profile: output.Profile,
 	}, nil
 }
 

@@ -47,6 +47,10 @@ func (l *Layers) State() *tty.State {
 		}
 	}
 
+	if !foundCursor {
+		state.CursorVisible = false
+	}
+
 	return state
 }
 
