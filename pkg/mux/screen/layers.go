@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/util"
 
+	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -29,23 +30,45 @@ type Layers struct {
 
 var _ Screen = (*Layers)(nil)
 
+type RenderLayer struct {
+	state *tty.State
+	layer *Layer
+}
+
 func (l *Layers) State() *tty.State {
 	l.RLock()
 	defer l.RUnlock()
 
 	state := tty.New(l.size)
 
-	foundCursor := false
-	for _, layer := range l.layers {
-		layerState := layer.State()
-		image.Compose(state.Image, 0, 0, layerState.Image)
+	states := make([]RenderLayer, 0)
 
-		if !foundCursor && layer.isInteractive {
+	// We don't want to invoke State() separately in two different passes
+	for _, layer := range l.layers {
+		states = append(states, RenderLayer{
+			state: layer.State(),
+			layer: layer,
+		})
+	}
+
+	// In the first pass we layer the states on top of each other
+	for _, layer := range states {
+		image.Compose(state.Image, 0, 0, layer.state.Image)
+	}
+
+	// Then we find the topmost cursor state for interactivity
+	foundCursor := false
+	for i := len(states) - 1; i >= 0; i-- {
+		layer := states[i]
+		log.Info().Msgf("%d %+v", i, layer.state.Cursor)
+		if !foundCursor && layer.layer.isInteractive {
 			foundCursor = true
-			state.Cursor = layerState.Cursor
-			state.CursorVisible = layerState.CursorVisible
+			state.Cursor = layer.state.Cursor
+			state.CursorVisible = layer.state.CursorVisible
 		}
 	}
+
+	log.Info().Msgf("cursor %+v", state.Cursor)
 
 	if !foundCursor {
 		state.CursorVisible = false

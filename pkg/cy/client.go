@@ -266,7 +266,7 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 				"three",
 			},
 		),
-		false,
+		true,
 	)
 
 	c.raw = emu.New(emu.WithSize(handshake.Size))

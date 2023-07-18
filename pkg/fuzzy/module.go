@@ -8,6 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/stream"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
@@ -24,16 +25,14 @@ func (f *Fuzzy) Resize(size mux.Size) error {
 }
 
 func NewFuzzy(ctx context.Context, profile termenv.Profile, options []string) *Fuzzy {
+	renderer := lipgloss.NewRenderer(
+		nil,
+		termenv.WithProfile(profile),
+	)
+
 	stream := stream.NewTea(
 		ctx,
-		ui{
-			options: options,
-			selected: "one",
-			renderer: lipgloss.NewRenderer(
-				nil,
-				termenv.WithProfile(profile),
-			),
-		},
+		initialModel(renderer, options),
 		geom.DEFAULT_SIZE,
 	)
 
@@ -42,27 +41,45 @@ func NewFuzzy(ctx context.Context, profile termenv.Profile, options []string) *F
 	}
 }
 
-type ui struct {
-	options  []string
-	selected string
-	renderer *lipgloss.Renderer
+type model struct {
+	options   []string
+	selected  string
+	renderer  *lipgloss.Renderer
+	textInput textinput.Model
 }
 
-var _ tea.Model = (*ui)(nil)
+func initialModel(renderer *lipgloss.Renderer, options []string) model {
+	ti := textinput.New()
+	ti.Focus()
+	ti.CharLimit = 20
+	ti.Width = 20
 
-func (m ui) Init() tea.Cmd {
-	return nil
+	return model{
+		options: options,
+		// TODO(cfoust): 07/18/23 don't assume
+		selected:  options[0],
+		renderer:  renderer,
+		textInput: ti,
+	}
 }
 
-func (m ui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return m, nil
+var _ tea.Model = (*model)(nil)
+
+func (m model) Init() tea.Cmd {
+	return textinput.Blink
 }
 
-func (m ui) View() string {
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	m.textInput, cmd = m.textInput.Update(msg)
+	return m, cmd
+}
+
+func (m model) View() string {
 	basic := m.renderer.NewStyle().
 		Background(lipgloss.Color("#20111B")).
 		Foreground(lipgloss.Color("#D5CCBA")).
-		Width(30)
+		Width(20)
 
 	inactive := basic.Copy().Background(lipgloss.Color("#968C83"))
 	active := basic.Copy().Background(lipgloss.Color("#EAA549"))
@@ -81,7 +98,7 @@ func (m ui) View() string {
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Left,
-		basic.Render("$ text"),
+		basic.Render(m.textInput.View()),
 		lipgloss.JoinVertical(lipgloss.Left, options...),
 	)
 }
