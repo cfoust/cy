@@ -28,6 +28,7 @@ func NewFuzzy(ctx context.Context, profile termenv.Profile, options []string) *F
 		ctx,
 		ui{
 			options: options,
+			selected: "one",
 			renderer: lipgloss.NewRenderer(
 				nil,
 				termenv.WithProfile(profile),
@@ -43,6 +44,7 @@ func NewFuzzy(ctx context.Context, profile termenv.Profile, options []string) *F
 
 type ui struct {
 	options  []string
+	selected string
 	renderer *lipgloss.Renderer
 }
 
@@ -57,9 +59,29 @@ func (m ui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m ui) View() string {
-	titleStyle := m.renderer.NewStyle().
-		Foreground(lipgloss.Color("#FFF7DB")).
-		Background(lipgloss.Color("#F25D94"))
+	basic := m.renderer.NewStyle().
+		Background(lipgloss.Color("#20111B")).
+		Foreground(lipgloss.Color("#D5CCBA")).
+		Width(30)
 
-	return titleStyle.Render("this is a test")
+	inactive := basic.Copy().Background(lipgloss.Color("#968C83"))
+	active := basic.Copy().Background(lipgloss.Color("#EAA549"))
+
+	var options []string
+	for _, option := range m.options {
+		style := inactive
+
+		if m.selected == option {
+			style = active
+		}
+
+		options = append(options,
+			style.Render(option),
+		)
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Left,
+		basic.Render("$ text"),
+		lipgloss.JoinVertical(lipgloss.Left, options...),
+	)
 }
