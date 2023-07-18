@@ -35,8 +35,16 @@ func (l *Layers) State() *tty.State {
 
 	state := tty.New(l.size)
 
+	foundCursor := false
 	for _, layer := range l.layers {
-		image.Compose(state.Image, 0, 0, layer.State().Image)
+		layerState := layer.State()
+		image.Compose(state.Image, 0, 0, layerState.Image)
+
+		if !foundCursor && layer.isInteractive {
+			foundCursor = true
+			state.Cursor = layerState.Cursor
+			state.CursorVisible = layerState.CursorVisible
+		}
 	}
 
 	return state
