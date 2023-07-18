@@ -46,6 +46,10 @@ func (l *Layers) Updates() *Updater {
 	return l.changes.Subscribe()
 }
 
+func (l *Layers) notifyChange() {
+	l.changes.Publish(l.State())
+}
+
 func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool) *Layer {
 	l.Lock()
 	defer l.Unlock()
@@ -57,6 +61,18 @@ func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool
 	}
 
 	l.layers = append(l.layers, layer)
+
+	go func() {
+		updates := layer.Updates()
+		for {
+			select {
+			case <-layer.Ctx().Done():
+				return
+			case <-updates.Recv():
+				l.notifyChange()
+			}
+		}
+	}()
 
 	go func() {
 		<-layer.Ctx().Done()
