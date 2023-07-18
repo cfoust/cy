@@ -18,10 +18,10 @@ type Layer struct {
 	isInteractive bool
 }
 
+// Layers allows you to stack several Screens on top of one another. The
+// topmost layer with isInteractive set to true receives all key presses.
 type Layers struct {
 	deadlock.RWMutex
-	util.Lifetime
-
 	size    geom.Vec2
 	layers  []*Layer
 	changes *mux.UpdatePublisher
@@ -110,5 +110,6 @@ func (l *Layers) Resize(size Size) error {
 func NewLayers() *Layers {
 	return &Layers{
 		changes: mux.NewPublisher(),
+		size:    geom.DEFAULT_SIZE,
 	}
 }

@@ -9,10 +9,12 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
@@ -251,8 +253,30 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	}
 
 	c.muxClient = c.cy.muxServer.AddClient(c.Ctx(), info, size)
+
+	layers := screen.NewLayers()
+
+	layers.NewLayer(
+		c.Ctx(),
+		c.muxClient,
+		true,
+	)
+
+	layers.NewLayer(
+		c.Ctx(),
+		fuzzy.NewFuzzy(
+			c.Ctx(),
+			[]string{
+				"one",
+				"two",
+				"three",
+			},
+		),
+		true,
+	)
+
 	c.raw = emu.New(emu.WithSize(size))
-	c.renderer = stream.NewRenderer(c.Ctx(), info, c.raw, c.muxClient)
+	c.renderer = stream.NewRenderer(c.Ctx(), info, c.raw, layers)
 
 	go c.pollRender()
 

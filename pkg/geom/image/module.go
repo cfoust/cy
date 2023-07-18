@@ -9,6 +9,10 @@ import (
 type Image [][]emu.Glyph
 
 func (i Image) Size() geom.Vec2 {
+	if len(i) == 0 {
+		return geom.Vec2{}
+	}
+
 	return geom.Vec2{
 		R: len(i),
 		C: len(i[0]),
