@@ -43,9 +43,11 @@ func NewFuzzy(ctx context.Context, profile termenv.Profile, options []string) *F
 
 type model struct {
 	options   []string
+	matches   []Match
 	selected  string
 	renderer  *lipgloss.Renderer
 	textInput textinput.Model
+	queried   string
 }
 
 func initialModel(renderer *lipgloss.Renderer, options []string) model {
@@ -71,10 +73,37 @@ func (m model) Init() tea.Cmd {
 	return textinput.Blink
 }
 
+type matchResult struct {
+	Matches []Match
+}
+
+func queryOptions(options []string, pattern string) tea.Cmd {
+	return func() tea.Msg {
+		return matchResult{
+			Matches: Filter(options, pattern),
+		}
+	}
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
 	var cmd tea.Cmd
+
+	switch msg := msg.(type) {
+	case matchResult:
+		m.matches = msg.Matches
+	}
+
 	m.textInput, cmd = m.textInput.Update(msg)
-	return m, cmd
+	cmds = append(cmds, cmd)
+
+	value := m.textInput.Value()
+	if m.queried != value {
+		m.queried = value
+		cmds = append(cmds, queryOptions(m.options, value))
+	}
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m model) View() string {
@@ -89,16 +118,24 @@ func (m model) View() string {
 		Foreground(lipgloss.Color("#20111B"))
 
 	var options []string
-	for _, option := range m.options {
-		style := inactive
-
-		if m.selected == option {
-			style = active
+	if len(m.matches) != 0 {
+		for _, match := range m.matches {
+			options = append(options,
+				inactive.Render(match.Text),
+			)
 		}
+	} else {
+		for _, option := range m.options {
+			style := inactive
 
-		options = append(options,
-			style.Render(option),
-		)
+			if m.selected == option {
+				style = active
+			}
+
+			options = append(options,
+				style.Render(option),
+			)
+		}
 	}
 
 	m.textInput.Cursor.Style = m.renderer.NewStyle().
