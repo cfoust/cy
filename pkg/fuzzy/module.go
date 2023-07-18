@@ -2,6 +2,7 @@ package fuzzy
 
 import (
 	"context"
+	"strings"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
@@ -9,6 +10,8 @@ import (
 	"github.com/cfoust/cy/pkg/mux/stream"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 )
 
 type Fuzzy struct {
@@ -47,6 +50,18 @@ func (m ui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+var ()
+
 func (m ui) View() string {
-	return "this is a test"
+	var b strings.Builder
+	renderer := lipgloss.NewRenderer(&b, termenv.WithProfile(termenv.TrueColor))
+	titleStyle := renderer.NewStyle().
+		MarginLeft(1).
+		MarginRight(5).
+		Padding(0, 1).
+		Italic(true).
+		Foreground(lipgloss.Color("#FFF7DB")).
+		Background(lipgloss.Color("#F25D94"))
+
+	return titleStyle.Render("this is a test")
 }

@@ -4,6 +4,6 @@
 
 set -e
 
-pkill -f b001.exe || true
+pkill -9 -f b001.exe || true
 pkill -f 'go run' || true
 rm -rf /tmp/cy-501/
