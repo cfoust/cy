@@ -77,7 +77,7 @@ func (l *Layers) Updates() *Updater {
 	return l.changes.Subscribe()
 }
 
-func (l *Layers) notifyChange() {
+func (l *Layers) rerender() {
 	l.changes.Publish(l.State())
 }
 
@@ -100,7 +100,7 @@ func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool
 			case <-layer.Ctx().Done():
 				return
 			case <-updates.Recv():
-				l.notifyChange()
+				l.rerender()
 			}
 		}
 	}()
@@ -119,6 +119,8 @@ func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool
 		}
 		l.layers = newLayers
 		l.Unlock()
+
+		l.rerender()
 	}()
 
 	return layer

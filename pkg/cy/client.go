@@ -255,18 +255,20 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		true,
 	)
 
-	layers.NewLayer(
+	fuzzy := fuzzy.NewFuzzy(
 		c.Ctx(),
-		fuzzy.NewFuzzy(
-			c.Ctx(),
-			handshake.Profile,
-			info,
-			[]string{
-				"one",
-				"two",
-				"three",
-			},
-		),
+		handshake.Profile,
+		info,
+		[]string{
+			"one",
+			"two",
+			"three",
+		},
+	)
+
+	layers.NewLayer(
+		fuzzy.Ctx(),
+		fuzzy,
 		true,
 	)
 

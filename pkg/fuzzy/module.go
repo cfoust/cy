@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -16,6 +17,7 @@ import (
 )
 
 type Fuzzy struct {
+	util.Lifetime
 	*screen.Terminal
 	info *terminfo.Terminfo
 }
@@ -37,9 +39,11 @@ func NewFuzzy(
 		termenv.WithProfile(profile),
 	)
 
+	lifetime := util.NewLifetime(ctx)
+
 	stream := stream.NewTea(
 		ctx,
-		initialModel(renderer, options),
+		initialModel(&lifetime, renderer, options),
 		geom.DEFAULT_SIZE,
 	)
 
@@ -49,12 +53,14 @@ func NewFuzzy(
 	info.Fprintf(terminal, terminfo.CursorInvisible)
 
 	return &Fuzzy{
+		Lifetime: lifetime,
 		Terminal: terminal,
 		info:     info,
 	}
 }
 
 type model struct {
+	lifetime  *util.Lifetime
 	options   []string
 	matches   []Match
 	selected  string
@@ -63,7 +69,11 @@ type model struct {
 	queried   string
 }
 
-func initialModel(renderer *lipgloss.Renderer, options []string) model {
+func initialModel(
+	lifetime *util.Lifetime,
+	renderer *lipgloss.Renderer,
+	options []string,
+) model {
 	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 20
@@ -72,6 +82,7 @@ func initialModel(renderer *lipgloss.Renderer, options []string) model {
 	ti.Placeholder = "fuzzy: projects"
 
 	return model{
+		lifetime: lifetime,
 		options: options,
 		// TODO(cfoust): 07/18/23 don't assume
 		selected:  options[0],
@@ -105,6 +116,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case matchResult:
 		m.matches = msg.Matches
+	case tea.KeyMsg:
+		switch msg.Type {
+		case tea.KeyEsc, tea.KeyCtrlC:
+			m.lifetime.Cancel()
+			return m, nil
+		}
 	}
 
 	m.textInput, cmd = m.textInput.Update(msg)
