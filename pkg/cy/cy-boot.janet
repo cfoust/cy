@@ -40,3 +40,9 @@
   "log something"
   (fn [&]
     (log "test test test")))
+
+(key/bind
+  [prefix "f"]
+  "choose from many"
+  (fn [&]
+    (fzf/find @["one" "two" "three" "four"])))

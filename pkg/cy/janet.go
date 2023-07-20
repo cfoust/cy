@@ -146,6 +146,14 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			return client.Attach(node)
 		},
+		"fzf/find": func(context interface{}, choices []string) {
+			client, ok := context.(*Client)
+			if !ok {
+				return
+			}
+
+			client.Find(choices)
+		},
 	}
 
 	for name, callback := range callbacks {

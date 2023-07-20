@@ -19,6 +19,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
 
+	"github.com/muesli/termenv"
 	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 	"github.com/xo/terminfo"
@@ -38,10 +39,12 @@ type Client struct {
 	binds *bind.Engine[tree.Binding]
 
 	muxClient *server.Client
+	layers    *screen.Layers
 	renderer  *stream.Renderer
 
-	raw  emu.Terminal
-	info *terminfo.Terminfo
+	raw          emu.Terminal
+	info         *terminfo.Terminfo
+	colorProfile termenv.Profile
 }
 
 func (c *Cy) addClient(conn Connection) *Client {
@@ -231,6 +234,22 @@ func (c *Client) Resize(size geom.Vec2) {
 	c.renderer.Resize(size)
 }
 
+// Trigger fuzzy finding.
+func (c *Client) Find(choices []string) {
+	fuzzy := fuzzy.NewFuzzy(
+		c.Ctx(),
+		c.colorProfile,
+		c.info,
+		choices,
+	)
+
+	c.layers.NewLayer(
+		fuzzy.Ctx(),
+		fuzzy,
+		true,
+	)
+}
+
 func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	c.Lock()
 	defer c.Unlock()
@@ -240,6 +259,7 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		return err
 	}
 	c.info = info
+	c.colorProfile = handshake.Profile
 
 	c.muxClient = c.cy.muxServer.AddClient(
 		c.Ctx(),
@@ -247,33 +267,15 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		handshake.Size,
 	)
 
-	layers := screen.NewLayers()
-
-	layers.NewLayer(
+	c.layers = screen.NewLayers()
+	c.layers.NewLayer(
 		c.Ctx(),
 		c.muxClient,
 		true,
 	)
 
-	fuzzy := fuzzy.NewFuzzy(
-		c.Ctx(),
-		handshake.Profile,
-		info,
-		[]string{
-			"one",
-			"two",
-			"three",
-		},
-	)
-
-	layers.NewLayer(
-		fuzzy.Ctx(),
-		fuzzy,
-		true,
-	)
-
 	c.raw = emu.New(emu.WithSize(handshake.Size))
-	c.renderer = stream.NewRenderer(c.Ctx(), info, c.raw, layers)
+	c.renderer = stream.NewRenderer(c.Ctx(), info, c.raw, c.layers)
 
 	go c.pollRender()
 
