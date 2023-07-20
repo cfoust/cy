@@ -12,10 +12,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
+	"github.com/xo/terminfo"
 )
 
 type Fuzzy struct {
 	*screen.Terminal
+	info *terminfo.Terminfo
 }
 
 var _ mux.Screen = (*Fuzzy)(nil)
@@ -24,7 +26,12 @@ func (f *Fuzzy) Resize(size mux.Size) error {
 	return nil
 }
 
-func NewFuzzy(ctx context.Context, profile termenv.Profile, options []string) *Fuzzy {
+func NewFuzzy(
+	ctx context.Context,
+	profile termenv.Profile,
+	info *terminfo.Terminfo,
+	options []string,
+) *Fuzzy {
 	renderer := lipgloss.NewRenderer(
 		nil,
 		termenv.WithProfile(profile),
@@ -36,8 +43,14 @@ func NewFuzzy(ctx context.Context, profile termenv.Profile, options []string) *F
 		geom.DEFAULT_SIZE,
 	)
 
+	terminal := screen.NewTerminal(ctx, stream, geom.DEFAULT_SIZE)
+
+	// TODO(cfoust): 07/20/23 tea interfaces use fake cursor. move this to tea?
+	info.Fprintf(terminal, terminfo.CursorInvisible)
+
 	return &Fuzzy{
-		Terminal: screen.NewTerminal(ctx, stream, geom.DEFAULT_SIZE),
+		Terminal: terminal,
+		info:     info,
 	}
 }
 

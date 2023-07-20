@@ -260,6 +260,7 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		fuzzy.NewFuzzy(
 			c.Ctx(),
 			handshake.Profile,
+			info,
 			[]string{
 				"one",
 				"two",

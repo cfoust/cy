@@ -9,7 +9,6 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/util"
 
-	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -60,15 +59,12 @@ func (l *Layers) State() *tty.State {
 	foundCursor := false
 	for i := len(states) - 1; i >= 0; i-- {
 		layer := states[i]
-		log.Info().Msgf("%d %+v", i, layer.state.Cursor)
 		if !foundCursor && layer.layer.isInteractive {
 			foundCursor = true
 			state.Cursor = layer.state.Cursor
 			state.CursorVisible = layer.state.CursorVisible
 		}
 	}
-
-	log.Info().Msgf("cursor %+v", state.Cursor)
 
 	if !foundCursor {
 		state.CursorVisible = false
