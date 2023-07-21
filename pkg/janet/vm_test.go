@@ -70,6 +70,7 @@ func TestVM(t *testing.T) {
 	t.Run("callback with context", func(t *testing.T) {
 		state := 0
 		err = vm.Callback("test-context", func(context interface{}) {
+			t.Logf("test-context called %+v", context)
 			if value, ok := context.(int); ok {
 				state = value
 			}
