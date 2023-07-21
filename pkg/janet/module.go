@@ -121,12 +121,10 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 					wrapped = C.wrap_result_value(result)
 				}
 
-				value := v.value(wrapped)
-
-				v.runFiber(
+				go v.runFiber(
 					req.Params,
 					req.Fiber,
-					value,
+					v.value(wrapped),
 				)
 			}
 		}

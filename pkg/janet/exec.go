@@ -165,7 +165,7 @@ func (v *VM) runFunction(params Params, fun *C.JanetFunction, args []interface{}
 		cArgs,
 	)
 
-	v.runFiber(params, fiber, nil)
+	go v.runFiber(params, fiber, nil)
 }
 
 func (v *VM) ExecuteCall(ctx context.Context, user interface{}, call Call) error {
