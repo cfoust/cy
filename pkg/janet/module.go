@@ -13,8 +13,6 @@ import _ "embed"
 import (
 	"context"
 	"runtime"
-	"sync"
-	"sync/atomic"
 
 	"github.com/sasha-s/go-deadlock"
 )
@@ -22,18 +20,10 @@ import (
 //go:embed go-boot.janet
 var GO_BOOT_FILE []byte
 
-// We need some way of C calls to ExecGo back to their respective Janet
-// instances.
-var (
-	nextId atomic.Int32
-	vms    = sync.Map{}
-)
-
 type Request interface{}
 
 type VM struct {
 	deadlock.RWMutex
-	id int32
 
 	callbacks map[string]interface{}
 	evaluate  C.Janet
@@ -64,14 +54,6 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 	// Set up the core environment
 	env := C.janet_core_env(nil)
 	v.runCodeUnsafe(GO_BOOT_FILE, "go-boot.janet")
-
-	// Store the VM's ID in the environment so calls to ExecGo can be
-	// directed appropriately
-	C.janet_table_put(
-		env,
-		C.janet_wrap_keyword(C.janet_ckeyword(VM_ID)),
-		C.janet_wrap_integer(C.int(v.id)),
-	)
 
 	// Then store our evaluation function
 	var evaluate C.Janet
@@ -131,13 +113,8 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 	}
 }
 
-func (v *VM) Free() {
-	vms.Delete(v.id)
-}
-
 func New(ctx context.Context) (*VM, error) {
 	vm := &VM{
-		id:        nextId.Add(1),
 		requests:  make(chan Request),
 		callbacks: make(map[string]interface{}),
 	}
@@ -145,8 +122,6 @@ func New(ctx context.Context) (*VM, error) {
 	vmReady := make(chan bool)
 	go vm.poll(ctx, vmReady)
 	<-vmReady
-
-	vms.Store(vm.id, vm)
 
 	return vm, nil
 }

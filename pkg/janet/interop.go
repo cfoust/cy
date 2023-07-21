@@ -17,10 +17,6 @@ import (
 	"unsafe"
 )
 
-var (
-	VM_ID = C.CString("vm-id")
-)
-
 func wrapError(message string) C.Janet {
 	return C.wrap_result_error(C.CString(message))
 }
@@ -29,29 +25,6 @@ func isErrorType(type_ reflect.Type) bool {
 	value := reflect.New(type_)
 	_, ok := value.Interface().(*error)
 	return ok
-}
-
-func getVM() (*VM, error) {
-	env := C.janet_core_env(nil)
-	symbol := C.janet_table_get(
-		env,
-		C.janet_wrap_keyword(C.janet_ckeyword(VM_ID)),
-	)
-	if C.janet_checktype(symbol, C.JANET_NUMBER) != 1 {
-		return nil, fmt.Errorf(
-			"vm-id symbol incorrect type: %s",
-			JANET_TYPE_TO_STRING[C.janet_type(symbol)],
-		)
-	}
-
-	id := int32(C.janet_unwrap_integer(symbol))
-
-	vm, ok := vms.Load(id)
-	if !ok {
-		return nil, fmt.Errorf("could not find vm for id %d", id)
-	}
-
-	return vm.(*VM), nil
 }
 
 func handleReturn(v *VM, value reflect.Value) (C.Janet, error) {
