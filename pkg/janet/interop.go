@@ -54,26 +54,6 @@ func getVM() (*VM, error) {
 	return vm.(*VM), nil
 }
 
-//export ExecGo
-func ExecGo(argc int, argv *C.Janet) C.Janet {
-	vm, err := getVM()
-	if err != nil {
-		return wrapError(err.Error())
-	}
-
-	args := make([]C.Janet, 0)
-	for i := 0; i < argc; i++ {
-		args = append(args, C.access_argv(argv, C.int(i)))
-	}
-
-	result, err := vm.executeCallback(args)
-	if err != nil {
-		return wrapError(err.Error())
-	}
-
-	return C.wrap_result_value(result)
-}
-
 func handleReturn(v *VM, value reflect.Value) (C.Janet, error) {
 	isPointer := value.Kind() == reflect.Pointer
 	if isPointer {
@@ -87,19 +67,36 @@ func handleReturn(v *VM, value reflect.Value) (C.Janet, error) {
 	return v.marshal(value.Interface())
 }
 
-func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
-	result = C.janet_wrap_nil()
+// A request to receive the result of a callback.
+type ResolveRequest struct {
+	Params
+	Fiber Fiber
+	// The type signature of the callback
+	Type reflect.Type
+	// The results of the function call
+	Out []reflect.Value
+}
 
+type PartialCallback struct {
+	Type   reflect.Type
+	invoke func() []reflect.Value
+}
+
+func (p *PartialCallback) Call() []reflect.Value {
+	return p.invoke()
+}
+
+// Process Janet arguments and return a function that invokes the callback.
+func (v *VM) setupCallback(args []C.Janet) (partial *PartialCallback, err error) {
 	if len(args) == 0 {
-		resultErr = fmt.Errorf("you must provide at least one argument")
+		err = fmt.Errorf("you must provide at least one argument")
 		return
 	}
 
 	target := args[0]
 	var name string
-	err := v.unmarshal(target, &name)
+	err = v.unmarshal(target, &name)
 	if err != nil {
-		resultErr = err
 		return
 	}
 
@@ -107,7 +104,7 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 	callback, ok := v.callbacks[name]
 	v.RUnlock()
 	if !ok {
-		resultErr = fmt.Errorf("callback not found: %s", name)
+		err = fmt.Errorf("callback not found: %s", name)
 		return
 	}
 
@@ -134,7 +131,7 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 		}
 
 		if argIndex >= len(args) {
-			resultErr = fmt.Errorf("%s requires at least %d arguments", name, callbackType.NumIn())
+			err = fmt.Errorf("%s requires at least %d arguments", name, callbackType.NumIn())
 			return
 		}
 
@@ -154,9 +151,9 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 		if isPointer && C.janet_checktype(arg, C.JANET_NIL) == 1 {
 			argValue = reflect.NewAt(argType.Elem(), unsafe.Pointer(nil))
 		} else {
-			err := v.unmarshal(arg, argValue.Interface())
+			err = v.unmarshal(arg, argValue.Interface())
 			if err != nil {
-				resultErr = fmt.Errorf("error processing argument %d: %s", argIndex, err.Error())
+				err = fmt.Errorf("error processing argument %d: %s", argIndex, err.Error())
 				return
 			}
 
@@ -168,23 +165,34 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 		callbackArgs = append(callbackArgs, argValue)
 	}
 
-	results := reflect.ValueOf(callback).Call(callbackArgs)
-	numResults := callbackType.NumOut()
+	partial = &PartialCallback{
+		Type: callbackType,
+		invoke: func() []reflect.Value {
+			return reflect.ValueOf(callback).Call(callbackArgs)
+		},
+	}
+
+	return
+}
+
+func (v *VM) resolveCallback(type_ reflect.Type, out []reflect.Value) (result C.Janet, resultErr error) {
+	result = C.janet_wrap_nil()
+	numResults := type_.NumOut()
 	if numResults == 0 {
 		return
 	}
 
 	if numResults == 1 {
-		lastResult := results[0]
+		lastResult := out[0]
 
-		if isErrorType(callbackType.Out(0)) {
+		if isErrorType(type_.Out(0)) {
 			if err, ok := lastResult.Interface().(error); ok {
 				resultErr = err
 			}
 			return
 		}
 
-		value, err := handleReturn(v, results[0])
+		value, err := handleReturn(v, out[0])
 		if err != nil {
 			resultErr = fmt.Errorf("failed to marshal return value: %s", err.Error())
 			return
@@ -195,14 +203,14 @@ func (v *VM) executeCallback(args []C.Janet) (result C.Janet, resultErr error) {
 	}
 
 	// numResults must be 2
-	value, err := handleReturn(v, results[0])
+	value, err := handleReturn(v, out[0])
 	if err != nil {
 		resultErr = fmt.Errorf("failed to marshal return value: %s", err.Error())
 		return
 	}
 
 	result = value
-	if err, ok := results[1].Interface().(error); ok {
+	if err, ok := out[1].Interface().(error); ok {
 		resultErr = err
 	}
 

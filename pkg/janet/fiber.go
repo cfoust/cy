@@ -13,6 +13,7 @@ import _ "embed"
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"unsafe"
 )
 
@@ -102,13 +103,9 @@ func (v *VM) runFiber(params Params, fiber Fiber, in *Value) {
 
 func (v *VM) handleYield(params Params, fiber Fiber, out C.Janet) {
 	if C.janet_checktype(out, C.JANET_TUPLE) == 0 {
-		params.Error(fmt.Errorf("(yield) called with non-array value"))
+		params.Error(fmt.Errorf("(yield) called with non-tuple"))
 		return
 	}
-
-	// We don't want any of the arguments to get garbage collected
-	// before we're done executing
-	C.janet_gcroot(out)
 
 	args := make([]C.Janet, 0)
 	for i := 0; i < int(C.janet_length(out)); i++ {
@@ -121,24 +118,29 @@ func (v *VM) handleYield(params Params, fiber Fiber, out C.Janet) {
 		)
 	}
 
-	// go run the callback in a new goroutine
+	partial, err := v.setupCallback(args)
+	if err != nil {
+		params.Error(err)
+		return
+	}
+
+	outc := make(chan []reflect.Value)
 	go func() {
-		defer C.janet_gcunroot(out)
-
-		// TODO(cfoust): 07/20/23 ctx
-		result, err := v.executeCallback(args)
-		var wrapped C.Janet
-		if err != nil {
-			wrapped = wrapError(err.Error())
-		} else {
-			wrapped = C.wrap_result_value(result)
+		outc <- partial.Call()
+	}()
+	go func() {
+		select {
+		case <-params.Context.Done():
+			params.Error(params.Context.Err())
+			return
+		case out := <-outc:
+			v.requests <- ResolveRequest{
+				Params: params,
+				Fiber:  fiber,
+				Type:   partial.Type,
+				Out:    out,
+			}
 		}
-
-		v.runFiber(
-			params,
-			fiber,
-			v.value(wrapped),
-		)
 	}()
 
 	return

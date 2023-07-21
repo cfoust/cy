@@ -1,20 +1,5 @@
 #include <janet.h>
 
-extern Janet ExecGo(int32_t argc, Janet *argv);
-
-static Janet cfun_go_exec(int32_t argc, Janet *argv) {
-    return ExecGo(argc, argv);
-}
-
-static const JanetReg cfuns[] = {
-    {"go/exec", cfun_go_exec, "(go/exec)\n\nExecute a Go callback."},
-    {NULL, NULL, NULL}
-};
-
-void apply_env(JanetTable *env) {
-    janet_cfuns(env, "go", cfuns);
-}
-
 Janet wrap_result_value(Janet value) {
     Janet parts[2] = {
         janet_ckeywordv("value"),

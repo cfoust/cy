@@ -1,6 +1,5 @@
 #include <janet.h>
 
-void apply_env(JanetTable *env);
 Janet access_argv(Janet *argv, int offset);
 Janet wrap_result_value(Janet value);
 Janet wrap_result_error(const char *message);

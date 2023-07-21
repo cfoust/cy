@@ -63,7 +63,6 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 
 	// Set up the core environment
 	env := C.janet_core_env(nil)
-	C.apply_env(env)
 	v.runCodeUnsafe(GO_BOOT_FILE, "go-boot.janet")
 
 	// Store the VM's ID in the environment so calls to ExecGo can be
@@ -109,6 +108,26 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 					req.Args,
 				)
 				v.user = nil
+			case ResolveRequest:
+				result, err := v.resolveCallback(
+					req.Type,
+					req.Out,
+				)
+
+				var wrapped C.Janet
+				if err != nil {
+					wrapped = wrapError(err.Error())
+				} else {
+					wrapped = C.wrap_result_value(result)
+				}
+
+				value := v.value(wrapped)
+
+				v.runFiber(
+					req.Params,
+					req.Fiber,
+					value,
+				)
 			}
 		}
 	}
