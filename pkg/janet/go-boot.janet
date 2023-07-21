@@ -54,6 +54,6 @@
          :on-parse-error on-parse-error
          :fiber-flags :i
          :on-compile-error on-compile-error}))
-    ([exec-err fiber] (set err exec-err) (debug/stacktrace fiber)))
+    ([exec-err] (set err exec-err)))
 
   (if (nil? err) env err))

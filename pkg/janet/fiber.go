@@ -127,15 +127,17 @@ func (v *VM) handleYield(params Params, fiber Fiber, out C.Janet) {
 
 		// TODO(cfoust): 07/20/23 ctx
 		result, err := v.executeCallback(args)
+		var wrapped C.Janet
 		if err != nil {
-			params.Error(err)
-			return
+			wrapped = wrapError(err.Error())
+		} else {
+			wrapped = C.wrap_result_value(result)
 		}
 
 		v.runFiber(
 			params,
 			fiber,
-			v.value(result),
+			v.value(wrapped),
 		)
 	}()
 
@@ -161,7 +163,7 @@ func (v *VM) continueFiber(params Params, fiber Fiber, in *Value) {
 		params.Out(v.value(out))
 		return
 	case C.JANET_SIGNAL_ERROR:
-		params.Error(fmt.Errorf("error while running Janet function"))
+		params.Error(fmt.Errorf("error while running Janet fiber"))
 		return
 	case C.JANET_SIGNAL_YIELD:
 		v.handleYield(params, fiber, out)

@@ -11,8 +11,8 @@ import "C"
 import _ "embed"
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 	"reflect"
 	"unsafe"
 )
@@ -274,7 +274,7 @@ func (v *VM) Callback(name string, callback interface{}) error {
 	call.Options.UpdateEnv = true
 	err := v.ExecuteCall(context.Background(), nil, call)
 	if err != nil {
-	    return err
+		return err
 	}
 
 	return nil
