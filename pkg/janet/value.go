@@ -10,6 +10,7 @@ package janet
 import "C"
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sasha-s/go-deadlock"
@@ -33,7 +34,9 @@ func (v *VM) value(janet C.Janet) *Value {
 	}
 }
 
-type UnlockRequest RPC[*Value, error]
+type UnlockRequest struct {
+	Value *Value
+}
 
 func (v *Value) IsFree() bool {
 	v.RLock()
@@ -54,7 +57,7 @@ func (v *Value) Free() {
 	v.wasFreed = true
 
 	v.vm.requests <- UnlockRequest{
-		Params: v,
+		Value: v,
 	}
 }
 
@@ -81,27 +84,31 @@ type Function struct {
 	function *C.JanetFunction
 }
 
-type FunctionParams struct {
+type FunctionRequest struct {
+	Params
 	Args     []interface{}
 	Function *Function
-	Context  interface{}
 }
-type FunctionRequest RPC[FunctionParams, error]
 
-func (f *Function) CallContext(context interface{}, params ...interface{}) error {
+func (f *Function) CallContext(
+	ctx context.Context,
+	user interface{},
+	params ...interface{},
+) error {
+	result := make(chan error)
 	req := FunctionRequest{
-		Params: FunctionParams{
-			Args:     params,
-			Function: f,
-			Context:  context,
+		Args:     params,
+		Function: f,
+		Params: Params{
+			Context: ctx,
+			User:    user,
+			Result:  result,
 		},
-		Result: make(chan error),
 	}
-
 	f.vm.requests <- req
 	return <-req.Result
 }
 
-func (f *Function) Call(params ...interface{}) error {
-	return f.CallContext(nil, params...)
+func (f *Function) Call(ctx context.Context, params ...interface{}) error {
+	return f.CallContext(ctx, nil, params...)
 }

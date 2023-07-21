@@ -11,13 +11,10 @@ import "C"
 import _ "embed"
 
 import (
+	"context"
 	"fmt"
 	"unsafe"
 )
-
-type Result struct {
-	Error error
-}
 
 type CallOptions struct {
 	// Whether to allow the code to mutate the current environment.
@@ -49,17 +46,10 @@ func CallString(code string) Call {
 	}
 }
 
-type CallRequest RPC[Call, error]
-
-type FiberParams struct {
-	Context interface{}
-	// The fiber to run
-	Fiber Fiber
-	// The value with which to resume
-	Value *Value
+type CallRequest struct {
+	Params
+	Call
 }
-
-type FiberRequest RPC[FiberParams, error]
 
 // Run code without using our evaluation function. This can panic.
 func (v *VM) runCodeUnsafe(code []byte, source string) {
@@ -75,64 +65,53 @@ func (v *VM) runCodeUnsafe(code []byte, source string) {
 	C.free(unsafe.Pointer(sourcePtr))
 }
 
-func (v *VM) runFiber(fiber *C.JanetFiber, value C.Janet, errc chan error) {
-}
-
-func (v *VM) handleYield(fiber *C.JanetFiber, value C.Janet, errc chan error) {
-	if C.janet_checktype(value, C.JANET_ARRAY) == 0 {
-		errc <- fmt.Errorf("(yield) called with non-array value")
-		return
+func (v *VM) handleCodeResult(params Params, call Call) error {
+	var out *Value
+	select {
+	case <-params.Context.Done():
+		return params.Context.Err()
+	case result := <-params.Result:
+		if result.Error != nil {
+			return result.Error
+		}
+		out = result.Out
 	}
 
-	// We don't want any of the arguments to get garbage collected
-	// before we're done executing
-	C.janet_gcroot(value)
+	result := out.janet
 
-	args := make([]C.Janet, 0)
-	for i := 0; i < int(C.janet_length(value)); i++ {
-		args = append(
-			args,
-			C.janet_get(
-				value,
-				C.janet_wrap_integer(C.int(i)),
-			),
-		)
-	}
+	resultType := C.janet_type(result)
 
-	// go run the callback in a new goroutine
-	go func() {
-		defer C.janet_gcunroot(value)
-
-		// TODO(cfoust): 07/20/23 ctx
-		result, err := v.executeCallback(args)
-
+	if resultType == C.JANET_STRING {
+		var message string
+		err := v.unmarshal(result, &message)
 		if err != nil {
-			errc <- err
-			return
+			return err
 		}
 
-		// send a new event
-		v.requests <- FiberRequest{
-			Params: FiberParams{
-				Context: v.context,
-				Fiber: Fiber{
-					Value: v.value(
-						C.janet_wrap_fiber(fiber),
-					),
-					fiber: fiber,
-				},
-				Value: v.value(result),
-			},
-			Result: errc,
-		}
-	}()
+		return fmt.Errorf(message)
+	}
 
-	return
+	if resultType != C.JANET_TABLE {
+		return fmt.Errorf("evaluate returned unexpected type")
+	}
+
+	if call.Options.UpdateEnv {
+		if v.env != nil {
+			v.env.unroot()
+		}
+
+		v.env = &Table{
+			Value: v.value(result),
+			table: C.janet_unwrap_table(result),
+		}
+	}
+
+	return nil
 }
 
 // Run a string containing Janet code and return any error that occurs.
 // TODO(cfoust): 07/20/23 send error to errc with timeout
-func (v *VM) runCode(call Call, errc chan error) {
+func (v *VM) runCode(params Params, call Call) {
 	sourcePtr := C.CString(call.SourcePath)
 
 	var env *C.JanetTable = C.janet_core_env(nil)
@@ -154,59 +133,20 @@ func (v *VM) runCode(call Call, errc chan error) {
 		),
 	}
 
-	var fiber *C.JanetFiber = nil
-	var result C.Janet
-	signal := C.janet_pcall(
+	fiber := v.createFiber(
 		C.janet_unwrap_function(v.evaluate),
-		C.int(len(args)),
-		(*C.Janet)(unsafe.Pointer(&args[0])),
-		&result,
-		&fiber,
+		args,
 	)
-	C.free(unsafe.Pointer(sourcePtr))
+	subParams := params.Pipe()
 
-	if signal == C.JANET_SIGNAL_YIELD {
-		v.handleYield(fiber, result, errc)
-		return
-	}
-
-	if signal != C.JANET_SIGNAL_OK {
-		errc <- fmt.Errorf("failed to evaluate Janet code")
-		return
-	}
-
-	resultType := C.janet_type(result)
-
-	if resultType == C.JANET_STRING {
-		var message string
-		err := v.unmarshal(result, &message)
+	go func() {
+		v.runFiber(subParams, fiber, nil)
+		err := v.handleCodeResult(subParams, call)
 		if err != nil {
-			errc <- err
+			params.Result <- Result{Error: err}
 			return
 		}
-
-		errc <- fmt.Errorf(message)
-		return
-	}
-
-	if resultType != C.JANET_TABLE {
-		errc <- fmt.Errorf("evaluate returned unexpected type")
-		return
-	}
-
-	if call.Options.UpdateEnv {
-		if v.env != nil {
-			v.env.unroot()
-		}
-
-		v.env = &Table{
-			Value: v.value(result),
-			table: C.janet_unwrap_table(result),
-		}
-	}
-
-	errc <- nil
-	return
+	}()
 }
 
 func (v *VM) runFunction(fun *C.JanetFunction, args []interface{}) error {
@@ -244,20 +184,34 @@ func (v *VM) runFunction(fun *C.JanetFunction, args []interface{}) error {
 	}
 }
 
-func (v *VM) ExecuteCall(call Call) error {
+func (v *VM) ExecuteCall(ctx context.Context, user interface{}, call Call) error {
+	result := make(chan Result)
 	req := CallRequest{
-		Params: call,
-		Result: make(chan error),
+		Params: Params{
+			Context: ctx,
+			User:    user,
+			Result:  result,
+		},
+		Call: call,
 	}
 	v.requests <- req
-	return <-req.Result
+
+	select {
+	case result := <-req.Result:
+		if result.Out != nil {
+			result.Out.Free()
+		}
+		return result.Error
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
-func (v *VM) Execute(code string) error {
-	return v.ExecuteCall(CallString(code))
+func (v *VM) Execute(ctx context.Context, code string) error {
+	return v.ExecuteCall(ctx, nil, CallString(code))
 }
 
-func (v *VM) ExecuteFile(path string) error {
+func (v *VM) ExecuteFile(ctx context.Context, path string) error {
 	bytes, err := readFile(path)
 	if err != nil {
 		return err
@@ -266,5 +220,5 @@ func (v *VM) ExecuteFile(path string) error {
 	call := CallBytes(bytes)
 	call.SourcePath = path
 
-	return v.ExecuteCall(call)
+	return v.ExecuteCall(ctx, nil, call)
 }

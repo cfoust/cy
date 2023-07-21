@@ -31,18 +31,6 @@ var (
 
 type Request interface{}
 
-type RPC[A any, B any] struct {
-	Params A
-	Result chan B
-}
-
-func makeRPC[A any, B any](params A) RPC[A, B] {
-	return RPC[A, B]{
-		Params: params,
-		Result: make(chan B),
-	}
-}
-
 type VM struct {
 	deadlock.RWMutex
 	id int32
@@ -52,8 +40,8 @@ type VM struct {
 
 	requests chan Request
 
-	context interface{}
-	env     *Table
+	user interface{}
+	env  *Table
 }
 
 func initJanet() {
@@ -102,25 +90,24 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 			switch req := req.(type) {
 			case CallRequest:
 				params := req.Params
-				v.context = params.Context
+				v.user = params.Context
 				v.runCode(params, req.Result)
-				v.context = nil
-			case ContinueRequest:
+				v.user = nil
+			case FiberRequest:
 				params := req.Params
-				v.context = params.Context
-				signal := C.janet_continue(
-				)
-				v.context = nil
+				v.user = params.Context
+				signal := C.janet_continue()
+				v.user = nil
 			case UnlockRequest:
 				req.Params.unroot()
 			case FunctionRequest:
 				params := req.Params
-				v.context = params.Context
+				v.user = params.Context
 				req.Result <- v.runFunction(
 					params.Function.function,
 					params.Args,
 				)
-				v.context = nil
+				v.user = nil
 			}
 		}
 	}
