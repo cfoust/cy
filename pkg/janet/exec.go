@@ -51,6 +51,16 @@ func CallString(code string) Call {
 
 type CallRequest RPC[Call, error]
 
+type FiberParams struct {
+	Context interface{}
+	// The fiber to run
+	Fiber Fiber
+	// The value with which to resume
+	Value *Value
+}
+
+type FiberRequest RPC[FiberParams, error]
+
 // Run code without using our evaluation function. This can panic.
 func (v *VM) runCodeUnsafe(code []byte, source string) {
 	env := C.janet_core_env(nil)
@@ -65,8 +75,64 @@ func (v *VM) runCodeUnsafe(code []byte, source string) {
 	C.free(unsafe.Pointer(sourcePtr))
 }
 
-// Run code with our custom evaluator.
-func (v *VM) runCode(call Call) error {
+func (v *VM) runFiber(fiber *C.JanetFiber, value C.Janet, errc chan error) {
+}
+
+func (v *VM) handleYield(fiber *C.JanetFiber, value C.Janet, errc chan error) {
+	if C.janet_checktype(value, C.JANET_ARRAY) == 0 {
+		errc <- fmt.Errorf("(yield) called with non-array value")
+		return
+	}
+
+	// We don't want any of the arguments to get garbage collected
+	// before we're done executing
+	C.janet_gcroot(value)
+
+	args := make([]C.Janet, 0)
+	for i := 0; i < int(C.janet_length(value)); i++ {
+		args = append(
+			args,
+			C.janet_get(
+				value,
+				C.janet_wrap_integer(C.int(i)),
+			),
+		)
+	}
+
+	// go run the callback in a new goroutine
+	go func() {
+		defer C.janet_gcunroot(value)
+
+		// TODO(cfoust): 07/20/23 ctx
+		result, err := v.executeCallback(args)
+
+		if err != nil {
+			errc <- err
+			return
+		}
+
+		// send a new event
+		v.requests <- FiberRequest{
+			Params: FiberParams{
+				Context: v.context,
+				Fiber: Fiber{
+					Value: v.value(
+						C.janet_wrap_fiber(fiber),
+					),
+					fiber: fiber,
+				},
+				Value: v.value(result),
+			},
+			Result: errc,
+		}
+	}()
+
+	return
+}
+
+// Run a string containing Janet code and return any error that occurs.
+// TODO(cfoust): 07/20/23 send error to errc with timeout
+func (v *VM) runCode(call Call, errc chan error) {
 	sourcePtr := C.CString(call.SourcePath)
 
 	var env *C.JanetTable = C.janet_core_env(nil)
@@ -99,8 +165,14 @@ func (v *VM) runCode(call Call) error {
 	)
 	C.free(unsafe.Pointer(sourcePtr))
 
+	if signal == C.JANET_SIGNAL_YIELD {
+		v.handleYield(fiber, result, errc)
+		return
+	}
+
 	if signal != C.JANET_SIGNAL_OK {
-		return fmt.Errorf("failed to evaluate Janet code")
+		errc <- fmt.Errorf("failed to evaluate Janet code")
+		return
 	}
 
 	resultType := C.janet_type(result)
@@ -109,14 +181,17 @@ func (v *VM) runCode(call Call) error {
 		var message string
 		err := v.unmarshal(result, &message)
 		if err != nil {
-			return err
+			errc <- err
+			return
 		}
 
-		return fmt.Errorf(message)
+		errc <- fmt.Errorf(message)
+		return
 	}
 
 	if resultType != C.JANET_TABLE {
-		return fmt.Errorf("evaluate returned unexpected type")
+		errc <- fmt.Errorf("evaluate returned unexpected type")
+		return
 	}
 
 	if call.Options.UpdateEnv {
@@ -130,7 +205,8 @@ func (v *VM) runCode(call Call) error {
 		}
 	}
 
-	return nil
+	errc <- nil
+	return
 }
 
 func (v *VM) runFunction(fun *C.JanetFunction, args []interface{}) error {

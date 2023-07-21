@@ -103,7 +103,13 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 			case CallRequest:
 				params := req.Params
 				v.context = params.Context
-				req.Result <- v.runCode(params)
+				v.runCode(params, req.Result)
+				v.context = nil
+			case ContinueRequest:
+				params := req.Params
+				v.context = params.Context
+				signal := C.janet_continue(
+				)
 				v.context = nil
 			case UnlockRequest:
 				req.Params.unroot()

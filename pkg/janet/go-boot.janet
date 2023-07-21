@@ -1,8 +1,8 @@
 (defn
   go/callback
   "Invoke a Go callback by name and return the result, but raise errors instead of returning them."
-  [callback & args]
-  (def [status result] (go/exec callback ;args))
+  [& args]
+  (def [status result] (yield args))
 
   (case status
     :value result

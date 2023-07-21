@@ -71,6 +71,11 @@ type Table struct {
 	table *C.JanetTable
 }
 
+type Fiber struct {
+	*Value
+	fiber *C.JanetFiber
+}
+
 type Function struct {
 	*Value
 	function *C.JanetFunction
