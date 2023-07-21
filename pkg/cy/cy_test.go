@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
@@ -45,9 +45,11 @@ func (t *TestServer) Attach(rows, cols int) (Connection, *Client, error) {
 	}
 
 	conn.Send(P.HandshakeMessage{
-		TERM:    "xterm-256color",
-		Rows:    rows,
-		Columns: cols,
+		TERM: "xterm-256color",
+		Size: geom.Size{
+			R: rows,
+			C: cols,
+		},
 	})
 
 	time.Sleep(100 * time.Millisecond)
@@ -98,8 +100,10 @@ func TestHandshake(t *testing.T) {
 
 	conn.Send(P.HandshakeMessage{
 		TERM:    "xterm-256color",
-		Rows:    26,
-		Columns: 80,
+		Size: geom.Size{
+			R: 26,
+			C: 80,
+		},
 	})
 
 	time.Sleep(100 * time.Millisecond)
@@ -141,7 +145,7 @@ func TestEmpty(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	leaves := cy.tree.Leaves()
-	require.Equal(t, client.GetNode(), leaves[0])
+	require.Equal(t, client.Node(), leaves[0])
 }
 
 func TestSize(t *testing.T) {
@@ -170,7 +174,7 @@ func TestScopes(t *testing.T) {
 	group := cy.tree.Root().NewGroup()
 	pane, err := group.NewCmd(
 		server.Ctx(),
-		io.CmdOptions{
+		stream.CmdOptions{
 			Command: "/bin/bash",
 		},
 		geom.DEFAULT_SIZE,

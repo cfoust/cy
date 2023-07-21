@@ -17,8 +17,8 @@ func TestHealthy(t *testing.T) {
 			Command: "/bin/sh",
 		},
 		geom.Vec2{
-			Rows:    26,
-			Columns: 80,
+			R: 26,
+			C: 80,
 		},
 	)
 	require.NoError(t, err)
@@ -39,8 +39,8 @@ func TestFailLoop(t *testing.T) {
 			},
 		},
 		geom.Vec2{
-			Rows:    26,
-			Columns: 80,
+			R: 26,
+			C: 80,
 		},
 	)
 

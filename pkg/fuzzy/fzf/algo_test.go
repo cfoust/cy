@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/junegunn/fzf/src/util"
+	"github.com/cfoust/cy/pkg/fuzzy/fzf/util"
 )
 
 func assertMatch(t *testing.T, fun Algo, caseSensitive, forward bool, input, pattern string, sidx int, eidx int, score int) {

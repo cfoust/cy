@@ -28,7 +28,6 @@ var DEFAULT_CALL_OPTIONS = CallOptions{
 type Call struct {
 	Code       []byte
 	SourcePath string
-	Context    interface{}
 	Options    CallOptions
 }
 
@@ -143,45 +142,31 @@ func (v *VM) runCode(params Params, call Call) {
 		v.runFiber(subParams, fiber, nil)
 		err := v.handleCodeResult(subParams, call)
 		if err != nil {
-			params.Result <- Result{Error: err}
+			params.Error(err)
 			return
 		}
+
+		params.Ok()
 	}()
 }
 
-func (v *VM) runFunction(fun *C.JanetFunction, args []interface{}) error {
+func (v *VM) runFunction(params Params, fun *C.JanetFunction, args []interface{}) {
 	cArgs := make([]C.Janet, 0)
 	for _, arg := range args {
 		value, err := v.marshal(arg)
 		if err != nil {
-			return err
+			params.Error(err)
+			return
 		}
 		cArgs = append(cArgs, value)
 	}
 
-	argPtr := unsafe.Pointer(nil)
-	if len(args) > 0 {
-		argPtr = unsafe.Pointer(&cArgs[0])
-	}
-
-	var fiber *C.JanetFiber = nil
-	var result C.Janet
-	signal := C.janet_pcall(
+	fiber := v.createFiber(
 		fun,
-		C.int(len(args)),
-		(*C.Janet)(argPtr),
-		&result,
-		&fiber,
+		cArgs,
 	)
 
-	switch signal {
-	case C.JANET_SIGNAL_OK:
-		return nil
-	case C.JANET_SIGNAL_ERROR:
-		return fmt.Errorf("error while running Janet function")
-	default:
-		return nil
-	}
+	v.runFiber(params, fiber, nil)
 }
 
 func (v *VM) ExecuteCall(ctx context.Context, user interface{}, call Call) error {
@@ -195,16 +180,7 @@ func (v *VM) ExecuteCall(ctx context.Context, user interface{}, call Call) error
 		Call: call,
 	}
 	v.requests <- req
-
-	select {
-	case result := <-req.Result:
-		if result.Out != nil {
-			result.Out.Free()
-		}
-		return result.Error
-	case <-ctx.Done():
-		return ctx.Err()
-	}
+	return req.Wait()
 }
 
 func (v *VM) Execute(ctx context.Context, code string) error {

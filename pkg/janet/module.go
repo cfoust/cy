@@ -91,21 +91,22 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 			case CallRequest:
 				params := req.Params
 				v.user = params.Context
-				v.runCode(params, req.Result)
+				v.runCode(params, req.Call)
 				v.user = nil
 			case FiberRequest:
 				params := req.Params
 				v.user = params.Context
-				signal := C.janet_continue()
+				v.continueFiber(params, req.Fiber, req.In)
 				v.user = nil
 			case UnlockRequest:
-				req.Params.unroot()
+				req.Value.unroot()
 			case FunctionRequest:
 				params := req.Params
 				v.user = params.Context
-				req.Result <- v.runFunction(
-					params.Function.function,
-					params.Args,
+				v.runFunction(
+					params,
+					req.Function.function,
+					req.Args,
 				)
 				v.user = nil
 			}

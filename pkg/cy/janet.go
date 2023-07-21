@@ -163,7 +163,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 		}
 	}
 
-	err = vm.ExecuteCall(janet.Call{
+	err = vm.ExecuteCall(ctx, nil, janet.Call{
 		Code:       CY_BOOT_FILE,
 		SourcePath: "cy-boot.janet",
 		Options:    janet.DEFAULT_CALL_OPTIONS,
@@ -173,7 +173,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 	}
 
 	if len(configFile) != 0 {
-		err := vm.ExecuteFile(configFile)
+		err := vm.ExecuteFile(ctx, configFile)
 		if err != nil {
 			return nil, err
 		}

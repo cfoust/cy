@@ -95,7 +95,7 @@ func (f *Function) CallContext(
 	user interface{},
 	params ...interface{},
 ) error {
-	result := make(chan error)
+	result := make(chan Result)
 	req := FunctionRequest{
 		Args:     params,
 		Function: f,
@@ -106,7 +106,8 @@ func (f *Function) CallContext(
 		},
 	}
 	f.vm.requests <- req
-	return <-req.Result
+
+	return req.Wait()
 }
 
 func (f *Function) Call(ctx context.Context, params ...interface{}) error {

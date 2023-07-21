@@ -4,6 +4,14 @@ import (
 	"math"
 )
 
+// Max returns the largest integer
+func Max(first int, second int) int {
+	if first >= second {
+		return first
+	}
+	return second
+}
+
 // Max16 returns the largest integer
 func Max16(first int16, second int16) int16 {
 	if first >= second {

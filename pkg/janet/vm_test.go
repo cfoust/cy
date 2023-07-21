@@ -32,9 +32,10 @@ func cmp[T any](t *testing.T, vm *VM, before T) {
 }
 
 func TestVM(t *testing.T) {
+	ctx := context.Background()
 	// TODO(cfoust): 07/02/23 gracefully handle the Janet vm already being
 	// initialized and break these into separate tests
-	vm, err := New(context.Background())
+	vm, err := New(ctx)
 	require.NoError(t, err)
 
 	ok := false
@@ -45,7 +46,7 @@ func TestVM(t *testing.T) {
 
 	t.Run("callback", func(t *testing.T) {
 		ok = false
-		err = vm.Execute(`(test)`)
+		err = vm.Execute(ctx, `(test)`)
 		require.NoError(t, err)
 
 		require.True(t, ok, "should have been called")
@@ -58,11 +59,11 @@ func TestVM(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = vm.Execute(`(test-callback (fn [first second &] (+ 2 2)))`)
+		err = vm.Execute(ctx, `(test-callback (fn [first second &] (+ 2 2)))`)
 		require.NoError(t, err)
 		require.NotNil(t, fun)
 
-		err = fun.Call("2312", 2)
+		err = fun.Call(ctx, "2312", 2)
 		require.NoError(t, err)
 	})
 
@@ -76,8 +77,7 @@ func TestVM(t *testing.T) {
 		require.NoError(t, err)
 
 		call := CallString(`(test-context)`)
-		call.Context = 1
-		err = vm.ExecuteCall(call)
+		err = vm.ExecuteCall(ctx, 1, call)
 		require.NoError(t, err)
 		require.Equal(t, 1, state)
 	})
@@ -95,11 +95,11 @@ func TestVM(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = vm.Execute(`(test-nil nil)`)
+		err = vm.Execute(ctx, `(test-nil nil)`)
 		require.NoError(t, err)
 		require.Equal(t, 1, value)
 
-		err = vm.Execute(`(test-nil 2)`)
+		err = vm.Execute(ctx, `(test-nil 2)`)
 		require.NoError(t, err)
 		require.Equal(t, 2, value)
 	})
@@ -114,22 +114,22 @@ func TestVM(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		err = vm.ExecuteFile(filename)
+		err = vm.ExecuteFile(ctx, filename)
 		require.NoError(t, err)
 
 		require.True(t, ok, "should have been called")
 	})
 
 	t.Run("catches a syntax error", func(t *testing.T) {
-		err = vm.Execute(`(asd`)
+		err = vm.Execute(ctx, `(asd`)
 		require.Error(t, err)
 	})
 
 	t.Run("defining a symbol", func(t *testing.T) {
-		err = vm.Execute(`(def some-int 2)`)
+		err = vm.Execute(ctx, `(def some-int 2)`)
 		require.NoError(t, err)
 
-		err = vm.Execute(`(+ some-int some-int)`)
+		err = vm.Execute(ctx, `(+ some-int some-int)`)
 		require.NoError(t, err)
 	})
 

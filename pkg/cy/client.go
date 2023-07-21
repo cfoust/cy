@@ -97,7 +97,10 @@ func (c *Client) pollEvents() {
 		case event := <-c.binds.Recv():
 			switch event := event.(type) {
 			case bind.ActionEvent[tree.Binding]:
-				err := event.Action.Callback.CallContext(c)
+				err := event.Action.Callback.CallContext(
+					c.Ctx(),
+					c,
+				)
 				if err != nil {
 					log.Error().Err(err).Msgf("failed to run callback")
 				}
