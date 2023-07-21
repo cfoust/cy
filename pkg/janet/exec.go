@@ -77,7 +77,6 @@ func (v *VM) handleCodeResult(params Params, call Call) error {
 	}
 
 	result := out.janet
-
 	resultType := C.janet_type(result)
 
 	if resultType == C.JANET_STRING {

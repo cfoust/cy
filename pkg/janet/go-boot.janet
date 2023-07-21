@@ -52,8 +52,8 @@
          :chunks (go/chunk-string user-script)
          :source source
          :on-parse-error on-parse-error
-         :fiber-flags :y
+         :fiber-flags :i
          :on-compile-error on-compile-error}))
-    ([exec-err] (set err exec-err)))
+    ([exec-err fiber] (set err exec-err) (debug/stacktrace fiber)))
 
   (if (nil? err) env err))

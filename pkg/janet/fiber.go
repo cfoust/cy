@@ -101,7 +101,7 @@ func (v *VM) runFiber(params Params, fiber Fiber, in *Value) {
 }
 
 func (v *VM) handleYield(params Params, fiber Fiber, out C.Janet) {
-	if C.janet_checktype(out, C.JANET_ARRAY) == 0 {
+	if C.janet_checktype(out, C.JANET_TUPLE) == 0 {
 		params.Error(fmt.Errorf("(yield) called with non-array value"))
 		return
 	}
