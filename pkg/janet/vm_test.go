@@ -27,7 +27,6 @@ func cmp[T any](t *testing.T, vm *VM, before T) {
 	err = vm.unmarshal(value, &after)
 	require.NoError(t, err)
 
-	t.Logf("%+v", after)
 	require.Equal(t, before, after, "should yield same result")
 }
 
@@ -128,19 +127,21 @@ func TestVM(t *testing.T) {
 			First  int
 			Second string
 		}
+
+		var post Params
 		err = vm.Callback("test-named", func(params *Named[Params]) {
-			values := params.Values(Params{
+			post = params.Values(Params{
 				First: 2,
 			})
-
-			require.Equal(t, 2, values.First)
-			require.Equal(t, "ok", values.Second)
 		})
 		require.NoError(t, err)
 
 		call := CallString(`(test-named :second "ok")`)
 		err = vm.ExecuteCall(ctx, 1, call)
 		require.NoError(t, err)
+
+		require.Equal(t, 2, post.First)
+		require.Equal(t, "ok", post.Second)
 	})
 
 	t.Run("execute a file", func(t *testing.T) {

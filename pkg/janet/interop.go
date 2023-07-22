@@ -18,9 +18,11 @@ import (
 	"unsafe"
 )
 
+// This is a little weird, but it's a workaround to allow us to simplify the
+// public API for setting up named parameters.
 type namable interface {
 	getType() reflect.Type
-	set(value reflect.Value)
+	set(reflect.Value)
 }
 
 type Named[T any] struct {
@@ -28,7 +30,24 @@ type Named[T any] struct {
 }
 
 func (n *Named[T]) Values(defaults T) T {
-	return n.value
+	updated := n.value
+
+	type_ := n.getType()
+	dstValue := reflect.ValueOf(updated)
+	srcValue := reflect.ValueOf(defaults)
+
+	for i := 0; i < type_.NumField(); i++ {
+		srcField := srcValue.Field(i)
+		dstField := dstValue.Field(i)
+
+		// If srcField's value is the type's default value, use the
+		// value from default
+		if dstField.Interface() == reflect.New(dstField.Type()).Elem().Interface() {
+			dstField.Set(srcField)
+		}
+	}
+
+	return updated
 }
 
 func (n *Named[T]) getType() reflect.Type {
@@ -128,6 +147,39 @@ func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallb
 	for i := 0; i < callbackType.NumIn(); i++ {
 		argType := callbackType.In(i)
 		argValue := reflect.New(argType)
+
+		// Handle all of the remaining named parameters
+		named := getNamable(argType)
+		if named != nil {
+			type_ := named.getType()
+			value := reflect.New(type_).Elem()
+
+			for j := 0; j < type_.NumField(); i++ {
+				field := type_.Field(j)
+				fieldValue := value.Field(j)
+
+				namedArg := args[argIndex+j]
+				if C.janet_checktype(namedArg, C.JANET_NIL) == 1 {
+					continue
+				}
+
+				err := v.unmarshal(
+					namedArg,
+					fieldValue.Addr().Interface(),
+				)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"failed to unmarshal named param %s: %s",
+						getFieldName(field),
+						err.Error(),
+					)
+				}
+			}
+
+			named.set(value)
+			callbackArgs = append(callbackArgs, reflect.ValueOf(named))
+			break
+		}
 
 		// Context allows for passing arbitrary vm-wide state to certain callbacks
 		if isInterface(argType) {
