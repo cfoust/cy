@@ -60,7 +60,7 @@ func (p *PartialCallback) Call() []reflect.Value {
 }
 
 // Process Janet arguments and return a function that invokes the callback.
-func (v *VM) setupCallback(args []C.Janet) (partial *PartialCallback, err error) {
+func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallback, err error) {
 	if len(args) == 0 {
 		err = fmt.Errorf("you must provide at least one argument")
 		return
@@ -94,11 +94,16 @@ func (v *VM) setupCallback(args []C.Janet) (partial *PartialCallback, err error)
 
 		// Context allows for passing arbitrary vm-wide state to certain callbacks
 		if isInterface(argType) {
-			context := v.user
+			if _, ok := argValue.Interface().(*context.Context); ok {
+				callbackArgs = append(callbackArgs, reflect.ValueOf(params.Context))
+				continue
+			}
+
+			context := params.User
 			if context == nil {
 				callbackArgs = append(callbackArgs, reflect.New(argType).Elem())
 			} else {
-				callbackArgs = append(callbackArgs, reflect.ValueOf(v.user))
+				callbackArgs = append(callbackArgs, reflect.ValueOf(context))
 			}
 			continue
 		}

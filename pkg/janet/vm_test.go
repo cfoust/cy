@@ -70,7 +70,6 @@ func TestVM(t *testing.T) {
 	t.Run("callback with context", func(t *testing.T) {
 		state := 0
 		err = vm.Callback("test-context", func(context interface{}) {
-			t.Logf("test-context called %+v", context)
 			if value, ok := context.(int); ok {
 				state = value
 			}
@@ -78,6 +77,25 @@ func TestVM(t *testing.T) {
 		require.NoError(t, err)
 
 		call := CallString(`(test-context)`)
+		err = vm.ExecuteCall(ctx, 1, call)
+		require.NoError(t, err)
+		require.Equal(t, 1, state)
+	})
+
+	t.Run("callback with user and context", func(t *testing.T) {
+		state := 0
+		err = vm.Callback("test-context-ctx", func(ctx context.Context, user interface{}) {
+			if ctx == nil || user == nil {
+				t.Fail()
+			}
+
+			if value, ok := user.(int); ok {
+				state = value
+			}
+		})
+		require.NoError(t, err)
+
+		call := CallString(`(test-context-ctx)`)
 		err = vm.ExecuteCall(ctx, 1, call)
 		require.NoError(t, err)
 		require.Equal(t, 1, state)

@@ -118,7 +118,7 @@ func (v *VM) handleYield(params Params, fiber Fiber, out C.Janet) {
 		)
 	}
 
-	partial, err := v.setupCallback(args)
+	partial, err := v.setupCallback(params, args)
 	if err != nil {
 		params.Error(err)
 		return
