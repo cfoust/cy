@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -146,13 +147,31 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			return client.Attach(node)
 		},
-		"fzf/find": func(context interface{}, choices []string) {
-			client, ok := context.(*Client)
+		"fzf/find": func(ctx context.Context, user interface{}, choices []string) (*string, error) {
+			client, ok := user.(*Client)
 			if !ok {
-				return
+				return nil, fmt.Errorf("missing client context")
 			}
 
-			client.Find(choices)
+			fuzzy := fuzzy.NewFuzzy(
+				ctx,
+				client.colorProfile,
+				client.info,
+				choices,
+			)
+
+			client.layers.NewLayer(
+				fuzzy.Ctx(),
+				fuzzy,
+				true,
+			)
+
+			select {
+			case result := <-fuzzy.Result():
+				return result, nil
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			}
 		},
 	}
 

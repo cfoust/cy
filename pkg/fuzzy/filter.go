@@ -1,27 +1,41 @@
 package fuzzy
 
 import (
-	"sort"
-
 	"github.com/cfoust/cy/pkg/fuzzy/fzf"
 	"github.com/cfoust/cy/pkg/fuzzy/fzf/util"
 )
 
 type Match struct {
-	Text  string
 	Score int
-	Chars *[]int
+	Index *[]int
 }
 
-func Filter(options []string, search string) []Match {
-	matches := make([]Match, 0)
+type Option struct {
+	Text  string
+	Chars *util.Chars
+	Match *Match
+}
+
+func createOptions(options []string) (result []Option) {
 	for _, option := range options {
-		input := util.ToChars([]byte(option))
+		chars := util.ToChars([]byte(option))
+		result = append(result, Option{
+			Text:  option,
+			Chars: &chars,
+		})
+	}
+
+	return result
+}
+
+func Filter(options []Option, search string) []Option {
+	matches := make([]Option, 0)
+	for _, option := range options {
 		result, pos := fzf.FuzzyMatchV2(
 			true,
 			true,
 			true,
-			&input,
+			option.Chars,
 			[]rune(search),
 			true,
 			nil,
@@ -31,16 +45,13 @@ func Filter(options []string, search string) []Match {
 			continue
 		}
 
-		matches = append(matches, Match{
-			Text:  option,
+		newOption := option
+		newOption.Match = &Match{
 			Score: result.Score,
-			Chars: pos,
-		})
+			Index: pos,
+		}
+		matches = append(matches, newOption)
 	}
-
-	sort.Slice(matches, func(i, j int) bool {
-		return matches[i].Score > matches[j].Score
-	})
 
 	return matches
 }

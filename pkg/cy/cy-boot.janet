@@ -45,4 +45,4 @@
   [prefix "f"]
   "choose from many"
   (fn [&]
-    (fzf/find @["one" "two" "three" "four"])))
+    (log (string (fzf/find @["one" "two" "three" "four"])))))

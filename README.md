@@ -37,11 +37,11 @@ As of writing, `cy` is just a collection of partially-implemented ideas. The fol
     * [X] Populate Janet execution environment with cy standard library
     * [X] On startup, attempt to read cy configuration files
     * [X] Structured logs go to a pane
-    * [ ] Logging API in Janet
-    * [ ] Error reporting for callback execution
     * [ ] [fzf](https://github.com/junegunn/fzf/tree/master)-search from Janet
+    * [ ] Error reporting for callback execution
     * [ ] Implement [oakthree](https://github.com/cfoust/tmux-oakthree)
     * [ ] Pane margins and centering
+    * [ ] Logging API in Janet
 * [ ] **Replay**
     * [ ] Record all sessions and save in custom file format
         * [ ] Is this also the `.borg` file format?

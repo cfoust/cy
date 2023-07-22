@@ -9,7 +9,6 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
-	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
@@ -97,14 +96,15 @@ func (c *Client) pollEvents() {
 		case event := <-c.binds.Recv():
 			switch event := event.(type) {
 			case bind.ActionEvent[tree.Binding]:
-				err := event.Action.Callback.CallContext(
-					c.Ctx(),
-					c,
-				)
-				if err != nil {
-					log.Error().Err(err).Msgf("failed to run callback")
-				}
-				continue
+				go func() {
+					err := event.Action.Callback.CallContext(
+						c.Ctx(),
+						c,
+					)
+					if err != nil {
+						log.Error().Err(err).Msgf("failed to run callback")
+					}
+				}()
 			case bind.RawEvent:
 				// TODO(cfoust): 07/18/23 error handling
 				c.renderer.Write(event.Data)
@@ -235,22 +235,6 @@ func (c *Client) closeError(reason error) error {
 func (c *Client) Resize(size geom.Vec2) {
 	c.muxClient.Resize(size)
 	c.renderer.Resize(size)
-}
-
-// Trigger fuzzy finding.
-func (c *Client) Find(choices []string) {
-	fuzzy := fuzzy.NewFuzzy(
-		c.Ctx(),
-		c.colorProfile,
-		c.info,
-		choices,
-	)
-
-	c.layers.NewLayer(
-		fuzzy.Ctx(),
-		fuzzy,
-		true,
-	)
 }
 
 func (c *Client) initialize(handshake *P.HandshakeMessage) error {
