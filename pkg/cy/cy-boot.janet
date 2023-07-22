@@ -1,5 +1,6 @@
 (def prefix "ctrl+a")
 
+(def projects (group/new (tree/root)))
 (def shells (group/new (tree/root)))
 
 (key/bind
@@ -9,6 +10,17 @@
     (def path (cmd/path (pane/current)))
     (def shell (cmd/new shells path))
     (pane/attach shell)))
+
+(key/bind
+  [prefix "n"]
+  "create a new project"
+  (fn [&]
+    (def path (cmd/path (pane/current)))
+    (def project (group/new projects))
+    (def editor (cmd/new project path))
+    (def shell (cmd/new project path))
+    (pane/attach shell)
+    (log (os/getenv "EDITOR" "vim"))))
 
 (key/bind
   ["ctrl+l"]
@@ -34,15 +46,3 @@
     (when (= 0 (length next-panes)) (break))
     (def [next] next-panes)
     (pane/attach next)))
-
-(key/bind
-  [prefix "e"]
-  "log something"
-  (fn [&]
-    (log "test test test")))
-
-(key/bind
-  [prefix "f"]
-  "choose from many"
-  (fn [&]
-    (log (string (fzf/find @["one" "two" "three" "four"])))))

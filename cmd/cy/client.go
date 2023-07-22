@@ -38,6 +38,45 @@ func (c *ClientIO) Write(p []byte) (n int, err error) {
 
 var _ io.Writer = (*ClientIO)(nil)
 
+// Do some sanity checks on a shell string.
+func checkShell(shell string) bool {
+	if len(shell) == 0 || shell[0] != '/' {
+		return false
+	}
+
+	/**
+	TODO(cfoust): 07/22/23
+	if (areshell(shell))
+		return (0);
+	if (access(shell, X_OK) != 0)
+		return (0);
+	**/
+
+	return true
+}
+
+func getShell() string {
+	env := os.Getenv("SHELL")
+	if checkShell(env) {
+		return env
+	}
+
+	/**
+	TODO(cfoust): 07/22/23
+	pw = getpwuid(getuid());
+	if (pw != NULL && checkshell(pw->pw_shell))
+		return (pw->pw_shell);
+	**/
+
+	return "/bin/bash"
+}
+
+/**
+if ((s = getenv("VISUAL")) != NULL || (s = getenv("EDITOR")) != NULL) {
+	options_set_string(global_options, "editor", 0, "%s", s);
+}
+**/
+
 func buildHandshake() (*P.HandshakeMessage, error) {
 	columns, rows, err := term.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
@@ -47,7 +86,9 @@ func buildHandshake() (*P.HandshakeMessage, error) {
 	output := termenv.NewOutput(os.Stdout)
 
 	return &P.HandshakeMessage{
-		TERM: os.Getenv("TERM"),
+		TERM:   os.Getenv("TERM"),
+		SHELL:  getShell(),
+		EDITOR: os.Getenv("EDITOR"),
 		Size: geom.Size{
 			R: rows,
 			C: columns,

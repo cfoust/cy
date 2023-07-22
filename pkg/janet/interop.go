@@ -199,7 +199,18 @@ func isInterface(type_ reflect.Type) bool {
 	return type_.Kind() == reflect.Interface
 }
 
+func isNamable(type_ reflect.Type) bool {
+	if _, ok := reflect.New(type_.Elem()).Interface().(namable); ok {
+		return true
+	}
+	return false
+}
+
 func isParamType(type_ reflect.Type) bool {
+	if isNamable(type_) {
+		return true
+	}
+
 	if type_.Kind() == reflect.Pointer && isValidType(type_.Elem()) {
 		return true
 	}

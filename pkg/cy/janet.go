@@ -16,6 +16,11 @@ import _ "embed"
 //go:embed cy-boot.janet
 var CY_BOOT_FILE []byte
 
+type CmdParams struct {
+	Command string
+	Args    []string
+}
+
 func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error) {
 	vm, err := janet.New(ctx)
 	if err != nil {
@@ -114,7 +119,15 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			return &path, nil
 		},
-		"cmd/new": func(groupId tree.NodeID, path string) (tree.NodeID, error) {
+		"cmd/new": func(
+			groupId tree.NodeID,
+			path string,
+			params *janet.Named[CmdParams],
+		) (tree.NodeID, error) {
+			values := params.Values(CmdParams{
+				Command: "/bin/bash",
+			})
+
 			group, ok := c.tree.GroupById(groupId)
 			if !ok {
 				return 0, fmt.Errorf("node not found: %d", groupId)
@@ -123,7 +136,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 			cmd, err := group.NewCmd(
 				c.Ctx(),
 				stream.CmdOptions{
-					Command:   "/bin/bash",
+					Command:   values.Command,
 					Directory: path,
 				},
 				geom.DEFAULT_SIZE,

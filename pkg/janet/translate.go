@@ -17,12 +17,40 @@ import (
 	"unsafe"
 )
 
+type namable interface {
+	getType() reflect.Type
+	set(value reflect.Value)
+}
+
+type Named[T any] struct {
+	value T
+}
+
+func (n *Named[T]) Values(defaults T) T {
+	return n.value
+}
+
+func (n *Named[T]) getType() reflect.Type {
+	return reflect.TypeOf(n.value)
+}
+
+func (n *Named[T]) set(value reflect.Value) {
+	reflect.ValueOf(n.value).Set(value)
+}
+
+var _ namable = (*Named[int])(nil)
+
 // Wrap a string as a Janet keyword.
 func wrapKeyword(word string) C.Janet {
 	str := C.CString(word)
 	keyword := C.wrap_keyword(str)
 	C.free(unsafe.Pointer(str))
 	return keyword
+}
+
+func isJanetFunction(type_ reflect.Type) bool {
+	_, ok := reflect.New(type_).Elem().Interface().(*Function)
+	return ok
 }
 
 func isValidType(type_ reflect.Type) bool {
@@ -47,11 +75,6 @@ func isValidType(type_ reflect.Type) bool {
 	default:
 		return false
 	}
-}
-
-func isJanetFunction(type_ reflect.Type) bool {
-	_, ok := reflect.New(type_).Elem().Interface().(*Function)
-	return ok
 }
 
 // Marshal a Go value into a Janet value.

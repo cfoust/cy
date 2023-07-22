@@ -44,8 +44,9 @@ func (i SizeMessage) Type() MessageType { return MessageTypeSize }
 
 // The initial information necessary to render to the client.
 type HandshakeMessage struct {
-	// The value of the TERM environment variable.
 	TERM    string
+	SHELL   string
+	EDITOR  string
 	Size    geom.Vec2
 	Profile termenv.Profile
 }
