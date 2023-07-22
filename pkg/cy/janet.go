@@ -124,7 +124,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 			path string,
 			params *janet.Named[CmdParams],
 		) (tree.NodeID, error) {
-			values := params.Values(CmdParams{
+			values := params.WithDefault(CmdParams{
 				Command: "/bin/bash",
 			})
 
@@ -137,6 +137,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 				c.Ctx(),
 				stream.CmdOptions{
 					Command:   values.Command,
+					Args:      values.Args,
 					Directory: path,
 				},
 				geom.DEFAULT_SIZE,

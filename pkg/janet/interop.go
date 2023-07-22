@@ -29,25 +29,37 @@ type Named[T any] struct {
 	value T
 }
 
-func (n *Named[T]) Values(defaults T) T {
+func (n *Named[T]) WithDefault(defaults T) T {
 	updated := n.value
 
 	type_ := n.getType()
 	dstValue := reflect.ValueOf(&updated)
-	srcValue := reflect.ValueOf(defaults)
+	defaultValue := reflect.ValueOf(defaults)
 
 	for i := 0; i < type_.NumField(); i++ {
-		srcField := srcValue.Field(i)
+		defaultField := defaultValue.Field(i)
 		dstField := dstValue.Elem().Field(i)
 
-		// If srcField's value is the type's default value, use the
+		switch defaultField.Type().Kind() {
+		case reflect.Slice, reflect.Array:
+			if defaultField.Len() > 0 && dstField.Len() == 0 {
+				dstField.Set(defaultField)
+			}
+			continue
+		}
+
+		// If defaultField's value is the type's default value, use the
 		// value from default
 		if dstField.Interface() == reflect.New(dstField.Type()).Elem().Interface() {
-			dstField.Set(srcField)
+			dstField.Set(defaultField)
 		}
 	}
 
 	return updated
+}
+
+func (n *Named[T]) Values() T {
+	return n.value
 }
 
 func (n *Named[T]) getType() reflect.Type {

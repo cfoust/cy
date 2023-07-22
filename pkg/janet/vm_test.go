@@ -130,8 +130,7 @@ func TestVM(t *testing.T) {
 
 		var post Params
 		err = vm.Callback("test-named", func(params *Named[Params]) {
-			t.Logf("test-named called")
-			post = params.Values(Params{
+			post = params.WithDefault(Params{
 				First: 2,
 			})
 		})

@@ -17,10 +17,12 @@
   (fn [&]
     (def path (cmd/path (pane/current)))
     (def project (group/new projects))
-    (def editor (cmd/new project path))
+    (def editor
+      (cmd/new project
+               path
+               :command (os/getenv "EDITOR" "vim")))
     (def shell (cmd/new project path))
-    (pane/attach shell)
-    (log (os/getenv "EDITOR" "vim"))))
+    (pane/attach editor)))
 
 (key/bind
   ["ctrl+l"]
