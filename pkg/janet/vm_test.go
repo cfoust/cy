@@ -130,14 +130,14 @@ func TestVM(t *testing.T) {
 
 		var post Params
 		err = vm.Callback("test-named", func(params *Named[Params]) {
+			t.Logf("test-named called")
 			post = params.Values(Params{
 				First: 2,
 			})
 		})
 		require.NoError(t, err)
 
-		call := CallString(`(test-named :second "ok")`)
-		err = vm.ExecuteCall(ctx, 1, call)
+		err = vm.Execute(ctx, `(test-named :second "ok")`)
 		require.NoError(t, err)
 
 		require.Equal(t, 2, post.First)

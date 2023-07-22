@@ -22,7 +22,7 @@ import (
 // public API for setting up named parameters.
 type namable interface {
 	getType() reflect.Type
-	set(reflect.Value)
+	set(interface{})
 }
 
 type Named[T any] struct {
@@ -33,12 +33,12 @@ func (n *Named[T]) Values(defaults T) T {
 	updated := n.value
 
 	type_ := n.getType()
-	dstValue := reflect.ValueOf(updated)
+	dstValue := reflect.ValueOf(&updated)
 	srcValue := reflect.ValueOf(defaults)
 
 	for i := 0; i < type_.NumField(); i++ {
 		srcField := srcValue.Field(i)
-		dstField := dstValue.Field(i)
+		dstField := dstValue.Elem().Field(i)
 
 		// If srcField's value is the type's default value, use the
 		// value from default
@@ -54,8 +54,10 @@ func (n *Named[T]) getType() reflect.Type {
 	return reflect.TypeOf(n.value)
 }
 
-func (n *Named[T]) set(value reflect.Value) {
-	reflect.ValueOf(n.value).Set(value)
+func (n *Named[T]) set(newValue interface{}) {
+	if value, ok := newValue.(T); ok {
+		n.value = value
+	}
 }
 
 var _ namable = (*Named[int])(nil)
@@ -154,7 +156,7 @@ func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallb
 			type_ := named.getType()
 			value := reflect.New(type_).Elem()
 
-			for j := 0; j < type_.NumField(); i++ {
+			for j := 0; j < type_.NumField(); j++ {
 				field := type_.Field(j)
 				fieldValue := value.Field(j)
 
@@ -176,7 +178,7 @@ func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallb
 				}
 			}
 
-			named.set(value)
+			named.set(value.Interface())
 			callbackArgs = append(callbackArgs, reflect.ValueOf(named))
 			break
 		}
