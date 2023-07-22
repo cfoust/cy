@@ -143,6 +143,29 @@ func TestVM(t *testing.T) {
 		require.Equal(t, "ok", post.Second)
 	})
 
+	t.Run("callback with value", func(t *testing.T) {
+		first := 0
+		err = vm.Callback("test-value", func(value *Value) error {
+			defer value.Free()
+
+			var nums []int
+			err := value.Unmarshal(&nums)
+			if err != nil {
+			    return err
+			}
+
+			first = nums[0]
+
+			return nil
+		})
+		require.NoError(t, err)
+
+		err = vm.Execute(ctx, `(test-value [1 2 3])`)
+		require.NoError(t, err)
+
+		require.Equal(t, 1, first)
+	})
+
 	t.Run("execute a file", func(t *testing.T) {
 		ok = false
 

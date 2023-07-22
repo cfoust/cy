@@ -221,7 +221,7 @@ func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallb
 
 		isPointer := argType.Kind() == reflect.Pointer
 
-		if isJanetFunction(argType) {
+		if isSpecial(argType) {
 			isPointer = false
 		}
 
@@ -358,7 +358,7 @@ func (v *VM) Callback(name string, callback interface{}) error {
 			break
 		}
 
-		if !isParamType(argType) && !isInterface(argType) {
+		if !isSpecial(argType) && !isParamType(argType) && !isInterface(argType) {
 			return fmt.Errorf(
 				"arg %d's type %s (%s) not supported",
 				i,

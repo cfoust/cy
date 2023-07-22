@@ -7,12 +7,9 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/stream"
-
-	"github.com/sasha-s/go-deadlock"
 )
 
 type Pane struct {
-	deadlock.RWMutex
 	*metaData
 
 	recorder *stream.Recorder

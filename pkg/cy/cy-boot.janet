@@ -17,12 +17,25 @@
   (fn [&]
     (def path (cmd/path (pane/current)))
     (def project (group/new projects))
+    # TODO(cfoust): 07/22/23 basename
+    (tree/set-name project path)
     (def editor
       (cmd/new project
                path
                :command (os/getenv "EDITOR" "vim")))
     (def shell (cmd/new project path))
     (pane/attach editor)))
+
+(key/bind
+  [prefix "k"]
+  "jump to a project"
+  (fn [&]
+    (def choice
+      (-?>>
+        (group/children projects)
+        (map tree/name)
+        (fzf/find)
+        (log)))))
 
 (key/bind
   ["ctrl+l"]

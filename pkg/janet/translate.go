@@ -27,9 +27,16 @@ func wrapKeyword(word string) C.Janet {
 	return keyword
 }
 
-func isJanetFunction(type_ reflect.Type) bool {
-	_, ok := reflect.New(type_).Elem().Interface().(*Function)
-	return ok
+func isSpecial(type_ reflect.Type) bool {
+	if _, ok := reflect.New(type_).Elem().Interface().(*Function); ok {
+		return true
+	}
+
+	if _, ok := reflect.New(type_).Elem().Interface().(*Value); ok {
+		return true
+	}
+
+	return false
 }
 
 func getFieldName(field reflect.StructField) (name string) {
@@ -240,6 +247,11 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 				function: C.janet_unwrap_function(source),
 			}
 			value.Set(reflect.ValueOf(function))
+			return nil
+		}
+
+		if _, ok := reflect.New(type_).Elem().Interface().(*Value); ok {
+			value.Set(reflect.ValueOf(v.value(source)))
 			return nil
 		}
 
