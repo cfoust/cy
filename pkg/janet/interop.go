@@ -17,6 +17,40 @@ import (
 	"unsafe"
 )
 
+type namable interface {
+	getType() reflect.Type
+	set(value reflect.Value)
+}
+
+type Named[T any] struct {
+	value T
+}
+
+func (n *Named[T]) Values(defaults T) T {
+	return n.value
+}
+
+func (n *Named[T]) getType() reflect.Type {
+	return reflect.TypeOf(n.value)
+}
+
+func (n *Named[T]) set(value reflect.Value) {
+	reflect.ValueOf(n.value).Set(value)
+}
+
+var _ namable = (*Named[int])(nil)
+
+func getNamedParams(named namable) (params []string) {
+	type_ := named.getType()
+
+	for i := 0; i < type_.NumField(); i++ {
+		field := type_.Field(i)
+		params = append(params, field.Name)
+	}
+
+	return
+}
+
 func wrapError(message string) C.Janet {
 	return C.wrap_result_error(C.CString(message))
 }
@@ -199,18 +233,23 @@ func isInterface(type_ reflect.Type) bool {
 	return type_.Kind() == reflect.Interface
 }
 
-func isNamable(type_ reflect.Type) bool {
-	if _, ok := reflect.New(type_.Elem()).Interface().(namable); ok {
-		return true
+func getNamable(type_ reflect.Type) namable {
+	if type_.Kind() != reflect.Pointer {
+		return nil
 	}
-	return false
+
+	if named, ok := reflect.New(type_.Elem()).Interface().(namable); ok {
+		return named
+	}
+
+	return nil
+}
+
+func isNamable(type_ reflect.Type) bool {
+	return getNamable(type_) != nil
 }
 
 func isParamType(type_ reflect.Type) bool {
-	if isNamable(type_) {
-		return true
-	}
-
 	if type_.Kind() == reflect.Pointer && isValidType(type_.Elem()) {
 		return true
 	}
@@ -224,8 +263,31 @@ func (v *VM) Callback(name string, callback interface{}) error {
 		return fmt.Errorf("callback must be a function")
 	}
 
-	for i := 0; i < type_.NumIn(); i++ {
+	var named namable
+	numNormal := 0
+
+	numArgs := type_.NumIn()
+	for i := 0; i < numArgs; i++ {
 		argType := type_.In(i)
+
+		named = getNamable(argType)
+		if named != nil {
+			namedType := named.getType()
+			if namedType.Kind() != reflect.Struct {
+				return fmt.Errorf("Named must have a struct type")
+			}
+
+			if !isValidType(namedType) {
+				return fmt.Errorf("Named had field(s) with invalid types")
+			}
+
+			if i != numArgs-1 {
+				return fmt.Errorf("Named must be the last argument")
+			}
+
+			numNormal = i
+			break
+		}
 
 		if !isParamType(argType) && !isInterface(argType) {
 			return fmt.Errorf(
@@ -265,9 +327,21 @@ func (v *VM) Callback(name string, callback interface{}) error {
 	v.callbacks[name] = callback
 	v.Unlock()
 
+	code := fmt.Sprintf(
+		`[& args] (go/callback %s ;args)`,
+		name,
+	)
+
+	if named != nil {
+		args := make([]string, 0)
+		for i := 0; i < numNormal; i++ {
+			args = append(args, fmt.Sprintf("arg%d ", i))
+		}
+	}
+
 	call := CallString(fmt.Sprintf(`
-(def %s (go/make-callback "%s"))
-`, name, name))
+(def %s (fn %s))
+`, name, code))
 	call.Options.UpdateEnv = true
 	err := v.ExecuteCall(context.Background(), nil, call)
 	if err != nil {

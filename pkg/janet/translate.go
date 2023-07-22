@@ -15,30 +15,9 @@ import (
 	"reflect"
 	"strings"
 	"unsafe"
+
+	"github.com/iancoleman/strcase"
 )
-
-type namable interface {
-	getType() reflect.Type
-	set(value reflect.Value)
-}
-
-type Named[T any] struct {
-	value T
-}
-
-func (n *Named[T]) Values(defaults T) T {
-	return n.value
-}
-
-func (n *Named[T]) getType() reflect.Type {
-	return reflect.TypeOf(n.value)
-}
-
-func (n *Named[T]) set(value reflect.Value) {
-	reflect.ValueOf(n.value).Set(value)
-}
-
-var _ namable = (*Named[int])(nil)
 
 // Wrap a string as a Janet keyword.
 func wrapKeyword(word string) C.Janet {
@@ -51,6 +30,14 @@ func wrapKeyword(word string) C.Janet {
 func isJanetFunction(type_ reflect.Type) bool {
 	_, ok := reflect.New(type_).Elem().Interface().(*Function)
 	return ok
+}
+
+func getFieldName(field reflect.StructField) (name string) {
+	if custom, ok := field.Tag.Lookup("janet"); ok {
+		return custom
+	}
+
+	return strcase.ToKebab(field.Name)
 }
 
 func isValidType(type_ reflect.Type) bool {
@@ -112,7 +99,7 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 			field := type_.Field(i)
 			fieldValue := value.Field(i)
 
-			key_ := wrapKeyword(field.Name)
+			key_ := wrapKeyword(getFieldName(field))
 
 			value_, fieldErr := v.marshal(fieldValue.Interface())
 			if fieldErr != nil {
@@ -179,15 +166,21 @@ func janetTypeString(type_ C.JanetType) string {
 }
 
 func assertType(value C.Janet, expected ...C.JanetType) (err error) {
+	expectedStrs := make([]string, 0)
 	for _, type_ := range expected {
 		if C.janet_checktype(value, type_) == 1 {
 			return
 		}
+		expectedStrs = append(expectedStrs, janetTypeString(type_))
 	}
 
 	actual := C.janet_type(value)
 	// TODO(cfoust): 07/08/23 this is wrong
-	return fmt.Errorf("expected number, got %s", janetTypeString(actual))
+	return fmt.Errorf(
+		"expected %s, got %s",
+		strings.Join(expectedStrs, "|"),
+		janetTypeString(actual),
+	)
 }
 
 func prettyPrint(value C.Janet) string {
@@ -261,7 +254,7 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 			field := type_.Field(i)
 			fieldValue := value.Field(i)
 
-			key_ := wrapKeyword(field.Name)
+			key_ := wrapKeyword(getFieldName(field))
 			value_ := C.janet_struct_get(struct_, key_)
 			err := v.unmarshal(value_, fieldValue.Addr().Interface())
 			if err != nil {

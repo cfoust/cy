@@ -12,6 +12,7 @@ require (
 	github.com/creack/pty v1.1.18 // indirect
 	github.com/danielgatis/go-vte v1.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/klauspost/compress v1.10.3 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect

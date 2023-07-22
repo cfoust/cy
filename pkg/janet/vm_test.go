@@ -123,6 +123,26 @@ func TestVM(t *testing.T) {
 		require.Equal(t, 2, value)
 	})
 
+	t.Run("callback with named arguments", func(t *testing.T) {
+		type Params struct {
+			First  int
+			Second string
+		}
+		err = vm.Callback("test-named", func(params *Named[Params]) {
+			values := params.Values(Params{
+				First: 2,
+			})
+
+			require.Equal(t, 2, values.First)
+			require.Equal(t, "ok", values.Second)
+		})
+		require.NoError(t, err)
+
+		call := CallString(`(test-named :second "ok")`)
+		err = vm.ExecuteCall(ctx, 1, call)
+		require.NoError(t, err)
+	})
+
 	t.Run("execute a file", func(t *testing.T) {
 		ok = false
 
