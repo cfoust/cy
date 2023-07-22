@@ -14,6 +14,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"unsafe"
 )
 
@@ -44,8 +45,10 @@ func getNamedParams(named namable) (params []string) {
 	type_ := named.getType()
 
 	for i := 0; i < type_.NumField(); i++ {
-		field := type_.Field(i)
-		params = append(params, field.Name)
+		params = append(
+			params,
+			getFieldName(type_.Field(i)),
+		)
 	}
 
 	return
@@ -328,7 +331,7 @@ func (v *VM) Callback(name string, callback interface{}) error {
 	v.Unlock()
 
 	code := fmt.Sprintf(
-		`[& args] (go/callback %s ;args)`,
+		`[& args] (go/callback "%s" ;args)`,
 		name,
 	)
 
@@ -337,6 +340,19 @@ func (v *VM) Callback(name string, callback interface{}) error {
 		for i := 0; i < numNormal; i++ {
 			args = append(args, fmt.Sprintf("arg%d ", i))
 		}
+
+		params := getNamedParams(named)
+
+		argStr := strings.Join(args, " ")
+		paramStr := strings.Join(params, " ")
+		code = fmt.Sprintf(
+			`[%s &named %s] (go/callback "%s" %s %s)`,
+			argStr,
+			paramStr,
+			name,
+			argStr,
+			paramStr,
+		)
 	}
 
 	call := CallString(fmt.Sprintf(`
