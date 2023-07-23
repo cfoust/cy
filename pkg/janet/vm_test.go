@@ -151,7 +151,7 @@ func TestVM(t *testing.T) {
 			var nums []int
 			err := value.Unmarshal(&nums)
 			if err != nil {
-			    return err
+				return err
 			}
 
 			first = nums[0]
@@ -164,6 +164,30 @@ func TestVM(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, 1, first)
+	})
+
+	t.Run("callback with a tuple", func(t *testing.T) {
+		type Tuple struct {
+			_      struct{} `janet:"tuple"`
+			First  int
+			Second string
+		}
+
+		first := 0
+		err = vm.Callback("test-tuple", func(t Tuple) {
+			first = t.First
+		})
+		require.NoError(t, err)
+
+		err = vm.Execute(ctx, `(test-tuple [1 "two"])`)
+		require.NoError(t, err)
+		require.Equal(t, 1, first)
+
+		err = vm.Execute(ctx, `(test-tuple [1 2 3])`)
+		require.Error(t, err)
+
+		err = vm.Execute(ctx, `(test-tuple ["one" "two"])`)
+		require.Error(t, err)
 	})
 
 	t.Run("execute a file", func(t *testing.T) {

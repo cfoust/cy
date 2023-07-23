@@ -35,3 +35,7 @@ const char *_pretty_print(Janet value) {
 Janet wrap_keyword(const char *str) {
     return janet_ckeywordv(str);
 }
+
+int tuple_length(const Janet *t) {
+    return janet_tuple_length(t);
+}

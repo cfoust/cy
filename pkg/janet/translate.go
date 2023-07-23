@@ -39,6 +39,19 @@ func isSpecial(type_ reflect.Type) bool {
 	return false
 }
 
+func isTuple(type_ reflect.Type) bool {
+	if type_.Kind() != reflect.Struct {
+		return false
+	}
+
+	if type_.NumField() == 0 {
+		return false
+	}
+
+	first := type_.Field(0)
+	return first.Name == "_" && first.Tag.Get("janet") == "tuple"
+}
+
 func getFieldName(field reflect.StructField) (name string) {
 	if custom, ok := field.Tag.Lookup("janet"); ok {
 		return custom
@@ -101,6 +114,37 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 		result = C.janet_wrap_string(C.janet_cstring(strPtr))
 		defer C.free(unsafe.Pointer(strPtr))
 	case reflect.Struct:
+		if isTuple(type_) {
+			elements := make([]C.Janet, 0)
+			for i := 0; i < type_.NumField(); i++ {
+				field := type_.Field(i)
+				fieldValue := value.Field(i)
+				value_, fieldErr := v.marshal(fieldValue.Interface())
+				if fieldErr != nil {
+					err = fmt.Errorf(
+						"could not marshal value '%s': %s",
+						field.Name,
+						fieldErr.Error(),
+					)
+					return
+				}
+				elements = append(elements, value_)
+			}
+
+			argPtr := unsafe.Pointer(nil)
+			if len(elements) > 0 {
+				argPtr = unsafe.Pointer(&elements[0])
+			}
+
+			result = C.janet_wrap_tuple(
+				C.janet_tuple_n(
+					(*C.Janet)(argPtr),
+					C.int(len(elements)),
+				),
+			)
+			return
+		}
+
 		struct_ := C.janet_struct_begin(C.int(type_.NumField()))
 		for i := 0; i < type_.NumField(); i++ {
 			field := type_.Field(i)
@@ -257,6 +301,43 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 
 		return fmt.Errorf("unimplemented pointer type: %s (%s)", type_.String(), type_.Kind().String())
 	case reflect.Struct:
+		if isTuple(type_) {
+			if err := assertType(source, C.JANET_TUPLE); err != nil {
+				return err
+			}
+
+			tuple := C.janet_unwrap_tuple(source)
+
+			numElements := C.tuple_length(tuple)
+			requiredElements := C.int(type_.NumField() - 1)
+			if numElements != requiredElements {
+				return fmt.Errorf(
+					"tuple did not have enough elements (%d vs %d)",
+					numElements,
+					requiredElements,
+				)
+			}
+
+			// Skip first field, it's "_"
+			for i := 1; i < type_.NumField(); i++ {
+				field := type_.Field(i)
+				fieldValue := value.Field(i)
+
+				err := v.unmarshal(
+					C.access_argv(tuple, C.int(i-1)),
+					fieldValue.Addr().Interface(),
+				)
+				if err != nil {
+					return fmt.Errorf(
+						"failed to unmarshal tuple field %s: %s",
+						field.Name,
+						err.Error(),
+					)
+				}
+			}
+			return nil
+		}
+
 		if err := assertType(source, C.JANET_STRUCT); err != nil {
 			return err
 		}

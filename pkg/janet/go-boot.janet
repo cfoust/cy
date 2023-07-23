@@ -8,12 +8,6 @@
     :value result
     :error (error result)))
 
-(defn
-  go/make-callback
-  "Return a function that will invoke the provided Go callback `callback`."
-  [callback]
-  (fn [& args] (go/callback callback ;args)))
-
 # Inspired by the code from https://janet.guide/embedding-janet/
 (defn go/capture-stderr [f & args]
   (def buf @"")
