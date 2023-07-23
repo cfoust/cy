@@ -30,13 +30,13 @@
   [prefix "k"]
   "jump to a project"
   (fn [&]
-    (def choice
-      (-?>>
-        (group/children projects)
-        (map |(tuple (tree/name $) $))
-        (fzf/find)
-        (string)
-        (log)))))
+    (-?>>
+      (group/children projects)
+      (map |(tuple (tree/name $) $))
+      (fzf/find)
+      (group/children)
+      (0) # Gets the first index, the editor
+      (pane/attach))))
 
 (key/bind
   ["ctrl+l"]
