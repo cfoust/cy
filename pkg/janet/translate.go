@@ -88,10 +88,19 @@ func isValidType(type_ reflect.Type) bool {
 func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 	result = C.janet_wrap_nil()
 
+	if item == nil {
+		return
+	}
+
 	type_ := reflect.TypeOf(item)
 	value := reflect.ValueOf(item)
 
 	if value.Kind() == reflect.Pointer {
+		if v, ok := item.(*Value); ok {
+			result = v.janet
+			return
+		}
+
 		// TODO(cfoust): 06/23/23 maybe support this someday
 		err = fmt.Errorf("cannot marshal pointer to value")
 		return

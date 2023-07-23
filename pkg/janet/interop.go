@@ -377,13 +377,13 @@ func (v *VM) Callback(name string, callback interface{}) error {
 	// The first return value can be an error or valid type
 	if numResults == 1 {
 		first := type_.Out(0)
-		if !isParamType(first) && !isErrorType(first) {
+		if !isParamType(first) && !isErrorType(first) && !isInterface(first) {
 			return fmt.Errorf("first callback return type must be valid type or error")
 		}
 	}
 
 	if numResults == 2 {
-		if !isParamType(type_.Out(0)) {
+		if !isParamType(type_.Out(0)) && !isInterface(type_.Out(0)) {
 			return fmt.Errorf("first callback return type must be valid type")
 		}
 

@@ -81,18 +81,23 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 		"fzf/find": func(
 			ctx context.Context,
 			user interface{},
-			choices []string,
-		) (*string, error) {
+			choices *janet.Value,
+		) (interface{}, error) {
 			client, ok := user.(*Client)
 			if !ok {
 				return nil, fmt.Errorf("missing client context")
+			}
+
+			options, err := fuzzy.UnmarshalOptions(choices)
+			if err != nil {
+				return nil, err
 			}
 
 			fuzzy := fuzzy.NewFuzzy(
 				ctx,
 				client.colorProfile,
 				client.info,
-				choices,
+				options,
 			)
 
 			client.layers.NewLayer(

@@ -1,8 +1,11 @@
 package fuzzy
 
 import (
+	"fmt"
+
 	"github.com/cfoust/cy/pkg/fuzzy/fzf"
 	"github.com/cfoust/cy/pkg/fuzzy/fzf/util"
+	"github.com/cfoust/cy/pkg/janet"
 )
 
 type Match struct {
@@ -11,21 +14,58 @@ type Match struct {
 }
 
 type Option struct {
-	Text  string
-	Chars *util.Chars
-	Match *Match
+	Text   string
+	Chars  *util.Chars
+	Match  *Match
+	Result interface{}
 }
 
-func createOptions(options []string) (result []Option) {
-	for _, option := range options {
-		chars := util.ToChars([]byte(option))
-		result = append(result, Option{
-			Text:  option,
-			Chars: &chars,
-		})
+type tupleInput struct {
+	_     struct{} `janet:"tuple"`
+	Text  string
+	Value *janet.Value
+}
+
+func createOption(text string, result interface{}) Option {
+	chars := util.ToChars([]byte(text))
+	return Option{
+		Text:   text,
+		Chars:  &chars,
+		Result: result,
+	}
+}
+
+func UnmarshalOptions(input *janet.Value) (result []Option, err error) {
+	var strings []string
+	err = input.Unmarshal(&strings)
+	if err == nil {
+		for _, str := range strings {
+			result = append(
+				result,
+				createOption(str, str),
+			)
+		}
+
+		return
 	}
 
-	return result
+	var tuples []tupleInput
+	err = input.Unmarshal(&tuples)
+	if err == nil {
+		for _, tuple := range tuples {
+			result = append(
+				result,
+				createOption(
+					tuple.Text,
+					tuple.Value,
+				),
+			)
+		}
+		return
+	}
+
+	err = fmt.Errorf("input must be array of strings or tuples")
+	return
 }
 
 func Filter(options []Option, search string) []Option {

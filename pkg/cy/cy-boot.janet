@@ -33,8 +33,9 @@
     (def choice
       (-?>>
         (group/children projects)
-        (map tree/name)
+        (map |(tuple (tree/name $) $))
         (fzf/find)
+        (string)
         (log)))))
 
 (key/bind

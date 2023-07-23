@@ -20,7 +20,7 @@ import (
 type Fuzzy struct {
 	util.Lifetime
 	*screen.Terminal
-	result chan *string
+	result chan interface{}
 }
 
 var _ mux.Screen = (*Fuzzy)(nil)
@@ -29,7 +29,7 @@ func (f *Fuzzy) Resize(size mux.Size) error {
 	return nil
 }
 
-func (f *Fuzzy) Result() <-chan *string {
+func (f *Fuzzy) Result() <-chan interface{} {
 	return f.result
 }
 
@@ -37,11 +37,11 @@ func NewFuzzy(
 	ctx context.Context,
 	profile termenv.Profile,
 	info *terminfo.Terminfo,
-	options []string,
+	options []Option,
 ) *Fuzzy {
 	lifetime := util.NewLifetime(ctx)
 
-	result := make(chan *string)
+	result := make(chan interface{})
 
 	ti := textinput.New()
 	ti.Focus()
@@ -53,7 +53,7 @@ func NewFuzzy(
 		ctx,
 		model{
 			lifetime: &lifetime,
-			options:  createOptions(options),
+			options:  options,
 			result:   result,
 			selected: 0,
 			renderer: lipgloss.NewRenderer(
@@ -81,7 +81,7 @@ type model struct {
 	lifetime  *util.Lifetime
 	renderer  *lipgloss.Renderer
 	textInput textinput.Model
-	result    chan *string
+	result    chan interface{}
 
 	options  []Option
 	filtered []Option
@@ -137,8 +137,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case tea.KeyEnter:
 			if m.selected < len(m.getOptions()) {
-				option := m.getOptions()[m.selected].Text
-				m.result <- &option
+				option := m.getOptions()[m.selected]
+				m.result <- option.Result
 			} else {
 				m.result <- nil
 			}
