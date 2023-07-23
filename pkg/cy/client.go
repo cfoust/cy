@@ -38,6 +38,7 @@ type Client struct {
 	binds *bind.Engine[tree.Binding]
 
 	muxClient *server.Client
+	margins   *screen.Margins
 	layers    *screen.Layers
 	renderer  *stream.Renderer
 
@@ -254,10 +255,12 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		handshake.Size,
 	)
 
+	c.margins = screen.NewMargins(c.muxClient)
+
 	c.layers = screen.NewLayers()
 	c.layers.NewLayer(
 		c.Ctx(),
-		c.muxClient,
+		c.margins,
 		true,
 	)
 

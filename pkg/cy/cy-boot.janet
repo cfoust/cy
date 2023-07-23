@@ -39,6 +39,16 @@
       (pane/attach))))
 
 (key/bind
+  [prefix "l"]
+  "jump to a shell"
+  (fn [&]
+    (-?>>
+      (group/children shells)
+      (map |(tuple (cmd/path $) $))
+      (fzf/find)
+      (pane/attach))))
+
+(key/bind
   ["ctrl+l"]
   "move to the next pane"
   (fn [&]

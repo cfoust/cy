@@ -3,7 +3,6 @@ package fuzzy
 import (
 	"context"
 
-	U "github.com/cfoust/cy/pkg/fuzzy/fzf/util"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
@@ -121,7 +120,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case matchResult:
 		m.filtered = msg.Filtered
-		m.selected = U.Max(U.Min(m.selected, len(m.getOptions())-1), 0)
+		m.selected = geom.Max(geom.Min(m.selected, len(m.getOptions())-1), 0)
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.Type {
@@ -130,10 +129,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.lifetime.Cancel()
 			return m, nil
 		case tea.KeyUp, tea.KeyCtrlK:
-			m.selected = U.Max(m.selected-1, 0)
+			m.selected = geom.Max(m.selected-1, 0)
 			return m, nil
 		case tea.KeyDown, tea.KeyCtrlJ:
-			m.selected = U.Min(m.selected+1, len(m.getOptions())-1)
+			m.selected = geom.Min(m.selected+1, len(m.getOptions())-1)
 			return m, nil
 		case tea.KeyEnter:
 			if m.selected < len(m.getOptions()) {

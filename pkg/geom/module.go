@@ -20,17 +20,23 @@ type Rect struct {
 	W int
 }
 
+func (r Rect) Size() Vec2 {
+	return Vec2{
+		R: r.H,
+		C: r.W,
+	}
+}
+
+func (r Rect) Position() Vec2 {
+	return Vec2{
+		R: r.R,
+		C: r.C,
+	}
+}
+
 var DEFAULT_SIZE = Vec2{
 	R: 26,
 	C: 80,
-}
-
-func Min(a, b int) int {
-	if a < b {
-		return a
-	}
-
-	return b
 }
 
 // Find the largest rectangle that both rectangle `a` and `b` can fit.

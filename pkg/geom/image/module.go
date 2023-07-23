@@ -42,7 +42,7 @@ func New(size geom.Vec2) Image {
 func (i Image) Clone() Image {
 	size := i.Size()
 	cloned := New(size)
-	Copy(cloned, 0, 0, i)
+	Copy(geom.Vec2{}, cloned, i)
 	return cloned
 }
 
@@ -65,22 +65,22 @@ func Capture(view emu.View) Image {
 }
 
 // Copy the cell contents from src to dst starting at [dstRow, dstCol],
-func Copy(dst Image, dstRow, dstCol int, src Image) {
+func Copy(pos geom.Vec2, dst, src Image) {
 	srcSize := src.Size()
 	dstSize := dst.Size()
 
 	lastRow := geom.Min(
-		dstRow+srcSize.R,
+		pos.R+srcSize.R,
 		dstSize.R,
 	)
 	lastCol := geom.Min(
-		dstCol+srcSize.C,
+		pos.C+srcSize.C,
 		dstSize.C,
 	)
 
-	for row := dstRow; row < lastRow; row++ {
-		for col := dstRow; col < lastCol; col++ {
-			dst[row][col] = src[row-dstRow][col-dstCol]
+	for row := pos.R; row < lastRow; row++ {
+		for col := pos.R; col < lastCol; col++ {
+			dst[row][col] = src[row-pos.R][col-pos.C]
 		}
 	}
 }

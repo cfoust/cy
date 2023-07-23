@@ -85,6 +85,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/fuzzy/fzf/util"
 )
 
@@ -465,7 +466,7 @@ func FuzzyMatchV2(caseSensitive bool, normalize bool, forward bool, input *util.
 			if pidx < M {
 				F[pidx] = int32(idx + off)
 				pidx++
-				pchar = pattern[util.Min(pidx, M-1)]
+				pchar = pattern[geom.Min(pidx, M-1)]
 			}
 			lastIdx = idx + off
 		}
@@ -483,9 +484,9 @@ func FuzzyMatchV2(caseSensitive bool, normalize bool, forward bool, input *util.
 			inGap = false
 		} else {
 			if inGap {
-				H0sub[off] = util.Max16(prevH0+scoreGapExtension, 0)
+				H0sub[off] = geom.Max16(prevH0+scoreGapExtension, 0)
 			} else {
-				H0sub[off] = util.Max16(prevH0+scoreGapStart, 0)
+				H0sub[off] = geom.Max16(prevH0+scoreGapStart, 0)
 			}
 			C0sub[off] = 0
 			inGap = true
@@ -551,7 +552,7 @@ func FuzzyMatchV2(caseSensitive bool, normalize bool, forward bool, input *util.
 					if b >= bonusBoundary && b > fb {
 						consecutive = 1
 					} else {
-						b = util.Max16(b, util.Max16(bonusConsecutive, fb))
+						b = geom.Max16(b, geom.Max16(bonusConsecutive, fb))
 					}
 				}
 				if s1+b < s2 {
@@ -564,7 +565,7 @@ func FuzzyMatchV2(caseSensitive bool, normalize bool, forward bool, input *util.
 			Csub[off] = consecutive
 
 			inGap = s1 < s2
-			score := util.Max16(util.Max16(s1, s2), 0)
+			score := geom.Max16(geom.Max16(s1, s2), 0)
 			if pidx == M-1 && (forward && score > maxScore || !forward && score >= maxScore) {
 				maxScore, maxScorePos = score, col
 			}
@@ -648,7 +649,7 @@ func calculateScore(caseSensitive bool, normalize bool, text *util.Chars, patter
 				if bonus >= bonusBoundary && bonus > firstBonus {
 					firstBonus = bonus
 				}
-				bonus = util.Max16(util.Max16(bonus, firstBonus), bonusConsecutive)
+				bonus = geom.Max16(geom.Max16(bonus, firstBonus), bonusConsecutive)
 			}
 			if pidx == 0 {
 				score += int(bonus * bonusFirstCharMultiplier)

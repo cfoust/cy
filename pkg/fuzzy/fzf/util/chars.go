@@ -5,6 +5,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 	"unsafe"
+
+	"github.com/cfoust/cy/pkg/geom"
 )
 
 const (
@@ -126,7 +128,7 @@ func (chars *Chars) TrimLength() uint16 {
 			break
 		}
 	}
-	chars.trimLength = AsUint16(i - j + 1)
+	chars.trimLength = geom.AsUint16(i - j + 1)
 	return chars.trimLength
 }
 
