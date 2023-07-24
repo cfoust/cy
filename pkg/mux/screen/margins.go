@@ -24,7 +24,8 @@ type Margins struct {
 	margins   Size
 	size      Size
 
-	bounds geom.Rect
+	outer Size
+	inner geom.Rect
 }
 
 var _ Screen = (*Margins)(nil)
@@ -84,11 +85,12 @@ func fitSize(outer, size Size) geom.Rect {
 
 func (l *Margins) State() *tty.State {
 	l.RLock()
-	bounds := l.bounds
+	inner := l.inner
+	outer := l.outer
 	l.RUnlock()
 
-	state := tty.New(bounds.Size())
-	tty.Copy(bounds.Position(), state, l.screen.State())
+	state := tty.New(outer)
+	tty.Copy(inner.Position(), state, l.screen.State())
 	return state
 }
 
@@ -131,7 +133,8 @@ func (l *Margins) Resize(size Size) error {
 	inner := l.getInner(size)
 
 	l.Lock()
-	l.bounds = inner
+	l.inner = inner
+	l.outer = size
 	l.Unlock()
 
 	err := l.screen.Resize(inner.Size())

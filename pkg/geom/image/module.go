@@ -31,6 +31,8 @@ func New(size geom.Vec2) Image {
 		for x := 0; x < size.C; x++ {
 			line = append(line, emu.Glyph{
 				Char: ' ',
+				FG:   emu.DefaultFG,
+				BG:   emu.DefaultBG,
 			})
 		}
 		image = append(image, line)
