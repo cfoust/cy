@@ -95,11 +95,16 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 				return nil, err
 			}
 
+			cursor := client.layers.State().Cursor
 			fuzzy := fuzzy.NewFuzzy(
 				ctx,
 				client.colorProfile,
 				client.info,
 				options,
+				geom.Vec2{
+					R: cursor.Y,
+					C: cursor.X,
+				},
 			)
 
 			client.layers.NewLayer(

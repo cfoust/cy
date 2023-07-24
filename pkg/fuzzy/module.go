@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/stream"
@@ -19,7 +20,8 @@ import (
 type Fuzzy struct {
 	util.Lifetime
 	*screen.Terminal
-	result chan interface{}
+	result   chan interface{}
+	location geom.Vec2
 }
 
 var _ mux.Screen = (*Fuzzy)(nil)
@@ -32,11 +34,20 @@ func (f *Fuzzy) Result() <-chan interface{} {
 	return f.result
 }
 
+func (f *Fuzzy) State() *tty.State {
+	termState := f.Terminal.State()
+	state := tty.New(termState.Image.Size())
+	tty.Copy(f.location, state, termState)
+	state.CursorVisible = false
+	return state
+}
+
 func NewFuzzy(
 	ctx context.Context,
 	profile termenv.Profile,
 	info *terminfo.Terminfo,
 	options []Option,
+	location geom.Vec2,
 ) *Fuzzy {
 	lifetime := util.NewLifetime(ctx)
 
@@ -73,6 +84,7 @@ func NewFuzzy(
 		Lifetime: lifetime,
 		Terminal: terminal,
 		result:   result,
+		location: location,
 	}
 }
 
