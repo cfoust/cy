@@ -1,6 +1,7 @@
 package geom
 
 type Vec2 struct {
+	_ struct{} `janet:"tuple"`
 	// row (y)
 	R int
 	// column (x)

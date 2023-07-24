@@ -125,7 +125,7 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 	case reflect.Struct:
 		if isTuple(type_) {
 			elements := make([]C.Janet, 0)
-			for i := 0; i < type_.NumField(); i++ {
+			for i := 1; i < type_.NumField(); i++ {
 				field := type_.Field(i)
 				fieldValue := value.Field(i)
 				value_, fieldErr := v.marshal(fieldValue.Interface())

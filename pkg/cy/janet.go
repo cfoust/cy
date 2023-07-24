@@ -9,6 +9,8 @@ import (
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
+
+	"github.com/rs/zerolog/log"
 )
 
 import _ "embed"
@@ -212,6 +214,22 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 		},
 		"tree/root": func() tree.NodeID {
 			return c.tree.Root().Id()
+		},
+		"frame/size": func(context interface{}) *geom.Vec2 {
+			client, ok := context.(*Client)
+			if !ok {
+				return nil
+			}
+			size := client.margins.Size()
+			return &size
+		},
+		"frame/set-size": func(context interface{}, size geom.Size) {
+			client, ok := context.(*Client)
+			if !ok {
+				return
+			}
+			log.Info().Msgf("%+v", size)
+			client.margins.SetSize(size)
 		},
 	}
 

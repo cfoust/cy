@@ -107,14 +107,25 @@ func (l *Margins) Write(data []byte) (n int, err error) {
 }
 
 func (l *Margins) getInner(size Size) geom.Rect {
-	l.RLock()
-	defer l.RUnlock()
-
 	if l.isMargins {
 		return fitMargins(size, l.margins)
 	}
 
 	return fitSize(size, l.size)
+}
+
+func (l *Margins) SetSize(size Size) error {
+	l.Lock()
+	l.isMargins = false
+	l.size = size
+	l.Unlock()
+	return l.recalculate()
+}
+
+func (l *Margins) Size() Size {
+	l.RLock()
+	defer l.RUnlock()
+	return l.size
 }
 
 func (l *Margins) poll(ctx context.Context) {
@@ -129,12 +140,15 @@ func (l *Margins) poll(ctx context.Context) {
 	}
 }
 
-func (l *Margins) Resize(size Size) error {
-	inner := l.getInner(size)
+func (l *Margins) recalculate() error {
+	l.RLock()
+	outer := l.outer
+	l.RUnlock()
+
+	inner := l.getInner(outer)
 
 	l.Lock()
 	l.inner = inner
-	l.outer = size
 	l.Unlock()
 
 	err := l.screen.Resize(inner.Size())
@@ -144,6 +158,13 @@ func (l *Margins) Resize(size Size) error {
 
 	l.rerender()
 	return nil
+}
+
+func (l *Margins) Resize(size Size) error {
+	l.Lock()
+	l.outer = size
+	l.Unlock()
+	return l.recalculate()
 }
 
 func NewMargins(ctx context.Context, screen Screen) *Margins {
