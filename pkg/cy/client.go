@@ -255,7 +255,7 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		handshake.Size,
 	)
 
-	c.margins = screen.NewMargins(c.muxClient)
+	c.margins = screen.NewMargins(c.Ctx(), c.muxClient)
 
 	c.layers = screen.NewLayers()
 	c.layers.NewLayer(

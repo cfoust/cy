@@ -1,6 +1,8 @@
 package screen
 
 import (
+	"context"
+
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
@@ -46,45 +48,45 @@ func centerRect(outer, inner Size) geom.Rect {
 	}
 }
 
+func fitMargin(outer, margin int) int {
+	if margin == 0 {
+		return outer
+	}
+
+	return geom.Max(outer-(margin*2), 1)
+}
+
 func fitMargins(outer, margins Size) geom.Rect {
-	rows := outer.R
-	if margins.R > 0 {
-		rows = outer.R - (margins.R * 2)
-	}
-
-	cols := outer.C
-	if margins.C > 0 {
-		cols = outer.C - (margins.C * 2)
-	}
-
 	return centerRect(outer, Size{
-		R: geom.Max(rows, 1),
-		C: geom.Max(cols, 1),
+		R: fitMargin(outer.R, margins.R),
+		C: fitMargin(outer.C, margins.C),
 	})
 }
 
+func getSize(outer, desired int) int {
+	if desired == 0 {
+		return outer
+	}
+
+	if desired > outer {
+		return outer
+	}
+
+	return desired
+}
+
 func fitSize(outer, size Size) geom.Rect {
-	rows := size.R
-	if rows > outer.R {
-		rows = outer.R
-	}
-
-	cols := size.C
-	if cols > outer.C {
-		cols = outer.C
-	}
-
 	return centerRect(outer, Size{
-		R: geom.Max(rows, 1),
-		C: geom.Max(cols, 1),
+		R: geom.Max(getSize(outer.R, size.R), 1),
+		C: geom.Max(getSize(outer.C, size.C), 1),
 	})
 }
 
 func (l *Margins) State() *tty.State {
 	l.RLock()
-	defer l.RUnlock()
-
 	bounds := l.bounds
+	l.RUnlock()
+
 	state := tty.New(bounds.Size())
 	tty.Copy(bounds.Position(), state, l.screen.State())
 	return state
@@ -113,6 +115,18 @@ func (l *Margins) getInner(size Size) geom.Rect {
 	return fitSize(size, l.size)
 }
 
+func (l *Margins) poll(ctx context.Context) {
+	updates := l.screen.Updates()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-updates.Recv():
+			l.rerender()
+		}
+	}
+}
+
 func (l *Margins) Resize(size Size) error {
 	inner := l.getInner(size)
 
@@ -120,10 +134,7 @@ func (l *Margins) Resize(size Size) error {
 	l.bounds = inner
 	l.Unlock()
 
-	err := l.screen.Resize(Size{
-		R: inner.R,
-		C: inner.C,
-	})
+	err := l.screen.Resize(inner.Size())
 	if err != nil {
 		return err
 	}
@@ -132,12 +143,16 @@ func (l *Margins) Resize(size Size) error {
 	return nil
 }
 
-func NewMargins(screen Screen) *Margins {
-	return &Margins{
+func NewMargins(ctx context.Context, screen Screen) *Margins {
+	margins := &Margins{
 		changes: mux.NewPublisher(),
 		size: Size{
 			C: 80,
 		},
 		screen: screen,
 	}
+
+	go margins.poll(ctx)
+
+	return margins
 }
