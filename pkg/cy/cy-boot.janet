@@ -60,6 +60,18 @@
       (frame/set-size [0 0]))))
 
 (key/bind
+  [prefix "1"]
+  "set size to 80 columns"
+  (fn [&]
+    (frame/set-size [0 80])))
+
+(key/bind
+  [prefix "2"]
+  "set size to 160 columns"
+  (fn [&]
+    (frame/set-size [0 160])))
+
+(key/bind
   ["ctrl+l"]
   "move to the next pane"
   (fn [&]
