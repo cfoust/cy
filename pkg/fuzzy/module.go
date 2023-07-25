@@ -22,11 +22,13 @@ type Fuzzy struct {
 	*screen.Terminal
 	result   chan interface{}
 	location geom.Vec2
+	size     geom.Vec2
 }
 
 var _ mux.Screen = (*Fuzzy)(nil)
 
 func (f *Fuzzy) Resize(size mux.Size) error {
+	f.size = size
 	return nil
 }
 
@@ -36,7 +38,7 @@ func (f *Fuzzy) Result() <-chan interface{} {
 
 func (f *Fuzzy) State() *tty.State {
 	termState := f.Terminal.State()
-	state := tty.New(termState.Image.Size())
+	state := tty.New(f.size)
 	tty.Copy(f.location, state, termState)
 	state.CursorVisible = false
 	return state

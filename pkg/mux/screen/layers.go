@@ -123,6 +123,8 @@ func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool
 		l.rerender()
 	}()
 
+	layer.Resize(l.size)
+
 	return layer
 }
 

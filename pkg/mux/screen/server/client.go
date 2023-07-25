@@ -50,6 +50,10 @@ func (c *Client) Resize(size mux.Size) error {
 	screen := c.screen
 	c.Unlock()
 
+	if screen == nil {
+		return nil
+	}
+
 	c.server.refreshPane(screen)
 	return nil
 }
