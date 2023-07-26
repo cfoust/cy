@@ -1,6 +1,9 @@
 package tree
 
 import (
+	"strings"
+	"unicode"
+
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -26,7 +29,13 @@ func (m *metaData) Name() string {
 func (m *metaData) SetName(name string) {
 	m.Lock()
 	defer m.Unlock()
-	m.name = name
+	m.name = strings.Map(func(r rune) rune {
+		if !unicode.IsPrint(r) || r == '/' {
+			return -1
+		}
+
+		return r
+	}, name)
 }
 
 func (m *metaData) Binds() *BindScope {

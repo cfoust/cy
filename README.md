@@ -37,13 +37,13 @@ As of writing, `cy` is just a collection of partially-implemented ideas. The fol
     * [X] [fzf](https://github.com/junegunn/fzf/tree/master)-search from Janet
     * [X] Error reporting for callback execution
     * [X] Pane margins and centering
-    * [ ] Refactor callbacks to use struct methods
-    * [ ] Allow for providing binding scope
     * [ ] Implement [oakthree](https://github.com/cfoust/tmux-oakthree)
-        * [ ] Add most Janet spork packages (mostly: path)
         * [ ] Enforce pane/group names on tree (disallow whitespace + `/`)
+        * [ ] Add most Janet spork packages (mostly: path)
         * [ ] Allow users to kill parts of the tree
         * [ ] Store pane jump history
+    * [ ] Refactor callbacks to use struct methods
+    * [ ] Allow for providing binding scope
     * [ ] Logging API in Janet
         * [ ] Support unmarshaling Janet table to `map[string]interface{}`
 * [ ] **Replay**
