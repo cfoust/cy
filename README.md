@@ -34,14 +34,18 @@ As of writing, `cy` is just a collection of partially-implemented ideas. The fol
 * [ ] **Server**
     * [ ] Allow for clients to connect to the server using `cy` without arguments
 * [ ] **Development**
-    * [X] Populate Janet execution environment with cy standard library
-    * [X] On startup, attempt to read cy configuration files
-    * [X] Structured logs go to a pane
-    * [ ] [fzf](https://github.com/junegunn/fzf/tree/master)-search from Janet
-    * [ ] Error reporting for callback execution
+    * [X] [fzf](https://github.com/junegunn/fzf/tree/master)-search from Janet
+    * [X] Error reporting for callback execution
+    * [X] Pane margins and centering
+    * [ ] Refactor callbacks to use struct methods
+    * [ ] Allow for providing binding scope
     * [ ] Implement [oakthree](https://github.com/cfoust/tmux-oakthree)
-    * [ ] Pane margins and centering
+        * [ ] Add most Janet spork packages (mostly: path)
+        * [ ] Enforce pane/group names on tree (disallow whitespace + `/`)
+        * [ ] Allow users to kill parts of the tree
+        * [ ] Store pane jump history
     * [ ] Logging API in Janet
+        * [ ] Support unmarshaling Janet table to `map[string]interface{}`
 * [ ] **Replay**
     * [ ] Record all sessions and save in custom file format
         * [ ] Is this also the `.borg` file format?
