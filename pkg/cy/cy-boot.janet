@@ -53,8 +53,6 @@
   "toggle size"
   (fn [&]
     (def size (frame/size))
-    (pp size)
-    (pp (+ (size 0) (size 1)))
     (case (+ (size 0) (size 1))
       0 (frame/set-size [0 80])
       (frame/set-size [0 0]))))
