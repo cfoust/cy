@@ -20,7 +20,7 @@ import (
 
 // This is a little weird, but it's a workaround to allow us to simplify the
 // public API for setting up named parameters.
-type namable interface {
+type nameable interface {
 	getType() reflect.Type
 	set(interface{})
 }
@@ -72,9 +72,9 @@ func (n *Named[T]) set(newValue interface{}) {
 	}
 }
 
-var _ namable = (*Named[int])(nil)
+var _ nameable = (*Named[int])(nil)
 
-func getNamedParams(named namable) (params []string) {
+func getNamedParams(named nameable) (params []string) {
 	type_ := named.getType()
 
 	for i := 0; i < type_.NumField(); i++ {
@@ -153,8 +153,15 @@ func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallb
 
 	args = args[1:]
 
-	callbackType := reflect.TypeOf(callback)
+	callbackType := callback.function.Type()
 	callbackArgs := make([]reflect.Value, 0)
+
+	if callback.source != nil {
+		callbackArgs = append(
+			callbackArgs,
+			reflect.ValueOf(callback.source),
+		)
+	}
 
 	argIndex := 0
 
@@ -249,7 +256,7 @@ func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallb
 	partial = &PartialCallback{
 		Type: callbackType,
 		invoke: func() []reflect.Value {
-			return reflect.ValueOf(callback).Call(callbackArgs)
+			return callback.function.Call(callbackArgs)
 		},
 	}
 
@@ -302,12 +309,12 @@ func isInterface(type_ reflect.Type) bool {
 	return type_.Kind() == reflect.Interface
 }
 
-func getNamable(type_ reflect.Type) namable {
+func getNamable(type_ reflect.Type) nameable {
 	if type_.Kind() != reflect.Pointer {
 		return nil
 	}
 
-	if named, ok := reflect.New(type_.Elem()).Interface().(namable); ok {
+	if named, ok := reflect.New(type_.Elem()).Interface().(nameable); ok {
 		return named
 	}
 
@@ -331,73 +338,98 @@ type Callback struct {
 	function reflect.Value
 }
 
-func validateFunction(in, out []reflect.Type) (named namable, numNormal int, err error) {
+func validateFunction(in, out []reflect.Type) error {
 	numArgs := len(in)
 	for i := 0; i < numArgs; i++ {
 		argType := in[i]
 
-		named = getNamable(argType)
+		named := getNamable(argType)
 		if named != nil {
 			namedType := named.getType()
 			if namedType.Kind() != reflect.Struct {
-				err = fmt.Errorf("Named must have a struct type")
-				return
+				return fmt.Errorf("Named must have a struct type")
 			}
 
 			if !isValidType(namedType) {
-				err = fmt.Errorf("Named had field(s) with invalid types")
-				return
+				return fmt.Errorf("Named had field(s) with invalid types")
 			}
 
 			if i != numArgs-1 {
-				err = fmt.Errorf("Named must be the last argument")
-				return
+				return fmt.Errorf("Named must be the last argument")
 			}
-
-			numNormal = i
 			break
 		}
 
 		if !isSpecial(argType) && !isParamType(argType) && !isInterface(argType) {
-			err = fmt.Errorf(
+			return fmt.Errorf(
 				"arg %d's type %s (%s) not supported",
 				i,
 				argType.String(),
 				argType.Kind().String(),
 			)
-			return
 		}
 	}
 
 	numResults := len(out)
 
 	if numResults > 2 {
-		err = fmt.Errorf("callback has too many return values")
-		return
+		return fmt.Errorf("callback has too many return values")
 	}
 
 	// The first return value can be an error or valid type
 	if numResults == 1 {
 		first := out[0]
 		if !isParamType(first) && !isErrorType(first) && !isInterface(first) {
-			err = fmt.Errorf("first callback return type must be valid type or error")
-			return
+			return fmt.Errorf("first callback return type must be valid type or error")
 		}
 	}
 
 	if numResults == 2 {
 		if !isParamType(out[0]) && !isInterface(out[0]) {
-			err = fmt.Errorf("first callback return type must be valid type")
-			return
+			return fmt.Errorf("first callback return type must be valid type")
 		}
 
 		if !isErrorType(out[1]) {
-			err = fmt.Errorf("second callback return type must be error")
-			return
+			return fmt.Errorf("second callback return type must be error")
 		}
 	}
 
-	return
+	return nil
+}
+
+func getPrototype(name string, in, out []reflect.Type) string {
+	numArgs := len(in)
+	for i := 0; i < numArgs; i++ {
+		argType := in[i]
+
+		named := getNamable(argType)
+		if named == nil {
+			continue
+		}
+
+		args := make([]string, 0)
+		for j := 0; j < i; j++ {
+			args = append(args, fmt.Sprintf("arg%d ", i))
+		}
+
+		params := getNamedParams(named)
+
+		argStr := strings.Join(args, " ")
+		paramStr := strings.Join(params, " ")
+		return fmt.Sprintf(
+			`[%s &named %s] (go/callback "%s" %s %s)`,
+			argStr,
+			paramStr,
+			name,
+			argStr,
+			paramStr,
+		)
+	}
+
+	return fmt.Sprintf(
+		`[& args] (go/callback "%s" ;args)`,
+		name,
+	)
 }
 
 func getFunctionTypes(f interface{}) (in, out []reflect.Type, err error) {
@@ -418,51 +450,33 @@ func getFunctionTypes(f interface{}) (in, out []reflect.Type, err error) {
 	return
 }
 
-func (v *VM) Callback(name string, callback interface{}) error {
+func (v *VM) registerCallback(name string, source interface{}, callback interface{}) error {
 	in, out, err := getFunctionTypes(callback)
 	if err != nil {
 		return err
 	}
 
-	named, numNormal, err := validateFunction(in, out)
+	// The first argument for struct methods is the receiver; we do not
+	// need to validate it
+	if source != nil {
+		in = in[1:]
+	}
+
+	err = validateFunction(in, out)
 	if err != nil {
 		return err
 	}
 
 	v.Lock()
 	v.callbacks[name] = &Callback{
+		source:   source,
 		function: reflect.ValueOf(callback),
 	}
 	v.Unlock()
 
-	code := fmt.Sprintf(
-		`[& args] (go/callback "%s" ;args)`,
-		name,
-	)
-
-	if named != nil {
-		args := make([]string, 0)
-		for i := 0; i < numNormal; i++ {
-			args = append(args, fmt.Sprintf("arg%d ", i))
-		}
-
-		params := getNamedParams(named)
-
-		argStr := strings.Join(args, " ")
-		paramStr := strings.Join(params, " ")
-		code = fmt.Sprintf(
-			`[%s &named %s] (go/callback "%s" %s %s)`,
-			argStr,
-			paramStr,
-			name,
-			argStr,
-			paramStr,
-		)
-	}
-
 	call := CallString(fmt.Sprintf(`
 (def %s (fn %s))
-`, name, code))
+`, name, getPrototype(name, in, out)))
 	call.Options.UpdateEnv = true
 	err = v.ExecuteCall(context.Background(), nil, call)
 	if err != nil {
@@ -470,4 +484,8 @@ func (v *VM) Callback(name string, callback interface{}) error {
 	}
 
 	return nil
+}
+
+func (v *VM) Callback(name string, callback interface{}) error {
+	return v.registerCallback(name, nil, callback)
 }
