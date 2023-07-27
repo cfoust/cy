@@ -16,6 +16,8 @@ import (
 	"reflect"
 	"strings"
 	"unsafe"
+
+	"github.com/iancoleman/strcase"
 )
 
 // This is a little weird, but it's a workaround to allow us to simplify the
@@ -156,7 +158,10 @@ func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallb
 	callbackType := callback.function.Type()
 	callbackArgs := make([]reflect.Value, 0)
 
+	startIndex := 0
+
 	if callback.source != nil {
+		startIndex = 1
 		callbackArgs = append(
 			callbackArgs,
 			reflect.ValueOf(callback.source),
@@ -165,7 +170,7 @@ func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallb
 
 	argIndex := 0
 
-	for i := 0; i < callbackType.NumIn(); i++ {
+	for i := startIndex; i < callbackType.NumIn(); i++ {
 		argType := callbackType.In(i)
 		argValue := reflect.New(argType)
 
@@ -432,8 +437,8 @@ func getPrototype(name string, in, out []reflect.Type) string {
 	)
 }
 
-func getFunctionTypes(f interface{}) (in, out []reflect.Type, err error) {
-	type_ := reflect.TypeOf(f)
+func getFunctionTypes(f reflect.Value) (in, out []reflect.Type, err error) {
+	type_ := f.Type()
 	if type_.Kind() != reflect.Func {
 		err = fmt.Errorf("callback must be a function")
 		return
@@ -450,7 +455,11 @@ func getFunctionTypes(f interface{}) (in, out []reflect.Type, err error) {
 	return
 }
 
-func (v *VM) registerCallback(name string, source interface{}, callback interface{}) error {
+func (v *VM) registerCallback(
+	name string,
+	source interface{},
+	callback reflect.Value,
+) error {
 	in, out, err := getFunctionTypes(callback)
 	if err != nil {
 		return err
@@ -470,7 +479,7 @@ func (v *VM) registerCallback(name string, source interface{}, callback interfac
 	v.Lock()
 	v.callbacks[name] = &Callback{
 		source:   source,
-		function: reflect.ValueOf(callback),
+		function: callback,
 	}
 	v.Unlock()
 
@@ -487,5 +496,37 @@ func (v *VM) registerCallback(name string, source interface{}, callback interfac
 }
 
 func (v *VM) Callback(name string, callback interface{}) error {
-	return v.registerCallback(name, nil, callback)
+	return v.registerCallback(name, nil, reflect.ValueOf(callback))
+}
+
+func (v *VM) Module(name string, module interface{}) error {
+	type_ := reflect.TypeOf(module)
+
+	if type_.Kind() == reflect.Pointer {
+		type_ = type_.Elem()
+	}
+
+	if type_.Kind() != reflect.Struct {
+		return fmt.Errorf("module must be a struct")
+	}
+
+	type_ = reflect.TypeOf(module)
+
+	for i := 0; i < type_.NumMethod(); i++ {
+		method := type_.Method(i)
+		err := v.registerCallback(
+			fmt.Sprintf(
+				"%s/%s",
+				name,
+				strcase.ToKebab(method.Name),
+			),
+			module,
+			method.Func,
+		)
+		if err != nil {
+		    return err
+		}
+	}
+
+	return nil
 }

@@ -30,6 +30,14 @@ func cmp[T any](t *testing.T, vm *VM, before T) {
 	require.Equal(t, before, after, "should yield same result")
 }
 
+type TestModule struct {
+	Value int
+}
+
+func (m *TestModule) Update(value int) {
+	m.Value = value
+}
+
 func TestVM(t *testing.T) {
 	ctx := context.Background()
 	// TODO(cfoust): 07/02/23 gracefully handle the Janet vm already being
@@ -188,6 +196,16 @@ func TestVM(t *testing.T) {
 
 		err = vm.Execute(ctx, `(test-tuple ["one" "two"])`)
 		require.Error(t, err)
+	})
+
+	t.Run("module registration", func(t *testing.T) {
+		m := &TestModule{}
+		err = vm.Module("test", m)
+		require.NoError(t, err)
+
+		err = vm.Execute(ctx, `(test/update 1)`)
+		require.NoError(t, err)
+		require.Equal(t, 1, m.Value)
 	})
 
 	t.Run("execute a file", func(t *testing.T) {
