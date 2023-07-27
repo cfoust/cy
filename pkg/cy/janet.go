@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cfoust/cy/pkg/cy/api"
 	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
-	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/rs/zerolog/log"
 )
@@ -29,56 +30,23 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 		return nil, err
 	}
 
+	modules := map[string]interface{}{
+		"cmd": &api.Cmd{
+			Lifetime: util.NewLifetime(c.Ctx()),
+			Tree:     c.tree,
+		},
+	}
+
+	for name, module := range modules {
+		err := vm.Module(name, module)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	callbacks := map[string]interface{}{
 		"log": func(text string) {
 			c.log.Info().Msgf(text)
-		},
-		"cmd/new": func(
-			groupId tree.NodeID,
-			path string,
-			params *janet.Named[CmdParams],
-		) (tree.NodeID, error) {
-			values := params.WithDefault(CmdParams{
-				Command: "/bin/bash",
-			})
-
-			group, ok := c.tree.GroupById(groupId)
-			if !ok {
-				return 0, fmt.Errorf("node not found: %d", groupId)
-			}
-
-			cmd, err := group.NewCmd(
-				c.Ctx(),
-				stream.CmdOptions{
-					Command:   values.Command,
-					Args:      values.Args,
-					Directory: path,
-				},
-				geom.DEFAULT_SIZE,
-			)
-			if err != nil {
-				return 0, err
-			}
-
-			return cmd.Id(), nil
-		},
-		"cmd/path": func(id tree.NodeID) (*string, error) {
-			pane, ok := c.tree.PaneById(id)
-			if !ok {
-				return nil, fmt.Errorf("pane not found: %d", id)
-			}
-
-			cmd, ok := pane.App().(*stream.Cmd)
-			if !ok {
-				return nil, fmt.Errorf("pane was not a cmd")
-			}
-
-			path, err := cmd.Path()
-			if err != nil {
-				return nil, err
-			}
-
-			return &path, nil
 		},
 		"fzf/find": func(
 			ctx context.Context,

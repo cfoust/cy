@@ -229,7 +229,6 @@ func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallb
 		}
 
 		arg := args[argIndex]
-		argIndex++
 
 		isPointer := argType.Kind() == reflect.Pointer
 
@@ -246,7 +245,12 @@ func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallb
 		} else {
 			err = v.unmarshal(arg, argValue.Interface())
 			if err != nil {
-				err = fmt.Errorf("error processing argument %d: %s", argIndex, err.Error())
+				err = fmt.Errorf(
+					"%s: error processing argument %d: %s",
+					name,
+					argIndex,
+					err.Error(),
+				)
 				return
 			}
 
@@ -256,6 +260,7 @@ func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallb
 		}
 
 		callbackArgs = append(callbackArgs, argValue)
+		argIndex++
 	}
 
 	partial = &PartialCallback{
@@ -414,7 +419,7 @@ func getPrototype(name string, in, out []reflect.Type) string {
 
 		args := make([]string, 0)
 		for j := 0; j < i; j++ {
-			args = append(args, fmt.Sprintf("arg%d ", i))
+			args = append(args, fmt.Sprintf("arg%d ", j))
 		}
 
 		params := getNamedParams(named)
@@ -473,7 +478,7 @@ func (v *VM) registerCallback(
 
 	err = validateFunction(in, out)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not register %s: %s", name, err.Error())
 	}
 
 	v.Lock()
