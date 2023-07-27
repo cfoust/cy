@@ -326,32 +326,32 @@ func isParamType(type_ reflect.Type) bool {
 	return isValidType(type_)
 }
 
-func (v *VM) Callback(name string, callback interface{}) error {
-	type_ := reflect.TypeOf(callback)
-	if type_.Kind() != reflect.Func {
-		return fmt.Errorf("callback must be a function")
-	}
+type Callback struct {
+	source   interface{}
+	function reflect.Value
+}
 
-	var named namable
-	numNormal := 0
-
-	numArgs := type_.NumIn()
+func validateFunction(in, out []reflect.Type) (named namable, numNormal int, err error) {
+	numArgs := len(in)
 	for i := 0; i < numArgs; i++ {
-		argType := type_.In(i)
+		argType := in[i]
 
 		named = getNamable(argType)
 		if named != nil {
 			namedType := named.getType()
 			if namedType.Kind() != reflect.Struct {
-				return fmt.Errorf("Named must have a struct type")
+				err = fmt.Errorf("Named must have a struct type")
+				return
 			}
 
 			if !isValidType(namedType) {
-				return fmt.Errorf("Named had field(s) with invalid types")
+				err = fmt.Errorf("Named had field(s) with invalid types")
+				return
 			}
 
 			if i != numArgs-1 {
-				return fmt.Errorf("Named must be the last argument")
+				err = fmt.Errorf("Named must be the last argument")
+				return
 			}
 
 			numNormal = i
@@ -359,41 +359,80 @@ func (v *VM) Callback(name string, callback interface{}) error {
 		}
 
 		if !isSpecial(argType) && !isParamType(argType) && !isInterface(argType) {
-			return fmt.Errorf(
+			err = fmt.Errorf(
 				"arg %d's type %s (%s) not supported",
 				i,
 				argType.String(),
 				argType.Kind().String(),
 			)
+			return
 		}
 	}
 
-	numResults := type_.NumOut()
+	numResults := len(out)
 
 	if numResults > 2 {
-		return fmt.Errorf("callback has too many return values")
+		err = fmt.Errorf("callback has too many return values")
+		return
 	}
 
 	// The first return value can be an error or valid type
 	if numResults == 1 {
-		first := type_.Out(0)
+		first := out[0]
 		if !isParamType(first) && !isErrorType(first) && !isInterface(first) {
-			return fmt.Errorf("first callback return type must be valid type or error")
+			err = fmt.Errorf("first callback return type must be valid type or error")
+			return
 		}
 	}
 
 	if numResults == 2 {
-		if !isParamType(type_.Out(0)) && !isInterface(type_.Out(0)) {
-			return fmt.Errorf("first callback return type must be valid type")
+		if !isParamType(out[0]) && !isInterface(out[0]) {
+			err = fmt.Errorf("first callback return type must be valid type")
+			return
 		}
 
-		if !isErrorType(type_.Out(1)) {
-			return fmt.Errorf("second callback return type must be error")
+		if !isErrorType(out[1]) {
+			err = fmt.Errorf("second callback return type must be error")
+			return
 		}
 	}
 
+	return
+}
+
+func getFunctionTypes(f interface{}) (in, out []reflect.Type, err error) {
+	type_ := reflect.TypeOf(f)
+	if type_.Kind() != reflect.Func {
+		err = fmt.Errorf("callback must be a function")
+		return
+	}
+
+	for i := 0; i < type_.NumIn(); i++ {
+		in = append(in, type_.In(i))
+	}
+
+	for i := 0; i < type_.NumOut(); i++ {
+		out = append(out, type_.Out(i))
+	}
+
+	return
+}
+
+func (v *VM) Callback(name string, callback interface{}) error {
+	in, out, err := getFunctionTypes(callback)
+	if err != nil {
+		return err
+	}
+
+	named, numNormal, err := validateFunction(in, out)
+	if err != nil {
+		return err
+	}
+
 	v.Lock()
-	v.callbacks[name] = callback
+	v.callbacks[name] = &Callback{
+		function: reflect.ValueOf(callback),
+	}
 	v.Unlock()
 
 	code := fmt.Sprintf(
@@ -425,7 +464,7 @@ func (v *VM) Callback(name string, callback interface{}) error {
 (def %s (fn %s))
 `, name, code))
 	call.Options.UpdateEnv = true
-	err := v.ExecuteCall(context.Background(), nil, call)
+	err = v.ExecuteCall(context.Background(), nil, call)
 	if err != nil {
 		return err
 	}

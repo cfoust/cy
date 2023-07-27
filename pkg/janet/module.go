@@ -25,12 +25,12 @@ type Request interface{}
 type VM struct {
 	deadlock.RWMutex
 
-	callbacks map[string]interface{}
+	callbacks map[string]*Callback
 	evaluate  C.Janet
 
 	requests chan Request
 
-	env  *Table
+	env *Table
 }
 
 func initJanet() {
@@ -109,7 +109,7 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 func New(ctx context.Context) (*VM, error) {
 	vm := &VM{
 		requests:  make(chan Request),
-		callbacks: make(map[string]interface{}),
+		callbacks: make(map[string]*Callback),
 	}
 
 	vmReady := make(chan bool)
