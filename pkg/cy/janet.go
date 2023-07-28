@@ -35,6 +35,9 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 			Lifetime: util.NewLifetime(c.Ctx()),
 			Tree:     c.tree,
 		},
+		"tree":  &api.TreeModule{Tree: c.tree},
+		"pane":  &api.PaneModule{Tree: c.tree},
+		"group": &api.GroupModule{Tree: c.tree},
 	}
 
 	for name, module := range modules {
@@ -88,26 +91,6 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 				return nil, ctx.Err()
 			}
 		},
-		"group/new": func(parentId tree.NodeID) (tree.NodeID, error) {
-			group, ok := c.tree.GroupById(parentId)
-			if !ok {
-				return 0, fmt.Errorf("node not found: %d", parentId)
-			}
-
-			return group.NewGroup().Id(), nil
-		},
-		"group/children": func(parentId tree.NodeID) ([]tree.NodeID, error) {
-			group, ok := c.tree.GroupById(parentId)
-			if !ok {
-				return nil, fmt.Errorf("node not found: %d", parentId)
-			}
-
-			nodes := make([]tree.NodeID, 0)
-			for _, child := range group.Children() {
-				nodes = append(nodes, child.Id())
-			}
-			return nodes, nil
-		},
 		"key/bind": func(sequence []string, doc string, callback *janet.Function) error {
 			c.tree.Root().Binds().Set(
 				sequence,
@@ -118,75 +101,6 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 			)
 
 			return nil
-		},
-		"pane/attach": func(context interface{}, id tree.NodeID) error {
-			client, ok := context.(*Client)
-			if !ok {
-				return fmt.Errorf("missing client context")
-			}
-
-			node, ok := c.tree.NodeById(id)
-			if !ok {
-				return fmt.Errorf("node not found: %d", id)
-			}
-
-			return client.Attach(node)
-		},
-		"pane/current": func(context interface{}) *tree.NodeID {
-			client, ok := context.(*Client)
-			if !ok {
-				return nil
-			}
-
-			node := client.node
-			if node == nil {
-				return nil
-			}
-
-			id := node.Id()
-			return &id
-		},
-		"tree/group?": func(id tree.NodeID) bool {
-			_, ok := c.tree.GroupById(id)
-			return ok
-		},
-		"tree/pane?": func(id tree.NodeID) bool {
-			_, ok := c.tree.PaneById(id)
-			return ok
-		},
-		"tree/set-name": func(id tree.NodeID, name string) {
-			node, ok := c.tree.NodeById(id)
-			if !ok {
-				return
-			}
-
-			node.SetName(name)
-		},
-		"tree/name": func(id tree.NodeID) *string {
-			node, ok := c.tree.NodeById(id)
-			if !ok {
-				return nil
-			}
-
-			name := node.Name()
-			return &name
-		},
-		"tree/parent": func(id tree.NodeID) *tree.NodeID {
-			node, ok := c.tree.NodeById(id)
-			if !ok {
-				return nil
-			}
-
-			path := c.tree.PathTo(node)
-			if len(path) <= 1 {
-				return nil
-			}
-
-			parentId := path[len(path)-2].Id()
-			return &parentId
-		},
-		"tree/root": func() tree.NodeID {
-			return c.tree.Root().Id()
 		},
 		"frame/size": func(context interface{}) *geom.Vec2 {
 			client, ok := context.(*Client)

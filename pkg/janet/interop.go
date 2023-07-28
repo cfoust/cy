@@ -20,6 +20,11 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
+// Allow the user to rename struct methods arbitrarily.
+type Renamable interface {
+	Renames() map[string]string
+}
+
 // This is a little weird, but it's a workaround to allow us to simplify the
 // public API for setting up named parameters.
 type nameable interface {
@@ -516,20 +521,33 @@ func (v *VM) Module(name string, module interface{}) error {
 	}
 
 	type_ = reflect.TypeOf(module)
+	renamable, haveCustom := module.(Renamable)
 
 	for i := 0; i < type_.NumMethod(); i++ {
 		method := type_.Method(i)
+		methodName := strcase.ToKebab(method.Name)
+
+		if haveCustom && methodName == "renames" {
+			continue
+		}
+
+		if haveCustom {
+			if replaced, ok := renamable.Renames()[method.Name]; ok {
+				methodName = replaced
+			}
+		}
+
 		err := v.registerCallback(
 			fmt.Sprintf(
 				"%s/%s",
 				name,
-				strcase.ToKebab(method.Name),
+				methodName,
 			),
 			module,
 			method.Func,
 		)
 		if err != nil {
-		    return err
+			return err
 		}
 	}
 
