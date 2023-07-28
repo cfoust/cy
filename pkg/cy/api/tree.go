@@ -25,11 +25,12 @@ func (g *GroupModule) New(
 		return 0, fmt.Errorf("node not found: %d", parentId)
 	}
 
+	newGroup := group.NewGroup()
 	if values.Name != "" {
-		group.SetName(values.Name)
+		newGroup.SetName(values.Name)
 	}
 
-	return group.NewGroup().Id(), nil
+	return newGroup.Id(), nil
 }
 
 func (g *GroupModule) Children(parentId tree.NodeID) ([]tree.NodeID, error) {

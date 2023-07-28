@@ -38,7 +38,7 @@ As of writing, `cy` is just a collection of partially-implemented ideas. The fol
     * [X] Error reporting for callback execution
     * [X] Pane margins and centering
     * [ ] Implement [oakthree](https://github.com/cfoust/tmux-oakthree)
-        * [ ] Enforce pane/group names on tree (disallow whitespace + `/`)
+        * [X] Enforce pane/group names on tree (disallow whitespace + `/`)
         * [ ] Add most Janet spork packages (mostly: path)
         * [ ] Allow users to kill parts of the tree
         * [ ] Store pane jump history

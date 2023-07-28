@@ -1,14 +1,14 @@
 (def prefix "ctrl+a")
 
-(def projects (group/new (tree/root)))
-(def shells (group/new (tree/root)))
+(def projects (group/new (tree/root) :name "projects"))
+(def shells (group/new (tree/root) :name "shells"))
 
 (key/bind
   [prefix "j"]
   "create a new shell"
   (fn [&]
     (def path (cmd/path (pane/current)))
-    (def shell (cmd/new shells path))
+    (def shell (cmd/new shells path :name (path/base path)))
     (pane/attach shell)))
 
 (key/bind
@@ -16,14 +16,13 @@
   "create a new project"
   (fn [&]
     (def path (cmd/path (pane/current)))
-    (def project (group/new projects))
-    # TODO(cfoust): 07/22/23 basename
-    (tree/set-name project path)
+    (def project (group/new projects :name (path/base path)))
     (def editor
       (cmd/new project
                path
+               :name "editor"
                :command (os/getenv "EDITOR" "vim")))
-    (def shell (cmd/new project path))
+    (def shell (cmd/new project path :name "shell"))
     (pane/attach editor)))
 
 (key/bind

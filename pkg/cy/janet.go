@@ -35,9 +35,10 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 			Lifetime: util.NewLifetime(c.Ctx()),
 			Tree:     c.tree,
 		},
-		"tree":  &api.TreeModule{Tree: c.tree},
-		"pane":  &api.PaneModule{Tree: c.tree},
 		"group": &api.GroupModule{Tree: c.tree},
+		"pane":  &api.PaneModule{Tree: c.tree},
+		"path":  &api.PathModule{},
+		"tree":  &api.TreeModule{Tree: c.tree},
 	}
 
 	for name, module := range modules {
