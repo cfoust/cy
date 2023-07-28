@@ -13,6 +13,7 @@ import (
 type CmdParams struct {
 	Command string
 	Args    []string
+	Name    string
 }
 
 type Cmd struct {
@@ -45,6 +46,10 @@ func (c *Cmd) New(
 	)
 	if err != nil {
 		return 0, err
+	}
+
+	if values.Name != "" {
+		cmd.SetName(values.Name)
 	}
 
 	return cmd.Id(), nil

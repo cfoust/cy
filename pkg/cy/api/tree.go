@@ -3,18 +3,30 @@ package api
 import (
 	"fmt"
 
-	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux/screen/tree"
 )
+
+type NodeParams struct {
+	Name string
+}
 
 type GroupModule struct {
 	Tree *tree.Tree
 }
 
-func (g *GroupModule) New(parentId tree.NodeID) (tree.NodeID, error) {
+func (g *GroupModule) New(
+	parentId tree.NodeID,
+	params *janet.Named[NodeParams],
+) (tree.NodeID, error) {
+	values := params.Values()
 	group, ok := g.Tree.GroupById(parentId)
 	if !ok {
 		return 0, fmt.Errorf("node not found: %d", parentId)
+	}
+
+	if values.Name != "" {
+		group.SetName(values.Name)
 	}
 
 	return group.NewGroup().Id(), nil

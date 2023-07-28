@@ -1,6 +1,7 @@
 package tree
 
 import (
+	"fmt"
 	"sync/atomic"
 
 	"github.com/cfoust/cy/pkg/bind"
@@ -19,9 +20,11 @@ func (t *Tree) newMetadata() *metaData {
 	t.Lock()
 	defer t.Unlock()
 
+	id := t.nodeIndex.Add(1)
 	node := &metaData{
-		id:    t.nodeIndex.Add(1),
+		id:    id,
 		binds: bind.NewScope[Binding](),
+		name:  fmt.Sprintf("%d", id),
 	}
 
 	return node
