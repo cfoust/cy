@@ -81,6 +81,14 @@ type Glyph struct {
 
 type line []Glyph
 
+func (l line) String() (str string) {
+	for i := 0; i < len(l); i++ {
+		str += string(l[i].Char)
+	}
+
+	return str
+}
+
 type Cursor struct {
 	Attr  Glyph
 	X, Y  int
@@ -98,6 +106,7 @@ type State struct {
 	mu            sync.Mutex
 	changed       ChangeFlag
 	cols, rows    int
+	history       []line
 	lines         []line
 	altLines      []line
 	dirty         []bool // line dirtiness
@@ -487,6 +496,13 @@ func (t *State) scrollDown(orig, n int) {
 
 func (t *State) scrollUp(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
+
+	if orig == 0 {
+		for i := 0; i < n; i++ {
+			t.history = append(t.history, t.lines[i])
+		}
+	}
+
 	t.clear(0, orig, t.cols-1, orig+n-1)
 	t.changed |= ChangedScreen
 	for i := orig; i <= t.bottom-n; i++ {
