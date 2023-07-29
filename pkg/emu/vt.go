@@ -50,11 +50,11 @@ type View interface {
 	// CursorVisible returns the visible state of the cursor.
 	CursorVisible() bool
 
-	// Lock locks the state object's mutex.
-	Lock()
+	// Screen gets all of the lines on the screen.
+	Screen() []Line
 
-	// Unlock resets change flags and unlocks the state object's mutex.
-	Unlock()
+	// History returns the full scrollback buffer and current screen.
+	History() []Line
 }
 
 type TerminalOption func(*TerminalInfo)

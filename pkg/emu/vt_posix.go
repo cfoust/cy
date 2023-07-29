@@ -1,3 +1,4 @@
+//go:build linux || darwin || dragonfly || solaris || openbsd || netbsd || freebsd
 // +build linux darwin dragonfly solaris openbsd netbsd freebsd
 
 package emu
@@ -33,8 +34,8 @@ func (t *terminal) init(cols, rows int) {
 func (t *terminal) Write(p []byte) (int, error) {
 	var written int
 	r := bytes.NewReader(p)
-	t.lock()
-	defer t.unlock()
+	t.Lock()
+	defer t.Unlock()
 	for {
 		c, sz, err := r.ReadRune()
 		if err != nil {
@@ -62,7 +63,7 @@ func (t *terminal) Parse(br *bufio.Reader) error {
 	var locked bool
 	defer func() {
 		if locked {
-			t.unlock()
+			t.Unlock()
 		}
 	}()
 	for {
@@ -75,7 +76,7 @@ func (t *terminal) Parse(br *bufio.Reader) error {
 			break
 		}
 		if !locked {
-			t.lock()
+			t.Lock()
 			locked = true
 		}
 
@@ -102,7 +103,7 @@ func fullRuneBuffered(br *bufio.Reader) bool {
 }
 
 func (t *terminal) Resize(cols, rows int) {
-	t.lock()
-	defer t.unlock()
+	t.Lock()
+	defer t.Unlock()
 	_ = t.resize(cols, rows)
 }

@@ -3,7 +3,8 @@ package emu
 import (
 	"io"
 	"log"
-	"sync"
+
+	"github.com/sasha-s/go-deadlock"
 )
 
 const (
@@ -79,9 +80,9 @@ type Glyph struct {
 	FG, BG Color
 }
 
-type line []Glyph
+type Line []Glyph
 
-func (l line) String() (str string) {
+func (l Line) String() (str string) {
 	for i := 0; i < len(l); i++ {
 		str += string(l[i].Char)
 	}
@@ -100,15 +101,16 @@ type parseState func(c rune)
 // State represents the terminal emulation state. Use Lock/Unlock
 // methods to synchronize data access with VT.
 type State struct {
+	deadlock.RWMutex
 	DebugLogger *log.Logger
 
 	w             io.Writer
-	mu            sync.Mutex
 	changed       ChangeFlag
 	cols, rows    int
-	history       []line
-	lines         []line
-	altLines      []line
+	lines         []Line
+	history       []Line
+	altLines      []Line
+	altHistory    []Line
 	dirty         []bool // line dirtiness
 	anydirty      bool
 	cur, curSaved Cursor
@@ -142,25 +144,6 @@ func (t *State) logln(s string) {
 	}
 }
 
-func (t *State) lock() {
-	t.mu.Lock()
-}
-
-func (t *State) unlock() {
-	t.mu.Unlock()
-}
-
-// Lock locks the state object's mutex.
-func (t *State) Lock() {
-	t.mu.Lock()
-}
-
-// Unlock resets change flags and unlocks the state object's mutex.
-func (t *State) Unlock() {
-	t.resetChanges()
-	t.mu.Unlock()
-}
-
 // Cell returns the glyph containing the character code, foreground color, and
 // background color at position (x, y) relative to the top left of the terminal.
 func (t *State) Cell(x, y int) Glyph {
@@ -178,21 +161,29 @@ func (t *State) Cell(x, y int) Glyph {
 
 // Cursor returns the current position of the cursor.
 func (t *State) Cursor() Cursor {
+	t.RLock()
+	defer t.RUnlock()
 	return t.cur
 }
 
 // CursorVisible returns the visible state of the cursor.
 func (t *State) CursorVisible() bool {
+	t.RLock()
+	defer t.RUnlock()
 	return t.mode&ModeHide == 0
 }
 
 // Mode returns the current terminal mode.
 func (t *State) Mode() ModeFlag {
+	t.RLock()
+	defer t.RUnlock()
 	return t.mode
 }
 
 // Title returns the current title set via the tty.
 func (t *State) Title() string {
+	t.RLock()
+	defer t.RUnlock()
 	return t.title
 }
 
@@ -335,8 +326,8 @@ func (t *State) resize(cols, rows int) bool {
 	}
 
 	lines, altLines, tabs := t.lines, t.altLines, t.tabs
-	t.lines = make([]line, rows)
-	t.altLines = make([]line, rows)
+	t.lines = make([]Line, rows)
+	t.altLines = make([]Line, rows)
 	t.dirty = make([]bool, rows)
 	t.tabs = make([]bool, cols)
 
@@ -345,8 +336,8 @@ func (t *State) resize(cols, rows int) bool {
 	t.changed |= ChangedScreen
 	for i := 0; i < rows; i++ {
 		t.dirty[i] = true
-		t.lines[i] = make(line, cols)
-		t.altLines[i] = make(line, cols)
+		t.lines[i] = make(Line, cols)
+		t.altLines[i] = make(Line, cols)
 	}
 	for i := 0; i < minrows; i++ {
 		copy(t.lines[i], lines[i])
@@ -430,6 +421,7 @@ func (t *State) moveTo(x, y int) {
 
 func (t *State) swapScreen() {
 	t.lines, t.altLines = t.altLines, t.lines
+	t.history, t.altHistory = t.altHistory, t.history
 	t.mode ^= ModeAltScreen
 	t.dirtyAll()
 }
@@ -769,7 +761,38 @@ func (t *State) setTitle(title string) {
 }
 
 func (t *State) Size() (cols, rows int) {
+	t.RLock()
+	defer t.RUnlock()
 	return t.cols, t.rows
+}
+
+func (t *State) clone(sets ...[]Line) []Line {
+	lines := make([]Line, 0)
+
+	for _, set := range sets {
+		for _, line := range set {
+			copied := make([]Glyph, len(line))
+			copy(copied, line)
+			lines = append(
+				lines,
+				copied,
+			)
+		}
+	}
+
+	return lines
+}
+
+func (t *State) Screen() []Line {
+	t.Lock()
+	defer t.Unlock()
+	return t.clone(t.lines)
+}
+
+func (t *State) History() []Line {
+	t.Lock()
+	defer t.Unlock()
+	return t.clone(t.history, t.lines)
 }
 
 func (t *State) String() string {

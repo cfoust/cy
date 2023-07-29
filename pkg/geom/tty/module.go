@@ -28,10 +28,8 @@ func Copy(pos geom.Vec2, dst, src *State) {
 }
 
 func Capture(view emu.View) *State {
-	view.Lock()
 	cursor := view.Cursor()
 	cursorVisible := view.CursorVisible()
-	view.Unlock()
 
 	return &State{
 		Image:         image.Capture(view),

@@ -6,7 +6,7 @@ import (
 )
 
 // An Image is a simple buffer of terminal state.
-type Image [][]emu.Glyph
+type Image []emu.Line
 
 func (i Image) Size() geom.Vec2 {
 	if len(i) == 0 {
@@ -49,21 +49,7 @@ func (i Image) Clone() Image {
 }
 
 func Capture(view emu.View) Image {
-	image := Image{}
-
-	view.Lock()
-	defer view.Unlock()
-
-	cols, rows := view.Size()
-	for row := 0; row < rows; row++ {
-		line := make([]emu.Glyph, cols)
-		for col := 0; col < cols; col++ {
-			line[col] = view.Cell(col, row)
-		}
-		image = append(image, line)
-	}
-
-	return image
+	return view.Screen()
 }
 
 // Copy the cell contents from src to dst starting at [dstRow, dstCol],
