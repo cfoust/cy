@@ -7,7 +7,6 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
-	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -19,7 +18,7 @@ import (
 
 type Fuzzy struct {
 	util.Lifetime
-	*screen.Terminal
+	*screen.Tea
 	result   chan interface{}
 	location geom.Vec2
 	size     geom.Vec2
@@ -61,7 +60,7 @@ func NewFuzzy(
 	ti.Width = 20
 	ti.Prompt = ""
 
-	stream := stream.NewTea(
+	screen := screen.NewTea(
 		ctx,
 		model{
 			lifetime: &lifetime,
@@ -74,17 +73,14 @@ func NewFuzzy(
 			),
 			textInput: ti,
 		},
+		profile,
+		info,
 		geom.DEFAULT_SIZE,
 	)
 
-	terminal := screen.NewTerminal(ctx, stream, geom.DEFAULT_SIZE)
-
-	// TODO(cfoust): 07/20/23 tea interfaces use fake cursor. move this to tea?
-	info.Fprintf(terminal, terminfo.CursorInvisible)
-
 	return &Fuzzy{
 		Lifetime: lifetime,
-		Terminal: terminal,
+		Tea:      screen,
 		result:   result,
 		location: location,
 	}
