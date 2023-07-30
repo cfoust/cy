@@ -18,7 +18,7 @@ func (m *Midjo) Init(start image.Image) {
 }
 
 func (mid *Midjo) Update(delta time.Duration) image.Image {
-	elapsed := delta.Seconds()
+	elapsed := delta.Seconds() / 10
 	size := mid.out.Size()
 	for row := 0; row < size.R; row++ {
 		s := 1 - (2*float64(row))/float64(size.R)

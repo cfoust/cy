@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/cy/api"
 	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
@@ -77,6 +78,17 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 					R: cursor.Y,
 					C: cursor.X,
 				},
+			)
+
+			client.layers.NewLayer(
+				fuzzy.Ctx(),
+				anim.NewAnimator(
+					fuzzy.Ctx(),
+					&anim.Midjo{},
+					client.layers.State().Image,
+					30,
+				),
+				false,
 			)
 
 			client.layers.NewLayer(
