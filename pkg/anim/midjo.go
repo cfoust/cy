@@ -6,16 +6,17 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/image"
-	_ "github.com/rs/zerolog/log"
 )
 
 type Midjo struct {
+	in  image.Image
 	out image.Image
 }
 
 var _ Animation = (*Midjo)(nil)
 
 func (m *Midjo) Init(start image.Image) {
+	m.in = start.Clone()
 	m.out = start
 }
 
@@ -28,7 +29,7 @@ func (mid *Midjo) Update(delta time.Duration) image.Image {
 		for col := 0; col < size.C; col++ {
 			o := (2*float64(col))/float64(size.C) - 1
 			distance := math.Sqrt(o*o + s*s)
-			l := (0.1 * elapsed) / math.Max(0.1, distance)
+			l := ((0.1 * elapsed) / math.Max(0.1, distance))
 			f := math.Sin(l)
 			b := math.Cos(l)
 			u := o*f - s*b
@@ -36,7 +37,7 @@ func (mid *Midjo) Update(delta time.Duration) image.Image {
 			h := int(math.Round(((u+1)/2)*float64(size.R))) % size.R
 			g = emu.EmptyGlyph()
 			if !(m < 0 || m >= size.C || h < 0 || h >= size.R) {
-				g = mid.out[h][m]
+				g = mid.in[h][m]
 			}
 			mid.out[row][col] = g
 		}
