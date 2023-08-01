@@ -80,6 +80,14 @@ type Glyph struct {
 	FG, BG Color
 }
 
+func EmptyGlyph() Glyph {
+	return Glyph{
+		Char: ' ',
+		FG: DefaultFG,
+		BG: DefaultBG,
+	}
+}
+
 type Line []Glyph
 
 func (l Line) String() (str string) {

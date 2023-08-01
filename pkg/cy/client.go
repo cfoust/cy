@@ -262,6 +262,7 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		c.Ctx(),
 		c.margins,
 		true,
+		true,
 	)
 
 	c.raw = emu.New(emu.WithSize(handshake.Size))

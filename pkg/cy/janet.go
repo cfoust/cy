@@ -86,15 +86,17 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 					fuzzy.Ctx(),
 					&anim.Midjo{},
 					client.layers.State().Image,
-					20,
+					60,
 				),
 				false,
+				true,
 			)
 
 			client.layers.NewLayer(
 				fuzzy.Ctx(),
 				fuzzy,
 				true,
+				false,
 			)
 
 			select {

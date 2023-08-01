@@ -16,6 +16,7 @@ type Layer struct {
 	util.Lifetime
 	Screen
 	isInteractive bool
+	isOpaque      bool
 }
 
 // Layers allows you to stack several Screens on top of one another. The
@@ -52,7 +53,11 @@ func (l *Layers) State() *tty.State {
 
 	// In the first pass we layer the states on top of each other
 	for _, layer := range states {
-		image.Compose(state.Image, 0, 0, layer.state.Image)
+		if layer.layer.isOpaque {
+			image.Copy(geom.Vec2{}, state.Image, layer.state.Image)
+		} else {
+			image.Compose(geom.Vec2{}, state.Image, layer.state.Image)
+		}
 	}
 
 	// Then we find the topmost cursor state for interactivity
@@ -81,7 +86,7 @@ func (l *Layers) rerender() {
 	l.changes.Publish(l.State())
 }
 
-func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool) *Layer {
+func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool, isOpaque bool) *Layer {
 	l.Lock()
 	defer l.Unlock()
 
@@ -89,6 +94,7 @@ func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool
 		Lifetime:      util.NewLifetime(ctx),
 		Screen:        screen,
 		isInteractive: isInteractive,
+		isOpaque:      isOpaque,
 	}
 
 	l.layers = append(l.layers, layer)

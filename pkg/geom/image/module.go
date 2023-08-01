@@ -75,22 +75,22 @@ func Copy(pos geom.Vec2, dst, src Image) {
 
 // Like Copy, but does not overwrite a cell in dst if a cell in src is empty
 // and has the default background.
-func Compose(dst Image, dstRow, dstCol int, src Image) {
+func Compose(pos geom.Vec2, dst, src Image) {
 	srcSize := src.Size()
 	dstSize := dst.Size()
 
 	lastRow := geom.Min(
-		dstRow+srcSize.R,
+		pos.R+srcSize.R,
 		dstSize.R,
 	)
 	lastCol := geom.Min(
-		dstCol+srcSize.C,
+		pos.C+srcSize.C,
 		dstSize.C,
 	)
 
-	for row := dstRow; row < lastRow; row++ {
-		for col := dstRow; col < lastCol; col++ {
-			srcCell := src[row-dstRow][col-dstCol]
+	for row := pos.R; row < lastRow; row++ {
+		for col := pos.R; col < lastCol; col++ {
+			srcCell := src[row-pos.R][col-pos.C]
 			if srcCell.Char == ' ' && srcCell.BG == emu.DefaultBG {
 				continue
 			}
