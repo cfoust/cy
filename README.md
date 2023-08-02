@@ -29,20 +29,13 @@ The `cy` project has a few main goals:
 
 ## Roadmap
 
-As of writing, `cy` is just a collection of partially-implemented ideas. The following features comprise a basic MVP that is still in the works.
-
-* [ ] **Server**
-    * [ ] Allow for clients to connect to the server using `cy` without arguments
+* [ ] **Usability**
+    * [ ] Attaching, detaching, killing the server
+    * [ ] Copy mode
 * [ ] **Development**
-    * [X] [fzf](https://github.com/junegunn/fzf/tree/master)-search from Janet
-    * [X] Error reporting for callback execution
-    * [X] Pane margins and centering
     * [ ] Implement [oakthree](https://github.com/cfoust/tmux-oakthree)
-        * [X] Enforce pane/group names on tree (disallow whitespace + `/`)
-        * [ ] Add most Janet spork packages (mostly: path)
         * [ ] Allow users to kill parts of the tree
         * [ ] Store pane jump history
-    * [ ] Refactor callbacks to use struct methods
     * [ ] Allow for providing binding scope
     * [ ] Logging API in Janet
         * [ ] Support unmarshaling Janet table to `map[string]interface{}`
