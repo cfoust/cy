@@ -69,6 +69,12 @@
     (frame/set-size [0 160])))
 
 (key/bind
+  [prefix "q"]
+  "kill the cy server"
+  (fn [&]
+    (cy/kill-server)))
+
+(key/bind
   ["ctrl+l"]
   "move to the next pane"
   (fn [&]

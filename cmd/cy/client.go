@@ -171,13 +171,8 @@ func poll(conn cy.Connection) error {
 
 func connect(socketPath string) (cy.Connection, error) {
 	// mimics client_connect() in tmux's client.c
-	var lock *os.File = nil
-
-	defer func() {
-		if lock != nil {
-			lock.Close()
-		}
-	}()
+	var lockFd *os.File
+	var lockPath string
 
 	locked := false
 	for {
@@ -192,13 +187,14 @@ func connect(socketPath string) (cy.Connection, error) {
 		}
 
 		if !locked {
-			lock, err = getLock(socketPath)
+			lockPath = getLockPath(socketPath)
+			lockFd, err = getLock(lockPath)
 			if err != nil {
 				if err == ErrorLockFailed {
 					continue
 				}
 
-				lock = nil
+				lockFd = nil
 
 				return nil, err
 			}
@@ -216,6 +212,11 @@ func connect(socketPath string) (cy.Connection, error) {
 
 		if err := os.Remove(socketPath); err != nil && !strings.Contains(err.Error(), ENOENT) {
 			return nil, err
+		}
+
+		if lockFd != nil {
+			lockFd.Close()
+			os.Remove(lockPath)
 		}
 
 		// Now we can start the server

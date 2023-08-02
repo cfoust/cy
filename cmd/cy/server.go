@@ -16,9 +16,11 @@ import (
 
 var ErrorLockFailed = fmt.Errorf("failed to lock file")
 
-func getLock(socketPath string) (*os.File, error) {
-	lockPath := socketPath + ".lock"
+func getLockPath(socketPath string) string {
+	return socketPath + ".lock"
+}
 
+func getLock(lockPath string) (*os.File, error) {
 	fd, err := os.OpenFile(lockPath, os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		return nil, err
