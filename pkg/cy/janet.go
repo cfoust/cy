@@ -51,7 +51,15 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 	callbacks := map[string]interface{}{
 		"cy/kill-server": func() {
-			c.Cancel()
+			c.Shutdown()
+		},
+		"cy/detach": func(user interface{}) {
+			client, ok := user.(*Client)
+			if !ok {
+				return
+			}
+
+			client.Detach("detached")
 		},
 		"log": func(text string) {
 			c.log.Info().Msgf(text)

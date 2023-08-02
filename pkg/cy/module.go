@@ -53,6 +53,21 @@ func (c *Cy) findInitialPane() tree.Node {
 	return leaves[0]
 }
 
+func (c *Cy) Shutdown() error {
+	c.RLock()
+	defer c.RUnlock()
+	for _, client := range c.clients {
+		err := client.Detach("server went away")
+		if err != nil {
+			return err
+		}
+	}
+
+	c.Cancel()
+
+	return nil
+}
+
 func Start(ctx context.Context, configFile string) (*Cy, error) {
 	tree := tree.NewTree()
 

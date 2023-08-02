@@ -75,6 +75,12 @@
     (cy/kill-server)))
 
 (key/bind
+  [prefix "d"]
+  "detach from the cy server"
+  (fn [&]
+    (cy/detach)))
+
+(key/bind
   ["ctrl+l"]
   "move to the next pane"
   (fn [&]

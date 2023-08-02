@@ -166,8 +166,11 @@ func poll(conn cy.Connection) error {
 				return packet.Error
 			}
 
-			if msg, ok := packet.Contents.(*P.OutputMessage); ok {
+			switch msg := packet.Contents.(type) {
+			case *P.OutputMessage:
 				os.Stdout.Write(msg.Data)
+			case *P.CloseMessage:
+				return nil
 			}
 		}
 	}

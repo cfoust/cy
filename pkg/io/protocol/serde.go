@@ -31,6 +31,8 @@ func Decode(data []byte) (Message, error) {
 		msg = &OutputMessage{}
 	case MessageTypeSize:
 		msg = &SizeMessage{}
+	case MessageTypeClose:
+		msg = &CloseMessage{}
 	default:
 		return nil, fmt.Errorf("invalid type: %d", type_)
 	}

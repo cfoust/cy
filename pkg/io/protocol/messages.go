@@ -14,6 +14,7 @@ const (
 	MessageTypeSize
 	MessageTypeInput
 	MessageTypeOutput
+	MessageTypeClose
 )
 
 type Message interface {
@@ -33,6 +34,13 @@ func (i InputMessage) Type() MessageType { return MessageTypeInput }
 type OutputMessage DataMessage
 
 func (i OutputMessage) Type() MessageType { return MessageTypeOutput }
+
+// A message indicating the connection is complete.
+type CloseMessage struct {
+	Reason string
+}
+
+func (i CloseMessage) Type() MessageType { return MessageTypeClose }
 
 // Used when the client terminal is resized.
 type SizeMessage struct {

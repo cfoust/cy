@@ -300,6 +300,17 @@ func (c *Client) Attach(node tree.Node) error {
 	return nil
 }
 
+func (c *Client) Detach(reason string) error {
+	err := c.conn.Send(P.CloseMessage{
+		Reason: reason,
+	})
+	if err != nil {
+		return err
+	}
+
+	return c.conn.Close()
+}
+
 func (c *Cy) HandleWSClient(conn ws.Client[P.Message]) {
 	c.addClient(conn)
 	<-conn.Ctx().Done()
