@@ -18,7 +18,12 @@ func (c *Cyform) Init(start image.Image) {
 }
 
 func (c *Cyform) Update(delta time.Duration) image.Image {
-	end := 'a' + int32(delta*25)
+	elapsed := delta.Seconds()
+	if elapsed > 1.0 {
+		return c.start
+	}
+
+	end := 'a' + int32(elapsed*25)
 	mapping := make(map[rune]rune)
 	for i := 'a'; i < end; i++ {
 		target := 'c'
