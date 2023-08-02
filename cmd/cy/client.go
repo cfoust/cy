@@ -77,13 +77,11 @@ if ((s = getenv("VISUAL")) != NULL || (s = getenv("EDITOR")) != NULL) {
 }
 **/
 
-func buildHandshake() (*P.HandshakeMessage, error) {
+func buildHandshake(profile termenv.Profile) (*P.HandshakeMessage, error) {
 	columns, rows, err := term.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
 		return nil, err
 	}
-
-	output := termenv.NewOutput(os.Stdout)
 
 	return &P.HandshakeMessage{
 		TERM:   os.Getenv("TERM"),
@@ -93,12 +91,14 @@ func buildHandshake() (*P.HandshakeMessage, error) {
 			R: rows,
 			C: columns,
 		},
-		Profile: output.Profile,
+		Profile: profile,
 	}, nil
 }
 
 func poll(conn cy.Connection) error {
-	handshake, err := buildHandshake()
+	output := termenv.NewOutput(os.Stdout)
+
+	handshake, err := buildHandshake(output.Profile)
 	if err != nil {
 		return err
 	}
@@ -109,11 +109,15 @@ func poll(conn cy.Connection) error {
 		conn: conn,
 	}
 
+	output.AltScreen()
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		return err
 	}
-	defer term.Restore(int(os.Stdin.Fd()), oldState)
+	defer func() {
+		output.ExitAltScreen()
+		term.Restore(int(os.Stdin.Fd()), oldState)
+	}()
 
 	go func() { _, _ = io.Copy(&writer, os.Stdin) }()
 
