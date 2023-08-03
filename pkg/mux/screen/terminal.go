@@ -80,7 +80,7 @@ func (t *Terminal) poll(ctx context.Context) error {
 
 func NewTerminal(ctx context.Context, stream Stream, size Size) *Terminal {
 	terminal := &Terminal{
-		terminal: emu.New(emu.WithSize(size)),
+		terminal: emu.New(emu.WithWriter(stream), emu.WithSize(size)),
 		changes:  mux.NewPublisher(),
 		stream:   stream,
 	}
