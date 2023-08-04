@@ -95,6 +95,8 @@ func (c *Compositor) Depends(ctx context.Context, screens ...mux.Screen) {
 	for _, screen := range screens {
 		go func(screen Screen) {
 			updates := screen.Updates()
+			defer updates.Done()
+
 			for {
 				select {
 				case <-updates.Recv():

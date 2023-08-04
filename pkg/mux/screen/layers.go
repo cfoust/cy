@@ -101,6 +101,7 @@ func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool
 
 	go func() {
 		updates := layer.Updates()
+		defer updates.Done()
 		for {
 			select {
 			case <-layer.Ctx().Done():

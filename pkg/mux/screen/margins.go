@@ -130,6 +130,8 @@ func (l *Margins) Size() Size {
 
 func (l *Margins) poll(ctx context.Context) {
 	updates := l.screen.Updates()
+	defer updates.Done()
+
 	for {
 		select {
 		case <-ctx.Done():
