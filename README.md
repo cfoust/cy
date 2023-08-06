@@ -30,8 +30,6 @@ The `cy` project has a few main goals:
 ## Roadmap
 
 * [ ] **Usability**
-    * [X] Attaching, detaching, killing the server
-    * [ ] Copy mode
 * [ ] **Development**
     * [ ] Implement [oakthree](https://github.com/cfoust/tmux-oakthree)
         * [ ] Allow users to kill parts of the tree
