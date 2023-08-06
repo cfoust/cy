@@ -81,7 +81,7 @@ type model struct {
 	offset    int
 	maxOffset int
 	history   int
-	width     int
+	size      Size
 }
 
 var _ tea.Model = (*model)(nil)
@@ -106,8 +106,11 @@ func (m *model) quit() (tea.Model, tea.Cmd) {
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.maxOffset = getMaxOffset(msg.Height, m.history)
+		m.size = Size{
+			R: msg.Height,
+			C: msg.Width,
+		}
+		m.maxOffset = getMaxOffset(m.size.R, m.history)
 		m.setOffset(m.offset) // trigger clamp
 		return m, nil
 	case tea.KeyMsg:
@@ -116,19 +119,23 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case "q":
 				return m.quit()
+			case "j":
+				m.setOffset(m.offset + 1)
+			case "k":
+				m.setOffset(m.offset - 1)
 			}
 		case tea.KeyEsc, tea.KeyCtrlC:
 			return m.quit()
-		case tea.KeyUp, tea.KeyCtrlK:
+		case tea.KeyUp:
 			m.setOffset(m.offset - 1)
 			return m, nil
-		case tea.KeyDown, tea.KeyCtrlJ:
+		case tea.KeyDown:
 			m.setOffset(m.offset + 1)
 			return m, nil
 		case tea.KeyCtrlU:
-			m.setOffset(m.offset - (m.maxOffset / 2))
+			m.setOffset(m.offset - (m.size.R / 2))
 		case tea.KeyCtrlD:
-			m.setOffset(m.offset + (m.maxOffset / 2))
+			m.setOffset(m.offset + (m.size.R / 2))
 			return m, nil
 		}
 	}
@@ -139,7 +146,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *model) View() string {
 	basic := m.renderer.NewStyle().
 		Foreground(lipgloss.Color("#D5CCBA")).
-		Width(m.width).
+		Width(m.size.C).
 		Align(lipgloss.Right)
 
 	return basic.Render(fmt.Sprintf(
