@@ -83,8 +83,8 @@ type Glyph struct {
 func EmptyGlyph() Glyph {
 	return Glyph{
 		Char: ' ',
-		FG: DefaultFG,
-		BG: DefaultBG,
+		FG:   DefaultFG,
+		BG:   DefaultBG,
 	}
 }
 
@@ -494,12 +494,18 @@ func (t *State) scrollDown(orig, n int) {
 	// TODO: selection scroll
 }
 
+func copyLine(line Line) Line {
+	copied := make([]Glyph, len(line))
+	copy(copied, line)
+	return copied
+}
+
 func (t *State) scrollUp(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
 
 	if orig == 0 {
 		for i := 0; i < n; i++ {
-			t.history = append(t.history, t.lines[i])
+			t.history = append(t.history, copyLine(t.lines[i]))
 		}
 	}
 

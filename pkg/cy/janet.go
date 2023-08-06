@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -61,6 +62,41 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			client.Detach("detached")
 		},
+		"cy/copy-mode": func(user interface{}) {
+			client, ok := user.(*Client)
+			if !ok {
+				return
+			}
+
+			node := client.Node()
+			if node == nil {
+				return
+			}
+
+			pane, ok := node.(*tree.Pane)
+			if !ok {
+				return
+			}
+
+			term, ok := pane.Screen().(*screen.Terminal)
+			if !ok {
+				return
+			}
+
+			copyMode := screen.NewCopyMode(
+				ctx,
+				client.info,
+				term.History(),
+				geom.DEFAULT_SIZE,
+			)
+
+			client.layers.NewLayer(
+				copyMode.Ctx(),
+				copyMode,
+				true,
+				true,
+			)
+		},
 		"log": func(text string) {
 			c.log.Info().Msgf(text)
 		},
@@ -82,7 +118,6 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 			cursor := client.layers.State().Cursor
 			fuzzy := fuzzy.NewFuzzy(
 				ctx,
-				client.colorProfile,
 				client.info,
 				options,
 				geom.Vec2{

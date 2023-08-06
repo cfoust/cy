@@ -18,7 +18,6 @@ import (
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
 
-	"github.com/muesli/termenv"
 	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 	"github.com/xo/terminfo"
@@ -42,9 +41,8 @@ type Client struct {
 	layers    *screen.Layers
 	renderer  *stream.Renderer
 
-	raw          emu.Terminal
-	info         *terminfo.Terminfo
-	colorProfile termenv.Profile
+	raw  emu.Terminal
+	info screen.RenderContext
 }
 
 func (c *Cy) addClient(conn Connection) *Client {
@@ -206,8 +204,8 @@ func (c *Cy) removeClient(client *Client) {
 
 func (c *Client) clearScreen() {
 	buf := new(bytes.Buffer)
-	c.info.Fprintf(buf, terminfo.ClearScreen)
-	c.info.Fprintf(buf, terminfo.CursorHome)
+	c.info.Terminfo.Fprintf(buf, terminfo.ClearScreen)
+	c.info.Terminfo.Fprintf(buf, terminfo.CursorHome)
 	c.output(buf.Bytes())
 }
 
@@ -246,8 +244,11 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	if err != nil {
 		return err
 	}
-	c.info = info
-	c.colorProfile = handshake.Profile
+
+	c.info = screen.RenderContext{
+		Terminfo: info,
+		Colors:   handshake.Profile,
+	}
 
 	c.muxClient = c.cy.muxServer.AddClient(
 		c.Ctx(),

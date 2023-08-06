@@ -87,9 +87,6 @@ func (l *Layers) rerender() {
 }
 
 func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool, isOpaque bool) *Layer {
-	l.Lock()
-	defer l.Unlock()
-
 	layer := &Layer{
 		Lifetime:      util.NewLifetime(ctx),
 		Screen:        screen,
@@ -97,7 +94,9 @@ func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool
 		isOpaque:      isOpaque,
 	}
 
+	l.Lock()
 	l.layers = append(l.layers, layer)
+	l.Unlock()
 
 	go func() {
 		updates := layer.Updates()

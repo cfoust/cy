@@ -81,6 +81,12 @@
     (cy/detach)))
 
 (key/bind
+  [prefix "p"]
+  "enter copy mode"
+  (fn [&]
+    (cy/copy-mode)))
+
+(key/bind
   ["ctrl+l"]
   "move to the next pane"
   (fn [&]

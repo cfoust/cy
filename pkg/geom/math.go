@@ -36,6 +36,17 @@ func Min(first int, second int) int {
 	return second
 }
 
+func Clamp(value, min, max int) int {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+
+	return value
+}
+
 func AsUint16(val int) uint16 {
 	if val > math.MaxUint16 {
 		return math.MaxUint16

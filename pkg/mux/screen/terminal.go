@@ -21,6 +21,10 @@ func (t *Terminal) State() *tty.State {
 	return tty.Capture(t.terminal)
 }
 
+func (t *Terminal) History() []emu.Line {
+	return t.terminal.History()
+}
+
 func (t *Terminal) notifyChange() {
 	t.changes.Publish(t.State())
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/muesli/termenv"
 	"github.com/xo/terminfo"
 )
 
@@ -68,8 +67,7 @@ var _ Screen = (*Tea)(nil)
 func NewTea(
 	ctx context.Context,
 	model tea.Model,
-	profile termenv.Profile,
-	info *terminfo.Terminfo,
+	info RenderContext,
 	size Size,
 ) *Tea {
 	stream := newTeaStream(

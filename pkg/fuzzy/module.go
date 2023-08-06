@@ -13,7 +13,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
-	"github.com/xo/terminfo"
 )
 
 type Fuzzy struct {
@@ -45,8 +44,7 @@ func (f *Fuzzy) State() *tty.State {
 
 func NewFuzzy(
 	ctx context.Context,
-	profile termenv.Profile,
-	info *terminfo.Terminfo,
+	info screen.RenderContext,
 	options []Option,
 	location geom.Vec2,
 ) *Fuzzy {
@@ -61,7 +59,7 @@ func NewFuzzy(
 	ti.Prompt = ""
 
 	screen := screen.NewTea(
-		ctx,
+		lifetime.Ctx(),
 		model{
 			lifetime: &lifetime,
 			options:  options,
@@ -69,11 +67,10 @@ func NewFuzzy(
 			selected: 0,
 			renderer: lipgloss.NewRenderer(
 				nil,
-				termenv.WithProfile(profile),
+				termenv.WithProfile(info.Colors),
 			),
 			textInput: ti,
 		},
-		profile,
 		info,
 		geom.DEFAULT_SIZE,
 	)
