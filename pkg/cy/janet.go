@@ -90,7 +90,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 				geom.DEFAULT_SIZE,
 			)
 
-			client.layers.NewLayer(
+			client.innerLayers.NewLayer(
 				copyMode.Ctx(),
 				copyMode,
 				true,
@@ -115,7 +115,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 				return nil, err
 			}
 
-			cursor := client.layers.State().Cursor
+			cursor := client.outerLayers.State().Cursor
 			fuzzy := fuzzy.NewFuzzy(
 				ctx,
 				client.info,
@@ -126,19 +126,19 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 				},
 			)
 
-			client.layers.NewLayer(
+			client.outerLayers.NewLayer(
 				fuzzy.Ctx(),
 				anim.NewAnimator(
 					fuzzy.Ctx(),
 					&anim.Cyform{},
-					client.layers.State().Image,
+					client.outerLayers.State().Image,
 					23,
 				),
 				false,
 				true,
 			)
 
-			client.layers.NewLayer(
+			client.outerLayers.NewLayer(
 				fuzzy.Ctx(),
 				fuzzy,
 				true,

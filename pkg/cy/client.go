@@ -38,8 +38,13 @@ type Client struct {
 
 	muxClient *server.Client
 	margins   *screen.Margins
-	layers    *screen.Layers
-	renderer  *stream.Renderer
+	// Layers inside of the margins
+	// This is for rendering content that should obey the user's margin
+	// settings.
+	innerLayers *screen.Layers
+	// Layers outside of the margins
+	outerLayers *screen.Layers
+	renderer    *stream.Renderer
 
 	raw  emu.Terminal
 	info screen.RenderContext
@@ -256,10 +261,17 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		handshake.Size,
 	)
 
-	c.margins = screen.NewMargins(c.Ctx(), c.muxClient)
+	c.innerLayers = screen.NewLayers()
+	c.innerLayers.NewLayer(
+		c.Ctx(),
+		c.muxClient,
+		true,
+		true,
+	)
+	c.margins = screen.NewMargins(c.Ctx(), c.innerLayers)
 
-	c.layers = screen.NewLayers()
-	c.layers.NewLayer(
+	c.outerLayers = screen.NewLayers()
+	c.outerLayers.NewLayer(
 		c.Ctx(),
 		c.margins,
 		true,
@@ -267,7 +279,7 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	)
 
 	c.raw = emu.New(emu.WithSize(handshake.Size))
-	c.renderer = stream.NewRenderer(c.Ctx(), info, c.raw, c.layers)
+	c.renderer = stream.NewRenderer(c.Ctx(), info, c.raw, c.outerLayers)
 
 	go c.pollRender()
 
