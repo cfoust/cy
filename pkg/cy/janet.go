@@ -12,8 +12,6 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/util"
-
-	"github.com/rs/zerolog/log"
 )
 
 import _ "embed"
@@ -176,7 +174,6 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 			if !ok {
 				return
 			}
-			log.Info().Msgf("%+v", size)
 			client.margins.SetSize(size)
 		},
 	}

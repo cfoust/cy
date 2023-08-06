@@ -48,45 +48,6 @@
       (pane/attach))))
 
 (key/bind
-  [prefix "g"]
-  "toggle size"
-  (fn [&]
-    (def size (frame/size))
-    (case (+ (size 0) (size 1))
-      0 (frame/set-size [0 80])
-      (frame/set-size [0 0]))))
-
-(key/bind
-  [prefix "1"]
-  "set size to 80 columns"
-  (fn [&]
-    (frame/set-size [0 80])))
-
-(key/bind
-  [prefix "2"]
-  "set size to 160 columns"
-  (fn [&]
-    (frame/set-size [0 160])))
-
-(key/bind
-  [prefix "q"]
-  "kill the cy server"
-  (fn [&]
-    (cy/kill-server)))
-
-(key/bind
-  [prefix "d"]
-  "detach from the cy server"
-  (fn [&]
-    (cy/detach)))
-
-(key/bind
-  [prefix "p"]
-  "enter copy mode"
-  (fn [&]
-    (cy/copy-mode)))
-
-(key/bind
   ["ctrl+l"]
   "move to the next pane"
   (fn [&]
@@ -110,3 +71,56 @@
     (when (= 0 (length next-panes)) (break))
     (def [next] next-panes)
     (pane/attach next)))
+
+(key/bind
+  [prefix "g"]
+  "toggle size"
+  (fn [&]
+    (def size (frame/size))
+    (case (+ (size 0) (size 1))
+      0 (frame/set-size [0 80])
+      (frame/set-size [0 0]))))
+
+(key/bind
+  [prefix "1"]
+  "set size to 80 columns"
+  (fn [&]
+    (frame/set-size [0 80])))
+
+(key/bind
+  [prefix "2"]
+  "set size to 160 columns"
+  (fn [&]
+    (frame/set-size [0 160])))
+
+(key/bind
+  [prefix "+"]
+  "decrease margins by 5 columns"
+  (fn [&]
+    (def [lines cols] (frame/size))
+    (frame/set-size [lines (+ cols 10)])))
+
+(key/bind
+  [prefix "-"]
+  "increase margins by 5 columns"
+  (fn [&]
+    (def [lines cols] (frame/size))
+    (frame/set-size [lines (- cols 10)])))
+
+(key/bind
+  [prefix "q"]
+  "kill the cy server"
+  (fn [&]
+    (cy/kill-server)))
+
+(key/bind
+  [prefix "d"]
+  "detach from the cy server"
+  (fn [&]
+    (cy/detach)))
+
+(key/bind
+  [prefix "p"]
+  "enter copy mode"
+  (fn [&]
+    (cy/copy-mode)))

@@ -117,7 +117,10 @@ func (l *Margins) getInner(size Size) geom.Rect {
 func (l *Margins) SetSize(size Size) error {
 	l.Lock()
 	l.isMargins = false
-	l.size = size
+	l.size = Size{
+		R: geom.Max(0, size.R),
+		C: geom.Max(0, size.C),
+	}
 	l.Unlock()
 	return l.recalculate()
 }
