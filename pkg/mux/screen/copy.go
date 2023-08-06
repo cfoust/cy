@@ -136,7 +136,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.setOffset(m.offset - (m.size.R / 2))
 		case tea.KeyCtrlD:
 			m.setOffset(m.offset + (m.size.R / 2))
-			return m, nil
+		case tea.KeyCtrlB:
+			m.setOffset(m.offset - m.size.R)
+		case tea.KeyCtrlF:
+			m.setOffset(m.offset + m.size.R)
 		}
 	}
 
