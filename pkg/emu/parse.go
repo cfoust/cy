@@ -1,5 +1,9 @@
 package emu
 
+import (
+	"github.com/mattn/go-runewidth"
+)
+
 func isControlCode(c rune) bool {
 	return c < 0x20 || c == 0177
 }
@@ -23,9 +27,10 @@ func (t *State) parse(c rune) {
 		t.logln("insert mode not implemented")
 	}
 
+	w := runewidth.RuneWidth(c)
 	t.setChar(c, &t.cur.Attr, t.cur.X, t.cur.Y)
-	if t.cur.X+1 < t.cols {
-		t.moveTo(t.cur.X+1, t.cur.Y)
+	if t.cur.X+w < t.cols {
+		t.moveTo(t.cur.X+w, t.cur.Y)
 	} else {
 		t.cur.State |= cursorWrapNext
 	}

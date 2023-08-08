@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 
+	"github.com/mattn/go-runewidth"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -277,22 +278,32 @@ var gfxCharTable = [62]rune{
 }
 
 func (t *State) setChar(c rune, attr *Glyph, x, y int) {
+	w := runewidth.RuneWidth(c)
+
 	if attr.Mode&attrGfx != 0 {
 		if c >= 0x41 && c <= 0x7e && gfxCharTable[c-0x41] != 0 {
 			c = gfxCharTable[c-0x41]
 		}
 	}
+
 	t.changed |= ChangedScreen
 	t.dirty[y] = true
-	t.lines[y][x] = *attr
-	t.lines[y][x].Char = c
-	//if t.options.BrightBold && attr.Mode&attrBold != 0 && attr.FG < 8 {
-	if attr.Mode&attrBold != 0 && attr.FG < 8 {
-		t.lines[y][x].FG = attr.FG + 8
-	}
-	if attr.Mode&attrReverse != 0 {
-		t.lines[y][x].FG = attr.BG
-		t.lines[y][x].BG = attr.FG
+
+	for i := x; i < len(t.lines[y]) && i < x + w; i++ {
+		t.lines[y][i] = *attr
+		if i == x {
+			t.lines[y][i].Char = c
+		} else {
+			t.lines[y][i].Char = ' '
+		}
+		//if t.options.BrightBold && attr.Mode&attrBold != 0 && attr.FG < 8 {
+		if attr.Mode&attrBold != 0 && attr.FG < 8 {
+			t.lines[y][i].FG = attr.FG + 8
+		}
+		if attr.Mode&attrReverse != 0 {
+			t.lines[y][i].FG = attr.BG
+			t.lines[y][i].BG = attr.FG
+		}
 	}
 }
 
