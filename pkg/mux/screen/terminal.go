@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 
+	"github.com/cfoust/cy/pkg/bind/parse"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
@@ -46,7 +47,56 @@ func (t *Terminal) Resize(size Size) error {
 }
 
 func (t *Terminal) Write(data []byte) (n int, err error) {
-	return t.stream.Write(data)
+	mode := t.terminal.Mode()
+
+	input := make([]byte, 0)
+	var msg parse.Msg
+	for i, w := 0, 0; i < len(data); i += w {
+		w, msg = parse.DetectOneMsg(data[i:])
+		if msg == nil {
+			continue
+		}
+
+		if _, ok := msg.(parse.KeyMsg); ok {
+			input = append(
+				input,
+				data[i:i+w]...,
+			)
+			continue
+		}
+
+		mouse, ok := msg.(parse.MouseMsg)
+		if !ok {
+			continue
+		}
+
+		switch mode & emu.ModeMouseMask {
+		case emu.ModeMouseX10:
+			if mouse.Type != parse.MouseLeft {
+				continue
+			}
+
+			input = append(
+				input,
+				parse.MouseEvent(mouse).X10Bytes()...,
+			)
+			continue
+		case emu.ModeMouseButton:
+			// TODO(cfoust): 08/08/23 we should still report drag
+			if mouse.Type == parse.MouseMotion {
+				continue
+			}
+		case 0:
+			continue
+		}
+
+		input = append(
+			input,
+			data[i:i+w]...,
+		)
+	}
+
+	return t.stream.Write(input)
 }
 
 func (t *Terminal) poll(ctx context.Context) error {

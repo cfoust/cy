@@ -61,6 +61,12 @@ func (m MouseEvent) Bytes() []byte {
 	}
 }
 
+func (m MouseEvent) X10Bytes() []byte {
+	b := m.Bytes()
+	b[3] &= bitsLeft | bitsMiddle | bitsRight
+	return b
+}
+
 // String returns a string representation of a mouse event.
 func (m MouseEvent) String() (s string) {
 	if m.Ctrl {
