@@ -566,9 +566,13 @@ func readInputs(ctx context.Context, msgs chan<- Msg, input io.Reader) error {
 
 var unknownCSIRe = regexp.MustCompile(`^\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]`)
 
+func isMouseEvent(b []byte) bool {
+	return len(b) >= 6 && b[0] == '\x1b' && b[1] == '[' && b[2] == 'M'
+}
+
 func DetectOneMsg(b []byte) (w int, msg Msg) {
 	// Detect mouse events.
-	if len(b) >= 6 && b[0] == '\x1b' && b[1] == '[' && b[2] == 'M' {
+	if isMouseEvent(b) {
 		return 6, MouseMsg(parseX10MouseEvent(b))
 	}
 

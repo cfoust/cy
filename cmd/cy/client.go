@@ -110,12 +110,14 @@ func poll(conn cy.Connection) error {
 	}
 
 	output.AltScreen()
+	output.EnableMouseAllMotion()
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		return err
 	}
 	defer func() {
 		output.ExitAltScreen()
+		output.DisableMouseAllMotion()
 		term.Restore(int(os.Stdin.Fd()), oldState)
 	}()
 

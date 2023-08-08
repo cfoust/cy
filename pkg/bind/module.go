@@ -114,7 +114,15 @@ func (e *Engine[T]) getState() []string {
 }
 
 func (e *Engine[T]) processKey(ctx context.Context, in input) {
-	// TODO(cfoust): 06/29/23 MouseMsg
+	// Mouse messages have to be translated to match the pane, so we just
+	// pass them on
+	if _, ok := in.Message.(parse.MouseMsg); ok {
+		e.out <- RawEvent{
+			Data: in.Data,
+		}
+		return
+	}
+
 	key, ok := in.Message.(parse.KeyMsg)
 	if !ok {
 		return

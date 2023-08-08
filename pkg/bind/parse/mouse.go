@@ -20,6 +20,47 @@ type MouseEvent struct {
 	Ctrl bool
 }
 
+func (m MouseEvent) Bytes() []byte {
+	var flags byte = 0
+
+	switch m.Type {
+	case MouseWheelUp:
+		flags |= bitWheel
+		flags |= bitsWheelUp
+	case MouseWheelDown:
+		flags |= bitWheel
+		flags |= bitsWheelDown
+	case MouseLeft:
+		flags |= bitsLeft
+	case MouseMiddle:
+		flags |= bitsMiddle
+	case MouseRight:
+		flags |= bitsRight
+	case MouseMotion, MouseRelease:
+		flags |= bitsRelease
+		if m.Type == MouseMotion {
+			flags |= bitMotion
+		}
+	}
+
+	if m.Alt {
+		flags |= bitAlt
+	}
+
+	if m.Ctrl {
+		flags |= bitCtrl
+	}
+
+	return []byte{
+		'\x1b',
+		'[',
+		'M',
+		flags,
+		byte(m.X) + byteOffset + 1,
+		byte(m.Y) + byteOffset + 1,
+	}
+}
+
 // String returns a string representation of a mouse event.
 func (m MouseEvent) String() (s string) {
 	if m.Ctrl {
@@ -58,6 +99,26 @@ var mouseEventTypes = map[MouseEventType]string{
 	MouseMotion:    "motion",
 }
 
+const (
+	byteOffset = 32
+
+	bitShift  = 0b0000_0100
+	bitAlt    = 0b0000_1000
+	bitCtrl   = 0b0001_0000
+	bitMotion = 0b0010_0000
+	bitWheel  = 0b0100_0000
+
+	bitsMask = 0b0000_0011
+
+	bitsLeft    = 0b0000_0000
+	bitsMiddle  = 0b0000_0001
+	bitsRight   = 0b0000_0010
+	bitsRelease = 0b0000_0011
+
+	bitsWheelUp   = 0b0000_0000
+	bitsWheelDown = 0b0000_0001
+)
+
 // Parse X10-encoded mouse events; the simplest kind. The last release of X10
 // was December 1986, by the way.
 //
@@ -69,26 +130,7 @@ var mouseEventTypes = map[MouseEventType]string{
 func parseX10MouseEvent(buf []byte) MouseEvent {
 	v := buf[3:6]
 	var m MouseEvent
-	const byteOffset = 32
 	e := v[0] - byteOffset
-
-	const (
-		bitShift  = 0b0000_0100
-		bitAlt    = 0b0000_1000
-		bitCtrl   = 0b0001_0000
-		bitMotion = 0b0010_0000
-		bitWheel  = 0b0100_0000
-
-		bitsMask = 0b0000_0011
-
-		bitsLeft    = 0b0000_0000
-		bitsMiddle  = 0b0000_0001
-		bitsRight   = 0b0000_0010
-		bitsRelease = 0b0000_0011
-
-		bitsWheelUp   = 0b0000_0000
-		bitsWheelDown = 0b0000_0001
-	)
 
 	if e&bitWheel != 0 {
 		// Check the low two bits.
@@ -129,4 +171,21 @@ func parseX10MouseEvent(buf []byte) MouseEvent {
 	m.Y = int(v[2]) - byteOffset - 1
 
 	return m
+}
+
+// TranslateMouseEvents translates all mouse events in-place by [dx, dy].
+func TranslateMouseEvents(data []byte, dx, dy int) {
+	for i := 0; i < len(data); i++ {
+		slice := data[i:]
+		if !isMouseEvent(slice) {
+			continue
+		}
+
+		e := parseX10MouseEvent(slice)
+		e.X += dx
+		e.Y += dy
+		b := e.Bytes()
+		data[i+4] = b[4]
+		data[i+5] = b[5]
+	}
 }
