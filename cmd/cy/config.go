@@ -26,7 +26,11 @@ func findConfig() (result string, found bool) {
 	}
 
 	if home, ok := os.LookupEnv("HOME"); ok {
-		roots = append(roots, home)
+		roots = append(
+			roots,
+			home,
+			filepath.Join(home, ".config"),
+		)
 	}
 
 	for _, root := range roots {
