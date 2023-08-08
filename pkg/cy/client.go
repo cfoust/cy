@@ -237,6 +237,7 @@ func (c *Client) closeError(reason error) error {
 }
 
 func (c *Client) Resize(size geom.Vec2) {
+	c.clearScreen()
 	c.muxClient.Resize(size)
 	c.renderer.Resize(size)
 }
