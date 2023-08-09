@@ -289,7 +289,7 @@ func (t *State) setChar(c rune, attr *Glyph, x, y int) {
 	t.changed |= ChangedScreen
 	t.dirty[y] = true
 
-	for i := x; i < len(t.lines[y]) && i < x + w; i++ {
+	for i := x; i < len(t.lines[y]) && i < x+w; i++ {
 		t.lines[y][i] = *attr
 		if i == x {
 			t.lines[y][i].Char = c
@@ -494,6 +494,7 @@ func between(val, min, max int) bool {
 
 func (t *State) scrollDown(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
+
 	t.clear(0, t.bottom-n+1, t.cols-1, t.bottom)
 	t.changed |= ChangedScreen
 	for i := t.bottom; i >= orig+n; i-- {
@@ -502,7 +503,23 @@ func (t *State) scrollDown(orig, n int) {
 		t.dirty[i-n] = true
 	}
 
-	// TODO: selection scroll
+	if orig != 0 {
+		return
+	}
+
+	// Bring lines back from the scrollback buffer rather than using empty ones
+	if len(t.history) < n {
+		return
+	}
+
+	offset := len(t.history)-n
+	newLines := t.history[offset:]
+	for row := 0; row < n; row++ {
+		for col := 0; col < len(t.lines[row]) && col < len(newLines[row]); col++ {
+			t.lines[row][col] = newLines[row][col]
+		}
+		t.history = t.history[:offset]
+	}
 }
 
 func copyLine(line Line) Line {
