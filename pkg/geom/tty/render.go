@@ -103,10 +103,10 @@ func Swap(
 	data.Write(swapImage(info, dst.Image, src.Image))
 
 	// TODO(cfoust): 05/19/23 cursor mode?
-	info.Fprintf(data, terminfo.CursorAddress, src.Cursor.Y, src.Cursor.X)
+	cursor := src.Cursor
+	info.Fprintf(data, terminfo.CursorAddress, cursor.Y, cursor.X)
 
 	// This is wasteful, we shouldn't have to include this on every frame
-	// TODO(cfoust): 07/20/23 why is our top-level cursor state wrong initially?
 	if src.CursorVisible {
 		info.Fprintf(data, terminfo.CursorVisible)
 	} else {

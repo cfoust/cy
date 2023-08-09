@@ -181,6 +181,7 @@ func (t *State) handleCSI() {
 		t.saveCursor()
 	case 'u': // DECRC - restore cursor position (ANSI.SYS)
 		t.restoreCursor()
+	case '0', '1', '2', '3', '4', '5', '6':
 	}
 	return
 unknown: // TODO: get rid of this goto

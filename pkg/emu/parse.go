@@ -1,6 +1,7 @@
 package emu
 
 import (
+	"fmt"
 	"github.com/mattn/go-runewidth"
 )
 
@@ -206,3 +207,36 @@ func (t *State) handleControlCodes(c rune) bool {
 	}
 	return true
 }
+
+func (t *State) Print(r rune) {
+	fmt.Printf("[Print] %c\n", r)
+}
+
+func (t *State) Execute(b byte) {
+	fmt.Printf("[Execute] %02x\n", b)
+}
+
+func (t *State) Put(b byte) {
+	fmt.Printf("[Put] %02x\n", b)
+}
+
+func (t *State) Unhook() {
+	fmt.Printf("[Unhook]\n")
+}
+
+func (t *State) Hook(params []int64, intermediates []byte, ignore bool, r rune) {
+	fmt.Printf("[Hook] params=%v, intermediates=%v, ignore=%v, r=%v\n", params, intermediates, ignore, r)
+}
+
+func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
+	fmt.Printf("[OscDispatch] params=%v, bellTerminated=%v\n", params, bellTerminated)
+}
+
+func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r rune) {
+	fmt.Printf("[CsiDispatch] params=%v, intermediates=%v, ignore=%v, r=%v\n", params, intermediates, ignore, r)
+}
+
+func (t *State) EscDispatch(intermediates []byte, ignore bool, b byte) {
+	fmt.Printf("[EscDispatch] intermediates=%v, ignore=%v, byte=%02x\n", intermediates, ignore, b)
+}
+

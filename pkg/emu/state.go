@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 
+	"github.com/danielgatis/go-vte/vtparser"
 	"github.com/mattn/go-runewidth"
 	"github.com/sasha-s/go-deadlock"
 )
@@ -132,13 +133,28 @@ type State struct {
 	tabs          []bool
 	title         string
 	colorOverride map[Color]Color
+
+	parser *vtparser.Parser
 }
 
 func newState(w io.Writer) *State {
-	return &State{
+	t := &State{
 		w:             w,
 		colorOverride: make(map[Color]Color),
 	}
+
+	t.parser = vtparser.New(
+		t.Print,
+		t.Execute,
+		t.Put,
+		t.Unhook,
+		t.Hook,
+		t.OscDispatch,
+		t.CsiDispatch,
+		t.EscDispatch,
+	)
+
+	return t
 }
 
 func (t *State) logf(format string, args ...interface{}) {
@@ -512,7 +528,7 @@ func (t *State) scrollDown(orig, n int) {
 		return
 	}
 
-	offset := len(t.history)-n
+	offset := len(t.history) - n
 	newLines := t.history[offset:]
 	for row := 0; row < n; row++ {
 		for col := 0; col < len(t.lines[row]) && col < len(newLines[row]); col++ {
