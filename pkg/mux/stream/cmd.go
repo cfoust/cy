@@ -96,6 +96,11 @@ func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 	go func() {
 		cmd := exec.CommandContext(ctx, options.Command, options.Args...)
 		cmd.Dir = options.Directory
+		cmd.Env = append(
+			os.Environ(),
+			// TODO(cfoust): 08/08/23 this is complicated
+			"TERM=xterm-256color",
+		)
 
 		fd, err := pty.StartWithSize(
 			cmd,
