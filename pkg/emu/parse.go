@@ -38,19 +38,24 @@ func (t *State) Execute(b byte) {
 }
 
 func (t *State) Put(b byte) {
-	fmt.Printf("[Put] %02x\n", b)
+	// TODO(cfoust): 08/10/23
+	//fmt.Printf("[Put] %02x\n", b)
 }
 
 func (t *State) Unhook() {
-	fmt.Printf("[Unhook]\n")
+	// TODO(cfoust): 08/10/23
+	//fmt.Printf("[Unhook]\n")
 }
 
 func (t *State) Hook(params []int64, intermediates []byte, ignore bool, r rune) {
-	fmt.Printf("[Hook] params=%v, intermediates=%v, ignore=%v, r=%v\n", params, intermediates, ignore, r)
+	// TODO(cfoust): 08/10/23
+	//fmt.Printf("[Hook] params=%v, intermediates=%v, ignore=%v, r=%v\n", params, intermediates, ignore, r)
 }
 
 func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
-	fmt.Printf("[OscDispatch] params=%v, bellTerminated=%v\n", params, bellTerminated)
+	// TODO(cfoust): 08/10/23 do we care about operating system commands?
+	// I can only find one reference to them here: https://vt100.net/docs/vt510-rm/chapter4.html
+	//fmt.Printf("[OscDispatch] params=%v, bellTerminated=%v\n", params, bellTerminated)
 }
 
 func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r rune) {
