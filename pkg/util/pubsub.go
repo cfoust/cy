@@ -17,10 +17,12 @@ func NewPublisher[T any]() *Publisher[T] {
 
 func (t *Publisher[T]) Publish(value T) {
 	t.mutex.Lock()
-	for subscriber := range t.subscribers {
+	subscribers := t.subscribers
+	t.mutex.Unlock()
+
+	for subscriber := range subscribers {
 		subscriber <- value
 	}
-	t.mutex.Unlock()
 }
 
 type Subscriber[T any] struct {
