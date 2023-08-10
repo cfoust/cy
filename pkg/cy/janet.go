@@ -128,7 +128,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 				fuzzy.Ctx(),
 				anim.NewAnimator(
 					fuzzy.Ctx(),
-					&anim.Cyform{},
+					anim.Random(),
 					client.outerLayers.State().Image,
 					23,
 				),

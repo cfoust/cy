@@ -3,6 +3,7 @@ package anim
 import (
 	"context"
 	"time"
+	"math/rand"
 
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -65,4 +66,13 @@ func NewAnimator(
 	go a.poll(ctx, fps)
 
 	return a
+}
+
+func Random() Animation {
+	anims := []Animation{
+		&Midjo{},
+		&Cyform{},
+	}
+
+	return anims[rand.Int() % len(anims)]
 }
