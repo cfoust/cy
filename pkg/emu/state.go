@@ -102,8 +102,8 @@ func (l Line) String() (str string) {
 
 type CursorStyle int
 const (
-	CursorStyleBlock CursorStyle = 1
-	CursorStyleBlinkBlock
+	CursorStyleBlock CursorStyle = iota
+	CursorStyleSteadyBlock
 	CursorStyleUnderline
 	CursorStyleBlinkUnderline
 	CursorStyleBar

@@ -377,7 +377,7 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 		style := CursorStyleBlock
 		switch c.arg(0, 0) {
 		case 2:
-			style = CursorStyleBlinkBlock
+			style = CursorStyleSteadyBlock
 		case 3:
 			style = CursorStyleUnderline
 		case 4:

@@ -102,9 +102,16 @@ func Swap(
 	data := new(bytes.Buffer)
 	data.Write(swapImage(info, dst.Image, src.Image))
 
-	// TODO(cfoust): 05/19/23 cursor mode?
-	cursor := src.Cursor
-	info.Fprintf(data, terminfo.CursorAddress, cursor.Y, cursor.X)
+	dstCursor := dst.Cursor
+	srcCursor := src.Cursor
+
+	// TODO(cfoust): 08/09/23 debug
+	//if dstCursor.X != srcCursor.X || dstCursor.Y != srcCursor.Y {
+	info.Fprintf(data, terminfo.CursorAddress, srcCursor.Y, srcCursor.X)
+
+	if dstCursor.Style != srcCursor.Style {
+		fmt.Fprintf(data, "\x1b[%d q", int(srcCursor.Style)+1)
+	}
 
 	// This is wasteful, we shouldn't have to include this on every frame
 	if src.CursorVisible {
