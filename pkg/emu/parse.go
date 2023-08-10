@@ -257,7 +257,7 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 	c := csiEscape{
 		args: args,
 		mode: byte(r),
-		priv: ignore,
+		priv: len(intermediates) > 0 && intermediates[0] == '?',
 	}
 
 	switch c.mode {
@@ -388,6 +388,7 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 			style = CursorStyleBlinkBar
 		}
 		t.cur.Style = style
+	case 't': // XTWINOPS - window manipulation (ignored)
 	case '0', '1', '2', '3', '4', '5', '6':
 	}
 	return
