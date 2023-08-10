@@ -101,6 +101,7 @@ func (l Line) String() (str string) {
 }
 
 type CursorStyle int
+
 const (
 	CursorStyleBlock CursorStyle = iota
 	CursorStyleSteadyBlock
@@ -530,7 +531,7 @@ func (t *State) scrollDown(orig, n int) {
 		t.dirty[i-n] = true
 	}
 
-	if orig != 0 {
+	if orig != 0 || (t.mode&ModeAltScreen) != 0 {
 		return
 	}
 
@@ -558,7 +559,7 @@ func copyLine(line Line) Line {
 func (t *State) scrollUp(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
 
-	if orig == 0 {
+	if orig == 0 && (t.mode&ModeAltScreen) == 0 {
 		for i := 0; i < n; i++ {
 			t.history = append(t.history, copyLine(t.lines[i]))
 		}
