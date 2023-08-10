@@ -100,10 +100,21 @@ func (l Line) String() (str string) {
 	return str
 }
 
+type CursorStyle int
+const (
+	CursorStyleBlock CursorStyle = 1
+	CursorStyleBlinkBlock
+	CursorStyleUnderline
+	CursorStyleBlinkUnderline
+	CursorStyleBar
+	CursorStyleBlinkBar
+)
+
 type Cursor struct {
 	Attr  Glyph
 	X, Y  int
 	State uint8
+	Style CursorStyle
 }
 
 type parseState func(c rune)
