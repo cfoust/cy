@@ -105,7 +105,7 @@ func (c *Client) pollEvents() {
 						c.Ctx(),
 						c,
 					)
-					if err != nil {
+					if err != nil && err != context.Canceled {
 						log.Error().Err(err).Msgf("failed to run callback")
 					}
 				}()

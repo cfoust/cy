@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"net/http"
 
 	"github.com/rs/zerolog/log"
 	"github.com/sevlyar/go-daemon"
@@ -24,7 +25,7 @@ func main() {
 
 	if daemon.WasReborn() {
 		err := serve(socketPath)
-		if err != nil {
+		if err != nil && err != http.ErrServerClosed {
 			log.Panic().Err(err).Msg("failed to start cy")
 		}
 		return
