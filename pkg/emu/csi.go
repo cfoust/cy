@@ -10,6 +10,7 @@ import (
 type csiEscape struct {
 	buf  []byte
 	args []int
+	intermediates []byte
 	mode byte
 	priv bool
 }
@@ -54,10 +55,17 @@ func (c *csiEscape) parse() {
 }
 
 func (c *csiEscape) arg(i, def int) int {
-	if i >= len(c.args) || i < 0 || (len(c.args) >= 1 && i == 0 && c.args[0] == 0) {
+	if i >= len(c.args) || i < 0 {
 		return def
 	}
 	return c.args[i]
+}
+
+func (c *csiEscape) intermediate(i int, def byte) byte {
+	if i >= len(c.intermediates) || i < 0 {
+		return def
+	}
+	return c.intermediates[i]
 }
 
 // maxarg takes the maximum of arg(i, def) and def

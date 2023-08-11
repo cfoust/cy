@@ -70,10 +70,10 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 	}
 
 	c := csiEscape{
-		args: args,
+		args:          args,
 		intermediates: intermediates,
-		mode: byte(r),
-		priv: len(intermediates) > 0 && intermediates[0] == '?',
+		mode:          byte(r),
+		priv:          len(intermediates) > 0 && intermediates[0] == '?',
 	}
 
 	// when in doubt, see https://invisible-island.net/xterm/ctlseqs/ctlseqs.html

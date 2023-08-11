@@ -1,8 +1,8 @@
 package main
 
 import (
-	"os"
 	"net/http"
+	"os"
 
 	"github.com/rs/zerolog/log"
 	"github.com/sevlyar/go-daemon"
