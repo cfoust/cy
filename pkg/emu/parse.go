@@ -64,6 +64,11 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 		args = append(args, int(arg))
 	}
 
+	// go-vte returns _always_ returns a params array (unnecessarily)
+	if len(args) == 1 && args[0] == 0 {
+		args = make([]int, 0)
+	}
+
 	c := csiEscape{
 		args: args,
 		mode: byte(r),
@@ -164,7 +169,10 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 	case 'h': // SM - set terminal mode
 		t.setMode(c.priv, true, c.args)
 	case 'm': // SGR - terminal attribute (color)
-		t.setAttr(c.args)
+		// TODO(cfoust): 08/10/23 vim emits ESC]>4;2m sometimes, what does >4 mean?
+		if len(intermediates) == 0 {
+			t.setAttr(c.args)
+		}
 	case 'n':
 		switch c.arg(0, 0) {
 		case 5: // DSR - device status report
