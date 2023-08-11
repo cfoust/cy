@@ -13,6 +13,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 )
 
 type CopyMode struct {
@@ -174,6 +175,10 @@ func New(
 		offset:    maxOffset,
 		maxOffset: maxOffset,
 		history:   len(history),
+		renderer: lipgloss.NewRenderer(
+			nil,
+			termenv.WithProfile(info.Colors),
+		),
 	}
 
 	overlay := screen.NewTea(

@@ -14,6 +14,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -176,9 +177,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *model) View() string {
+	width := m.size.C
+
 	basic := m.renderer.NewStyle().
 		Foreground(lipgloss.Color("#D5CCBA")).
-		Width(m.size.C).
+		Width(width).
 		Align(lipgloss.Right)
 
 	index := m.index
@@ -187,8 +190,37 @@ func (m *model) View() string {
 	}
 
 	event := m.events[index]
+	stamp := basic.Render(event.Stamp.Format(time.RFC1123))
 
-	return basic.Render(event.Stamp.Format(time.RFC1123))
+	statusBarStyle := m.renderer.NewStyle().
+		Foreground(lipgloss.AdaptiveColor{Light: "#343433", Dark: "#C1C6B2"}).
+		Background(lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#353533"})
+
+	statusText := m.renderer.NewStyle().Inherit(statusBarStyle)
+
+	statusKey := m.renderer.NewStyle().
+		Inherit(statusBarStyle).
+		Foreground(lipgloss.Color("#FFFDF5")).
+		Background(lipgloss.Color("#FF5F87")).
+		Padding(0, 1).
+		MarginRight(1).
+		Render("⏵")
+
+	bar := statusText.Copy().
+		Width(width - lipgloss.Width(statusKey)).
+		Render("test")
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		stamp,
+		lipgloss.Place(
+			m.size.C,
+			m.size.R-1,
+			lipgloss.Left,
+			lipgloss.Bottom,
+			lipgloss.JoinHorizontal(lipgloss.Top, statusKey, bar),
+		),
+	)
 }
 
 func New(
@@ -203,6 +235,10 @@ func New(
 	m := &model{
 		lifetime: &lifetime,
 		events:   events,
+		renderer: lipgloss.NewRenderer(
+			nil,
+			termenv.WithProfile(info.Colors),
+		),
 	}
 
 	overlay := screen.NewTea(
