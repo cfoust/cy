@@ -71,10 +71,12 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 
 	c := csiEscape{
 		args: args,
+		intermediates: intermediates,
 		mode: byte(r),
 		priv: len(intermediates) > 0 && intermediates[0] == '?',
 	}
 
+	// when in doubt, see https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 	switch c.mode {
 	default:
 		goto unknown
@@ -169,8 +171,10 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 	case 'h': // SM - set terminal mode
 		t.setMode(c.priv, true, c.args)
 	case 'm': // SGR - terminal attribute (color)
-		// TODO(cfoust): 08/10/23 vim emits ESC]>4;2m sometimes, what does >4 mean?
-		if len(intermediates) == 0 {
+		switch c.intermediate(0, 0) {
+		case '>': // XTMODKEYS
+		case '?': // XTQMODKEYS
+		default:
 			t.setAttr(c.args)
 		}
 	case 'n':
