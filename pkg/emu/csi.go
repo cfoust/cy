@@ -54,7 +54,7 @@ func (c *csiEscape) parse() {
 }
 
 func (c *csiEscape) arg(i, def int) int {
-	if i >= len(c.args) || i < 0 {
+	if i >= len(c.args) || i < 0 || (len(c.args) >= 1 && i == 0 && c.args[0] == 0) {
 		return def
 	}
 	return c.args[i]
