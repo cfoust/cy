@@ -2,10 +2,11 @@ package replay
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/stream"
@@ -35,8 +36,8 @@ var _ screen.Screen = (*Replay)(nil)
 
 // Move the terminal from event index `from` to `to`.
 func (c *Replay) update(from, to int) {
-	from = geom.Clamp(from, 0, len(c.events) - 1)
-	to = geom.Clamp(to, 0, len(c.events) - 1)
+	from = geom.Clamp(from, 0, len(c.events)-1)
+	to = geom.Clamp(to, 0, len(c.events)-1)
 
 	if from == to {
 		return
@@ -79,17 +80,24 @@ func (c *Replay) Render(size screen.Size) *tty.State {
 	out := tty.New(size)
 	out.CursorVisible = false
 
+	// TODO(cfoust): 08/10/23 indicate smaller/bigger size somehow
 	for row := 0; row < size.R && row < stateSize.R; row++ {
 		for col := 0; col < size.C && col < stateSize.C; col++ {
 			out.Image[row][col] = state.Image[row][col]
 		}
 	}
 
+	image.Compose(geom.Vec2{}, out.Image, c.overlay.State().Image)
+
+	out.Cursor = state.Cursor
+
 	return out
 }
 
 func (c *Replay) Write(data []byte) (n int, err error) {
-	return c.overlay.Write(data)
+	n, err = c.overlay.Write(data)
+	c.Rerender()
+	return
 }
 
 func (c *Replay) poll(ctx context.Context) {
@@ -135,7 +143,7 @@ func (m *model) quit() (tea.Model, tea.Cmd) {
 }
 
 func (m *model) setIndex(index int) {
-	m.index = geom.Clamp(index, 0, len(m.events) - 1)
+	m.index = geom.Clamp(index, 0, len(m.events)-1)
 }
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -173,7 +181,14 @@ func (m *model) View() string {
 		Width(m.size.C).
 		Align(lipgloss.Right)
 
-	return basic.Render(fmt.Sprintf("[%d/%d]", m.index, len(m.events)))
+	index := m.index
+	if index < 0 || index >= len(m.events) || len(m.events) == 0 {
+		return basic.Render("???")
+	}
+
+	event := m.events[index]
+
+	return basic.Render(event.Stamp.Format(time.RFC1123))
 }
 
 func New(
