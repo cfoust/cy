@@ -142,9 +142,8 @@ func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool
 
 func (l *Layers) Write(data []byte) (n int, err error) {
 	l.RLock()
-	defer l.RUnlock()
-
 	layers := l.layers
+	l.RUnlock()
 
 	for i := len(layers) - 1; i >= 0; i-- {
 		layer := layers[i]
