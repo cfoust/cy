@@ -9,8 +9,7 @@ import (
 type EventType byte
 
 const (
-	EventTypeInput EventType = iota
-	EventTypeOutput
+	EventTypeOutput EventType = iota
 	EventTypeResize
 )
 
@@ -21,10 +20,6 @@ type EventData interface {
 type Write struct {
 	Bytes []byte
 }
-
-type InputEvent Write
-
-func (i InputEvent) Type() EventType { return EventTypeInput }
 
 type OutputEvent Write
 
@@ -71,7 +66,6 @@ func (s *Recorder) Events() []Event {
 }
 
 func (s *Recorder) Write(data []byte) (n int, err error) {
-	s.store(InputEvent{Bytes: data})
 	return s.stream.Write(data)
 }
 

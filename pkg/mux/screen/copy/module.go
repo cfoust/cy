@@ -1,4 +1,4 @@
-package screen
+package copy
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/util"
+	"github.com/cfoust/cy/pkg/mux/screen"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -16,15 +17,15 @@ import (
 
 type CopyMode struct {
 	util.Lifetime
-	*Trigger
+	*screen.Trigger
 	history []emu.Line
-	overlay *Tea
+	overlay *screen.Tea
 	model   *model
 }
 
-var _ Screen = (*CopyMode)(nil)
+var _ screen.Screen = (*CopyMode)(nil)
 
-func (c *CopyMode) Render(size Size) *tty.State {
+func (c *CopyMode) Render(size screen.Size) *tty.State {
 	out := image.New(size)
 	for row := 0; row < size.R; row++ {
 		srcRow := c.model.offset + row
@@ -66,7 +67,7 @@ func (c *CopyMode) poll(ctx context.Context) {
 	}
 }
 
-func (c *CopyMode) Resize(size Size) error {
+func (c *CopyMode) Resize(size screen.Size) error {
 	err := c.overlay.Resize(size)
 	if err != nil {
 		return err
@@ -81,7 +82,7 @@ type model struct {
 	offset    int
 	maxOffset int
 	history   int
-	size      Size
+	size      screen.Size
 }
 
 var _ tea.Model = (*model)(nil)
@@ -106,7 +107,7 @@ func (m *model) quit() (tea.Model, tea.Cmd) {
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.size = Size{
+		m.size = screen.Size{
 			R: msg.Height,
 			C: msg.Width,
 		}
@@ -159,11 +160,11 @@ func (m *model) View() string {
 	))
 }
 
-func NewCopyMode(
+func New(
 	ctx context.Context,
-	info RenderContext,
+	info screen.RenderContext,
 	history []emu.Line,
-	size Size,
+	size screen.Size,
 ) *CopyMode {
 	lifetime := util.NewLifetime(ctx)
 
@@ -175,7 +176,7 @@ func NewCopyMode(
 		history:   len(history),
 	}
 
-	overlay := NewTea(
+	overlay := screen.NewTea(
 		lifetime.Ctx(),
 		m,
 		info,
@@ -188,7 +189,7 @@ func NewCopyMode(
 		overlay:  overlay,
 		model:    m,
 	}
-	c.Trigger = NewTrigger(c)
+	c.Trigger = screen.NewTrigger(c)
 
 	go c.poll(lifetime.Ctx())
 

@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
+	copyMode "github.com/cfoust/cy/pkg/mux/screen/copy"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
 )
@@ -31,6 +32,10 @@ func (p *Pane) Screen() mux.Screen {
 	return p.screen
 }
 
+func (p *Pane) Recorder() *stream.Recorder {
+	return p.recorder
+}
+
 func (p *Pane) Resize(size geom.Vec2) {
 	p.screen.Resize(size)
 }
@@ -44,7 +49,7 @@ func (p *Pane) CopyMode(info screen.RenderContext) {
 		return
 	}
 
-	copyMode := screen.NewCopyMode(
+	copyMode := copyMode.New(
 		p.Ctx(),
 		info,
 		p.terminal.History(),
