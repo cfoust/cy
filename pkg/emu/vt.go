@@ -1,7 +1,6 @@
 package emu
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,11 +15,6 @@ type Terminal interface {
 
 	// Write parses input and writes terminal changes to state.
 	io.Writer
-
-	// Parse blocks on read on pty or io.Reader, then parses sequences until
-	// buffer empties. State is locked as soon as first rune is read, and unlocked
-	// when buffer is empty.
-	Parse(bf *bufio.Reader) error
 }
 
 // View represents the view of the virtual terminal emulator.
