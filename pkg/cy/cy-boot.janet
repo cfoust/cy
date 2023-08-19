@@ -121,12 +121,6 @@
 
 (key/bind
   [prefix "p"]
-  "enter copy mode"
-  (fn [&]
-    (cy/copy-mode)))
-
-(key/bind
-  [prefix "r"]
   "enter replay mode"
   (fn [&]
     (cy/replay)))

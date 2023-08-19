@@ -7,13 +7,11 @@ import (
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
-	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/sasha-s/go-deadlock"
 )
 
 type Layer struct {
-	util.Lifetime
 	Screen
 	isInteractive bool
 	isOpaque      bool
@@ -94,7 +92,6 @@ func (l *Layers) NumLayers() int {
 
 func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool, isOpaque bool) *Layer {
 	layer := &Layer{
-		Lifetime:      util.NewLifetime(ctx),
 		Screen:        screen,
 		isInteractive: isInteractive,
 		isOpaque:      isOpaque,
@@ -109,7 +106,7 @@ func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool
 		defer updates.Done()
 		for {
 			select {
-			case <-layer.Ctx().Done():
+			case <-ctx.Done():
 				return
 			case <-updates.Recv():
 				l.rerender()
@@ -118,7 +115,7 @@ func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool
 	}()
 
 	go func() {
-		<-layer.Ctx().Done()
+		<-ctx.Done()
 
 		l.Lock()
 		newLayers := make([]*Layer, 0)

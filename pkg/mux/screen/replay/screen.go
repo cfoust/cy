@@ -2,7 +2,6 @@ package replay
 
 import (
 	"context"
-	"time"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
@@ -12,7 +11,6 @@ import (
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
 
-	"github.com/charmbracelet/bubbles/stopwatch"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 	"github.com/sasha-s/go-deadlock"
@@ -101,6 +99,7 @@ func (c *Replay) Write(data []byte) (n int, err error) {
 	return
 }
 
+
 func (c *Replay) poll(ctx context.Context) {
 	updates := c.overlay.Updates()
 	defer updates.Done()
@@ -133,7 +132,6 @@ func New(
 
 	events := recorder.Events()
 	m := &model{
-		stopwatch: stopwatch.NewWithInterval(time.Second / 60),
 		lifetime:  &lifetime,
 		events:    events,
 		renderer: lipgloss.NewRenderer(
@@ -141,6 +139,7 @@ func New(
 			termenv.WithProfile(info.Colors),
 		),
 	}
+	m.setIndex(-1)
 
 	overlay := screen.NewTea(
 		lifetime.Ctx(),

@@ -8,17 +8,15 @@ import (
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
 
-	"github.com/charmbracelet/bubbles/stopwatch"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 type model struct {
-	stopwatch stopwatch.Model
-	renderer  *lipgloss.Renderer
-	lifetime  *util.Lifetime
-	size      screen.Size
-	events    []stream.Event
+	renderer *lipgloss.Renderer
+	lifetime *util.Lifetime
+	size     screen.Size
+	events   []stream.Event
 
 	index int
 }
@@ -26,7 +24,7 @@ type model struct {
 var _ tea.Model = (*model)(nil)
 
 func (m *model) Init() tea.Cmd {
-	return m.stopwatch.Init()
+	return nil
 }
 
 func (m *model) quit() (tea.Model, tea.Cmd) {
@@ -35,7 +33,13 @@ func (m *model) quit() (tea.Model, tea.Cmd) {
 }
 
 func (m *model) setIndex(index int) {
-	m.index = geom.Clamp(index, 0, len(m.events)-1)
+	numEvents := len(m.events)
+	// Allow for negative indices from end of stream
+	if index < 0 {
+		index = geom.Clamp(numEvents+index, 0, numEvents-1)
+	}
+
+	m.index = geom.Clamp(index, 0, numEvents-1)
 }
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -55,8 +59,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case tea.KeyEsc, tea.KeyCtrlC:
 			return m.quit()
-		case tea.KeySpace:
-			return m, m.stopwatch.Toggle()
 		case tea.KeyLeft:
 			m.setIndex(m.index - 1)
 			return m, nil
@@ -66,9 +68,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	var cmd tea.Cmd
-	m.stopwatch, cmd = m.stopwatch.Update(msg)
-	return m, cmd
+	return m, nil
 }
 
 func (m *model) View() string {
@@ -87,33 +87,5 @@ func (m *model) View() string {
 	event := m.events[index]
 	stamp := basic.Render(event.Stamp.Format(time.RFC1123))
 
-	statusBarStyle := m.renderer.NewStyle().
-		Foreground(lipgloss.AdaptiveColor{Light: "#343433", Dark: "#C1C6B2"}).
-		Background(lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#353533"})
-
-	statusText := m.renderer.NewStyle().Inherit(statusBarStyle)
-
-	statusKey := m.renderer.NewStyle().
-		Inherit(statusBarStyle).
-		Foreground(lipgloss.Color("#FFFDF5")).
-		Background(lipgloss.Color("#FF5F87")).
-		Padding(0, 1).
-		MarginRight(1).
-		Render("⏵")
-
-	bar := statusText.Copy().
-		Width(width - lipgloss.Width(statusKey)).
-		Render(m.stopwatch.View())
-
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		stamp,
-		lipgloss.Place(
-			m.size.C,
-			m.size.R-1,
-			lipgloss.Left,
-			lipgloss.Bottom,
-			lipgloss.JoinHorizontal(lipgloss.Top, statusKey, bar),
-		),
-	)
+	return stamp
 }
