@@ -8,7 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux/screen"
-	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/charmbracelet/lipgloss"
@@ -22,9 +22,9 @@ type Replay struct {
 	util.Lifetime
 	*screen.Trigger
 
-	events   []stream.Event
+	events   []sessions.Event
 	terminal emu.Terminal
-	recorder *stream.Recorder
+	recorder *sessions.Recorder
 	overlay  *screen.Tea
 	model    *model
 
@@ -51,9 +51,9 @@ func (c *Replay) update(from, to int) {
 	for i := origin; i <= to; i++ {
 		event := c.events[i]
 		switch e := event.Data.(type) {
-		case stream.OutputEvent:
+		case sessions.OutputEvent:
 			c.terminal.Write(e.Bytes)
-		case stream.ResizeEvent:
+		case sessions.ResizeEvent:
 			c.terminal.Resize(
 				e.Columns,
 				e.Rows,
@@ -99,7 +99,6 @@ func (c *Replay) Write(data []byte) (n int, err error) {
 	return
 }
 
-
 func (c *Replay) poll(ctx context.Context) {
 	updates := c.overlay.Updates()
 	defer updates.Done()
@@ -125,15 +124,15 @@ func (c *Replay) Resize(size screen.Size) error {
 func New(
 	ctx context.Context,
 	info screen.RenderContext,
-	recorder *stream.Recorder,
+	recorder *sessions.Recorder,
 	size screen.Size,
 ) *Replay {
 	lifetime := util.NewLifetime(ctx)
 
 	events := recorder.Events()
 	m := &model{
-		lifetime:  &lifetime,
-		events:    events,
+		lifetime: &lifetime,
+		events:   events,
 		renderer: lipgloss.NewRenderer(
 			nil,
 			termenv.WithProfile(info.Colors),

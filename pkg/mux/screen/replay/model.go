@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/mux/screen"
-	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -16,7 +16,7 @@ type model struct {
 	renderer *lipgloss.Renderer
 	lifetime *util.Lifetime
 	size     screen.Size
-	events   []stream.Event
+	events   []sessions.Event
 
 	index int
 }

@@ -1,49 +1,20 @@
-package stream
+package sessions
 
 import (
 	"time"
 
+	"github.com/cfoust/cy/pkg/mux/stream"
+
 	"github.com/sasha-s/go-deadlock"
 )
-
-type EventType byte
-
-const (
-	EventTypeOutput EventType = iota
-	EventTypeResize
-)
-
-type EventData interface {
-	Type() EventType
-}
-
-type Write struct {
-	Bytes []byte
-}
-
-type OutputEvent Write
-
-func (i OutputEvent) Type() EventType { return EventTypeOutput }
-
-type ResizeEvent struct {
-	Columns int
-	Rows    int
-}
-
-func (i ResizeEvent) Type() EventType { return EventTypeResize }
-
-type Event struct {
-	Stamp time.Time
-	Data  EventData
-}
 
 type Recorder struct {
 	events []Event
 	mutex  deadlock.RWMutex
-	stream Stream
+	stream stream.Stream
 }
 
-var _ Stream = (*Recorder)(nil)
+var _ stream.Stream = (*Recorder)(nil)
 
 func New() *Recorder {
 	return &Recorder{}
@@ -81,7 +52,7 @@ func (s *Recorder) Read(p []byte) (n int, err error) {
 	return
 }
 
-func (s *Recorder) Resize(size Size) error {
+func (s *Recorder) Resize(size stream.Size) error {
 	s.store(ResizeEvent{
 		Columns: size.C,
 		Rows:    size.R,
@@ -90,7 +61,7 @@ func (s *Recorder) Resize(size Size) error {
 	return s.stream.Resize(size)
 }
 
-func NewRecorder(stream Stream) *Recorder {
+func NewRecorder(stream stream.Stream) *Recorder {
 	return &Recorder{
 		events: make([]Event, 0),
 		stream: stream,
