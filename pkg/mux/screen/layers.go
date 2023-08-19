@@ -86,6 +86,12 @@ func (l *Layers) rerender() {
 	l.changes.Publish(l.State())
 }
 
+func (l *Layers) NumLayers() int {
+	l.RLock()
+	defer l.RUnlock()
+	return len(l.layers)
+}
+
 func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool, isOpaque bool) *Layer {
 	layer := &Layer{
 		Lifetime:      util.NewLifetime(ctx),

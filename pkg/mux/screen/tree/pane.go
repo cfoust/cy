@@ -7,13 +7,17 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/util"
 )
 
 type Pane struct {
+	util.Lifetime
 	*metaData
 
+	terminal *screen.Terminal
 	recorder *stream.Recorder
 	screen   mux.Screen
+	layers   *screen.Layers
 	stream   stream.Stream
 }
 
@@ -35,17 +39,48 @@ func (p *Pane) Write(data []byte) (n int, err error) {
 	return p.stream.Write(data)
 }
 
+func (p *Pane) CopyMode(info screen.RenderContext) {
+	if p.layers.NumLayers() > 1 {
+		return
+	}
+
+	copyMode := screen.NewCopyMode(
+		p.Ctx(),
+		info,
+		p.terminal.History(),
+		geom.DEFAULT_SIZE,
+	)
+
+	p.layers.NewLayer(
+		copyMode.Ctx(),
+		copyMode,
+		true,
+		true,
+	)
+}
+
 func newPane(ctx context.Context, subStream stream.Stream, size geom.Vec2) *Pane {
+	lifetime := util.NewLifetime(ctx)
 	recorder := stream.NewRecorder(subStream)
 	terminal := screen.NewTerminal(
-		ctx,
+		lifetime.Ctx(),
 		recorder,
 		size,
 	)
+	layers := screen.NewLayers()
+	layers.NewLayer(
+		lifetime.Ctx(),
+		terminal,
+		true,
+		true,
+	)
 	pane := Pane{
-		screen:   terminal,
+		Lifetime: lifetime,
+		layers:   layers,
 		recorder: recorder,
+		screen:   layers,
 		stream:   subStream,
+		terminal: terminal,
 	}
 
 	return &pane

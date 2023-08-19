@@ -9,7 +9,6 @@ import (
 	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
-	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/util"
 )
@@ -76,24 +75,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 				return
 			}
 
-			term, ok := pane.Screen().(*screen.Terminal)
-			if !ok {
-				return
-			}
-
-			copyMode := screen.NewCopyMode(
-				ctx,
-				client.info,
-				term.History(),
-				geom.DEFAULT_SIZE,
-			)
-
-			client.innerLayers.NewLayer(
-				copyMode.Ctx(),
-				copyMode,
-				true,
-				true,
-			)
+			pane.CopyMode(client.info)
 		},
 		"log": func(text string) {
 			c.log.Info().Msgf(text)
