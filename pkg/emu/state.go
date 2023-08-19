@@ -118,8 +118,6 @@ type Cursor struct {
 	Style CursorStyle
 }
 
-type parseState func(c rune)
-
 // State represents the terminal emulation state. Use Lock/Unlock
 // methods to synchronize data access with VT.
 type State struct {
@@ -138,7 +136,6 @@ type State struct {
 	cur, curSaved Cursor
 	top, bottom   int // scroll limits
 	mode          ModeFlag
-	state         parseState
 	str           strEscape
 	csi           csiEscape
 	numlock       bool
@@ -254,10 +251,6 @@ func (t *State) restoreCursor() {
 	t.moveTo(t.cur.X, t.cur.Y)
 }
 
-func (t *State) put(c rune) {
-	t.state(c)
-}
-
 func (t *State) putTab(forward bool) {
 	x := t.cur.X
 	if forward {
@@ -356,6 +349,78 @@ func (t *State) reset() {
 	t.mode = ModeWrap
 	t.clear(0, 0, t.rows-1, t.cols-1)
 	t.moveTo(0, 0)
+}
+
+func wrapLine(line Line, cols int) []Line {
+	result := make([]Line, 0)
+	orig := len(line)
+	numLines := (orig / cols) + 1
+
+	for i := 0; i < numLines; i++ {
+		start := i * cols
+		end := (i + 1) * cols
+
+		if end <= orig {
+			result = append(result, line[start:end])
+			continue
+		}
+
+		// It's the last line, split it up
+		newLine := make(Line, cols)
+		for j := i; j < cols; j++ {
+			if j < orig {
+				newLine[j-i] = line[j]
+				continue
+			}
+
+			newLine[j-i] = EmptyGlyph()
+		}
+		result = append(result, newLine)
+	}
+
+	// Remove all existing attrWrap
+	for _, line := range result {
+		for _, glyph := range line {
+			glyph.Mode ^= attrWrap
+		}
+	}
+
+	// Mark attrWrap
+	for i := 0; i < len(result)-1; i++ {
+		result[i][cols-1].Mode = attrWrap
+	}
+
+	return result
+}
+
+// reflow recalculates the wrap point for all lines in `lines` and `history`.
+func reflow(lines, history []Line, cols int) []Line {
+	result := make([]Line, 0)
+
+	var current Line = nil
+	for _, line := range append(history, lines...) {
+		// the line was wrapped originally, aggregate it
+		wasWrapped := line[len(line)-1].Mode == attrWrap
+
+		if current == nil {
+			current = copyLine(line)
+		} else {
+			current = append(current, line...)
+		}
+
+		if wasWrapped {
+			continue
+		}
+
+		result = append(result, wrapLine(current, cols)...)
+		current = nil
+	}
+
+	if current != nil {
+		result = append(result, wrapLine(current, cols)...)
+	}
+
+	return result
 }
 
 // TODO: definitely can improve allocs
@@ -531,6 +596,7 @@ func (t *State) scrollDown(orig, n int) {
 		t.dirty[i-n] = true
 	}
 
+	// don't save history lines on alt screen
 	if orig != 0 || (t.mode&ModeAltScreen) != 0 {
 		return
 	}
@@ -548,12 +614,6 @@ func (t *State) scrollDown(orig, n int) {
 		}
 		t.history = t.history[:offset]
 	}
-}
-
-func copyLine(line Line) Line {
-	copied := make([]Glyph, len(line))
-	copy(copied, line)
-	return copied
 }
 
 func (t *State) scrollUp(orig, n int) {
@@ -836,13 +896,18 @@ func (t *State) Size() (cols, rows int) {
 	return t.cols, t.rows
 }
 
+func copyLine(line Line) Line {
+	copied := make(Line, len(line))
+	copy(copied, line)
+	return copied
+}
+
 func (t *State) clone(sets ...[]Line) []Line {
 	lines := make([]Line, 0)
 
 	for _, set := range sets {
 		for _, line := range set {
-			copied := make([]Glyph, len(line))
-			copy(copied, line)
+			copied := copyLine(line)
 			lines = append(
 				lines,
 				copied,
