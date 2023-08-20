@@ -351,78 +351,6 @@ func (t *State) reset() {
 	t.moveTo(0, 0)
 }
 
-func wrapLine(line Line, cols int) []Line {
-	result := make([]Line, 0)
-	orig := len(line)
-	numLines := (orig / cols) + 1
-
-	for i := 0; i < numLines; i++ {
-		start := i * cols
-		end := (i + 1) * cols
-
-		if end <= orig {
-			result = append(result, line[start:end])
-			continue
-		}
-
-		// It's the last line, split it up
-		newLine := make(Line, cols)
-		for j := i; j < cols; j++ {
-			if j < orig {
-				newLine[j-i] = line[j]
-				continue
-			}
-
-			newLine[j-i] = EmptyGlyph()
-		}
-		result = append(result, newLine)
-	}
-
-	// Remove all existing attrWrap
-	for _, line := range result {
-		for _, glyph := range line {
-			glyph.Mode ^= attrWrap
-		}
-	}
-
-	// Mark attrWrap
-	for i := 0; i < len(result)-1; i++ {
-		result[i][cols-1].Mode = attrWrap
-	}
-
-	return result
-}
-
-// reflow recalculates the wrap point for all lines in `lines` and `history`.
-func reflow(lines, history []Line, cols int) []Line {
-	result := make([]Line, 0)
-
-	var current Line = nil
-	for _, line := range append(history, lines...) {
-		// the line was wrapped originally, aggregate it
-		wasWrapped := line[len(line)-1].Mode == attrWrap
-
-		if current == nil {
-			current = copyLine(line)
-		} else {
-			current = append(current, line...)
-		}
-
-		if wasWrapped {
-			continue
-		}
-
-		result = append(result, wrapLine(current, cols)...)
-		current = nil
-	}
-
-	if current != nil {
-		result = append(result, wrapLine(current, cols)...)
-	}
-
-	return result
-}
-
 // TODO: definitely can improve allocs
 func (t *State) resize(cols, rows int) bool {
 	if cols == t.cols && rows == t.rows {
@@ -437,14 +365,16 @@ func (t *State) resize(cols, rows int) bool {
 		copy(t.altLines, t.altLines[slide:slide+rows])
 	}
 
-	lines, altLines, tabs := t.lines, t.altLines, t.tabs
+	tabs := t.tabs
+	lines, altLines := t.lines, t.altLines
+	history, altHistory := t.history, t.altHistory
 	t.lines = make([]Line, rows)
 	t.altLines = make([]Line, rows)
 	t.dirty = make([]bool, rows)
 	t.tabs = make([]bool, cols)
 
 	minrows := min(rows, t.rows)
-	mincols := min(cols, t.cols)
+	//mincols := min(cols, t.cols)
 	t.changed |= ChangedScreen
 	for i := 0; i < rows; i++ {
 		t.dirty[i] = true
@@ -455,6 +385,37 @@ func (t *State) resize(cols, rows int) bool {
 		copy(t.lines[i], lines[i])
 		copy(t.altLines[i], altLines[i])
 	}
+
+	t.cols = cols
+	t.rows = rows
+	if cols > 0 && rows > 0 {
+		t.clear(0, 0, cols-1, rows-1)
+	}
+
+	if isAltMode(t.mode) {
+		history, lines := reflow(
+			altHistory,
+			altLines,
+			rows,
+			cols,
+		)
+		t.altHistory = history
+		for i := range lines {
+			copy(t.altLines[i], lines[i])
+		}
+	} else {
+		history, lines := reflow(
+			history,
+			lines,
+			rows,
+			cols,
+		)
+		t.history = history
+		for i := range lines {
+			copy(t.lines[i], lines[i])
+		}
+	}
+
 	copy(t.tabs, tabs)
 	if cols > t.cols {
 		i := t.cols - 1
@@ -466,19 +427,18 @@ func (t *State) resize(cols, rows int) bool {
 		}
 	}
 
-	t.cols = cols
-	t.rows = rows
 	t.setScroll(0, rows-1)
 	t.moveTo(t.cur.X, t.cur.Y)
-	for i := 0; i < 2; i++ {
-		if mincols < cols && minrows > 0 {
-			t.clear(mincols, 0, cols-1, minrows-1)
-		}
-		if cols > 0 && minrows < rows {
-			t.clear(0, minrows, cols-1, rows-1)
-		}
-		t.swapScreen()
-	}
+	//for i := 0; i < 2; i++ {
+		//if mincols < cols && minrows > 0 {
+			//t.clear(mincols, 0, cols-1, minrows-1)
+		//}
+		//if cols > 0 && minrows < rows {
+			//t.clear(0, minrows, cols-1, rows-1)
+		//}
+		//t.swapScreen()
+	//}
+
 	return slide > 0
 }
 
@@ -585,6 +545,10 @@ func between(val, min, max int) bool {
 	return true
 }
 
+func isAltMode(mode ModeFlag) bool {
+	return (mode & ModeAltScreen) != 0
+}
+
 func (t *State) scrollDown(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
 
@@ -597,7 +561,7 @@ func (t *State) scrollDown(orig, n int) {
 	}
 
 	// don't save history lines on alt screen
-	if orig != 0 || (t.mode&ModeAltScreen) != 0 {
+	if orig != 0 || isAltMode(t.mode) {
 		return
 	}
 
