@@ -22,7 +22,7 @@ func wrapLine(line Line, cols int) []Line {
 	result := make([]Line, 0)
 
 	if length == 0 {
-		return []Line{emptyLine(cols)}
+		return nil
 	}
 
 	numLines := length / cols
@@ -92,6 +92,22 @@ func reflow(history, lines []Line, rows, cols int) ([]Line, []Line) {
 
 	if current != nil {
 		result = append(result, wrapLine(current, cols)...)
+	}
+
+	// Remove trailing empty lines
+	for i := len(result) - 1; i >= 0; i-- {
+		if result[i] != nil {
+			break
+		}
+		result = result[:i]
+	}
+
+	for i := range result {
+		if result[i] != nil {
+			continue
+		}
+
+		result[i] = emptyLine(cols)
 	}
 
 	numHistory := clamp(len(result)-rows, 0, len(result))

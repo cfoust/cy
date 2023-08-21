@@ -3,6 +3,7 @@ package emu
 import (
 	"testing"
 
+	"github.com/mattn/go-runewidth"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,6 +14,14 @@ func makeLine(text string) Line {
 		glyph := EmptyGlyph()
 		glyph.Char = r
 		line = append(line, glyph)
+
+		// Handle wider characters
+		w := runewidth.RuneWidth(r)
+		if w > 1 {
+			for i := 0; i < w-1; i++ {
+				line = append(line, EmptyGlyph())
+			}
+		}
 	}
 
 	return line
@@ -47,28 +56,32 @@ func TestWrap(t *testing.T) {
 	ensureWrap(t, "a   ", 2, makeWrapped(
 		"a ",
 	))
+	ensureWrap(t, "你好", 2, makeWrapped(
+		"你",
+		"好",
+	))
 }
 
-func TestTerm(t *testing.T) {
+func TestLongLine(t *testing.T) {
 	term := New()
 
 	// 1. One long line
 	for i := 0; i < 40; i++ {
 		term.Write([]byte("a"))
 	}
-
 	for i := 0; i < 40; i++ {
 		term.Write([]byte("b"))
 	}
-
 	term.Resize(40, 24)
+	t.Logf(term.String())
 	require.Equal(t, "a", extractStr(term, 39, 39, 0))
 	require.Equal(t, "b", extractStr(term, 0, 0, 1))
 	term.Resize(80, 24)
 	require.Equal(t, "b", extractStr(term, 40, 40, 0))
+}
 
-	// 2. Several lines
-	term = New()
+func TestSeveralLines(t *testing.T) {
+	term := New()
 	term.Write([]byte("\033[20h")) // set CRLF mode
 	term.Write([]byte("test\ntest"))
 	term.Resize(40, 24)
