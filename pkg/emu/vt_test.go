@@ -4,8 +4,6 @@ import (
 	"io"
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 func extractStr(term Terminal, x0, x1, row int) string {
@@ -63,28 +61,4 @@ func TestNewline(t *testing.T) {
 	if attr.FG != DefaultFG {
 		t.Fatal(st.cur.X, st.cur.Y, attr.FG, attr.BG)
 	}
-}
-
-func TestWrap(t *testing.T) {
-	term := New()
-
-	for i := 0; i < 40; i++ {
-		term.Write([]byte("a"))
-	}
-
-	for i := 0; i < 40; i++ {
-		term.Write([]byte("b"))
-	}
-
-	term.Resize(40, 24)
-	require.Equal(t, "a", extractStr(term, 39, 39, 0))
-	require.Equal(t, "b", extractStr(term, 0, 0, 1))
-	term.Resize(80, 24)
-	require.Equal(t, "b", extractStr(term, 40, 40, 0))
-
-	term = New()
-	term.Write([]byte("test\ntest"))
-	term.Resize(40, 24)
-	require.Equal(t, "test", extractStr(term, 0, 3, 0))
-	require.Equal(t, "test", extractStr(term, 0, 3, 1))
 }

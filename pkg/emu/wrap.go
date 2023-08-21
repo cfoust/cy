@@ -1,9 +1,5 @@
 package emu
 
-import (
-	"github.com/rs/zerolog/log"
-)
-
 func emptyLine(cols int) Line {
 	line := make(Line, cols)
 	for i := range line {
@@ -33,7 +29,6 @@ func wrapLine(line Line, cols int) []Line {
 	if (length % cols) > 0 {
 		numLines++
 	}
-	log.Info().Msgf("wrapLine '%+v' %+v", line, numLines)
 
 	for i := 0; i < numLines; i++ {
 		start := i * cols
@@ -46,7 +41,7 @@ func wrapLine(line Line, cols int) []Line {
 
 		// It's the last line, split it up
 		newLine := make(Line, cols)
-		for j := start; j < cols; j++ {
+		for j := start; j < end; j++ {
 			if j < length {
 				newLine[j-start] = line[j]
 				continue
@@ -69,14 +64,11 @@ func wrapLine(line Line, cols int) []Line {
 		result[i][cols-1].Mode = attrWrap
 	}
 
-	log.Info().Msgf("wrap '%+v' %+v", line, result)
-
 	return result
 }
 
 // reflow recalculates the wrap point for all lines in `lines` and `history`.
 func reflow(history, lines []Line, rows, cols int) ([]Line, []Line) {
-	log.Info().Msgf("reflow history=%d lines=%d %dx%d", len(history), len(lines), rows, cols)
 	result := make([]Line, 0)
 
 	var current Line = nil
@@ -105,9 +97,6 @@ func reflow(history, lines []Line, rows, cols int) ([]Line, []Line) {
 	numHistory := clamp(len(result)-rows, 0, len(result))
 	newHistory := result[:numHistory]
 	newLines := result[numHistory:]
-
-	log.Info().Msgf("results=%d history=%d newLines=%d", len(result), len(newHistory), len(newLines))
-	log.Info().Msgf("%+v", result)
 
 	return newHistory, newLines
 }
