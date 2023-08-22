@@ -29,13 +29,12 @@ func (t *terminal) init(cols, rows int) {
 // Write parses input and writes terminal changes to state.
 func (t *terminal) Write(p []byte) (int, error) {
 	t.Lock()
-	defer t.Unlock()
-
 	var written int
 	for _, b := range p {
 		t.parser.Advance(b)
 		written++
 	}
+	t.Unlock()
 
 	return written, nil
 }

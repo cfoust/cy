@@ -73,7 +73,6 @@ func TestLongLine(t *testing.T) {
 		term.Write([]byte("b"))
 	}
 	term.Resize(40, 24)
-	t.Logf(term.String())
 	require.Equal(t, "a", extractStr(term, 39, 39, 0))
 	require.Equal(t, "b", extractStr(term, 0, 0, 1))
 	term.Resize(80, 24)
@@ -82,9 +81,11 @@ func TestLongLine(t *testing.T) {
 
 func TestSeveralLines(t *testing.T) {
 	term := New()
+	term.Resize(4, 24)
 	term.Write([]byte("\033[20h")) // set CRLF mode
 	term.Write([]byte("test\ntest"))
-	term.Resize(40, 24)
+	term.Resize(2, 24)
+	term.Resize(4, 24)
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
 	require.Equal(t, "test", extractStr(term, 0, 3, 1))
 }

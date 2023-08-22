@@ -374,7 +374,6 @@ func (t *State) resize(cols, rows int) bool {
 	t.tabs = make([]bool, cols)
 
 	minrows := min(rows, t.rows)
-	//mincols := min(cols, t.cols)
 	t.changed |= ChangedScreen
 	for i := 0; i < rows; i++ {
 		t.dirty[i] = true
@@ -393,22 +392,26 @@ func (t *State) resize(cols, rows int) bool {
 	}
 
 	if isAltMode(t.mode) {
-		history, lines := reflow(
+		history, lines, _, _ := reflow(
 			altHistory,
 			altLines,
 			rows,
 			cols,
+			t.cur.Y,
+			t.cur.X,
 		)
 		t.altHistory = history
 		for i := range lines {
 			copy(t.altLines[i], lines[i])
 		}
 	} else {
-		history, lines := reflow(
+		history, lines, _, _ := reflow(
 			history,
 			lines,
 			rows,
 			cols,
+			t.cur.Y,
+			t.cur.X,
 		)
 		t.history = history
 		for i := range lines {
@@ -429,15 +432,6 @@ func (t *State) resize(cols, rows int) bool {
 
 	t.setScroll(0, rows-1)
 	t.moveTo(t.cur.X, t.cur.Y)
-	//for i := 0; i < 2; i++ {
-		//if mincols < cols && minrows > 0 {
-			//t.clear(mincols, 0, cols-1, minrows-1)
-		//}
-		//if cols > 0 && minrows < rows {
-			//t.clear(0, minrows, cols-1, rows-1)
-		//}
-		//t.swapScreen()
-	//}
 
 	return slide > 0
 }

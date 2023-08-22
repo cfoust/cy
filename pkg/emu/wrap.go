@@ -8,8 +8,7 @@ func emptyLine(cols int) Line {
 	return line
 }
 
-func wrapLine(line Line, cols int) []Line {
-	// We only want to wrap non-whitespace characters
+func getLineLength(line Line) int {
 	var length int = 0
 	for i := len(line) - 1; i >= 0; i-- {
 		glyph := line[i]
@@ -18,11 +17,17 @@ func wrapLine(line Line, cols int) []Line {
 			break
 		}
 	}
+	return length
+}
+
+func wrapLine(line Line, cols int) []Line {
+	// We only want to wrap non-whitespace characters
+	length := getLineLength(line)
 
 	result := make([]Line, 0)
 
 	if length == 0 {
-		return nil
+		return []Line{emptyLine(cols)}
 	}
 
 	numLines := length / cols
@@ -52,13 +57,6 @@ func wrapLine(line Line, cols int) []Line {
 		result = append(result, newLine)
 	}
 
-	// Remove all existing attrWrap
-	for _, line := range result {
-		for _, glyph := range line {
-			glyph.Mode ^= attrWrap
-		}
-	}
-
 	// Mark attrWrap
 	for i := 0; i < len(result)-1; i++ {
 		result[i][cols-1].Mode = attrWrap
@@ -67,52 +65,82 @@ func wrapLine(line Line, cols int) []Line {
 	return result
 }
 
-// reflow recalculates the wrap point for all lines in `lines` and `history`.
-func reflow(history, lines []Line, rows, cols int) ([]Line, []Line) {
-	result := make([]Line, 0)
+type rowRange struct {
+	Start int
+	// exclusive
+	End int
+}
 
+type lineMapping struct {
+	Before rowRange
+	After  rowRange
+}
+
+func wrapLines(history, lines []Line, cols, origin int) (newLines []Line, mappings []lineMapping) {
 	var current Line = nil
-	for _, line := range append(history, lines...) {
+	var start int
+
+	numLines := len(history) + len(lines)
+	var line Line
+	for row := 0; row < numLines; row++ {
+		if row < len(history) {
+			line = history[row]
+		} else {
+			line = lines[row-len(history)]
+		}
+
 		// the line was wrapped originally, aggregate it
 		wasWrapped := line[len(line)-1].Mode == attrWrap
 
 		if current == nil {
+			start = row
 			current = copyLine(line)
 		} else {
 			current = append(current, line...)
 		}
 
-		if wasWrapped {
+		if wasWrapped && row != len(lines)-1 {
+			// Remove attrWrap
+			current[len(current)-1].Mode ^= attrWrap
 			continue
 		}
 
-		result = append(result, wrapLine(current, cols)...)
+		// We've accumulated the whole line, wrap it
+		wrapped := wrapLine(current, cols)
+		mappings = append(mappings, lineMapping{
+			Before: rowRange{
+				Start: start - origin,
+				End:   (row - origin) + 1,
+			},
+			After: rowRange{
+				Start: len(newLines),
+				End:   len(newLines) + len(wrapped),
+			},
+		})
+		for _, wrappedLine := range wrapped {
+			newLines = append(newLines, wrappedLine)
+		}
 		current = nil
 	}
 
-	if current != nil {
-		result = append(result, wrapLine(current, cols)...)
-	}
+	return newLines, mappings
+}
+
+// reflow recalculates the wrap point for all lines in `lines` and `history`.
+func reflow(history, lines []Line, rows, cols, y, x int) (newHistory []Line, newLines []Line, curY int, curX int) {
+	// TODO(cfoust): 08/22/23 use mappings to move cursor to stay at offset in line
+	wrapped, _ := wrapLines(history, lines, cols, len(history))
 
 	// Remove trailing empty lines
-	for i := len(result) - 1; i >= 0; i-- {
-		if result[i] != nil {
+	for i := len(wrapped) - 1; i >= 0; i-- {
+		if getLineLength(wrapped[i]) != 0 {
 			break
 		}
-		result = result[:i]
+		wrapped = wrapped[:i]
 	}
 
-	for i := range result {
-		if result[i] != nil {
-			continue
-		}
-
-		result[i] = emptyLine(cols)
-	}
-
-	numHistory := clamp(len(result)-rows, 0, len(result))
-	newHistory := result[:numHistory]
-	newLines := result[numHistory:]
-
-	return newHistory, newLines
+	numHistory := clamp(len(wrapped)-rows, 0, len(wrapped))
+	newHistory = wrapped[:numHistory]
+	newLines = wrapped[numHistory:]
+	return newHistory, newLines, 0, 0
 }

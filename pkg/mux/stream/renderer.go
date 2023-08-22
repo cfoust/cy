@@ -29,7 +29,8 @@ var _ Stream = (*Renderer)(nil)
 
 func (r *Renderer) Resize(size Size) error {
 	r.target.Resize(size.C, size.R)
-	return r.screen.Resize(size)
+	err := r.screen.Resize(size)
+	return err
 }
 
 func (r *Renderer) Write(data []byte) (n int, err error) {
