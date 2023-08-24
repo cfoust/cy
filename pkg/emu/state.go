@@ -181,6 +181,7 @@ func (t *State) logln(s string) {
 
 // Cell returns the glyph containing the character code, foreground color, and
 // background color at position (x, y) relative to the top left of the terminal.
+// TODO(cfoust): 08/24/23 move this to row, col
 func (t *State) Cell(x, y int) Glyph {
 	cell := t.lines[y][x]
 	fg, ok := t.colorOverride[cell.FG]
