@@ -65,7 +65,6 @@ func TestWrap(t *testing.T) {
 func TestLongLine(t *testing.T) {
 	term := New()
 
-	// 1. One long line
 	for i := 0; i < 40; i++ {
 		term.Write([]byte("a"))
 	}

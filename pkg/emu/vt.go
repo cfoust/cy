@@ -49,6 +49,8 @@ type View interface {
 
 	// History returns the full scrollback buffer and current screen.
 	History() []Line
+
+	Changes() (ChangeFlag, []int)
 }
 
 type TerminalOption func(*TerminalInfo)

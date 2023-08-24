@@ -131,8 +131,6 @@ type State struct {
 	history       []Line
 	altLines      []Line
 	altHistory    []Line
-	dirty         []bool // line dirtiness
-	anydirty      bool
 	cur, curSaved Cursor
 	top, bottom   int // scroll limits
 	mode          ModeFlag
@@ -142,6 +140,9 @@ type State struct {
 	tabs          []bool
 	title         string
 	colorOverride map[Color]Color
+
+	dirty    map[int]bool // line dirtiness
+	numDirty int
 
 	parser *vtparser.Parser
 }
@@ -233,15 +234,6 @@ func (t *State) Changed(change ChangeFlag) bool {
 	return t.changed&change != 0
 }
 
-// resetChanges resets the change mask and dirtiness.
-func (t *State) resetChanges() {
-	for i := range t.dirty {
-		t.dirty[i] = false
-	}
-	t.anydirty = false
-	t.changed = 0
-}
-
 func (t *State) saveCursor() {
 	t.curSaved = t.cur
 }
@@ -308,7 +300,7 @@ func (t *State) setChar(c rune, attr *Glyph, x, y int) {
 	}
 
 	t.changed |= ChangedScreen
-	t.dirty[y] = true
+	t.markDirtyLine(y)
 
 	for i := x; i < len(t.lines[y]) && i < x+w; i++ {
 		t.lines[y][i] = *attr
@@ -370,13 +362,14 @@ func (t *State) resize(cols, rows int) bool {
 	history, altHistory := t.history, t.altHistory
 	t.lines = make([]Line, rows)
 	t.altLines = make([]Line, rows)
-	t.dirty = make([]bool, rows)
+	t.dirty = make(map[int]bool, rows)
+	t.numDirty = 0
 	t.tabs = make([]bool, cols)
 
 	minrows := min(rows, t.rows)
 	t.changed |= ChangedScreen
 	for i := 0; i < rows; i++ {
-		t.dirty[i] = true
+		t.markDirtyLine(i)
 		t.lines[i] = make(Line, cols)
 		t.altLines[i] = make(Line, cols)
 	}
@@ -449,7 +442,7 @@ func (t *State) clear(x0, y0, x1, y1 int) {
 	y1 = clamp(y1, 0, t.rows-1)
 	t.changed |= ChangedScreen
 	for y := y0; y <= y1; y++ {
-		t.dirty[y] = true
+		t.markDirtyLine(y)
 		for x := x0; x <= x1; x++ {
 			t.lines[y][x] = t.cur.Attr
 			t.lines[y][x].Char = ' '
@@ -495,7 +488,7 @@ func (t *State) swapScreen() {
 func (t *State) dirtyAll() {
 	t.changed |= ChangedScreen
 	for y := 0; y < t.rows; y++ {
-		t.dirty[y] = true
+		t.markDirtyLine(y)
 	}
 }
 
@@ -550,8 +543,8 @@ func (t *State) scrollDown(orig, n int) {
 	t.changed |= ChangedScreen
 	for i := t.bottom; i >= orig+n; i-- {
 		t.lines[i], t.lines[i-n] = t.lines[i-n], t.lines[i]
-		t.dirty[i] = true
-		t.dirty[i-n] = true
+		t.markDirtyLine(i)
+		t.markDirtyLine(i - n)
 	}
 
 	// don't save history lines on alt screen
@@ -587,8 +580,8 @@ func (t *State) scrollUp(orig, n int) {
 	t.changed |= ChangedScreen
 	for i := orig; i <= t.bottom-n; i++ {
 		t.lines[i], t.lines[i+n] = t.lines[i+n], t.lines[i]
-		t.dirty[i] = true
-		t.dirty[i+n] = true
+		t.markDirtyLine(i)
+		t.markDirtyLine(i + n)
 	}
 
 	// TODO: selection scroll
@@ -804,7 +797,7 @@ func (t *State) insertBlanks(n int) {
 	dst := src + n
 	size := t.cols - dst
 	t.changed |= ChangedScreen
-	t.dirty[t.cur.Y] = true
+	t.markDirtyLine(t.cur.Y)
 
 	if dst >= t.cols {
 		t.clear(t.cur.X, t.cur.Y, t.cols-1, t.cur.Y)
@@ -833,7 +826,7 @@ func (t *State) deleteChars(n int) {
 	dst := t.cur.X
 	size := t.cols - src
 	t.changed |= ChangedScreen
-	t.dirty[t.cur.Y] = true
+	t.markDirtyLine(t.cur.Y)
 
 	if src >= t.cols {
 		t.clear(t.cur.X, t.cur.Y, t.cols-1, t.cur.Y)
