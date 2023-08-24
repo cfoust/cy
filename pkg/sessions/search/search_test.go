@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/cfoust/cy/pkg/sessions"
-	//"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 func makeWrites(lines ...string) (events []sessions.Event) {
@@ -19,13 +19,16 @@ func makeWrites(lines ...string) (events []sessions.Event) {
 }
 
 func TestBasic(t *testing.T) {
-	//results := Search(
-		//makeWrites(
-			//"blah",
-			//"test",
-		//),
-		//"test",
-	//)
-
-	//require.Equal(t, 1, len(results))
+	results, _ := Search(
+		makeWrites(
+			"blah",
+			"test",
+		),
+		"^test",
+	)
+	require.Equal(t, 1, len(results))
+	require.Equal(t, SearchResult{
+		Index:  1,
+		Offset: 3,
+	}, results[0])
 }

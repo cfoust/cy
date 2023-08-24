@@ -13,15 +13,23 @@ import (
 // cells on the screen of an emu.Terminal. Runes are read from top to bottom,
 // left to right, starting at the ScreenReader's initial cell.
 type ScreenReader struct {
-	term emu.Terminal
-	next geom.Vec2
+	term    emu.Terminal
+	start   geom.Vec2
+	next    geom.Vec2
+	numRead int
 }
 
 var _ io.RuneReader = (*ScreenReader)(nil)
 
 // Reset the position of the ScreenReader.
 func (s *ScreenReader) Reset(next geom.Vec2) {
+	s.start = next
 	s.next = next
+	s.numRead = 0
+}
+
+func (s *ScreenReader) NumRead() int {
+	return s.numRead
 }
 
 func (s *ScreenReader) ReadRune() (r rune, size int, err error) {
@@ -31,6 +39,7 @@ func (s *ScreenReader) ReadRune() (r rune, size int, err error) {
 		return 0, 0, io.EOF
 	}
 
+	s.numRead++
 	cell := s.term.Cell(next.C, next.R)
 	r = cell.Char
 	size = len([]byte(string(r)))
@@ -52,7 +61,8 @@ func (s *ScreenReader) ReadRune() (r rune, size int, err error) {
 
 func NewScreenReader(term emu.Terminal, start geom.Vec2) *ScreenReader {
 	return &ScreenReader{
-		term: term,
-		next: start,
+		term:  term,
+		start: start,
+		next:  start,
 	}
 }
