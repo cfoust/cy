@@ -7,7 +7,6 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/mux/screen"
-	copyMode "github.com/cfoust/cy/pkg/mux/screen/copy"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
 )
@@ -43,26 +42,6 @@ func (p *Pane) Resize(size geom.Vec2) {
 
 func (p *Pane) Write(data []byte) (n int, err error) {
 	return p.stream.Write(data)
-}
-
-func (p *Pane) CopyMode(info screen.RenderContext) {
-	if p.layers.NumLayers() > 1 {
-		return
-	}
-
-	copyMode := copyMode.New(
-		p.Ctx(),
-		info,
-		p.terminal.History(),
-		geom.DEFAULT_SIZE,
-	)
-
-	p.layers.NewLayer(
-		copyMode.Ctx(),
-		copyMode,
-		true,
-		true,
-	)
 }
 
 func newPane(ctx context.Context, subStream stream.Stream, size geom.Vec2) *Pane {

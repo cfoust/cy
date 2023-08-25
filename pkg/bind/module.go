@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/cfoust/cy/pkg/bind/parse"
+	"github.com/cfoust/cy/pkg/latte"
 	"github.com/cfoust/cy/pkg/bind/trie"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -41,7 +41,7 @@ type RawEvent struct {
 
 // Contains data for a single input event
 type input struct {
-	Message parse.Msg
+	Message latte.Msg
 	Data    []byte
 }
 
@@ -116,14 +116,14 @@ func (e *Engine[T]) getState() []string {
 func (e *Engine[T]) processKey(ctx context.Context, in input) {
 	// Mouse messages have to be translated to match the pane, so we just
 	// pass them on
-	if _, ok := in.Message.(parse.MouseMsg); ok {
+	if _, ok := in.Message.(latte.MouseMsg); ok {
 		e.out <- RawEvent{
 			Data: in.Data,
 		}
 		return
 	}
 
-	key, ok := in.Message.(parse.KeyMsg)
+	key, ok := in.Message.(latte.KeyMsg)
 	if !ok {
 		return
 	}
@@ -207,8 +207,8 @@ func (e *Engine[T]) Poll(ctx context.Context) {
 // Process input and produce events.
 func (e *Engine[T]) Input(data []byte) {
 	for i, w := 0, 0; i < len(data); i += w {
-		var msg parse.Msg
-		w, msg = parse.DetectOneMsg(data[i:])
+		var msg latte.Msg
+		w, msg = latte.DetectOneMsg(data[i:])
 		e.in <- input{
 			Message: msg,
 			Data:    data[i:],

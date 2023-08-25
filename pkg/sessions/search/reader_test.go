@@ -14,7 +14,7 @@ func TestSequence(t *testing.T) {
 	term.Resize(4, 2)
 	term.Write([]byte("foo"))
 
-	reader := NewScreenReader(term, geom.Vec2{})
+	reader := NewScreenReader(term, geom.Vec2{}, 8)
 
 	sequence := []rune{
 		// line 1

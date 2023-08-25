@@ -2,162 +2,181 @@ package replay
 
 import (
 	"context"
+	"time"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/latte"
 	"github.com/cfoust/cy/pkg/sessions"
-	"github.com/cfoust/cy/pkg/util"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
-	"github.com/sasha-s/go-deadlock"
 )
 
 type Replay struct {
-	deadlock.RWMutex
+	render *latte.Renderer
 
-	util.Lifetime
-	*screen.Trigger
-
-	events   []sessions.Event
+	// the size of the terminal
 	terminal emu.Terminal
-	recorder *sessions.Recorder
-	overlay  *screen.Tea
-	model    *model
 
-	index int
+	// the offset of the displayed event in `events`
+	index  int
+	events []sessions.Event
+
+	// the location of the cursor relative to the top of the terminal's
+	// lines including the scrollback buffer
+	cursor geom.Size
+
+	offset    int
+	maxOffset int
+	numLines  int
 }
 
-var _ screen.Screen = (*Replay)(nil)
+var _ latte.Model = (*Replay)(nil)
+
+func (r *Replay) quit() (latte.Model, tea.Cmd) {
+	return r, tea.Quit
+}
+
+func (r *Replay) setOffset(offset int) {
+	r.offset = geom.Clamp(offset, 0, r.maxOffset)
+}
 
 // Move the terminal from event index `from` to `to`.
-func (c *Replay) update(from, to int) {
-	from = geom.Clamp(from, 0, len(c.events)-1)
-	to = geom.Clamp(to, 0, len(c.events)-1)
+func (r *Replay) setIndex(index int) {
+	numEvents := len(r.events)
+	// Allow for negative indices from end of stream
+	if index < 0 {
+		index = geom.Clamp(numEvents+index, 0, numEvents-1)
+	}
+
+	from := geom.Clamp(r.index, 0, numEvents-1)
+	to := geom.Clamp(index, 0, numEvents-1)
 
 	if from == to {
 		return
 	}
 
+	// don't allow looking at scrollback when moving in time
+	r.offset = 0
+
 	origin := from + 1
 	if from > to {
-		c.terminal = emu.New()
+		r.terminal = emu.New()
 		origin = 0
 	}
 
 	for i := origin; i <= to; i++ {
-		event := c.events[i]
+		event := r.events[i]
 		switch e := event.Data.(type) {
 		case sessions.OutputEvent:
-			c.terminal.Write(e.Bytes)
+			r.terminal.Write(e.Bytes)
 		case sessions.ResizeEvent:
-			c.terminal.Resize(
+			r.terminal.Resize(
 				e.Columns,
 				e.Rows,
 			)
 		}
+		r.maxOffset = len(r.terminal.History())
 	}
 
-	c.index = to
+	r.index = to
 }
 
-func (c *Replay) Render(size screen.Size) *tty.State {
-	c.Lock()
-	defer c.Unlock()
-	from := c.index
-	to := c.model.index
-	if from != to {
-		c.update(from, to)
+func (r *Replay) Init() tea.Cmd {
+	return nil
+}
+
+func (r *Replay) Update(msg tea.Msg) (latte.Model, tea.Cmd) {
+	_, rows := r.terminal.Size()
+
+	switch msg := msg.(type) {
+	case latte.KeyMsg:
+		switch msg.Type {
+		case latte.KeyRunes:
+			switch msg.String() {
+			case "g":
+				r.setIndex(0)
+				return r, nil
+			case "G":
+				r.setIndex(-1)
+				return r, nil
+			case "q":
+				return r.quit()
+			}
+		case latte.KeyEsc, latte.KeyCtrlC:
+			return r.quit()
+		case latte.KeyLeft:
+			r.setIndex(r.index - 1)
+			return r, nil
+		case latte.KeyRight:
+			r.setIndex(r.index + 1)
+			return r, nil
+		case latte.KeyCtrlU:
+			r.setOffset(r.offset + (rows / 2))
+		case latte.KeyCtrlD:
+			r.setOffset(r.offset - (rows / 2))
+		case latte.KeyUp:
+			r.setOffset(r.offset + 1)
+		case latte.KeyDown:
+			r.setOffset(r.offset - 1)
+		}
 	}
 
-	state := tty.Capture(c.terminal)
-	stateSize := state.Image.Size()
+	return r, nil
+}
 
-	out := tty.New(size)
-	out.CursorVisible = false
+func (r *Replay) View(state *tty.State) {
+	termCols, termRows := r.terminal.Size()
+	screen := r.terminal.Screen()
+	history := r.terminal.History()
+
+	size := state.Image.Size()
+
+	state.CursorVisible = false
 
 	// TODO(cfoust): 08/10/23 indicate smaller/bigger size somehow
-	for row := 0; row < size.R && row < stateSize.R; row++ {
-		for col := 0; col < size.C && col < stateSize.C; col++ {
-			out.Image[row][col] = state.Image[row][col]
+	var rowIndex int
+	for row := 0; row < geom.Min(termRows, size.R); row++ {
+		rowIndex = row - r.offset
+		for col := 0; col < geom.Min(termCols, size.C); col++ {
+			if rowIndex < 0 {
+				state.Image[row][col] = history[len(history)+rowIndex][col]
+			} else {
+				state.Image[row][col] = screen[rowIndex][col]
+			}
 		}
 	}
 
-	image.Compose(geom.Vec2{}, out.Image, c.overlay.State().Image)
+	//state.Cursor = termState.Cursor
 
-	out.Cursor = state.Cursor
+	basic := r.render.NewStyle().
+		Foreground(lipgloss.Color("#D5CCBA")).
+		Width(size.C).
+		Align(lipgloss.Right)
 
-	return out
-}
-
-func (c *Replay) Write(data []byte) (n int, err error) {
-	n, err = c.overlay.Write(data)
-	c.Rerender()
-	return
-}
-
-func (c *Replay) poll(ctx context.Context) {
-	updates := c.overlay.Updates()
-	defer updates.Done()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-updates.Recv():
-			c.Rerender()
-		}
-	}
-}
-
-func (c *Replay) Resize(size screen.Size) error {
-	err := c.overlay.Resize(size)
-	if err != nil {
-		return err
+	index := r.index
+	if index < 0 || index >= len(r.events) || len(r.events) == 0 {
+		r.render.RenderAt(state, 0, 0, basic.Render("???"))
+		return
 	}
 
-	return c.Trigger.Resize(size)
+	r.render.RenderAt(
+		state,
+		0,
+		0,
+		basic.Render(r.events[index].Stamp.Format(time.RFC1123)),
+	)
 }
 
-func New(
-	ctx context.Context,
-	info screen.RenderContext,
-	recorder *sessions.Recorder,
-	size screen.Size,
-) *Replay {
-	lifetime := util.NewLifetime(ctx)
-
+func New(ctx context.Context, recorder *sessions.Recorder) *latte.Program {
 	events := recorder.Events()
-	m := &model{
-		lifetime: &lifetime,
+	m := &Replay{
+		render:   latte.NewRenderer(),
 		events:   events,
-		renderer: lipgloss.NewRenderer(
-			nil,
-			termenv.WithProfile(info.Colors),
-		),
+		terminal: emu.New(),
 	}
 	m.setIndex(-1)
-
-	overlay := screen.NewTea(
-		lifetime.Ctx(),
-		m,
-		info,
-		size,
-	)
-
-	c := &Replay{
-		Lifetime: lifetime,
-		terminal: emu.New(),
-		overlay:  overlay,
-		recorder: recorder,
-		model:    m,
-		events:   events,
-	}
-	c.Trigger = screen.NewTrigger(c)
-
-	go c.poll(lifetime.Ctx())
-
-	return c
+	return latte.New(ctx, m)
 }

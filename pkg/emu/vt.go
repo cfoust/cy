@@ -28,7 +28,7 @@ type View interface {
 	// Resize changes the size of the virtual terminal.
 	Resize(cols, rows int)
 
-	// Mode returns the current terminal mode.//
+	// Mode returns the current terminal mode.
 	Mode() ModeFlag
 
 	// Title represents the title of the console window.
@@ -47,10 +47,10 @@ type View interface {
 	// Screen gets all of the lines on the screen.
 	Screen() []Line
 
-	// History returns the full scrollback buffer and current screen.
+	// History returns the scrollback buffer.
 	History() []Line
 
-	Changes() (ChangeFlag, []int)
+	LastCell() (cell Cell, changed bool)
 }
 
 type TerminalOption func(*TerminalInfo)

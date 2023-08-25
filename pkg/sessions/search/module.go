@@ -2,25 +2,37 @@ package search
 
 import (
 	"regexp"
-	"sort"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/sessions"
 )
 
-type SearchResult struct {
-	// The index of the event that
+// Address refers to a point inside of a recording.
+type Address struct {
+	// The index of the event
 	Index int
-	// The offset at which (after parsing) the match was on the screen
+	// The byte offset at which (after parsing) the match either appeared
+	// or disappeared
 	Offset int
 }
 
-func matchCell(re *regexp.Regexp, reader *ScreenReader) (full, partial bool) {
-	loc := re.FindReaderIndex(reader)
+type SearchResult struct {
+	// The location of the result in time
+	Begin, End Address
+	// The location of the result on the screen
+	From, To geom.Vec2
+}
 
-	if len(loc) != 0 {
-		full = true
+func matchCell(re *regexp.Regexp, reader *ScreenReader, cell geom.Vec2) (loc []geom.Vec2, partial bool) {
+	reader.Reset(cell)
+	indices := re.FindReaderIndex(reader)
+
+	if len(indices) == 2 {
+		loc = []geom.Vec2{
+			reader.GetLocation(indices[0]),
+			reader.GetLocation(indices[1]),
+		}
 		return
 	}
 
@@ -43,58 +55,138 @@ func Search(events []sessions.Event, pattern string) (results []SearchResult, er
 
 	term := emu.New()
 
-	var flag emu.ChangeFlag
-	var dirty []int
+	reader := NewScreenReader(term, geom.Vec2{}, geom.DEFAULT_SIZE.R*geom.DEFAULT_SIZE.C)
 
-	reader := NewScreenReader(term, geom.Vec2{})
+	// The partial matches we're tracking
+	var candidates, newCandidates []geom.Vec2
+	// The full matches we're tracking that are still on the screen
+	var matches, newMatches []SearchResult
 
-	// TODO(cfoust): 08/24/23 keep track of match candidates on non-dirty lines
-	// right now we'll miss matches that start on non-dirty lines
-	//candidates := make(map[geom.Vec2]struct{}, 32)
+	var address Address
 
 	for index, event := range events {
-		switch event := event.Data.(type) {
-		case sessions.OutputEvent:
-			for offset := range event.Bytes {
-				// Advance one byte at a time
-				term.Write(event.Bytes[offset : offset+1])
+		if resize, ok := event.Data.(sessions.ResizeEvent); ok {
+			term.Resize(
+				resize.Columns,
+				resize.Rows,
+			)
+			reader.Resize(resize.Columns * resize.Rows)
 
-				flag, dirty = term.Changes()
-				if flag == 0 || len(dirty) == 0 {
+			// TODO(cfoust): 08/24/23 clear all matches and
+			// candidates, scan every cell for candidates
+			continue
+		}
+
+		output := event.Data.(sessions.OutputEvent)
+
+		for offset := range output.Bytes {
+			newCandidates = make([]geom.Vec2, 0)
+			newMatches = make([]SearchResult, 0)
+
+			// Advance one byte at a time
+			term.Write(output.Bytes[offset : offset+1])
+
+			// TODO(cfoust): 08/25/23 if ChangeFlag is 0, don't bother
+
+			address = Address{
+				Index:  index,
+				Offset: offset,
+			}
+
+			// Check all existing candidates
+			for _, candidate := range candidates {
+				loc, partial := matchCell(re, reader, candidate)
+
+				// The partial match is still partial
+				if partial {
+					newCandidates = append(
+						newCandidates,
+						candidate,
+					)
 					continue
 				}
 
-				sort.Ints(dirty)
+				// It left
+				if len(loc) == 0 {
+					continue
+				}
 
-				cols, _ := term.Size()
-				for _, row := range dirty {
-					for col := 0; col < cols; col++ {
-						reader.Reset(geom.Vec2{
-							R: row,
-							C: col,
-						})
-						full, _ := matchCell(
-							re,
-							reader,
-						)
+				// We have a full match!
+				newMatches = append(
+					newMatches,
+					SearchResult{
+						Begin: address,
+						From:  loc[0],
+						To:    loc[1],
+					},
+				)
+			}
 
-						if !full {
-							continue
-						}
+			for _, match := range matches {
+				loc, partial := matchCell(re, reader, match.From)
 
-						results = append(results, SearchResult{
-							Index:  index,
-							Offset: offset,
-						})
-					}
+				// Still track it if it was partial
+				if partial {
+					newCandidates = append(
+						newCandidates,
+						match.From,
+					)
+				}
+
+				// It's gone
+				if partial || len(loc) != 2 {
+					match.End = address
+					results = append(
+						results,
+						match,
+					)
+					continue
+				}
+
+				// Still a match, so leave it
+				newMatches = append(
+					newMatches,
+					match,
+				)
+			}
+
+			// Check for a new match
+			cell, changed := term.LastCell()
+			if changed {
+				loc, partial := matchCell(re, reader, cell.Vec2)
+
+				if partial {
+					newCandidates = append(
+						newCandidates,
+						cell.Vec2,
+					)
+				}
+
+				if len(loc) == 2 {
+					newMatches = append(
+						newMatches,
+						SearchResult{
+							Begin: address,
+							From:  loc[0],
+							To:    loc[1],
+						},
+					)
 				}
 			}
-		case sessions.ResizeEvent:
-			term.Resize(
-				event.Columns,
-				event.Rows,
-			)
+
+			candidates = newCandidates
+			matches = newMatches
 		}
 	}
+
+	// Finish any matches that were done
+	for _, match := range matches {
+		match.End = address
+		results = append(
+			results,
+			match,
+		)
+	}
+
 	return
 }

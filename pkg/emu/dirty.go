@@ -8,18 +8,12 @@ func (t *State) markDirtyLine(row int) {
 	}
 
 	t.dirty[index] = true
-	t.numDirty++
 }
 
-func (t *State) Changes() (flag ChangeFlag, dirtyRows []int) {
-	t.Lock()
-	for row := range t.dirty {
-		dirtyRows = append(dirtyRows, row)
-	}
-	flag = t.changed
-	t.resetChanges()
-	t.Unlock()
-
+func (t *State) LastCell() (cell Cell, changed bool) {
+	cell = t.lastCell
+	changed = t.lastCell.changed
+	t.lastCell.changed = false
 	return
 }
 
@@ -27,5 +21,4 @@ func (t *State) Changes() (flag ChangeFlag, dirtyRows []int) {
 func (t *State) resetChanges() {
 	t.dirty = make(map[int]bool)
 	t.changed = 0
-	t.numDirty = 0
 }

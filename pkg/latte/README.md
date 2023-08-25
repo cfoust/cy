@@ -1,0 +1,1 @@
+Much of this code was forked from [charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea). I needed to be able to expand on its key/mouse event parsing and build a new `Program`-esque abstraction.

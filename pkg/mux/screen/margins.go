@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/bind/parse"
+	"github.com/cfoust/cy/pkg/latte"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 
@@ -107,7 +107,7 @@ func (l *Margins) Write(data []byte) (n int, err error) {
 	l.RLock()
 	inner := l.inner
 	l.RUnlock()
-	parse.TranslateMouseEvents(
+	latte.TranslateMouseEvents(
 		data,
 		-inner.C,
 		-inner.R,

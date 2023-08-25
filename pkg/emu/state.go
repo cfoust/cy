@@ -4,6 +4,8 @@ import (
 	"io"
 	"log"
 
+	"github.com/cfoust/cy/pkg/geom"
+
 	"github.com/danielgatis/go-vte/vtparser"
 	"github.com/mattn/go-runewidth"
 	"github.com/sasha-s/go-deadlock"
@@ -118,6 +120,12 @@ type Cursor struct {
 	Style CursorStyle
 }
 
+type Cell struct {
+	changed bool
+	geom.Vec2
+	Glyph
+}
+
 // State represents the terminal emulation state. Use Lock/Unlock
 // methods to synchronize data access with VT.
 type State struct {
@@ -125,7 +133,6 @@ type State struct {
 	DebugLogger *log.Logger
 
 	w             io.Writer
-	changed       ChangeFlag
 	cols, rows    int
 	lines         []Line
 	history       []Line
@@ -141,8 +148,10 @@ type State struct {
 	title         string
 	colorOverride map[Color]Color
 
-	dirty    map[int]bool // line dirtiness
-	numDirty int
+	changed ChangeFlag
+	dirty   map[int]bool // line dirtiness
+	// the most recent cell that was `setChar`'d
+	lastCell Cell
 
 	parser *vtparser.Parser
 }
@@ -319,6 +328,11 @@ func (t *State) setChar(c rune, attr *Glyph, x, y int) {
 			t.lines[y][i].BG = attr.FG
 		}
 	}
+
+	t.lastCell.R = y
+	t.lastCell.C = x
+	t.lastCell.Glyph = t.lines[y][x]
+	t.lastCell.changed = true
 }
 
 func (t *State) defaultCursor() Cursor {
@@ -364,7 +378,6 @@ func (t *State) resize(cols, rows int) bool {
 	t.lines = make([]Line, rows)
 	t.altLines = make([]Line, rows)
 	t.dirty = make(map[int]bool, rows)
-	t.numDirty = 0
 	t.tabs = make([]bool, cols)
 
 	minrows := min(rows, t.rows)
@@ -873,13 +886,13 @@ func (t *State) clone(sets ...[]Line) []Line {
 func (t *State) Screen() []Line {
 	t.Lock()
 	defer t.Unlock()
-	return t.clone(t.lines)
+	return t.lines
 }
 
 func (t *State) History() []Line {
 	t.Lock()
 	defer t.Unlock()
-	return t.clone(t.history, t.lines)
+	return t.history
 }
 
 func (t *State) String() string {

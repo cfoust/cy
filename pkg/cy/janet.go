@@ -60,24 +60,6 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			client.Detach("detached")
 		},
-		"cy/copy-mode": func(user interface{}) {
-			client, ok := user.(*Client)
-			if !ok {
-				return
-			}
-
-			node := client.Node()
-			if node == nil {
-				return
-			}
-
-			pane, ok := node.(*tree.Pane)
-			if !ok {
-				return
-			}
-
-			pane.CopyMode(client.info)
-		},
 		"cy/replay": func(user interface{}) {
 			client, ok := user.(*Client)
 			if !ok {
@@ -96,9 +78,7 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 
 			r := replay.New(
 				ctx,
-				client.info,
 				pane.Recorder(),
-				geom.DEFAULT_SIZE,
 			)
 
 			client.innerLayers.NewLayer(

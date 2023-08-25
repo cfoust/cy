@@ -4,9 +4,9 @@ import (
 	"context"
 	"io"
 
-	"github.com/cfoust/cy/pkg/bind/parse"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/latte"
 	"github.com/cfoust/cy/pkg/mux"
 )
 
@@ -20,10 +20,6 @@ var _ Screen = (*Terminal)(nil)
 
 func (t *Terminal) State() *tty.State {
 	return tty.Capture(t.terminal)
-}
-
-func (t *Terminal) History() []emu.Line {
-	return t.terminal.History()
 }
 
 func (t *Terminal) notifyChange() {
@@ -50,14 +46,14 @@ func (t *Terminal) Write(data []byte) (n int, err error) {
 	mode := t.terminal.Mode()
 
 	input := make([]byte, 0)
-	var msg parse.Msg
+	var msg latte.Msg
 	for i, w := 0, 0; i < len(data); i += w {
-		w, msg = parse.DetectOneMsg(data[i:])
+		w, msg = latte.DetectOneMsg(data[i:])
 		if msg == nil {
 			continue
 		}
 
-		if _, ok := msg.(parse.KeyMsg); ok {
+		if _, ok := msg.(latte.KeyMsg); ok {
 			input = append(
 				input,
 				data[i:i+w]...,
@@ -65,25 +61,25 @@ func (t *Terminal) Write(data []byte) (n int, err error) {
 			continue
 		}
 
-		mouse, ok := msg.(parse.MouseMsg)
+		mouse, ok := msg.(latte.MouseMsg)
 		if !ok {
 			continue
 		}
 
 		switch mode & emu.ModeMouseMask {
 		case emu.ModeMouseX10:
-			if mouse.Type != parse.MouseLeft {
+			if mouse.Type != latte.MouseLeft {
 				continue
 			}
 
 			input = append(
 				input,
-				parse.MouseEvent(mouse).X10Bytes()...,
+				latte.MouseEvent(mouse).X10Bytes()...,
 			)
 			continue
 		case emu.ModeMouseButton:
 			// TODO(cfoust): 08/08/23 we should still report drag
-			if mouse.Type == parse.MouseMotion {
+			if mouse.Type == latte.MouseMotion {
 				continue
 			}
 		case 0:

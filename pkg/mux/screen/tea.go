@@ -10,15 +10,15 @@ import (
 	"github.com/xo/terminfo"
 )
 
-type teaStream struct {
+type teaScreen struct {
 	reads   *io.PipeReader
 	writes  *io.PipeWriter
 	program *tea.Program
 }
 
-var _ Stream = (*teaStream)(nil)
+var _ Stream = (*teaScreen)(nil)
 
-func (s *teaStream) Resize(size Size) error {
+func (s *teaScreen) Resize(size Size) error {
 	s.program.Send(tea.WindowSizeMsg{
 		Width:  size.C,
 		Height: size.R,
@@ -26,15 +26,15 @@ func (s *teaStream) Resize(size Size) error {
 	return nil
 }
 
-func (s *teaStream) Write(data []byte) (n int, err error) {
+func (s *teaScreen) Write(data []byte) (n int, err error) {
 	return s.writes.Write(data)
 }
 
-func (s *teaStream) Read(p []byte) (n int, err error) {
+func (s *teaScreen) Read(p []byte) (n int, err error) {
 	return s.reads.Read(p)
 }
 
-func newTeaStream(ctx context.Context, model tea.Model, size Size) *teaStream {
+func newTeaScreen(ctx context.Context, model tea.Model, size Size) *teaScreen {
 	reads, out := io.Pipe()
 	in, writes := io.Pipe()
 
@@ -48,7 +48,7 @@ func newTeaStream(ctx context.Context, model tea.Model, size Size) *teaStream {
 
 	go program.Run()
 
-	tea := &teaStream{
+	tea := &teaScreen{
 		reads:   reads,
 		writes:  writes,
 		program: program,
@@ -59,7 +59,7 @@ func newTeaStream(ctx context.Context, model tea.Model, size Size) *teaStream {
 
 type Tea struct {
 	*Terminal
-	stream *teaStream
+	stream *teaScreen
 }
 
 var _ Screen = (*Tea)(nil)
@@ -70,7 +70,7 @@ func NewTea(
 	info RenderContext,
 	size Size,
 ) *Tea {
-	stream := newTeaStream(
+	stream := newTeaScreen(
 		ctx,
 		model,
 		geom.DEFAULT_SIZE,

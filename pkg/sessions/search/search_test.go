@@ -3,7 +3,9 @@ package search
 import (
 	"testing"
 
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/sessions"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,14 +23,27 @@ func makeWrites(lines ...string) (events []sessions.Event) {
 func TestBasic(t *testing.T) {
 	results, _ := Search(
 		makeWrites(
-			"blah",
-			"test",
+			"foo",
+			"bar",
+			"baz",
 		),
-		"^test",
+		"^bar",
 	)
 	require.Equal(t, 1, len(results))
 	require.Equal(t, SearchResult{
-		Index:  1,
-		Offset: 3,
+		Begin: Address{
+			Index:  1,
+			Offset: 2,
+		},
+		End: Address{
+			Index:  2,
+			Offset: 2,
+		},
+		From: geom.Vec2{
+			C: 3,
+		},
+		To: geom.Vec2{
+			C: 6,
+		},
 	}, results[0])
 }
