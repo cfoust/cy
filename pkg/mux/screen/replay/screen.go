@@ -2,6 +2,7 @@ package replay
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/cfoust/cy/pkg/emu"
@@ -153,7 +154,7 @@ func (r *Replay) View(state *tty.State) {
 
 	basic := r.render.NewStyle().
 		Foreground(lipgloss.Color("#D5CCBA")).
-		Width(size.C).
+		Background(lipgloss.Color("#000000")).
 		Align(lipgloss.Right)
 
 	index := r.index
@@ -162,11 +163,25 @@ func (r *Replay) View(state *tty.State) {
 		return
 	}
 
+	headline := r.events[index].Stamp.Format(time.RFC1123)
+
+	if r.offset > 0 {
+		headline = fmt.Sprintf(
+			"[%d/%d]",
+			r.offset,
+			r.maxOffset,
+		)
+	}
+
 	r.render.RenderAt(
 		state,
 		0,
 		0,
-		basic.Render(r.events[index].Stamp.Format(time.RFC1123)),
+		r.render.PlaceHorizontal(
+			size.C,
+			lipgloss.Right,
+			basic.Render(headline),
+		),
 	)
 }
 
