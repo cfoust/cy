@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/cfoust/cy/pkg/latte"
 	"github.com/cfoust/cy/pkg/bind/trie"
+	"github.com/cfoust/cy/pkg/latte"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/sasha-s/go-deadlock"
@@ -211,7 +211,7 @@ func (e *Engine[T]) Input(data []byte) {
 		w, msg = latte.DetectOneMsg(data[i:])
 		e.in <- input{
 			Message: msg,
-			Data:    data[i:],
+			Data:    data[i : i+w],
 		}
 	}
 }
