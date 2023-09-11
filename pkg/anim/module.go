@@ -2,8 +2,8 @@ package anim
 
 import (
 	"context"
-	"time"
 	"math/rand"
+	"time"
 
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -72,7 +72,8 @@ func Random() Animation {
 	anims := []Animation{
 		&Midjo{},
 		&Cyform{},
+		&Conway{},
 	}
 
-	return anims[rand.Int() % len(anims)]
+	return anims[rand.Int()%len(anims)]
 }
