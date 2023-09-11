@@ -1,4 +1,4 @@
-package latte
+package taro
 
 import (
 	"github.com/cfoust/cy/pkg/emu"

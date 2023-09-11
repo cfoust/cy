@@ -26,7 +26,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package latte
+package taro
 
 // MouseMsg contains information about a mouse event and are sent to a programs
 // update function when mouse activity occurs. Note that the mouse must first

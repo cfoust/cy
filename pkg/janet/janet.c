@@ -624,7 +624,7 @@ void *janet_gcalloc(enum JanetMemoryType type, size_t size);
 #define janet_v_count(v)        (((v) != NULL) ? janet_v__cnt(v) : 0)
 #define janet_v_last(v)         ((v)[janet_v__cnt(v) - 1])
 #define janet_v_empty(v)        (((v) != NULL) ? (janet_v__cnt(v) = 0) : 0)
-#define janet_v_flatten(v)      (janet_v_flattenmem((v), sizeof(*(v))))
+#define janet_v_ftaron(v)      (janet_v_ftaronmem((v), sizeof(*(v))))
 
 #define janet_v__raw(v) ((int32_t *)(v) - 2)
 #define janet_v__cap(v) janet_v__raw(v)[0]
@@ -636,7 +636,7 @@ void *janet_gcalloc(enum JanetMemoryType type, size_t size);
 
 /* Actual functions defined in vector.c */
 void *janet_v_grow(void *v, int32_t increment, int32_t itemsize);
-void *janet_v_flattenmem(void *v, int32_t itemsize);
+void *janet_v_ftaronmem(void *v, int32_t itemsize);
 
 #endif
 
@@ -5747,10 +5747,10 @@ JanetFuncDef *janetc_pop_funcdef(JanetCompiler *c) {
     }
 
     def->constants_length = janet_v_count(scope->consts);
-    def->constants = janet_v_flatten(scope->consts);
+    def->constants = janet_v_ftaron(scope->consts);
 
     def->defs_length = janet_v_count(scope->defs);
-    def->defs = janet_v_flatten(scope->defs);
+    def->defs = janet_v_ftaron(scope->defs);
 
     /* Copy bytecode (only last chunk) */
     def->bytecode_length = janet_v_count(c->buffer) - scope->bytecode_start;
@@ -5849,7 +5849,7 @@ JanetFuncDef *janetc_pop_funcdef(JanetCompiler *c) {
         }
     }
     def->symbolmap_length = janet_v_count(locals);
-    def->symbolmap = janet_v_flatten(locals);
+    def->symbolmap = janet_v_ftaron(locals);
     if (def->symbolmap_length) def->flags |= JANET_FUNCDEF_FLAG_HASSYMBOLMAP;
 
     /* Pop the scope */
@@ -28564,8 +28564,8 @@ JANET_CORE_FN(cfun_struct_getproto,
            : janet_wrap_nil();
 }
 
-JANET_CORE_FN(cfun_struct_flatten,
-              "(struct/proto-flatten st)",
+JANET_CORE_FN(cfun_struct_ftaron,
+              "(struct/proto-ftaron st)",
               "Convert a struct with prototypes to a struct with no prototypes by merging "
               "all key value pairs from recursive prototypes into one new struct.") {
     janet_fixarity(argc, 1);
@@ -28633,7 +28633,7 @@ void janet_lib_struct(JanetTable *env) {
     JanetRegExt struct_cfuns[] = {
         JANET_CORE_REG("struct/with-proto", cfun_struct_with_proto),
         JANET_CORE_REG("struct/getproto", cfun_struct_getproto),
-        JANET_CORE_REG("struct/proto-flatten", cfun_struct_flatten),
+        JANET_CORE_REG("struct/proto-ftaron", cfun_struct_ftaron),
         JANET_CORE_REG("struct/to-table", cfun_struct_to_table),
         JANET_REG_END
     };
@@ -29166,7 +29166,7 @@ const JanetKV *janet_table_to_struct(JanetTable *t) {
     return janet_struct_end(st);
 }
 
-JanetTable *janet_table_proto_flatten(JanetTable *t) {
+JanetTable *janet_table_proto_ftaron(JanetTable *t) {
     JanetTable *newTable = janet_table(0);
     while (t) {
         JanetKV *kv = t->data;
@@ -29255,12 +29255,12 @@ JANET_CORE_FN(cfun_table_clear,
     return janet_wrap_table(table);
 }
 
-JANET_CORE_FN(cfun_table_proto_flatten,
-              "(table/proto-flatten tab)",
+JANET_CORE_FN(cfun_table_proto_ftaron,
+              "(table/proto-ftaron tab)",
               "Create a new table that is the result of merging all prototypes into a new table.") {
     janet_fixarity(argc, 1);
     JanetTable *table = janet_gettable(argv, 0);
-    return janet_wrap_table(janet_table_proto_flatten(table));
+    return janet_wrap_table(janet_table_proto_ftaron(table));
 }
 
 /* Load the table module */
@@ -29273,7 +29273,7 @@ void janet_lib_table(JanetTable *env) {
         JANET_CORE_REG("table/rawget", cfun_table_rawget),
         JANET_CORE_REG("table/clone", cfun_table_clone),
         JANET_CORE_REG("table/clear", cfun_table_clear),
-        JANET_CORE_REG("table/proto-flatten", cfun_table_proto_flatten),
+        JANET_CORE_REG("table/proto-ftaron", cfun_table_proto_ftaron),
         JANET_REG_END
     };
     janet_core_cfuns_ext(env, NULL, table_cfuns);
@@ -31353,7 +31353,7 @@ void *janet_v_grow(void *v, int32_t increment, int32_t itemsize) {
 }
 
 /* Convert a buffer to normal allocated memory (forget capacity) */
-void *janet_v_flattenmem(void *v, int32_t itemsize) {
+void *janet_v_ftaronmem(void *v, int32_t itemsize) {
     char *p;
     if (NULL == v) return NULL;
     size_t size = (size_t) itemsize * janet_v__cnt(v);

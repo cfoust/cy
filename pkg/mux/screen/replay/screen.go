@@ -8,7 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/latte"
+	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/sessions"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -16,7 +16,7 @@ import (
 )
 
 type Replay struct {
-	render *latte.Renderer
+	render *taro.Renderer
 
 	// the size of the terminal
 	terminal emu.Terminal
@@ -34,9 +34,9 @@ type Replay struct {
 	numLines  int
 }
 
-var _ latte.Model = (*Replay)(nil)
+var _ taro.Model = (*Replay)(nil)
 
-func (r *Replay) quit() (latte.Model, tea.Cmd) {
+func (r *Replay) quit() (taro.Model, tea.Cmd) {
 	return r, tea.Quit
 }
 
@@ -89,13 +89,13 @@ func (r *Replay) Init() tea.Cmd {
 	return nil
 }
 
-func (r *Replay) Update(msg tea.Msg) (latte.Model, tea.Cmd) {
+func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	_, rows := r.terminal.Size()
 
 	switch msg := msg.(type) {
-	case latte.KeyMsg:
+	case taro.KeyMsg:
 		switch msg.Type {
-		case latte.KeyRunes:
+		case taro.KeyRunes:
 			switch msg.String() {
 			case "g":
 				r.setIndex(0)
@@ -106,21 +106,21 @@ func (r *Replay) Update(msg tea.Msg) (latte.Model, tea.Cmd) {
 			case "q":
 				return r.quit()
 			}
-		case latte.KeyEsc, latte.KeyCtrlC:
+		case taro.KeyEsc, taro.KeyCtrlC:
 			return r.quit()
-		case latte.KeyLeft:
+		case taro.KeyLeft:
 			r.setIndex(r.index - 1)
 			return r, nil
-		case latte.KeyRight:
+		case taro.KeyRight:
 			r.setIndex(r.index + 1)
 			return r, nil
-		case latte.KeyCtrlU:
+		case taro.KeyCtrlU:
 			r.setOffset(r.offset + (rows / 2))
-		case latte.KeyCtrlD:
+		case taro.KeyCtrlD:
 			r.setOffset(r.offset - (rows / 2))
-		case latte.KeyUp:
+		case taro.KeyUp:
 			r.setOffset(r.offset + 1)
-		case latte.KeyDown:
+		case taro.KeyDown:
 			r.setOffset(r.offset - 1)
 		}
 	}
@@ -185,13 +185,13 @@ func (r *Replay) View(state *tty.State) {
 	)
 }
 
-func New(ctx context.Context, recorder *sessions.Recorder) *latte.Program {
+func New(ctx context.Context, recorder *sessions.Recorder) *taro.Program {
 	events := recorder.Events()
 	m := &Replay{
-		render:   latte.NewRenderer(),
+		render:   taro.NewRenderer(),
 		events:   events,
 		terminal: emu.New(),
 	}
 	m.setIndex(-1)
-	return latte.New(ctx, m)
+	return taro.New(ctx, m)
 }

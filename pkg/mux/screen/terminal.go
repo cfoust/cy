@@ -6,7 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/latte"
+	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/mux"
 )
 
@@ -46,14 +46,14 @@ func (t *Terminal) Write(data []byte) (n int, err error) {
 	mode := t.terminal.Mode()
 
 	input := make([]byte, 0)
-	var msg latte.Msg
+	var msg taro.Msg
 	for i, w := 0, 0; i < len(data); i += w {
-		w, msg = latte.DetectOneMsg(data[i:])
+		w, msg = taro.DetectOneMsg(data[i:])
 		if msg == nil {
 			continue
 		}
 
-		if _, ok := msg.(latte.KeyMsg); ok {
+		if _, ok := msg.(taro.KeyMsg); ok {
 			input = append(
 				input,
 				data[i:i+w]...,
@@ -61,25 +61,25 @@ func (t *Terminal) Write(data []byte) (n int, err error) {
 			continue
 		}
 
-		mouse, ok := msg.(latte.MouseMsg)
+		mouse, ok := msg.(taro.MouseMsg)
 		if !ok {
 			continue
 		}
 
 		switch mode & emu.ModeMouseMask {
 		case emu.ModeMouseX10:
-			if mouse.Type != latte.MouseLeft {
+			if mouse.Type != taro.MouseLeft {
 				continue
 			}
 
 			input = append(
 				input,
-				latte.MouseEvent(mouse).X10Bytes()...,
+				taro.MouseEvent(mouse).X10Bytes()...,
 			)
 			continue
 		case emu.ModeMouseButton:
 			// TODO(cfoust): 08/08/23 we should still report drag
-			if mouse.Type == latte.MouseMotion {
+			if mouse.Type == taro.MouseMotion {
 				continue
 			}
 		case 0:
