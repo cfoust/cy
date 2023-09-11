@@ -5,12 +5,6 @@ import (
 	"path/filepath"
 )
 
-/*$XDG_CONFIG_HOME/cy/cyrc.janet*/
-/*$XDG_CONFIG_HOME/cy.janet*/
-/*$HOME/.config/cy/cy.janet*/
-/*$HOME/cy/cy.janet*/
-/*$HOME/.cy.janet*/
-
 func fileExists(path string) bool {
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		return true
@@ -20,6 +14,12 @@ func fileExists(path string) bool {
 
 func findConfig() (result string, found bool) {
 	roots := make([]string, 0)
+
+	// $XDG_CONFIG_HOME/cy/cyrc.janet
+	// $XDG_CONFIG_HOME/cy.janet
+	// $HOME/.config/cy/cy.janet
+	// $HOME/cy/cy.janet
+	// $HOME/.cy.janet
 
 	if xdgConfig, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
 		roots = append(roots, xdgConfig)

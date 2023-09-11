@@ -24,7 +24,7 @@ type CmdParams struct {
 	Args    []string
 }
 
-func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error) {
+func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 	vm, err := janet.New(ctx)
 	if err != nil {
 		return nil, err
@@ -185,13 +185,6 @@ func (c *Cy) initJanet(ctx context.Context, configFile string) (*janet.VM, error
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	if len(configFile) != 0 {
-		err := vm.ExecuteFile(ctx, configFile)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return vm, nil

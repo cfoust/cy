@@ -17,6 +17,13 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
+type Options struct {
+	// The initial Janet script, typically ~/.cyrc.janet.
+	Config string
+	// The default directory in which to store recorded sessions.
+	SessionDir string
+}
+
 type Cy struct {
 	util.Lifetime
 	deadlock.RWMutex
@@ -68,7 +75,7 @@ func (c *Cy) Shutdown() error {
 	return nil
 }
 
-func Start(ctx context.Context, configFile string) (*Cy, error) {
+func Start(ctx context.Context, options Options) (*Cy, error) {
 	tree := tree.NewTree()
 
 	cy := Cy{
@@ -95,12 +102,19 @@ func Start(ctx context.Context, configFile string) (*Cy, error) {
 	consoleWriter := zerolog.ConsoleWriter{Out: logs.Writer(), TimeFormat: time.RFC3339}
 	cy.log = log.Output(zerolog.MultiLevelWriter(consoleWriter, os.Stdout))
 
-	vm, err := cy.initJanet(ctx, configFile)
+	vm, err := cy.initJanet(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	cy.janet = vm
+
+	if len(options.Config) != 0 {
+		err := vm.ExecuteFile(ctx, options.Config)
+		if err != nil {
+			cy.log.Error().Err(err).Str("path", options.Config).Msg("failed to execute config")
+		}
+	}
 
 	return &cy, nil
 }

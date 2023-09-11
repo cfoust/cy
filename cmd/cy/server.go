@@ -36,7 +36,9 @@ func getLock(lockPath string) (*os.File, error) {
 
 func serve(path string) error {
 	config, _ := findConfig()
-	cy, err := cy.Start(context.Background(), config)
+	cy, err := cy.Start(context.Background(), cy.Options{
+		Config: config,
+	})
 	if err != nil {
 		return err
 	}
