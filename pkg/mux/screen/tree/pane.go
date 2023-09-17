@@ -5,9 +5,9 @@ import (
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
-	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/util"
 )
 
@@ -44,9 +44,9 @@ func (p *Pane) Write(data []byte) (n int, err error) {
 	return p.stream.Write(data)
 }
 
-func newPane(ctx context.Context, subStream stream.Stream, size geom.Vec2) *Pane {
+func newPane(ctx context.Context, subStream stream.Stream, sessionFile string, size geom.Vec2) *Pane {
 	lifetime := util.NewLifetime(ctx)
-	recorder := sessions.NewRecorder(subStream)
+	recorder, _ := sessions.NewRecorder(sessionFile, subStream)
 	terminal := screen.NewTerminal(
 		lifetime.Ctx(),
 		recorder,

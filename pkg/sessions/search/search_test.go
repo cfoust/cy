@@ -12,7 +12,7 @@ import (
 func makeWrites(lines ...string) (events []sessions.Event) {
 	for _, line := range lines {
 		events = append(events, sessions.Event{
-			Data: sessions.OutputEvent{
+			Message: sessions.OutputEvent{
 				Bytes: []byte(line),
 			},
 		})

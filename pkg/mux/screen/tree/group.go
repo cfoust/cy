@@ -38,7 +38,7 @@ func (g *Group) NewPane(
 	stream mux.Stream,
 	size geom.Vec2,
 ) *Pane {
-	pane := newPane(ctx, stream, size)
+	pane := newPane(ctx, stream, "test.borg", size)
 	pane.metaData = g.tree.newMetadata()
 	g.addNode(pane)
 	return pane
@@ -49,7 +49,7 @@ func (g *Group) NewCmd(ctx context.Context, options stream.CmdOptions, size geom
 	if err != nil {
 		return nil, err
 	}
-	pane := newPane(ctx, cmd, size)
+	pane := newPane(ctx, cmd, "cmd.borg", size)
 	pane.metaData = g.tree.newMetadata()
 	g.addNode(pane)
 	return pane, nil

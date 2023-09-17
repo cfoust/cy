@@ -1,14 +1,21 @@
 package sessions
 
 import (
+	"os"
 	"time"
 
+	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/mux/stream"
 
 	"github.com/sasha-s/go-deadlock"
+	"github.com/ugorji/go/codec"
 )
 
 type Recorder struct {
+	file    *os.File
+	handle  *codec.MsgpackHandle
+	encoder *codec.Encoder
+
 	events []Event
 	mutex  deadlock.RWMutex
 	stream stream.Stream
@@ -16,17 +23,30 @@ type Recorder struct {
 
 var _ stream.Stream = (*Recorder)(nil)
 
-func New() *Recorder {
-	return &Recorder{}
-}
-
-func (s *Recorder) store(data EventData) {
+func (s *Recorder) store(data P.Message) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.events = append(s.events, Event{
-		Stamp: time.Now(),
-		Data:  data,
-	})
+
+	event := Event{
+		Stamp:   time.Now(),
+		Message: data,
+	}
+
+	s.events = append(s.events, event)
+
+	if err := s.encoder.Encode(event.Stamp); err != nil {
+		return err
+	}
+
+	if err := s.encoder.Encode(data.Type()); err != nil {
+		return err
+	}
+
+	if err := s.encoder.Encode(data); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Recorder) Events() []Event {
@@ -48,12 +68,12 @@ func (s *Recorder) Read(p []byte) (n int, err error) {
 
 	data := make([]byte, n)
 	copy(data, p)
-	s.store(OutputEvent{Bytes: data})
+	s.store(P.OutputMessage{Data: data})
 	return
 }
 
 func (s *Recorder) Resize(size stream.Size) error {
-	s.store(ResizeEvent{
+	s.store(P.SizeMessage{
 		Columns: size.C,
 		Rows:    size.R,
 	})
@@ -61,9 +81,20 @@ func (s *Recorder) Resize(size stream.Size) error {
 	return s.stream.Resize(size)
 }
 
-func NewRecorder(stream stream.Stream) *Recorder {
-	return &Recorder{
+func NewRecorder(filename string, stream stream.Stream) (*Recorder, error) {
+	r := &Recorder{
 		events: make([]Event, 0),
 		stream: stream,
+		handle: new(codec.MsgpackHandle),
 	}
+
+	f, err := os.Create(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	r.file = f
+	r.encoder = codec.NewEncoder(f, r.handle)
+
+	return r, nil
 }

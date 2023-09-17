@@ -8,8 +8,9 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/taro"
+	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/sessions"
+	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -70,10 +71,10 @@ func (r *Replay) setIndex(index int) {
 
 	for i := origin; i <= to; i++ {
 		event := r.events[i]
-		switch e := event.Data.(type) {
-		case sessions.OutputEvent:
-			r.terminal.Write(e.Bytes)
-		case sessions.ResizeEvent:
+		switch e := event.Message.(type) {
+		case P.OutputMessage:
+			r.terminal.Write(e.Data)
+		case P.SizeMessage:
 			r.terminal.Resize(
 				e.Columns,
 				e.Rows,

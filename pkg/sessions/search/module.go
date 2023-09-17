@@ -65,7 +65,7 @@ func Search(events []sessions.Event, pattern string) (results []SearchResult, er
 	var address Address
 
 	for index, event := range events {
-		if resize, ok := event.Data.(sessions.ResizeEvent); ok {
+		if resize, ok := event.Message.(sessions.ResizeEvent); ok {
 			term.Resize(
 				resize.Columns,
 				resize.Rows,
@@ -77,7 +77,7 @@ func Search(events []sessions.Event, pattern string) (results []SearchResult, er
 			continue
 		}
 
-		output := event.Data.(sessions.OutputEvent)
+		output := event.Message.(sessions.OutputEvent)
 
 		for offset := range output.Bytes {
 			newCandidates = make([]geom.Vec2, 0)
