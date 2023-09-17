@@ -20,8 +20,8 @@ import (
 type Options struct {
 	// The initial Janet script, typically ~/.cyrc.janet.
 	Config string
-	// The default directory in which to store recorded sessions.
-	SessionDir string
+	// The default directory in which to store data (e.g. recorded sessions).
+	DataDir string
 }
 
 type Cy struct {

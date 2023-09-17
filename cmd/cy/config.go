@@ -12,7 +12,9 @@ func fileExists(path string) bool {
 	return false
 }
 
-func findConfig() (result string, found bool) {
+// TODO(cfoust): 09/17/23 support XDG_CONFIG_DIRS and XDG_DATA_DIRS
+
+func findConfig() string {
 	roots := make([]string, 0)
 
 	// $XDG_CONFIG_HOME/cy/cyrc.janet
@@ -35,13 +37,25 @@ func findConfig() (result string, found bool) {
 
 	for _, root := range roots {
 		if path := filepath.Join(root, "cy", "cyrc.janet"); fileExists(path) {
-			return path, true
+			return path
 		}
 
 		if path := filepath.Join(root, "cyrc.janet"); fileExists(path) {
-			return path, true
+			return path
 		}
 	}
 
-	return
+	return ""
+}
+
+func findDataDir() string {
+	if xdgData, ok := os.LookupEnv("XDG_DATA_HOME"); ok {
+		return filepath.Join(xdgData, "cy")
+	}
+	home, ok := os.LookupEnv("HOME")
+	if !ok {
+		home = "~"
+	}
+
+	return filepath.Join(home, ".local", "share", "cy")
 }

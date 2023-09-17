@@ -85,8 +85,8 @@ func buildHandshake(profile termenv.Profile) (*P.HandshakeMessage, error) {
 
 	return &P.HandshakeMessage{
 		TERM:   os.Getenv("TERM"),
-		SHELL:  getShell(),
 		EDITOR: os.Getenv("EDITOR"),
+		Shell:  getShell(),
 		Size: geom.Size{
 			R: rows,
 			C: columns,

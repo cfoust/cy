@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"syscall"
+
+	"github.com/cfoust/cy/pkg/sessions"
 )
 
 const (
@@ -19,27 +20,8 @@ func getSocketPath() (string, error) {
 	uid := os.Getuid()
 	directory := fmt.Sprintf(CY_SOCKET_TEMPLATE, uid)
 
-	if err := os.MkdirAll(directory, syscall.S_IRWXU); err != nil {
+	if err := sessions.EnsureDirectory(directory); err != nil {
 		return "", err
-	}
-
-	info, err := os.Lstat(directory)
-	if err != nil {
-		return "", err
-	}
-
-	if !info.IsDir() {
-		return "", fmt.Errorf("%s is not a directory", directory)
-	}
-
-	var stat syscall.Stat_t
-	err = syscall.Stat(directory, &stat)
-	if err != nil {
-		return "", err
-	}
-
-	if stat.Uid != uint32(uid) || ((stat.Mode & syscall.S_IRWXO) != 0) {
-		return "", fmt.Errorf("%s has unsafe permissions", directory)
 	}
 
 	label, err := filepath.Abs(filepath.Join(directory, "default"))
@@ -49,4 +31,3 @@ func getSocketPath() (string, error) {
 
 	return label, nil
 }
-
