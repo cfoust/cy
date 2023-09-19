@@ -60,7 +60,7 @@ func GetFilename(dataDir string, path string) (string, error) {
 	return filepath.Join(
 		dataDir,
 		fmt.Sprintf(
-			"%s-%d-%s.borg",
+			"%s.%d-%s.borg",
 			time.Now().Format("2006.01.02.03.04.05"),
 			sessionId.Add(1),
 			strings.ReplaceAll(
