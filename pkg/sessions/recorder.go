@@ -1,20 +1,16 @@
 package sessions
 
 import (
-	"os"
 	"time"
 
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/mux/stream"
 
 	"github.com/sasha-s/go-deadlock"
-	"github.com/ugorji/go/codec"
 )
 
 type Recorder struct {
-	file    *os.File
-	handle  *codec.MsgpackHandle
-	encoder *codec.Encoder
+	writer SessionWriter
 
 	events []Event
 	mutex  deadlock.RWMutex
@@ -33,18 +29,6 @@ func (s *Recorder) store(data P.Message) error {
 	}
 
 	s.events = append(s.events, event)
-
-	if err := s.encoder.Encode(event.Stamp); err != nil {
-		return err
-	}
-
-	if err := s.encoder.Encode(data.Type()); err != nil {
-		return err
-	}
-
-	if err := s.encoder.Encode(data); err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -85,16 +69,7 @@ func NewRecorder(filename string, stream stream.Stream) (*Recorder, error) {
 	r := &Recorder{
 		events: make([]Event, 0),
 		stream: stream,
-		handle: new(codec.MsgpackHandle),
 	}
-
-	f, err := os.Create(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	r.file = f
-	r.encoder = codec.NewEncoder(f, r.handle)
 
 	return r, nil
 }
