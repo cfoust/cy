@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/sessions"
 
 	"github.com/sasha-s/go-deadlock"
 )
@@ -38,7 +39,7 @@ func (g *Group) NewPane(
 	stream mux.Stream,
 	size geom.Vec2,
 ) *Pane {
-	pane := newPane(ctx, stream, "test.borg", size)
+	pane := newPane(ctx, stream, "", size)
 	pane.metaData = g.tree.newMetadata()
 	g.addNode(pane)
 	return pane
@@ -49,7 +50,13 @@ func (g *Group) NewCmd(ctx context.Context, options stream.CmdOptions, size geom
 	if err != nil {
 		return nil, err
 	}
-	pane := newPane(ctx, cmd, "cmd.borg", size)
+
+	borgPath, err := sessions.GetFilename(g.tree.DataDir(), options.Directory)
+	if err != nil {
+		return nil, err
+	}
+
+	pane := newPane(ctx, cmd, borgPath, size)
 	pane.metaData = g.tree.newMetadata()
 	g.addNode(pane)
 	return pane, nil

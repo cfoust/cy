@@ -46,7 +46,8 @@ func (p *Pane) Write(data []byte) (n int, err error) {
 
 func newPane(ctx context.Context, subStream stream.Stream, sessionFile string, size geom.Vec2) *Pane {
 	lifetime := util.NewLifetime(ctx)
-	recorder, _ := sessions.NewRecorder(sessionFile, subStream)
+	// TODO(cfoust): 09/19/23 error handling
+	recorder, _ := sessions.NewRecorder(ctx, sessionFile, subStream)
 	terminal := screen.NewTerminal(
 		lifetime.Ctx(),
 		recorder,

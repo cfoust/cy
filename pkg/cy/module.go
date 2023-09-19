@@ -84,6 +84,8 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 		muxServer: server.New(),
 	}
 
+	tree.SetDataDir(options.DataDir)
+
 	tree.Root().NewCmd(
 		cy.Ctx(),
 		stream.CmdOptions{

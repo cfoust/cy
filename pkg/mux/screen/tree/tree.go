@@ -14,6 +14,9 @@ type Tree struct {
 	root      *Group
 	nodes     map[NodeID]Node
 	nodeIndex atomic.Int32
+
+	// the directory in which to store recorded sessions
+	dataDir string
 }
 
 func (t *Tree) newMetadata() *metaData {
@@ -42,6 +45,19 @@ func (t *Tree) Root() *Group {
 	defer t.RUnlock()
 
 	return t.root
+}
+
+func (t *Tree) SetDataDir(dir string) {
+	t.Lock()
+	defer t.Unlock()
+	t.dataDir = dir
+}
+
+func (t *Tree) DataDir() string {
+	t.RLock()
+	defer t.RUnlock()
+
+	return t.dataDir
 }
 
 // Get the path from the root node to the given node.

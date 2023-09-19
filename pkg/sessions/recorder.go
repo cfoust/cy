@@ -1,6 +1,7 @@
 package sessions
 
 import (
+	"context"
 	"time"
 
 	P "github.com/cfoust/cy/pkg/io/protocol"
@@ -10,8 +11,7 @@ import (
 )
 
 type Recorder struct {
-	writer SessionWriter
-
+	eventc chan Event
 	events []Event
 	mutex  deadlock.RWMutex
 	stream stream.Stream
@@ -29,6 +29,10 @@ func (s *Recorder) store(data P.Message) error {
 	}
 
 	s.events = append(s.events, event)
+
+	if s.eventc != nil {
+		s.eventc <- event
+	}
 
 	return nil
 }
@@ -65,11 +69,36 @@ func (s *Recorder) Resize(size stream.Size) error {
 	return s.stream.Resize(size)
 }
 
-func NewRecorder(filename string, stream stream.Stream) (*Recorder, error) {
+func NewRecorder(ctx context.Context, filename string, stream stream.Stream) (*Recorder, error) {
 	r := &Recorder{
 		events: make([]Event, 0),
 		stream: stream,
 	}
+
+	// don't record to file if this is empty
+	if len(filename) == 0 {
+		return r, nil
+	}
+
+	w, err := Create(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	r.eventc = make(chan Event, 100)
+
+	go func() {
+		defer w.Close()
+		for {
+			select {
+			case event := <-r.eventc:
+				// TODO(cfoust): 09/19/23 error handling
+				w.Write(event)
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 
 	return r, nil
 }
