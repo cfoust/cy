@@ -37,6 +37,7 @@ func (r *Renderer) RenderAt(state *tty.State, row, col int, value string) {
 func NewRenderer() *Renderer {
 	info, _ := terminfo.Load("xterm-256color")
 	term := emu.New()
+	term.Write([]byte("\033[20h")) // set CRLF mode
 
 	return &Renderer{
 		term:     term,

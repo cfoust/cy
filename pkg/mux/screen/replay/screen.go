@@ -28,6 +28,7 @@ type Replay struct {
 
 	// the location of the cursor relative to the top of the terminal's
 	// lines including the scrollback buffer
+	// TODO(cfoust): 09/20/23
 	cursor geom.Size
 
 	offset    int

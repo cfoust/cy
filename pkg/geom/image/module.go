@@ -89,7 +89,7 @@ func Compose(pos geom.Vec2, dst, src Image) {
 	)
 
 	for row := pos.R; row < lastRow; row++ {
-		for col := pos.R; col < lastCol; col++ {
+		for col := pos.C; col < lastCol; col++ {
 			srcCell := src[row-pos.R][col-pos.C]
 			if srcCell.Char == ' ' && srcCell.BG == emu.DefaultBG {
 				continue

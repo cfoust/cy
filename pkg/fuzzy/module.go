@@ -5,89 +5,23 @@ import (
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 )
 
 type Fuzzy struct {
 	util.Lifetime
-	*screen.Tea
-	result   chan interface{}
+	result   chan<- interface{}
 	location geom.Vec2
 	size     geom.Vec2
-}
 
-var _ mux.Screen = (*Fuzzy)(nil)
-
-func (f *Fuzzy) Resize(size mux.Size) error {
-	f.size = size
-	return nil
-}
-
-func (f *Fuzzy) Result() <-chan interface{} {
-	return f.result
-}
-
-func (f *Fuzzy) State() *tty.State {
-	termState := f.Terminal.State()
-	state := tty.New(f.size)
-	tty.Copy(f.location, state, termState)
-	state.CursorVisible = false
-	return state
-}
-
-func NewFuzzy(
-	ctx context.Context,
-	info screen.RenderContext,
-	options []Option,
-	location geom.Vec2,
-) *Fuzzy {
-	lifetime := util.NewLifetime(ctx)
-
-	result := make(chan interface{})
-
-	ti := textinput.New()
-	ti.Focus()
-	ti.CharLimit = 20
-	ti.Width = 20
-	ti.Prompt = ""
-
-	screen := screen.NewTea(
-		lifetime.Ctx(),
-		model{
-			lifetime: &lifetime,
-			options:  options,
-			result:   result,
-			selected: 0,
-			renderer: lipgloss.NewRenderer(
-				nil,
-				termenv.WithProfile(info.Colors),
-			),
-			textInput: ti,
-		},
-		info,
-		geom.DEFAULT_SIZE,
-	)
-
-	return &Fuzzy{
-		Lifetime: lifetime,
-		Tea:      screen,
-		result:   result,
-		location: location,
-	}
-}
-
-type model struct {
-	lifetime  *util.Lifetime
-	renderer  *lipgloss.Renderer
+	render    *taro.Renderer
 	textInput textinput.Model
-	result    chan interface{}
 
 	options  []Option
 	filtered []Option
@@ -95,10 +29,161 @@ type model struct {
 	pattern  string
 }
 
-var _ tea.Model = (*model)(nil)
+var _ taro.Model = (*Fuzzy)(nil)
 
-func (m model) Init() tea.Cmd {
+func (f *Fuzzy) quit() (taro.Model, tea.Cmd) {
+	return f, tea.Quit
+}
+
+func (f *Fuzzy) Init() taro.Cmd {
 	return textinput.Blink
+}
+
+func (f *Fuzzy) getOptions() []Option {
+	if len(f.pattern) > 0 {
+		return f.filtered
+	}
+	return f.options
+}
+
+func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+	var cmd tea.Cmd
+
+	switch msg := msg.(type) {
+	case matchResult:
+		f.filtered = msg.Filtered
+		f.selected = geom.Max(geom.Min(f.selected, len(f.getOptions())-1), 0)
+		return f, nil
+	case tea.WindowSizeMsg:
+		f.size = geom.Size{
+			R: msg.Height,
+			C: msg.Width,
+		}
+	case taro.KeyMsg:
+		switch msg.Type {
+		case taro.KeyEsc, taro.KeyCtrlC:
+			f.result <- nil
+			return f.quit()
+		case taro.KeyUp, taro.KeyCtrlK:
+			f.selected = geom.Max(f.selected-1, 0)
+			return f, nil
+		case taro.KeyDown, taro.KeyCtrlJ:
+			f.selected = geom.Min(f.selected+1, len(f.getOptions())-1)
+			return f, nil
+		case taro.KeyEnter:
+			if f.selected < len(f.getOptions()) {
+				option := f.getOptions()[f.selected]
+				f.result <- option.Result
+			} else {
+				f.result <- nil
+			}
+			return f.quit()
+		}
+	}
+
+	inputMsg := msg
+	// We need to translate taro.KeyMsg to tea.KeyMsg (for now)
+	if key, ok := msg.(taro.KeyMsg); ok {
+		inputMsg = tea.KeyMsg{
+			Type:  tea.KeyType(key.Type),
+			Runes: key.Runes,
+			Alt:   key.Alt,
+		}
+	}
+	f.textInput, cmd = f.textInput.Update(inputMsg)
+	cmds = append(cmds, cmd)
+
+	value := f.textInput.Value()
+	if f.pattern != value {
+		f.pattern = value
+		cmds = append(cmds, queryOptions(f.options, value))
+	}
+
+	return f, tea.Batch(cmds...)
+}
+
+func (f *Fuzzy) View(state *tty.State) {
+	basic := f.render.NewStyle().
+		Background(lipgloss.Color("#20111B")).
+		Foreground(lipgloss.Color("#D5CCBA")).
+		Width(20)
+
+	inactive := basic.Copy().Background(lipgloss.Color("#968C83"))
+	active := basic.Copy().
+		Background(lipgloss.Color("#EAA549")).
+		Foreground(lipgloss.Color("#20111B"))
+
+	// TODO(cfoust): 09/20/23 just use slices.Reverse in go 1.21
+	var lines []string
+	shouldInvert := f.location.R > (f.size.R / 2)
+
+	// first, the options
+	for i, match := range f.getOptions() {
+		var rendered string
+		if f.selected == i {
+			rendered = active.Render(match.Text)
+		} else {
+			rendered = inactive.Render(match.Text)
+		}
+
+		if shouldInvert {
+			lines = append([]string{rendered}, lines...)
+		} else {
+			lines = append(lines, rendered)
+		}
+	}
+
+	// then the text input
+	input := basic.Render(f.textInput.View())
+	if shouldInvert {
+		lines = append(lines, input)
+	} else {
+		lines = append([]string{input}, lines...)
+	}
+
+	f.textInput.Cursor.Style = f.render.NewStyle().
+		Background(lipgloss.Color("#EAA549"))
+
+	output := lipgloss.JoinVertical(lipgloss.Left, lines...)
+
+	offset := 0
+	if shouldInvert {
+		offset += lipgloss.Height(output) - 1
+	}
+
+	f.render.RenderAt(
+		state,
+		geom.Max(f.location.R-offset, 0),
+		f.location.C,
+		output,
+	)
+
+	// the text input provides its own cursor
+	state.CursorVisible = false
+}
+
+func NewFuzzy(
+	ctx context.Context,
+	info screen.RenderContext,
+	options []Option,
+	location geom.Vec2,
+	result chan<- interface{},
+) *taro.Program {
+	ti := textinput.New()
+	ti.Focus()
+	ti.CharLimit = 20
+	ti.Width = 20
+	ti.Prompt = ""
+
+	return taro.New(ctx, &Fuzzy{
+		render:    taro.NewRenderer(),
+		result:    result,
+		location:  location,
+		options:   options,
+		selected:  0,
+		textInput: ti,
+	})
 }
 
 type matchResult struct {
@@ -111,87 +196,4 @@ func queryOptions(options []Option, pattern string) tea.Cmd {
 			Filtered: Filter(options, pattern),
 		}
 	}
-}
-
-func (m model) getOptions() []Option {
-	if len(m.pattern) > 0 {
-		return m.filtered
-	}
-	return m.options
-}
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
-	var cmd tea.Cmd
-
-	switch msg := msg.(type) {
-	case matchResult:
-		m.filtered = msg.Filtered
-		m.selected = geom.Max(geom.Min(m.selected, len(m.getOptions())-1), 0)
-		return m, nil
-	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyEsc, tea.KeyCtrlC:
-			m.result <- nil
-			m.lifetime.Cancel()
-			return m, nil
-		case tea.KeyUp, tea.KeyCtrlK:
-			m.selected = geom.Max(m.selected-1, 0)
-			return m, nil
-		case tea.KeyDown, tea.KeyCtrlJ:
-			m.selected = geom.Min(m.selected+1, len(m.getOptions())-1)
-			return m, nil
-		case tea.KeyEnter:
-			if m.selected < len(m.getOptions()) {
-				option := m.getOptions()[m.selected]
-				m.result <- option.Result
-			} else {
-				m.result <- nil
-			}
-			m.lifetime.Cancel()
-			return m, nil
-		}
-	}
-
-	m.textInput, cmd = m.textInput.Update(msg)
-	cmds = append(cmds, cmd)
-
-	value := m.textInput.Value()
-	if m.pattern != value {
-		m.pattern = value
-		cmds = append(cmds, queryOptions(m.options, value))
-	}
-
-	return m, tea.Batch(cmds...)
-}
-
-func (m model) View() string {
-	basic := m.renderer.NewStyle().
-		Background(lipgloss.Color("#20111B")).
-		Foreground(lipgloss.Color("#D5CCBA")).
-		Width(20)
-
-	inactive := basic.Copy().Background(lipgloss.Color("#968C83"))
-	active := basic.Copy().
-		Background(lipgloss.Color("#EAA549")).
-		Foreground(lipgloss.Color("#20111B"))
-
-	var options []string
-	for i, match := range m.getOptions() {
-		var rendered string
-		if m.selected == i {
-			rendered = active.Render(match.Text)
-		} else {
-			rendered = inactive.Render(match.Text)
-		}
-		options = append(options, rendered)
-	}
-
-	m.textInput.Cursor.Style = m.renderer.NewStyle().
-		Background(lipgloss.Color("#EAA549"))
-
-	return lipgloss.JoinVertical(lipgloss.Left,
-		basic.Render(m.textInput.View()),
-		lipgloss.JoinVertical(lipgloss.Left, options...),
-	)
 }

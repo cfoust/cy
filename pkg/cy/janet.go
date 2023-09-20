@@ -107,6 +107,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 			}
 
 			cursor := client.outerLayers.State().Cursor
+			result := make(chan interface{})
 			fuzzy := fuzzy.NewFuzzy(
 				ctx,
 				client.info,
@@ -115,6 +116,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 					R: cursor.Y,
 					C: cursor.X,
 				},
+				result,
 			)
 
 			client.outerLayers.NewLayer(
@@ -137,8 +139,8 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 			)
 
 			select {
-			case result := <-fuzzy.Result():
-				return result, nil
+			case match := <-result:
+				return match, nil
 			case <-ctx.Done():
 				return nil, ctx.Err()
 			}
