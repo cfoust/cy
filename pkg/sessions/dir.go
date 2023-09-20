@@ -61,7 +61,7 @@ func GetFilename(dataDir string, path string) (string, error) {
 		dataDir,
 		fmt.Sprintf(
 			"%s.%d-%s.borg",
-			time.Now().Format("2006.01.02.03.04.05"),
+			time.Now().Format("2006.01.02.15.04.05"),
 			sessionId.Add(1),
 			strings.ReplaceAll(
 				cleanPath,
