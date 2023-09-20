@@ -83,6 +83,43 @@ func (t *Tree) NodeById(id NodeID) (Node, bool) {
 	return node, ok
 }
 
+func (t *Tree) RemoveNode(id NodeID) error {
+	if t.root.Id() == id {
+		return fmt.Errorf("cannot remove root node")
+	}
+
+	node, ok := t.NodeById(id)
+	if !ok {
+		return fmt.Errorf("node %d does not exist", id)
+	}
+
+	path := t.PathTo(node)
+	if len(path) == 0 {
+		return nil
+	}
+
+	parent := path[len(path)-2]
+	parent.(*Group).removeNode(node)
+
+	switch node := node.(type) {
+	case *Pane:
+		t.Lock()
+		node.Cancel()
+		delete(t.nodes, id)
+		t.Unlock()
+	case *Group:
+		t.Lock()
+		delete(t.nodes, id)
+		t.Unlock()
+
+		for _, child := range node.children {
+			t.RemoveNode(child.Id())
+		}
+	}
+
+	return nil
+}
+
 func (t *Tree) PaneById(id NodeID) (*Pane, bool) {
 	t.RLock()
 	defer t.RUnlock()

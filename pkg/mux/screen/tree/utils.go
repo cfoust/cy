@@ -38,7 +38,6 @@ func getLeaves(node Node) (result []Node) {
 				result,
 				getLeaves(child)...,
 			)
-			return
 		}
 	}
 

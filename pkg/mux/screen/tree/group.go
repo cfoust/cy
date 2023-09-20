@@ -34,6 +34,20 @@ func (g *Group) addNode(node Node) {
 	g.Unlock()
 }
 
+func (g *Group) removeNode(node Node) {
+	newChildren := make([]Node, 0)
+
+	g.Lock()
+	for _, child := range g.children {
+		if child == node {
+			continue
+		}
+		newChildren = append(newChildren, child)
+	}
+	g.children = newChildren
+	g.Unlock()
+}
+
 func (g *Group) NewPane(
 	ctx context.Context,
 	stream mux.Stream,
