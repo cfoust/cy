@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cfoust/cy/pkg/geom"
+	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/sessions"
 
 	"github.com/stretchr/testify/require"
@@ -12,8 +13,8 @@ import (
 func makeWrites(lines ...string) (events []sessions.Event) {
 	for _, line := range lines {
 		events = append(events, sessions.Event{
-			Message: sessions.OutputEvent{
-				Bytes: []byte(line),
+			Message: P.OutputMessage{
+				Data: []byte(line),
 			},
 		})
 	}

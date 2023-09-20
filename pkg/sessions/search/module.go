@@ -5,6 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/sessions"
 )
 
@@ -65,7 +66,7 @@ func Search(events []sessions.Event, pattern string) (results []SearchResult, er
 	var address Address
 
 	for index, event := range events {
-		if resize, ok := event.Message.(sessions.ResizeEvent); ok {
+		if resize, ok := event.Message.(P.SizeMessage); ok {
 			term.Resize(
 				resize.Columns,
 				resize.Rows,
@@ -77,14 +78,14 @@ func Search(events []sessions.Event, pattern string) (results []SearchResult, er
 			continue
 		}
 
-		output := event.Message.(sessions.OutputEvent)
+		output := event.Message.(P.OutputMessage)
 
-		for offset := range output.Bytes {
+		for offset := range output.Data {
 			newCandidates = make([]geom.Vec2, 0)
 			newMatches = make([]SearchResult, 0)
 
 			// Advance one byte at a time
-			term.Write(output.Bytes[offset : offset+1])
+			term.Write(output.Data[offset : offset+1])
 
 			// TODO(cfoust): 08/25/23 if ChangeFlag is 0, don't bother
 

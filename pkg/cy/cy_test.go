@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
+	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/stretchr/testify/require"
@@ -71,7 +71,9 @@ func setupServer(t *testing.T) *TestServer {
 
 	socketPath := filepath.Join(dir, "socket")
 
-	cy, err := Start(context.Background(), "")
+	cy, err := Start(context.Background(), Options{
+		DataDir: filepath.Join(t.TempDir(), "data"),
+	})
 	require.NoError(t, err)
 
 	server := TestServer{
@@ -99,7 +101,7 @@ func TestHandshake(t *testing.T) {
 	require.NoError(t, err)
 
 	conn.Send(P.HandshakeMessage{
-		TERM:    "xterm-256color",
+		TERM: "xterm-256color",
 		Size: geom.Size{
 			R: 26,
 			C: 80,

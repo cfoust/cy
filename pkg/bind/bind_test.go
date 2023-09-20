@@ -5,24 +5,24 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cfoust/cy/pkg/bind/parse"
+	"github.com/cfoust/cy/pkg/taro"
 	"github.com/stretchr/testify/assert"
 )
 
 func sendKeys(client *Engine[int], keys ...interface{}) {
-	msgs := make([]parse.KeyMsg, 0)
+	msgs := make([]taro.KeyMsg, 0)
 
 	for _, key := range keys {
 		switch key := key.(type) {
 		case string:
 			for _, char := range key {
-				msgs = append(msgs, parse.KeyMsg{
-					Type:  parse.KeyRunes,
+				msgs = append(msgs, taro.KeyMsg{
+					Type:  taro.KeyRunes,
 					Runes: []rune{char},
 				})
 			}
-		case parse.KeyType:
-			msgs = append(msgs, parse.KeyMsg{
+		case taro.KeyType:
+			msgs = append(msgs, taro.KeyMsg{
 				Type: key,
 			})
 		}
@@ -50,7 +50,7 @@ func TestAction(t *testing.T) {
 
 	go sendKeys(
 		engine,
-		parse.KeyCtrlA,
+		taro.KeyCtrlA,
 	)
 
 	<-engine.Recv()
@@ -83,7 +83,7 @@ func TestIdle(t *testing.T) {
 
 	sendKeys(
 		engine,
-		parse.KeyCtrlA,
+		taro.KeyCtrlA,
 	)
 
 	assert.Equal(t, []string{
