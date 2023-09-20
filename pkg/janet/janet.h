@@ -653,10 +653,10 @@ struct JanetListenerState {
  * external bindings, we should prefer using the Head structs directly, and
  * use the host language to add sugar around the manipulation of the Janet types. */
 
-JANET_API JanetStructHead *janet_struct_head(const JanetKV *st);
+JANET_API JanetStructHead *janet_struct_head(JanetStruct st);
 JANET_API JanetAbstractHead *janet_abstract_head(const void *abstract);
-JANET_API JanetStringHead *janet_string_head(const uint8_t *s);
-JANET_API JanetTupleHead *janet_tuple_head(const Janet *tuple);
+JANET_API JanetStringHead *janet_string_head(JanetString s);
+JANET_API JanetTupleHead *janet_tuple_head(JanetTuple tuple);
 
 /* Some language bindings won't have access to the macro versions. */
 
@@ -665,16 +665,16 @@ JANET_API int janet_checktype(Janet x, JanetType type);
 JANET_API int janet_checktypes(Janet x, int typeflags);
 JANET_API int janet_truthy(Janet x);
 
-JANET_API const JanetKV *janet_unwrap_struct(Janet x);
-JANET_API const Janet *janet_unwrap_tuple(Janet x);
+JANET_API JanetStruct janet_unwrap_struct(Janet x);
+JANET_API JanetTuple janet_unwrap_tuple(Janet x);
 JANET_API JanetFiber *janet_unwrap_fiber(Janet x);
 JANET_API JanetArray *janet_unwrap_array(Janet x);
 JANET_API JanetTable *janet_unwrap_table(Janet x);
 JANET_API JanetBuffer *janet_unwrap_buffer(Janet x);
-JANET_API const uint8_t *janet_unwrap_string(Janet x);
-JANET_API const uint8_t *janet_unwrap_symbol(Janet x);
-JANET_API const uint8_t *janet_unwrap_keyword(Janet x);
-JANET_API void *janet_unwrap_abstract(Janet x);
+JANET_API JanetString janet_unwrap_string(Janet x);
+JANET_API JanetSymbol janet_unwrap_symbol(Janet x);
+JANET_API JanetKeyword janet_unwrap_keyword(Janet x);
+JANET_API JanetAbstract janet_unwrap_abstract(Janet x);
 JANET_API void *janet_unwrap_pointer(Janet x);
 JANET_API JanetFunction *janet_unwrap_function(Janet x);
 JANET_API JanetCFunction janet_unwrap_cfunction(Janet x);
@@ -687,18 +687,18 @@ JANET_API Janet janet_wrap_number(double x);
 JANET_API Janet janet_wrap_true(void);
 JANET_API Janet janet_wrap_false(void);
 JANET_API Janet janet_wrap_boolean(int x);
-JANET_API Janet janet_wrap_string(const uint8_t *x);
-JANET_API Janet janet_wrap_symbol(const uint8_t *x);
-JANET_API Janet janet_wrap_keyword(const uint8_t *x);
+JANET_API Janet janet_wrap_string(JanetString x);
+JANET_API Janet janet_wrap_symbol(JanetSymbol x);
+JANET_API Janet janet_wrap_keyword(JanetKeyword x);
 JANET_API Janet janet_wrap_array(JanetArray *x);
-JANET_API Janet janet_wrap_tuple(const Janet *x);
-JANET_API Janet janet_wrap_struct(const JanetKV *x);
+JANET_API Janet janet_wrap_tuple(JanetTuple x);
+JANET_API Janet janet_wrap_struct(JanetStruct x);
 JANET_API Janet janet_wrap_fiber(JanetFiber *x);
 JANET_API Janet janet_wrap_buffer(JanetBuffer *x);
 JANET_API Janet janet_wrap_function(JanetFunction *x);
 JANET_API Janet janet_wrap_cfunction(JanetCFunction x);
 JANET_API Janet janet_wrap_table(JanetTable *x);
-JANET_API Janet janet_wrap_abstract(void *x);
+JANET_API Janet janet_wrap_abstract(JanetAbstract x);
 JANET_API Janet janet_wrap_pointer(void *x);
 JANET_API Janet janet_wrap_integer(int32_t x);
 
@@ -776,14 +776,14 @@ JANET_API Janet janet_nanbox_from_bits(uint64_t bits);
 #define janet_wrap_pointer(s) janet_nanbox_wrap_((s), JANET_POINTER)
 
 /* Unwrap the pointer types */
-#define janet_unwrap_struct(x) ((const JanetKV *)janet_nanbox_to_pointer(x))
-#define janet_unwrap_tuple(x) ((const Janet *)janet_nanbox_to_pointer(x))
+#define janet_unwrap_struct(x) ((JanetStruct)janet_nanbox_to_pointer(x))
+#define janet_unwrap_tuple(x) ((JanetTuple)janet_nanbox_to_pointer(x))
 #define janet_unwrap_fiber(x) ((JanetFiber *)janet_nanbox_to_pointer(x))
 #define janet_unwrap_array(x) ((JanetArray *)janet_nanbox_to_pointer(x))
 #define janet_unwrap_table(x) ((JanetTable *)janet_nanbox_to_pointer(x))
 #define janet_unwrap_buffer(x) ((JanetBuffer *)janet_nanbox_to_pointer(x))
-#define janet_unwrap_string(x) ((const uint8_t *)janet_nanbox_to_pointer(x))
-#define janet_unwrap_symbol(x) ((const uint8_t *)janet_nanbox_to_pointer(x))
+#define janet_unwrap_string(x) ((JanetString)janet_nanbox_to_pointer(x))
+#define janet_unwrap_symbol(x) ((JanetSymbol)janet_nanbox_to_pointer(x))
 #define janet_unwrap_keyword(x) ((const uint8_t *)janet_nanbox_to_pointer(x))
 #define janet_unwrap_abstract(x) (janet_nanbox_to_pointer(x))
 #define janet_unwrap_pointer(x) (janet_nanbox_to_pointer(x))
@@ -825,15 +825,15 @@ JANET_API Janet janet_nanbox32_from_tagp(uint32_t tag, void *pointer);
 #define janet_wrap_cfunction(s) janet_nanbox32_from_tagp(JANET_CFUNCTION, (void *)(s))
 #define janet_wrap_pointer(s) janet_nanbox32_from_tagp(JANET_POINTER, (void *)(s))
 
-#define janet_unwrap_struct(x) ((const JanetKV *)(x).tagged.payload.pointer)
-#define janet_unwrap_tuple(x) ((const Janet *)(x).tagged.payload.pointer)
+#define janet_unwrap_struct(x) ((JanetStruct)(x).tagged.payload.pointer)
+#define janet_unwrap_tuple(x) ((JanetTuple)(x).tagged.payload.pointer)
 #define janet_unwrap_fiber(x) ((JanetFiber *)(x).tagged.payload.pointer)
 #define janet_unwrap_array(x) ((JanetArray *)(x).tagged.payload.pointer)
 #define janet_unwrap_table(x) ((JanetTable *)(x).tagged.payload.pointer)
 #define janet_unwrap_buffer(x) ((JanetBuffer *)(x).tagged.payload.pointer)
-#define janet_unwrap_string(x) ((const uint8_t *)(x).tagged.payload.pointer)
-#define janet_unwrap_symbol(x) ((const uint8_t *)(x).tagged.payload.pointer)
-#define janet_unwrap_keyword(x) ((const uint8_t *)(x).tagged.payload.pointer)
+#define janet_unwrap_string(x) ((JanetString)(x).tagged.payload.pointer)
+#define janet_unwrap_symbol(x) ((JanetSymbol)(x).tagged.payload.pointer)
+#define janet_unwrap_keyword(x) ((JanetKeyword)(x).tagged.payload.pointer)
 #define janet_unwrap_abstract(x) ((x).tagged.payload.pointer)
 #define janet_unwrap_pointer(x) ((x).tagged.payload.pointer)
 #define janet_unwrap_function(x) ((JanetFunction *)(x).tagged.payload.pointer)
@@ -848,15 +848,15 @@ JANET_API Janet janet_nanbox32_from_tagp(uint32_t tag, void *pointer);
 #define janet_truthy(x) \
     ((x).type != JANET_NIL && ((x).type != JANET_BOOLEAN || ((x).as.u64 & 0x1)))
 
-#define janet_unwrap_struct(x) ((const JanetKV *)(x).as.pointer)
-#define janet_unwrap_tuple(x) ((const Janet *)(x).as.pointer)
+#define janet_unwrap_struct(x) ((JanetStruct)(x).as.pointer)
+#define janet_unwrap_tuple(x) ((JanetTuple)(x).as.pointer)
 #define janet_unwrap_fiber(x) ((JanetFiber *)(x).as.pointer)
 #define janet_unwrap_array(x) ((JanetArray *)(x).as.pointer)
 #define janet_unwrap_table(x) ((JanetTable *)(x).as.pointer)
 #define janet_unwrap_buffer(x) ((JanetBuffer *)(x).as.pointer)
-#define janet_unwrap_string(x) ((const uint8_t *)(x).as.pointer)
-#define janet_unwrap_symbol(x) ((const uint8_t *)(x).as.pointer)
-#define janet_unwrap_keyword(x) ((const uint8_t *)(x).as.pointer)
+#define janet_unwrap_string(x) ((JanetString)(x).as.pointer)
+#define janet_unwrap_symbol(x) ((JanetSymbol)(x).as.pointer)
+#define janet_unwrap_keyword(x) ((JanetKeyword)(x).as.pointer)
 #define janet_unwrap_abstract(x) ((x).as.pointer)
 #define janet_unwrap_pointer(x) ((x).as.pointer)
 #define janet_unwrap_function(x) ((JanetFunction *)(x).as.pointer)
@@ -868,12 +868,15 @@ JANET_API Janet janet_nanbox32_from_tagp(uint32_t tag, void *pointer);
 #endif
 
 JANET_API int janet_checkint(Janet x);
+JANET_API int janet_checkuint(Janet x);
 JANET_API int janet_checkint64(Janet x);
 JANET_API int janet_checkuint64(Janet x);
 JANET_API int janet_checksize(Janet x);
 JANET_API JanetAbstract janet_checkabstract(Janet x, const JanetAbstractType *at);
 #define janet_checkintrange(x) ((x) >= INT32_MIN && (x) <= INT32_MAX && (x) == (int32_t)(x))
+#define janet_checkuintrange(x) ((x) >= 0 && (x) <= UINT32_MAX && (x) == (uint32_t)(x))
 #define janet_checkint64range(x) ((x) >= JANET_INTMIN_DOUBLE && (x) <= JANET_INTMAX_DOUBLE && (x) == (int64_t)(x))
+#define janet_checkuint64range(x) ((x) >= 0 && (x) <= JANET_INTMAX_DOUBLE && (x) == (uint64_t)(x))
 #define janet_unwrap_integer(x) ((int32_t) janet_unwrap_number(x))
 #define janet_wrap_integer(x) janet_wrap_number((int32_t)(x))
 
@@ -1259,11 +1262,13 @@ enum JanetOpCode {
     JOP_RETURN_NIL,
     JOP_ADD_IMMEDIATE,
     JOP_ADD,
+    JOP_SUBTRACT_IMMEDIATE,
     JOP_SUBTRACT,
     JOP_MULTIPLY_IMMEDIATE,
     JOP_MULTIPLY,
     JOP_DIVIDE_IMMEDIATE,
     JOP_DIVIDE,
+    JOP_DIVIDE_FLOOR,
     JOP_MODULO,
     JOP_REMAINDER,
     JOP_BAND,
@@ -1383,6 +1388,7 @@ JANET_API void janet_stream_flags(JanetStream *stream, uint32_t flags);
 JANET_API void janet_schedule(JanetFiber *fiber, Janet value);
 JANET_API void janet_cancel(JanetFiber *fiber, Janet value);
 JANET_API void janet_schedule_signal(JanetFiber *fiber, Janet value, JanetSignal sig);
+JANET_API void janet_schedule_soon(JanetFiber *fiber, Janet value, JanetSignal sig);
 
 /* Start a state machine listening for events from a stream */
 JANET_API JanetListenerState *janet_listen(JanetStream *stream, JanetListener behavior, int mask, size_t size, void *user);
@@ -1607,7 +1613,7 @@ JANET_API void janet_buffer_push_u64(JanetBuffer *buffer, uint64_t x);
 #define JANET_TUPLE_FLAG_BRACKETCTOR 0x10000
 
 #define janet_tuple_head(t) ((JanetTupleHead *)((char *)t - offsetof(JanetTupleHead, data)))
-#define janet_tuple_from_head(gcobject) ((const Janet *)((char *)gcobject + offsetof(JanetTupleHead, data)))
+#define janet_tuple_from_head(gcobject) ((JanetTuple)((char *)gcobject + offsetof(JanetTupleHead, data)))
 #define janet_tuple_length(t) (janet_tuple_head(t)->length)
 #define janet_tuple_hash(t) (janet_tuple_head(t)->hash)
 #define janet_tuple_sm_line(t) (janet_tuple_head(t)->sm_line)
@@ -1653,7 +1659,7 @@ JANET_API JanetSymbol janet_symbol_gen(void);
 
 /* Structs */
 #define janet_struct_head(t) ((JanetStructHead *)((char *)t - offsetof(JanetStructHead, data)))
-#define janet_struct_from_head(t) ((const JanetKV *)((char *)gcobject + offsetof(JanetStructHead, data)))
+#define janet_struct_from_head(t) ((JanetStruct)((char *)gcobject + offsetof(JanetStructHead, data)))
 #define janet_struct_length(t) (janet_struct_head(t)->length)
 #define janet_struct_capacity(t) (janet_struct_head(t)->capacity)
 #define janet_struct_hash(t) (janet_struct_head(t)->hash)
@@ -1794,6 +1800,7 @@ JANET_API void janet_vm_free(JanetVM *vm);
 JANET_API void janet_vm_save(JanetVM *into);
 JANET_API void janet_vm_load(JanetVM *from);
 JANET_API void janet_interpreter_interrupt(JanetVM *vm);
+JANET_API void janet_interpreter_interrupt_handled(JanetVM *vm);
 JANET_API JanetSignal janet_continue(JanetFiber *fiber, Janet in, Janet *out);
 JANET_API JanetSignal janet_continue_signal(JanetFiber *fiber, Janet in, Janet *out, JanetSignal sig);
 JANET_API JanetSignal janet_pcall(JanetFunction *fun, int32_t argn, const Janet *argv, Janet *out, JanetFiber **f);
@@ -1817,6 +1824,7 @@ JANET_API void janet_stacktrace_ext(JanetFiber *fiber, Janet err, const char *pr
 #define JANET_SANDBOX_FS_TEMP 1024
 #define JANET_SANDBOX_FFI_USE 2048
 #define JANET_SANDBOX_FFI_JIT 4096
+#define JANET_SANDBOX_SIGNAL 8192
 #define JANET_SANDBOX_FFI (JANET_SANDBOX_FFI_DEFINE | JANET_SANDBOX_FFI_USE | JANET_SANDBOX_FFI_JIT)
 #define JANET_SANDBOX_FS (JANET_SANDBOX_FS_WRITE | JANET_SANDBOX_FS_READ | JANET_SANDBOX_FS_TEMP)
 #define JANET_SANDBOX_NET (JANET_SANDBOX_NET_CONNECT | JANET_SANDBOX_NET_LISTEN)
@@ -1992,6 +2000,8 @@ JANET_API JanetDictView janet_getdictionary(const Janet *argv, int32_t n);
 JANET_API void *janet_getabstract(const Janet *argv, int32_t n, const JanetAbstractType *at);
 JANET_API JanetRange janet_getslice(int32_t argc, const Janet *argv);
 JANET_API int32_t janet_gethalfrange(const Janet *argv, int32_t n, int32_t length, const char *which);
+JANET_API int32_t janet_getstartrange(const Janet *argv, int32_t argc, int32_t n, int32_t length);
+JANET_API int32_t janet_getendrange(const Janet *argv, int32_t argc, int32_t n, int32_t length);
 JANET_API int32_t janet_getargindex(const Janet *argv, int32_t n, int32_t length, const char *which);
 JANET_API uint64_t janet_getflags(const Janet *argv, int32_t n, const char *flags);
 
@@ -2050,6 +2060,7 @@ JANET_API int janet_cryptorand(uint8_t *out, size_t n);
 JANET_API void janet_marshal_size(JanetMarshalContext *ctx, size_t value);
 JANET_API void janet_marshal_int(JanetMarshalContext *ctx, int32_t value);
 JANET_API void janet_marshal_int64(JanetMarshalContext *ctx, int64_t value);
+JANET_API void janet_marshal_ptr(JanetMarshalContext *ctx, const void *value);
 JANET_API void janet_marshal_byte(JanetMarshalContext *ctx, uint8_t value);
 JANET_API void janet_marshal_bytes(JanetMarshalContext *ctx, const uint8_t *bytes, size_t len);
 JANET_API void janet_marshal_janet(JanetMarshalContext *ctx, Janet x);
@@ -2059,10 +2070,12 @@ JANET_API void janet_unmarshal_ensure(JanetMarshalContext *ctx, size_t size);
 JANET_API size_t janet_unmarshal_size(JanetMarshalContext *ctx);
 JANET_API int32_t janet_unmarshal_int(JanetMarshalContext *ctx);
 JANET_API int64_t janet_unmarshal_int64(JanetMarshalContext *ctx);
+JANET_API void *janet_unmarshal_ptr(JanetMarshalContext *ctx);
 JANET_API uint8_t janet_unmarshal_byte(JanetMarshalContext *ctx);
 JANET_API void janet_unmarshal_bytes(JanetMarshalContext *ctx, uint8_t *dest, size_t len);
 JANET_API Janet janet_unmarshal_janet(JanetMarshalContext *ctx);
 JANET_API JanetAbstract janet_unmarshal_abstract(JanetMarshalContext *ctx, size_t size);
+JANET_API JanetAbstract janet_unmarshal_abstract_threaded(JanetMarshalContext *ctx, size_t size);
 JANET_API void janet_unmarshal_abstract_reuse(JanetMarshalContext *ctx, void *p);
 
 JANET_API void janet_register_abstract_type(const JanetAbstractType *at);
