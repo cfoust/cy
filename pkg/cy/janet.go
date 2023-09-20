@@ -24,6 +24,14 @@ type CmdParams struct {
 	Args    []string
 }
 
+// execute runs some Janet code on behalf of the Client. This is only used in testing.
+func (c *Client) execute(code string) error {
+	return c.cy.janet.ExecuteCall(c.Ctx(), c, janet.Call{
+		Code:    []byte(code),
+		Options: janet.DEFAULT_CALL_OPTIONS,
+	})
+}
+
 func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 	vm, err := janet.New(ctx)
 	if err != nil {

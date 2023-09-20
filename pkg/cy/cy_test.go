@@ -186,3 +186,21 @@ func TestScopes(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 3, len(client.binds.Scopes()))
 }
+
+func TestPaneKill(t *testing.T) {
+	server := setupServer(t)
+	defer server.Release()
+
+	_, client, err := server.Standard()
+	require.NoError(t, err)
+
+	require.NoError(t, client.execute(`
+(def shell (cmd/new (tree/root) "/tmp"))
+(pp shell)
+(pane/attach shell)
+(tree/kill shell)
+`))
+	time.Sleep(100 * time.Millisecond) // lol
+	leaves := server.cy.tree.Leaves()
+	require.Equal(t, leaves[0].Id(), client.Node().Id())
+}

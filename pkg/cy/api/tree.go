@@ -141,6 +141,10 @@ func (t *TreeModule) Parent(id tree.NodeID) *tree.NodeID {
 	return &parentId
 }
 
+func (t *TreeModule) Kill(id tree.NodeID) error {
+	return t.Tree.RemoveNode(id)
+}
+
 func (t *TreeModule) Root() tree.NodeID {
 	return t.Tree.Root().Id()
 }

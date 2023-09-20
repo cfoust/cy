@@ -46,6 +46,9 @@ type Client struct {
 	outerLayers *screen.Layers
 	renderer    *stream.Renderer
 
+	// history is an array of all of the panes this client has attached to
+	history []tree.NodeID
+
 	raw  emu.Terminal
 	info screen.RenderContext
 }
@@ -300,8 +303,35 @@ func (c *Client) Attach(node tree.Node) error {
 
 	c.muxClient.Attach(c.Ctx(), pane.Screen())
 
+	go func() {
+		select {
+		case <-c.Ctx().Done():
+			return
+		case <-c.muxClient.Attachment().Ctx().Done():
+			return
+		case <-pane.Ctx().Done():
+			// if the pane dies, just re-attach to the last node the user visited
+			c.RLock()
+			history := c.history
+			c.RUnlock()
+
+			if len(history) < 2 {
+				// TODO(cfoust): 09/20/23
+				return
+			}
+
+			node, ok := c.cy.tree.NodeById(history[len(history)-2])
+			if !ok {
+				return
+			}
+			c.Attach(node)
+			return
+		}
+	}()
+
 	c.Lock()
 	c.node = node
+	c.history = append(c.history, node.Id())
 	c.Unlock()
 
 	// Update bindings

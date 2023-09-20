@@ -36,6 +36,10 @@ func (c *Client) State() *tty.State {
 	return screen.State()
 }
 
+func (c *Client) Attachment() *util.Lifetime {
+	return c.attachment
+}
+
 func (c *Client) Updates() *mux.Updater {
 	return c.publisher.Subscribe()
 }

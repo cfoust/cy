@@ -38,6 +38,12 @@
       (pane/attach))))
 
 (key/bind
+  [prefix "x"]
+  "kill the current pane"
+  (fn [&]
+    (tree/kill (pane/current))))
+
+(key/bind
   [prefix "l"]
   "jump to a shell"
   (fn [&]
