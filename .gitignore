@@ -4,3 +4,4 @@
 **.log
 **.pid
 /cy
+cy-build
