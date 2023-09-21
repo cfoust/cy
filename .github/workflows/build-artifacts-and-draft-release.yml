@@ -37,7 +37,7 @@ jobs:
       - name: Build
         uses: goreleaser/goreleaser-action@v5
         with:
-          args: release --skip-publish --config scripts/.goreleaser-for-linux.yaml
+          args: release --skip-publish --config ci/goreleaser-for-linux.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload
@@ -55,7 +55,7 @@ jobs:
       - name: Build
         uses: goreleaser/goreleaser-action@v5
         with:
-          args: release --skip-publish --config scripts/.goreleaser-for-darwin.yaml
+          args: release --skip-publish --config ci/goreleaser-for-darwin.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload
@@ -95,6 +95,6 @@ jobs:
       - name: Release
         uses: goreleaser/goreleaser-action@v5
         with:
-          args: release --config scripts/.goreleaser-release.yaml
+          args: release --config ci/goreleaser-release.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
