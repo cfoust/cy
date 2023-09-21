@@ -37,6 +37,9 @@ func TestServer(t *testing.T) {
 		Serve[[]byte](ctx, socketPath, RawProtocol, &echo)
 	}()
 
+	// wait for server to start up
+	time.Sleep(200 * time.Millisecond)
+
 	ok := make(chan bool, 1)
 	c, err := Connect(ctx, RawProtocol, socketPath)
 	assert.NoError(t, err)
