@@ -70,6 +70,7 @@ func NewAnimator(
 
 func Random() Animation {
 	anims := []Animation{
+		&Collapse{},
 		&Midjo{},
 		&Cyform{},
 		&Conway{},

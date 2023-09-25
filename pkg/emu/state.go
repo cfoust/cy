@@ -84,6 +84,10 @@ type Glyph struct {
 	FG, BG Color
 }
 
+func (g Glyph) IsEmpty() bool {
+	return g.Char == ' '
+}
+
 func EmptyGlyph() Glyph {
 	return Glyph{
 		Char: ' ',
