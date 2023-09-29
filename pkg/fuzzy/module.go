@@ -85,11 +85,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	inputMsg := msg
 	// We need to translate taro.KeyMsg to tea.KeyMsg (for now)
 	if key, ok := msg.(taro.KeyMsg); ok {
-		inputMsg = tea.KeyMsg{
-			Type:  tea.KeyType(key.Type),
-			Runes: key.Runes,
-			Alt:   key.Alt,
-		}
+		inputMsg = key.ToTea()
 	}
 	f.textInput, cmd = f.textInput.Update(inputMsg)
 	cmds = append(cmds, cmd)
