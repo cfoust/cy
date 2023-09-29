@@ -9,7 +9,6 @@ import (
 	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
-	"github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/util"
 )
@@ -84,17 +83,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 				return
 			}
 
-			r := replay.New(
-				ctx,
-				pane.Recorder(),
-			)
-
-			client.innerLayers.NewLayer(
-				r.Ctx(),
-				r,
-				true,
-				true,
-			)
+			pane.ReplayMode()
 		},
 		"log": func(text string) {
 			c.log.Info().Msgf(text)

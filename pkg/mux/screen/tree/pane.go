@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/util"
@@ -42,6 +43,24 @@ func (p *Pane) Resize(size geom.Vec2) {
 
 func (p *Pane) Write(data []byte) (n int, err error) {
 	return p.stream.Write(data)
+}
+
+func (p *Pane) ReplayMode() {
+	if p.layers.NumLayers() > 1 {
+		return
+	}
+
+	r := replay.New(
+		p.Ctx(),
+		p.Recorder(),
+	)
+
+	p.layers.NewLayer(
+		r.Ctx(),
+		r,
+		true,
+		true,
+	)
 }
 
 func newPane(ctx context.Context, subStream stream.Stream, sessionFile string, size geom.Vec2) *Pane {
