@@ -1,6 +1,7 @@
 package tree
 
 import (
+	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/bind/trie"
 	"github.com/cfoust/cy/pkg/janet"
 )
@@ -11,3 +12,7 @@ type Binding struct {
 }
 
 type BindScope = trie.Trie[Binding]
+
+func NewScope() *BindScope {
+	return bind.NewScope[Binding]()
+}

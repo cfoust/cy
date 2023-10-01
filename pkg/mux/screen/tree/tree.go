@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/cfoust/cy/pkg/bind"
-
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -26,7 +24,7 @@ func (t *Tree) newMetadata() *metaData {
 	id := t.nodeIndex.Add(1)
 	node := &metaData{
 		id:    id,
-		binds: bind.NewScope[Binding](),
+		binds: NewScope(),
 		name:  fmt.Sprintf("%d", id),
 	}
 

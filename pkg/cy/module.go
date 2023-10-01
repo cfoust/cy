@@ -31,8 +31,11 @@ type Cy struct {
 
 	muxServer *server.Server
 
-	// The tree of groups and panes.
-	tree    *tree.Tree
+	// The tree of groups and panes
+	tree *tree.Tree
+	// Replay mode has its own isolated binding scope
+	replayBinds *tree.BindScope
+
 	clients []*Client
 
 	log zerolog.Logger
@@ -76,17 +79,17 @@ func (c *Cy) Shutdown() error {
 }
 
 func Start(ctx context.Context, options Options) (*Cy, error) {
-	tree := tree.NewTree()
-
+	t := tree.NewTree()
 	cy := Cy{
-		Lifetime:  util.NewLifetime(ctx),
-		tree:      tree,
-		muxServer: server.New(),
+		Lifetime:    util.NewLifetime(ctx),
+		tree:        t,
+		muxServer:   server.New(),
+		replayBinds: tree.NewScope(),
 	}
 
-	tree.SetDataDir(options.DataDir)
+	t.SetDataDir(options.DataDir)
 
-	tree.Root().NewCmd(
+	t.Root().NewCmd(
 		cy.Ctx(),
 		stream.CmdOptions{
 			Command: "/bin/bash",
@@ -95,7 +98,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	)
 
 	logs := stream.NewReader()
-	tree.Root().NewPane(
+	t.Root().NewPane(
 		cy.Ctx(),
 		logs,
 		geom.DEFAULT_SIZE,
