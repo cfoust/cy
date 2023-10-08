@@ -120,7 +120,11 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 		}
 	case reflect.String:
 		strPtr := C.CString(value.String())
-		result = C.janet_wrap_string(C.janet_cstring(strPtr))
+		if _, ok := item.(Keyword); ok {
+			result = C.wrap_keyword(strPtr)
+		} else {
+			result = C.janet_wrap_string(C.janet_cstring(strPtr))
+		}
 		defer C.free(unsafe.Pointer(strPtr))
 	case reflect.Struct:
 		if isTuple(type_) {
@@ -283,6 +287,18 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 			value.SetBool(false)
 		}
 	case reflect.String:
+		if keyword, ok := value.Interface().(Keyword); ok {
+			if err := assertType(source, C.JANET_KEYWORD); err != nil {
+				return err
+			}
+
+			strPtr := strings.Clone(C.GoString(C.cast_janet_string(C.janet_unwrap_keyword(source))))
+			if strPtr != string(keyword) {
+				return fmt.Errorf("keyword :%s does not match :%s", strPtr, keyword)
+			}
+			return nil
+		}
+
 		if err := assertType(source, C.JANET_STRING); err != nil {
 			return err
 		}

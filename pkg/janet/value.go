@@ -79,6 +79,8 @@ type Fiber struct {
 	fiber *C.JanetFiber
 }
 
+type Keyword string
+
 type Function struct {
 	*Value
 	function *C.JanetFunction

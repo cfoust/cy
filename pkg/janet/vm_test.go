@@ -266,5 +266,15 @@ func TestVM(t *testing.T) {
 			},
 			Bools: bools,
 		})
+
+		// keywords
+		keyword := Keyword("test")
+		value, err := vm.marshal(keyword)
+		require.NoError(t, err)
+		err = vm.unmarshal(value, &keyword)
+		require.NoError(t, err)
+		foo := Keyword("foo")
+		err = vm.unmarshal(value, &foo)
+		require.Error(t, err)
 	})
 }
