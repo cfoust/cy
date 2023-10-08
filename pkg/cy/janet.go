@@ -31,6 +31,30 @@ func (c *Client) execute(code string) error {
 	})
 }
 
+var KEYWORD_ROOT = janet.Keyword("root")
+var KEYWORD_REPLAY = janet.Keyword("replay")
+
+func (c *Cy) resolveGroup(target *janet.Value) (*tree.Group, error) {
+	// first try keyword
+	err := target.Unmarshal(&KEYWORD_ROOT)
+	if err == nil {
+		return c.tree.Root(), nil
+	}
+
+	// otherwise, node ID
+	var id tree.NodeID
+	if err := target.Unmarshal(&id); err != nil {
+		return nil, err
+	}
+
+	group, ok := c.tree.GroupById(id)
+	if !ok {
+		return nil, fmt.Errorf("group not found: %d", id)
+	}
+
+	return group, nil
+}
+
 func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 	vm, err := janet.New(ctx)
 	if err != nil {
@@ -93,6 +117,8 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 			user interface{},
 			choices *janet.Value,
 		) (interface{}, error) {
+			defer choices.Free()
+
 			client, ok := user.(*Client)
 			if !ok {
 				return nil, fmt.Errorf("missing client context")
@@ -142,8 +168,23 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 				return nil, ctx.Err()
 			}
 		},
-		"key/bind": func(sequence []string, doc string, callback *janet.Function) error {
-			c.tree.Root().Binds().Set(
+		"key/bind": func(target *janet.Value, sequence []string, doc string, callback *janet.Function) error {
+			defer target.Free()
+
+			var scope *tree.BindScope
+			group, err := c.resolveGroup(target)
+			if err == nil {
+				scope = group.Binds()
+			} else {
+				replayErr := target.Unmarshal(&KEYWORD_REPLAY)
+				if replayErr != nil {
+					return fmt.Errorf("target must be one of :root, :replay, or node ID")
+				}
+
+				scope = c.replayBinds
+			}
+
+			scope.Set(
 				sequence,
 				tree.Binding{
 					Description: doc,
