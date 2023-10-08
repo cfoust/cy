@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/sessions"
+	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 )
 
@@ -21,6 +22,8 @@ type Pane struct {
 	screen   mux.Screen
 	layers   *screen.Layers
 	stream   stream.Stream
+
+	replay *taro.Program
 }
 
 var _ Node = (*Pane)(nil)
@@ -45,7 +48,15 @@ func (p *Pane) Write(data []byte) (n int, err error) {
 	return p.stream.Write(data)
 }
 
-func (p *Pane) ReplayMode() {
+func (p *Pane) ReplayMode() *taro.Program {
+	p.RLock()
+	r := p.replay
+	p.RUnlock()
+	return r
+}
+
+func (p *Pane) EnterReplay() {
+	p.Lock()
 	if p.layers.NumLayers() > 1 {
 		return
 	}
@@ -61,6 +72,15 @@ func (p *Pane) ReplayMode() {
 		true,
 		true,
 	)
+	p.replay = r
+	p.Unlock()
+
+	go func() {
+		<-r.Ctx().Done()
+		p.Lock()
+		p.replay = nil
+		p.Unlock()
+	}()
 }
 
 func newPane(ctx context.Context, subStream stream.Stream, sessionFile string, size geom.Vec2) *Pane {

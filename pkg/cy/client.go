@@ -339,6 +339,14 @@ func (c *Client) Attach(node tree.Node) error {
 	for _, pathNode := range path {
 		scopes = append(scopes, pathNode.Binds())
 	}
+
+	if pane, ok := node.(*tree.Pane); ok {
+		replay := pane.ReplayMode()
+		if replay != nil {
+			scopes = append(scopes, c.cy.replayBinds)
+		}
+	}
+
 	c.binds.SetScopes(scopes...)
 
 	return nil

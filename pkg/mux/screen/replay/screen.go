@@ -12,6 +12,7 @@ import (
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -34,6 +35,9 @@ type Replay struct {
 	offset    int
 	maxOffset int
 	numLines  int
+
+	isSearching bool
+	searchInput textinput.Model
 }
 
 var _ taro.Model = (*Replay)(nil)
@@ -88,41 +92,76 @@ func (r *Replay) setIndex(index int) {
 }
 
 func (r *Replay) Init() tea.Cmd {
-	return nil
+	return textinput.Blink
 }
+
+type ActionType int
+type Action struct {
+	Type ActionType
+}
+
+const (
+	ActionQuit           ActionType = iota
+	ActionStepBack       ActionType = iota
+	ActionStepForward    ActionType = iota
+	ActionScrollUp       ActionType = iota
+	ActionScrollDown     ActionType = iota
+	ActionScrollUpHalf   ActionType = iota
+	ActionScrollDownHalf ActionType = iota
+	ActionSearch         ActionType = iota
+	ActionBeginning      ActionType = iota
+	ActionEnd            ActionType = iota
+)
 
 func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	_, rows := r.terminal.Size()
 
-	switch msg := msg.(type) {
-	case taro.KeyMsg:
-		switch msg.Type {
-		case taro.KeyRunes:
-			switch msg.String() {
-			case "g":
-				r.setIndex(0)
+	if r.isSearching {
+		switch msg := msg.(type) {
+		case taro.KeyMsg:
+			switch msg.Type {
+			case taro.KeyEsc, taro.KeyCtrlC:
+				r.isSearching = false
 				return r, nil
-			case "G":
-				r.setIndex(-1)
-				return r, nil
-			case "q":
-				return r.quit()
 			}
-		case taro.KeyEsc, taro.KeyCtrlC:
+		}
+		var cmd tea.Cmd
+		inputMsg := msg
+		if key, ok := msg.(taro.KeyMsg); ok {
+			inputMsg = key.ToTea()
+		}
+		r.searchInput, cmd = r.searchInput.Update(inputMsg)
+		return r, cmd
+	}
+
+	switch msg := msg.(type) {
+	case Action:
+		switch msg.Type {
+		case ActionQuit:
 			return r.quit()
-		case taro.KeyLeft:
+		case ActionBeginning:
+			r.setIndex(0)
+			return r, nil
+		case ActionEnd:
+			r.setIndex(-1)
+			return r, nil
+		case ActionSearch:
+			r.isSearching = true
+			r.searchInput.Reset()
+			return r, nil
+		case ActionStepBack:
 			r.setIndex(r.index - 1)
 			return r, nil
-		case taro.KeyRight:
+		case ActionStepForward:
 			r.setIndex(r.index + 1)
 			return r, nil
-		case taro.KeyCtrlU:
+		case ActionScrollUpHalf:
 			r.setOffset(r.offset + (rows / 2))
-		case taro.KeyCtrlD:
+		case ActionScrollDownHalf:
 			r.setOffset(r.offset - (rows / 2))
-		case taro.KeyUp:
+		case ActionScrollUp:
 			r.setOffset(r.offset + 1)
-		case taro.KeyDown:
+		case ActionScrollDown:
 			r.setOffset(r.offset - 1)
 		}
 	}
@@ -152,7 +191,7 @@ func (r *Replay) View(state *tty.State) {
 		}
 	}
 
-	//state.Cursor = termState.Cursor
+	state.Cursor = r.terminal.Cursor()
 
 	basic := r.render.NewStyle().
 		Foreground(lipgloss.Color("#D5CCBA")).
@@ -185,14 +224,34 @@ func (r *Replay) View(state *tty.State) {
 			basic.Render(headline),
 		),
 	)
+
+	if !r.isSearching {
+		return
+	}
+
+	r.render.RenderAt(
+		state,
+		geom.Clamp(r.terminal.Cursor().Y, 0, size.R-1),
+		0,
+		basic.Render(r.searchInput.View()),
+	)
+
+	state.CursorVisible = false
 }
 
 func New(ctx context.Context, recorder *sessions.Recorder) *taro.Program {
+	ti := textinput.New()
+	ti.Focus()
+	ti.CharLimit = 20
+	ti.Width = 20
+	ti.Prompt = ""
+
 	events := recorder.Events()
 	m := &Replay{
-		render:   taro.NewRenderer(),
-		events:   events,
-		terminal: emu.New(),
+		render:      taro.NewRenderer(),
+		events:      events,
+		terminal:    emu.New(),
+		searchInput: ti,
 	}
 	m.setIndex(-1)
 	return taro.New(ctx, m)

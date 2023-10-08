@@ -66,10 +66,11 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 			Lifetime: util.NewLifetime(c.Ctx()),
 			Tree:     c.tree,
 		},
-		"group": &api.GroupModule{Tree: c.tree},
-		"pane":  &api.PaneModule{Tree: c.tree},
-		"path":  &api.PathModule{},
-		"tree":  &api.TreeModule{Tree: c.tree},
+		"group":  &api.GroupModule{Tree: c.tree},
+		"pane":   &api.PaneModule{Tree: c.tree},
+		"path":   &api.PathModule{},
+		"replay": &api.ReplayModule{},
+		"tree":   &api.TreeModule{Tree: c.tree},
 	}
 
 	for name, module := range modules {
@@ -107,7 +108,9 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 				return
 			}
 
-			pane.ReplayMode()
+			pane.EnterReplay()
+			// TODO(cfoust): 10/08/23 reattach all clients
+			client.Attach(node)
 		},
 		"log": func(text string) {
 			c.log.Info().Msgf(text)
