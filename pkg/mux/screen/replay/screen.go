@@ -10,6 +10,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/sessions"
+	"github.com/cfoust/cy/pkg/sessions/search"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -118,11 +119,21 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 	if r.isSearching {
 		switch msg := msg.(type) {
-		case taro.KeyMsg:
+		case Action:
 			switch msg.Type {
-			case taro.KeyEsc, taro.KeyCtrlC:
+			case ActionQuit:
 				r.isSearching = false
 				return r, nil
+			}
+		case taro.KeyMsg:
+			switch msg.Type {
+			case taro.KeyEnter:
+				value := r.searchInput.Value()
+				r.searchInput.Reset()
+				return r, func() tea.Msg {
+					search.Search(r.events, value)
+					return nil
+				}
 			}
 		}
 		var cmd tea.Cmd
@@ -239,14 +250,12 @@ func (r *Replay) View(state *tty.State) {
 	state.CursorVisible = false
 }
 
-func New(ctx context.Context, recorder *sessions.Recorder) *taro.Program {
+func newReplay(events []sessions.Event) *Replay {
 	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 20
 	ti.Width = 20
 	ti.Prompt = ""
-
-	events := recorder.Events()
 	m := &Replay{
 		render:      taro.NewRenderer(),
 		events:      events,
@@ -254,5 +263,10 @@ func New(ctx context.Context, recorder *sessions.Recorder) *taro.Program {
 		searchInput: ti,
 	}
 	m.setIndex(-1)
-	return taro.New(ctx, m)
+	return m
+}
+
+func New(ctx context.Context, recorder *sessions.Recorder) *taro.Program {
+	events := recorder.Events()
+	return taro.New(ctx, newReplay(events))
 }

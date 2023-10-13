@@ -77,6 +77,7 @@ func NewTea(
 	)
 
 	terminal := NewTerminal(ctx, stream, geom.DEFAULT_SIZE)
+	// TODO(cfoust): 10/13/23 why is this using the user's terminfo?
 	// bubbletea uses a simulated cursor
 	info.Fprintf(terminal, terminfo.CursorInvisible)
 
