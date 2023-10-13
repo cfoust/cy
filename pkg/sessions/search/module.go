@@ -1,6 +1,7 @@
 package search
 
 import (
+	"fmt"
 	"regexp"
 
 	"github.com/cfoust/cy/pkg/emu"
@@ -49,6 +50,16 @@ func matchCell(re *regexp.Regexp, reader *ScreenReader, cell geom.Vec2) (loc []g
 }
 
 func Search(events []sessions.Event, pattern string) (results []SearchResult, err error) {
+	if len(pattern) == 0 {
+		err = fmt.Errorf("pattern must be non-empty")
+		return
+	}
+
+	// this MUST be set because of how the cell reader works
+	if pattern[0] != '^' {
+		pattern = "^" + pattern
+	}
+
 	re, err := regexp.Compile(pattern)
 	if err != nil {
 		return

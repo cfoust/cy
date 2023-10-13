@@ -39,6 +39,7 @@ type Replay struct {
 
 	isSearching bool
 	searchInput textinput.Model
+	matches     []search.SearchResult
 }
 
 var _ taro.Model = (*Replay)(nil)
@@ -101,6 +102,11 @@ type Action struct {
 	Type ActionType
 }
 
+type SearchResult struct {
+	results []search.SearchResult
+	err     error
+}
+
 const (
 	ActionQuit           ActionType = iota
 	ActionStepBack       ActionType = iota
@@ -117,6 +123,14 @@ const (
 func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	_, rows := r.terminal.Size()
 
+	switch msg := msg.(type) {
+	case SearchResult:
+		r.isSearching = false
+		// TODO(cfoust): 10/13/23 handle error
+		r.matches = msg.results
+		return r, nil
+	}
+
 	if r.isSearching {
 		switch msg := msg.(type) {
 		case Action:
@@ -131,8 +145,11 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				value := r.searchInput.Value()
 				r.searchInput.Reset()
 				return r, func() tea.Msg {
-					search.Search(r.events, value)
-					return nil
+					res, err := search.Search(r.events, value)
+					return SearchResult{
+						results: res,
+						err:     err,
+					}
 				}
 			}
 		}

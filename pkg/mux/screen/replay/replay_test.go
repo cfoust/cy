@@ -8,8 +8,8 @@ import (
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/stretchr/testify/require"
 	"github.com/xo/terminfo"
-	//"github.com/stretchr/testify/require"
 )
 
 func createTestSession() []sessions.Event {
@@ -20,9 +20,9 @@ func createTestSession() []sessions.Event {
 		"test string please ignore",
 	)
 	s.Term(terminfo.ClearScreen)
-	s.Add(
-		"take two",
-	)
+	s.Add("take two")
+	s.Term(terminfo.ClearScreen)
+	s.Add("test")
 
 	return s.Events()
 }
@@ -52,7 +52,7 @@ func input(m taro.Model, msgs ...interface{}) taro.Model {
 }
 
 func TestBasics(t *testing.T) {
-	var r taro.Model = newReplay(createTestSession())
-	r = input(r, ActionSearch, "test", "enter")
-	t.Fail()
+	var r = newReplay(createTestSession())
+	input(r, ActionSearch, "test", "enter")
+	require.Equal(t, len(r.matches), 2)
 }
