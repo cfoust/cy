@@ -38,6 +38,8 @@ type Replay struct {
 	numLines  int
 
 	isSearching bool
+	isForward   bool
+	isWaiting   bool
 	searchInput textinput.Model
 	matches     []search.SearchResult
 }
@@ -103,22 +105,30 @@ type Action struct {
 }
 
 type SearchResult struct {
-	results []search.SearchResult
-	err     error
+	isForward bool
+	results   []search.SearchResult
+	err       error
 }
 
 const (
-	ActionQuit           ActionType = iota
-	ActionStepBack       ActionType = iota
-	ActionStepForward    ActionType = iota
-	ActionScrollUp       ActionType = iota
-	ActionScrollDown     ActionType = iota
-	ActionScrollUpHalf   ActionType = iota
-	ActionScrollDownHalf ActionType = iota
-	ActionSearch         ActionType = iota
-	ActionBeginning      ActionType = iota
-	ActionEnd            ActionType = iota
+	ActionQuit               ActionType = iota
+	ActionStepBack           ActionType = iota
+	ActionStepForward        ActionType = iota
+	ActionScrollUp           ActionType = iota
+	ActionScrollDown         ActionType = iota
+	ActionScrollUpHalf       ActionType = iota
+	ActionScrollDownHalf     ActionType = iota
+	ActionTimeSearchForward  ActionType = iota
+	ActionTimeSearchBackward ActionType = iota
+	ActionBeginning          ActionType = iota
+	ActionEnd                ActionType = iota
 )
+
+func reverse[S ~[]E, E any](s S) {
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
+}
 
 func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	_, rows := r.terminal.Size()
@@ -128,6 +138,15 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		r.isSearching = false
 		// TODO(cfoust): 10/13/23 handle error
 		r.matches = msg.results
+
+		if !msg.isForward {
+			reverse(r.matches)
+		}
+
+		if len(r.matches) > 0 {
+			r.setIndex(r.matches[0].Begin.Index)
+		}
+
 		return r, nil
 	}
 
@@ -144,11 +163,21 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			case taro.KeyEnter:
 				value := r.searchInput.Value()
 				r.searchInput.Reset()
+
+				isForward := r.isForward
+				events := r.events[r.index:]
+				if !isForward {
+					events = r.events[:r.index]
+				}
+
+				r.isWaiting = true
+
 				return r, func() tea.Msg {
-					res, err := search.Search(r.events, value)
+					res, err := search.Search(events, value)
 					return SearchResult{
-						results: res,
-						err:     err,
+						isForward: isForward,
+						results:   res,
+						err:       err,
 					}
 				}
 			}
@@ -173,8 +202,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case ActionEnd:
 			r.setIndex(-1)
 			return r, nil
-		case ActionSearch:
+		case ActionTimeSearchForward, ActionTimeSearchBackward:
 			r.isSearching = true
+			r.isForward = msg.Type == ActionTimeSearchForward
 			r.searchInput.Reset()
 			return r, nil
 		case ActionStepBack:

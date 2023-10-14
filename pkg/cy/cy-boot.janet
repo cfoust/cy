@@ -143,6 +143,7 @@
 (key/bind :replay ["down"] "" (fn [&] (replay/scroll-down)))
 (key/bind :replay ["ctrl+u"] "" (fn [&] (replay/half-page-up)))
 (key/bind :replay ["ctrl+d"] "" (fn [&] (replay/half-page-down)))
-(key/bind :replay ["s"] "" (fn [&] (replay/start-search)))
+(key/bind :replay ["s"] "" (fn [&] (replay/time-search-forward)))
+(key/bind :replay ["S"] "" (fn [&] (replay/time-search-backward)))
 (key/bind :replay ["g" "g"] "" (fn [&] (replay/time-beginning)))
 (key/bind :replay ["G"] "" (fn [&] (replay/time-end)))

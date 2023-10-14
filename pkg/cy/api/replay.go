@@ -65,8 +65,12 @@ func (m *ReplayModule) HalfPageDown(context interface{}) error {
 	return m.send(context, replay.ActionScrollDownHalf)
 }
 
-func (m *ReplayModule) StartSearch(context interface{}) error {
-	return m.send(context, replay.ActionSearch)
+func (m *ReplayModule) TimeSearchForward(context interface{}) error {
+	return m.send(context, replay.ActionTimeSearchForward)
+}
+
+func (m *ReplayModule) TimeSearchBackward(context interface{}) error {
+	return m.send(context, replay.ActionTimeSearchBackward)
 }
 
 func (m *ReplayModule) TimeStepBack(context interface{}) error {
