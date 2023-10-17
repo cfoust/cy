@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync/atomic"
 
+	"github.com/cfoust/cy/pkg/bind"
+
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -14,7 +16,9 @@ type Tree struct {
 	nodeIndex atomic.Int32
 
 	// the directory in which to store recorded sessions
-	dataDir string
+	dataDir      string
+	replayBinds  *bind.BindScope
+	replayEvents chan<- ReplayEvent
 }
 
 func (t *Tree) newMetadata() *metaData {
@@ -24,7 +28,7 @@ func (t *Tree) newMetadata() *metaData {
 	id := t.nodeIndex.Add(1)
 	node := &metaData{
 		id:    id,
-		binds: NewScope(),
+		binds: bind.NewBindScope(),
 		name:  fmt.Sprintf("%d", id),
 	}
 
@@ -152,9 +156,11 @@ func (t *Tree) GroupById(id NodeID) (*Group, bool) {
 	return group, true
 }
 
-func NewTree() *Tree {
+func NewTree(replayBinds *bind.BindScope, replayEvents chan<- ReplayEvent) *Tree {
 	tree := &Tree{
-		nodes: make(map[NodeID]Node),
+		nodes:        make(map[NodeID]Node),
+		replayBinds:  replayBinds,
+		replayEvents: replayEvents,
 	}
 
 	tree.root = &Group{

@@ -34,7 +34,7 @@ type Client struct {
 	cy *Cy
 
 	node  tree.Node
-	binds *bind.Engine[tree.Binding]
+	binds *bind.Engine[bind.Action]
 
 	muxClient *server.Client
 	margins   *screen.Margins
@@ -61,7 +61,7 @@ func (c *Cy) addClient(conn Connection) *Client {
 		Lifetime: util.NewLifetime(clientCtx),
 		cy:       c,
 		conn:     conn,
-		binds:    bind.NewEngine[tree.Binding](),
+		binds:    bind.NewEngine[bind.Action](),
 	}
 	c.clients = append(c.clients, client)
 	c.Unlock()
@@ -102,7 +102,7 @@ func (c *Client) pollEvents() {
 			return
 		case event := <-c.binds.Recv():
 			switch event := event.(type) {
-			case bind.ActionEvent[tree.Binding]:
+			case bind.BindEvent:
 				go func() {
 					err := event.Action.Callback.CallContext(
 						c.Ctx(),
@@ -335,16 +335,9 @@ func (c *Client) Attach(node tree.Node) error {
 	c.Unlock()
 
 	// Update bindings
-	scopes := make([]*tree.BindScope, 0)
+	scopes := make([]*bind.BindScope, 0)
 	for _, pathNode := range path {
 		scopes = append(scopes, pathNode.Binds())
-	}
-
-	if pane, ok := node.(*tree.Pane); ok {
-		replay := pane.ReplayMode()
-		if replay != nil {
-			scopes = append(scopes, c.cy.replayBinds)
-		}
 	}
 
 	c.binds.SetScopes(scopes...)

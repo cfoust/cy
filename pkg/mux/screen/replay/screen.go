@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -20,6 +21,7 @@ import (
 
 type Replay struct {
 	render *taro.Renderer
+	binds  *bind.Engine[bind.Action]
 
 	// the size of the terminal
 	terminal emu.Terminal
@@ -297,7 +299,10 @@ func (r *Replay) View(state *tty.State) {
 	state.CursorVisible = false
 }
 
-func newReplay(events []sessions.Event) *Replay {
+func newReplay(
+	events []sessions.Event,
+	binds *bind.Engine[bind.Action],
+) *Replay {
 	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 20
@@ -308,12 +313,21 @@ func newReplay(events []sessions.Event) *Replay {
 		events:      events,
 		terminal:    emu.New(),
 		searchInput: ti,
+		binds:       binds,
 	}
 	m.setIndex(-1)
 	return m
 }
 
-func New(ctx context.Context, recorder *sessions.Recorder) *taro.Program {
+func New(
+	ctx context.Context,
+	recorder *sessions.Recorder,
+	replayBinds *bind.BindScope,
+	replayEvents chan<- bind.BindEvent,
+) *taro.Program {
 	events := recorder.Events()
-	return taro.New(ctx, newReplay(events))
+
+	engine := bind.NewEngine[bind.Action]()
+	engine.SetScopes(replayBinds)
+	return taro.New(ctx, newReplay(events, engine))
 }

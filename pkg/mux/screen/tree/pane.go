@@ -3,6 +3,7 @@ package tree
 import (
 	"context"
 
+	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
@@ -23,7 +24,9 @@ type Pane struct {
 	layers   *screen.Layers
 	stream   stream.Stream
 
-	replay *taro.Program
+	replay       *taro.Program
+	replayBinds  *bind.BindScope
+	replayEvents chan<- bind.BindEvent
 }
 
 var _ Node = (*Pane)(nil)
@@ -64,6 +67,8 @@ func (p *Pane) EnterReplay() {
 	r := replay.New(
 		p.Ctx(),
 		p.Recorder(),
+		p.replayBinds,
+		p.replayEvents,
 	)
 
 	p.layers.NewLayer(
@@ -83,7 +88,15 @@ func (p *Pane) EnterReplay() {
 	}()
 }
 
-func newPane(ctx context.Context, subStream stream.Stream, sessionFile string, size geom.Vec2) *Pane {
+func newPane(
+	ctx context.Context,
+	id NodeID,
+	subStream stream.Stream,
+	sessionFile string,
+	size geom.Vec2,
+	replayBinds *bind.BindScope,
+	replayEvents chan<- ReplayEvent,
+) *Pane {
 	lifetime := util.NewLifetime(ctx)
 	// TODO(cfoust): 09/19/23 error handling
 	recorder, _ := sessions.NewRecorder(ctx, sessionFile, subStream)
@@ -99,13 +112,31 @@ func newPane(ctx context.Context, subStream stream.Stream, sessionFile string, s
 		true,
 		true,
 	)
+
+	actions := make(chan bind.BindEvent)
+	go func() {
+		for {
+			select {
+			case <-lifetime.Ctx().Done():
+				return
+			case event := <-actions:
+				replayEvents <- ReplayEvent{
+					Id:    id,
+					Event: event,
+				}
+			}
+		}
+	}()
+
 	pane := Pane{
-		Lifetime: lifetime,
-		layers:   layers,
-		recorder: recorder,
-		screen:   layers,
-		stream:   subStream,
-		terminal: terminal,
+		Lifetime:     lifetime,
+		layers:       layers,
+		recorder:     recorder,
+		screen:       layers,
+		stream:       subStream,
+		terminal:     terminal,
+		replayBinds:  replayBinds,
+		replayEvents: actions,
 	}
 
 	return &pane

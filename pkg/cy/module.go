@@ -11,6 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
+	"github.com/cfoust/cy/pkg/bind"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -33,8 +34,9 @@ type Cy struct {
 
 	// The tree of groups and panes
 	tree *tree.Tree
+
 	// Replay mode has its own isolated binding scope
-	replayBinds *tree.BindScope
+	replayBinds *bind.BindScope
 
 	clients []*Client
 
@@ -79,12 +81,14 @@ func (c *Cy) Shutdown() error {
 }
 
 func Start(ctx context.Context, options Options) (*Cy, error) {
-	t := tree.NewTree()
+	replayBinds := bind.NewBindScope()
+	replayEvents := make(chan tree.ReplayEvent)
+	t := tree.NewTree(replayBinds, replayEvents)
 	cy := Cy{
 		Lifetime:    util.NewLifetime(ctx),
 		tree:        t,
 		muxServer:   server.New(),
-		replayBinds: tree.NewScope(),
+		replayBinds: replayBinds,
 	}
 
 	t.SetDataDir(options.DataDir)

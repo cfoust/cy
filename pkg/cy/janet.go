@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/anim"
+	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/cy/api"
 	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
@@ -174,7 +175,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 		"key/bind": func(target *janet.Value, sequence []string, doc string, callback *janet.Function) error {
 			defer target.Free()
 
-			var scope *tree.BindScope
+			var scope *bind.BindScope
 			group, err := c.resolveGroup(target)
 			if err == nil {
 				scope = group.Binds()
@@ -189,7 +190,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 
 			scope.Set(
 				sequence,
-				tree.Binding{
+				bind.Action{
 					Description: doc,
 					Callback:    callback,
 				},

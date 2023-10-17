@@ -4,6 +4,8 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/cfoust/cy/pkg/bind"
+
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -13,7 +15,7 @@ type metaData struct {
 	deadlock.RWMutex
 	id    NodeID
 	name  string
-	binds *BindScope
+	binds *bind.BindScope
 }
 
 func (m *metaData) Id() int32 {
@@ -38,7 +40,7 @@ func (m *metaData) SetName(name string) {
 	}, name)
 }
 
-func (m *metaData) Binds() *BindScope {
+func (m *metaData) Binds() *bind.BindScope {
 	return m.binds
 }
 
@@ -46,5 +48,5 @@ type Node interface {
 	Id() NodeID
 	Name() string
 	SetName(string)
-	Binds() *BindScope
+	Binds() *bind.BindScope
 }
