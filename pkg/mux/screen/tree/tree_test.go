@@ -11,7 +11,7 @@ import (
 )
 
 func TestRoot(t *testing.T) {
-	tree := NewTree()
+	tree := NewTree(nil, nil)
 	require.Equal(t, NodeID(1), tree.Root().Id())
 	require.Equal(t, 0, len(tree.Leaves()))
 }
@@ -25,7 +25,7 @@ func emptyPane(g *Group) *Pane {
 }
 
 func TestLeaves(t *testing.T) {
-	tree := NewTree()
+	tree := NewTree(nil, nil)
 	g := tree.Root().NewGroup()
 	for i := 0; i < 3; i++ {
 		emptyPane(g)
@@ -35,7 +35,7 @@ func TestLeaves(t *testing.T) {
 }
 
 func TestRemoveGroup(t *testing.T) {
-	tree := NewTree()
+	tree := NewTree(nil, nil)
 	g := tree.Root().NewGroup()
 	for i := 0; i < 3; i++ {
 		emptyPane(g)
@@ -46,7 +46,7 @@ func TestRemoveGroup(t *testing.T) {
 }
 
 func TestRemoveNode(t *testing.T) {
-	tree := NewTree()
+	tree := NewTree(nil, nil)
 	g := tree.Root().NewGroup()
 	for i := 0; i < 3; i++ {
 		emptyPane(g)
@@ -59,6 +59,6 @@ func TestRemoveNode(t *testing.T) {
 }
 
 func TestRemoveRoot(t *testing.T) {
-	tree := NewTree()
+	tree := NewTree(nil, nil)
 	require.Error(t, tree.RemoveNode(tree.Root().Id()))
 }
