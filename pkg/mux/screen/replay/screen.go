@@ -195,7 +195,10 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case taro.KeyMsg:
-		r.binds.InputMessage(msg)
+		return r, func() tea.Msg {
+			r.binds.InputMessage(msg)
+			return nil
+		}
 	case Action:
 		switch msg.Type {
 		case ActionQuit:
