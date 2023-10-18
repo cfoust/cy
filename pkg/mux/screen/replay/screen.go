@@ -194,6 +194,8 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
+	case taro.KeyMsg:
+		r.binds.InputMessage(msg)
 	case Action:
 		switch msg.Type {
 		case ActionQuit:
@@ -329,5 +331,19 @@ func New(
 
 	engine := bind.NewEngine[bind.Action]()
 	engine.SetScopes(replayBinds)
+	go engine.Poll(ctx)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-engine.Recv():
+				if bindEvent, ok := event.(bind.BindEvent); ok {
+					replayEvents <- bindEvent
+				}
+			}
+		}
+	}()
+
 	return taro.New(ctx, newReplay(events, engine))
 }

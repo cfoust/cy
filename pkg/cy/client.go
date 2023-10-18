@@ -95,6 +95,36 @@ func (c *Client) pollRender() {
 	}
 }
 
+func (c *Cy) pollReplayEvents(ctx context.Context, events <-chan tree.ReplayEvent) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case event := <-events:
+			c.RLock()
+			clients := c.clients
+			c.RUnlock()
+
+			// TODO(cfoust): 10/18/23 infer client
+			if len(clients) == 0 {
+				continue
+			}
+
+			client := clients[0]
+
+			go func() {
+				err := event.Event.Action.Callback.CallContext(
+					c.Ctx(),
+					client,
+				)
+				if err != nil && err != context.Canceled {
+					log.Error().Err(err).Msgf("failed to run callback")
+				}
+			}()
+		}
+	}
+}
+
 func (c *Client) pollEvents() {
 	for {
 		select {

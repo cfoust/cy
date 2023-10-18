@@ -3,6 +3,7 @@ package replay
 import (
 	"testing"
 
+	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
@@ -52,7 +53,7 @@ func input(m taro.Model, msgs ...interface{}) taro.Model {
 }
 
 func TestBasics(t *testing.T) {
-	var r = newReplay(createTestSession())
-	input(r, ActionSearch, "test", "enter")
-	require.Equal(t, len(r.matches), 2)
+	var r = newReplay(createTestSession(), bind.NewEngine[bind.Action]())
+	input(r, ActionBeginning, ActionTimeSearchForward, "test", "enter")
+	require.Equal(t, 2, len(r.matches))
 }

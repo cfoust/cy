@@ -215,3 +215,7 @@ func (e *Engine[T]) Input(data []byte) {
 		}
 	}
 }
+
+func (e *Engine[T]) InputMessage(msg taro.Msg) {
+	e.in <- input{Message: msg}
+}
