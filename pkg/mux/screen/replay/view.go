@@ -48,8 +48,9 @@ func (r *Replay) View(state *tty.State) {
 	cursor := r.termToViewport(r.getTerminalCursor())
 	if r.isSelectionMode {
 		cursor = r.cursor
+	} else {
+		state.Cursor = r.terminal.Cursor()
 	}
-	state.Cursor = r.terminal.Cursor()
 	state.Cursor.X = cursor.C
 	state.Cursor.Y = cursor.R
 

@@ -22,7 +22,7 @@ func (v Vec2) Sub(other Vec2) Vec2 {
 func (v Vec2) Add(other Vec2) Vec2 {
 	return Vec2{
 		R: other.R + v.R,
-		C: other.C * v.C,
+		C: other.C + v.C,
 	}
 }
 

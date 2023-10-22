@@ -8,7 +8,6 @@ import (
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
 
-	"github.com/cfoust/cy/pkg/geom/tty"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/require"
 	"github.com/xo/terminfo"
@@ -75,5 +74,51 @@ func TestViewport(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.minOffset)
 	require.Equal(t, geom.Vec2{R: 10, C: 10}, r.maxOffset)
 	require.Equal(t, geom.Vec2{R: 10, C: 10}, r.offset)
-	r.View(tty.New(r.viewport))
+}
+
+func TestScroll(t *testing.T) {
+	s := sessions.NewSimulator()
+	s.Add(
+		geom.Size{R: 5, C: 10},
+		"\033[20h", // CRLF -- why is this everywhere?
+		"one\n",
+		"two\n",
+		"three\n",
+		"four\n",
+		"five\n",
+		"six\n",
+		"seven",
+	)
+
+	var r = newReplay(s.Events(), bind.NewEngine[bind.Action]())
+	input(r, geom.Size{R: 2, C: 10})
+	require.Equal(t, 1, r.cursor.R)
+	require.Equal(t, 5, r.cursor.C)
+	require.Equal(t, 5, r.desiredCol)
+	// six
+	// seven[ ]
+
+	input(r, ActionScrollUp)
+	// five
+	// si[x]
+	require.Equal(t, 2, r.cursor.C)
+	require.Equal(t, 5, r.desiredCol)
+
+	input(r, ActionScrollUp)
+	// four
+	// fiv[e]
+	require.Equal(t, 3, r.cursor.C)
+	require.Equal(t, 5, r.desiredCol)
+
+	input(r, ActionScrollDown)
+	// fiv[e]
+	// six
+	require.Equal(t, 0, r.cursor.R)
+	require.Equal(t, 3, r.cursor.C)
+
+	input(r, ActionScrollDown)
+	// si[x]
+	// seven
+	require.Equal(t, 0, r.cursor.R)
+	require.Equal(t, 2, r.cursor.C)
 }

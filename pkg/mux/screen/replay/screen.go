@@ -13,6 +13,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/mattn/go-runewidth"
 )
 
 type Replay struct {
@@ -72,6 +73,10 @@ func (r *Replay) termToViewport(point geom.Vec2) geom.Vec2 {
 	return point.Sub(r.offset)
 }
 
+func (r *Replay) viewportToTerm(point geom.Vec2) geom.Vec2 {
+	return point.Add(r.offset)
+}
+
 func (r *Replay) getTerminalCursor() geom.Vec2 {
 	cursor := r.terminal.Cursor()
 	return geom.Vec2{
@@ -101,10 +106,6 @@ func (r *Replay) setViewport(oldViewport, newViewport geom.Size) (taro.Model, te
 	return r, nil
 }
 
-// first non-whitespace is after desiredCol: last column before first non-whitespace
-// last non-whitespace is before desiredCol: last non-whitespace column
-// desiredCol is before last non-whitespace and after first non-whitespace: remain in place
-
 func (r *Replay) setOffsetY(offset int) {
 	r.offset.R = geom.Clamp(offset, r.minOffset.R, r.maxOffset.R)
 }
@@ -121,6 +122,11 @@ func (r *Replay) center(point geom.Vec2) {
 
 // Calculate the bounds of `{min,max}Offset` and ensure `offset` falls between them.
 func (r *Replay) recalculateViewport() {
+	// the cursor and desiredCol are viewport-relative, so we must
+	// transform to term space and back
+	cursor := r.viewportToTerm(r.cursor)
+	desiredCol := r.desiredCol + r.offset.C
+
 	termSize := r.getTerminalSize()
 	r.minOffset = geom.Vec2{
 		R: -len(r.terminal.History()),
@@ -132,11 +138,112 @@ func (r *Replay) recalculateViewport() {
 	}
 	r.setOffsetY(r.offset.R)
 	r.setOffsetX(r.offset.C)
+
+	r.cursor = r.termToViewport(cursor)
+	r.desiredCol = desiredCol - r.offset.C
+}
+
+// Given a point in term space representing a desired cursor position, return
+// the best available cursor position. This enables behavior akin to moving up
+// and down in a text editor.
+func (r *Replay) getColumn(point geom.Vec2) int {
+	var row emu.Line
+	screen := r.terminal.Screen()
+	history := r.terminal.History()
+	if point.R < 0 {
+		row = history[len(history)+point.R]
+	} else {
+		row = screen[point.R]
+	}
+
+	occupancy := make([]bool, len(row))
+	for i := 0; i < len(row); i++ {
+		if row[i].IsEmpty() {
+			continue
+		}
+
+		// handle wide runes
+		r := row[i].Char
+		w := runewidth.RuneWidth(r)
+		for j := 0; j < w; j++ {
+			occupancy[i+j] = true
+		}
+		i += geom.Max(w-1, 0)
+	}
+
+	// desiredCol occupied -> return that col
+	if occupancy[point.C] {
+		return point.C
+	}
+
+	var haveBefore, haveAfter bool
+	// check for occupied cells before and after the desired column
+	for i := 0; i < len(row); i++ {
+		if i == point.C || !occupancy[i] {
+			continue
+		}
+
+		if i > point.C {
+			haveAfter = true
+		} else {
+			haveBefore = true
+		}
+	}
+
+	// the line is empty, just go to col 0
+	if !haveBefore && !haveAfter {
+		return 0
+	}
+
+	// point.C is before last non-whitespace and after first
+	// non-whitespace: remain in place
+	if haveBefore && haveAfter {
+		return point.C
+	}
+
+	// first non-whitespace is after point.C: last column before first
+	// non-whitespace
+	if haveAfter && !haveBefore {
+		for i := point.C + 1; i < len(row); i-- {
+			if occupancy[i] {
+				return i - 1
+			}
+		}
+
+		return point.C
+	}
+
+	// last non-whitespace is before point.C: last non-whitespace column
+	if haveBefore && !haveAfter {
+		for i := point.C; i >= 0; i-- {
+			if !row[i].IsEmpty() {
+				return i
+			}
+		}
+	}
+
+	return 0
 }
 
 func (r *Replay) setScroll(offset int) {
 	r.isSelectionMode = true
+	before := r.viewportToTerm(r.cursor)
 	r.setOffsetY(offset)
+	after := r.termToViewport(before)
+
+	// cursor is below viewport; move it to bottom
+	if after.R >= r.viewport.R {
+		r.cursor.R = geom.Max(r.viewport.R-1, 0)
+	} else if after.R < 0 {
+		r.cursor.R = 0
+	} else {
+		r.cursor.R = after.R
+	}
+
+	r.cursor.C = r.getColumn(geom.Vec2{
+		R: r.cursor.R + r.offset.R,
+		C: r.desiredCol,
+	})
 }
 
 // Move the terminal from event index `from` to `to`.
