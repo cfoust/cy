@@ -74,15 +74,33 @@ func (m *ReplayModule) TimeSearchBackward(context interface{}) error {
 }
 
 func (m *ReplayModule) TimeStepBack(context interface{}) error {
-	return m.send(context, replay.ActionStepBack)
+	return m.send(context, replay.ActionTimeStepBack)
 }
 
 func (m *ReplayModule) TimeStepForward(context interface{}) error {
-	return m.send(context, replay.ActionStepForward)
+	return m.send(context, replay.ActionTimeStepForward)
 }
 
 func (m *ReplayModule) TimeBeginning(context interface{}) error {
-	return m.send(context, replay.ActionBeginning)
+	return m.send(context, replay.ActionTimeBeginning)
 }
 
-func (m *ReplayModule) TimeEnd(context interface{}) error { return m.send(context, replay.ActionEnd) }
+func (m *ReplayModule) TimeEnd(context interface{}) error {
+	return m.send(context, replay.ActionTimeEnd)
+}
+
+func (m *ReplayModule) CursorDown(context interface{}) error {
+	return m.send(context, replay.ActionCursorDown)
+}
+
+func (m *ReplayModule) CursorLeft(context interface{}) error {
+	return m.send(context, replay.ActionCursorLeft)
+}
+
+func (m *ReplayModule) CursorRight(context interface{}) error {
+	return m.send(context, replay.ActionCursorRight)
+}
+
+func (m *ReplayModule) CursorUp(context interface{}) error {
+	return m.send(context, replay.ActionCursorUp)
+}

@@ -60,7 +60,7 @@ func input(m taro.Model, msgs ...interface{}) taro.Model {
 
 func TestSearch(t *testing.T) {
 	var r = newReplay(createTestSession(), bind.NewEngine[bind.Action]())
-	input(r, ActionBeginning, ActionTimeSearchForward, "test", "enter")
+	input(r, ActionTimeBeginning, ActionTimeSearchForward, "test", "enter")
 	require.Equal(t, 2, len(r.matches))
 }
 
