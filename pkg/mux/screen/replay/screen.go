@@ -177,6 +177,18 @@ func getOccupancy(line emu.Line) []bool {
 	return occupancy
 }
 
+func isLineEmpty(line emu.Line) bool {
+	occupancy := getOccupancy(line)
+
+	for _, occupied := range occupancy {
+		if occupied {
+			return false
+		}
+	}
+
+	return true
+}
+
 // Get the indices of the first and last non-empty cells for the given line.
 func getNonWhitespace(line emu.Line) (first, last int) {
 	for i := 0; i < len(line); i++ {
@@ -315,6 +327,18 @@ func (r *Replay) moveCursorDelta(dy, dx int) {
 		R: dy,
 		C: dx,
 	}))
+
+	// Don't allow user to move onto blank lines at end of terminal
+	numBlank := 0
+	screen := r.terminal.Screen()
+	termSize := r.getTerminalSize()
+	for row := termSize.R - 1; row >= 0; row-- {
+		if !isLineEmpty(screen[row]) {
+			break
+		}
+		numBlank++
+	}
+	newPos.R = geom.Min(termSize.R-1-numBlank, newPos.R)
 
 	// Don't do anything if we can't move
 	if newPos == oldPos {

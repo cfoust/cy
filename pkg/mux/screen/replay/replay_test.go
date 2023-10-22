@@ -156,4 +156,11 @@ func TestCursor(t *testing.T) {
 	require.Equal(t, 0, r.cursor.C)
 	input(r, ActionCursorDown)
 	require.Equal(t, 0, r.cursor.C)
+	require.Equal(t, 1, r.cursor.R)
+	// moving down past last occupied line should do nothing
+	input(r, ActionCursorDown)
+	require.Equal(t, geom.Vec2{
+		R: 3,
+		C: 0,
+	}, r.viewportToTerm(r.cursor))
 }
