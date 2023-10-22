@@ -26,6 +26,15 @@ func (v Vec2) Add(other Vec2) Vec2 {
 	}
 }
 
+func (v Vec2) Clamp(min, max Vec2) Vec2 {
+	return Vec2{
+		R: Clamp(v.R, min.R, max.R),
+		C: Clamp(v.C, min.C, max.C),
+	}
+}
+
+var UnitVec2 = Vec2{R: 1, C: 1}
+
 type Size = Vec2
 
 type Rect struct {

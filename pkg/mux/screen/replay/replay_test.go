@@ -122,3 +122,38 @@ func TestScroll(t *testing.T) {
 	require.Equal(t, 0, r.cursor.R)
 	require.Equal(t, 2, r.cursor.C)
 }
+
+func TestCursor(t *testing.T) {
+	s := sessions.NewSimulator()
+	s.Add(
+		geom.Size{R: 5, C: 10},
+		"\033[20h", // CRLF -- why is this everywhere?
+		"foo\n",
+		"      foo\n",
+		"foo  foo\n",
+		"foo ",
+	)
+
+	var r = newReplay(s.Events(), bind.NewEngine[bind.Action]())
+	input(r, geom.Size{R: 2, C: 10})
+	require.Equal(t, 2, r.offset.R)
+	require.Equal(t, 1, r.cursor.R)
+	require.Equal(t, 4, r.cursor.C)
+	require.Equal(t, 4, r.desiredCol)
+	input(r, ActionCursorUp)
+	require.Equal(t, 4, r.cursor.C)
+	input(r, ActionCursorUp)
+	require.Equal(t, 5, r.cursor.C)
+	input(r, ActionCursorUp)
+	require.Equal(t, 2, r.cursor.C)
+	input(r, ActionCursorRight)
+	require.Equal(t, 2, r.cursor.C)
+	input(r, ActionCursorLeft, ActionCursorLeft, ActionCursorLeft, ActionCursorLeft)
+	require.Equal(t, 0, r.cursor.C)
+	input(r, ActionCursorDown)
+	require.Equal(t, 5, r.cursor.C)
+	input(r, ActionCursorDown)
+	require.Equal(t, 0, r.cursor.C)
+	input(r, ActionCursorDown)
+	require.Equal(t, 0, r.cursor.C)
+}

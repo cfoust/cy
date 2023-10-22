@@ -147,3 +147,7 @@
 (key/bind :replay ["S"] "" (fn [&] (replay/time-search-backward)))
 (key/bind :replay ["g" "g"] "" (fn [&] (replay/time-beginning)))
 (key/bind :replay ["G"] "" (fn [&] (replay/time-end)))
+(key/bind :replay ["l"] "" (fn [&] (replay/cursor-right)))
+(key/bind :replay ["h"] "" (fn [&] (replay/cursor-left)))
+(key/bind :replay ["j"] "" (fn [&] (replay/cursor-down)))
+(key/bind :replay ["k"] "" (fn [&] (replay/cursor-up)))

@@ -107,11 +107,19 @@ func (r *Replay) setViewport(oldViewport, newViewport geom.Size) (taro.Model, te
 }
 
 func (r *Replay) setOffsetY(offset int) {
+	cursor := r.viewportToTerm(r.cursor)
+	desiredCol := r.desiredCol + r.offset.C
 	r.offset.R = geom.Clamp(offset, r.minOffset.R, r.maxOffset.R)
+	r.cursor = r.termToViewport(cursor)
+	r.desiredCol = desiredCol - r.offset.C
 }
 
 func (r *Replay) setOffsetX(offset int) {
+	cursor := r.viewportToTerm(r.cursor)
+	desiredCol := r.desiredCol + r.offset.C
 	r.offset.C = geom.Clamp(offset, r.minOffset.C, r.maxOffset.C)
+	r.cursor = r.termToViewport(cursor)
+	r.desiredCol = desiredCol - r.offset.C
 }
 
 // Center the viewport on a point in the reference frame of the terminal.
@@ -122,11 +130,6 @@ func (r *Replay) center(point geom.Vec2) {
 
 // Calculate the bounds of `{min,max}Offset` and ensure `offset` falls between them.
 func (r *Replay) recalculateViewport() {
-	// the cursor and desiredCol are viewport-relative, so we must
-	// transform to term space and back
-	cursor := r.viewportToTerm(r.cursor)
-	desiredCol := r.desiredCol + r.offset.C
-
 	termSize := r.getTerminalSize()
 	r.minOffset = geom.Vec2{
 		R: -len(r.terminal.History()),
@@ -138,38 +141,71 @@ func (r *Replay) recalculateViewport() {
 	}
 	r.setOffsetY(r.offset.R)
 	r.setOffsetX(r.offset.C)
-
-	r.cursor = r.termToViewport(cursor)
-	r.desiredCol = desiredCol - r.offset.C
 }
 
-// Given a point in term space representing a desired cursor position, return
-// the best available cursor position. This enables behavior akin to moving up
-// and down in a text editor.
-func (r *Replay) getColumn(point geom.Vec2) int {
-	var row emu.Line
+// Get the glyphs for a row in term space.
+func (r *Replay) getLine(row int) emu.Line {
+	var line emu.Line
 	screen := r.terminal.Screen()
 	history := r.terminal.History()
-	if point.R < 0 {
-		row = history[len(history)+point.R]
+	if row < 0 {
+		line = history[len(history)+row]
 	} else {
-		row = screen[point.R]
+		line = screen[row]
 	}
 
-	occupancy := make([]bool, len(row))
-	for i := 0; i < len(row); i++ {
-		if row[i].IsEmpty() {
+	return line
+}
+
+// Get the occupancy state of the given line.
+func getOccupancy(line emu.Line) []bool {
+	occupancy := make([]bool, len(line))
+	for i := 0; i < len(line); i++ {
+		if line[i].IsEmpty() {
 			continue
 		}
 
 		// handle wide runes
-		r := row[i].Char
+		r := line[i].Char
 		w := runewidth.RuneWidth(r)
 		for j := 0; j < w; j++ {
 			occupancy[i+j] = true
 		}
 		i += geom.Max(w-1, 0)
 	}
+
+	return occupancy
+}
+
+// Get the indices of the first and last non-empty cells for the given line.
+func getNonWhitespace(line emu.Line) (first, last int) {
+	for i := 0; i < len(line); i++ {
+		if line[i].IsEmpty() {
+			continue
+		}
+
+		first = i
+		break
+	}
+
+	for i := len(line) - 1; i >= 0; i-- {
+		if line[i].IsEmpty() {
+			continue
+		}
+
+		last = i
+		break
+	}
+
+	return
+}
+
+// Given a point in term space representing a desired cursor position, return
+// the best available cursor position. This enables behavior akin to moving up
+// and down in a text editor.
+func (r *Replay) resolveDesiredColumn(point geom.Vec2) int {
+	line := r.getLine(point.R)
+	occupancy := getOccupancy(line)
 
 	// desiredCol occupied -> return that col
 	if occupancy[point.C] {
@@ -178,7 +214,7 @@ func (r *Replay) getColumn(point geom.Vec2) int {
 
 	var haveBefore, haveAfter bool
 	// check for occupied cells before and after the desired column
-	for i := 0; i < len(row); i++ {
+	for i := 0; i < len(line); i++ {
 		if i == point.C || !occupancy[i] {
 			continue
 		}
@@ -204,22 +240,14 @@ func (r *Replay) getColumn(point geom.Vec2) int {
 	// first non-whitespace is after point.C: last column before first
 	// non-whitespace
 	if haveAfter && !haveBefore {
-		for i := point.C + 1; i < len(row); i-- {
-			if occupancy[i] {
-				return i - 1
-			}
-		}
-
-		return point.C
+		first, _ := getNonWhitespace(line)
+		return geom.Max(first-1, 0)
 	}
 
 	// last non-whitespace is before point.C: last non-whitespace column
 	if haveBefore && !haveAfter {
-		for i := point.C; i >= 0; i-- {
-			if !row[i].IsEmpty() {
-				return i
-			}
-		}
+		_, last := getNonWhitespace(line)
+		return last
 	}
 
 	return 0
@@ -240,10 +268,80 @@ func (r *Replay) setScroll(offset int) {
 		r.cursor.R = after.R
 	}
 
-	r.cursor.C = r.getColumn(geom.Vec2{
+	r.cursor.C = r.resolveDesiredColumn(geom.Vec2{
 		R: r.cursor.R + r.offset.R,
 		C: r.desiredCol,
 	})
+}
+
+// Move the cursor to a point in term space, adjusting the viewport the minimum
+// amount necessary to keep the cursor in view.
+func (r *Replay) moveCursor(point geom.Vec2) {
+	viewport := r.viewport
+	newCursor := r.termToViewport(point)
+
+	if newCursor.C < 0 {
+		r.setOffsetX(r.offset.C + newCursor.C)
+	}
+
+	if newCursor.C >= viewport.C {
+		r.setOffsetX(r.offset.C + (newCursor.C - viewport.C + 1))
+	}
+
+	if newCursor.R < 0 {
+		r.setOffsetY(r.offset.R + newCursor.R)
+	}
+
+	if newCursor.R >= viewport.R {
+		r.setOffsetY(r.offset.R + (newCursor.R - viewport.R + 1))
+	}
+
+	r.cursor = r.termToViewport(point)
+}
+
+// Ensure a point in term space falls inside of the terminal and its scrollback.
+func (r *Replay) clampToTerminal(point geom.Vec2) geom.Vec2 {
+	return point.Clamp(
+		r.minOffset,
+		r.getTerminalSize().Sub(geom.UnitVec2),
+	)
+}
+
+// Attempt to move the cursor relative to its current position. Sets
+// `desiredCol` if the motion is horizontal.
+func (r *Replay) moveCursorDelta(dy, dx int) {
+	oldPos := r.viewportToTerm(r.cursor)
+	newPos := r.clampToTerminal(oldPos.Add(geom.Vec2{
+		R: dy,
+		C: dx,
+	}))
+
+	// Don't do anything if we can't move
+	if newPos == oldPos {
+		return
+	}
+
+	// Motion to the right is bounded to the last non-whitespace character
+	if newPos.C > oldPos.C {
+		line := r.getLine(newPos.R)
+		_, lastCell := getNonWhitespace(line)
+		newPos.C = geom.Min(lastCell, newPos.C)
+	}
+
+	if newPos.R != oldPos.R && newPos.C == oldPos.C {
+		newPos.C = r.resolveDesiredColumn(geom.Vec2{
+			R: newPos.R,
+			C: r.desiredCol,
+		})
+	}
+
+	r.isSelectionMode = true
+	r.moveCursor(newPos)
+
+	// If the column motion was intentional, set the desiredCol
+	if newPos.C != oldPos.C && dx != 0 {
+		r.desiredCol = r.termToViewport(newPos).C
+	}
 }
 
 // Move the terminal from event index `from` to `to`.
@@ -422,6 +520,14 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.setScroll(r.offset.R - 1)
 		case ActionScrollDown:
 			r.setScroll(r.offset.R + 1)
+		case ActionCursorDown:
+			r.moveCursorDelta(1, 0)
+		case ActionCursorUp:
+			r.moveCursorDelta(-1, 0)
+		case ActionCursorLeft:
+			r.moveCursorDelta(0, -1)
+		case ActionCursorRight:
+			r.moveCursorDelta(0, 1)
 		}
 	}
 
