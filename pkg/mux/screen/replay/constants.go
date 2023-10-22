@@ -19,14 +19,18 @@ type Action struct {
 const (
 	ActionQuit ActionType = iota
 
+	// Bimodal actions
+	ActionBeginning
+	ActionEnd
+	ActionSearchForward
+	ActionSearchBackward
+	ActionSearchAgain
+	ActionSearchReverse
+
 	// Time controls have no tmux parallel
 	//////////////////////////////////////
 	ActionTimeStepBack
 	ActionTimeStepForward
-	ActionTimeSearchForward
-	ActionTimeSearchBackward
-	ActionTimeBeginning
-	ActionTimeEnd
 
 	// All tmux copy-mode commands, only some of which are implemented
 	//////////////////////////////////////////////////////////////////

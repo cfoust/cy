@@ -484,6 +484,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				}
 
 				r.isWaiting = true
+				r.matches = make([]search.SearchResult, 0)
 
 				return r, func() tea.Msg {
 					res, err := search.Search(events, value)
@@ -524,13 +525,27 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		switch msg.Type {
 		case ActionQuit:
 			return r.quit()
-		case ActionTimeBeginning:
-			r.setIndex(0)
-		case ActionTimeEnd:
-			r.setIndex(-1)
-		case ActionTimeSearchForward, ActionTimeSearchBackward:
+		case ActionBeginning:
+			if r.isSelectionMode {
+				r.moveCursorDelta(
+					-r.viewportToTerm(r.cursor).R+r.minOffset.R,
+					0,
+				)
+			} else {
+				r.setIndex(0)
+			}
+		case ActionEnd:
+			if r.isSelectionMode {
+				r.moveCursorDelta(
+					(r.getTerminalSize().R-1)-r.viewportToTerm(r.cursor).R,
+					0,
+				)
+			} else {
+				r.setIndex(-1)
+			}
+		case ActionSearchForward, ActionSearchBackward:
 			r.isSearching = true
-			r.isForward = msg.Type == ActionTimeSearchForward
+			r.isForward = msg.Type == ActionSearchForward
 			r.searchInput.Reset()
 		case ActionTimeStepBack:
 			r.setIndex(r.index - 1)

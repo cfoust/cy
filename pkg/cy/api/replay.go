@@ -65,12 +65,20 @@ func (m *ReplayModule) HalfPageDown(context interface{}) error {
 	return m.send(context, replay.ActionScrollDownHalf)
 }
 
-func (m *ReplayModule) TimeSearchForward(context interface{}) error {
-	return m.send(context, replay.ActionTimeSearchForward)
+func (m *ReplayModule) SearchForward(context interface{}) error {
+	return m.send(context, replay.ActionSearchForward)
 }
 
-func (m *ReplayModule) TimeSearchBackward(context interface{}) error {
-	return m.send(context, replay.ActionTimeSearchBackward)
+func (m *ReplayModule) SearchAgain(context interface{}) error {
+	return m.send(context, replay.ActionSearchAgain)
+}
+
+func (m *ReplayModule) SearchReverse(context interface{}) error {
+	return m.send(context, replay.ActionSearchReverse)
+}
+
+func (m *ReplayModule) SearchBackward(context interface{}) error {
+	return m.send(context, replay.ActionSearchBackward)
 }
 
 func (m *ReplayModule) TimeStepBack(context interface{}) error {
@@ -81,12 +89,12 @@ func (m *ReplayModule) TimeStepForward(context interface{}) error {
 	return m.send(context, replay.ActionTimeStepForward)
 }
 
-func (m *ReplayModule) TimeBeginning(context interface{}) error {
-	return m.send(context, replay.ActionTimeBeginning)
+func (m *ReplayModule) Beginning(context interface{}) error {
+	return m.send(context, replay.ActionBeginning)
 }
 
-func (m *ReplayModule) TimeEnd(context interface{}) error {
-	return m.send(context, replay.ActionTimeEnd)
+func (m *ReplayModule) End(context interface{}) error {
+	return m.send(context, replay.ActionEnd)
 }
 
 func (m *ReplayModule) CursorDown(context interface{}) error {

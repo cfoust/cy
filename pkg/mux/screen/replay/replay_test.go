@@ -59,7 +59,7 @@ func input(m taro.Model, msgs ...interface{}) taro.Model {
 
 func TestSearch(t *testing.T) {
 	var r = newReplay(createTestSession(), bind.NewEngine[bind.Action]())
-	input(r, ActionTimeBeginning, ActionTimeSearchForward, "test", "enter")
+	input(r, ActionBeginning, ActionSearchForward, "test", "enter")
 	require.Equal(t, 2, len(r.matches))
 }
 
@@ -121,6 +121,12 @@ func TestScroll(t *testing.T) {
 	// seven
 	require.Equal(t, 0, r.cursor.R)
 	require.Equal(t, 2, r.cursor.C)
+
+	input(r, ActionBeginning)
+	require.Equal(t, -2, r.viewportToTerm(r.cursor).R)
+
+	input(r, ActionEnd)
+	require.Equal(t, 4, r.viewportToTerm(r.cursor).R)
 }
 
 func TestCursor(t *testing.T) {
