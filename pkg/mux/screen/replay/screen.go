@@ -39,7 +39,10 @@ type Replay struct {
 	// The offset of the viewport relative to the top-left corner of the
 	// underlying terminal.
 	//
-	// offset.R is in the range [0, number of scrollback lines]
+	// offset.R is in the range [min(-(height of terminal - height of viewport), 0), number of scrollback lines]
+	// positive indices mean the viewport is inside of the scrollback buffer
+	// negative indices mean the viewport is viewing only part of the terminal's screen
+	//
 	// offset.C is in the range [0, max(width of terminal - width of viewport, 0)]
 	//
 	// For example:
@@ -301,6 +304,13 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
+	case taro.MouseMsg:
+		switch msg.Type {
+		case taro.MouseWheelUp:
+			r.setScroll(r.offset.R + 1)
+		case taro.MouseWheelDown:
+			r.setScroll(r.offset.R - 1)
+		}
 	case taro.KeyMsg:
 		// Pass unmatched keys into the binding engine; because of how
 		// text input works, :replay bindings have to be activated
