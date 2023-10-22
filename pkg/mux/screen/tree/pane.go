@@ -79,7 +79,6 @@ func (p *Pane) EnterReplay() {
 	)
 	p.replay = r
 	p.Unlock()
-	r.Resize(p.terminal.State().Image.Size())
 
 	go func() {
 		<-r.Ctx().Done()
