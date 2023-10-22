@@ -39,7 +39,8 @@ type Replay struct {
 	// The offset of the viewport relative to the top-left corner of the
 	// underlying terminal.
 	//
-	// offset.R is in the range [min(-(height of terminal - height of viewport), 0), number of scrollback lines]
+	// offset.R is in the range
+	// [-1 * number of scrollback lines, min(-(height of terminal - height of viewport), 0)]
 	// positive indices mean the viewport is inside of the scrollback buffer
 	// negative indices mean the viewport is viewing only part of the terminal's screen
 	//
@@ -72,10 +73,7 @@ func (r *Replay) quit() (taro.Model, tea.Cmd) {
 // Translate a coordinate in the reference frame of the terminal to a point in
 // the viewport.
 func (r *Replay) termToViewport(point geom.Vec2) geom.Vec2 {
-	return geom.Vec2{
-		C: point.C - r.offset.C,
-		R: point.R - (-r.offset.R),
-	}
+	return point.Sub(r.offset)
 }
 
 func (r *Replay) getTerminalCursor() geom.Vec2 {
@@ -122,17 +120,20 @@ func (r *Replay) setOffsetX(offset int) {
 // Center the viewport on a point in the reference frame of the terminal.
 func (r *Replay) center(point geom.Vec2) {
 	r.setOffsetX(point.C - (r.viewport.C / 2))
-	r.setOffsetY(-1 * (point.R - (r.viewport.R / 2)))
+	r.setOffsetY(point.R - (r.viewport.R / 2))
 }
 
 // Calculate the bounds of `{min,max}Offset` and ensure `offset` falls between them.
 func (r *Replay) recalculateViewport() {
-	viewport := r.viewport
 	termSize := r.getTerminalSize()
-	r.minOffset.R = geom.Min(-1*(termSize.R-viewport.R), 0)
-	r.minOffset.C = 0 // always, but for clarity
-	r.maxOffset.R = len(r.terminal.History())
-	r.maxOffset.C = geom.Max(termSize.C-r.viewport.C, 0)
+	r.minOffset = geom.Vec2{
+		R: -len(r.terminal.History()),
+		C: 0, // always, but for clarity
+	}
+	r.maxOffset = geom.Vec2{
+		R: geom.Max(termSize.R-r.viewport.R, 0),
+		C: geom.Max(termSize.C-r.viewport.C, 0),
+	}
 	r.setOffsetY(r.offset.R)
 	r.setOffsetX(r.offset.C)
 }
@@ -307,9 +308,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case taro.MouseMsg:
 		switch msg.Type {
 		case taro.MouseWheelUp:
-			r.setScroll(r.offset.R + 1)
-		case taro.MouseWheelDown:
 			r.setScroll(r.offset.R - 1)
+		case taro.MouseWheelDown:
+			r.setScroll(r.offset.R + 1)
 		}
 	case taro.KeyMsg:
 		// Pass unmatched keys into the binding engine; because of how
@@ -336,13 +337,13 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case ActionStepForward:
 			r.setIndex(r.index + 1)
 		case ActionScrollUpHalf:
-			r.setScroll(r.offset.R + (rows / 2))
-		case ActionScrollDownHalf:
 			r.setScroll(r.offset.R - (rows / 2))
+		case ActionScrollDownHalf:
+			r.setScroll(r.offset.R + (rows / 2))
 		case ActionScrollUp:
-			r.setScroll(r.offset.R + 1)
-		case ActionScrollDown:
 			r.setScroll(r.offset.R - 1)
+		case ActionScrollDown:
+			r.setScroll(r.offset.R + 1)
 		}
 	}
 
@@ -365,7 +366,7 @@ func (r *Replay) View(state *tty.State) {
 	var point geom.Vec2
 	var glyph emu.Glyph
 	for row := 0; row < r.viewport.R; row++ {
-		point.R = row - r.offset.R
+		point.R = row + r.offset.R
 		for col := 0; col < r.viewport.C; col++ {
 			point.C = r.offset.C + col
 
@@ -404,11 +405,11 @@ func (r *Replay) View(state *tty.State) {
 
 	headline := r.events[index].Stamp.Format(time.RFC1123)
 
-	if r.offset.R > 0 {
+	if r.offset.R < 0 {
 		headline = fmt.Sprintf(
 			"[%d/%d]",
-			r.offset.R,
-			r.maxOffset.R,
+			-r.offset.R,
+			-r.minOffset.R,
 		)
 	}
 

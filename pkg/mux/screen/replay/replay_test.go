@@ -72,8 +72,8 @@ func TestViewport(t *testing.T) {
 
 	var r = newReplay(s.Events(), bind.NewEngine[bind.Action]())
 	input(r, geom.Size{R: 10, C: 10})
-	require.Equal(t, geom.Vec2{R: -10, C: 0}, r.minOffset)
-	require.Equal(t, geom.Vec2{R: 0, C: 10}, r.maxOffset)
-	require.Equal(t, geom.Vec2{R: -10, C: 10}, r.offset)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.minOffset)
+	require.Equal(t, geom.Vec2{R: 10, C: 10}, r.maxOffset)
+	require.Equal(t, geom.Vec2{R: 10, C: 10}, r.offset)
 	r.View(tty.New(r.viewport))
 }
