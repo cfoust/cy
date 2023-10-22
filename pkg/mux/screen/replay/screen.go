@@ -350,7 +350,6 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 }
 
 func (r *Replay) View(state *tty.State) {
-	termCols, termRows := r.terminal.Size()
 	screen := r.terminal.Screen()
 	history := r.terminal.History()
 	size := state.Image.Size()
@@ -362,17 +361,25 @@ func (r *Replay) View(state *tty.State) {
 		return
 	}
 
-	// TODO(cfoust): 08/10/23 indicate smaller/bigger size somehow
-	var rowIndex int
-	for row := 0; row < geom.Min(termRows, size.R); row++ {
-		rowIndex = row - r.offset.R
-		for col := 0; col < geom.Min(termCols, size.C); col++ {
-			colIndex := r.offset.C + col
-			if rowIndex < 0 {
-				state.Image[row][col] = history[len(history)+rowIndex][colIndex]
+	termSize := r.getTerminalSize()
+	var point geom.Vec2
+	var glyph emu.Glyph
+	for row := 0; row < r.viewport.R; row++ {
+		point.R = row - r.offset.R
+		for col := 0; col < r.viewport.C; col++ {
+			point.C = r.offset.C + col
+
+			if point.C >= termSize.C || point.R >= termSize.R {
+				glyph = emu.EmptyGlyph()
+				glyph.FG = 8
+				glyph.Char = '-'
+			} else if point.R < 0 {
+				glyph = history[len(history)+point.R][point.C]
 			} else {
-				state.Image[row][col] = screen[rowIndex][colIndex]
+				glyph = screen[point.R][point.C]
 			}
+
+			state.Image[row][col] = glyph
 		}
 	}
 
