@@ -160,9 +160,12 @@ func TestCursor(t *testing.T) {
 	require.Equal(t, 5, r.cursor.C)
 	input(r, ActionCursorDown)
 	require.Equal(t, 0, r.cursor.C)
+
+	// at end of screen
 	input(r, ActionCursorDown)
 	require.Equal(t, 0, r.cursor.C)
 	require.Equal(t, 1, r.cursor.R)
+
 	// moving down past last occupied line should do nothing
 	input(r, ActionCursorDown)
 	require.Equal(t, geom.Vec2{

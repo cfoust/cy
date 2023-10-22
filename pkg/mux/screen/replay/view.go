@@ -45,6 +45,7 @@ func (r *Replay) View(state *tty.State) {
 		}
 	}
 
+	viewport := r.viewport
 	termCursor := r.termToViewport(r.getTerminalCursor())
 	if r.isSelectionMode {
 		state.Cursor.X = r.cursor.C
@@ -52,7 +53,7 @@ func (r *Replay) View(state *tty.State) {
 
 		// In selection mode, leave behind a ghost cursor where the
 		// terminal's cursor is
-		if termCursor != r.cursor {
+		if termCursor != r.cursor && termCursor.R >= 0 && termCursor.R < viewport.R && termCursor.C >= 0 && termCursor.C < viewport.C {
 			state.Image[termCursor.R][termCursor.C].BG = 8
 		}
 	} else {
