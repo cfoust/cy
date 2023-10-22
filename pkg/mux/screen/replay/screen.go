@@ -66,6 +66,15 @@ func (r *Replay) quit() (taro.Model, tea.Cmd) {
 	return r, tea.Quit
 }
 
+// Translate a coordinate in the reference frame of the terminal to a point in
+// the viewport.
+func (r *Replay) termToViewport(point geom.Vec2) geom.Vec2 {
+	return geom.Vec2{
+		C: point.C - r.offset.C,
+		R: point.R - (-r.offset.R),
+	}
+}
+
 func (r *Replay) getTerminalCursor() geom.Vec2 {
 	cursor := r.terminal.Cursor()
 	return geom.Vec2{
@@ -83,9 +92,15 @@ func (r *Replay) getTerminalSize() geom.Vec2 {
 }
 
 func (r *Replay) setViewport(oldViewport, newViewport geom.Size) (taro.Model, tea.Cmd) {
-	// TODO(cfoust): 10/21/23 handle out-of-bounds cursor
 	r.viewport = newViewport
 	r.recalculateViewport()
+
+	if r.isSelectionMode {
+		r.center(r.cursor)
+	} else {
+		r.center(r.getTerminalCursor())
+	}
+
 	return r, nil
 }
 
@@ -99,6 +114,12 @@ func (r *Replay) setOffsetY(offset int) {
 
 func (r *Replay) setOffsetX(offset int) {
 	r.offset.C = geom.Clamp(offset, r.minOffset.C, r.maxOffset.C)
+}
+
+// Center the viewport on a point in the reference frame of the terminal.
+func (r *Replay) center(point geom.Vec2) {
+	r.setOffsetX(point.C - (r.viewport.C / 2))
+	r.setOffsetY(-1 * (point.R - (r.viewport.R / 2)))
 }
 
 // Calculate the bounds of `{min,max}Offset` and ensure `offset` falls between them.
@@ -159,20 +180,19 @@ func (r *Replay) setIndex(index int) {
 	termCursor := r.getTerminalCursor()
 	termSize := r.getTerminalSize()
 
+	r.isSelectionMode = false
+
 	// reset scroll offset whenever we move in time
 	r.offset.R = 0
 	r.offset.C = 0
 
-	// Center the cursor vertically and horizontally on the screen if the
-	// viewport is smaller than the terminal's viewport
-	if r.viewport.C < termSize.C {
-		r.setOffsetX(termCursor.C - (r.viewport.C / 2))
-	}
-	if r.viewport.R < termSize.R {
-		r.setOffsetY(-1 * (termCursor.R - (r.viewport.R / 2)))
+	// Center the cursor if the viewport is smaller than the terminal's
+	// viewport
+	if r.viewport.C < termSize.C || r.viewport.R < termSize.R {
+		r.center(termCursor)
 	}
 
-	r.cursor = termCursor
+	r.cursor = r.termToViewport(termCursor)
 	r.desiredCol = r.cursor.C
 }
 
@@ -337,15 +357,22 @@ func (r *Replay) View(state *tty.State) {
 	for row := 0; row < geom.Min(termRows, size.R); row++ {
 		rowIndex = row - r.offset.R
 		for col := 0; col < geom.Min(termCols, size.C); col++ {
+			colIndex := r.offset.C + col
 			if rowIndex < 0 {
-				state.Image[row][col] = history[len(history)+rowIndex][col]
+				state.Image[row][col] = history[len(history)+rowIndex][colIndex]
 			} else {
-				state.Image[row][col] = screen[rowIndex][col]
+				state.Image[row][col] = screen[rowIndex][colIndex]
 			}
 		}
 	}
 
+	cursor := r.termToViewport(r.getTerminalCursor())
+	if r.isSelectionMode {
+		cursor = r.cursor
+	}
 	state.Cursor = r.terminal.Cursor()
+	state.Cursor.X = cursor.C
+	state.Cursor.Y = cursor.R
 
 	basic := r.render.NewStyle().
 		Foreground(lipgloss.Color("#D5CCBA")).
