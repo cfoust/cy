@@ -98,12 +98,15 @@ func (r *Replay) View(state *tty.State) {
 		return
 	}
 
+	r.searchInput.Cursor.Style = r.render.NewStyle().
+		Background(lipgloss.Color("#EAA549"))
+
 	// hide the cursor when typing in the search bar (it has its own)
 	state.CursorVisible = false
 	r.render.RenderAt(
 		state,
-		geom.Clamp(r.terminal.Cursor().Y, 0, size.R-1),
-		0,
+		r.cursor.R,
+		r.cursor.C,
 		basic.Render(r.searchInput.View()),
 	)
 }

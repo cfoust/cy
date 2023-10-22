@@ -63,6 +63,20 @@ func TestSearch(t *testing.T) {
 	require.Equal(t, 2, len(r.matches))
 }
 
+func TestIndex(t *testing.T) {
+	var r = newReplay(createTestSession(), bind.NewEngine[bind.Action]())
+	r.setIndex(2, 0)
+	require.Equal(t, "t ", r.getLine(0).String()[:2])
+	r.setIndex(2, 1)
+	require.Equal(t, "te ", r.getLine(0).String()[:3])
+	r.setIndex(2, 0)
+	require.Equal(t, "t ", r.getLine(0).String()[:2])
+	r.setIndex(2, -1)
+	require.Equal(t, "test", r.getLine(0).String()[:4])
+	r.setIndex(4, -1)
+	require.Equal(t, "take", r.getLine(0).String()[:4])
+}
+
 func TestViewport(t *testing.T) {
 	s := sessions.NewSimulator()
 	s.Add(geom.Size{R: 20, C: 20})

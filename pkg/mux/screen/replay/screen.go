@@ -25,9 +25,9 @@ type Replay struct {
 
 	viewport geom.Size
 
-	// the offset of the displayed event in `events`
-	index  int
-	events []sessions.Event
+	// the index of the displayed event in `events` and the byte within it
+	index, indexByte int
+	events           []sessions.Event
 
 	// Selection mode occurs when the user moves the cursor or scrolls the
 	// window
@@ -368,34 +368,49 @@ func (r *Replay) moveCursorDelta(dy, dx int) {
 	}
 }
 
-// Move the terminal from event index `from` to `to`.
-func (r *Replay) setIndex(index int) {
+// Move the terminal back in time to the event at `index` and byte offset (if
+// the event is an OutputMessage) of `indexByte`.
+func (r *Replay) setIndex(index, indexByte int) {
 	numEvents := len(r.events)
 	// Allow for negative indices from end of stream
 	if index < 0 {
 		index = geom.Clamp(numEvents+index, 0, numEvents-1)
 	}
 
-	from := geom.Clamp(r.index, 0, numEvents-1)
-	to := geom.Clamp(index, 0, numEvents-1)
+	fromIndex := geom.Clamp(r.index, 0, numEvents-1)
+	toIndex := geom.Clamp(index, 0, numEvents-1)
+	fromByte := r.indexByte
+	toByte := indexByte
 
-	if from == to {
-		return
-	}
-
-	// Don't reapply the change at the current offset
-	if to > from && from != 0 {
-		from++
-	} else if from > to {
+	// Going back in time; must start over
+	if toIndex < fromIndex || (toIndex == fromIndex && toByte < fromByte) {
 		r.terminal = emu.New()
-		from = 0
+		fromIndex = 0
+		fromByte = -1
 	}
 
-	for i := from; i <= to; i++ {
+	for i := fromIndex; i <= toIndex; i++ {
 		event := r.events[i]
 		switch e := event.Message.(type) {
 		case P.OutputMessage:
-			r.terminal.Write(e.Data)
+			data := e.Data
+
+			if toIndex == i {
+				if toByte < 0 {
+					toByte += len(data)
+				}
+				toByte = geom.Clamp(toByte, 0, len(data)-1)
+			}
+
+			if fromIndex == toIndex {
+				data = data[fromByte+1 : toByte+1]
+			} else if fromIndex == i {
+				data = data[fromByte+1:]
+			} else if toIndex == i {
+				data = data[:toByte+1]
+			}
+
+			r.terminal.Write(data)
 		case P.SizeMessage:
 			r.terminal.Resize(
 				e.Columns,
@@ -404,7 +419,8 @@ func (r *Replay) setIndex(index int) {
 		}
 	}
 
-	r.index = to
+	r.index = toIndex
+	r.indexByte = toByte
 	r.recalculateViewport()
 	termCursor := r.getTerminalCursor()
 	termSize := r.getTerminalSize()
@@ -457,7 +473,8 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 
 		if len(r.matches) > 0 {
-			r.setIndex(r.matches[0].Begin.Index)
+			match := r.matches[0].Begin
+			r.setIndex(match.Index, match.Offset)
 		}
 
 		return r, nil
@@ -532,7 +549,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 					0,
 				)
 			} else {
-				r.setIndex(0)
+				r.setIndex(0, -1)
 			}
 		case ActionEnd:
 			if r.isSelectionMode {
@@ -541,16 +558,16 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 					0,
 				)
 			} else {
-				r.setIndex(-1)
+				r.setIndex(-1, -1)
 			}
 		case ActionSearchForward, ActionSearchBackward:
 			r.isSearching = true
 			r.isForward = msg.Type == ActionSearchForward
 			r.searchInput.Reset()
 		case ActionTimeStepBack:
-			r.setIndex(r.index - 1)
+			r.setIndex(r.index-1, -1)
 		case ActionTimeStepForward:
-			r.setIndex(r.index + 1)
+			r.setIndex(r.index+1, -1)
 		case ActionScrollUpHalf:
 			r.moveCursorDelta(-(viewport.R / 2), 0)
 		case ActionScrollDownHalf:
@@ -589,7 +606,7 @@ func newReplay(
 		searchInput: ti,
 		binds:       binds,
 	}
-	m.setIndex(-1)
+	m.setIndex(-1, -1)
 	return m
 }
 
