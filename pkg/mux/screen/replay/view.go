@@ -15,7 +15,7 @@ func (r *Replay) View(state *tty.State) {
 	screen := r.terminal.Screen()
 	history := r.terminal.History()
 	size := state.Image.Size()
-	state.CursorVisible = false
+	state.CursorVisible = true
 
 	// Return nothing when View() is called before we've actually gotten
 	// the viewport
@@ -45,14 +45,21 @@ func (r *Replay) View(state *tty.State) {
 		}
 	}
 
-	cursor := r.termToViewport(r.getTerminalCursor())
+	termCursor := r.termToViewport(r.getTerminalCursor())
 	if r.isSelectionMode {
-		cursor = r.cursor
+		state.Cursor.X = r.cursor.C
+		state.Cursor.Y = r.cursor.R
+
+		// In selection mode, leave behind a ghost cursor where the
+		// terminal's cursor is
+		if termCursor != r.cursor {
+			state.Image[termCursor.R][termCursor.C].BG = 8
+		}
 	} else {
 		state.Cursor = r.terminal.Cursor()
+		state.Cursor.X = termCursor.C
+		state.Cursor.Y = termCursor.R
 	}
-	state.Cursor.X = cursor.C
-	state.Cursor.Y = cursor.R
 
 	basic := r.render.NewStyle().
 		Foreground(lipgloss.Color("#D5CCBA")).
@@ -90,12 +97,12 @@ func (r *Replay) View(state *tty.State) {
 		return
 	}
 
+	// hide the cursor when typing in the search bar (it has its own)
+	state.CursorVisible = false
 	r.render.RenderAt(
 		state,
 		geom.Clamp(r.terminal.Cursor().Y, 0, size.R-1),
 		0,
 		basic.Render(r.searchInput.View()),
 	)
-
-	state.CursorVisible = false
 }
