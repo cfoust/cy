@@ -26,18 +26,32 @@ type Replay struct {
 	// the size of the terminal
 	terminal emu.Terminal
 
+	viewport geom.Size
+
 	// the offset of the displayed event in `events`
 	index  int
 	events []sessions.Event
 
-	// the location of the cursor relative to the top of the terminal's
-	// lines including the scrollback buffer
-	// TODO(cfoust): 09/20/23
-	cursor geom.Size
+	// Selection mode occurs when the user moves the cursor or scrolls the
+	// window
+	isSelectionMode bool
 
-	offset    int
-	maxOffset int
-	numLines  int
+	// The offset of the viewport relative to the top-left corner of the
+	// underlying terminal.
+	//
+	// offset.R is in the range [0, number of scrollback lines]
+	// offset.C is in the range [0, max(width of terminal - width of viewport, 0)]
+	//
+	// For example:
+	// * offset.R == 1: the viewport shows the first scrollback line
+	offset, minOffset, maxOffset geom.Vec2
+
+	// The cursor's position relative to the viewport.
+	cursor geom.Vec2
+	// Used to emulate the behavior in text editors wherein moving the
+	// cursor up and down "sticks" to a certain column index wherever
+	// possible
+	desiredCol int
 
 	isSearching bool
 	isForward   bool
@@ -52,8 +66,56 @@ func (r *Replay) quit() (taro.Model, tea.Cmd) {
 	return r, tea.Quit
 }
 
-func (r *Replay) setOffset(offset int) {
-	r.offset = geom.Clamp(offset, 0, r.maxOffset)
+func (r *Replay) getTerminalCursor() geom.Vec2 {
+	cursor := r.terminal.Cursor()
+	return geom.Vec2{
+		R: cursor.Y,
+		C: cursor.X,
+	}
+}
+
+func (r *Replay) getTerminalSize() geom.Vec2 {
+	cols, rows := r.terminal.Size()
+	return geom.Vec2{
+		R: rows,
+		C: cols,
+	}
+}
+
+func (r *Replay) setViewport(oldViewport, newViewport geom.Size) (taro.Model, tea.Cmd) {
+	// TODO(cfoust): 10/21/23 handle out-of-bounds cursor
+	r.viewport = newViewport
+	r.recalculateViewport()
+	return r, nil
+}
+
+// first non-whitespace is after desiredCol: last column before first non-whitespace
+// last non-whitespace is before desiredCol: last non-whitespace column
+// desiredCol is before last non-whitespace and after first non-whitespace: remain in place
+
+func (r *Replay) setOffsetY(offset int) {
+	r.offset.R = geom.Clamp(offset, r.minOffset.R, r.maxOffset.R)
+}
+
+func (r *Replay) setOffsetX(offset int) {
+	r.offset.C = geom.Clamp(offset, r.minOffset.C, r.maxOffset.C)
+}
+
+// Calculate the bounds of `{min,max}Offset` and ensure `offset` falls between them.
+func (r *Replay) recalculateViewport() {
+	viewport := r.viewport
+	termSize := r.getTerminalSize()
+	r.minOffset.R = geom.Min(-1*(termSize.R-viewport.R), 0)
+	r.minOffset.C = 0 // always, but for clarity
+	r.maxOffset.R = len(r.terminal.History())
+	r.maxOffset.C = geom.Max(termSize.C-r.viewport.C, 0)
+	r.setOffsetY(r.offset.R)
+	r.setOffsetX(r.offset.C)
+}
+
+func (r *Replay) setScroll(offset int) {
+	r.isSelectionMode = true
+	r.setOffsetY(offset)
 }
 
 // Move the terminal from event index `from` to `to`.
@@ -71,16 +133,15 @@ func (r *Replay) setIndex(index int) {
 		return
 	}
 
-	// don't allow looking at scrollback when moving in time
-	r.offset = 0
-
-	origin := from + 1
-	if from > to {
+	// Don't reapply the change at the current offset
+	if to > from && from != 0 {
+		from++
+	} else if from > to {
 		r.terminal = emu.New()
-		origin = 0
+		from = 0
 	}
 
-	for i := origin; i <= to; i++ {
+	for i := from; i <= to; i++ {
 		event := r.events[i]
 		switch e := event.Message.(type) {
 		case P.OutputMessage:
@@ -91,10 +152,28 @@ func (r *Replay) setIndex(index int) {
 				e.Rows,
 			)
 		}
-		r.maxOffset = len(r.terminal.History())
 	}
 
 	r.index = to
+	r.recalculateViewport()
+	termCursor := r.getTerminalCursor()
+	termSize := r.getTerminalSize()
+
+	// reset scroll offset whenever we move in time
+	r.offset.R = 0
+	r.offset.C = 0
+
+	// Center the cursor vertically and horizontally on the screen if the
+	// viewport is smaller than the terminal's viewport
+	if r.viewport.C < termSize.C {
+		r.setOffsetX(termCursor.C - (r.viewport.C / 2))
+	}
+	if r.viewport.R < termSize.R {
+		r.setOffsetY(-1 * (termCursor.R - (r.viewport.R / 2)))
+	}
+
+	r.cursor = termCursor
+	r.desiredCol = r.cursor.C
 }
 
 func (r *Replay) Init() tea.Cmd {
@@ -136,6 +215,14 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	_, rows := r.terminal.Size()
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		return r.setViewport(
+			r.viewport,
+			geom.Size{
+				R: msg.Height,
+				C: msg.Width,
+			},
+		)
 	case SearchResult:
 		r.isSearching = false
 		// TODO(cfoust): 10/13/23 handle error
@@ -195,6 +282,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case taro.KeyMsg:
+		// Pass unmatched keys into the binding engine; because of how
+		// text input works, :replay bindings have to be activated
+		// selectively
 		return r, func() tea.Msg {
 			r.binds.InputMessage(msg)
 			return nil
@@ -205,29 +295,24 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return r.quit()
 		case ActionBeginning:
 			r.setIndex(0)
-			return r, nil
 		case ActionEnd:
 			r.setIndex(-1)
-			return r, nil
 		case ActionTimeSearchForward, ActionTimeSearchBackward:
 			r.isSearching = true
 			r.isForward = msg.Type == ActionTimeSearchForward
 			r.searchInput.Reset()
-			return r, nil
 		case ActionStepBack:
 			r.setIndex(r.index - 1)
-			return r, nil
 		case ActionStepForward:
 			r.setIndex(r.index + 1)
-			return r, nil
 		case ActionScrollUpHalf:
-			r.setOffset(r.offset + (rows / 2))
+			r.setScroll(r.offset.R + (rows / 2))
 		case ActionScrollDownHalf:
-			r.setOffset(r.offset - (rows / 2))
+			r.setScroll(r.offset.R - (rows / 2))
 		case ActionScrollUp:
-			r.setOffset(r.offset + 1)
+			r.setScroll(r.offset.R + 1)
 		case ActionScrollDown:
-			r.setOffset(r.offset - 1)
+			r.setScroll(r.offset.R - 1)
 		}
 	}
 
@@ -238,15 +323,19 @@ func (r *Replay) View(state *tty.State) {
 	termCols, termRows := r.terminal.Size()
 	screen := r.terminal.Screen()
 	history := r.terminal.History()
-
 	size := state.Image.Size()
-
 	state.CursorVisible = false
+
+	// Return nothing when View() is called before we've actually gotten
+	// the viewport
+	if r.viewport.R == 0 && r.viewport.C == 0 {
+		return
+	}
 
 	// TODO(cfoust): 08/10/23 indicate smaller/bigger size somehow
 	var rowIndex int
 	for row := 0; row < geom.Min(termRows, size.R); row++ {
-		rowIndex = row - r.offset
+		rowIndex = row - r.offset.R
 		for col := 0; col < geom.Min(termCols, size.C); col++ {
 			if rowIndex < 0 {
 				state.Image[row][col] = history[len(history)+rowIndex][col]
@@ -271,11 +360,11 @@ func (r *Replay) View(state *tty.State) {
 
 	headline := r.events[index].Stamp.Format(time.RFC1123)
 
-	if r.offset > 0 {
+	if r.offset.R > 0 {
 		headline = fmt.Sprintf(
 			"[%d/%d]",
-			r.offset,
-			r.maxOffset,
+			r.offset.R,
+			r.maxOffset.R,
 		)
 	}
 
