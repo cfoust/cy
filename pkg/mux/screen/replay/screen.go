@@ -436,7 +436,7 @@ func reverse[S ~[]E, E any](s S) {
 }
 
 func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
-	_, rows := r.terminal.Size()
+	viewport := r.viewport
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -552,9 +552,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case ActionTimeStepForward:
 			r.setIndex(r.index + 1)
 		case ActionScrollUpHalf:
-			r.setScroll(r.offset.R - (rows / 2))
+			r.moveCursorDelta(-(viewport.R / 2), 0)
 		case ActionScrollDownHalf:
-			r.setScroll(r.offset.R + (rows / 2))
+			r.moveCursorDelta((viewport.R / 2), 0)
 		case ActionScrollUp:
 			r.setScroll(r.offset.R - 1)
 		case ActionScrollDown:
