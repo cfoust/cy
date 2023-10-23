@@ -32,13 +32,8 @@ The `cy` project has a few main goals:
 * [ ] **Usability**
 * [ ] **Development**
     * [ ] Implement [oakthree](https://github.com/cfoust/tmux-oakthree)
-        * [ ] Allow users to kill parts of the tree
         * [ ] Store pane jump history
-    * [ ] Allow for providing binding scope
     * [ ] Logging API in Janet
         * [ ] Support unmarshaling Janet table to `map[string]interface{}`
 * [ ] **Replay**
-    * [ ] Record all sessions and save in custom file format
-        * [ ] Is this also the `.borg` file format?
-    * [ ] Allow users to search through history
     * [ ] Don't record bytes matching regex (IPs etc)
