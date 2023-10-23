@@ -11,10 +11,81 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+func (r *Replay) drawMatches(state *tty.State) {
+	matches := r.matches
+	if len(matches) == 0 {
+		return
+	}
+
+	location := r.location
+	for i, match := range matches {
+		// This match is not on the screen
+		if location.Compare(match.Begin) < 0 || location.Compare(match.End) >= 0 {
+			continue
+		}
+
+		isSelected := i == r.matchIndex && location.Compare(match.Begin) == 0
+
+		for row := match.From.R; row <= match.To.R; row++ {
+			for col := match.From.C; col <= match.To.C; col++ {
+				state.Image[row][col].FG = 1
+
+				var bg emu.Color = 14
+				if isSelected {
+					bg = 13
+				}
+				state.Image[row][col].BG = bg
+			}
+		}
+	}
+}
+
+func (r *Replay) drawStatusBar(state *tty.State) {
+	size := state.Image.Size()
+
+	statusBarStyle := r.render.NewStyle().
+		Foreground(lipgloss.Color("0")).
+		Background(lipgloss.Color("251"))
+
+	statusText := "TIME"
+	statusBG := lipgloss.Color("6")
+	if r.isSelectionMode {
+		statusText = "SELECT"
+		statusBG = lipgloss.Color("3")
+	}
+
+	statusStyle := r.render.NewStyle().
+		Inherit(statusBarStyle).
+		Background(statusBG).
+		Padding(0, 1).
+		MarginRight(1)
+
+	index := r.location.Index
+	if index < 0 || index >= len(r.events) || len(r.events) == 0 {
+		return
+	}
+
+	timestamp := r.events[index].Stamp.Format(time.RFC1123)
+
+	if r.offset.R < 0 {
+		timestamp = fmt.Sprintf(
+			"[%d/%d]",
+			-r.offset.R,
+			-r.minOffset.R,
+		)
+	}
+
+	statusBar := statusBarStyle.Width(size.C).Height(1).Render(lipgloss.JoinHorizontal(lipgloss.Top,
+		statusStyle.Render(statusText),
+		statusBarStyle.Render(timestamp),
+	))
+
+	r.render.RenderAt(state, size.R-1, 0, statusBar)
+}
+
 func (r *Replay) View(state *tty.State) {
 	screen := r.terminal.Screen()
 	history := r.terminal.History()
-	size := state.Image.Size()
 	state.CursorVisible = true
 
 	// Return nothing when View() is called before we've actually gotten
@@ -28,7 +99,7 @@ func (r *Replay) View(state *tty.State) {
 	termSize := r.getTerminalSize()
 	var point geom.Vec2
 	var glyph emu.Glyph
-	for row := 0; row < r.viewport.R; row++ {
+	for row := 0; row <= r.viewport.R; row++ {
 		point.R = row + r.offset.R
 		for col := 0; col < r.viewport.C; col++ {
 			point.C = r.offset.C + col
@@ -66,62 +137,11 @@ func (r *Replay) View(state *tty.State) {
 
 	// Layer 2: Highlight any matches on the screen
 	///////////////////////////////////////////////
-	matches := r.matches
-	if len(matches) > 0 {
-		location := r.location
-		for i, match := range matches {
-			// This match is not on the screen
-			if location.Compare(match.Begin) < 0 || location.Compare(match.End) > 0 {
-				continue
-			}
-
-			for row := match.From.R; row <= match.To.R; row++ {
-				for col := match.From.C; col <= match.To.C; col++ {
-					state.Image[row][col].FG = 1
-
-					var bg emu.Color = 14
-					if i == r.matchIndex {
-						bg = 13
-					}
-					state.Image[row][col].BG = bg
-				}
-			}
-		}
-	}
+	r.drawMatches(state)
 
 	// Layer 3: Render overlays
 	///////////////////////////
-	basic := r.render.NewStyle().
-		Foreground(lipgloss.Color("#D5CCBA")).
-		Background(lipgloss.Color("#000000")).
-		Align(lipgloss.Right)
-
-	index := r.location.Index
-	if index < 0 || index >= len(r.events) || len(r.events) == 0 {
-		r.render.RenderAt(state, 0, 0, basic.Render("???"))
-		return
-	}
-
-	headline := r.events[index].Stamp.Format(time.RFC1123)
-
-	if r.offset.R < 0 {
-		headline = fmt.Sprintf(
-			"[%d/%d]",
-			-r.offset.R,
-			-r.minOffset.R,
-		)
-	}
-
-	r.render.RenderAt(
-		state,
-		0,
-		0,
-		r.render.PlaceHorizontal(
-			size.C,
-			lipgloss.Right,
-			basic.Render(headline),
-		),
-	)
+	r.drawStatusBar(state)
 
 	// Layer 3: Render text input
 	/////////////////////////////
@@ -138,6 +158,6 @@ func (r *Replay) View(state *tty.State) {
 		state,
 		r.cursor.R,
 		r.cursor.C,
-		basic.Render(r.searchInput.View()),
+		r.searchInput.View(),
 	)
 }

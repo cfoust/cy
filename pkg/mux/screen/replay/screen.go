@@ -98,8 +98,11 @@ func (r *Replay) getTerminalSize() geom.Vec2 {
 }
 
 func (r *Replay) setViewport(oldViewport, newViewport geom.Size) (taro.Model, tea.Cmd) {
+	// Remove one row for our status line
+	newViewport.R = geom.Max(newViewport.R-1, 0)
 	r.viewport = newViewport
 	r.recalculateViewport()
+	r.setOffsetY(-1)
 
 	if r.isSelectionMode {
 		r.center(r.cursor)
@@ -612,6 +615,15 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case ActionEvent:
 		switch msg.Type {
 		case ActionQuit:
+			if r.isSelectionMode {
+				r.isSelectionMode = false
+				termCursor := r.getTerminalCursor()
+				r.center(termCursor)
+				r.cursor = r.termToViewport(termCursor)
+				r.desiredCol = r.cursor.C
+				return r, nil
+			}
+
 			return r.quit()
 		case ActionBeginning:
 			if r.isSelectionMode {
