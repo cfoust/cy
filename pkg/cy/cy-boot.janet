@@ -153,3 +153,4 @@
 (key/bind :replay ["k"] "" (fn [&] (replay/cursor-up)))
 (key/bind :replay ["n"] "" (fn [&] (replay/search-again)))
 (key/bind :replay ["N"] "" (fn [&] (replay/search-reverse)))
+(key/bind :replay [" "] "" (fn [&] (replay/time-play)))

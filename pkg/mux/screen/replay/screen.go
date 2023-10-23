@@ -2,6 +2,7 @@ package replay
 
 import (
 	"context"
+	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
@@ -24,6 +25,10 @@ type Replay struct {
 	terminal emu.Terminal
 
 	viewport geom.Size
+
+	isPlaying    bool
+	playbackRate int
+	currentTime  time.Time
 
 	// The location of Replay in time
 	// R: the index of the displayed event in `events`
@@ -386,7 +391,7 @@ func (r *Replay) moveCursorDelta(dy, dx int) {
 
 // Move the terminal back in time to the event at `index` and byte offset (if
 // the event is an OutputMessage) of `indexByte`.
-func (r *Replay) setIndex(index, indexByte int) {
+func (r *Replay) setIndex(index, indexByte int, updateTime bool) {
 	numEvents := len(r.events)
 	// Allow for negative indices from end of stream
 	if index < 0 {
@@ -437,6 +442,10 @@ func (r *Replay) setIndex(index, indexByte int) {
 
 	r.location.Index = toIndex
 	r.location.Offset = toByte
+	if updateTime {
+		r.currentTime = r.events[toIndex].Stamp
+	}
+
 	r.recalculateViewport()
 	termCursor := r.getTerminalCursor()
 	termSize := r.getTerminalSize()
@@ -455,6 +464,11 @@ func (r *Replay) setIndex(index, indexByte int) {
 
 	r.cursor = r.termToViewport(termCursor)
 	r.desiredCol = r.cursor.C
+}
+
+func (r *Replay) gotoIndex(index, indexByte int) {
+	r.isPlaying = false
+	r.setIndex(index, indexByte, true)
 }
 
 func (r *Replay) gotoMatch(index int) {
@@ -479,7 +493,7 @@ func (r *Replay) gotoMatch(index int) {
 	//}
 
 	match := r.matches[index].Begin
-	r.setIndex(match.Index, match.Offset)
+	r.gotoIndex(match.Index, match.Offset)
 }
 
 func (r *Replay) gotoMatchDelta(delta int) {
@@ -491,6 +505,62 @@ func (r *Replay) gotoMatchDelta(delta int) {
 	// Python-esque modulo behavior
 	index := (((r.matchIndex + delta) % numMatches) + numMatches) % numMatches
 	r.gotoMatch(index)
+}
+
+func (r *Replay) scheduleUpdate() (taro.Model, tea.Cmd) {
+	since := time.Now()
+	return r, func() tea.Msg {
+		time.Sleep(time.Second / PLAYBACK_FPS)
+		return PlaybackEvent{
+			Since: since,
+		}
+	}
+}
+
+func (r *Replay) setTimeDelta(delta time.Duration) {
+	if len(r.events) == 0 {
+		return
+	}
+
+	newTime := r.currentTime.Add(delta)
+	if newTime.Equal(r.currentTime) {
+		return
+	}
+
+	beginning := r.events[0].Stamp
+	lastIndex := len(r.events) - 1
+	end := r.events[lastIndex].Stamp
+	if newTime.Before(beginning) || newTime.Equal(beginning) {
+		r.gotoIndex(0, -1)
+		return
+	}
+
+	if newTime.After(end) || newTime.Equal(end) {
+		r.gotoIndex(lastIndex, -1)
+		return
+	}
+
+	// We use setIndex after this because our timestamp can be anywhere
+	// within the valid range; gotoIndex sets the time to the timestamp of
+	// the event
+	if newTime.Before(r.currentTime) {
+		indexStamp := r.events[r.location.Index].Stamp
+		for i := r.location.Index; i >= 0; i-- {
+			if newTime.Before(indexStamp) && newTime.After(r.events[i].Stamp) {
+				r.setIndex(i, -1, false)
+				break
+			}
+		}
+	} else {
+		for i := r.location.Index + 1; i < len(r.events); i++ {
+			if newTime.After(r.events[i].Stamp) {
+				r.setIndex(i, -1, false)
+				break
+			}
+		}
+	}
+
+	r.currentTime = newTime
 }
 
 func (r *Replay) Init() tea.Cmd {
@@ -507,6 +577,14 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	viewport := r.viewport
 
 	switch msg := msg.(type) {
+	case PlaybackEvent:
+		if !r.isPlaying {
+			return r, nil
+		}
+
+		r.setTimeDelta(time.Duration(int64(time.Now().Sub(msg.Since)) * int64(r.playbackRate)))
+
+		return r.scheduleUpdate()
 	case tea.WindowSizeMsg:
 		return r.setViewport(
 			r.viewport,
@@ -605,13 +683,18 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return r, cmd
 	}
 
+	// These events do not stop playback
 	switch msg := msg.(type) {
-	case taro.MouseMsg:
+	case ActionEvent:
 		switch msg.Type {
-		case taro.MouseWheelUp:
-			r.setScroll(r.offset.R - 1)
-		case taro.MouseWheelDown:
-			r.setScroll(r.offset.R + 1)
+		case ActionTimePlay:
+			r.isPlaying = !r.isPlaying
+
+			if r.isPlaying {
+				return r.scheduleUpdate()
+			}
+
+			return r, nil
 		}
 	case taro.KeyMsg:
 		// Pass unmatched keys into the binding engine; because of how
@@ -620,6 +703,19 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return r, func() tea.Msg {
 			r.binds.InputMessage(msg)
 			return nil
+		}
+	}
+
+	// Every other event causes us to pause
+	r.isPlaying = false
+
+	switch msg := msg.(type) {
+	case taro.MouseMsg:
+		switch msg.Type {
+		case taro.MouseWheelUp:
+			r.setScroll(r.offset.R - 1)
+		case taro.MouseWheelDown:
+			r.setScroll(r.offset.R + 1)
 		}
 	case ActionEvent:
 		switch msg.Type {
@@ -641,7 +737,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 					0,
 				)
 			} else {
-				r.setIndex(0, -1)
+				r.gotoIndex(0, -1)
 			}
 		case ActionEnd:
 			if r.isSelectionMode {
@@ -650,7 +746,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 					0,
 				)
 			} else {
-				r.setIndex(-1, -1)
+				r.gotoIndex(-1, -1)
 			}
 		case ActionSearchAgain, ActionSearchReverse:
 			delta := 1
@@ -666,9 +762,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.isForward = msg.Type == ActionSearchForward
 			r.searchInput.Reset()
 		case ActionTimeStepBack:
-			r.setIndex(r.location.Index-1, -1)
+			r.gotoIndex(r.location.Index-1, -1)
 		case ActionTimeStepForward:
-			r.setIndex(r.location.Index+1, -1)
+			r.gotoIndex(r.location.Index+1, -1)
 		case ActionScrollUpHalf:
 			r.moveCursorDelta(-(viewport.R / 2), 0)
 		case ActionScrollDownHalf:
@@ -701,13 +797,14 @@ func newReplay(
 	ti.Width = 20
 	ti.Prompt = ""
 	m := &Replay{
-		render:      taro.NewRenderer(),
-		events:      events,
-		terminal:    emu.New(),
-		searchInput: ti,
-		binds:       binds,
+		render:       taro.NewRenderer(),
+		events:       events,
+		terminal:     emu.New(),
+		searchInput:  ti,
+		playbackRate: 1,
+		binds:        binds,
 	}
-	m.setIndex(-1, -1)
+	m.gotoIndex(-1, -1)
 	return m
 }
 

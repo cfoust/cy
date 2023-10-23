@@ -1,6 +1,8 @@
 package replay
 
 import (
+	"time"
+
 	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
@@ -17,6 +19,12 @@ type ActionEvent struct {
 	Type ActionType
 }
 
+const PLAYBACK_FPS = 30
+
+type PlaybackEvent struct {
+	Since time.Time
+}
+
 const (
 	ActionQuit ActionType = iota
 
@@ -30,6 +38,7 @@ const (
 
 	// Time controls have no tmux parallel
 	//////////////////////////////////////
+	ActionTimePlay
 	ActionTimeStepBack
 	ActionTimeStepForward
 

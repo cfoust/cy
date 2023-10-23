@@ -101,11 +101,13 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		)
 	}
 
-	timestamp := r.events[index].Stamp.Format(time.RFC1123)
-	statusBar := statusBarStyle.Width(size.C).Height(1).Render(lipgloss.JoinHorizontal(lipgloss.Top,
-		statusStyle.Render(statusText),
-		statusBarStyle.Render(timestamp),
-	))
+	statusBar := statusBarStyle.
+		Width(size.C).
+		Height(1).
+		Render(lipgloss.JoinHorizontal(lipgloss.Top,
+			statusStyle.Render(statusText),
+			statusBarStyle.Render(r.currentTime.Format(time.RFC1123)),
+		))
 
 	r.render.RenderAt(state, size.R-1, 0, statusBar)
 }
@@ -170,7 +172,7 @@ func (r *Replay) View(state *tty.State) {
 	///////////////////////////
 	r.drawStatusBar(state)
 
-	// Layer 3: Render text input
+	// Layer 4: Render text input
 	/////////////////////////////
 	if !r.isSearching {
 		return

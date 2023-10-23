@@ -69,6 +69,10 @@ func (m *ReplayModule) SearchForward(context interface{}) error {
 	return m.send(context, replay.ActionSearchForward)
 }
 
+func (m *ReplayModule) TimePlay(context interface{}) error {
+	return m.send(context, replay.ActionTimePlay)
+}
+
 func (m *ReplayModule) SearchAgain(context interface{}) error {
 	return m.send(context, replay.ActionSearchAgain)
 }

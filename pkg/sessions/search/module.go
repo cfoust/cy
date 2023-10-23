@@ -19,6 +19,7 @@ type Address struct {
 	Offset int
 }
 
+// TODO(cfoust): 10/23/23 make this Before(), After(), Equal() to mimic Time API
 func (a Address) Compare(other Address) int {
 	if a == other {
 		return 0
