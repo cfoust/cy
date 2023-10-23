@@ -19,6 +19,32 @@ type Address struct {
 	Offset int
 }
 
+func (a Address) Compare(other Address) int {
+	if a == other {
+		return 0
+	}
+
+	if a.Index < other.Index {
+		return -1
+	}
+
+	if a.Index > other.Index {
+		return 1
+	}
+
+	// index must be equal
+
+	if a.Offset < other.Offset {
+		return -1
+	}
+
+	if a.Offset > other.Offset {
+		return 1
+	}
+
+	return 0
+}
+
 type SearchResult struct {
 	// The location of the result in time
 	Begin, End Address

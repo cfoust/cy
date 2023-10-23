@@ -453,20 +453,21 @@ func (r *Replay) gotoMatch(index int) {
 	index = geom.Clamp(index, 0, len(r.matches)-1)
 	r.matchIndex = index
 
+	// TODO(cfoust): 10/23/23 revisit
 	// go to the last byte before the match leaves the screen
-	match := r.matches[index].End
-	matchIndex := match.Index
-	matchOffset := match.Offset - 1
-	if matchOffset < 0 {
-		matchIndex--
-		matchOffset = -1
-	}
+	//matchIndex := match.Index
+	//matchOffset := match.Offset - 1
+	//if matchOffset < 0 {
+	//matchIndex--
+	//matchOffset = -1
+	//}
 
-	if matchIndex < 0 {
-		matchIndex = 0
-	}
+	//if matchIndex < 0 {
+	//matchIndex = 0
+	//}
 
-	r.setIndex(matchIndex, matchOffset)
+	match := r.matches[index].Begin
+	r.setIndex(match.Index, match.Offset)
 }
 
 func (r *Replay) gotoMatchDelta(delta int) {

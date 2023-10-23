@@ -23,6 +23,8 @@ func (r *Replay) View(state *tty.State) {
 		return
 	}
 
+	// Layer 1: Draw the underlying terminal state
+	//////////////////////////////////////////////
 	termSize := r.getTerminalSize()
 	var point geom.Vec2
 	var glyph emu.Glyph
@@ -62,6 +64,33 @@ func (r *Replay) View(state *tty.State) {
 		state.Cursor.Y = termCursor.R
 	}
 
+	// Layer 2: Highlight any matches on the screen
+	///////////////////////////////////////////////
+	matches := r.matches
+	if len(matches) > 0 {
+		location := r.location
+		for i, match := range matches {
+			// This match is not on the screen
+			if location.Compare(match.Begin) < 0 || location.Compare(match.End) > 0 {
+				continue
+			}
+
+			for row := match.From.R; row <= match.To.R; row++ {
+				for col := match.From.C; col <= match.To.C; col++ {
+					state.Image[row][col].FG = 1
+
+					var bg emu.Color = 14
+					if i == r.matchIndex {
+						bg = 13
+					}
+					state.Image[row][col].BG = bg
+				}
+			}
+		}
+	}
+
+	// Layer 3: Render overlays
+	///////////////////////////
 	basic := r.render.NewStyle().
 		Foreground(lipgloss.Color("#D5CCBA")).
 		Background(lipgloss.Color("#000000")).
@@ -94,6 +123,8 @@ func (r *Replay) View(state *tty.State) {
 		),
 	)
 
+	// Layer 3: Render text input
+	/////////////////////////////
 	if !r.isSearching {
 		return
 	}
