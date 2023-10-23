@@ -25,9 +25,11 @@ type Replay struct {
 
 	viewport geom.Size
 
-	// the index of the displayed event in `events` and the byte within it
-	index, indexByte int
-	events           []sessions.Event
+	// The location of Replay in time
+	// R: the index of the displayed event in `events`
+	// C: the byte within it
+	location search.Address
+	events   []sessions.Event
 
 	// Selection mode occurs when the user moves the cursor or scrolls the
 	// window
@@ -55,9 +57,11 @@ type Replay struct {
 	desiredCol int
 
 	isSearching bool
+
 	isForward   bool
 	isWaiting   bool
 	searchInput textinput.Model
+	matchIndex  int
 	matches     []search.SearchResult
 }
 
@@ -377,9 +381,9 @@ func (r *Replay) setIndex(index, indexByte int) {
 		index = geom.Clamp(numEvents+index, 0, numEvents-1)
 	}
 
-	fromIndex := geom.Clamp(r.index, 0, numEvents-1)
+	fromIndex := geom.Clamp(r.location.Index, 0, numEvents-1)
 	toIndex := geom.Clamp(index, 0, numEvents-1)
-	fromByte := r.indexByte
+	fromByte := r.location.Offset
 	toByte := indexByte
 
 	// Going back in time; must start over
@@ -419,8 +423,8 @@ func (r *Replay) setIndex(index, indexByte int) {
 		}
 	}
 
-	r.index = toIndex
-	r.indexByte = toByte
+	r.location.Index = toIndex
+	r.location.Offset = toByte
 	r.recalculateViewport()
 	termCursor := r.getTerminalCursor()
 	termSize := r.getTerminalSize()
@@ -439,6 +443,41 @@ func (r *Replay) setIndex(index, indexByte int) {
 
 	r.cursor = r.termToViewport(termCursor)
 	r.desiredCol = r.cursor.C
+}
+
+func (r *Replay) gotoMatch(index int) {
+	if len(r.matches) == 0 {
+		return
+	}
+
+	index = geom.Clamp(index, 0, len(r.matches)-1)
+	r.matchIndex = index
+
+	// go to the last byte before the match leaves the screen
+	match := r.matches[index].End
+	matchIndex := match.Index
+	matchOffset := match.Offset - 1
+	if matchOffset < 0 {
+		matchIndex--
+		matchOffset = -1
+	}
+
+	if matchIndex < 0 {
+		matchIndex = 0
+	}
+
+	r.setIndex(matchIndex, matchOffset)
+}
+
+func (r *Replay) gotoMatchDelta(delta int) {
+	numMatches := len(r.matches)
+	if numMatches == 0 {
+		return
+	}
+
+	// Python-esque modulo behavior
+	index := (((r.matchIndex + delta) % numMatches) + numMatches) % numMatches
+	r.gotoMatch(index)
 }
 
 func (r *Replay) Init() tea.Cmd {
@@ -463,18 +502,49 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				C: msg.Width,
 			},
 		)
-	case SearchResult:
-		r.isSearching = false
-		// TODO(cfoust): 10/13/23 handle error
-		r.matches = msg.results
+	case SearchResultEvent:
+		r.isWaiting = false
 
-		if !msg.isForward {
-			reverse(r.matches)
+		// TODO(cfoust): 10/13/23 handle error
+
+		matches := msg.results
+		if len(matches) == 0 {
+			r.matches = matches
+			return r, nil
 		}
 
+		origin := msg.origin
+
+		if msg.isForward {
+			startIndex := 0
+			for i, match := range matches {
+				begin := match.Begin
+				if begin.Index >= origin.Index && begin.Offset > origin.Offset {
+					startIndex = i
+					break
+				}
+			}
+
+			matches = append(matches[startIndex:], matches[:startIndex]...)
+		} else {
+			reverse(matches)
+
+			startIndex := 0
+			for i, match := range matches {
+				begin := match.Begin
+				if begin.Index <= origin.Index && begin.Offset <= origin.Offset {
+					startIndex = i
+					break
+				}
+			}
+
+			matches = append(matches[startIndex:], matches[:startIndex]...)
+		}
+
+		r.matches = matches
+
 		if len(r.matches) > 0 {
-			match := r.matches[0].Begin
-			r.setIndex(match.Index, match.Offset)
+			r.gotoMatch(0)
 		}
 
 		return r, nil
@@ -482,7 +552,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 	if r.isSearching {
 		switch msg := msg.(type) {
-		case Action:
+		case ActionEvent:
 			switch msg.Type {
 			case ActionQuit:
 				r.isSearching = false
@@ -492,21 +562,21 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			switch msg.Type {
 			case taro.KeyEnter:
 				value := r.searchInput.Value()
+
 				r.searchInput.Reset()
-
-				isForward := r.isForward
-				events := r.events[r.index:]
-				if !isForward {
-					events = r.events[:r.index]
-				}
-
 				r.isWaiting = true
+				r.isSearching = false
 				r.matches = make([]search.SearchResult, 0)
+
+				location := r.location
+				isForward := r.isForward
+				events := r.events
 
 				return r, func() tea.Msg {
 					res, err := search.Search(events, value)
-					return SearchResult{
+					return SearchResultEvent{
 						isForward: isForward,
+						origin:    location,
 						results:   res,
 						err:       err,
 					}
@@ -538,7 +608,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.binds.InputMessage(msg)
 			return nil
 		}
-	case Action:
+	case ActionEvent:
 		switch msg.Type {
 		case ActionQuit:
 			return r.quit()
@@ -560,14 +630,23 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			} else {
 				r.setIndex(-1, -1)
 			}
+		case ActionSearchAgain, ActionSearchReverse:
+			delta := 1
+			if msg.Type == ActionSearchReverse {
+				delta = -1
+			}
+
+			if !r.isSelectionMode {
+				r.gotoMatchDelta(delta)
+			}
 		case ActionSearchForward, ActionSearchBackward:
 			r.isSearching = true
 			r.isForward = msg.Type == ActionSearchForward
 			r.searchInput.Reset()
 		case ActionTimeStepBack:
-			r.setIndex(r.index-1, -1)
+			r.setIndex(r.location.Index-1, -1)
 		case ActionTimeStepForward:
-			r.setIndex(r.index+1, -1)
+			r.setIndex(r.location.Index+1, -1)
 		case ActionScrollUpHalf:
 			r.moveCursorDelta(-(viewport.R / 2), 0)
 		case ActionScrollDownHalf:

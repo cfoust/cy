@@ -151,3 +151,5 @@
 (key/bind :replay ["h"] "" (fn [&] (replay/cursor-left)))
 (key/bind :replay ["j"] "" (fn [&] (replay/cursor-down)))
 (key/bind :replay ["k"] "" (fn [&] (replay/cursor-up)))
+(key/bind :replay ["n"] "" (fn [&] (replay/search-again)))
+(key/bind :replay ["N"] "" (fn [&] (replay/search-reverse)))

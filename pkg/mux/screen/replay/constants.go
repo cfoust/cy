@@ -4,15 +4,16 @@ import (
 	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
-type SearchResult struct {
+type SearchResultEvent struct {
 	isForward bool
+	origin    search.Address
 	results   []search.SearchResult
 	err       error
 }
 
 type ActionType int
 
-type Action struct {
+type ActionEvent struct {
 	Type ActionType
 }
 

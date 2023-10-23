@@ -41,7 +41,7 @@ func (m *ReplayModule) send(context interface{}, action replay.ActionType) error
 		return err
 	}
 
-	r.Send(replay.Action{
+	r.Send(replay.ActionEvent{
 		Type: action,
 	})
 	return nil

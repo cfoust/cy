@@ -67,7 +67,7 @@ func (r *Replay) View(state *tty.State) {
 		Background(lipgloss.Color("#000000")).
 		Align(lipgloss.Right)
 
-	index := r.index
+	index := r.location.Index
 	if index < 0 || index >= len(r.events) || len(r.events) == 0 {
 		r.render.RenderAt(state, 0, 0, basic.Render("???"))
 		return

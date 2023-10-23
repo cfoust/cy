@@ -35,7 +35,7 @@ func input(m taro.Model, msgs ...interface{}) taro.Model {
 		realMsg = msg
 		switch msg := msg.(type) {
 		case ActionType:
-			realMsg = Action{Type: msg}
+			realMsg = ActionEvent{Type: msg}
 		case geom.Size:
 			realMsg = tea.WindowSizeMsg{
 				Width:  msg.C,
