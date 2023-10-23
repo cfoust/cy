@@ -65,15 +65,15 @@ func TestSearch(t *testing.T) {
 
 func TestIndex(t *testing.T) {
 	var r = newReplay(createTestSession(), bind.NewEngine[bind.Action]())
-	r.setIndex(2, 0)
+	r.gotoIndex(2, 0)
 	require.Equal(t, "t ", r.getLine(0).String()[:2])
-	r.setIndex(2, 1)
+	r.gotoIndex(2, 1)
 	require.Equal(t, "te ", r.getLine(0).String()[:3])
-	r.setIndex(2, 0)
+	r.gotoIndex(2, 0)
 	require.Equal(t, "t ", r.getLine(0).String()[:2])
-	r.setIndex(2, -1)
+	r.gotoIndex(2, -1)
 	require.Equal(t, "test", r.getLine(0).String()[:4])
-	r.setIndex(4, -1)
+	r.gotoIndex(4, -1)
 	require.Equal(t, "take", r.getLine(0).String()[:4])
 }
 
@@ -86,8 +86,8 @@ func TestViewport(t *testing.T) {
 	var r = newReplay(s.Events(), bind.NewEngine[bind.Action]())
 	input(r, geom.Size{R: 10, C: 10})
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.minOffset)
-	require.Equal(t, geom.Vec2{R: 10, C: 10}, r.maxOffset)
-	require.Equal(t, geom.Vec2{R: 10, C: 10}, r.offset)
+	require.Equal(t, geom.Vec2{R: 11, C: 10}, r.maxOffset)
+	require.Equal(t, geom.Vec2{R: 11, C: 10}, r.offset)
 }
 
 func TestScroll(t *testing.T) {
@@ -105,7 +105,7 @@ func TestScroll(t *testing.T) {
 	)
 
 	var r = newReplay(s.Events(), bind.NewEngine[bind.Action]())
-	input(r, geom.Size{R: 2, C: 10})
+	input(r, geom.Size{R: 3, C: 10})
 	require.Equal(t, 1, r.cursor.R)
 	require.Equal(t, 5, r.cursor.C)
 	require.Equal(t, 5, r.desiredCol)
@@ -155,7 +155,7 @@ func TestCursor(t *testing.T) {
 	)
 
 	var r = newReplay(s.Events(), bind.NewEngine[bind.Action]())
-	input(r, geom.Size{R: 2, C: 10})
+	input(r, geom.Size{R: 3, C: 10})
 	require.Equal(t, 2, r.offset.R)
 	require.Equal(t, 1, r.cursor.R)
 	require.Equal(t, 4, r.cursor.C)
@@ -186,4 +186,14 @@ func TestCursor(t *testing.T) {
 		R: 3,
 		C: 0,
 	}, r.viewportToTerm(r.cursor))
+}
+
+func TestEmpty(t *testing.T) {
+	s := sessions.NewSimulator()
+	s.Add(
+		geom.Size{R: 5, C: 10},
+	)
+
+	var r = newReplay(s.Events(), bind.NewEngine[bind.Action]())
+	input(r, geom.Size{R: 3, C: 10}, ActionCursorDown)
 }

@@ -166,9 +166,16 @@ func (r *Replay) recalculateViewport() {
 
 // Get the glyphs for a row in term space.
 func (r *Replay) getLine(row int) emu.Line {
-	var line emu.Line
 	screen := r.terminal.Screen()
 	history := r.terminal.History()
+
+	// Handle out-of-bounds lines
+	clamped := geom.Clamp(row, -len(history), r.getTerminalSize().R-1)
+	if clamped != row {
+		return nil
+	}
+
+	var line emu.Line
 	if row < 0 {
 		line = history[len(history)+row]
 	} else {
@@ -238,6 +245,10 @@ func getNonWhitespace(line emu.Line) (first, last int) {
 // and down in a text editor.
 func (r *Replay) resolveDesiredColumn(point geom.Vec2) int {
 	line := r.getLine(point.R)
+	if line == nil {
+		return 0
+	}
+
 	occupancy := getOccupancy(line)
 
 	// desiredCol occupied -> return that col
@@ -369,6 +380,9 @@ func (r *Replay) moveCursorDelta(dy, dx int) {
 	// Motion to the right is bounded to the last non-whitespace character
 	if newPos.C > oldPos.C {
 		line := r.getLine(newPos.R)
+		if line == nil {
+			return
+		}
 		_, lastCell := getNonWhitespace(line)
 		newPos.C = geom.Min(lastCell, newPos.C)
 	}
