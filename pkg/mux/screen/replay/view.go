@@ -45,7 +45,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 
 	statusBarStyle := r.render.NewStyle().
 		Foreground(lipgloss.Color("0")).
-		Background(lipgloss.Color("251"))
+		Background(lipgloss.Color("8"))
 
 	statusText := "TIME"
 	statusBG := lipgloss.Color("6")
@@ -65,16 +65,38 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		return
 	}
 
-	timestamp := r.events[index].Stamp.Format(time.RFC1123)
-
 	if r.offset.R < 0 {
-		timestamp = fmt.Sprintf(
-			"[%d/%d]",
-			-r.offset.R,
-			-r.minOffset.R,
+		offsetStyle := r.render.NewStyle().
+			Foreground(lipgloss.Color("9")).
+			Background(lipgloss.Color("240"))
+
+		linePos := r.termToViewport(geom.Vec2{R: 0}).R
+		if linePos >= 0 && linePos < r.viewport.R {
+			r.render.RenderAt(
+				state,
+				linePos,
+				r.viewport.C - 3,
+				offsetStyle.Render("<--"),
+			)
+		}
+
+		r.render.RenderAt(
+			state,
+			0,
+			0,
+			r.render.PlaceHorizontal(
+				size.C,
+				lipgloss.Right,
+				offsetStyle.Render(fmt.Sprintf(
+					"[%d/%d]",
+					-r.offset.R,
+					-r.minOffset.R,
+				)),
+			),
 		)
 	}
 
+	timestamp := r.events[index].Stamp.Format(time.RFC1123)
 	statusBar := statusBarStyle.Width(size.C).Height(1).Render(lipgloss.JoinHorizontal(lipgloss.Top,
 		statusStyle.Render(statusText),
 		statusBarStyle.Render(timestamp),
