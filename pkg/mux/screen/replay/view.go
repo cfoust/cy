@@ -52,11 +52,15 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		Foreground(lipgloss.Color("0")).
 		Background(lipgloss.Color("8"))
 
-	statusText := "TIME"
+	statusText := "⏵"
 	statusBG := lipgloss.Color("6")
 	if r.isSelectionMode {
 		statusText = "SELECT"
 		statusBG = lipgloss.Color("3")
+	}
+	if r.isPlaying {
+		statusText = "⏸"
+		statusBG = lipgloss.Color("5")
 	}
 
 	statusStyle := r.render.NewStyle().

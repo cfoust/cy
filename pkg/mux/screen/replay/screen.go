@@ -563,6 +563,14 @@ func (r *Replay) setTimeDelta(delta time.Duration) {
 	r.currentTime = newTime
 }
 
+func (r *Replay) exitSelectionMode() {
+	r.isSelectionMode = false
+	termCursor := r.getTerminalCursor()
+	r.center(termCursor)
+	r.cursor = r.termToViewport(termCursor)
+	r.desiredCol = r.cursor.C
+}
+
 func (r *Replay) Init() tea.Cmd {
 	return textinput.Blink
 }
@@ -691,6 +699,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.isPlaying = !r.isPlaying
 
 			if r.isPlaying {
+				r.exitSelectionMode()
 				return r.scheduleUpdate()
 			}
 
@@ -721,11 +730,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		switch msg.Type {
 		case ActionQuit:
 			if r.isSelectionMode {
-				r.isSelectionMode = false
-				termCursor := r.getTerminalCursor()
-				r.center(termCursor)
-				r.cursor = r.termToViewport(termCursor)
-				r.desiredCol = r.cursor.C
+				r.exitSelectionMode()
 				return r, nil
 			}
 
