@@ -25,9 +25,14 @@ func (r *Replay) drawMatches(state *tty.State) {
 		}
 
 		isSelected := i == r.matchIndex && location.Compare(match.Begin) == 0
+		from := r.termToViewport(match.From)
+		to := r.termToViewport(match.To)
+		if !r.isInViewport(from) || !r.isInViewport(to) {
+			continue
+		}
 
-		for row := match.From.R; row <= match.To.R; row++ {
-			for col := match.From.C; col <= match.To.C; col++ {
+		for row := from.R; row <= to.R; row++ {
+			for col := from.C; col < to.C; col++ {
 				state.Image[row][col].FG = 1
 
 				var bg emu.Color = 14
@@ -75,7 +80,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 			r.render.RenderAt(
 				state,
 				linePos,
-				r.viewport.C - 3,
+				r.viewport.C-3,
 				offsetStyle.Render("<--"),
 			)
 		}

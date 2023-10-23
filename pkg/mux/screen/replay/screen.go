@@ -77,6 +77,15 @@ func (r *Replay) termToViewport(point geom.Vec2) geom.Vec2 {
 	return point.Sub(r.offset)
 }
 
+// Check whether the given point in viewport space actually falls within it.
+func (r *Replay) isInViewport(point geom.Vec2) bool {
+	if point.R < 0 || point.C < 0 || point.R >= r.viewport.R || point.C >= r.viewport.C {
+		return false
+	}
+
+	return true
+}
+
 func (r *Replay) viewportToTerm(point geom.Vec2) geom.Vec2 {
 	return point.Add(r.offset)
 }
