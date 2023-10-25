@@ -462,7 +462,7 @@ func (r *Replay) setIndex(index, indexByte int, updateTime bool) {
 
 	r.recalculateViewport()
 	termCursor := r.getTerminalCursor()
-	termSize := r.getTerminalSize()
+	viewportCursor := r.termToViewport(termCursor)
 
 	r.isSelectionMode = false
 
@@ -470,9 +470,8 @@ func (r *Replay) setIndex(index, indexByte int, updateTime bool) {
 	r.offset.R = 0
 	r.offset.C = 0
 
-	// Center the cursor if the viewport is smaller than the terminal's
-	// viewport
-	if r.viewport.C < termSize.C || r.viewport.R < termSize.R {
+	// Center the cursor if it's not in the viewport
+	if !r.isInViewport(viewportCursor) {
 		r.center(termCursor)
 	}
 
