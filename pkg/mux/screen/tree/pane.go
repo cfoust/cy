@@ -60,6 +60,8 @@ func (p *Pane) ReplayMode() *taro.Program {
 
 func (p *Pane) EnterReplay() {
 	p.Lock()
+	defer p.Unlock()
+
 	if p.layers.NumLayers() > 1 {
 		return
 	}
@@ -78,7 +80,6 @@ func (p *Pane) EnterReplay() {
 		true,
 	)
 	p.replay = r
-	p.Unlock()
 
 	go func() {
 		<-r.Ctx().Done()

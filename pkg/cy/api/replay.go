@@ -42,7 +42,9 @@ func (m *ReplayModule) sendAction(context interface{}, action replay.ActionType)
 	})
 }
 
-func (m *ReplayModule) Quit(context interface{}) error { return m.send(context, replay.ActionQuit) }
+func (m *ReplayModule) Quit(context interface{}) error {
+	return m.sendAction(context, replay.ActionQuit)
+}
 
 func (m *ReplayModule) ScrollUp(context interface{}) error {
 	return m.sendAction(context, replay.ActionScrollUp)
