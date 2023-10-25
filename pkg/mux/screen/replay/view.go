@@ -63,6 +63,10 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		statusBG = lipgloss.Color("5")
 	}
 
+	if !r.isSelectionMode && r.playbackRate != 1 {
+		statusText += fmt.Sprintf(" %dx", r.playbackRate)
+	}
+
 	statusStyle := r.render.NewStyle().
 		Inherit(statusBarStyle).
 		Background(statusBG).

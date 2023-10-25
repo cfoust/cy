@@ -19,6 +19,10 @@ type ActionEvent struct {
 	Type ActionType
 }
 
+type PlaybackRateEvent struct {
+	Rate int
+}
+
 const PLAYBACK_FPS = 30
 
 type PlaybackEvent struct {

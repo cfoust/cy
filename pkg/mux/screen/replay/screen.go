@@ -492,20 +492,6 @@ func (r *Replay) gotoMatch(index int) {
 
 	index = geom.Clamp(index, 0, len(r.matches)-1)
 	r.matchIndex = index
-
-	// TODO(cfoust): 10/23/23 revisit
-	// go to the last byte before the match leaves the screen
-	//matchIndex := match.Index
-	//matchOffset := match.Offset - 1
-	//if matchOffset < 0 {
-	//matchIndex--
-	//matchOffset = -1
-	//}
-
-	//if matchIndex < 0 {
-	//matchIndex = 0
-	//}
-
 	match := r.matches[index].Begin
 	r.gotoIndex(match.Index, match.Offset)
 }
@@ -599,6 +585,12 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	viewport := r.viewport
 
 	switch msg := msg.(type) {
+	case PlaybackRateEvent:
+		r.playbackRate = geom.Clamp(msg.Rate, -10, 10)
+		if r.playbackRate == 0 {
+			r.playbackRate = 1
+		}
+		return r, nil
 	case PlaybackEvent:
 		if !r.isPlaying {
 			return r, nil

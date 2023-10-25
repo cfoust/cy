@@ -5,6 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
 
@@ -49,8 +50,10 @@ func input(m taro.Model, msgs ...interface{}) taro.Model {
 		}
 
 		m, cmd = m.Update(realMsg)
+		m.View(tty.New(geom.DEFAULT_SIZE))
 		for cmd != nil {
 			m, cmd = m.Update(cmd())
+			m.View(tty.New(geom.DEFAULT_SIZE))
 		}
 	}
 

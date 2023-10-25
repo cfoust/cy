@@ -11,108 +11,109 @@ import (
 type ReplayModule struct {
 }
 
-func (r *ReplayModule) get(context interface{}) (*taro.Program, error) {
+func (m *ReplayModule) send(context interface{}, msg taro.Msg) error {
 	client, ok := context.(Client)
 	if !ok {
-		return nil, fmt.Errorf("no client could be inferred")
+		return fmt.Errorf("no client could be inferred")
 	}
 
 	node := client.Node()
 	if node == nil {
-		return nil, fmt.Errorf("client was missing node")
+		return fmt.Errorf("client was missing node")
 	}
 
 	pane, ok := node.(*tree.Pane)
 	if !ok {
-		return nil, fmt.Errorf("client node was not pane")
+		return fmt.Errorf("client node was not pane")
 	}
 
-	replay := pane.ReplayMode()
-	if replay == nil {
-		return nil, fmt.Errorf("client pane was not in replay mode")
+	r := pane.ReplayMode()
+	if r == nil {
+		return fmt.Errorf("client pane was not in replay mode")
 	}
 
-	return replay, nil
+	r.Send(msg)
+	return nil
 }
 
-func (m *ReplayModule) send(context interface{}, action replay.ActionType) error {
-	r, err := m.get(context)
-	if err != nil {
-		return err
-	}
-
-	r.Send(replay.ActionEvent{
+func (m *ReplayModule) sendAction(context interface{}, action replay.ActionType) error {
+	return m.send(context, replay.ActionEvent{
 		Type: action,
 	})
-	return nil
 }
 
 func (m *ReplayModule) Quit(context interface{}) error { return m.send(context, replay.ActionQuit) }
 
 func (m *ReplayModule) ScrollUp(context interface{}) error {
-	return m.send(context, replay.ActionScrollUp)
+	return m.sendAction(context, replay.ActionScrollUp)
 }
 
 func (m *ReplayModule) ScrollDown(context interface{}) error {
-	return m.send(context, replay.ActionScrollDown)
+	return m.sendAction(context, replay.ActionScrollDown)
 }
 
 func (m *ReplayModule) HalfPageUp(context interface{}) error {
-	return m.send(context, replay.ActionScrollUpHalf)
+	return m.sendAction(context, replay.ActionScrollUpHalf)
 }
 
 func (m *ReplayModule) HalfPageDown(context interface{}) error {
-	return m.send(context, replay.ActionScrollDownHalf)
+	return m.sendAction(context, replay.ActionScrollDownHalf)
 }
 
 func (m *ReplayModule) SearchForward(context interface{}) error {
-	return m.send(context, replay.ActionSearchForward)
+	return m.sendAction(context, replay.ActionSearchForward)
 }
 
 func (m *ReplayModule) TimePlay(context interface{}) error {
-	return m.send(context, replay.ActionTimePlay)
+	return m.sendAction(context, replay.ActionTimePlay)
 }
 
 func (m *ReplayModule) SearchAgain(context interface{}) error {
-	return m.send(context, replay.ActionSearchAgain)
+	return m.sendAction(context, replay.ActionSearchAgain)
 }
 
 func (m *ReplayModule) SearchReverse(context interface{}) error {
-	return m.send(context, replay.ActionSearchReverse)
+	return m.sendAction(context, replay.ActionSearchReverse)
 }
 
 func (m *ReplayModule) SearchBackward(context interface{}) error {
-	return m.send(context, replay.ActionSearchBackward)
+	return m.sendAction(context, replay.ActionSearchBackward)
 }
 
 func (m *ReplayModule) TimeStepBack(context interface{}) error {
-	return m.send(context, replay.ActionTimeStepBack)
+	return m.sendAction(context, replay.ActionTimeStepBack)
 }
 
 func (m *ReplayModule) TimeStepForward(context interface{}) error {
-	return m.send(context, replay.ActionTimeStepForward)
+	return m.sendAction(context, replay.ActionTimeStepForward)
 }
 
 func (m *ReplayModule) Beginning(context interface{}) error {
-	return m.send(context, replay.ActionBeginning)
+	return m.sendAction(context, replay.ActionBeginning)
 }
 
 func (m *ReplayModule) End(context interface{}) error {
-	return m.send(context, replay.ActionEnd)
+	return m.sendAction(context, replay.ActionEnd)
 }
 
 func (m *ReplayModule) CursorDown(context interface{}) error {
-	return m.send(context, replay.ActionCursorDown)
+	return m.sendAction(context, replay.ActionCursorDown)
 }
 
 func (m *ReplayModule) CursorLeft(context interface{}) error {
-	return m.send(context, replay.ActionCursorLeft)
+	return m.sendAction(context, replay.ActionCursorLeft)
 }
 
 func (m *ReplayModule) CursorRight(context interface{}) error {
-	return m.send(context, replay.ActionCursorRight)
+	return m.sendAction(context, replay.ActionCursorRight)
 }
 
 func (m *ReplayModule) CursorUp(context interface{}) error {
-	return m.send(context, replay.ActionCursorUp)
+	return m.sendAction(context, replay.ActionCursorUp)
+}
+
+func (m *ReplayModule) TimePlaybackRate(context interface{}, rate int) error {
+	return m.send(context, replay.PlaybackRateEvent{
+		Rate: rate,
+	})
 }
