@@ -23,7 +23,10 @@ type PlaybackRateEvent struct {
 	Rate int
 }
 
-const PLAYBACK_FPS = 30
+const (
+	PLAYBACK_FPS   = 30
+	IDLE_THRESHOLD = time.Second
+)
 
 type PlaybackEvent struct {
 	Since time.Time

@@ -147,14 +147,14 @@ func (r *Replay) setTimeDelta(delta time.Duration) {
 		return
 	}
 
-	// We use setIndex after this because our timestamp can be anywhere
-	// within the valid range; gotoIndex sets the time to the timestamp of
-	// the event
+	// First, just check to see whether we've entered another event
+	currentIndex := r.location.Index
+	var nextIndex int = currentIndex
 	if newTime.Before(r.currentTime) {
-		indexStamp := r.events[r.location.Index].Stamp
-		for i := r.location.Index; i >= 0; i-- {
+		indexStamp := r.events[currentIndex].Stamp
+		for i := currentIndex; i >= 0; i-- {
 			if newTime.Before(indexStamp) && newTime.After(r.events[i].Stamp) {
-				r.setIndex(i, -1, false)
+				nextIndex = i
 				break
 			}
 		}
@@ -167,5 +167,31 @@ func (r *Replay) setTimeDelta(delta time.Duration) {
 		}
 	}
 
-	r.currentTime = newTime
+	// If this resulted in a change, we just jump to it immediately
+	if currentIndex != nextIndex {
+		r.currentTime = newTime
+		r.setIndex(nextIndex, -1, false)
+		return
+	}
+
+	// It didn't, which can only mean that we're waiting for the next event
+	var nextTime time.Time
+	if newTime.Before(r.currentTime) {
+		nextTime = r.events[currentIndex].Stamp
+	} else {
+		// we know `currentIndex` is not the last one because `end` is the time of the last event
+		nextTime = r.events[currentIndex+1].Stamp
+	}
+
+	if newTime.Sub(nextTime).Abs() < IDLE_THRESHOLD {
+		r.currentTime = newTime
+		return
+	}
+
+	if newTime.Before(r.currentTime) {
+		r.setIndex(currentIndex-1, -1, false)
+	} else {
+		r.setIndex(currentIndex+1, -1, false)
+	}
+	r.currentTime = nextTime
 }

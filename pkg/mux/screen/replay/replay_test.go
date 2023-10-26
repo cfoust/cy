@@ -2,6 +2,7 @@ package replay
 
 import (
 	"testing"
+	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
@@ -14,60 +15,64 @@ import (
 	"github.com/xo/terminfo"
 )
 
-func createTestSession() []sessions.Event {
-	s := sessions.NewSimulator()
-	s.Add(
-		"\033[20h", // CRLF -- why is this everywhere?
-		geom.DEFAULT_SIZE,
-		"test string please ignore",
-	)
-	s.Term(terminfo.ClearScreen)
-	s.Add("take two")
-	s.Term(terminfo.ClearScreen)
-	s.Add("test")
+var sim = sessions.NewSimulator
 
-	return s.Events()
+func createTestSession() []sessions.Event {
+	return sim().
+		Add(
+			"\033[20h", // CRLF -- why is this everywhere?
+			geom.DEFAULT_SIZE,
+			"test string please ignore",
+		).
+		Term(terminfo.ClearScreen).
+		Add("take two").
+		Term(terminfo.ClearScreen).
+		Add("test").
+		Events()
 }
 
-func input(m taro.Model, msgs ...interface{}) taro.Model {
-	var cmd tea.Cmd
-	var realMsg tea.Msg
-	for _, msg := range msgs {
-		realMsg = msg
-		switch msg := msg.(type) {
-		case ActionType:
-			realMsg = ActionEvent{Type: msg}
-		case geom.Size:
-			realMsg = tea.WindowSizeMsg{
-				Width:  msg.C,
-				Height: msg.R,
-			}
-		case string:
-			keyMsgs := taro.KeysToMsg(msg)
-			if len(keyMsgs) == 1 {
-				realMsg = keyMsgs[0]
-			}
-		}
+func createTest(events []sessions.Event) (*Replay, func(msgs ...interface{})) {
+	var r = newReplay(events, bind.NewEngine[bind.Action]())
+	var m taro.Model = r
 
-		m, cmd = m.Update(realMsg)
-		m.View(tty.New(geom.DEFAULT_SIZE))
-		for cmd != nil {
-			m, cmd = m.Update(cmd())
+	return r, func(msgs ...interface{}) {
+		var cmd tea.Cmd
+		var realMsg tea.Msg
+		for _, msg := range msgs {
+			realMsg = msg
+			switch msg := msg.(type) {
+			case ActionType:
+				realMsg = ActionEvent{Type: msg}
+			case geom.Size:
+				realMsg = tea.WindowSizeMsg{
+					Width:  msg.C,
+					Height: msg.R,
+				}
+			case string:
+				keyMsgs := taro.KeysToMsg(msg)
+				if len(keyMsgs) == 1 {
+					realMsg = keyMsgs[0]
+				}
+			}
+
+			m, cmd = m.Update(realMsg)
 			m.View(tty.New(geom.DEFAULT_SIZE))
+			for cmd != nil {
+				m, cmd = m.Update(cmd())
+				m.View(tty.New(geom.DEFAULT_SIZE))
+			}
 		}
 	}
-
-	return m
 }
 
 func TestSearch(t *testing.T) {
-	var r = newReplay(createTestSession(), bind.NewEngine[bind.Action]())
-	input(r, ActionBeginning, ActionSearchForward, "test", "enter")
+	r, i := createTest(createTestSession())
+	i(ActionBeginning, ActionSearchForward, "test", "enter")
 	require.Equal(t, 2, len(r.matches))
 }
 
 func TestIndex(t *testing.T) {
-	var r = newReplay(createTestSession(), bind.NewEngine[bind.Action]())
+	r, _ := createTest(createTestSession())
 	r.gotoIndex(2, 0)
 	require.Equal(t, "t ", r.getLine(0).String()[:2])
 	r.gotoIndex(2, 1)
@@ -81,13 +86,13 @@ func TestIndex(t *testing.T) {
 }
 
 func TestViewport(t *testing.T) {
-	s := sessions.NewSimulator()
-	s.Add(geom.Size{R: 20, C: 20})
-	s.Term(terminfo.ClearScreen)
-	s.Term(terminfo.CursorAddress, 19, 19)
+	s := sim().
+		Add(geom.Size{R: 20, C: 20}).
+		Term(terminfo.ClearScreen).
+		Term(terminfo.CursorAddress, 19, 19)
 
-	var r = newReplay(s.Events(), bind.NewEngine[bind.Action]())
-	input(r, geom.Size{R: 10, C: 10})
+	r, i := createTest(s.Events())
+	i(geom.Size{R: 10, C: 10})
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.minOffset)
 	require.Equal(t, geom.Vec2{R: 11, C: 10}, r.maxOffset)
 	require.Equal(t, geom.Vec2{R: 11, C: 10}, r.offset)
@@ -107,42 +112,42 @@ func TestScroll(t *testing.T) {
 		"seven",
 	)
 
-	var r = newReplay(s.Events(), bind.NewEngine[bind.Action]())
-	input(r, geom.Size{R: 3, C: 10})
+	r, i := createTest(s.Events())
+	i(geom.Size{R: 3, C: 10})
 	require.Equal(t, 1, r.cursor.R)
 	require.Equal(t, 5, r.cursor.C)
 	require.Equal(t, 5, r.desiredCol)
 	// six
 	// seven[ ]
 
-	input(r, ActionScrollUp)
+	i(ActionScrollUp)
 	// five
 	// si[x]
 	require.Equal(t, 2, r.cursor.C)
 	require.Equal(t, 5, r.desiredCol)
 
-	input(r, ActionScrollUp)
+	i(ActionScrollUp)
 	// four
 	// fiv[e]
 	require.Equal(t, 3, r.cursor.C)
 	require.Equal(t, 5, r.desiredCol)
 
-	input(r, ActionScrollDown)
+	i(ActionScrollDown)
 	// fiv[e]
 	// six
 	require.Equal(t, 0, r.cursor.R)
 	require.Equal(t, 3, r.cursor.C)
 
-	input(r, ActionScrollDown)
+	i(ActionScrollDown)
 	// si[x]
 	// seven
 	require.Equal(t, 0, r.cursor.R)
 	require.Equal(t, 2, r.cursor.C)
 
-	input(r, ActionBeginning)
+	i(ActionBeginning)
 	require.Equal(t, -2, r.viewportToTerm(r.cursor).R)
 
-	input(r, ActionEnd)
+	i(ActionEnd)
 	require.Equal(t, 4, r.viewportToTerm(r.cursor).R)
 }
 
@@ -157,34 +162,34 @@ func TestCursor(t *testing.T) {
 		"foo ",
 	)
 
-	var r = newReplay(s.Events(), bind.NewEngine[bind.Action]())
-	input(r, geom.Size{R: 3, C: 10})
+	r, i := createTest(s.Events())
+	i(geom.Size{R: 3, C: 10})
 	require.Equal(t, 2, r.offset.R)
 	require.Equal(t, 1, r.cursor.R)
 	require.Equal(t, 4, r.cursor.C)
 	require.Equal(t, 4, r.desiredCol)
-	input(r, ActionCursorUp)
+	i(ActionCursorUp)
 	require.Equal(t, 4, r.cursor.C)
-	input(r, ActionCursorUp)
+	i(ActionCursorUp)
 	require.Equal(t, 5, r.cursor.C)
-	input(r, ActionCursorUp)
+	i(ActionCursorUp)
 	require.Equal(t, 2, r.cursor.C)
-	input(r, ActionCursorRight)
+	i(ActionCursorRight)
 	require.Equal(t, 2, r.cursor.C)
-	input(r, ActionCursorLeft, ActionCursorLeft, ActionCursorLeft, ActionCursorLeft)
+	i(ActionCursorLeft, ActionCursorLeft, ActionCursorLeft, ActionCursorLeft)
 	require.Equal(t, 0, r.cursor.C)
-	input(r, ActionCursorDown)
+	i(ActionCursorDown)
 	require.Equal(t, 5, r.cursor.C)
-	input(r, ActionCursorDown)
+	i(ActionCursorDown)
 	require.Equal(t, 0, r.cursor.C)
 
 	// at end of screen
-	input(r, ActionCursorDown)
+	i(ActionCursorDown)
 	require.Equal(t, 0, r.cursor.C)
 	require.Equal(t, 1, r.cursor.R)
 
 	// moving down past last occupied line should do nothing
-	input(r, ActionCursorDown)
+	i(ActionCursorDown)
 	require.Equal(t, geom.Vec2{
 		R: 3,
 		C: 0,
@@ -192,11 +197,33 @@ func TestCursor(t *testing.T) {
 }
 
 func TestEmpty(t *testing.T) {
-	s := sessions.NewSimulator()
-	s.Add(
-		geom.Size{R: 5, C: 10},
-	)
+	s := sim().Add(geom.Size{R: 5, C: 10})
+	_, i := createTest(s.Events())
+	i(geom.Size{R: 3, C: 10}, ActionCursorDown)
+	// should not panic
+}
 
-	var r = newReplay(s.Events(), bind.NewEngine[bind.Action]())
-	input(r, geom.Size{R: 3, C: 10}, ActionCursorDown)
+func TestTime(t *testing.T) {
+	delta := time.Second / PLAYBACK_FPS
+	size := geom.Size{R: 5, C: 10}
+	e := sim().
+		Add(size).
+		AddTime(0, "test").
+		AddTime(IDLE_THRESHOLD*2, "test").
+		AddTime(time.Second, "test").
+		Events()
+
+	r, i := createTest(e)
+	i(size)
+	r.gotoIndex(0, -1)
+	require.Equal(t, e[0].Stamp, r.currentTime)
+	r.setTimeDelta(delta)
+	require.Equal(t, 1, r.location.Index)
+	r.setTimeDelta(delta)
+	require.Equal(t, 2, r.location.Index)
+	require.Equal(t, e[2].Stamp, r.currentTime)
+	r.setTimeDelta(-delta)
+	require.Equal(t, 1, r.location.Index)
+	r.setTimeDelta(-delta)
+	require.Equal(t, 0, r.location.Index)
 }
