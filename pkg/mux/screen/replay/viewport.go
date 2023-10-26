@@ -42,9 +42,9 @@ func (r *Replay) setViewport(oldViewport, newViewport geom.Size) (taro.Model, te
 	r.setOffsetY(-1)
 
 	if r.isSelectionMode {
-		r.center(r.cursor)
+		r.centerPoint(r.cursor)
 	} else {
-		r.center(r.getTerminalCursor())
+		r.centerPoint(r.getTerminalCursor())
 	}
 
 	return r, nil
@@ -67,7 +67,7 @@ func (r *Replay) setOffsetX(offset int) {
 }
 
 // Center the viewport on a point in the reference frame of the terminal.
-func (r *Replay) center(point geom.Vec2) {
+func (r *Replay) centerPoint(point geom.Vec2) {
 	r.setOffsetX(point.C - (r.viewport.C / 2))
 	r.setOffsetY(point.R - (r.viewport.R / 2))
 }

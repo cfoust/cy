@@ -74,13 +74,9 @@ func (r *Replay) setIndex(index, indexByte int, updateTime bool) {
 
 	r.isSelectionMode = false
 
-	// reset scroll offset whenever we move in time
-	r.offset.R = 0
-	r.offset.C = 0
-
 	// Center the cursor if it's not in the viewport
 	if !r.isInViewport(viewportCursor) {
-		r.center(termCursor)
+		r.centerPoint(termCursor)
 	}
 
 	r.cursor = r.termToViewport(termCursor)
