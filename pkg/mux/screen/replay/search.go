@@ -9,6 +9,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+func reverse[S ~[]E, E any](s S) {
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
+}
+
 func (r *Replay) gotoMatch(index int) {
 	if len(r.matches) == 0 {
 		return
