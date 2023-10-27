@@ -9,12 +9,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func reverse[S ~[]E, E any](s S) {
-	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
-		s[i], s[j] = s[j], s[i]
-	}
-}
-
 func (r *Replay) gotoMatch(index int) {
 	if len(r.matches) == 0 {
 		return
@@ -98,9 +92,6 @@ func (r *Replay) handleSearchResult(msg SearchResultEvent) (taro.Model, tea.Cmd)
 		r.matches = matches
 		return r, nil
 	}
-
-	// TODO(cfoust): 10/27/23 y tho
-	reverse(matches)
 
 	r.matches = matches
 	r.location = msg.origin

@@ -3,6 +3,7 @@ package search
 import (
 	"fmt"
 	"regexp"
+	"sort"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
@@ -211,6 +212,10 @@ func Search(events []sessions.Event, pattern string) (results []SearchResult, er
 			match,
 		)
 	}
+
+	sort.SliceStable(results, func(i, j int) bool {
+		return results[i].Begin.Before(results[j].Begin)
+	})
 
 	return
 }
