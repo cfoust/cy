@@ -66,9 +66,49 @@ func createTest(events []sessions.Event) (*Replay, func(msgs ...interface{})) {
 }
 
 func TestSearch(t *testing.T) {
-	r, i := createTest(createTestSession())
-	i(ActionBeginning, ActionSearchForward, "test", "enter")
-	require.Equal(t, 2, len(r.matches))
+	s := sessions.NewSimulator().
+		Add(
+			// TODO(cfoust): 10/27/23 why does R=2 lead to fewer matches?
+			geom.Size{R: 10, C: 10},
+			"foo",
+			"bar blah", // 2
+			"foo",
+			"foo",
+			"foo",
+			"foo",
+			"bar", // 7
+			"foo",
+			"bar", // 9
+			"foo",
+		)
+
+	r, i := createTest(s.Events())
+	i(ActionBeginning, ActionSearchForward, "bar", "enter")
+	require.Equal(t, 3, len(r.matches))
+	require.Equal(t, 2, r.location.Index)
+	i(ActionSearchAgain)
+	require.Equal(t, 7, r.location.Index)
+	i(ActionSearchReverse)
+	require.Equal(t, 2, r.location.Index)
+	// Loop back from beginning
+	i(ActionSearchReverse)
+	require.Equal(t, 9, r.location.Index)
+	// Loop over end
+	i(ActionSearchAgain)
+	require.Equal(t, 2, r.location.Index)
+
+	// Ensure that the -1 rewriting works
+	r.gotoIndex(2, -1)
+	i(ActionSearchReverse)
+	require.Equal(t, 2, r.location.Index)
+
+	// Now search backward
+	i(ActionEnd, ActionSearchBackward, "bar", "enter")
+	require.Equal(t, 9, r.location.Index)
+	i(ActionSearchAgain)
+	require.Equal(t, 7, r.location.Index)
+	i(ActionSearchReverse)
+	require.Equal(t, 9, r.location.Index)
 }
 
 func TestIndex(t *testing.T) {

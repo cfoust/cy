@@ -88,28 +88,6 @@ func (r *Replay) gotoIndex(index, indexByte int) {
 	r.setIndex(index, indexByte, true)
 }
 
-func (r *Replay) gotoMatch(index int) {
-	if len(r.matches) == 0 {
-		return
-	}
-
-	index = geom.Clamp(index, 0, len(r.matches)-1)
-	r.matchIndex = index
-	match := r.matches[index].Begin
-	r.gotoIndex(match.Index, match.Offset)
-}
-
-func (r *Replay) gotoMatchDelta(delta int) {
-	numMatches := len(r.matches)
-	if numMatches == 0 {
-		return
-	}
-
-	// Python-esque modulo behavior
-	index := (((r.matchIndex + delta) % numMatches) + numMatches) % numMatches
-	r.gotoMatch(index)
-}
-
 func (r *Replay) scheduleUpdate() (taro.Model, tea.Cmd) {
 	since := time.Now()
 	return r, func() tea.Msg {

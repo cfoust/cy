@@ -19,31 +19,16 @@ type Address struct {
 	Offset int
 }
 
-// TODO(cfoust): 10/23/23 make this Before(), After(), Equal() to mimic Time API
-func (a Address) Compare(other Address) int {
-	if a == other {
-		return 0
-	}
+func (a Address) Before(other Address) bool {
+	return a.Index < other.Index || (a.Index == other.Index && a.Offset < other.Offset)
+}
 
-	if a.Index < other.Index {
-		return -1
-	}
+func (a Address) After(other Address) bool {
+	return a.Index > other.Index || (a.Index == other.Index && a.Offset > other.Offset)
+}
 
-	if a.Index > other.Index {
-		return 1
-	}
-
-	// index must be equal
-
-	if a.Offset < other.Offset {
-		return -1
-	}
-
-	if a.Offset > other.Offset {
-		return 1
-	}
-
-	return 0
+func (a Address) Equal(other Address) bool {
+	return a.Index == other.Index && a.Offset == other.Offset
 }
 
 type SearchResult struct {

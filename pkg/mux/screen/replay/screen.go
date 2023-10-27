@@ -64,7 +64,6 @@ type Replay struct {
 	isForward   bool
 	isWaiting   bool
 	searchInput textinput.Model
-	matchIndex  int
 	matches     []search.SearchResult
 }
 
@@ -156,93 +155,11 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			},
 		)
 	case SearchResultEvent:
-		r.isWaiting = false
-
-		// TODO(cfoust): 10/13/23 handle error
-
-		matches := msg.results
-		if len(matches) == 0 {
-			r.matches = matches
-			return r, nil
-		}
-
-		origin := msg.origin
-
-		if msg.isForward {
-			startIndex := 0
-			for i, match := range matches {
-				begin := match.Begin
-				if begin.Index >= origin.Index && begin.Offset > origin.Offset {
-					startIndex = i
-					break
-				}
-			}
-
-			matches = append(matches[startIndex:], matches[:startIndex]...)
-		} else {
-			reverse(matches)
-
-			startIndex := 0
-			for i, match := range matches {
-				begin := match.Begin
-				if begin.Index <= origin.Index && begin.Offset <= origin.Offset {
-					startIndex = i
-					break
-				}
-			}
-
-			matches = append(matches[startIndex:], matches[:startIndex]...)
-		}
-
-		r.matches = matches
-
-		if len(r.matches) > 0 {
-			r.gotoMatch(0)
-		}
-
-		return r, nil
+		return r.handleSearchResult(msg)
 	}
 
 	if r.isSearching {
-		switch msg := msg.(type) {
-		case ActionEvent:
-			switch msg.Type {
-			case ActionQuit:
-				r.isSearching = false
-				return r, nil
-			}
-		case taro.KeyMsg:
-			switch msg.Type {
-			case taro.KeyEnter:
-				value := r.searchInput.Value()
-
-				r.searchInput.Reset()
-				r.isWaiting = true
-				r.isSearching = false
-				r.matches = make([]search.SearchResult, 0)
-
-				location := r.location
-				isForward := r.isForward
-				events := r.events
-
-				return r, func() tea.Msg {
-					res, err := search.Search(events, value)
-					return SearchResultEvent{
-						isForward: isForward,
-						origin:    location,
-						results:   res,
-						err:       err,
-					}
-				}
-			}
-		}
-		var cmd tea.Cmd
-		inputMsg := msg
-		if key, ok := msg.(taro.KeyMsg); ok {
-			inputMsg = key.ToTea()
-		}
-		r.searchInput, cmd = r.searchInput.Update(inputMsg)
-		return r, cmd
+		return r.handleSearchInput(msg)
 	}
 
 	// These events do not stop playback
@@ -308,14 +225,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				r.gotoIndex(-1, -1)
 			}
 		case ActionSearchAgain, ActionSearchReverse:
-			delta := 1
-			if msg.Type == ActionSearchReverse {
-				delta = -1
-			}
-
-			if !r.isSelectionMode {
-				r.gotoMatchDelta(delta)
-			}
+			r.searchAgain(msg.Type != ActionSearchReverse)
 		case ActionSearchForward, ActionSearchBackward:
 			r.isSearching = true
 			r.isForward = msg.Type == ActionSearchForward

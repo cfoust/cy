@@ -18,13 +18,13 @@ func (r *Replay) drawMatches(state *tty.State) {
 	}
 
 	location := r.location
-	for i, match := range matches {
+	for _, match := range matches {
 		// This match is not on the screen
-		if location.Compare(match.Begin) < 0 || location.Compare(match.End) >= 0 {
+		if location.Before(match.Begin) || location.After(match.End) {
 			continue
 		}
 
-		isSelected := i == r.matchIndex && location.Compare(match.Begin) == 0
+		isSelected := location.Equal(match.Begin)
 		from := r.termToViewport(match.From)
 		to := r.termToViewport(match.To)
 		if !r.isInViewport(from) || !r.isInViewport(to) {
