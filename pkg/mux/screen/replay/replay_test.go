@@ -275,9 +275,6 @@ func TestReadString(t *testing.T) {
 			"\033[20h", // CRLF -- why is this everywhere?
 			"foo\n",
 			"你好 ",
-			"      foo\n",
-			"foo  foo\n",
-			"foo ",
 		)
 
 	r, i := createTest(s.Events())
@@ -286,9 +283,17 @@ func TestReadString(t *testing.T) {
 		geom.Vec2{R: 0, C: 0},
 		geom.Vec2{R: 0, C: 2},
 	))
+	require.Equal(t, `foo`, r.readString(
+		geom.Vec2{R: 0, C: 2},
+		geom.Vec2{R: 0, C: 0},
+	))
 	require.Equal(t, "foo\n你", r.readString(
 		geom.Vec2{R: 0, C: 0},
 		geom.Vec2{R: 1, C: 0},
+	))
+	require.Equal(t, "foo\n你", r.readString(
+		geom.Vec2{R: 1, C: 0},
+		geom.Vec2{R: 0, C: 0},
 	))
 	require.Equal(t, "oo", r.readString(
 		geom.Vec2{R: 0, C: 1},

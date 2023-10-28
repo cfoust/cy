@@ -32,6 +32,10 @@ type PlaybackEvent struct {
 	Since time.Time
 }
 
+type CopyEvent struct {
+	Text string
+}
+
 type Mode uint8
 
 const (
