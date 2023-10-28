@@ -66,8 +66,9 @@ func (r *Replay) handleCopy() (taro.Model, tea.Cmd) {
 		r.viewportToTerm(r.cursor),
 	)
 	return r, func() tea.Msg {
-		return CopyEvent{
+		r.emit <- CopyEvent{
 			Text: text,
 		}
+		return nil
 	}
 }

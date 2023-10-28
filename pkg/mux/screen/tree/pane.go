@@ -26,7 +26,7 @@ type Pane struct {
 
 	replay       *taro.Program
 	replayBinds  *bind.BindScope
-	replayEvents chan<- bind.BindEvent
+	replayEvents chan<- interface{}
 }
 
 var _ Node = (*Pane)(nil)
@@ -114,7 +114,7 @@ func newPane(
 		true,
 	)
 
-	actions := make(chan bind.BindEvent)
+	actions := make(chan interface{})
 	go func() {
 		for {
 			select {

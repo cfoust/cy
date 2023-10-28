@@ -13,6 +13,7 @@ import (
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
@@ -35,6 +36,9 @@ type Client struct {
 
 	node  tree.Node
 	binds *bind.Engine[bind.Action]
+
+	// the text the client has copied
+	buffer string
 
 	muxClient *server.Client
 	margins   *screen.Margins
@@ -112,15 +116,21 @@ func (c *Cy) pollReplayEvents(ctx context.Context, events <-chan tree.ReplayEven
 
 			client := clients[0]
 
-			go func() {
-				err := event.Event.Action.Callback.CallContext(
-					c.Ctx(),
-					client,
-				)
-				if err != nil && err != context.Canceled {
-					log.Error().Err(err).Msgf("failed to run callback")
-				}
-			}()
+			switch event := event.Event.(type) {
+			case replay.CopyEvent:
+				client.buffer = event.Text
+			case bind.BindEvent:
+				go func() {
+					err := event.Action.Callback.CallContext(
+						c.Ctx(),
+						client,
+					)
+					if err != nil && err != context.Canceled {
+						log.Error().Err(err).Msgf("failed to run callback")
+					}
+				}()
+			}
+
 		}
 	}
 }

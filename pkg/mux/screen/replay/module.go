@@ -67,6 +67,8 @@ type Replay struct {
 	isWaiting   bool
 	searchInput textinput.Model
 	matches     []search.SearchResult
+
+	emit chan<- interface{}
 }
 
 var _ taro.Model = (*Replay)(nil)
@@ -128,6 +130,7 @@ func (r *Replay) Init() tea.Cmd {
 func newReplay(
 	events []sessions.Event,
 	binds *bind.Engine[bind.Action],
+	emit chan<- interface{},
 ) *Replay {
 	ti := textinput.New()
 	ti.Focus()
@@ -141,6 +144,7 @@ func newReplay(
 		searchInput:  ti,
 		playbackRate: 1,
 		binds:        binds,
+		emit:         emit,
 	}
 	m.gotoIndex(-1, -1)
 	return m
@@ -150,7 +154,7 @@ func New(
 	ctx context.Context,
 	recorder *sessions.Recorder,
 	replayBinds *bind.BindScope,
-	replayEvents chan<- bind.BindEvent,
+	replayEvents chan<- interface{},
 ) *taro.Program {
 	events := recorder.Events()
 
@@ -170,5 +174,5 @@ func New(
 		}
 	}()
 
-	return taro.New(ctx, newReplay(events, engine))
+	return taro.New(ctx, newReplay(events, engine, replayEvents))
 }
