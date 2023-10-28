@@ -40,7 +40,7 @@ const (
 	// Copy mode occurs when the user moves the cursor or scrolls the
 	// window
 	ModeCopy
-	ModeVisual
+	// Input mode is used for searching
 	ModeInput
 )
 
@@ -84,6 +84,7 @@ const (
 	// copy-selection [<prefix>]
 	// copy-selection-no-clear [<prefix>]
 	// copy-selection-and-cancel [<prefix>]         Enter           M-w
+	ActionCopy
 	// cursor-down                                  j               Down
 	ActionCursorDown
 	// cursor-down-and-cancel
@@ -130,6 +131,7 @@ const (
 	// rectangle-on
 	// rectangle-off
 	// rectangle-toggle                             v               R
+	ActionSelect
 	// refresh-from-pane                            r               r
 	// scroll-down                                  C-e             C-Down
 	ActionScrollDown

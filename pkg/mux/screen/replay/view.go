@@ -55,7 +55,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	statusText := "⏵"
 	statusBG := lipgloss.Color("6")
 	if r.isCopyMode() {
-		statusText = "SELECT"
+		statusText = "COPY"
 		statusBG = lipgloss.Color("3")
 	}
 	if r.isPlaying {
@@ -181,7 +181,7 @@ func (r *Replay) View(state *tty.State) {
 
 	// Layer 4: Render text input
 	/////////////////////////////
-	if !r.isSearching {
+	if r.mode != ModeInput {
 		return
 	}
 

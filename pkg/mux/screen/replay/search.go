@@ -36,7 +36,7 @@ func (r *Replay) searchAgain(isForward bool) {
 	location := r.location
 
 	firstMatch := matches[0].Begin
-	lastMatch := matches[len(matches) - 1].Begin
+	lastMatch := matches[len(matches)-1].Begin
 
 	if !isForward && (location.Before(firstMatch) || location.Equal(firstMatch)) {
 		location.Index = len(r.events) - 1
@@ -105,7 +105,7 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case ActionEvent:
 		switch msg.Type {
 		case ActionQuit:
-			r.isSearching = false
+			r.mode = ModeTime
 			return r, nil
 		}
 	case taro.KeyMsg:
@@ -115,7 +115,7 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 			r.searchInput.Reset()
 			r.isWaiting = true
-			r.isSearching = false
+			r.mode = ModeTime
 			r.matches = make([]search.SearchResult, 0)
 
 			location := r.location

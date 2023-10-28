@@ -54,12 +54,14 @@ type Replay struct {
 
 	// The cursor's position relative to the viewport.
 	cursor geom.Vec2
-	// Used to emulate the behavior in text editors wherein moving the
-	// cursor up and down "sticks" to a certain column index wherever
-	// possible
+	// Used to mimic the behavior in text editors wherein moving the cursor
+	// up and down "sticks" to a certain column index wherever possible
 	desiredCol int
 
-	isSearching bool
+	// Whether the user has started selecting.
+	isSelecting bool
+	// The location in terminal space where the select began
+	selectStart geom.Vec2
 
 	isForward   bool
 	isWaiting   bool

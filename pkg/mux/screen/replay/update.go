@@ -43,7 +43,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return r.handleSearchResult(msg)
 	}
 
-	if r.isSearching {
+	if r.mode == ModeInput {
 		return r.handleSearchInput(msg)
 	}
 
@@ -112,7 +112,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case ActionSearchAgain, ActionSearchReverse:
 			r.searchAgain(msg.Type != ActionSearchReverse)
 		case ActionSearchForward, ActionSearchBackward:
-			r.isSearching = true
+			r.mode = ModeInput
 			r.isForward = msg.Type == ActionSearchForward
 			r.searchInput.Reset()
 		case ActionTimeStepBack:
@@ -135,6 +135,20 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.moveCursorDelta(0, -1)
 		case ActionCursorRight:
 			r.moveCursorDelta(0, 1)
+		case ActionSelect:
+			if !r.isCopyMode() {
+				return r, nil
+			}
+
+			if r.isSelecting {
+				r.isSelecting = false
+				return r, nil
+			}
+
+			r.isSelecting = true
+			r.selectStart = r.viewportToTerm(r.cursor)
+		case ActionCopy:
+			return r.handleCopy()
 		}
 	}
 

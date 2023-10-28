@@ -267,3 +267,39 @@ func TestTime(t *testing.T) {
 	r.setTimeDelta(-delta)
 	require.Equal(t, 0, r.location.Index)
 }
+
+func TestReadString(t *testing.T) {
+	s := sessions.NewSimulator().
+		Add(
+			geom.Size{R: 5, C: 10},
+			"\033[20h", // CRLF -- why is this everywhere?
+			"foo\n",
+			"你好 ",
+			"      foo\n",
+			"foo  foo\n",
+			"foo ",
+		)
+
+	r, i := createTest(s.Events())
+	i(geom.Size{R: 6, C: 10})
+	require.Equal(t, `foo`, r.readString(
+		geom.Vec2{R: 0, C: 0},
+		geom.Vec2{R: 0, C: 2},
+	))
+	require.Equal(t, "foo\n你", r.readString(
+		geom.Vec2{R: 0, C: 0},
+		geom.Vec2{R: 1, C: 0},
+	))
+	require.Equal(t, "oo", r.readString(
+		geom.Vec2{R: 0, C: 1},
+		geom.Vec2{R: 0, C: 2},
+	))
+	require.Equal(t, "o", r.readString(
+		geom.Vec2{R: 0, C: 2},
+		geom.Vec2{R: 0, C: 2},
+	))
+	require.Equal(t, "你好", r.readString(
+		geom.Vec2{R: 1, C: 0},
+		geom.Vec2{R: 1, C: 3},
+	))
+}
