@@ -113,6 +113,29 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 			// TODO(cfoust): 10/08/23 reattach all clients
 			client.Attach(node)
 		},
+		"cy/paste": func(user interface{}) {
+			client, ok := user.(*Client)
+			if !ok {
+				return
+			}
+
+			buffer := client.buffer
+			if len(buffer) == 0 {
+				return
+			}
+
+			node := client.Node()
+			if node == nil {
+				return
+			}
+
+			pane, ok := node.(*tree.Pane)
+			if !ok {
+				return
+			}
+
+			pane.Write([]byte(buffer))
+		},
 		"log": func(text string) {
 			c.log.Info().Msgf(text)
 		},

@@ -127,6 +127,7 @@
 (key/bind :root [prefix "q"] "kill the cy server" (fn [&] (cy/kill-server)))
 (key/bind :root [prefix "d"] "detach from the cy server" (fn [&] (cy/detach)))
 (key/bind :root [prefix "p"] "enter replay mode" (fn [&] (cy/replay)))
+(key/bind :root [prefix "P"] "" (fn [&] (cy/paste)))
 
 # should actions just be functions with docstrings?
 #(key/action increase-margins "increase margins by 5 columns"
