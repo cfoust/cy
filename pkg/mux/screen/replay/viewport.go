@@ -41,7 +41,7 @@ func (r *Replay) setViewport(oldViewport, newViewport geom.Size) (taro.Model, te
 	r.recalculateViewport()
 	r.setOffsetY(-1)
 
-	if r.isSelectionMode {
+	if r.isCopyMode() {
 		r.centerPoint(r.cursor)
 	} else {
 		r.centerPoint(r.getTerminalCursor())
@@ -88,7 +88,7 @@ func (r *Replay) recalculateViewport() {
 }
 
 func (r *Replay) setScroll(offset int) {
-	r.isSelectionMode = true
+	r.mode = ModeCopy
 	before := r.viewportToTerm(r.cursor)
 	r.setOffsetY(offset)
 	after := r.termToViewport(before)

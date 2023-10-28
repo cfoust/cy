@@ -22,7 +22,11 @@ type Replay struct {
 	// the size of the terminal
 	terminal emu.Terminal
 
+	// the size of the client, but minus one row
+	// we don't want to obscure content
 	viewport geom.Size
+
+	mode Mode
 
 	isPlaying    bool
 	playbackRate int
@@ -33,10 +37,6 @@ type Replay struct {
 	// C: the byte within it
 	location search.Address
 	events   []sessions.Event
-
-	// Selection mode occurs when the user moves the cursor or scrolls the
-	// window
-	isSelectionMode bool
 
 	// The offset of the viewport relative to the top-left corner of the
 	// underlying terminal.
@@ -68,6 +68,10 @@ type Replay struct {
 }
 
 var _ taro.Model = (*Replay)(nil)
+
+func (r *Replay) isCopyMode() bool {
+	return r.mode == ModeCopy
+}
 
 func (r *Replay) getTerminalCursor() geom.Vec2 {
 	cursor := r.terminal.Cursor()
@@ -106,8 +110,8 @@ func (r *Replay) getLine(row int) emu.Line {
 	return line
 }
 
-func (r *Replay) exitSelectionMode() {
-	r.isSelectionMode = false
+func (r *Replay) exitCopyMode() {
+	r.mode = ModeTime
 	termCursor := r.getTerminalCursor()
 	r.centerPoint(termCursor)
 	r.cursor = r.termToViewport(termCursor)

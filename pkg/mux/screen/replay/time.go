@@ -72,7 +72,7 @@ func (r *Replay) setIndex(index, indexByte int, updateTime bool) {
 	termCursor := r.getTerminalCursor()
 	viewportCursor := r.termToViewport(termCursor)
 
-	r.isSelectionMode = false
+	r.mode = ModeTime
 
 	// Center the cursor if it's not in the viewport
 	if !r.isInViewport(viewportCursor) {

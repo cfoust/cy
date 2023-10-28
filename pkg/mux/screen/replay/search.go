@@ -20,7 +20,7 @@ func (r *Replay) gotoMatch(index int) {
 }
 
 func (r *Replay) searchAgain(isForward bool) {
-	if r.isSelectionMode {
+	if r.isCopyMode() {
 		return
 	}
 

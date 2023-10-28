@@ -54,7 +54,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 
 	statusText := "⏵"
 	statusBG := lipgloss.Color("6")
-	if r.isSelectionMode {
+	if r.isCopyMode() {
 		statusText = "SELECT"
 		statusBG = lipgloss.Color("3")
 	}
@@ -63,7 +63,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		statusBG = lipgloss.Color("5")
 	}
 
-	if !r.isSelectionMode && r.playbackRate != 1 {
+	if !r.isCopyMode() && r.playbackRate != 1 {
 		statusText += fmt.Sprintf(" %dx", r.playbackRate)
 	}
 
@@ -156,11 +156,11 @@ func (r *Replay) View(state *tty.State) {
 	}
 
 	termCursor := r.termToViewport(r.getTerminalCursor())
-	if r.isSelectionMode {
+	if r.isCopyMode() {
 		state.Cursor.X = r.cursor.C
 		state.Cursor.Y = r.cursor.R
 
-		// In selection mode, leave behind a ghost cursor where the
+		// In copy mode, leave behind a ghost cursor where the
 		// terminal's cursor is
 		if r.isInViewport(termCursor) {
 			state.Image[termCursor.R][termCursor.C].BG = 8

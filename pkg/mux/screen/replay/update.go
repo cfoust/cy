@@ -55,7 +55,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.isPlaying = !r.isPlaying
 
 			if r.isPlaying {
-				r.exitSelectionMode()
+				r.exitCopyMode()
 				return r.scheduleUpdate()
 			}
 
@@ -85,14 +85,14 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case ActionEvent:
 		switch msg.Type {
 		case ActionQuit:
-			if r.isSelectionMode {
-				r.exitSelectionMode()
+			if r.isCopyMode() {
+				r.exitCopyMode()
 				return r, nil
 			}
 
 			return r.quit()
 		case ActionBeginning:
-			if r.isSelectionMode {
+			if r.isCopyMode() {
 				r.moveCursorDelta(
 					-r.viewportToTerm(r.cursor).R+r.minOffset.R,
 					0,
@@ -101,7 +101,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				r.gotoIndex(0, -1)
 			}
 		case ActionEnd:
-			if r.isSelectionMode {
+			if r.isCopyMode() {
 				r.moveCursorDelta(
 					(r.getTerminalSize().R-1)-r.viewportToTerm(r.cursor).R,
 					0,

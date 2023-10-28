@@ -188,7 +188,7 @@ func (r *Replay) moveCursorDelta(dy, dx int) {
 		})
 	}
 
-	r.isSelectionMode = true
+	r.mode = ModeCopy
 	r.moveCursor(newPos)
 
 	// If the column motion was intentional, set the desiredCol

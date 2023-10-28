@@ -32,6 +32,18 @@ type PlaybackEvent struct {
 	Since time.Time
 }
 
+type Mode uint8
+
+const (
+	// The default mode, Time, allows the user to navigate in time
+	ModeTime Mode = iota
+	// Copy mode occurs when the user moves the cursor or scrolls the
+	// window
+	ModeCopy
+	ModeVisual
+	ModeInput
+)
+
 const (
 	ActionQuit ActionType = iota
 
