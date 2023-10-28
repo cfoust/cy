@@ -34,6 +34,20 @@ func (r *Renderer) RenderAt(state *tty.State, row, col int, value string) {
 	image.Compose(geom.Vec2{R: row, C: col}, state.Image, r.term.Screen())
 }
 
+func (r *Renderer) ConvertLipgloss(color lipgloss.Color) emu.Color {
+	switch c := r.ColorProfile().Color(string(color)).(type) {
+	case termenv.ANSIColor:
+		return emu.Color(c)
+	case termenv.ANSI256Color:
+		return emu.Color(c)
+	case termenv.RGBColor:
+		r, g, b, _ := termenv.ConvertToRGB(c).RGBA()
+		return emu.Color(r<<16 | g<<8 | b)
+	}
+
+	return emu.DefaultFG
+}
+
 func NewRenderer() *Renderer {
 	info, _ := terminfo.Load("xterm-256color")
 	term := emu.New()

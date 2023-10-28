@@ -86,7 +86,11 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		switch msg.Type {
 		case ActionQuit:
 			if r.isCopyMode() {
-				r.exitCopyMode()
+				if r.isSelecting {
+					r.isSelecting = false
+				} else {
+					r.exitCopyMode()
+				}
 				return r, nil
 			}
 

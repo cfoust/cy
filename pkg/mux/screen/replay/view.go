@@ -11,11 +11,50 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+func (r *Replay) highlightRange(state *tty.State, from, to geom.Vec2, fg, bg emu.Color) {
+	from, to = normalizeRange(from, to)
+	from = r.termToViewport(from)
+	to = r.termToViewport(to)
+
+	if !r.isInViewport(from) {
+		from = geom.Vec2{R: 0, C: 0}
+	}
+	if !r.isInViewport(to) {
+		to = geom.Vec2{
+			R: r.viewport.R - 1,
+			C: r.viewport.C - 1,
+		}
+	}
+
+	size := state.Image.Size()
+	var startCol, endCol int
+	for row := from.R; row <= to.R; row++ {
+		startCol = 0
+		if row == from.R {
+			startCol = from.C
+		}
+
+		endCol = size.C - 1
+		if row == to.R {
+			endCol = to.C
+		}
+
+		for col := startCol; col <= endCol; col++ {
+			state.Image[row][col].FG = fg
+			state.Image[row][col].BG = bg
+		}
+	}
+}
+
 func (r *Replay) drawMatches(state *tty.State) {
 	matches := r.matches
 	if len(matches) == 0 {
 		return
 	}
+
+	fgColor := r.render.ConvertLipgloss(lipgloss.Color("1"))
+	bgColor := r.render.ConvertLipgloss(lipgloss.Color("14"))
+	bgSelectedColor := r.render.ConvertLipgloss(lipgloss.Color("13"))
 
 	location := r.location
 	for _, match := range matches {
@@ -24,24 +63,17 @@ func (r *Replay) drawMatches(state *tty.State) {
 			continue
 		}
 
-		isSelected := location.Equal(match.Begin)
-		from := r.termToViewport(match.From)
-		to := r.termToViewport(match.To)
-		if !r.isInViewport(from) || !r.isInViewport(to) {
-			continue
+		bg := bgColor
+		if location.Equal(match.Begin) {
+			bg = bgSelectedColor
 		}
-
-		for row := from.R; row <= to.R; row++ {
-			for col := from.C; col < to.C; col++ {
-				state.Image[row][col].FG = 1
-
-				var bg emu.Color = 14
-				if isSelected {
-					bg = 13
-				}
-				state.Image[row][col].BG = bg
-			}
-		}
+		r.highlightRange(
+			state,
+			match.From,
+			match.To,
+			fgColor,
+			bg,
+		)
 	}
 }
 
@@ -49,18 +81,23 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	size := state.Image.Size()
 
 	statusBarStyle := r.render.NewStyle().
-		Foreground(lipgloss.Color("0")).
+		Foreground(lipgloss.Color("15")).
 		Background(lipgloss.Color("8"))
 
 	statusText := "⏵"
-	statusBG := lipgloss.Color("6")
+	statusBG := lipgloss.Color("#4D9DE0")
 	if r.isCopyMode() {
 		statusText = "COPY"
-		statusBG = lipgloss.Color("3")
+		statusBG = lipgloss.Color("#E1BC29")
+
+		if r.isSelecting {
+			statusText = "VISUAL"
+			statusBG = lipgloss.Color("#3BB273")
+		}
 	}
 	if r.isPlaying {
 		statusText = "⏸"
-		statusBG = lipgloss.Color("5")
+		statusBG = lipgloss.Color("#7768AE")
 	}
 
 	if !r.isCopyMode() && r.playbackRate != 1 {
@@ -131,7 +168,7 @@ func (r *Replay) View(state *tty.State) {
 		return
 	}
 
-	// Layer 1: Draw the underlying terminal state
+	// Draw the underlying terminal state
 	//////////////////////////////////////////////
 	termSize := r.getTerminalSize()
 	var point geom.Vec2
@@ -171,15 +208,27 @@ func (r *Replay) View(state *tty.State) {
 		state.Cursor.Y = termCursor.R
 	}
 
-	// Layer 2: Highlight any matches on the screen
+	// Show the selection state
+	////////////////////////////
+	if r.isCopyMode() && r.isSelecting {
+		r.highlightRange(
+			state,
+			r.selectStart,
+			r.viewportToTerm(r.cursor),
+			r.render.ConvertLipgloss(lipgloss.Color("9")),
+			r.render.ConvertLipgloss(lipgloss.Color("240")),
+		)
+	}
+
+	// Highlight any matches on the screen
 	///////////////////////////////////////////////
 	r.drawMatches(state)
 
-	// Layer 3: Render overlays
+	// Render overlays
 	///////////////////////////
 	r.drawStatusBar(state)
 
-	// Layer 4: Render text input
+	// Render text input
 	/////////////////////////////
 	if r.mode != ModeInput {
 		return

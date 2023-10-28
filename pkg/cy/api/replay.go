@@ -119,3 +119,11 @@ func (m *ReplayModule) TimePlaybackRate(context interface{}, rate int) error {
 		Rate: rate,
 	})
 }
+
+func (m *ReplayModule) Copy(context interface{}) error {
+	return m.sendAction(context, replay.ActionCopy)
+}
+
+func (m *ReplayModule) Select(context interface{}) error {
+	return m.sendAction(context, replay.ActionSelect)
+}

@@ -114,6 +114,7 @@ func (r *Replay) getLine(row int) emu.Line {
 
 func (r *Replay) exitCopyMode() {
 	r.mode = ModeTime
+	r.isSelecting = false
 	termCursor := r.getTerminalCursor()
 	r.centerPoint(termCursor)
 	r.cursor = r.termToViewport(termCursor)
