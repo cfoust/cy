@@ -124,17 +124,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 				return
 			}
 
-			node := client.Node()
-			if node == nil {
-				return
-			}
-
-			pane, ok := node.(*tree.Pane)
-			if !ok {
-				return
-			}
-
-			pane.Write([]byte(buffer))
+			client.renderer.Write([]byte(buffer))
 		},
 		"log": func(text string) {
 			c.log.Info().Msgf(text)
