@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/cy/api"
 	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/util"
 )
@@ -18,11 +18,6 @@ import _ "embed"
 
 //go:embed cy-boot.janet
 var CY_BOOT_FILE []byte
-
-type CmdParams struct {
-	Command string
-	Args    []string
-}
 
 // execute runs some Janet code on behalf of the Client. This is only used in testing.
 func (c *Client) execute(code string) error {
@@ -146,36 +141,26 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 				return nil, err
 			}
 
-			cursor := client.outerLayers.State().Cursor
+			outerLayers := client.outerLayers
+			state := outerLayers.State()
+			cursor := state.Cursor
 			result := make(chan interface{})
 			fuzzy := fuzzy.NewFuzzy(
 				ctx,
-				client.info,
+				state.Image,
 				options,
-				geom.Vec2{
-					R: cursor.Y,
-					C: cursor.X,
-				},
+				geom.Vec2{R: cursor.Y, C: cursor.X},
+				c.tree,
+				c.muxServer.AddClient(ctx, geom.Vec2{}),
 				result,
 			)
 
 			client.outerLayers.NewLayer(
 				fuzzy.Ctx(),
-				anim.NewAnimator(
-					fuzzy.Ctx(),
-					anim.Random(),
-					client.outerLayers.State().Image,
-					23,
-				),
-				false,
-				true,
-			)
-
-			client.outerLayers.NewLayer(
-				fuzzy.Ctx(),
 				fuzzy,
-				true,
-				false,
+				screen.PositionTop,
+				screen.WithInteractive,
+				screen.WithOpaque,
 			)
 
 			select {

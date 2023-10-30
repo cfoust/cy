@@ -301,7 +301,6 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 
 	c.muxClient = c.cy.muxServer.AddClient(
 		c.Ctx(),
-		info,
 		handshake.Size,
 	)
 
@@ -309,8 +308,9 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	c.innerLayers.NewLayer(
 		c.Ctx(),
 		c.muxClient,
-		true,
-		true,
+		screen.PositionTop,
+		screen.WithOpaque,
+		screen.WithInteractive,
 	)
 	c.margins = screen.NewMargins(c.Ctx(), c.innerLayers)
 
@@ -318,8 +318,8 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	c.outerLayers.NewLayer(
 		c.Ctx(),
 		c.margins,
-		true,
-		true,
+		screen.PositionTop,
+		screen.WithInteractive,
 	)
 
 	c.raw = emu.New(emu.WithSize(handshake.Size))

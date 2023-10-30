@@ -19,6 +19,10 @@ func (v Vec2) Sub(other Vec2) Vec2 {
 	return v.Add(other.Scalar(-1))
 }
 
+func (v Vec2) IsZero() bool {
+	return v.R == 0 && v.C == 0
+}
+
 func (v Vec2) Add(other Vec2) Vec2 {
 	return Vec2{
 		R: other.R + v.R,

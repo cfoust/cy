@@ -76,8 +76,9 @@ func (p *Pane) EnterReplay() {
 	p.layers.NewLayer(
 		r.Ctx(),
 		r,
-		true,
-		true,
+		screen.PositionTop,
+		screen.WithInteractive,
+		screen.WithOpaque,
 	)
 	p.replay = r
 
@@ -110,8 +111,9 @@ func newPane(
 	layers.NewLayer(
 		lifetime.Ctx(),
 		terminal,
-		true,
-		true,
+		screen.PositionTop,
+		screen.WithInteractive,
+		screen.WithOpaque,
 	)
 
 	actions := make(chan interface{})

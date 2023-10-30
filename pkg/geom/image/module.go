@@ -48,6 +48,25 @@ func (i Image) Clone() Image {
 	return cloned
 }
 
+func (i Image) Clear(region geom.Rect) {
+	size := i.Size()
+
+	min := geom.Vec2{
+		R: geom.Clamp(region.R, 0, size.R-1),
+		C: geom.Clamp(region.C, 0, size.C-1),
+	}
+	max := geom.Vec2{
+		R: geom.Clamp(region.R+region.H, 0, size.R),
+		C: geom.Clamp(region.C+region.W, 0, size.C),
+	}
+
+	for row := min.R; row < max.R; row++ {
+		for col := min.C; col < max.C; col++ {
+			i[row][col] = emu.EmptyGlyph()
+		}
+	}
+}
+
 func Capture(view emu.View) Image {
 	return view.Screen()
 }
@@ -56,18 +75,21 @@ func Capture(view emu.View) Image {
 func Copy(pos geom.Vec2, dst, src Image) {
 	srcSize := src.Size()
 	dstSize := dst.Size()
+	if dstSize.IsZero() || srcSize.IsZero() {
+		return
+	}
 
-	lastRow := geom.Min(
-		pos.R+srcSize.R,
-		dstSize.R,
-	)
-	lastCol := geom.Min(
-		pos.C+srcSize.C,
-		dstSize.C,
-	)
+	min := geom.Vec2{
+		R: geom.Clamp(pos.R, 0, dstSize.R-1),
+		C: geom.Clamp(pos.C, 0, dstSize.C-1),
+	}
+	max := geom.Vec2{
+		R: geom.Clamp(pos.R+srcSize.R, 0, dstSize.R),
+		C: geom.Clamp(pos.C+srcSize.C, 0, dstSize.C),
+	}
 
-	for row := pos.R; row < lastRow; row++ {
-		for col := pos.C; col < lastCol; col++ {
+	for row := min.R; row < max.R; row++ {
+		for col := min.C; col < max.C; col++ {
 			dst[row][col] = src[row-pos.R][col-pos.C]
 		}
 	}
@@ -78,18 +100,21 @@ func Copy(pos geom.Vec2, dst, src Image) {
 func Compose(pos geom.Vec2, dst, src Image) {
 	srcSize := src.Size()
 	dstSize := dst.Size()
+	if dstSize.IsZero() || srcSize.IsZero() {
+		return
+	}
 
-	lastRow := geom.Min(
-		pos.R+srcSize.R,
-		dstSize.R,
-	)
-	lastCol := geom.Min(
-		pos.C+srcSize.C,
-		dstSize.C,
-	)
+	min := geom.Vec2{
+		R: geom.Clamp(pos.R, 0, dstSize.R-1),
+		C: geom.Clamp(pos.C, 0, dstSize.C-1),
+	}
+	max := geom.Vec2{
+		R: geom.Clamp(pos.R+srcSize.R, 0, dstSize.R),
+		C: geom.Clamp(pos.C+srcSize.C, 0, dstSize.C),
+	}
 
-	for row := pos.R; row < lastRow; row++ {
-		for col := pos.C; col < lastCol; col++ {
+	for row := min.R; row < max.R; row++ {
+		for col := min.C; col < max.C; col++ {
 			srcCell := src[row-pos.R][col-pos.C]
 			if srcCell.Char == ' ' && srcCell.BG == emu.DefaultBG {
 				continue

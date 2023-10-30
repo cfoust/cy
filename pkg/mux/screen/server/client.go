@@ -8,7 +8,6 @@ import (
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/sasha-s/go-deadlock"
-	"github.com/xo/terminfo"
 )
 
 type Client struct {
@@ -86,7 +85,6 @@ func (c *Client) Attach(ctx context.Context, screen mux.Screen) {
 		c.attachment.Cancel()
 	}
 	c.attachment = &attachment
-
 	oldScreen := c.screen
 	c.screen = screen
 	c.Unlock()
@@ -115,7 +113,6 @@ func (c *Client) Size() mux.Size {
 
 func (s *Server) AddClient(
 	ctx context.Context,
-	info *terminfo.Terminfo,
 	initialSize mux.Size,
 ) *Client {
 	s.Lock()

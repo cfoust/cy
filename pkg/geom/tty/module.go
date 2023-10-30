@@ -25,6 +25,7 @@ func New(size geom.Vec2) *State {
 		CursorVisible: true,
 	}
 }
+
 func Copy(pos geom.Vec2, dst, src *State) {
 	image.Copy(pos, dst.Image, src.Image)
 	dst.Cursor = src.Cursor

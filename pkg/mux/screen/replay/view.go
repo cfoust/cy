@@ -123,7 +123,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		linePos := r.termToViewport(geom.Vec2{R: 0}).R
 		if linePos >= 0 && linePos < r.viewport.R {
 			r.render.RenderAt(
-				state,
+				state.Image,
 				linePos,
 				r.viewport.C-3,
 				offsetStyle.Render("<--"),
@@ -131,7 +131,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		}
 
 		r.render.RenderAt(
-			state,
+			state.Image,
 			0,
 			0,
 			r.render.PlaceHorizontal(
@@ -154,7 +154,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 			statusBarStyle.Render(r.currentTime.Format(time.RFC1123)),
 		))
 
-	r.render.RenderAt(state, size.R-1, 0, statusBar)
+	r.render.RenderAt(state.Image, size.R-1, 0, statusBar)
 }
 
 func (r *Replay) View(state *tty.State) {
@@ -240,7 +240,7 @@ func (r *Replay) View(state *tty.State) {
 	// hide the cursor when typing in the search bar (it has its own)
 	state.CursorVisible = false
 	r.render.RenderAt(
-		state,
+		state.Image,
 		r.cursor.R,
 		r.cursor.C,
 		r.searchInput.View(),

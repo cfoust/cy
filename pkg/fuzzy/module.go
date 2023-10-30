@@ -3,19 +3,22 @@ package fuzzy
 import (
 	"context"
 
+	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/geom/image"
+	"github.com/cfoust/cy/pkg/mux/screen/server"
+	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type Fuzzy struct {
 	util.Lifetime
+	anim *anim.Animator
+
 	result   chan<- interface{}
 	location geom.Vec2
 	size     geom.Vec2
@@ -23,10 +26,17 @@ type Fuzzy struct {
 	render    *taro.Renderer
 	textInput textinput.Model
 
+	// before the user has done anything, we don't show the preview window
+	haveMoved bool
+
 	options  []Option
 	filtered []Option
 	selected int
 	pattern  string
+
+	tree       *tree.Tree
+	client     *server.Client
+	isAttached bool
 }
 
 var _ taro.Model = (*Fuzzy)(nil)
@@ -35,8 +45,53 @@ func (f *Fuzzy) quit() (taro.Model, tea.Cmd) {
 	return f, tea.Quit
 }
 
+type AttachEvent struct {
+	pane *tree.Pane
+}
+
+type DetachEvent struct {
+}
+
+func (f *Fuzzy) Attach(id tree.NodeID) taro.Cmd {
+	f.isAttached = false
+
+	return func() tea.Msg {
+		pane, ok := f.tree.PaneById(id)
+		if !ok {
+			return nil
+		}
+
+		f.client.Attach(f.Ctx(), pane.Screen())
+		return AttachEvent{
+			pane: pane,
+		}
+	}
+}
+
+func (f *Fuzzy) handlePreview() taro.Cmd {
+	options := f.getOptions()
+	if len(options) == 0 {
+		return nil
+	}
+
+	option := options[f.selected]
+	if option.Preview == nil {
+		return nil
+	}
+
+	switch preview := option.Preview.(type) {
+	case tree.NodeID:
+		return f.Attach(preview)
+	}
+
+	return nil
+}
+
 func (f *Fuzzy) Init() taro.Cmd {
-	return textinput.Blink
+	return tea.Batch(
+		textinput.Blink,
+		taro.WaitScreens(f.Ctx(), f.anim),
+	)
 }
 
 func (f *Fuzzy) getOptions() []Option {
@@ -46,31 +101,62 @@ func (f *Fuzzy) getOptions() []Option {
 	return f.options
 }
 
+func (f *Fuzzy) isInverted() bool {
+	return f.location.R > (f.size.R / 2)
+}
+
 func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case AttachEvent:
+		f.isAttached = true
+		return f, func() tea.Msg {
+			select {
+			case <-f.client.Attachment().Ctx().Done():
+				return nil
+			case <-msg.pane.Ctx().Done():
+				return DetachEvent{}
+			}
+		}
+	case DetachEvent:
+		f.isAttached = false
+		return f, nil
+	case taro.ScreenUpdate:
+		return f, taro.WaitScreens(f.Ctx(), f.anim)
 	case matchResult:
 		f.filtered = msg.Filtered
 		f.selected = geom.Max(geom.Min(f.selected, len(f.getOptions())-1), 0)
 		return f, nil
 	case tea.WindowSizeMsg:
-		f.size = geom.Size{
+		size := geom.Size{
 			R: msg.Height,
 			C: msg.Width,
 		}
+		f.anim.Resize(size)
+		f.size = size
 	case taro.KeyMsg:
 		switch msg.Type {
 		case taro.KeyEsc, taro.KeyCtrlC:
 			f.result <- nil
 			return f.quit()
 		case taro.KeyUp, taro.KeyCtrlK:
-			f.selected = geom.Max(f.selected-1, 0)
-			return f, nil
+			f.haveMoved = true
+			delta := -1
+			if f.isInverted() {
+				delta = 1
+			}
+			f.selected = geom.Clamp(f.selected+delta, 0, len(f.getOptions()))
+			return f, f.handlePreview()
 		case taro.KeyDown, taro.KeyCtrlJ:
-			f.selected = geom.Min(f.selected+1, len(f.getOptions())-1)
-			return f, nil
+			f.haveMoved = true
+			delta := 1
+			if f.isInverted() {
+				delta = -1
+			}
+			f.selected = geom.Clamp(f.selected+delta, 0, len(f.getOptions())-1)
+			return f, f.handlePreview()
 		case taro.KeyEnter:
 			if f.selected < len(f.getOptions()) {
 				option := f.getOptions()[f.selected]
@@ -99,71 +185,13 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	return f, tea.Batch(cmds...)
 }
 
-func (f *Fuzzy) View(state *tty.State) {
-	basic := f.render.NewStyle().
-		Background(lipgloss.Color("#20111B")).
-		Foreground(lipgloss.Color("#D5CCBA")).
-		Width(20)
-
-	inactive := basic.Copy().Background(lipgloss.Color("#968C83"))
-	active := basic.Copy().
-		Background(lipgloss.Color("#EAA549")).
-		Foreground(lipgloss.Color("#20111B"))
-
-	// TODO(cfoust): 09/20/23 just use slices.Reverse in go 1.21
-	var lines []string
-	shouldInvert := f.location.R > (f.size.R / 2)
-
-	// first, the options
-	for i, match := range f.getOptions() {
-		var rendered string
-		if f.selected == i {
-			rendered = active.Render(match.Text)
-		} else {
-			rendered = inactive.Render(match.Text)
-		}
-
-		if shouldInvert {
-			lines = append([]string{rendered}, lines...)
-		} else {
-			lines = append(lines, rendered)
-		}
-	}
-
-	// then the text input
-	input := basic.Render(f.textInput.View())
-	if shouldInvert {
-		lines = append(lines, input)
-	} else {
-		lines = append([]string{input}, lines...)
-	}
-
-	f.textInput.Cursor.Style = f.render.NewStyle().
-		Background(lipgloss.Color("#EAA549"))
-
-	output := lipgloss.JoinVertical(lipgloss.Left, lines...)
-
-	offset := 0
-	if shouldInvert {
-		offset += lipgloss.Height(output) - 1
-	}
-
-	f.render.RenderAt(
-		state,
-		geom.Max(f.location.R-offset, 0),
-		f.location.C,
-		output,
-	)
-
-	// the text input provides its own cursor
-	state.CursorVisible = false
-}
-
 func NewFuzzy(
 	ctx context.Context,
-	info screen.RenderContext,
+	bg image.Image,
 	options []Option,
 	location geom.Vec2,
+	tree *tree.Tree,
+	client *server.Client,
 	result chan<- interface{},
 ) *taro.Program {
 	ti := textinput.New()
@@ -173,12 +201,21 @@ func NewFuzzy(
 	ti.Prompt = ""
 
 	return taro.New(ctx, &Fuzzy{
+		Lifetime: util.NewLifetime(ctx),
+		anim: anim.NewAnimator(
+			ctx,
+			anim.Random(),
+			bg,
+			23,
+		),
 		render:    taro.NewRenderer(),
 		result:    result,
 		location:  location,
 		options:   options,
 		selected:  0,
 		textInput: ti,
+		tree:      tree,
+		client:    client,
 	})
 }
 

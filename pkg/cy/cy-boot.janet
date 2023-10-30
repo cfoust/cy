@@ -34,7 +34,7 @@
   (fn [&]
     (-?>>
       (group/children projects)
-      (map |(tuple (tree/name $) $))
+      (map |(tuple (tree/name $) ((group/children $) 0) $))
       (fzf/find)
       (group/children)
       (0) # Gets the first index, the editor
@@ -54,7 +54,7 @@
   (fn [&]
     (-?>>
       (group/children shells)
-      (map |(tuple (cmd/path $) $))
+      (map |(tuple (cmd/path $) $ $))
       (fzf/find)
       (pane/attach))))
 

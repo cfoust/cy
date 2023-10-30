@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/fuzzy/fzf"
 	"github.com/cfoust/cy/pkg/fuzzy/fzf/util"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux/screen/tree"
 )
 
 type Match struct {
@@ -14,16 +15,27 @@ type Match struct {
 }
 
 type Option struct {
-	Text   string
-	Chars  *util.Chars
-	Match  *Match
-	Result interface{}
+	Text string
+	// Supported types:
+	// - string: will be passed to a blank terminal
+	// - NodeID: will show in the background
+	Preview interface{}
+	Chars   *util.Chars
+	Match   *Match
+	Result  interface{}
 }
 
 type tupleInput struct {
 	_     struct{} `janet:"tuple"`
 	Text  string
 	Value *janet.Value
+}
+
+type tripleInput struct {
+	_       struct{} `janet:"tuple"`
+	Text    string
+	Preview *janet.Value
+	Value   *janet.Value
 }
 
 func createOption(text string, result interface{}) Option {
@@ -60,6 +72,37 @@ func UnmarshalOptions(input *janet.Value) (result []Option, err error) {
 					tuple.Value,
 				),
 			)
+		}
+		return
+	}
+
+	var triples []tripleInput
+	var previewNode tree.NodeID
+	var previewStr string
+	err = input.Unmarshal(&triples)
+	if err == nil {
+		for i, triple := range triples {
+			option := createOption(
+				triple.Text,
+				triple.Value,
+			)
+
+			nodeErr := triple.Preview.Unmarshal(&previewNode)
+			strErr := triple.Preview.Unmarshal(&previewStr)
+			if nodeErr != nil && strErr != nil {
+				err = fmt.Errorf("preview for choice %d had invalid type", i)
+				return
+			}
+
+			if nodeErr == nil {
+				option.Preview = previewNode
+			}
+
+			if strErr == nil {
+				option.Preview = previewStr
+			}
+
+			result = append(result, option)
 		}
 		return
 	}

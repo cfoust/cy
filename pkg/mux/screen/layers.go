@@ -90,15 +90,38 @@ func (l *Layers) NumLayers() int {
 	return len(l.layers)
 }
 
-func (l *Layers) NewLayer(ctx context.Context, screen Screen, isInteractive bool, isOpaque bool) *Layer {
+type LayerOption func(*Layer)
+
+func WithInteractive(layer *Layer) {
+	layer.isInteractive = true
+}
+
+func WithOpaque(layer *Layer) {
+	layer.isOpaque = true
+}
+
+type Position int
+
+const (
+	PositionTop Position = iota
+	PositionBottom
+)
+
+func (l *Layers) NewLayer(ctx context.Context, screen Screen, pos Position, options ...LayerOption) *Layer {
 	layer := &Layer{
-		Screen:        screen,
-		isInteractive: isInteractive,
-		isOpaque:      isOpaque,
+		Screen: screen,
+	}
+
+	for _, option := range options {
+		option(layer)
 	}
 
 	l.Lock()
-	l.layers = append(l.layers, layer)
+	if pos == PositionTop {
+		l.layers = append(l.layers, layer)
+	} else {
+		l.layers = append([]*Layer{layer}, l.layers...)
+	}
 	l.Unlock()
 
 	go func() {
