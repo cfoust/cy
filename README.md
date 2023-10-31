@@ -10,7 +10,7 @@
 
 <p align="center">
     <a target="_blank" href="https://github.com/cfoust/cy/actions/workflows/ci.yml">
-        <img src="ttps://github.com/cfoust/cy/actions/workflows/ci.yml/badge.svg" />
+        <img src="https://github.com/cfoust/cy/actions/workflows/ci.yml/badge.svg" />
     </a>
     <img src="https://img.shields.io/badge/Go-00ADD8?logo=go&logoColor=white" alt="Go Language" />
     <!-- LICENSE -->
