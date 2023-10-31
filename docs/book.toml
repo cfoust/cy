@@ -1,0 +1,6 @@
+[book]
+authors = ["Caleb Foust"]
+language = "en"
+multilingual = false
+src = "src"
+title = "cy documentation"
