@@ -45,12 +45,14 @@ func (r *Replay) setIndex(index, indexByte int, updateTime bool) {
 				toByte = geom.Clamp(toByte, 0, len(data)-1)
 			}
 
-			if fromIndex == toIndex {
-				data = data[fromByte+1 : toByte+1]
-			} else if fromIndex == i {
-				data = data[fromByte+1:]
-			} else if toIndex == i {
-				data = data[:toByte+1]
+			if len(data) > 0 {
+				if fromIndex == toIndex {
+					data = data[fromByte+1 : toByte+1]
+				} else if fromIndex == i {
+					data = data[fromByte+1:]
+				} else if toIndex == i {
+					data = data[:toByte+1]
+				}
 			}
 
 			r.terminal.Write(data)
