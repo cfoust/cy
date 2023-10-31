@@ -127,7 +127,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return f, taro.WaitScreens(f.Ctx(), f.anim)
 	case matchResult:
 		f.filtered = msg.Filtered
-		f.selected = geom.Max(geom.Min(f.selected, len(f.getOptions())-1), 0)
+		f.selected = geom.Clamp(f.selected, 0, len(f.getOptions())-1)
 		return f, nil
 	case tea.WindowSizeMsg:
 		size := geom.Size{
@@ -147,7 +147,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			if f.isInverted() {
 				delta = 1
 			}
-			f.selected = geom.Clamp(f.selected+delta, 0, len(f.getOptions()))
+			f.selected = geom.Clamp(f.selected+delta, 0, len(f.getOptions())-1)
 			return f, f.handlePreview()
 		case taro.KeyDown, taro.KeyCtrlJ:
 			f.haveMoved = true
