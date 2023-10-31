@@ -10,6 +10,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/util"
 )
@@ -27,8 +28,33 @@ func (c *Client) execute(code string) error {
 	})
 }
 
-var KEYWORD_ROOT = janet.Keyword("root")
-var KEYWORD_REPLAY = janet.Keyword("replay")
+var (
+	KEYWORD_ROOT   = janet.Keyword("root")
+	KEYWORD_REPLAY = janet.Keyword("replay")
+
+	KEYWORD_INFO  = janet.Keyword("info")
+	KEYWORD_WARN  = janet.Keyword("warn")
+	KEYWORD_ERROR = janet.Keyword("error")
+)
+
+func resolveLevel(level *janet.Value) (toasts.ToastLevel, error) {
+	err := level.Unmarshal(&KEYWORD_INFO)
+	if err == nil {
+		return toasts.ToastLevelInfo, nil
+	}
+
+	err = level.Unmarshal(&KEYWORD_WARN)
+	if err == nil {
+		return toasts.ToastLevelWarn, nil
+	}
+
+	err = level.Unmarshal(&KEYWORD_ERROR)
+	if err == nil {
+		return toasts.ToastLevelError, nil
+	}
+
+	return toasts.ToastLevelError, fmt.Errorf("you must provide one of :info, :warn, or :error")
+}
 
 func (c *Cy) resolveGroup(target *janet.Value) (*tree.Group, error) {
 	// first try keyword
@@ -210,6 +236,25 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 				return
 			}
 			client.margins.SetSize(size)
+		},
+		"cy/toast": func(context interface{}, level *janet.Value, message string) error {
+			defer level.Free()
+
+			toastLevel, err := resolveLevel(level)
+			if err != nil {
+				return err
+			}
+
+			client, ok := context.(*Client)
+			if !ok {
+				return fmt.Errorf("unable to detect client")
+			}
+
+			client.toaster.Send(toasts.Toast{
+				Level:   toastLevel,
+				Message: message,
+			})
+			return nil
 		},
 	}
 

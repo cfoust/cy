@@ -15,8 +15,10 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
+	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/rs/zerolog/log"
@@ -41,6 +43,7 @@ type Client struct {
 	buffer string
 
 	muxClient *server.Client
+	toaster   *taro.Program
 	margins   *screen.Margins
 	// Layers inside of the margins
 	// This is for rendering content that should obey the user's margin
@@ -320,6 +323,13 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		c.margins,
 		screen.PositionTop,
 		screen.WithInteractive,
+	)
+
+	c.toaster = toasts.New(c.Ctx())
+	c.outerLayers.NewLayer(
+		c.Ctx(),
+		c.toaster,
+		screen.PositionTop,
 	)
 
 	c.raw = emu.New(emu.WithSize(handshake.Size))
