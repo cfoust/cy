@@ -2,6 +2,7 @@ package cy
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
+	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
@@ -41,6 +43,20 @@ type Cy struct {
 	clients []*Client
 
 	log zerolog.Logger
+
+	configPath string
+
+	toast        *ToastLogger
+	queuedToasts []toasts.Toast
+}
+
+func (c *Cy) loadUserConfig(ctx context.Context) {
+	err := c.janet.ExecuteFile(ctx, c.configPath)
+	if err != nil {
+		c.log.Error().Err(err).Msg("failed to execute config")
+		message := fmt.Sprintf("an error occurred while loading %s: %s", c.configPath, err.Error())
+		c.toast.Error(message)
+	}
 }
 
 // Get the pane that new clients attach to. If there are other clients, we
@@ -91,6 +107,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 		muxServer:   server.New(),
 		replayBinds: replayBinds,
 	}
+	cy.toast = NewToastLogger(cy.sendToast)
 
 	go cy.pollReplayEvents(cy.Ctx(), replayEvents)
 
@@ -122,10 +139,8 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	cy.janet = vm
 
 	if len(options.Config) != 0 {
-		err := vm.ExecuteFile(ctx, options.Config)
-		if err != nil {
-			cy.log.Error().Err(err).Str("path", options.Config).Msg("failed to execute config")
-		}
+		cy.configPath = options.Config
+		cy.loadUserConfig(ctx)
 	}
 
 	return &cy, nil

@@ -43,6 +43,7 @@ type Client struct {
 	buffer string
 
 	muxClient *server.Client
+	toast     *ToastLogger
 	toaster   *taro.Program
 	margins   *screen.Margins
 	// Layers inside of the margins
@@ -138,6 +139,21 @@ func (c *Cy) pollReplayEvents(ctx context.Context, events <-chan tree.ReplayEven
 	}
 }
 
+func (c *Client) runAction(event bind.BindEvent) {
+	err := event.Action.Callback.CallContext(
+		c.Ctx(),
+		c,
+	)
+	if err != nil && err != context.Canceled {
+		log.Error().Err(err).Msgf("failed to run callback")
+		c.toast.Error(fmt.Sprintf(
+			"an error occurred while running %+v: %s",
+			event.Sequence,
+			err.Error(),
+		))
+	}
+}
+
 func (c *Client) pollEvents() {
 	for {
 		select {
@@ -146,15 +162,7 @@ func (c *Client) pollEvents() {
 		case event := <-c.binds.Recv():
 			switch event := event.(type) {
 			case bind.BindEvent:
-				go func() {
-					err := event.Action.Callback.CallContext(
-						c.Ctx(),
-						c,
-					)
-					if err != nil && err != context.Canceled {
-						log.Error().Err(err).Msgf("failed to run callback")
-					}
-				}()
+				go c.runAction(event)
 			case bind.RawEvent:
 				// TODO(cfoust): 07/18/23 error handling
 				c.renderer.Write(event.Data)
@@ -206,6 +214,8 @@ func (c *Cy) pollClient(ctx context.Context, client *Client) {
 	}
 
 	client.Attach(node)
+
+	c.sendQueuedToasts()
 
 	for {
 		select {
@@ -326,6 +336,7 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	)
 
 	c.toaster = toasts.New(c.Ctx())
+	c.toast = NewToastLogger(c.sendToast)
 	c.outerLayers.NewLayer(
 		c.Ctx(),
 		c.toaster,

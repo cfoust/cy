@@ -51,7 +51,7 @@ func (t *Toaster) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case Toast:
 		t.toasts = append(t.toasts, msg)
 		return t, func() tea.Msg {
-			time.Sleep(5 * time.Second)
+			time.Sleep(10 * time.Second)
 			return popToast{}
 		}
 	}

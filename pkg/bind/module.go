@@ -19,8 +19,9 @@ type Event interface{}
 
 // An action was triggered
 type ActionEvent[T any] struct {
-	Action T
-	Source *trie.Trie[T]
+	Action   T
+	Source   *trie.Trie[T]
+	Sequence []string
 }
 
 type Match[T any] struct {
@@ -146,8 +147,9 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) {
 		// Exact match, let's stop
 		e.clearState()
 		e.out <- ActionEvent[T]{
-			Action: value,
-			Source: scope,
+			Action:   value,
+			Source:   scope,
+			Sequence: sequence,
 		}
 		return
 	}
