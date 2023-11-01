@@ -22,6 +22,19 @@ func (c *Cy) sendQueuedToasts() {
 	}
 }
 
+// Sends a toast to every client but the provided one.
+func (c *Cy) broadcastToast(except *Client, toast toasts.Toast) {
+	c.RLock()
+	defer c.RUnlock()
+	for _, client := range c.clients {
+		if client == except {
+			continue
+		}
+		client.toast.Send(toast)
+	}
+}
+
+// Sends a toast to all clients.
 func (c *Client) sendToast(toast toasts.Toast) {
 	c.toaster.Send(toast)
 }

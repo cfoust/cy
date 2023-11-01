@@ -217,6 +217,10 @@ func (c *Cy) pollClient(ctx context.Context, client *Client) {
 
 	c.sendQueuedToasts()
 
+	c.broadcastToast(client, toasts.Toast{
+		Message: "a client joined the server",
+	})
+
 	for {
 		select {
 		case <-conn.Ctx().Done():
