@@ -17,12 +17,6 @@ func fileExists(path string) bool {
 func findConfig() string {
 	roots := make([]string, 0)
 
-	// $XDG_CONFIG_HOME/cy/cyrc.janet
-	// $XDG_CONFIG_HOME/cy.janet
-	// $HOME/.config/cy/cy.janet
-	// $HOME/cy/cy.janet
-	// $HOME/.cy.janet
-
 	if xdgConfig, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
 		roots = append(roots, xdgConfig)
 	}
@@ -41,6 +35,10 @@ func findConfig() string {
 		}
 
 		if path := filepath.Join(root, "cyrc.janet"); fileExists(path) {
+			return path
+		}
+
+		if path := filepath.Join(root, ".cy.janet"); fileExists(path) {
 			return path
 		}
 	}

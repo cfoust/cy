@@ -59,7 +59,7 @@ func (t *Toaster) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	return t, nil
 }
 
-const TOAST_WIDTH = 30
+const TOAST_WIDTH = 45
 
 func (t *Toaster) View(state *tty.State) {
 	size := state.Image.Size()
@@ -70,11 +70,13 @@ func (t *Toaster) View(state *tty.State) {
 	}
 
 	border := t.render.NewStyle().
-		Border(lipgloss.NormalBorder()).
+		Border(lipgloss.RoundedBorder()).
 		BorderTop(true).
 		BorderLeft(true).
 		BorderRight(true).
 		BorderBottom(true).
+		Background(lipgloss.Color("0")).
+		BorderBackground(lipgloss.Color("0")).
 		Width(TOAST_WIDTH)
 
 	var blocks []string
