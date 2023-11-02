@@ -59,6 +59,7 @@ func TestAction(t *testing.T) {
 	assert.Equal(t, ActionEvent[int]{
 		Action: 2,
 		Source: scope,
+		Sequence: []string{"ctrl+a"},
 	}, event)
 }
 

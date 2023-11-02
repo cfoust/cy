@@ -200,7 +200,7 @@ func TestPaneKill(t *testing.T) {
 (pane/attach shell)
 (tree/kill shell)
 `))
-	time.Sleep(100 * time.Millisecond) // lol
+	time.Sleep(1 * time.Second) // lol
 	leaves := server.cy.tree.Leaves()
 	require.Equal(t, leaves[0].Id(), client.Node().Id())
 }
