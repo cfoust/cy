@@ -340,9 +340,10 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		screen.WithInteractive,
 	)
 
+	splashScreen := splash.New(c.Ctx(), handshake.Size)
 	c.outerLayers.NewLayer(
-		c.Ctx(),
-		splash.New(c.Ctx(), handshake.Size),
+		splashScreen.Ctx(),
+		splashScreen,
 		screen.PositionTop,
 		screen.WithOpaque,
 		screen.WithInteractive,

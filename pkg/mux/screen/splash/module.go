@@ -32,6 +32,8 @@ func (s *Splash) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg.(type) {
 	case taro.ScreenUpdate:
 		return s, taro.WaitScreens(s.Ctx(), s.anim)
+	case taro.KeyMsg:
+		return s, tea.Quit
 	}
 
 	return s, nil
@@ -63,11 +65,15 @@ func (s *Splash) View(state *tty.State) {
 		"",
 		"by Caleb Foust",
 		"cy is open source and freely distributable",
+		"",
+		s.render.NewStyle().
+			Foreground(lipgloss.Color("2")).
+			Render("press any key to continue"),
 	)
 
 	boxStyle := s.render.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#874BFD")).
+		BorderForeground(lipgloss.Color("7")).
 		BorderTop(true).
 		BorderLeft(true).
 		BorderRight(true).
