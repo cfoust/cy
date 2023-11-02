@@ -15,6 +15,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
+	"github.com/cfoust/cy/pkg/mux/screen/splash"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
@@ -336,6 +337,14 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		c.Ctx(),
 		c.margins,
 		screen.PositionTop,
+		screen.WithInteractive,
+	)
+
+	c.outerLayers.NewLayer(
+		c.Ctx(),
+		splash.New(c.Ctx(), handshake.Size),
+		screen.PositionTop,
+		screen.WithOpaque,
 		screen.WithInteractive,
 	)
 

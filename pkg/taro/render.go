@@ -53,9 +53,12 @@ func NewRenderer() *Renderer {
 	term := emu.New()
 	term.Write([]byte("\033[20h")) // set CRLF mode
 
+	renderer := lipgloss.NewRenderer(term)
+	renderer.SetColorProfile(termenv.TrueColor)
+
 	return &Renderer{
 		term:     term,
 		info:     info,
-		Renderer: lipgloss.NewRenderer(term, termenv.WithProfile(termenv.TrueColor)),
+		Renderer: renderer,
 	}
 }
