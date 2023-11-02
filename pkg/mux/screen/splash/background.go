@@ -27,7 +27,7 @@ func generateBackground(render *taro.Renderer, size geom.Size) image.Image {
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	for i := 0; i < 10+r.Intn(25); i++ {
+	for i := 0; i < 20+r.Intn(25); i++ {
 		style := render.
 			NewStyle().
 			Foreground(lipgloss.Color(

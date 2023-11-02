@@ -28,11 +28,10 @@ builds:
     binary: cy
     ldflags:
       - -w -s
-      - -X github.com/bytebase/bytebase/backend/bin/server/cmd.version={{.Version}}
-      - -X github.com/bytebase/bytebase/backend/bin/server/cmd.goversion=${GO_VERSION}
-      - -X github.com/bytebase/bytebase/backend/bin/server/cmd.gitcommit={{.Commit}}
-      - -X github.com/bytebase/bytebase/backend/bin/server/cmd.buildtime={{.Timestamp}}
-      - -X github.com/bytebase/bytebase/backend/bin/server/cmd.builduser=goreleaser
+      - -X github.com/cfoust/cy/info.Version={{.Version}}
+      - -X github.com/cfoust/cy/info.GoVersion=${GO_VERSION}
+      - -X github.com/cfoust/cy/info.GitCommit={{.Commit}}
+      - -X github.com/cfoust/cy/info.BuildTime={{.Timestamp}}
     tags:
       - release
       - embed_frontend
