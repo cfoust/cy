@@ -196,7 +196,11 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 				return nil, ctx.Err()
 			}
 		},
-		"key/bind": func(target *janet.Value, sequence []string, doc string, callback *janet.Function) error {
+		"key/new": func(doc string, callback *janet.Function) error {
+			c.log.Info().Msgf("registered action: %+v", doc)
+			return nil
+		},
+		"key/bind": func(target *janet.Value, sequence []string, callback *janet.Function) error {
 			defer target.Free()
 
 			var scope *bind.BindScope
@@ -215,8 +219,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 			scope.Set(
 				sequence,
 				bind.Action{
-					Description: doc,
-					Callback:    callback,
+					Callback: callback,
 				},
 			)
 

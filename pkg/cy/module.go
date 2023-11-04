@@ -122,11 +122,12 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	)
 
 	logs := stream.NewReader()
-	t.Root().NewPane(
+	logPane := t.Root().NewPane(
 		cy.Ctx(),
 		logs,
 		geom.DEFAULT_SIZE,
 	)
+	logPane.SetName("logs")
 
 	consoleWriter := zerolog.ConsoleWriter{Out: logs.Writer(), TimeFormat: time.RFC3339}
 	cy.log = log.Output(zerolog.MultiLevelWriter(consoleWriter, os.Stdout))
