@@ -140,7 +140,7 @@ func parseTimeDelta(delta []string) (result time.Duration) {
 	return
 }
 
-func (r *Replay) setTimeDelta(delta time.Duration) {
+func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) {
 	if len(r.events) == 0 {
 		return
 	}
@@ -190,7 +190,7 @@ func (r *Replay) setTimeDelta(delta time.Duration) {
 		return
 	}
 
-	if !r.skipInactivity {
+	if !skipInactivity {
 		r.currentTime = newTime
 		return
 	}

@@ -115,7 +115,7 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.searchInput.Reset()
 
 			if match := TIME_DELTA_REGEX.FindStringSubmatch(value); match != nil {
-				r.setTimeDelta(parseTimeDelta(match))
+				r.setTimeDelta(parseTimeDelta(match), false)
 				return r, nil
 			}
 

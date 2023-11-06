@@ -321,7 +321,6 @@ func TestTimeJump(t *testing.T) {
 	r, i := createTest(e)
 	i(size)
 	r.gotoIndex(1, -1)
-	r.skipInactivity = false
 	i(ActionSearchForward, "+5m", "enter")
 	require.Equal(t, e[0].Stamp.Add(5*time.Minute), r.currentTime)
 	i(ActionSearchForward, "-5m", "enter")

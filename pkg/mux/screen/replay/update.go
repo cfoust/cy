@@ -28,7 +28,11 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return r, nil
 		}
 
-		r.setTimeDelta(time.Duration(int64(time.Now().Sub(msg.Since)) * int64(r.playbackRate)))
+		delta := int64(time.Now().Sub(msg.Since)) * int64(r.playbackRate)
+		r.setTimeDelta(
+			time.Duration(delta),
+			r.skipInactivity,
+		)
 
 		return r.scheduleUpdate()
 	case tea.WindowSizeMsg:
