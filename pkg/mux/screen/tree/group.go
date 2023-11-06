@@ -48,6 +48,10 @@ func (g *Group) removeNode(node Node) {
 	g.Unlock()
 }
 
+func (g *Group) Leaves() []Node {
+	return getLeaves(g)
+}
+
 func (g *Group) NewPane(
 	ctx context.Context,
 	stream mux.Stream,

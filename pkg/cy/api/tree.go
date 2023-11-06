@@ -46,6 +46,19 @@ func (g *GroupModule) Children(parentId tree.NodeID) ([]tree.NodeID, error) {
 	return nodes, nil
 }
 
+func (g *GroupModule) Leaves(parentId tree.NodeID) ([]tree.NodeID, error) {
+	group, ok := g.Tree.GroupById(parentId)
+	if !ok {
+		return nil, fmt.Errorf("node not found: %d", parentId)
+	}
+
+	nodes := make([]tree.NodeID, 0)
+	for _, child := range group.Leaves() {
+		nodes = append(nodes, child.Id())
+	}
+	return nodes, nil
+}
+
 type PaneModule struct {
 	Tree *tree.Tree
 }
@@ -124,6 +137,30 @@ func (t *TreeModule) Name(id tree.NodeID) *string {
 
 	name := node.Name()
 	return &name
+}
+
+func (t *TreeModule) Path(id tree.NodeID) *string {
+	node, ok := t.Tree.NodeById(id)
+	if !ok {
+		return nil
+	}
+
+	path := t.Tree.PathTo(node)
+	if path == nil {
+		return nil
+	}
+
+	var result string
+	for i, node := range path {
+		// skip the root node
+		if i == 0 {
+			continue
+		}
+
+		result += fmt.Sprintf("/%s", node.Name())
+	}
+
+	return &result
 }
 
 func (t *TreeModule) Parent(id tree.NodeID) *tree.NodeID {

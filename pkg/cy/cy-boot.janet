@@ -85,6 +85,15 @@
   (pane/attach next))
 
 (key/def
+  cy/jump-pane
+  "jump to a pane"
+  (-?>>
+    (group/leaves (tree/root))
+    (map |(tuple (tree/path $) $ $))
+    (fzf/find)
+    (pane/attach)))
+
+(key/def
   cy/kill-current-pane
   "kill the current pane"
   (tree/kill (pane/current)))
@@ -125,6 +134,7 @@
 (key/bind :root [prefix "l"] ot/jump-shell)
 (key/bind :root ["ctrl+l"] ot/next-pane)
 
+(key/bind :root [prefix ";"] cy/jump-pane)
 (key/bind :root [prefix "ctrl+p"] cy/command-palette)
 (key/bind :root [prefix "x"] cy/kill-current-pane)
 (key/bind :root [prefix "g"] cy/toggle-margins)
