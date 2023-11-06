@@ -179,4 +179,3 @@
 (key/bind :replay ["!"] (fn [&] (replay/time-playback-rate -1)))
 (key/bind :replay ["@"] (fn [&] (replay/time-playback-rate -2)))
 (key/bind :replay ["#"] (fn [&] (replay/time-playback-rate -5)))
-(pp actions)

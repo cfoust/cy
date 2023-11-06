@@ -257,14 +257,14 @@ func TestTime(t *testing.T) {
 	i(size)
 	r.gotoIndex(0, -1)
 	require.Equal(t, e[0].Stamp, r.currentTime)
-	r.setTimeDelta(delta)
+	r.setTimeDelta(delta, true)
 	require.Equal(t, 1, r.location.Index)
-	r.setTimeDelta(delta)
+	r.setTimeDelta(delta, true)
 	require.Equal(t, 2, r.location.Index)
 	require.Equal(t, e[2].Stamp, r.currentTime)
-	r.setTimeDelta(-delta)
+	r.setTimeDelta(-delta, true)
 	require.Equal(t, 1, r.location.Index)
-	r.setTimeDelta(-delta)
+	r.setTimeDelta(-delta, true)
 	require.Equal(t, 0, r.location.Index)
 }
 
