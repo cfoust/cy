@@ -3,12 +3,22 @@
 (def projects (group/new (tree/root) :name "projects"))
 (def shells (group/new (tree/root) :name "shells"))
 
+(def- actions @[])
+
 (defmacro key/def
   "register an action"
   [name docstring & body]
   ~(upscope
      (def ,name (fn ,name [&] ,;body))
-     (,key/new ,docstring ,name)))
+     (,array/push actions [,docstring ,name])))
+
+(key/def
+  cy/command-palette
+  "open command palette"
+  (-?>>
+    actions
+    (fzf/find)
+    (apply)))
 
 (key/def
   ot/new-shell
@@ -115,13 +125,13 @@
 (key/bind :root [prefix "l"] ot/jump-shell)
 (key/bind :root ["ctrl+l"] ot/next-pane)
 
+(key/bind :root [prefix "ctrl+p"] cy/command-palette)
 (key/bind :root [prefix "x"] cy/kill-current-pane)
 (key/bind :root [prefix "g"] cy/toggle-margins)
 (key/bind :root [prefix "1"] cy/margins-80)
 (key/bind :root [prefix "2"] cy/margins-160)
 (key/bind :root [prefix "+"] cy/margins-smaller)
 (key/bind :root [prefix "-"] cy/margins-bigger)
-
 #(key/bind :root [prefix "q"] "kill the cy server" (fn [&] (cy/kill-server)))
 #(key/bind :root [prefix "d"] "detach from the cy server" (fn [&] (cy/detach)))
 #(key/bind :root [prefix "p"] "enter replay mode" (fn [&] (cy/replay)))
@@ -130,12 +140,6 @@
 (key/bind :root [prefix "d"] cy/detach)
 (key/bind :root [prefix "p"] cy/replay)
 (key/bind :root [prefix "P"] cy/paste)
-
-# should actions just be functions with docstrings?
-#(key/action increase-margins "increase margins by 5 columns"
-#(def [lines cols] (frame/size))
-#(frame/set-size [lines (- cols 10)]))
-#(key/bind [prefix "-"] increase-margins)
 
 (key/bind :replay ["q"] replay/quit)
 (key/bind :replay ["ctrl+c"] replay/quit)
@@ -165,3 +169,4 @@
 (key/bind :replay ["!"] (fn [&] (replay/time-playback-rate -1)))
 (key/bind :replay ["@"] (fn [&] (replay/time-playback-rate -2)))
 (key/bind :replay ["#"] (fn [&] (replay/time-playback-rate -5)))
+(pp actions)
