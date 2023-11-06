@@ -1,6 +1,8 @@
 package replay
 
 import (
+	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/cfoust/cy/pkg/emu"
@@ -100,6 +102,44 @@ func (r *Replay) scheduleUpdate() (taro.Model, tea.Cmd) {
 	}
 }
 
+var (
+	TIME_DELTA_REGEX = regexp.MustCompile("^(?P<sign>[+-])((?P<days>\\d+)d)?((?P<hours>\\d+)h)?((?P<min>\\d+)m)?((?P<sec>\\d+)s)?$")
+)
+
+func parseTimeDelta(delta []string) (result time.Duration) {
+	sign := delta[TIME_DELTA_REGEX.SubexpIndex("sign")]
+	days := delta[TIME_DELTA_REGEX.SubexpIndex("days")]
+	hours := delta[TIME_DELTA_REGEX.SubexpIndex("hours")]
+	min := delta[TIME_DELTA_REGEX.SubexpIndex("min")]
+	sec := delta[TIME_DELTA_REGEX.SubexpIndex("sec")]
+
+	if len(days) > 0 {
+		value, _ := strconv.Atoi(days)
+		result += time.Duration(value) * 24 * time.Hour
+	}
+
+	if len(hours) > 0 {
+		value, _ := strconv.Atoi(hours)
+		result += time.Duration(value) * time.Hour
+	}
+
+	if len(min) > 0 {
+		value, _ := strconv.Atoi(min)
+		result += time.Duration(value) * time.Minute
+	}
+
+	if len(sec) > 0 {
+		value, _ := strconv.Atoi(sec)
+		result += time.Duration(value) * time.Second
+	}
+
+	if sign == "-" {
+		result *= -1
+	}
+
+	return
+}
+
 func (r *Replay) setTimeDelta(delta time.Duration) {
 	if len(r.events) == 0 {
 		return
@@ -147,6 +187,11 @@ func (r *Replay) setTimeDelta(delta time.Duration) {
 	if currentIndex != nextIndex {
 		r.currentTime = newTime
 		r.setIndex(nextIndex, -1, false)
+		return
+	}
+
+	if !r.skipInactivity {
+		r.currentTime = newTime
 		return
 	}
 

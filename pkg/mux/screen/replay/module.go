@@ -32,6 +32,9 @@ type Replay struct {
 	playbackRate int
 	currentTime  time.Time
 
+	// Whether moving in time should skip inactivity
+	skipInactivity bool
+
 	// The location of Replay in time
 	// R: the index of the displayed event in `events`
 	// C: the byte within it
@@ -138,13 +141,14 @@ func newReplay(
 	ti.Width = 20
 	ti.Prompt = ""
 	m := &Replay{
-		render:       taro.NewRenderer(),
-		events:       events,
-		terminal:     emu.New(),
-		searchInput:  ti,
-		playbackRate: 1,
-		binds:        binds,
-		emit:         emit,
+		render:         taro.NewRenderer(),
+		events:         events,
+		terminal:       emu.New(),
+		searchInput:    ti,
+		playbackRate:   1,
+		binds:          binds,
+		emit:           emit,
+		skipInactivity: true,
 	}
 	m.gotoIndex(-1, -1)
 	return m

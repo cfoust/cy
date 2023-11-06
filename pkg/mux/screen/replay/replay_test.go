@@ -308,3 +308,22 @@ func TestReadString(t *testing.T) {
 		geom.Vec2{R: 1, C: 3},
 	))
 }
+
+func TestTimeJump(t *testing.T) {
+	hour := 3600 * time.Second
+	size := geom.Size{R: 5, C: 10}
+	e := sim().
+		Add(size).
+		AddTime(0, "test").
+		AddTime(hour, "test").
+		Events()
+
+	r, i := createTest(e)
+	i(size)
+	r.gotoIndex(1, -1)
+	r.skipInactivity = false
+	i(ActionSearchForward, "+5m", "enter")
+	require.Equal(t, e[0].Stamp.Add(5*time.Minute), r.currentTime)
+	i(ActionSearchForward, "-5m", "enter")
+	require.Equal(t, e[0].Stamp, r.currentTime)
+}

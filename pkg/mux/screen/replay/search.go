@@ -112,8 +112,13 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 		switch msg.Type {
 		case taro.KeyEnter:
 			value := r.searchInput.Value()
-
 			r.searchInput.Reset()
+
+			if match := TIME_DELTA_REGEX.FindStringSubmatch(value); match != nil {
+				r.setTimeDelta(parseTimeDelta(match))
+				return r, nil
+			}
+
 			r.isWaiting = true
 			r.mode = ModeTime
 			r.matches = make([]search.SearchResult, 0)
