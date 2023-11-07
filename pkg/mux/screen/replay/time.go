@@ -57,7 +57,7 @@ func (r *Replay) setIndex(index, indexByte int, updateTime bool) {
 				}
 			}
 
-			r.terminal.Write(data)
+			r.terminal.Parse(data)
 		case P.SizeMessage:
 			r.terminal.Resize(
 				e.Columns,
