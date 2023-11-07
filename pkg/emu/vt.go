@@ -13,7 +13,10 @@ type Terminal interface {
 	// View displays the virtual terminal.
 	View
 
-	// Write parses input and writes terminal changes to state.
+	// Parse parses input and writes terminal changes to state.
+	Parse(p []byte) (n int, err error)
+
+	// Write does the same as Parse, but locks first.
 	io.Writer
 }
 
@@ -50,7 +53,13 @@ type View interface {
 	// History returns the scrollback buffer.
 	History() []Line
 
+	// ToggleHistory allows you to enable and disable saving lines to the
+	// scrollback buffer..
+	EnableHistory(enabled bool)
+
 	LastCell() (cell Cell, changed bool)
+
+	ScreenChanged() bool
 }
 
 type TerminalOption func(*TerminalInfo)

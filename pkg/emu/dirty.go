@@ -22,3 +22,7 @@ func (t *State) resetChanges() {
 	t.dirty = make(map[int]bool)
 	t.changed = 0
 }
+
+func (t *State) ScreenChanged() bool {
+	return t.changed&ChangedScreen != 0
+}

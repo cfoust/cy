@@ -27,16 +27,20 @@ func (t *terminal) init(cols, rows int) {
 }
 
 // Write parses input and writes terminal changes to state.
-func (t *terminal) Write(p []byte) (int, error) {
-	t.Lock()
+func (t *terminal) Parse(p []byte) (int, error) {
 	var written int
 	for _, b := range p {
 		t.parser.Advance(b)
 		written++
 	}
-	t.Unlock()
-
 	return written, nil
+}
+
+func (t *terminal) Write(p []byte) (int, error) {
+	t.Lock()
+	w, err := t.Parse(p)
+	t.Unlock()
+	return w, err
 }
 
 func fullRuneBuffered(br *bufio.Reader) bool {

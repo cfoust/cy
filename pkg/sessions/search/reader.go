@@ -23,6 +23,9 @@ type ScreenReader struct {
 	// The location of the next rune to be read
 	next geom.Vec2
 
+	// The size of the terminal
+	size geom.Vec2
+
 	// Stores the on-screen locations of every rune read so that we can map
 	// string indices to screen locations
 	locs []geom.Vec2
@@ -38,8 +41,9 @@ func (s *ScreenReader) Reset(next geom.Vec2) {
 }
 
 // Resize the location mapping.
-func (s *ScreenReader) Resize(size int) {
-	s.locs = make([]geom.Vec2, size)
+func (s *ScreenReader) Resize(size geom.Vec2) {
+	s.locs = make([]geom.Vec2, size.R*size.C)
+	s.size = size
 }
 
 func (s *ScreenReader) GetLocation(index int) geom.Vec2 {
@@ -51,9 +55,8 @@ func (s *ScreenReader) NumRead() int {
 }
 
 func (s *ScreenReader) ReadRune() (r rune, size int, err error) {
-	cols, rows := s.term.Size()
 	next := s.next
-	if next.R >= rows || next.R < 0 || next.C < 0 || next.C > cols {
+	if next.R >= s.size.R || next.R < 0 || next.C < 0 || next.C > s.size.C {
 		return 0, 0, io.EOF
 	}
 
@@ -68,7 +71,7 @@ func (s *ScreenReader) ReadRune() (r rune, size int, err error) {
 	s.next.C += w
 
 	// still on same line
-	if s.next.C < cols {
+	if s.next.C < s.size.C {
 		return
 	}
 
@@ -79,7 +82,7 @@ func (s *ScreenReader) ReadRune() (r rune, size int, err error) {
 	return
 }
 
-func NewScreenReader(term emu.Terminal, start geom.Vec2, initialSize int) *ScreenReader {
+func NewScreenReader(term emu.Terminal, start geom.Vec2, initialSize geom.Vec2) *ScreenReader {
 	s := &ScreenReader{
 		term:  term,
 		start: start,

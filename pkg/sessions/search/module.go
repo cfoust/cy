@@ -79,8 +79,9 @@ func Search(events []sessions.Event, pattern string) (results []SearchResult, er
 	}
 
 	term := emu.New()
+	term.EnableHistory(false)
 
-	reader := NewScreenReader(term, geom.Vec2{}, geom.DEFAULT_SIZE.R*geom.DEFAULT_SIZE.C)
+	reader := NewScreenReader(term, geom.Vec2{}, geom.DEFAULT_SIZE)
 
 	// The partial matches we're tracking
 	var candidates, newCandidates []geom.Vec2
@@ -95,7 +96,7 @@ func Search(events []sessions.Event, pattern string) (results []SearchResult, er
 				resize.Columns,
 				resize.Rows,
 			)
-			reader.Resize(resize.Columns * resize.Rows)
+			reader.Resize(geom.Vec2{C: resize.Columns, R: resize.Rows})
 
 			// TODO(cfoust): 08/24/23 clear all matches and
 			// candidates, scan every cell for candidates
@@ -109,9 +110,11 @@ func Search(events []sessions.Event, pattern string) (results []SearchResult, er
 			newMatches = make([]SearchResult, 0)
 
 			// Advance one byte at a time
-			term.Write(output.Data[offset : offset+1])
+			term.Parse(output.Data[offset : offset+1])
 
-			// TODO(cfoust): 08/25/23 if ChangeFlag is 0, don't bother
+			if !term.ScreenChanged() {
+				continue
+			}
 
 			address = Address{
 				Index:  index,

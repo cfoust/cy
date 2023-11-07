@@ -157,6 +157,9 @@ type State struct {
 	// the most recent cell that was `setChar`'d
 	lastCell Cell
 
+	// whether scrollingup should send lines to the scrollback buffer
+	disableHistory bool
+
 	parser *vtparser.Parser
 }
 
@@ -242,11 +245,6 @@ func (t *State) ChangeMask() ChangeFlag {
 	return t.changed
 }
 */
-
-// Changed returns true if change has occured.
-func (t *State) Changed(change ChangeFlag) bool {
-	return t.changed&change != 0
-}
 
 func (t *State) saveCursor() {
 	t.curSaved = t.cur
@@ -585,10 +583,14 @@ func (t *State) scrollDown(orig, n int) {
 	}
 }
 
+func (t *State) EnableHistory(enabled bool) {
+	t.disableHistory = !enabled
+}
+
 func (t *State) scrollUp(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
 
-	if orig == 0 && (t.mode&ModeAltScreen) == 0 {
+	if orig == 0 && !isAltMode(t.mode) && !t.disableHistory {
 		for i := 0; i < n; i++ {
 			t.history = append(t.history, copyLine(t.lines[i]))
 		}
