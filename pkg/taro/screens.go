@@ -10,7 +10,6 @@ type ScreenUpdate struct{}
 
 func WaitScreens(ctx context.Context, screens ...mux.Screen) Cmd {
 	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 
 	done := make(chan struct{})
 	for _, screen := range screens {
@@ -32,6 +31,7 @@ func WaitScreens(ctx context.Context, screens ...mux.Screen) Cmd {
 	}
 
 	return func() Msg {
+		defer cancel()
 		select {
 		case <-done:
 			return ScreenUpdate{}
