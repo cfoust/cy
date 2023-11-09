@@ -80,7 +80,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case taro.MouseMsg:
-		switch msg.Type {
+		switch msg.Button {
 		case taro.MouseWheelUp:
 			r.setScroll(r.offset.R - 1)
 		case taro.MouseWheelDown:

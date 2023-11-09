@@ -8,8 +8,6 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
-
-	"github.com/rs/zerolog/log"
 )
 
 type Terminal struct {
@@ -47,7 +45,7 @@ func (t *Terminal) Send(msg mux.Msg) {
 	case taro.MouseMsg:
 		switch mode & emu.ModeMouseMask {
 		case emu.ModeMouseX10:
-			if msg.Type != taro.MouseLeft {
+			if msg.Type != taro.MousePress {
 				return
 			}
 
@@ -57,10 +55,8 @@ func (t *Terminal) Send(msg mux.Msg) {
 			if msg.Type == taro.MouseMotion {
 				return
 			}
-			log.Info().Msgf("emu: ModeMouseButton %+v", string(msg.Bytes()))
 			input = msg.Bytes()
 		case emu.ModeMouseMotion:
-			log.Info().Msgf("emu: ModeMouseMotion %+v", string(msg.Bytes()))
 			input = msg.Bytes()
 		case 0:
 			return
