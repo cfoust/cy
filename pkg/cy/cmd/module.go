@@ -26,9 +26,12 @@ func New(
 		return nil, err
 	}
 
-	borgPath, err := sessions.GetFilename(dataDir, options.Directory)
-	if err != nil {
-		return nil, err
+	var borgPath string
+	if len(dataDir) > 0 {
+		borgPath, err = sessions.GetFilename(dataDir, options.Directory)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	recorder, err := sessions.NewRecorder(ctx, borgPath, cmd)

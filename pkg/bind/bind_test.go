@@ -29,10 +29,7 @@ func sendKeys(client *Engine[int], keys ...interface{}) {
 	}
 
 	for _, msg := range msgs {
-		client.processKey(context.Background(), input{
-			Message: msg,
-			Data:    []byte{},
-		})
+		client.processKey(context.Background(), msg)
 	}
 }
 
@@ -57,8 +54,8 @@ func TestAction(t *testing.T) {
 	<-engine.Recv()
 	event := <-engine.Recv()
 	assert.Equal(t, ActionEvent[int]{
-		Action: 2,
-		Source: scope,
+		Action:   2,
+		Source:   scope,
 		Sequence: []string{"ctrl+a"},
 	}, event)
 }

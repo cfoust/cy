@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cfoust/cy/pkg/cy/cmd"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
@@ -174,12 +175,18 @@ func TestScopes(t *testing.T) {
 	cy := server.cy
 
 	group := cy.tree.Root().NewGroup()
-	pane, err := group.NewCmd(
+	cmd, err := cmd.New(
 		server.Ctx(),
 		stream.CmdOptions{
 			Command: "/bin/bash",
 		},
-		geom.DEFAULT_SIZE,
+		"",
+		cy.replayBinds,
+	)
+	require.NoError(t, err)
+	pane := group.NewPane(
+		server.Ctx(),
+		cmd,
 	)
 	require.NoError(t, err)
 	err = client.Attach(pane)

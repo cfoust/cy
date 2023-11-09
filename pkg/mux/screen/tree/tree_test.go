@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/stream"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestRoot(t *testing.T) {
-	tree := NewTree(nil, nil)
+	tree := NewTree()
 	require.Equal(t, NodeID(1), tree.Root().Id())
 	require.Equal(t, 0, len(tree.Leaves()))
 }
@@ -19,13 +20,12 @@ func TestRoot(t *testing.T) {
 func emptyPane(g *Group) *Pane {
 	return g.NewPane(
 		context.Background(),
-		stream.NewReader(),
-		geom.DEFAULT_SIZE,
+		screen.NewTerminal(context.Background(), stream.NewReader(), geom.DEFAULT_SIZE),
 	)
 }
 
 func TestLeaves(t *testing.T) {
-	tree := NewTree(nil, nil)
+	tree := NewTree()
 	g := tree.Root().NewGroup()
 	for i := 0; i < 3; i++ {
 		emptyPane(g)
@@ -35,7 +35,7 @@ func TestLeaves(t *testing.T) {
 }
 
 func TestRemoveGroup(t *testing.T) {
-	tree := NewTree(nil, nil)
+	tree := NewTree()
 	g := tree.Root().NewGroup()
 	for i := 0; i < 3; i++ {
 		emptyPane(g)
@@ -46,7 +46,7 @@ func TestRemoveGroup(t *testing.T) {
 }
 
 func TestRemoveNode(t *testing.T) {
-	tree := NewTree(nil, nil)
+	tree := NewTree()
 	g := tree.Root().NewGroup()
 	for i := 0; i < 3; i++ {
 		emptyPane(g)
@@ -59,6 +59,6 @@ func TestRemoveNode(t *testing.T) {
 }
 
 func TestRemoveRoot(t *testing.T) {
-	tree := NewTree(nil, nil)
+	tree := NewTree()
 	require.Error(t, tree.RemoveNode(tree.Root().Id()))
 }

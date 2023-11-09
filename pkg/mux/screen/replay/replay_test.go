@@ -32,7 +32,7 @@ func createTestSession() []sessions.Event {
 }
 
 func createTest(events []sessions.Event) (*Replay, func(msgs ...interface{})) {
-	var r = newReplay(events, bind.NewEngine[bind.Action](), make(chan interface{}, 1000))
+	var r = newReplay(events, bind.NewEngine[bind.Action]())
 	var m taro.Model = r
 
 	return r, func(msgs ...interface{}) {
