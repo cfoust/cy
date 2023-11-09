@@ -6,7 +6,6 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
-	"github.com/cfoust/cy/pkg/events"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/sessions/search"
@@ -19,6 +18,9 @@ import (
 type Replay struct {
 	render *taro.Renderer
 	binds  *bind.Engine[bind.Action]
+
+	// whether Replay will actually quit itself
+	preventExit bool
 
 	// the size of the terminal
 	terminal emu.Terminal
@@ -71,8 +73,6 @@ type Replay struct {
 	isWaiting   bool
 	searchInput textinput.Model
 	matches     []search.SearchResult
-
-	emit chan<- events.Msg
 }
 
 var _ taro.Model = (*Replay)(nil)
@@ -134,7 +134,6 @@ func (r *Replay) Init() tea.Cmd {
 func newReplay(
 	events []sessions.Event,
 	binds *bind.Engine[bind.Action],
-	emit chan<- events.Msg,
 ) *Replay {
 	ti := textinput.New()
 	ti.Focus()
@@ -148,24 +147,33 @@ func newReplay(
 		searchInput:    ti,
 		playbackRate:   1,
 		binds:          binds,
-		emit:           emit,
 		skipInactivity: true,
 	}
 	m.gotoIndex(-1, -1)
 	return m
 }
 
+type ReplayOption func(r *Replay)
+
+func WithNoQuit(r *Replay) {
+	r.preventExit = true
+}
+
 func New(
 	ctx context.Context,
-	recorder *sessions.Recorder,
+	events []sessions.Event,
 	replayBinds *bind.BindScope,
-	replayEvents chan<- events.Msg,
+	options ...ReplayOption,
 ) *taro.Program {
-	events := recorder.Events()
-
 	engine := bind.NewEngine[bind.Action]()
 	engine.SetScopes(replayBinds)
 	go engine.Poll(ctx)
+	r := newReplay(events, engine)
+	for _, option := range options {
+		option(r)
+	}
+	program := taro.New(ctx, r)
+
 	go func() {
 		for {
 			select {
@@ -173,11 +181,11 @@ func New(
 				return
 			case event := <-engine.Recv():
 				if bindEvent, ok := event.(bind.BindEvent); ok {
-					replayEvents <- bindEvent
+					program.Publish(bindEvent)
 				}
 			}
 		}
 	}()
 
-	return taro.New(ctx, newReplay(events, engine, replayEvents))
+	return program
 }

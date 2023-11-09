@@ -47,9 +47,8 @@ func (r *Replayable) EnterReplay() {
 	events := make(chan mux.Msg)
 	replay := replay.New(
 		r.Ctx(),
-		r.recorder,
+		r.recorder.Events(),
 		r.binds,
-		events,
 	)
 
 	r.NewLayer(

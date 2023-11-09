@@ -78,7 +78,7 @@ func (c *Cy) resolveGroup(target *janet.Value) (*tree.Group, error) {
 	return group, nil
 }
 
-func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
+func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 	vm, err := janet.New(ctx)
 	if err != nil {
 		return nil, err
@@ -87,13 +87,18 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 	modules := map[string]interface{}{
 		"cmd": &api.Cmd{
 			Lifetime: util.NewLifetime(c.Ctx()),
+			DataDir:  dataDir,
 			Tree:     c.tree,
 		},
-		"group":  &api.GroupModule{Tree: c.tree},
-		"pane":   &api.PaneModule{Tree: c.tree},
-		"path":   &api.PathModule{},
-		"replay": &api.ReplayModule{},
-		"tree":   &api.TreeModule{Tree: c.tree},
+		"group": &api.GroupModule{Tree: c.tree},
+		"pane":  &api.PaneModule{Tree: c.tree},
+		"path":  &api.PathModule{},
+		"replay": &api.ReplayModule{
+			Lifetime: util.NewLifetime(c.Ctx()),
+			Tree:     c.tree,
+			Binds:    c.replayBinds,
+		},
+		"tree": &api.TreeModule{Tree: c.tree},
 	}
 
 	for name, module := range modules {

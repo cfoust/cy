@@ -128,6 +128,15 @@
   (def [lines cols] (frame/size))
   (frame/set-size [lines (- cols 10)]))
 
+(key/def
+  cy/open-log
+  "open an existing log file"
+  (-?>>
+    (path/glob "/Users/cfoust/.local/share/cy/*.borg")
+    (fzf/find)
+    (replay/open (tree/root))
+    (pane/attach)))
+
 (key/bind :root [prefix "j"] ot/new-shell)
 (key/bind :root [prefix "n"] ot/new-project)
 (key/bind :root [prefix "k"] ot/jump-project)

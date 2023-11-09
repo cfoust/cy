@@ -10,6 +10,10 @@ import (
 )
 
 func (r *Replay) quit() (taro.Model, tea.Cmd) {
+	if r.preventExit {
+		return r, nil
+	}
+
 	return r, tea.Quit
 }
 

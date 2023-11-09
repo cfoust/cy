@@ -132,7 +132,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	consoleWriter := zerolog.ConsoleWriter{Out: logs.Writer(), TimeFormat: time.RFC3339}
 	cy.log = log.Output(zerolog.MultiLevelWriter(consoleWriter, os.Stdout))
 
-	vm, err := cy.initJanet(ctx)
+	vm, err := cy.initJanet(ctx, options.DataDir)
 	if err != nil {
 		return nil, err
 	}

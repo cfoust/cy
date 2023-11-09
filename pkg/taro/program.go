@@ -110,6 +110,11 @@ func Sequence(cmds ...tea.Cmd) tea.Cmd {
 // sequenceMsg is used internally to run the given commands in order.
 type sequenceMsg []tea.Cmd
 
+// Indicates that this message should be emitted upwards.
+type PublishMsg struct {
+	Message Msg
+}
+
 // NewProgram creates a new Program.
 func NewProgram(model Model) *Program {
 	p := &Program{
@@ -184,6 +189,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			switch msg := msg.(type) {
 			case tea.QuitMsg:
 				return model, nil
+
+			case PublishMsg:
+				p.Publish(msg.Message)
+				continue
 
 			case tea.BatchMsg:
 				for _, cmd := range msg {

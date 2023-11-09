@@ -2,15 +2,20 @@ package api
 
 import (
 	"fmt"
+	"io"
 
+	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
+	"github.com/cfoust/cy/pkg/util"
 )
 
 type ReplayModule struct {
-	Tree *tree.Tree
+	Lifetime util.Lifetime
+	Tree     *tree.Tree
+	Binds    *bind.BindScope
 }
 
 func (m *ReplayModule) send(context interface{}, msg taro.Msg) error {
@@ -128,11 +133,37 @@ func (m *ReplayModule) Select(context interface{}) error {
 func (m *ReplayModule) Open(
 	groupId tree.NodeID,
 	path string,
-) error {
-	_, err := sessions.Open(path)
-	if err != nil {
-		return err
+) (tree.NodeID, error) {
+	group, ok := m.Tree.GroupById(groupId)
+	if !ok {
+		return 0, fmt.Errorf("node not found: %d", groupId)
 	}
 
-	return nil
+	reader, err := sessions.Open(path)
+	if err != nil {
+		return 0, err
+	}
+
+	events := make([]sessions.Event, 0)
+	for {
+		event, err := reader.Read()
+		if err == io.EOF || err == io.ErrUnexpectedEOF {
+			break
+		}
+		if err != nil {
+			return 0, err
+		}
+		events = append(events, event)
+	}
+
+	ctx := m.Lifetime.Ctx()
+	replay := replay.New(
+		ctx,
+		events,
+		m.Binds,
+		replay.WithNoQuit,
+	)
+
+	pane := group.NewPane(ctx, replay)
+	return pane.Id(), nil
 }
