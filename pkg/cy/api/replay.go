@@ -5,10 +5,12 @@ import (
 
 	"github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
 )
 
 type ReplayModule struct {
+	Tree *tree.Tree
 }
 
 func (m *ReplayModule) send(context interface{}, msg taro.Msg) error {
@@ -126,4 +128,16 @@ func (m *ReplayModule) Copy(context interface{}) error {
 
 func (m *ReplayModule) Select(context interface{}) error {
 	return m.sendAction(context, replay.ActionSelect)
+}
+
+func (m *ReplayModule) Open(
+	groupId tree.NodeID,
+	path string,
+) error {
+	_, err := sessions.Open(path)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

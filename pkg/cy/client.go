@@ -161,13 +161,13 @@ func (c *Client) pollEvents() {
 		case <-c.Ctx().Done():
 			return
 		case event := <-c.binds.Recv():
-			switch event := event.(type) {
-			case bind.BindEvent:
-				go c.runAction(event)
-			case bind.RawEvent:
-				// TODO(cfoust): 07/18/23 error handling
-				c.renderer.Write(event.Data)
+			if bind, ok := event.(bind.BindEvent); ok {
+				go c.runAction(bind)
+				continue
 			}
+
+			// TODO(cfoust): 07/18/23 error handling
+			c.renderer.Send(event)
 		}
 	}
 }

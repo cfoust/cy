@@ -35,6 +35,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cfoust/cy/pkg/events"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
@@ -46,8 +47,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+type Msg = events.Msg
 type Cmd = tea.Cmd
-type Msg = tea.Msg
 
 // ErrProgramKilled is returned by [Program.Run] when the program got killed.
 var ErrProgramKilled = errors.New("program was killed")
@@ -56,11 +57,11 @@ var ErrProgramKilled = errors.New("program was killed")
 type Model interface {
 	// Init is the first function that will be called. It returns an optional
 	// initial command. To not perform an initial command return nil.
-	Init() tea.Cmd
+	Init() Cmd
 
 	// Update is called when a message is received. Use it to inspect messages
 	// and, in response, update the model and/or send a command.
-	Update(tea.Msg) (Model, tea.Cmd)
+	Update(Msg) (Model, Cmd)
 
 	// View renders the program's UI, which consists of a full *tty.State. The
 	// view is rendered after every Update.
@@ -125,7 +126,7 @@ func (p *Program) Write(data []byte) (n int, err error) {
 
 // handleCommands runs commands in a goroutine and sends the result to the
 // program's message channel.
-func (p *Program) handleCommands(cmds chan tea.Cmd) chan struct{} {
+func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 	ch := make(chan struct{})
 
 	go func() {
@@ -165,7 +166,7 @@ func (p *Program) render(model Model) {
 
 // eventLoop is the central message loop. It receives and handles the default
 // Bubble Tea messages, update the model and triggers redraws.
-func (p *Program) eventLoop(model Model, cmds chan tea.Cmd) (Model, error) {
+func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 	for {
 		select {
 		case <-p.Ctx().Done():
@@ -219,7 +220,7 @@ func (p *Program) eventLoop(model Model, cmds chan tea.Cmd) (Model, error) {
 				}()
 			}
 
-			var cmd tea.Cmd
+			var cmd Cmd
 			model, cmd = model.Update(msg) // run update
 			cmds <- cmd                    // process command (if any)
 			p.renderer.write(model)        // send view to renderer
@@ -283,7 +284,7 @@ func (p *Program) waitForReadLoop() {
 // Returns the final model.
 func (p *Program) Run() (Model, error) {
 	handlers := handlers{}
-	cmds := make(chan tea.Cmd)
+	cmds := make(chan Cmd)
 	p.errs = make(chan error)
 	p.finished = make(chan struct{}, 1)
 
@@ -356,7 +357,7 @@ func (p *Program) Run() (Model, error) {
 // If the program hasn't started yet this will be a blocking operation.
 // If the program has already been terminated this will be a no-op, so it's safe
 // to send messages after the program has exited.
-func (p *Program) Send(msg tea.Msg) {
+func (p *Program) Send(msg events.Msg) {
 	select {
 	case <-p.Ctx().Done():
 	case p.msgs <- msg:
@@ -417,8 +418,8 @@ func New(ctx context.Context, model Model) *Program {
 	p := &Program{
 		Lifetime: util.NewLifetime(ctx),
 		renderer: renderer{
-			state:   tty.New(geom.DEFAULT_SIZE),
-			changes: mux.NewPublisher(),
+			state:           tty.New(geom.DEFAULT_SIZE),
+			UpdatePublisher: mux.NewPublisher(),
 		},
 		initialModel: model,
 		msgs:         make(chan tea.Msg),
@@ -433,8 +434,8 @@ func New(ctx context.Context, model Model) *Program {
 
 type renderer struct {
 	deadlock.RWMutex
-	state   *tty.State
-	changes *mux.UpdatePublisher
+	state *tty.State
+	*mux.UpdatePublisher
 }
 
 func (r *renderer) resize(size geom.Size) {
@@ -448,15 +449,11 @@ func (r *renderer) write(model Model) {
 	r.state = tty.New(r.state.Image.Size())
 	model.View(r.state)
 	r.Unlock()
-	r.changes.Publish(r.state)
+	r.Notify()
 }
 
 func (r *renderer) State() *tty.State {
 	r.RLock()
 	defer r.RUnlock()
 	return r.state
-}
-
-func (r *renderer) Updates() *mux.Updater {
-	return r.changes.Subscribe()
 }

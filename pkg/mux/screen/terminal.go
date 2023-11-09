@@ -6,28 +6,22 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/taro"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Terminal struct {
+	*mux.UpdatePublisher
 	terminal emu.Terminal
 	stream   Stream
-	changes  *mux.UpdatePublisher
 }
 
 var _ Screen = (*Terminal)(nil)
 
 func (t *Terminal) State() *tty.State {
 	return tty.Capture(t.terminal)
-}
-
-func (t *Terminal) notifyChange() {
-	t.changes.Publish(t.State())
-}
-
-func (t *Terminal) Updates() *Updater {
-	return t.changes.Subscribe()
 }
 
 func (t *Terminal) Resize(size Size) error {
@@ -38,61 +32,47 @@ func (t *Terminal) Resize(size Size) error {
 		return err
 	}
 
-	t.notifyChange()
+	t.Notify()
 	return nil
 }
 
-func (t *Terminal) Write(data []byte) (n int, err error) {
+func (t *Terminal) Send(msg mux.Msg) {
+	input := make([]byte, 0)
 	mode := t.terminal.Mode()
 
-	input := make([]byte, 0)
-	var msg taro.Msg
-	for i, w := 0, 0; i < len(data); i += w {
-		w, msg = taro.DetectOneMsg(data[i:])
-		if msg == nil {
-			continue
-		}
-
-		if _, ok := msg.(taro.KeyMsg); ok {
-			input = append(
-				input,
-				data[i:i+w]...,
-			)
-			continue
-		}
-
-		mouse, ok := msg.(taro.MouseMsg)
-		if !ok {
-			continue
-		}
-
+	switch msg := msg.(type) {
+	case taro.KeyMsg:
+		data, _ := taro.KeysToBytes(msg)
+		input = data
+	case taro.MouseMsg:
 		switch mode & emu.ModeMouseMask {
 		case emu.ModeMouseX10:
-			if mouse.Type != taro.MouseLeft {
-				continue
+			if msg.Type != taro.MouseLeft {
+				return
 			}
 
-			input = append(
-				input,
-				taro.MouseEvent(mouse).X10Bytes()...,
-			)
-			continue
+			input = taro.MouseEvent(msg).X10Bytes()
 		case emu.ModeMouseButton:
 			// TODO(cfoust): 08/08/23 we should still report drag
-			if mouse.Type == taro.MouseMotion {
-				continue
+			if msg.Type == taro.MouseMotion {
+				return
 			}
+			log.Info().Msgf("emu: ModeMouseButton %+v", string(msg.Bytes()))
+			input = msg.Bytes()
+		case emu.ModeMouseMotion:
+			log.Info().Msgf("emu: ModeMouseMotion %+v", string(msg.Bytes()))
+			input = msg.Bytes()
 		case 0:
-			continue
+			return
 		}
-
-		input = append(
-			input,
-			data[i:i+w]...,
-		)
 	}
 
-	return t.stream.Write(input)
+	if len(input) == 0 {
+		return
+	}
+
+	// TODO(cfoust): 11/08/23 error handling
+	t.stream.Write(input)
 }
 
 func (t *Terminal) poll(ctx context.Context) error {
@@ -124,15 +104,15 @@ func (t *Terminal) poll(ctx context.Context) error {
 		}
 
 		// Let any clients know that this pane changed
-		t.notifyChange()
+		t.Notify()
 	}
 }
 
 func NewTerminal(ctx context.Context, stream Stream, size Size) *Terminal {
 	terminal := &Terminal{
-		terminal: emu.New(emu.WithWriter(stream), emu.WithSize(size)),
-		changes:  mux.NewPublisher(),
-		stream:   stream,
+		UpdatePublisher: mux.NewPublisher(),
+		terminal:        emu.New(emu.WithWriter(stream), emu.WithSize(size)),
+		stream:          stream,
 	}
 
 	// TODO(cfoust): 07/14/23 error handling

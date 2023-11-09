@@ -28,6 +28,10 @@ SOFTWARE.
 
 package taro
 
+import (
+	"github.com/rs/zerolog/log"
+)
+
 // MouseMsg contains information about a mouse event and are sent to a programs
 // update function when mouse activity occurs. Note that the mouse must first
 // be enabled in order for the mouse events to be received.
@@ -38,6 +42,10 @@ func (m MouseMsg) String() string {
 	return MouseEvent(m).String()
 }
 
+func (m MouseMsg) Bytes() []byte {
+	return MouseEvent(m).Bytes()
+}
+
 // MouseEvent represents a mouse event, which could be a click, a scroll wheel
 // movement, a cursor movement, or a combination.
 type MouseEvent struct {
@@ -46,6 +54,8 @@ type MouseEvent struct {
 	Type MouseEventType
 	Alt  bool
 	Ctrl bool
+	// Only used when Type == MouseMotion
+	Down bool
 }
 
 func (m MouseEvent) Bytes() []byte {
@@ -83,7 +93,7 @@ func (m MouseEvent) Bytes() []byte {
 		'\x1b',
 		'[',
 		'M',
-		flags,
+		flags + byteOffset,
 		byte(m.X) + byteOffset + 1,
 		byte(m.Y) + byteOffset + 1,
 	}
@@ -166,6 +176,8 @@ func parseX10MouseEvent(buf []byte) MouseEvent {
 	var m MouseEvent
 	e := v[0] - byteOffset
 
+	log.Info().Msgf("e: byte(%+v) string(%+v) %+v", buf, string(buf), e)
+
 	if e&bitWheel != 0 {
 		// Check the low two bits.
 		switch e & bitsMask {
@@ -222,4 +234,15 @@ func TranslateMouseEvents(data []byte, dx, dy int) {
 		data[i+4] = b[4]
 		data[i+5] = b[5]
 	}
+}
+
+func TranslateMouseMessage(msg Msg, dx, dy int) Msg {
+	switch msg := msg.(type) {
+	case MouseMsg:
+		cloned := msg
+		cloned.X += dx
+		cloned.Y += dy
+		return cloned
+	}
+	return msg
 }

@@ -21,9 +21,9 @@ type Layer struct {
 // topmost layer with isInteractive set to true receives all key presses.
 type Layers struct {
 	deadlock.RWMutex
-	size    geom.Vec2
-	layers  []*Layer
-	changes *mux.UpdatePublisher
+	*mux.UpdatePublisher
+	size   geom.Vec2
+	layers []*Layer
 }
 
 var _ Screen = (*Layers)(nil)
@@ -76,12 +76,8 @@ func (l *Layers) State() *tty.State {
 	return state
 }
 
-func (l *Layers) Updates() *Updater {
-	return l.changes.Subscribe()
-}
-
 func (l *Layers) rerender() {
-	l.changes.Publish(l.State())
+	l.Notify()
 }
 
 func (l *Layers) NumLayers() int {
@@ -125,14 +121,13 @@ func (l *Layers) NewLayer(ctx context.Context, screen Screen, pos Position, opti
 	l.Unlock()
 
 	go func() {
-		updates := layer.Updates()
-		defer updates.Done()
+		updates := layer.Subscribe(ctx)
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-updates.Recv():
-				l.rerender()
+				l.Notify()
 			}
 		}
 	}()
@@ -160,7 +155,7 @@ func (l *Layers) NewLayer(ctx context.Context, screen Screen, pos Position, opti
 	return layer
 }
 
-func (l *Layers) Write(data []byte) (n int, err error) {
+func (l *Layers) Send(msg mux.Msg) {
 	l.RLock()
 	layers := l.layers
 	l.RUnlock()
@@ -171,10 +166,9 @@ func (l *Layers) Write(data []byte) (n int, err error) {
 			continue
 		}
 
-		return layer.Write(data)
+		layer.Send(msg)
+		return
 	}
-
-	return 0, nil
 }
 
 func (l *Layers) Resize(size Size) error {
@@ -191,7 +185,7 @@ func (l *Layers) Resize(size Size) error {
 
 func NewLayers() *Layers {
 	return &Layers{
-		changes: mux.NewPublisher(),
-		size:    geom.DEFAULT_SIZE,
+		UpdatePublisher: mux.NewPublisher(),
+		size:            geom.DEFAULT_SIZE,
 	}
 }

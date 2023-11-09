@@ -25,8 +25,7 @@ type Animator struct {
 
 var _ mux.Screen = (*Animator)(nil)
 
-func (a *Animator) Write(data []byte) (n int, err error) {
-	return 0, nil
+func (a *Animator) Send(msg mux.Msg) {
 }
 
 func (a *Animator) Render(size mux.Size) *tty.State {
@@ -44,7 +43,7 @@ func (a *Animator) poll(ctx context.Context, fps int) {
 		case <-ctx.Done():
 			return
 		case <-t.C:
-			a.Rerender()
+			a.Notify()
 		}
 	}
 }

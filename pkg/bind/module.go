@@ -8,6 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
+	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -41,10 +42,7 @@ type RawEvent struct {
 }
 
 // Contains data for a single input event
-type input struct {
-	Message taro.Msg
-	Data    []byte
-}
+type input taro.Msg
 
 type Engine[T any] struct {
 	deadlock.RWMutex
@@ -117,14 +115,12 @@ func (e *Engine[T]) getState() []string {
 func (e *Engine[T]) processKey(ctx context.Context, in input) {
 	// Mouse messages have to be translated to match the pane, so we just
 	// pass them on
-	if _, ok := in.Message.(taro.MouseMsg); ok {
-		e.out <- RawEvent{
-			Data: in.Data,
-		}
+	if _, ok := in.(taro.MouseMsg); ok {
+		e.out <- in
 		return
 	}
 
-	key, ok := in.Message.(taro.KeyMsg)
+	key, ok := in.(taro.KeyMsg)
 	if !ok {
 		return
 	}
@@ -177,9 +173,7 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) {
 	}
 
 	e.clearState()
-	e.out <- RawEvent{
-		Data: in.Data,
-	}
+	e.out <- in
 }
 
 func (e *Engine[T]) SetScopes(scopes ...*trie.Trie[T]) {
@@ -211,13 +205,11 @@ func (e *Engine[T]) Input(data []byte) {
 	for i, w := 0, 0; i < len(data); i += w {
 		var msg taro.Msg
 		w, msg = taro.DetectOneMsg(data[i:])
-		e.in <- input{
-			Message: msg,
-			Data:    data[i : i+w],
-		}
+		log.Info().Msgf("%+v %+v", msg, string(data[i:i+w]))
+		e.in <- msg
 	}
 }
 
 func (e *Engine[T]) InputMessage(msg taro.Msg) {
-	e.in <- input{Message: msg}
+	e.in <- msg
 }

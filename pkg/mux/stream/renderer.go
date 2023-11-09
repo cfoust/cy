@@ -6,6 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
 
 	"github.com/xo/terminfo"
@@ -25,16 +26,14 @@ type Renderer struct {
 	info   *terminfo.Terminfo
 }
 
-var _ Stream = (*Renderer)(nil)
-
 func (r *Renderer) Resize(size Size) error {
 	r.target.Resize(size.C, size.R)
 	err := r.screen.Resize(size)
 	return err
 }
 
-func (r *Renderer) Write(data []byte) (n int, err error) {
-	return r.screen.Write(data)
+func (r *Renderer) Send(msg mux.Msg) {
+	r.screen.Send(msg)
 }
 
 func (r *Renderer) Read(p []byte) (n int, err error) {
@@ -42,10 +41,7 @@ func (r *Renderer) Read(p []byte) (n int, err error) {
 }
 
 func (r *Renderer) poll(ctx context.Context) error {
-	subscriber := r.screen.Updates()
-	defer subscriber.Done()
-
-	changes := subscriber.Recv()
+	subscriber := r.screen.Subscribe(ctx)
 
 	for {
 		_, err := r.w.Write(tty.Swap(
@@ -61,7 +57,7 @@ func (r *Renderer) poll(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-changes:
+		case <-subscriber.Recv():
 			continue
 		}
 	}

@@ -45,3 +45,22 @@ func TestKeysToBytes(t *testing.T) {
 	}
 	assert.Equal(t, keys, parsed)
 }
+
+func testMouseInput(t *testing.T, input string) {
+	bytes := []byte(input)
+	_, msg := DetectOneMsg(bytes)
+	mouse, ok := msg.(MouseMsg)
+	if !ok {
+		t.Fail()
+	}
+	assert.Equal(t, bytes, mouse.Bytes())
+}
+
+func TestMouse(t *testing.T) {
+	testMouseInput(t, "\u001b[M :;")
+	testMouseInput(t, "\u001b[M@;;")
+	testMouseInput(t, "\u001b[M`9>")
+	testMouseInput(t, "\u001b[MaD3")
+	testMouseInput(t, "\u001b[Mc>;")
+	testMouseInput(t, "\u001b[Mc74")
+}

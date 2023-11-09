@@ -14,9 +14,9 @@ type Renderable interface {
 
 type Trigger struct {
 	deadlock.RWMutex
-	changes *mux.UpdatePublisher
-	r       Renderable
-	size    Size
+	*mux.UpdatePublisher
+	r    Renderable
+	size Size
 }
 
 func (t *Trigger) State() *tty.State {
@@ -24,10 +24,6 @@ func (t *Trigger) State() *tty.State {
 	size := t.size
 	t.RUnlock()
 	return t.r.Render(size)
-}
-
-func (t *Trigger) Updates() *Updater {
-	return t.changes.Subscribe()
 }
 
 func (t *Trigger) Size() Size {
@@ -40,17 +36,13 @@ func (t *Trigger) Resize(size Size) error {
 	t.Lock()
 	t.size = size
 	t.Unlock()
-	t.Rerender()
+	t.Notify()
 	return nil
-}
-
-func (t *Trigger) Rerender() {
-	t.changes.Publish(t.State())
 }
 
 func NewTrigger(r Renderable) *Trigger {
 	return &Trigger{
-		changes: mux.NewPublisher(),
-		r:       r,
+		UpdatePublisher: mux.NewPublisher(),
+		r:               r,
 	}
 }

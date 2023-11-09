@@ -145,7 +145,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 				return
 			}
 
-			client.renderer.Write([]byte(buffer))
+			client.binds.Input([]byte(buffer))
 		},
 		"log": func(text string) {
 			c.log.Info().Msgf(text)

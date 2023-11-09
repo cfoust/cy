@@ -12,12 +12,12 @@ import (
 
 type Client struct {
 	deadlock.RWMutex
-	server *Server
+	*mux.UpdatePublisher
 
+	server *Server
 	size       mux.Size
 	screen     mux.Screen
 	attachment *util.Lifetime
-	publisher  *mux.UpdatePublisher
 }
 
 var _ mux.Screen = (*Client)(nil)
@@ -39,12 +39,8 @@ func (c *Client) Attachment() *util.Lifetime {
 	return c.attachment
 }
 
-func (c *Client) Updates() *mux.Updater {
-	return c.publisher.Subscribe()
-}
-
-func (c *Client) Write(data []byte) (n int, err error) {
-	return c.screen.Write(data)
+func (c *Client) Send(msg mux.Msg) {
+	c.screen.Send(msg)
 }
 
 func (c *Client) Resize(size mux.Size) error {
@@ -62,17 +58,15 @@ func (c *Client) Resize(size mux.Size) error {
 }
 
 func (c *Client) pollScreen(ctx context.Context, screen mux.Screen) error {
-	subscriber := screen.Updates()
-	defer subscriber.Done()
-
+	subscriber := screen.Subscribe(ctx)
 	changes := subscriber.Recv()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
-		case state := <-changes:
-			c.publisher.Publish(state)
+		case <-changes:
+			c.Notify()
 		}
 	}
 }
@@ -96,7 +90,7 @@ func (c *Client) Attach(ctx context.Context, screen mux.Screen) {
 
 	go c.pollScreen(attachment.Ctx(), screen)
 
-	c.publisher.Publish(c.State())
+	c.Notify()
 }
 
 func (c *Client) Screen() mux.Screen {
@@ -117,9 +111,9 @@ func (s *Server) AddClient(
 ) *Client {
 	s.Lock()
 	client := &Client{
-		size:      initialSize,
-		publisher: mux.NewPublisher(),
-		server:    s,
+		size:            initialSize,
+		UpdatePublisher: mux.NewPublisher(),
+		server:          s,
 	}
 	s.clients = append(s.clients, client)
 	s.Unlock()

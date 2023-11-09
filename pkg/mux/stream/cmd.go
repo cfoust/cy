@@ -243,13 +243,15 @@ func (c *Cmd) spin(ctx context.Context) {
 	}
 }
 
-func (c *Cmd) Subscribe() *util.Subscriber[CmdStatus] {
-	return c.statusUpdates.Subscribe()
+func (c *Cmd) Subscribe(ctx context.Context) *util.Subscriber[CmdStatus] {
+	return c.statusUpdates.Subscribe(ctx)
 }
 
 func (c *Cmd) waitHealthy(ctx context.Context) error {
-	changes := c.Subscribe()
-	defer changes.Done()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	changes := c.Subscribe(ctx)
 
 	errc := make(chan error)
 	go func() {

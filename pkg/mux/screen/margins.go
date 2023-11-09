@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/sasha-s/go-deadlock"
 )
@@ -17,8 +17,9 @@ import (
 // do not change with the screen size.
 type Margins struct {
 	deadlock.RWMutex
-	changes *mux.UpdatePublisher
-	screen  Screen
+	*mux.UpdatePublisher
+
+	screen Screen
 
 	// Whether Margins is in margin mode or size mode
 	isMargins bool
@@ -95,24 +96,18 @@ func (l *Margins) State() *tty.State {
 	return state
 }
 
-func (l *Margins) Updates() *Updater {
-	return l.changes.Subscribe()
-}
-
 func (l *Margins) rerender() {
-	l.changes.Publish(l.State())
 }
 
-func (l *Margins) Write(data []byte) (n int, err error) {
+func (l *Margins) Send(msg mux.Msg) {
 	l.RLock()
 	inner := l.inner
 	l.RUnlock()
-	taro.TranslateMouseEvents(
-		data,
+	l.screen.Send(taro.TranslateMouseMessage(
+		msg,
 		-inner.C,
 		-inner.R,
-	)
-	return l.screen.Write(data)
+	))
 }
 
 func (l *Margins) getInner(size Size) geom.Rect {
@@ -141,15 +136,14 @@ func (l *Margins) Size() Size {
 }
 
 func (l *Margins) poll(ctx context.Context) {
-	updates := l.screen.Updates()
-	defer updates.Done()
+	updates := l.screen.Subscribe(ctx)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-updates.Recv():
-			l.rerender()
+			l.Notify()
 		}
 	}
 }
@@ -183,7 +177,7 @@ func (l *Margins) Resize(size Size) error {
 
 func NewMargins(ctx context.Context, screen Screen) *Margins {
 	margins := &Margins{
-		changes: mux.NewPublisher(),
+		UpdatePublisher: mux.NewPublisher(),
 		size: Size{
 			C: 80,
 		},

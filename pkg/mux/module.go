@@ -1,20 +1,31 @@
 package mux
 
 import (
+	"context"
 	"io"
 
+	"github.com/cfoust/cy/pkg/events"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/util"
 )
 
+type Msg = events.Msg
 type Size = geom.Vec2
 
-type Updater = util.Subscriber[*tty.State]
-type UpdatePublisher = util.Publisher[*tty.State]
+type Updater = util.Subscriber[events.Msg]
+type UpdatePublisher struct {
+	*util.Publisher[events.Msg]
+}
+
+func (u *UpdatePublisher) Notify() {
+	u.Publish(nil)
+}
 
 func NewPublisher() *UpdatePublisher {
-	return util.NewPublisher[*tty.State]()
+	return &UpdatePublisher{
+		Publisher: util.NewPublisher[events.Msg](),
+	}
 }
 
 type Resizable interface {
@@ -29,8 +40,8 @@ type Stream interface {
 
 // A Screen is the "end" of a chain of IO, or the result that the user sees.
 type Screen interface {
-	io.Writer
 	State() *tty.State
-	Updates() *Updater
+	Subscribe(context.Context) *Updater
 	Resizable
+	Send(message events.Msg)
 }
