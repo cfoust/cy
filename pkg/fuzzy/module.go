@@ -158,7 +158,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			f.selected = geom.Clamp(f.selected+delta, 0, len(f.getOptions())-1)
 			return f, f.handlePreview()
 		case taro.KeyEnter:
-			if f.selected < len(f.getOptions()) {
+			if f.selected >= 0 && f.selected < len(f.getOptions()) {
 				option := f.getOptions()[f.selected]
 				f.result <- option.Result
 			} else {

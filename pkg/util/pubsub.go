@@ -18,11 +18,14 @@ func NewPublisher[T any]() *Publisher[T] {
 }
 
 func (p *Publisher[T]) Publish(value T) {
+	subscribers := make([]*Subscriber[T], 0)
 	p.m.Lock()
-	subscribers := p.subscribers
+	for subscriber := range p.subscribers {
+		subscribers = append(subscribers, subscriber)
+	}
 	p.m.Unlock()
 
-	for subscriber := range subscribers {
+	for _, subscriber := range subscribers {
 		subscriber.m.RLock()
 		active := subscriber.active
 		subscriber.m.RUnlock()
