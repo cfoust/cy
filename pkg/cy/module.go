@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/cy/cmd"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -98,9 +100,8 @@ func (c *Cy) Shutdown() error {
 
 func Start(ctx context.Context, options Options) (*Cy, error) {
 	replayBinds := bind.NewBindScope()
-	replayEvents := make(chan tree.ReplayEvent)
 
-	t := tree.NewTree(replayBinds, replayEvents)
+	t := tree.NewTree()
 	cy := Cy{
 		Lifetime:    util.NewLifetime(ctx),
 		tree:        t,
@@ -109,24 +110,23 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	}
 	cy.toast = NewToastLogger(cy.sendToast)
 
-	go cy.pollReplayEvents(cy.Ctx(), replayEvents)
+	subscriber := t.Subscribe(cy.Ctx())
+	go cy.pollNodeEvents(cy.Ctx(), subscriber.Recv())
 
-	t.SetDataDir(options.DataDir)
-
-	t.Root().NewCmd(
+	replayable, _ := cmd.New(
 		cy.Ctx(),
 		stream.CmdOptions{
 			Command: "/bin/bash",
 		},
-		geom.DEFAULT_SIZE,
+		options.DataDir,
+		replayBinds,
 	)
 
+	t.Root().NewPane(cy.Ctx(), replayable)
+
 	logs := stream.NewReader()
-	logPane := t.Root().NewPane(
-		cy.Ctx(),
-		logs,
-		geom.DEFAULT_SIZE,
-	)
+	terminal := screen.NewTerminal(cy.Ctx(), logs, geom.DEFAULT_SIZE)
+	logPane := t.Root().NewPane(cy.Ctx(), terminal)
 	logPane.SetName("logs")
 
 	consoleWriter := zerolog.ConsoleWriter{Out: logs.Writer(), TimeFormat: time.RFC3339}

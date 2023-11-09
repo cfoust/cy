@@ -142,8 +142,8 @@ func (l *Margins) poll(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-updates.Recv():
-			l.Notify()
+		case event := <-updates.Recv():
+			l.Publish(event)
 		}
 	}
 }

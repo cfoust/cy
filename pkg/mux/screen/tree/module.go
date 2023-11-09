@@ -1,7 +1,10 @@
 package tree
 
-// ReplayEvent is an event triggered by a binding in the :replay scope.
-type ReplayEvent struct {
+import (
+	"github.com/cfoust/cy/pkg/events"
+)
+
+type NodeEvent struct {
 	Id    NodeID
-	Event interface{}
+	Event events.Msg
 }

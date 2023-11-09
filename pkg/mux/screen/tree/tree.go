@@ -5,20 +5,17 @@ import (
 	"sync/atomic"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/mux"
 
 	"github.com/sasha-s/go-deadlock"
 )
 
 type Tree struct {
 	deadlock.RWMutex
+	*mux.UpdatePublisher
 	root      *Group
 	nodes     map[NodeID]Node
 	nodeIndex atomic.Int32
-
-	// the directory in which to store recorded sessions
-	dataDir      string
-	replayBinds  *bind.BindScope
-	replayEvents chan<- ReplayEvent
 }
 
 func (t *Tree) newMetadata() *metaData {
@@ -47,19 +44,6 @@ func (t *Tree) Root() *Group {
 	defer t.RUnlock()
 
 	return t.root
-}
-
-func (t *Tree) SetDataDir(dir string) {
-	t.Lock()
-	defer t.Unlock()
-	t.dataDir = dir
-}
-
-func (t *Tree) DataDir() string {
-	t.RLock()
-	defer t.RUnlock()
-
-	return t.dataDir
 }
 
 // Get the path from the root node to the given node.
@@ -156,11 +140,10 @@ func (t *Tree) GroupById(id NodeID) (*Group, bool) {
 	return group, true
 }
 
-func NewTree(replayBinds *bind.BindScope, replayEvents chan<- ReplayEvent) *Tree {
+func NewTree() *Tree {
 	tree := &Tree{
-		nodes:        make(map[NodeID]Node),
-		replayBinds:  replayBinds,
-		replayEvents: replayEvents,
+		UpdatePublisher: mux.NewPublisher(),
+		nodes:           make(map[NodeID]Node),
 	}
 
 	tree.root = &Group{

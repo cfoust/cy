@@ -124,10 +124,10 @@ func (l *Layers) NewLayer(ctx context.Context, screen Screen, pos Position, opti
 		updates := layer.Subscribe(ctx)
 		for {
 			select {
+			case event := <-updates.Recv():
+				l.Publish(event)
 			case <-ctx.Done():
 				return
-			case <-updates.Recv():
-				l.Notify()
 			}
 		}
 	}()

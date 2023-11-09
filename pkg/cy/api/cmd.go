@@ -3,8 +3,10 @@ package api
 import (
 	"fmt"
 
-	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/cy/cmd"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux/screen/replayable"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
@@ -17,8 +19,10 @@ type CmdParams struct {
 }
 
 type Cmd struct {
-	Lifetime util.Lifetime
-	Tree     *tree.Tree
+	Lifetime    util.Lifetime
+	Tree        *tree.Tree
+	DataDir     string
+	replayBinds *bind.BindScope
 }
 
 func (c *Cmd) New(
@@ -35,24 +39,26 @@ func (c *Cmd) New(
 		return 0, fmt.Errorf("node not found: %d", groupId)
 	}
 
-	cmd, err := group.NewCmd(
+	replayable, err := cmd.New(
 		c.Lifetime.Ctx(),
 		stream.CmdOptions{
 			Command:   values.Command,
 			Args:      values.Args,
 			Directory: path,
 		},
-		geom.DEFAULT_SIZE,
+		c.DataDir,
+		c.replayBinds,
 	)
 	if err != nil {
 		return 0, err
 	}
 
+	pane := group.NewPane(c.Lifetime.Ctx(), replayable)
 	if values.Name != "" {
-		cmd.SetName(values.Name)
+		pane.SetName(values.Name)
 	}
 
-	return cmd.Id(), nil
+	return pane.Id(), nil
 }
 
 func (c *Cmd) Path(id tree.NodeID) (*string, error) {
@@ -61,7 +67,12 @@ func (c *Cmd) Path(id tree.NodeID) (*string, error) {
 		return nil, fmt.Errorf("pane not found: %d", id)
 	}
 
-	cmd, ok := pane.App().(*stream.Cmd)
+	r, ok := pane.Screen().(*replayable.Replayable)
+	if !ok {
+		return nil, fmt.Errorf("pane was not a replayable")
+	}
+
+	cmd, ok := r.Stream().(*stream.Cmd)
 	if !ok {
 		return nil, fmt.Errorf("pane was not a cmd")
 	}

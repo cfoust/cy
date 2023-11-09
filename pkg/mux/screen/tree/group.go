@@ -3,10 +3,7 @@ package tree
 import (
 	"context"
 
-	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
-	"github.com/cfoust/cy/pkg/mux/stream"
-	"github.com/cfoust/cy/pkg/sessions"
 
 	"github.com/sasha-s/go-deadlock"
 )
@@ -52,50 +49,28 @@ func (g *Group) Leaves() []Node {
 	return getLeaves(g)
 }
 
-func (g *Group) NewPane(
-	ctx context.Context,
-	stream mux.Stream,
-	size geom.Vec2,
-) *Pane {
+func (g *Group) NewPane(ctx context.Context, screen mux.Screen) *Pane {
 	metadata := g.tree.newMetadata()
-	pane := newPane(
-		ctx,
-		metadata.Id(),
-		stream,
-		"",
-		size,
-		g.tree.replayBinds,
-		g.tree.replayEvents,
-	)
+	pane := newPane(ctx, metadata.Id(), screen)
 	pane.metaData = metadata
 	g.addNode(pane)
+
+	go func() {
+		updates := screen.Subscribe(ctx)
+		for {
+			select {
+			case event := <-updates.Recv():
+				g.tree.Publish(NodeEvent{
+					Id:    metadata.Id(),
+					Event: event,
+				})
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
 	return pane
-}
-
-func (g *Group) NewCmd(ctx context.Context, options stream.CmdOptions, size geom.Vec2) (*Pane, error) {
-	cmd, err := stream.NewCmd(ctx, options, size)
-	if err != nil {
-		return nil, err
-	}
-
-	borgPath, err := sessions.GetFilename(g.tree.DataDir(), options.Directory)
-	if err != nil {
-		return nil, err
-	}
-
-	metadata := g.tree.newMetadata()
-	pane := newPane(
-		ctx,
-		metadata.Id(),
-		cmd,
-		borgPath,
-		size,
-		g.tree.replayBinds,
-		g.tree.replayEvents,
-	)
-	pane.metaData = metadata
-	g.addNode(pane)
-	return pane, nil
 }
 
 func (g *Group) NewGroup() *Group {

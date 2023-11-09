@@ -29,12 +29,7 @@ func (m *ReplayModule) send(context interface{}, msg taro.Msg) error {
 		return fmt.Errorf("client node was not pane")
 	}
 
-	r := pane.ReplayMode()
-	if r == nil {
-		return fmt.Errorf("client pane was not in replay mode")
-	}
-
-	r.Send(msg)
+	pane.Screen().Send(msg)
 	return nil
 }
 

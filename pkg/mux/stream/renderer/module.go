@@ -1,10 +1,11 @@
-package stream
+package renderer
 
 import (
 	"context"
 	"io"
 
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
@@ -14,10 +15,11 @@ import (
 
 // A Renderer produces the stream of bytes necessary to render a Screen to a
 // destination terminal. Conceptually, it is the opposite of a Screen, which
-// takes an IO and feeds it to a virtual terminal emulator. A Renderer takes a
-// Screen and makes an IO. This is useful because an IO may produce many more
-// writes than are actually necessary to change the screen; a Renderer can make
-// optimizations to only update the parts of the screen that have changed.
+// takes a Stream and feeds it to a virtual terminal emulator. A Renderer takes
+// a Screen and makes a Stream. This is useful because a Stream may produce
+// many more writes than are actually necessary to change the screen; a
+// Renderer can make optimizations to only update the parts of the screen that
+// have changed.
 type Renderer struct {
 	target emu.Terminal
 	screen screen.Screen
@@ -26,7 +28,7 @@ type Renderer struct {
 	info   *terminfo.Terminfo
 }
 
-func (r *Renderer) Resize(size Size) error {
+func (r *Renderer) Resize(size geom.Size) error {
 	r.target.Resize(size.C, size.R)
 	err := r.screen.Resize(size)
 	return err
@@ -67,7 +69,7 @@ func NewRenderer(
 	ctx context.Context,
 	info *terminfo.Terminfo,
 	target emu.Terminal,
-	screen Screen,
+	screen mux.Screen,
 ) *Renderer {
 	r, w := io.Pipe()
 

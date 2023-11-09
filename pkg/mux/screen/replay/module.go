@@ -6,6 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/events"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/sessions/search"
@@ -71,7 +72,7 @@ type Replay struct {
 	searchInput textinput.Model
 	matches     []search.SearchResult
 
-	emit chan<- interface{}
+	emit chan<- events.Msg
 }
 
 var _ taro.Model = (*Replay)(nil)
@@ -133,7 +134,7 @@ func (r *Replay) Init() tea.Cmd {
 func newReplay(
 	events []sessions.Event,
 	binds *bind.Engine[bind.Action],
-	emit chan<- interface{},
+	emit chan<- events.Msg,
 ) *Replay {
 	ti := textinput.New()
 	ti.Focus()
@@ -158,7 +159,7 @@ func New(
 	ctx context.Context,
 	recorder *sessions.Recorder,
 	replayBinds *bind.BindScope,
-	replayEvents chan<- interface{},
+	replayEvents chan<- events.Msg,
 ) *taro.Program {
 	events := recorder.Events()
 

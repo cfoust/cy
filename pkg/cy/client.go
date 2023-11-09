@@ -9,6 +9,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/events"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
@@ -18,7 +19,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen/splash"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
-	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/mux/stream/renderer"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -53,7 +54,7 @@ type Client struct {
 	innerLayers *screen.Layers
 	// Layers outside of the margins
 	outerLayers *screen.Layers
-	renderer    *stream.Renderer
+	renderer    *renderer.Renderer
 
 	// history is an array of all of the panes this client has attached to
 	history []tree.NodeID
@@ -104,12 +105,17 @@ func (c *Client) pollRender() {
 	}
 }
 
-func (c *Cy) pollReplayEvents(ctx context.Context, events <-chan tree.ReplayEvent) {
+func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case event := <-events:
+			nodeEvent, ok := event.(tree.NodeEvent)
+			if !ok {
+				continue
+			}
+
 			c.RLock()
 			clients := c.clients
 			c.RUnlock()
@@ -121,7 +127,7 @@ func (c *Cy) pollReplayEvents(ctx context.Context, events <-chan tree.ReplayEven
 
 			client := clients[0]
 
-			switch event := event.Event.(type) {
+			switch event := nodeEvent.Event.(type) {
 			case replay.CopyEvent:
 				client.buffer = event.Text
 			case bind.BindEvent:
@@ -358,7 +364,7 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	)
 
 	c.raw = emu.New(emu.WithSize(handshake.Size))
-	c.renderer = stream.NewRenderer(c.Ctx(), info, c.raw, c.outerLayers)
+	c.renderer = renderer.NewRenderer(c.Ctx(), info, c.raw, c.outerLayers)
 
 	go c.pollRender()
 

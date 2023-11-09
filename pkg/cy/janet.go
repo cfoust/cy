@@ -10,6 +10,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/mux/screen/replayable"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/util"
@@ -130,7 +131,12 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 				return
 			}
 
-			pane.EnterReplay()
+			r, ok := pane.Screen().(*replayable.Replayable)
+			if !ok {
+				return
+			}
+
+			r.EnterReplay()
 			// TODO(cfoust): 10/08/23 reattach all clients
 			client.Attach(node)
 		},

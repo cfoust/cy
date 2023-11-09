@@ -14,7 +14,7 @@ type Client struct {
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 
-	server *Server
+	server     *Server
 	size       mux.Size
 	screen     mux.Screen
 	attachment *util.Lifetime
@@ -65,8 +65,8 @@ func (c *Client) pollScreen(ctx context.Context, screen mux.Screen) error {
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-changes:
-			c.Notify()
+		case event := <-changes:
+			c.Publish(event)
 		}
 	}
 }
