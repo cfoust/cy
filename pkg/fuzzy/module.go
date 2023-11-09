@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
+	"github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/taro"
@@ -37,6 +38,7 @@ type Fuzzy struct {
 	tree       *tree.Tree
 	client     *server.Client
 	isAttached bool
+	replay     *taro.Program
 }
 
 var _ taro.Model = (*Fuzzy)(nil)
@@ -80,8 +82,17 @@ func (f *Fuzzy) handlePreview() taro.Cmd {
 	}
 
 	switch preview := option.Preview.(type) {
-	case tree.NodeID:
-		return f.Attach(preview)
+	case nodePreview:
+		return f.Attach(preview.Id)
+	case replayPreview:
+		if f.replay != nil {
+			f.replay.Cancel()
+		}
+		f.replay = replay.NewPreview(
+			f.Ctx(),
+			preview.Path,
+		)
+		f.replay.Resize(f.size)
 	}
 
 	return nil

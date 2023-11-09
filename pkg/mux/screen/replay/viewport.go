@@ -88,6 +88,7 @@ func (r *Replay) recalculateViewport() {
 }
 
 func (r *Replay) setScroll(offset int) {
+	r.isPlaying = false
 	r.mode = ModeCopy
 	before := r.viewportToTerm(r.cursor)
 	r.setOffsetY(offset)

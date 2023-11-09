@@ -26,16 +26,48 @@ type Option struct {
 }
 
 type tupleInput struct {
-	_     struct{} `janet:"tuple"`
-	Text  string
+	_ struct{} `janet:"tuple"`
+	// the text that the user will filter
+	Text string
+	// the value returned if the user chooses this option
 	Value *janet.Value
 }
 
 type tripleInput struct {
-	_       struct{} `janet:"tuple"`
-	Text    string
+	_ struct{} `janet:"tuple"`
+	// the text that the user will filter
+	Text string
+	// contains the configuration for the preview window
 	Preview *janet.Value
-	Value   *janet.Value
+	// the value returned if the user chooses this option
+	Value *janet.Value
+}
+
+var (
+	KEYWORD_TEXT   = janet.Keyword("text")
+	KEYWORD_NODE   = janet.Keyword("node")
+	KEYWORD_REPLAY = janet.Keyword("replay")
+)
+
+type previewInput struct {
+	_     struct{} `janet:"tuple"`
+	Type  janet.Keyword
+	Value *janet.Value
+}
+
+type textPreview struct {
+	_    struct{} `janet:"tuple"`
+	Text string
+}
+
+type nodePreview struct {
+	_  struct{} `janet:"tuple"`
+	Id tree.NodeID
+}
+
+type replayPreview struct {
+	_    struct{} `janet:"tuple"`
+	Path string
 }
 
 func createOption(text string, result interface{}) Option {
@@ -77,37 +109,62 @@ func UnmarshalOptions(input *janet.Value) (result []Option, err error) {
 	}
 
 	var triples []tripleInput
-	var previewNode tree.NodeID
-	var previewStr string
 	err = input.Unmarshal(&triples)
-	if err == nil {
-		for i, triple := range triples {
-			option := createOption(
-				triple.Text,
-				triple.Value,
-			)
-
-			nodeErr := triple.Preview.Unmarshal(&previewNode)
-			strErr := triple.Preview.Unmarshal(&previewStr)
-			if nodeErr != nil && strErr != nil {
-				err = fmt.Errorf("preview for choice %d had invalid type", i)
-				return
-			}
-
-			if nodeErr == nil {
-				option.Preview = previewNode
-			}
-
-			if strErr == nil {
-				option.Preview = previewStr
-			}
-
-			result = append(result, option)
-		}
+	if err != nil {
+		err = fmt.Errorf("input must be array of strings or tuples")
 		return
 	}
 
-	err = fmt.Errorf("input must be array of strings or tuples")
+	for i, triple := range triples {
+		option := createOption(
+			triple.Text,
+			triple.Value,
+		)
+
+		preview := previewInput{}
+		preview.Type = KEYWORD_TEXT
+		err = triple.Preview.Unmarshal(&preview)
+		if err == nil {
+			text := textPreview{}
+			err = preview.Value.Unmarshal(&text)
+			if err != nil {
+				return
+			}
+			option.Preview = text
+			result = append(result, option)
+			continue
+		}
+
+		preview.Type = KEYWORD_NODE
+		err = triple.Preview.Unmarshal(&preview)
+		if err == nil {
+			node := nodePreview{}
+			err = preview.Value.Unmarshal(&node)
+			if err != nil {
+				return
+			}
+			option.Preview = node
+			result = append(result, option)
+			continue
+		}
+
+		preview.Type = KEYWORD_REPLAY
+		err = triple.Preview.Unmarshal(&preview)
+		if err == nil {
+			replay := replayPreview{}
+			err = preview.Value.Unmarshal(&replay)
+			if err != nil {
+				return
+			}
+			option.Preview = replay
+			result = append(result, option)
+			continue
+		}
+
+		err = fmt.Errorf("invalid preview for option %d", i)
+		return
+	}
+
 	return
 }
 

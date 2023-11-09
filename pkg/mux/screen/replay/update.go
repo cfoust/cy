@@ -79,9 +79,6 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 	}
 
-	// Every other event causes us to pause
-	r.isPlaying = false
-
 	switch msg := msg.(type) {
 	case taro.MouseMsg:
 		switch msg.Button {
@@ -91,6 +88,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.setScroll(r.offset.R + 1)
 		}
 	case ActionEvent:
+		r.isPlaying = false
 		switch msg.Type {
 		case ActionQuit:
 			if r.isCopyMode() {

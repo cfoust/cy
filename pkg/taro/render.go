@@ -19,19 +19,16 @@ type Renderer struct {
 
 // RenderAt renders the given string at (row, col) in `state`.
 func (r *Renderer) RenderAt(state image.Image, row, col int, value string) {
-	oldCols, oldRows := r.term.Size()
+	term := emu.New()
+	term.Write([]byte("\033[20h")) // set CRLF mode
 	newCols := lipgloss.Width(value)
 	newRows := lipgloss.Height(value)
+	term.Resize(newCols, newRows)
+	r.info.Fprintf(term, terminfo.ClearScreen)
+	r.info.Fprintf(term, terminfo.CursorHome)
+	term.Write([]byte(value))
 
-	if oldCols != newCols || oldRows != newRows {
-		r.term.Resize(newCols, newRows)
-	}
-
-	r.info.Fprintf(r.term, terminfo.ClearScreen)
-	r.info.Fprintf(r.term, terminfo.CursorHome)
-	r.term.Write([]byte(value))
-
-	image.Compose(geom.Vec2{R: row, C: col}, state, r.term.Screen())
+	image.Compose(geom.Vec2{R: row, C: col}, state, term.Screen())
 }
 
 func (r *Renderer) ConvertLipgloss(color lipgloss.Color) emu.Color {
@@ -50,14 +47,10 @@ func (r *Renderer) ConvertLipgloss(color lipgloss.Color) emu.Color {
 
 func NewRenderer() *Renderer {
 	info, _ := terminfo.Load("xterm-256color")
-	term := emu.New()
-	term.Write([]byte("\033[20h")) // set CRLF mode
-
-	renderer := lipgloss.NewRenderer(term)
+	renderer := lipgloss.NewRenderer(emu.New())
 	renderer.SetColorProfile(termenv.TrueColor)
 
 	return &Renderer{
-		term:     term,
 		info:     info,
 		Renderer: renderer,
 	}

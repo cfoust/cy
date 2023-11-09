@@ -43,6 +43,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/muesli/cancelreader"
+	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 	"golang.org/x/sync/errgroup"
 )
@@ -232,7 +233,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			var cmd Cmd
 			model, cmd = model.Update(msg) // run update
 			cmds <- cmd                    // process command (if any)
-			p.renderer.write(model)        // send view to renderer
+			frameStart := time.Now()
+			p.renderer.write(model) // send view to renderer
+			frameTime := time.Now().Sub(frameStart)
+			if frameTime > 16*time.Millisecond {
+				log.Debug().Msgf("%T: frame render time exceeded threshold (%+v)", p.initialModel, frameTime)
+			}
 		}
 	}
 }

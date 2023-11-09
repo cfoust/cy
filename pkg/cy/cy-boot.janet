@@ -45,7 +45,7 @@
   "oakthree: jump to a project"
   (-?>>
     (group/children projects)
-    (map |(tuple (tree/name $) ((group/children $) 0) $))
+    (map |(tuple (tree/name $) [:node [((group/children $) 0)]] $))
     (fzf/find)
     (group/children)
     (0) # Gets the first index, the editor
@@ -56,7 +56,7 @@
   "oakthree: jump to a shell"
   (-?>>
     (group/children shells)
-    (map |(tuple (cmd/path $) $ $))
+    (map |(tuple (cmd/path $) [:node [$]] $))
     (fzf/find)
     (pane/attach)))
 
@@ -89,7 +89,7 @@
   "jump to a pane"
   (-?>>
     (group/leaves (tree/root))
-    (map |(tuple (tree/path $) $ $))
+    (map |(tuple (tree/path $) [:node [$]] $))
     (fzf/find)
     (pane/attach)))
 
@@ -133,6 +133,7 @@
   "open an existing log file"
   (-?>>
     (path/glob "/Users/cfoust/.local/share/cy/*.borg")
+    (map |(tuple $ [:replay [$]] $))
     (fzf/find)
     (replay/open (tree/root))
     (pane/attach)))

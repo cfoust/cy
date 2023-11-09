@@ -90,6 +90,11 @@ func Copy(pos geom.Vec2, dst, src Image) {
 
 	for row := min.R; row < max.R; row++ {
 		for col := min.C; col < max.C; col++ {
+			srcR := row - pos.R
+			srcC := col - pos.C
+			if srcR < 0 || srcC < 0 {
+				continue
+			}
 			dst[row][col] = src[row-pos.R][col-pos.C]
 		}
 	}
@@ -115,6 +120,11 @@ func Compose(pos geom.Vec2, dst, src Image) {
 
 	for row := min.R; row < max.R; row++ {
 		for col := min.C; col < max.C; col++ {
+			srcR := row - pos.R
+			srcC := col - pos.C
+			if srcR < 0 || srcC < 0 {
+				continue
+			}
 			srcCell := src[row-pos.R][col-pos.C]
 			if srcCell.Char == ' ' && srcCell.BG == emu.DefaultBG {
 				continue

@@ -69,7 +69,7 @@ func (c *Cmd) Path(id tree.NodeID) (*string, error) {
 
 	r, ok := pane.Screen().(*replayable.Replayable)
 	if !ok {
-		return nil, fmt.Errorf("pane was not a replayable")
+		return nil, fmt.Errorf("pane was not a cmd")
 	}
 
 	cmd, ok := r.Stream().(*stream.Cmd)

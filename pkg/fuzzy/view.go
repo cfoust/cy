@@ -4,7 +4,6 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/mux/screen/tree"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -22,7 +21,7 @@ func (f *Fuzzy) getPreviewContents() (preview image.Image) {
 	}
 
 	switch data := option.Preview.(type) {
-	case tree.NodeID:
+	case nodePreview:
 		if f.isAttached {
 			state := f.client.State()
 			preview = image.New(state.Image.Size())
@@ -48,7 +47,21 @@ func (f *Fuzzy) getPreviewContents() (preview image.Image) {
 			),
 		)
 		return
-	case string:
+	case replayPreview:
+		if f.replay == nil {
+			return nil
+		}
+		state := f.replay.State()
+		preview = image.New(state.Image.Size())
+		image.Copy(geom.Vec2{}, preview, state.Image)
+
+		// draw a ghost cursor
+		cursor := state.Cursor
+		if state.CursorVisible {
+			preview[cursor.Y][cursor.X].BG = 8
+		}
+		return
+	case textPreview:
 		preview = image.New(geom.DEFAULT_SIZE)
 		f.render.RenderAt(
 			preview,
@@ -56,7 +69,7 @@ func (f *Fuzzy) getPreviewContents() (preview image.Image) {
 			f.render.NewStyle().
 				MaxWidth(geom.DEFAULT_SIZE.C).
 				MaxHeight(geom.DEFAULT_SIZE.R).
-				Render(data),
+				Render(data.Text),
 		)
 		return
 	}
