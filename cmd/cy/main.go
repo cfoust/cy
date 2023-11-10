@@ -11,6 +11,11 @@ import (
 func main() {
 	log.Logger = log.Logger.With().Int("pid", os.Getpid()).Logger()
 
+	if isStories() {
+		startStories()
+		return
+	}
+
 	var socketPath string
 
 	if envPath, ok := os.LookupEnv(CY_SOCKET_ENV); ok {
