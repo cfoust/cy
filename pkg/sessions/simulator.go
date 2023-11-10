@@ -18,7 +18,6 @@ type Simulator struct {
 
 func (s *Simulator) store(delta time.Duration, data P.Message) {
 	event := Event{
-		Stamp:   time.Now(),
 		Message: data,
 	}
 

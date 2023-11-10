@@ -54,6 +54,7 @@ func (s *StoryViewer) View(state *tty.State) {
 		W: storySize.C,
 	})
 	tty.Copy(storyPos, state, contents)
+	state.CursorVisible = contents.CursorVisible
 }
 
 func (s *StoryViewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
