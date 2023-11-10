@@ -22,7 +22,7 @@ import (
 // Renderer can make optimizations to only update the parts of the screen that
 // have changed.
 type Renderer struct {
-	target emu.Terminal
+	raw    emu.Terminal
 	screen screen.Screen
 	r      *io.PipeReader
 	w      *io.PipeWriter
@@ -37,8 +37,8 @@ func (r *Renderer) clearScreen(w io.Writer) {
 }
 
 func (r *Renderer) Resize(size geom.Size) error {
-	r.target.Resize(size.C, size.R)
-	r.clearScreen(r.target)
+	r.raw.Resize(size.C, size.R)
+	r.clearScreen(r.raw)
 	r.clearScreen(r.w)
 	err := r.screen.Resize(size)
 	return err
@@ -66,12 +66,13 @@ func (r *Renderer) poll(ctx context.Context) error {
 	subscriber := r.screen.Subscribe(ctx)
 
 	for {
-		_, err := r.w.Write(tty.Swap(
+		changes := tty.Swap(
 			r.info,
-			tty.Capture(r.target),
+			tty.Capture(r.raw),
 			r.screen.State(),
-		))
-
+		)
+		r.raw.Parse(changes)
+		_, err := r.w.Write(changes)
 		if err != nil {
 			return err
 		}
@@ -95,7 +96,7 @@ func NewRenderer(
 	target := emu.New(emu.WithSize(initialSize))
 	screen.Resize(initialSize)
 	renderer := &Renderer{
-		target: target,
+		raw:    target,
 		screen: screen,
 		r:      r,
 		w:      w,
