@@ -31,11 +31,12 @@ var Smoke stories.Story = func(ctx context.Context) mux.Screen {
 		bind.NewBindScope(),
 	)
 
-	replay.Resize(geom.DEFAULT_SIZE)
-
 	return replay
 }
 
 func init() {
-	stories.Register("smoke", Smoke)
+	config := stories.Config{
+		Size: geom.DEFAULT_SIZE,
+	}
+	stories.Register("smoke", Smoke, config)
 }

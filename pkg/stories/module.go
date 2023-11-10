@@ -4,23 +4,47 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
 )
 
+type Config struct {
+	// If zero, the story will resize
+	Size geom.Size
+}
+
 type Story func(context.Context) mux.Screen
 
-var stories = make(map[string]Story)
+type _story struct {
+	init   Story
+	config Config
+}
 
-func Register(name string, story Story) {
-	stories[name] = story
+var stories = make(map[string]_story)
+
+func Register(name string, story Story, config Config) {
+	stories[name] = _story{
+		init:   story,
+		config: config,
+	}
 }
 
 func Initialize(ctx context.Context, name string) (*taro.Program, error) {
-	_, ok := stories[name]
+	story, ok := stories[name]
 	if !ok {
 		return nil, fmt.Errorf("missing story %s", name)
 	}
 
-	return NewViewer(ctx), nil
+	screen := story.init(ctx)
+	config := story.config
+	if !config.Size.IsZero() {
+		screen.Resize(config.Size)
+	}
+
+	return NewViewer(
+		ctx,
+		screen,
+		story.config,
+	), nil
 }
