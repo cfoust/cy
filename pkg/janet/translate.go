@@ -84,6 +84,11 @@ func isValidType(type_ reflect.Type) bool {
 	}
 }
 
+// IsValidType returns true if the given value can be translated to a Janet value.
+func IsValidType(value interface{}) bool {
+	return isValidType(reflect.TypeOf(value))
+}
+
 // Marshal a Go value into a Janet value.
 func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 	result = C.janet_wrap_nil()
@@ -293,9 +298,16 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 			}
 
 			strPtr := strings.Clone(C.GoString(C.cast_janet_string(C.janet_unwrap_keyword(source))))
-			if strPtr != string(keyword) {
+
+			// if the keyword already contains a value, act as if
+			// we're comparing against a constant
+			keywordValue := string(keyword)
+			if len(keywordValue) == 0 {
+				value.SetString(strings.Clone(strPtr))
+			} else if strPtr != keywordValue {
 				return fmt.Errorf("keyword :%s does not match :%s", strPtr, keyword)
 			}
+
 			return nil
 		}
 

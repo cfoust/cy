@@ -5,6 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/cy/cmd"
+	"github.com/cfoust/cy/pkg/cy/params"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/replayable"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -21,22 +22,27 @@ type CmdParams struct {
 type Cmd struct {
 	Lifetime    util.Lifetime
 	Tree        *tree.Tree
-	DataDir     string
 	replayBinds *bind.BindScope
 }
 
 func (c *Cmd) New(
 	groupId tree.NodeID,
 	path string,
-	params *janet.Named[CmdParams],
+	cmdParams *janet.Named[CmdParams],
 ) (tree.NodeID, error) {
-	values := params.WithDefault(CmdParams{
+	values := cmdParams.WithDefault(CmdParams{
 		Command: "/bin/bash",
 	})
 
 	group, ok := c.Tree.GroupById(groupId)
 	if !ok {
 		return 0, fmt.Errorf("node not found: %d", groupId)
+	}
+
+	param, _ := group.Params().Get(params.ParamDataDirectory)
+	dataDir, ok := param.(string)
+	if !ok {
+		return 0, fmt.Errorf("param %s was not a string", params.ParamDataDirectory)
 	}
 
 	replayable, err := cmd.New(
@@ -46,7 +52,7 @@ func (c *Cmd) New(
 			Args:      values.Args,
 			Directory: path,
 		},
-		c.DataDir,
+		dataDir,
 		c.replayBinds,
 	)
 	if err != nil {

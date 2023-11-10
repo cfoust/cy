@@ -132,7 +132,7 @@
   cy/open-log
   "open an existing log file"
   (-?>>
-    (path/glob "/Users/cfoust/.local/share/cy/*.borg")
+    (path/glob (path/join [(cy/get :data-dir) "*.borg"]))
     (map |(tuple $ [:replay [$]] $))
     (fzf/find)
     (replay/open (tree/root))

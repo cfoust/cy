@@ -6,6 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/params"
 
 	"github.com/sasha-s/go-deadlock"
 )
@@ -140,7 +141,15 @@ func (t *Tree) GroupById(id NodeID) (*Group, bool) {
 	return group, true
 }
 
-func NewTree() *Tree {
+type TreeOption func(*Tree)
+
+func WithParams(p *params.Parameters) TreeOption {
+	return func(t *Tree) {
+		t.root.params = p
+	}
+}
+
+func NewTree(options ...TreeOption) *Tree {
 	tree := &Tree{
 		UpdatePublisher: mux.NewPublisher(),
 		nodes:           make(map[NodeID]Node),
@@ -152,6 +161,10 @@ func NewTree() *Tree {
 	}
 
 	tree.storeNode(tree.root)
+
+	for _, option := range options {
+		option(tree)
+	}
 
 	return tree
 }

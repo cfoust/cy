@@ -53,6 +53,7 @@ func (g *Group) NewPane(ctx context.Context, screen mux.Screen) *Pane {
 	metadata := g.tree.newMetadata()
 	pane := newPane(ctx, metadata.Id(), screen)
 	pane.metaData = metadata
+	metadata.params = g.params.NewChild()
 	g.addNode(pane)
 
 	go func() {
@@ -78,6 +79,7 @@ func (g *Group) NewGroup() *Group {
 		metaData: g.tree.newMetadata(),
 		tree:     g.tree,
 	}
+	g.params = g.params.NewChild()
 	g.addNode(group)
 	return group
 }

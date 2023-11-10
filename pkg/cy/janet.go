@@ -87,7 +87,6 @@ func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 	modules := map[string]interface{}{
 		"cmd": &api.Cmd{
 			Lifetime: util.NewLifetime(c.Ctx()),
-			DataDir:  dataDir,
 			Tree:     c.tree,
 		},
 		"group": &api.GroupModule{Tree: c.tree},
@@ -119,6 +118,63 @@ func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 			}
 
 			client.Detach("detached")
+		},
+		"cy/get": func(user interface{}, key *janet.Value) (interface{}, error) {
+			defer key.Free()
+
+			client, ok := user.(*Client)
+			if !ok {
+				return nil, fmt.Errorf("missing client context")
+			}
+
+			node := client.Node()
+			if node == nil {
+				return nil, fmt.Errorf("client was not attached")
+			}
+
+			var keyword janet.Keyword
+			err := key.Unmarshal(&keyword)
+			if err != nil {
+				return nil, err
+			}
+
+			value, ok := node.Params().Get(string(keyword))
+			return value, nil
+		},
+		"cy/set": func(user interface{}, key *janet.Value, value *janet.Value) error {
+			defer key.Free()
+
+			client, ok := user.(*Client)
+			if !ok {
+				return fmt.Errorf("missing client context")
+			}
+
+			node := client.Node()
+			if node == nil {
+				return fmt.Errorf("client was not attached")
+			}
+
+			var keyword janet.Keyword
+			err := key.Unmarshal(&keyword)
+			if err != nil {
+				return err
+			}
+
+			var str string
+			err = value.Unmarshal(&str)
+			if err == nil {
+				node.Params().Set(string(keyword), str)
+				return nil
+			}
+
+			var _int int
+			err = value.Unmarshal(&_int)
+			if err == nil {
+				node.Params().Set(string(keyword), _int)
+				return nil
+			}
+
+			return fmt.Errorf("parameter type not supported")
 		},
 		"cy/replay": func(user interface{}) {
 			client, ok := user.(*Client)

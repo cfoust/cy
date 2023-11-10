@@ -15,6 +15,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/rs/zerolog"
@@ -32,9 +33,15 @@ type Options struct {
 type Cy struct {
 	util.Lifetime
 	deadlock.RWMutex
+
 	janet *janet.VM
 
 	muxServer *server.Server
+
+	// The top-level fallback for all parameter queries. This is distinct
+	// from the *Parameters at the root node of the tree, which the user
+	// can actually change.
+	defaults *params.Parameters
 
 	// The tree of groups and panes
 	tree *tree.Tree
@@ -101,14 +108,20 @@ func (c *Cy) Shutdown() error {
 func Start(ctx context.Context, options Options) (*Cy, error) {
 	replayBinds := bind.NewBindScope()
 
-	t := tree.NewTree()
+	defaults := params.New()
+	t := tree.NewTree(tree.WithParams(defaults.NewChild()))
 	cy := Cy{
 		Lifetime:    util.NewLifetime(ctx),
 		tree:        t,
 		muxServer:   server.New(),
 		replayBinds: replayBinds,
+		defaults:    defaults,
 	}
 	cy.toast = NewToastLogger(cy.sendToast)
+	err := cy.setDefaults(options)
+	if err != nil {
+	    return nil, err
+	}
 
 	subscriber := t.Subscribe(cy.Ctx())
 	go cy.pollNodeEvents(cy.Ctx(), subscriber.Recv())
