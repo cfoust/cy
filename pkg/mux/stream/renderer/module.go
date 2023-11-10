@@ -31,8 +31,15 @@ type Renderer struct {
 
 var _ mux.Stream = (*Renderer)(nil)
 
+func (r *Renderer) clearScreen(w io.Writer) {
+	r.info.Fprintf(w, terminfo.ClearScreen)
+	r.info.Fprintf(w, terminfo.CursorHome)
+}
+
 func (r *Renderer) Resize(size geom.Size) error {
 	r.target.Resize(size.C, size.R)
+	r.clearScreen(r.target)
+	r.clearScreen(r.w)
 	err := r.screen.Resize(size)
 	return err
 }
@@ -81,11 +88,12 @@ func (r *Renderer) poll(ctx context.Context) error {
 func NewRenderer(
 	ctx context.Context,
 	info *terminfo.Terminfo,
-	target emu.Terminal,
+	initialSize geom.Size,
 	screen mux.Screen,
 ) *Renderer {
 	r, w := io.Pipe()
-
+	target := emu.New(emu.WithSize(initialSize))
+	screen.Resize(initialSize)
 	renderer := &Renderer{
 		target: target,
 		screen: screen,

@@ -1,14 +1,12 @@
 package cy
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
-	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/events"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
@@ -59,7 +57,6 @@ type Client struct {
 	// history is an array of all of the panes this client has attached to
 	history []tree.NodeID
 
-	raw  emu.Terminal
 	info screen.RenderContext
 }
 
@@ -212,8 +209,6 @@ func (c *Cy) pollClient(ctx context.Context, client *Client) {
 	go client.pollEvents()
 	go client.binds.Poll(client.Ctx())
 
-	client.clearScreen()
-
 	node := c.findInitialPane()
 	if node == nil {
 		// TODO(cfoust): 06/08/23 handle this
@@ -274,19 +269,7 @@ func (c *Cy) removeClient(client *Client) {
 	c.Unlock()
 }
 
-func (c *Client) clearScreen() {
-	buf := new(bytes.Buffer)
-	c.info.Terminfo.Fprintf(buf, terminfo.ClearScreen)
-	c.info.Terminfo.Fprintf(buf, terminfo.CursorHome)
-	c.output(buf.Bytes())
-}
-
 func (c *Client) output(data []byte) error {
-	_, err := c.raw.Write(data)
-	if err != nil {
-		return err
-	}
-
 	return c.conn.Send(P.OutputMessage{
 		Data: data,
 	})
@@ -304,7 +287,6 @@ func (c *Client) closeError(reason error) error {
 }
 
 func (c *Client) Resize(size geom.Vec2) {
-	c.clearScreen()
 	c.muxClient.Resize(size)
 	c.renderer.Resize(size)
 }
@@ -363,8 +345,12 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		screen.PositionTop,
 	)
 
-	c.raw = emu.New(emu.WithSize(handshake.Size))
-	c.renderer = renderer.NewRenderer(c.Ctx(), info, c.raw, c.outerLayers)
+	c.renderer = renderer.NewRenderer(
+		c.Ctx(),
+		info,
+		handshake.Size,
+		c.outerLayers,
+	)
 
 	go c.pollRender()
 
