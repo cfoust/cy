@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/xo/terminfo"
 )
@@ -28,6 +29,8 @@ type Renderer struct {
 	info   *terminfo.Terminfo
 }
 
+var _ mux.Stream = (*Renderer)(nil)
+
 func (r *Renderer) Resize(size geom.Size) error {
 	r.target.Resize(size.C, size.R)
 	err := r.screen.Resize(size)
@@ -36,6 +39,16 @@ func (r *Renderer) Resize(size geom.Size) error {
 
 func (r *Renderer) Send(msg mux.Msg) {
 	r.screen.Send(msg)
+}
+
+func (r *Renderer) Write(data []byte) (n int, err error) {
+	for i, w := 0, 0; i < len(data); i += w {
+		var msg taro.Msg
+		w, msg = taro.DetectOneMsg(data[i:])
+		r.Send(msg)
+	}
+
+	return len(data), nil
 }
 
 func (r *Renderer) Read(p []byte) (n int, err error) {
