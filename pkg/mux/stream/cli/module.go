@@ -57,7 +57,7 @@ func Attach(
 			case <-ctx.Done():
 				return
 			case <-ch:
-				columns, rows, err := term.GetSize(int(os.Stdin.Fd()))
+				columns, rows, err := term.GetSize(int(in.Fd()))
 				if err != nil {
 					// TODO(cfoust): 11/10/23 error handling
 					return
