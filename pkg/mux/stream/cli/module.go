@@ -11,6 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 
 	"github.com/muesli/termenv"
+	"github.com/xo/terminfo"
 	"golang.org/x/term"
 )
 
@@ -23,16 +24,22 @@ func Attach(
 ) error {
 	output := termenv.NewOutput(out)
 
+	info, err := terminfo.LoadFromEnv()
+	if err != nil {
+		panic(err)
+	}
+
 	output.AltScreen()
 	output.EnableMouseAllMotion()
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	oldState, err := term.MakeRaw(int(in.Fd()))
 	if err != nil {
 		return err
 	}
 	defer func() {
 		output.ExitAltScreen()
 		output.DisableMouseAllMotion()
-		term.Restore(int(os.Stdin.Fd()), oldState)
+		info.Fprintf(out, terminfo.CursorVisible)
+		term.Restore(int(in.Fd()), oldState)
 	}()
 
 	go func() { _, _ = io.Copy(stream, in) }()
