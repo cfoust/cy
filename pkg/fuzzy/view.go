@@ -117,7 +117,9 @@ func (f *Fuzzy) renderPreview(state *tty.State) {
 }
 
 func (f *Fuzzy) View(state *tty.State) {
-	tty.Copy(geom.Vec2{}, state, f.anim.State())
+	if f.anim != nil {
+		tty.Copy(geom.Vec2{}, state, f.anim.State())
+	}
 
 	if f.haveMoved {
 		f.renderPreview(state)

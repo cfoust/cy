@@ -113,7 +113,7 @@ type sequenceMsg []tea.Cmd
 
 // Indicates that this message should be emitted upwards.
 type PublishMsg struct {
-	Message Msg
+	Msg Msg
 }
 
 // NewProgram creates a new Program.
@@ -192,7 +192,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				return model, nil
 
 			case PublishMsg:
-				p.Publish(msg.Message)
+				p.Publish(msg.Msg)
 				continue
 
 			case tea.BatchMsg:

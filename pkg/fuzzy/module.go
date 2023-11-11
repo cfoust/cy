@@ -27,6 +27,9 @@ type Fuzzy struct {
 	render    *taro.Renderer
 	textInput textinput.Model
 
+	// Don't allow Fuzzy to quit or the user to choose anything
+	isSticky bool
+
 	// before the user has done anything, we don't show the preview window
 	haveMoved bool
 
@@ -99,10 +102,15 @@ func (f *Fuzzy) handlePreview() taro.Cmd {
 }
 
 func (f *Fuzzy) Init() taro.Cmd {
-	return tea.Batch(
+	cmds := []taro.Cmd{
 		textinput.Blink,
-		taro.WaitScreens(f.Ctx(), f.anim),
-	)
+	}
+
+	if f.anim != nil {
+		cmds = append(cmds, taro.WaitScreens(f.Ctx(), f.anim))
+	}
+
+	return tea.Batch(cmds...)
 }
 
 func (f *Fuzzy) getOptions() []Option {
@@ -114,6 +122,24 @@ func (f *Fuzzy) getOptions() []Option {
 
 func (f *Fuzzy) isInverted() bool {
 	return f.location.R > (f.size.R / 2)
+}
+
+type SelectedEvent struct {
+	Option Option
+}
+
+func (f *Fuzzy) setSelected(index int) {
+	f.selected = geom.Clamp(index, 0, len(f.getOptions())-1)
+}
+
+func (f *Fuzzy) emitOption() taro.Cmd {
+	return func() taro.Msg {
+		return taro.PublishMsg{
+			Msg: SelectedEvent{
+				Option: f.getOptions()[f.selected],
+			},
+		}
+	}
 }
 
 func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
@@ -138,8 +164,8 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return f, taro.WaitScreens(f.Ctx(), f.anim)
 	case matchResult:
 		f.filtered = msg.Filtered
-		f.selected = geom.Clamp(f.selected, 0, len(f.getOptions())-1)
-		return f, nil
+		f.setSelected(f.selected)
+		return f, f.emitOption()
 	case tea.WindowSizeMsg:
 		size := geom.Size{
 			R: msg.Height,
@@ -152,23 +178,32 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case taro.KeyEsc, taro.KeyCtrlC:
 			f.result <- nil
 			return f.quit()
-		case taro.KeyUp, taro.KeyCtrlK:
+		case taro.KeyDown, taro.KeyCtrlJ, taro.KeyUp, taro.KeyCtrlK:
 			f.haveMoved = true
-			delta := -1
+			isUp := false
+			switch msg.Type {
+			case taro.KeyUp, taro.KeyCtrlK:
+				isUp = true
+			}
 			if f.isInverted() {
+				isUp = !isUp
+			}
+
+			delta := -1
+			if !isUp {
 				delta = 1
 			}
-			f.selected = geom.Clamp(f.selected+delta, 0, len(f.getOptions())-1)
-			return f, f.handlePreview()
-		case taro.KeyDown, taro.KeyCtrlJ:
-			f.haveMoved = true
-			delta := 1
-			if f.isInverted() {
-				delta = -1
-			}
-			f.selected = geom.Clamp(f.selected+delta, 0, len(f.getOptions())-1)
-			return f, f.handlePreview()
+
+			f.setSelected(f.selected + delta)
+			return f, tea.Batch(
+				f.handlePreview(),
+				f.emitOption(),
+			)
 		case taro.KeyEnter:
+			if f.isSticky {
+				return f, nil
+			}
+
 			if f.selected >= 0 && f.selected < len(f.getOptions()) {
 				option := f.getOptions()[f.selected]
 				f.result <- option.Result
@@ -196,14 +231,43 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	return f, tea.Batch(cmds...)
 }
 
+type Setting func(context.Context, *Fuzzy)
+
+func WithAnimation(image image.Image) Setting {
+	return func(ctx context.Context, f *Fuzzy) {
+		f.anim = anim.NewAnimator(
+			ctx,
+			anim.Random(),
+			image,
+			23,
+		)
+	}
+}
+
+// Don't allow Fuzzy to quit.
+func WithSticky(ctx context.Context, f *Fuzzy) {
+	f.isSticky = true
+}
+
+// If both of these are provided, Fuzzy can show previews for panes.
+func WithNodes(t *tree.Tree, client *server.Client) Setting {
+	return func(ctx context.Context, f *Fuzzy) {
+		f.tree = t
+		f.client = client
+	}
+}
+
+func WithResult(result chan<- interface{}) Setting {
+	return func(ctx context.Context, f *Fuzzy) {
+		f.result = result
+	}
+}
+
 func NewFuzzy(
 	ctx context.Context,
-	bg image.Image,
 	options []Option,
 	location geom.Vec2,
-	tree *tree.Tree,
-	client *server.Client,
-	result chan<- interface{},
+	settings ...Setting,
 ) *taro.Program {
 	ti := textinput.New()
 	ti.Focus()
@@ -211,23 +275,20 @@ func NewFuzzy(
 	ti.Width = 20
 	ti.Prompt = ""
 
-	return taro.New(ctx, &Fuzzy{
-		Lifetime: util.NewLifetime(ctx),
-		anim: anim.NewAnimator(
-			ctx,
-			anim.Random(),
-			bg,
-			23,
-		),
+	f := &Fuzzy{
+		Lifetime:  util.NewLifetime(ctx),
 		render:    taro.NewRenderer(),
-		result:    result,
 		location:  location,
 		options:   options,
 		selected:  0,
 		textInput: ti,
-		tree:      tree,
-		client:    client,
-	})
+	}
+
+	for _, setting := range settings {
+		setting(f.Ctx(), f)
+	}
+
+	return taro.New(ctx, f)
 }
 
 type matchResult struct {

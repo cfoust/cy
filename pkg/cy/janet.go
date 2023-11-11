@@ -240,12 +240,15 @@ func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 			result := make(chan interface{})
 			fuzzy := fuzzy.NewFuzzy(
 				ctx,
-				state.Image,
 				options,
 				geom.Vec2{R: cursor.Y, C: cursor.X},
-				c.tree,
-				c.muxServer.AddClient(ctx, geom.Vec2{}),
-				result,
+
+				fuzzy.WithResult(result),
+				fuzzy.WithNodes(
+					c.tree,
+					c.muxServer.AddClient(ctx, geom.Vec2{}),
+				),
+				fuzzy.WithAnimation(state.Image),
 			)
 
 			client.outerLayers.NewLayer(

@@ -67,7 +67,7 @@ func (r *Replay) handleCopy() (taro.Model, tea.Cmd) {
 	)
 	return r, func() tea.Msg {
 		return taro.PublishMsg{
-			Message: CopyEvent{
+			Msg: CopyEvent{
 				Text: text,
 			},
 		}
