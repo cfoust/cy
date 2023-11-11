@@ -189,6 +189,10 @@ func (r *Replay) renderInput() image.Image {
 		}
 	}
 
+	if r.isWaiting {
+		prompt = fmt.Sprintf("searching...(%d/100)", r.progressPercent)
+	}
+
 	input := lipgloss.JoinVertical(
 		lipgloss.Left,
 		inputStyle.Render(r.searchInput.View()),
@@ -275,7 +279,7 @@ func (r *Replay) View(state *tty.State) {
 
 	// Render text input
 	/////////////////////////////
-	if r.mode != ModeInput {
+	if r.mode != ModeInput && !r.isWaiting {
 		return
 	}
 

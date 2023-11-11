@@ -56,7 +56,7 @@ func (s *ScreenReader) NumRead() int {
 
 func (s *ScreenReader) ReadRune() (r rune, size int, err error) {
 	next := s.next
-	if next.R >= s.size.R || next.R < 0 || next.C < 0 || next.C > s.size.C {
+	if next.R >= s.size.R || next.R < 0 || next.C < 0 || next.C >= s.size.C {
 		return 0, 0, io.EOF
 	}
 

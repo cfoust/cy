@@ -12,6 +12,9 @@ import (
 type Config struct {
 	// If zero, the story will resize
 	Size geom.Size
+	// If true, the viewer captures the screen immediately and uses that
+	// instead of a live view.
+	IsSnapshot bool
 }
 
 type Story func(context.Context) mux.Screen

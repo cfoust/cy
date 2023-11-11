@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/sessions"
+	"github.com/rs/zerolog/log"
 )
 
 // Address refers to a point inside of a recording.
@@ -62,11 +63,13 @@ func matchCell(re *regexp.Regexp, reader *ScreenReader, cell geom.Vec2) (loc []g
 	return
 }
 
-func Search(events []sessions.Event, pattern string) (results []SearchResult, err error) {
+func Search(events []sessions.Event, pattern string, progress chan<- int) (results []SearchResult, err error) {
 	if len(pattern) == 0 {
 		err = fmt.Errorf("pattern must be non-empty")
 		return
 	}
+
+	log.Info().Msgf("Search %d", len(events))
 
 	// this MUST be set because of how the cell reader works
 	if pattern[0] != '^' {
@@ -90,7 +93,15 @@ func Search(events []sessions.Event, pattern string) (results []SearchResult, er
 
 	var address Address
 
+	percent := 0
 	for index, event := range events {
+		newPercent := int(float64(index) / float64(len(events)) * 100)
+		log.Info().Msgf("event %d/%d %d", index+1, len(events), newPercent)
+		if newPercent > percent && progress != nil {
+			percent = newPercent
+			progress <- percent
+		}
+
 		if resize, ok := event.Message.(P.SizeMessage); ok {
 			term.Resize(
 				resize.Columns,

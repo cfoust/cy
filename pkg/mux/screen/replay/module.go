@@ -69,10 +69,12 @@ type Replay struct {
 	// The location in terminal space where the select began
 	selectStart geom.Vec2
 
-	isForward   bool
-	isWaiting   bool
-	searchInput textinput.Model
-	matches     []search.SearchResult
+	isForward       bool
+	isWaiting       bool
+	searchProgress  chan int
+	progressPercent int
+	searchInput     textinput.Model
+	matches         []search.SearchResult
 }
 
 var _ taro.Model = (*Replay)(nil)
@@ -147,6 +149,7 @@ func newReplay(
 		searchInput:    ti,
 		playbackRate:   1,
 		binds:          binds,
+		searchProgress: make(chan int),
 		skipInactivity: true,
 	}
 	m.gotoIndex(-1, -1)

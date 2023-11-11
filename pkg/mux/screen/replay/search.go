@@ -82,6 +82,18 @@ func (r *Replay) searchAgain(isForward bool) {
 	r.gotoMatch(initialIndex)
 }
 
+type progressEvent struct {
+	value int
+}
+
+func (r *Replay) waitProgress() tea.Cmd {
+	return func() tea.Msg {
+		return progressEvent{
+			value: <-r.searchProgress,
+		}
+	}
+}
+
 func (r *Replay) handleSearchResult(msg SearchResultEvent) (taro.Model, tea.Cmd) {
 	r.isWaiting = false
 
@@ -117,6 +129,7 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 			value := r.searchInput.Value()
 			r.searchInput.Reset()
 			r.mode = ModeTime
+			r.progressPercent = 0
 
 			if match := TIME_DELTA_REGEX.FindStringSubmatch(value); match != nil {
 				delta := parseTimeDelta(match)
@@ -134,15 +147,18 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 			isForward := r.isForward
 			events := r.events
 
-			return r, func() tea.Msg {
-				res, err := search.Search(events, value)
-				return SearchResultEvent{
-					isForward: isForward,
-					origin:    location,
-					results:   res,
-					err:       err,
-				}
-			}
+			return r, tea.Batch(
+				func() tea.Msg {
+					res, err := search.Search(events, value, r.searchProgress)
+					return SearchResultEvent{
+						isForward: isForward,
+						origin:    location,
+						results:   res,
+						err:       err,
+					}
+				},
+				r.waitProgress(),
+			)
 		}
 	}
 	var cmd tea.Cmd

@@ -21,6 +21,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	viewport := r.viewport
 
 	switch msg := msg.(type) {
+	case progressEvent:
+		r.progressPercent = msg.value
+		return r, r.waitProgress()
 	case PlaybackRateEvent:
 		r.playbackRate = geom.Clamp(msg.Rate, -10, 10)
 		if r.playbackRate == 0 {

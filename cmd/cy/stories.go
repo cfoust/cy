@@ -29,7 +29,7 @@ func startStories() {
 	log.Logger = log.Output(logs)
 
 	ctx := context.Background()
-	screen, err := stories.Initialize(ctx, "replay/time/jump-forward")
+	screen, err := stories.Initialize(ctx, "replay/time/searching")
 	if err != nil {
 		panic(err)
 	}

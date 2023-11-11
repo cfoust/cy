@@ -15,9 +15,10 @@ import (
 type StoryViewer struct {
 	util.Lifetime
 
-	config Config
-	render *taro.Renderer
-	screen mux.Screen
+	config  Config
+	render  *taro.Renderer
+	screen  mux.Screen
+	capture *tty.State
 }
 
 var _ taro.Model = (*StoryViewer)(nil)
@@ -29,6 +30,10 @@ func (s *StoryViewer) Init() tea.Cmd {
 func (s *StoryViewer) View(state *tty.State) {
 	size := state.Image.Size()
 	contents := s.screen.State()
+	if s.capture != nil {
+		contents = s.capture
+	}
+
 	storySize := contents.Image.Size()
 	storyPos := geom.Vec2{
 		R: (size.R / 2) - (storySize.R / 2),
@@ -72,11 +77,17 @@ func NewViewer(
 	screen mux.Screen,
 	config Config,
 ) *taro.Program {
-	program := taro.New(ctx, &StoryViewer{
+	viewer := &StoryViewer{
 		Lifetime: util.NewLifetime(ctx),
 		render:   taro.NewRenderer(),
 		config:   config,
 		screen:   screen,
-	})
+	}
+
+	if config.IsSnapshot {
+		viewer.capture = screen.State()
+	}
+
+	program := taro.New(ctx, viewer)
 	return program
 }
