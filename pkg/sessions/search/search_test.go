@@ -56,11 +56,13 @@ func TestBasic(t *testing.T) {
 			Index:  2,
 			Offset: 2,
 		},
-		From: geom.Vec2{
-			C: 3,
-		},
-		To: geom.Vec2{
-			C: 6,
+		Selection: Selection{
+			From: geom.Vec2{
+				C: 3,
+			},
+			To: geom.Vec2{
+				C: 6,
+			},
 		},
 	}, results[0])
 }

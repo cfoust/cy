@@ -111,8 +111,10 @@ func main() {
 	}
 	defer pprof.StopCPUProfile()
 
-	_, err = search.Search(events, CLI.Query, nil)
+	results, err := search.Search(events, CLI.Query, nil)
 	if err != nil {
 		panic(err)
 	}
+
+	log.Info().Msgf("found %d results", len(results))
 }

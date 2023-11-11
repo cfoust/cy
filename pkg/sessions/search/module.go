@@ -11,7 +11,6 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/sessions"
-	"github.com/rs/zerolog/log"
 )
 
 // Address refers to a point inside of a recording.
@@ -35,11 +34,43 @@ func (a Address) Equal(other Address) bool {
 	return a.Index == other.Index && a.Offset == other.Offset
 }
 
+type Selection struct {
+	From, To geom.Vec2
+}
+
+// Within returns true if `pos` falls within the Selection.
+func (s Selection) Within(pos geom.Vec2, size geom.Vec2) bool {
+	var startCol, endCol int
+	for row := s.From.R; row <= s.To.R; row++ {
+		startCol = 0
+		if row == s.From.R {
+			startCol = s.From.C
+		}
+
+		endCol = size.C - 1
+		if row == s.To.R {
+			endCol = s.To.C
+		}
+
+		for col := startCol; col <= endCol; col++ {
+			if pos.R == row && pos.C == col {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+type Candidate struct {
+	Selection
+}
+
 type SearchResult struct {
 	// The location of the result in time
 	Begin, End Address
 	// The location of the result on the screen
-	From, To geom.Vec2
+	Selection
 }
 
 func matchCell(re *regexp.Regexp, reader *ScreenReader, cell geom.Vec2) (loc []geom.Vec2, partial bool) {
@@ -59,6 +90,11 @@ func matchCell(re *regexp.Regexp, reader *ScreenReader, cell geom.Vec2) (loc []g
 	// if that's all it read, there was no partial match
 	if reader.NumRead() <= 3 {
 		return
+	}
+
+	loc = []geom.Vec2{
+		cell,
+		reader.Next(),
 	}
 
 	// If we read any more, there was a partial match no matter what
@@ -128,12 +164,11 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 	}
 
 	first, err := getPartial(pattern[1:])
-	log.Info().Msgf("%+v", first)
 	if err != nil {
 		return
 	}
 
-	initial := make([]Address, 0)
+	checkpoints := make(map[int]map[int]struct{}, 0)
 	for index, event := range events {
 		output, ok := event.Message.(P.OutputMessage)
 		if !ok {
@@ -141,16 +176,13 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 		}
 
 		for _, match := range first.FindAllIndex(output.Data, -1) {
-			offset := match[0]
-			initial = append(initial, Address{
-				Index:  index,
-				Offset: offset,
-			})
+			if _, ok := checkpoints[index]; !ok {
+				checkpoints[index] = make(map[int]struct{}, 0)
+			}
+
+			checkpoints[index][match[0]] = struct{}{}
 		}
 	}
-
-	log.Info().Msgf("%d partial matches", len(initial))
-	return
 
 	term := emu.New()
 	term.EnableHistory(false)
@@ -158,11 +190,13 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 	reader := NewScreenReader(term, geom.Vec2{}, geom.DEFAULT_SIZE)
 
 	// The partial matches we're tracking
-	var candidates, newCandidates []geom.Vec2
+	var candidates, newCandidates []Candidate
 	// The full matches we're tracking that are still on the screen
 	var matches, newMatches []SearchResult
 
 	var address Address
+
+	size := geom.Vec2{}
 
 	percent := 0
 	for index, event := range events {
@@ -177,7 +211,8 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 				resize.Columns,
 				resize.Rows,
 			)
-			reader.Resize(geom.Vec2{C: resize.Columns, R: resize.Rows})
+			size = geom.Vec2{C: resize.Columns, R: resize.Rows}
+			reader.Resize(size)
 
 			// TODO(cfoust): 08/24/23 clear all matches and
 			// candidates, scan every cell for candidates
@@ -187,7 +222,7 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 		output := event.Message.(P.OutputMessage)
 
 		for offset := range output.Data {
-			newCandidates = make([]geom.Vec2, 0)
+			newCandidates = make([]Candidate, 0)
 			newMatches = make([]SearchResult, 0)
 
 			// Advance one byte at a time
@@ -202,9 +237,15 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 				Offset: offset,
 			}
 
+			cell, changed := term.LastCell()
+
 			// Check all existing candidates
 			for _, candidate := range candidates {
-				loc, partial := matchCell(re, reader, candidate)
+				if !candidate.Within(cell.Vec2, size) {
+					continue
+				}
+
+				loc, partial := matchCell(re, reader, candidate.From)
 
 				// The partial match is still partial
 				if partial {
@@ -220,26 +261,31 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 					continue
 				}
 
+				result := SearchResult{}
+				result.Begin = address
+				result.From = loc[0]
+				result.To = loc[1]
+
 				// We have a full match!
-				newMatches = append(
-					newMatches,
-					SearchResult{
-						Begin: address,
-						From:  loc[0],
-						To:    loc[1],
-					},
-				)
+				newMatches = append(newMatches, result)
 			}
 
 			for _, match := range matches {
+				if !match.Within(cell.Vec2, size) {
+					newMatches = append(
+						newMatches,
+						match,
+					)
+					continue
+				}
 				loc, partial := matchCell(re, reader, match.From)
 
 				// Still track it if it was partial
 				if partial {
-					newCandidates = append(
-						newCandidates,
-						match.From,
-					)
+					candidate := Candidate{}
+					candidate.From = loc[0]
+					candidate.To = loc[1]
+					newCandidates = append(newCandidates, candidate)
 				}
 
 				// It's gone
@@ -259,32 +305,42 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 				)
 			}
 
+			candidates = newCandidates
+			matches = newMatches
+
 			// Check for a new match
-			cell, changed := term.LastCell()
-			if changed {
-				loc, partial := matchCell(re, reader, cell.Vec2)
+			if !changed {
+				continue
+			}
 
-				if partial {
-					newCandidates = append(
-						newCandidates,
-						cell.Vec2,
-					)
-				}
+			indexEvents, ok := checkpoints[index]
+			if !ok {
+				continue
+			}
 
-				if len(loc) == 2 {
-					newMatches = append(
-						newMatches,
-						SearchResult{
-							Begin: address,
-							From:  loc[0],
-							To:    loc[1],
-						},
-					)
-				}
+			if _, ok := indexEvents[offset]; !ok {
+				continue
+			}
+
+			loc, partial := matchCell(re, reader, cell.Vec2)
+
+			if partial {
+				candidate := Candidate{}
+				candidate.From = loc[0]
+				candidate.To = loc[1]
+				newCandidates = append(
+					newCandidates,
+					candidate,
+				)
+			} else if len(loc) == 2 {
+				result := SearchResult{}
+				result.Begin = address
+				result.From = loc[0]
+				result.To = loc[1]
+				newMatches = append(newMatches, result)
 			}
 
 			candidates = newCandidates
-			matches = newMatches
 		}
 	}
 

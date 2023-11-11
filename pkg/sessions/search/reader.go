@@ -54,6 +54,10 @@ func (s *ScreenReader) NumRead() int {
 	return s.numRead
 }
 
+func (s *ScreenReader) Next() geom.Vec2 {
+	return s.next
+}
+
 func (s *ScreenReader) ReadRune() (r rune, size int, err error) {
 	next := s.next
 	if next.R >= s.size.R || next.R < 0 || next.C < 0 || next.C >= s.size.C {
