@@ -87,6 +87,10 @@ type progressEvent struct {
 }
 
 func (r *Replay) waitProgress() tea.Cmd {
+	if r.searchProgress == nil {
+		return nil
+	}
+
 	return func() tea.Msg {
 		return progressEvent{
 			value: <-r.searchProgress,

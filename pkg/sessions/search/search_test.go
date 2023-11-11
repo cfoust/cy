@@ -29,6 +29,7 @@ func TestBasic(t *testing.T) {
 			"baz",
 		),
 		"^bar",
+		nil,
 	)
 	require.Equal(t, 1, len(results))
 	require.Equal(t, SearchResult{

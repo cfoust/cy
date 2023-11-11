@@ -58,7 +58,17 @@ func createTest(events []sessions.Event) (*Replay, func(msgs ...interface{})) {
 			m, cmd = m.Update(realMsg)
 			m.View(tty.New(geom.DEFAULT_SIZE))
 			for cmd != nil {
-				m, cmd = m.Update(cmd())
+				msg := cmd()
+
+				switch msg := msg.(type) {
+				case tea.BatchMsg:
+					for _, cmd := range msg {
+						m, _ = m.Update(cmd())
+					}
+					cmd = nil
+				default:
+					m, cmd = m.Update(msg)
+				}
 				m.View(tty.New(geom.DEFAULT_SIZE))
 			}
 		}
@@ -83,6 +93,7 @@ func TestSearch(t *testing.T) {
 		)
 
 	r, i := createTest(s.Events())
+	r.searchProgress = nil
 	i(ActionBeginning, ActionSearchForward, "bar", "enter")
 	require.Equal(t, 3, len(r.matches))
 	require.Equal(t, 2, r.location.Index)
