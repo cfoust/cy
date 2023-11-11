@@ -110,17 +110,24 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 	case taro.KeyMsg:
 		switch msg.Type {
+		case taro.KeyEsc, taro.KeyCtrlC:
+			r.mode = ModeTime
+			return r, nil
 		case taro.KeyEnter:
 			value := r.searchInput.Value()
 			r.searchInput.Reset()
+			r.mode = ModeTime
 
 			if match := TIME_DELTA_REGEX.FindStringSubmatch(value); match != nil {
-				r.setTimeDelta(parseTimeDelta(match), false)
+				delta := parseTimeDelta(match)
+				if !r.isForward {
+					delta *= -1
+				}
+				r.setTimeDelta(delta, false)
 				return r, nil
 			}
 
 			r.isWaiting = true
-			r.mode = ModeTime
 			r.matches = make([]search.SearchResult, 0)
 
 			location := r.location

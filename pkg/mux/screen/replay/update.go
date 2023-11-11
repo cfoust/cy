@@ -51,6 +51,8 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return r.handleSearchResult(msg)
 	}
 
+	// TODO(cfoust): 11/10/23 this is actually wrong; if we do this,
+	// ActionQuit does not go through
 	if r.mode == ModeInput {
 		return r.handleSearchInput(msg)
 	}

@@ -321,8 +321,16 @@ func TestTimeJump(t *testing.T) {
 	r, i := createTest(e)
 	i(size)
 	r.gotoIndex(1, -1)
-	i(ActionSearchForward, "+5m", "enter")
+	i(ActionSearchForward, "5m", "enter")
 	require.Equal(t, e[0].Stamp.Add(5*time.Minute), r.currentTime)
-	i(ActionSearchForward, "-5m", "enter")
+	i(ActionSearchBackward, "5m", "enter")
 	require.Equal(t, e[0].Stamp, r.currentTime)
+}
+
+func TestPrompt(t *testing.T) {
+	r, i := createTest(createTestSession())
+	i(geom.DEFAULT_SIZE)
+	r.gotoIndex(0, -1)
+	i(ActionSearchForward, "blah", ActionQuit)
+	require.Equal(t, r.mode, ModeTime)
 }

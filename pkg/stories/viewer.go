@@ -10,7 +10,6 @@ import (
 	"github.com/cfoust/cy/pkg/util"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type StoryViewer struct {
@@ -29,17 +28,6 @@ func (s *StoryViewer) Init() tea.Cmd {
 
 func (s *StoryViewer) View(state *tty.State) {
 	size := state.Image.Size()
-	s.render.RenderAt(
-		state.Image,
-		0, 0,
-		lipgloss.Place(
-			size.C,
-			size.R,
-			lipgloss.Center, lipgloss.Center,
-			"test",
-		),
-	)
-
 	contents := s.screen.State()
 	storySize := contents.Image.Size()
 	storyPos := geom.Vec2{
@@ -70,7 +58,8 @@ func (s *StoryViewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case taro.ScreenUpdate:
 		return s, taro.WaitScreens(s.Ctx(), s.screen)
 	case taro.KeyMsg:
-		if msg.String() == "q" {
+		switch msg.String() {
+		case "q":
 			return s, tea.Quit
 		}
 	}

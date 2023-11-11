@@ -103,11 +103,10 @@ func (r *Replay) scheduleUpdate() (taro.Model, tea.Cmd) {
 }
 
 var (
-	TIME_DELTA_REGEX = regexp.MustCompile("^(?P<sign>[+-])((?P<days>\\d+)d)?((?P<hours>\\d+)h)?((?P<min>\\d+)m)?((?P<sec>\\d+)s)?$")
+	TIME_DELTA_REGEX = regexp.MustCompile("^((?P<days>\\d+)d)?((?P<hours>\\d+)h)?((?P<min>\\d+)m)?((?P<sec>\\d+)s)?$")
 )
 
 func parseTimeDelta(delta []string) (result time.Duration) {
-	sign := delta[TIME_DELTA_REGEX.SubexpIndex("sign")]
 	days := delta[TIME_DELTA_REGEX.SubexpIndex("days")]
 	hours := delta[TIME_DELTA_REGEX.SubexpIndex("hours")]
 	min := delta[TIME_DELTA_REGEX.SubexpIndex("min")]
@@ -131,10 +130,6 @@ func parseTimeDelta(delta []string) (result time.Duration) {
 	if len(sec) > 0 {
 		value, _ := strconv.Atoi(sec)
 		result += time.Duration(value) * time.Second
-	}
-
-	if sign == "-" {
-		result *= -1
 	}
 
 	return

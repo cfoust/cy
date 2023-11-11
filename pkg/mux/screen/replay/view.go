@@ -6,6 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 
 	"github.com/charmbracelet/lipgloss"
@@ -157,6 +158,50 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	r.render.RenderAt(state.Image, size.R-1, 0, statusBar)
 }
 
+func (r *Replay) renderInput() image.Image {
+	r.searchInput.Cursor.Style = r.render.NewStyle().
+		Background(lipgloss.Color("15"))
+
+	width := 20
+	common := r.render.NewStyle().Width(width)
+	inputStyle := common.Copy().
+		Foreground(lipgloss.Color("15")).
+		Background(lipgloss.Color("8"))
+
+	promptStyle := common.Copy().
+		Foreground(lipgloss.Color("8")).
+		Background(lipgloss.Color("15"))
+
+	prompt := "search-forward"
+	if !r.isForward {
+		prompt = "search-backward"
+	}
+
+	value := r.searchInput.Value()
+	if match := TIME_DELTA_REGEX.FindStringSubmatch(value); len(value) > 0 && match != nil {
+		promptStyle = common.Copy().
+			Foreground(lipgloss.Color("15")).
+			Background(lipgloss.Color("#7768AE"))
+
+		prompt = "jump-forward"
+		if !r.isForward {
+			prompt = "jump-backward"
+		}
+	}
+
+	input := lipgloss.JoinVertical(
+		lipgloss.Left,
+		inputStyle.Render(r.searchInput.View()),
+		promptStyle.Render(prompt),
+	)
+	result := image.New(geom.Size{
+		R: lipgloss.Height(input),
+		C: lipgloss.Width(input),
+	})
+	r.render.RenderAt(result, 0, 0, input)
+	return result
+}
+
 func (r *Replay) View(state *tty.State) {
 	screen := r.terminal.Screen()
 	history := r.terminal.History()
@@ -234,15 +279,19 @@ func (r *Replay) View(state *tty.State) {
 		return
 	}
 
-	r.searchInput.Cursor.Style = r.render.NewStyle().
-		Background(lipgloss.Color("#EAA549"))
-
 	// hide the cursor when typing in the search bar (it has its own)
 	state.CursorVisible = false
-	r.render.RenderAt(
+
+	size := state.Image.Size()
+	input := r.renderInput()
+	inputSize := input.Size()
+	image.Copy(
+		geom.Vec2{
+			// -1 for the status bar
+			R: geom.Clamp(r.cursor.R, 0, size.R-inputSize.R-1),
+			C: geom.Clamp(r.cursor.C, 0, size.C-inputSize.C),
+		},
 		state.Image,
-		r.cursor.R,
-		r.cursor.C,
-		r.searchInput.View(),
+		input,
 	)
 }
