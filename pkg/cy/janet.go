@@ -241,8 +241,7 @@ func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 			fuzzy := fuzzy.NewFuzzy(
 				ctx,
 				options,
-				geom.Vec2{R: cursor.Y, C: cursor.X},
-
+				fuzzy.WithInline(geom.Vec2{R: cursor.Y, C: cursor.X}),
 				fuzzy.WithResult(result),
 				fuzzy.WithNodes(
 					c.tree,

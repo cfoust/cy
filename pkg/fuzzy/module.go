@@ -20,15 +20,22 @@ type Fuzzy struct {
 	util.Lifetime
 	anim *anim.Animator
 
-	result   chan<- interface{}
-	location geom.Vec2
-	size     geom.Vec2
+	result chan<- interface{}
+	size   geom.Vec2
 
 	render    *taro.Renderer
 	textInput textinput.Model
 
 	// Don't allow Fuzzy to quit or the user to choose anything
 	isSticky bool
+
+	// Whether Fuzzy should display options above or below the input.
+	isUp bool
+
+	// Whether to render at `location` instead of filling the boundaries of
+	// the screen.
+	isInline bool
+	location geom.Vec2
 
 	// before the user has done anything, we don't show the preview window
 	haveMoved bool
@@ -86,6 +93,9 @@ func (f *Fuzzy) handlePreview() taro.Cmd {
 
 	switch preview := option.Preview.(type) {
 	case nodePreview:
+		if f.tree == nil {
+			return nil
+		}
 		return f.Attach(preview.Id)
 	case replayPreview:
 		if f.replay != nil {
@@ -120,19 +130,22 @@ func (f *Fuzzy) getOptions() []Option {
 	return f.options
 }
 
-func (f *Fuzzy) isInverted() bool {
-	return f.location.R > (f.size.R / 2)
-}
-
 type SelectedEvent struct {
 	Option Option
 }
 
 func (f *Fuzzy) setSelected(index int) {
-	f.selected = geom.Clamp(index, 0, len(f.getOptions())-1)
+	f.selected = geom.Max(
+		0,
+		geom.Clamp(index, 0, len(f.getOptions())-1),
+	)
 }
 
 func (f *Fuzzy) emitOption() taro.Cmd {
+	if len(f.getOptions()) == 0 {
+		return nil
+	}
+
 	return func() taro.Msg {
 		return taro.PublishMsg{
 			Msg: SelectedEvent{
@@ -180,17 +193,17 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return f.quit()
 		case taro.KeyDown, taro.KeyCtrlJ, taro.KeyUp, taro.KeyCtrlK:
 			f.haveMoved = true
-			isUp := false
+			upwards := false
 			switch msg.Type {
 			case taro.KeyUp, taro.KeyCtrlK:
-				isUp = true
+				upwards = true
 			}
-			if f.isInverted() {
-				isUp = !isUp
+			if f.isUp {
+				upwards = !upwards
 			}
 
 			delta := -1
-			if !isUp {
+			if !upwards {
 				delta = 1
 			}
 
@@ -263,10 +276,17 @@ func WithResult(result chan<- interface{}) Setting {
 	}
 }
 
+func WithInline(location geom.Vec2) Setting {
+	return func(ctx context.Context, f *Fuzzy) {
+		f.isInline = true
+		f.location = location
+		f.isUp = f.location.R > (f.size.R / 2)
+	}
+}
+
 func NewFuzzy(
 	ctx context.Context,
 	options []Option,
-	location geom.Vec2,
 	settings ...Setting,
 ) *taro.Program {
 	ti := textinput.New()
@@ -278,10 +298,10 @@ func NewFuzzy(
 	f := &Fuzzy{
 		Lifetime:  util.NewLifetime(ctx),
 		render:    taro.NewRenderer(),
-		location:  location,
 		options:   options,
 		selected:  0,
 		textInput: ti,
+		isUp:      true,
 	}
 
 	for _, setting := range settings {

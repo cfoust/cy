@@ -116,28 +116,13 @@ func (f *Fuzzy) renderPreview(state *tty.State) {
 	)
 }
 
-func (f *Fuzzy) View(state *tty.State) {
-	if f.anim != nil {
-		tty.Copy(geom.Vec2{}, state, f.anim.State())
-	}
-
-	if f.haveMoved {
-		f.renderPreview(state)
-	}
-
-	basic := f.render.NewStyle().
-		Background(lipgloss.Color("#20111B")).
-		Foreground(lipgloss.Color("#D5CCBA")).
-		Width(20)
-
-	inactive := basic.Copy().Background(lipgloss.Color("#968C83"))
-	active := basic.Copy().
+func (f *Fuzzy) renderOptions(common lipgloss.Style) string {
+	inactive := common.Copy().Background(lipgloss.Color("#968C83"))
+	active := common.Copy().
 		Background(lipgloss.Color("#EAA549")).
 		Foreground(lipgloss.Color("#20111B"))
 
 	var lines []string
-
-	isInverted := f.isInverted()
 
 	// first, the options
 	for i, match := range f.getOptions() {
@@ -148,38 +133,117 @@ func (f *Fuzzy) View(state *tty.State) {
 			rendered = inactive.Render(match.Text)
 		}
 
-		if isInverted {
+		if f.isUp {
 			lines = append([]string{rendered}, lines...)
 		} else {
 			lines = append(lines, rendered)
 		}
 	}
 
-	// then the text input
-	input := basic.Render(f.textInput.View())
-	if isInverted {
-		lines = append(lines, input)
-	} else {
-		lines = append([]string{input}, lines...)
-	}
+	return lipgloss.JoinVertical(lipgloss.Left, lines...)
+}
+
+func (f *Fuzzy) renderInline(state *tty.State) {
+	common := f.render.NewStyle().
+		Background(lipgloss.Color("#20111B")).
+		Foreground(lipgloss.Color("#D5CCBA")).
+		Width(30)
 
 	f.textInput.Cursor.Style = f.render.NewStyle().
 		Background(lipgloss.Color("#EAA549"))
 
-	output := lipgloss.JoinVertical(lipgloss.Left, lines...)
+	options := f.renderOptions(common)
+	input := common.Render(f.textInput.View())
+	output := lipgloss.JoinVertical(
+		lipgloss.Left,
+		input,
+		options,
+	)
+
+	if f.isUp {
+		output = lipgloss.JoinVertical(
+			lipgloss.Left,
+			options,
+			input,
+		)
+	}
 
 	offset := 0
-	if isInverted {
+	if f.isUp {
 		offset += lipgloss.Height(output) - 1
+	}
+
+	size := geom.Vec2{
+		R: lipgloss.Height(output),
+		C: lipgloss.Width(output),
 	}
 
 	f.render.RenderAt(
 		state.Image,
-		geom.Max(f.location.R-offset, 0),
-		f.location.C,
+		geom.Clamp(
+			f.location.R-offset,
+			0,
+			f.size.R-size.R-1,
+		),
+		geom.Clamp(
+			f.location.C,
+			0,
+			f.size.C-size.C,
+		),
 		output,
 	)
+}
+
+func (f *Fuzzy) View(state *tty.State) {
+	if f.anim != nil {
+		tty.Copy(geom.Vec2{}, state, f.anim.State())
+	}
+
+	if f.haveMoved {
+		f.renderPreview(state)
+	}
 
 	// the text input provides its own cursor
 	state.CursorVisible = false
+
+	if f.isInline {
+		f.renderInline(state)
+		return
+	}
+
+	size := state.Image.Size()
+	common := f.render.NewStyle().
+		Background(lipgloss.Color("#20111B")).
+		Foreground(lipgloss.Color("#D5CCBA")).
+		Width(size.C)
+
+	f.textInput.Cursor.Style = f.render.NewStyle().
+		Background(lipgloss.Color("#EAA549"))
+
+	options := f.renderOptions(common)
+	input := common.Render(f.textInput.View())
+	output := lipgloss.JoinVertical(
+		lipgloss.Left,
+		input,
+		options,
+	)
+	if f.isUp {
+		output = lipgloss.JoinVertical(
+			lipgloss.Left,
+			options,
+			input,
+		)
+	}
+
+	offset := 0
+	if f.isUp {
+		offset = size.R - lipgloss.Height(output)
+	}
+
+	f.render.RenderAt(
+		state.Image,
+		offset,
+		0,
+		output,
+	)
 }
