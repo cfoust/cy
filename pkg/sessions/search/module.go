@@ -9,7 +9,6 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/sessions"
-	"github.com/rs/zerolog/log"
 )
 
 // Address refers to a point inside of a recording.
@@ -69,8 +68,6 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 		return
 	}
 
-	log.Info().Msgf("Search %d", len(events))
-
 	// this MUST be set because of how the cell reader works
 	if pattern[0] != '^' {
 		pattern = "^" + pattern
@@ -96,7 +93,6 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 	percent := 0
 	for index, event := range events {
 		newPercent := int(float64(index) / float64(len(events)) * 100)
-		log.Info().Msgf("event %d/%d %d", index+1, len(events), newPercent)
 		if newPercent > percent && progress != nil {
 			percent = newPercent
 			progress <- percent

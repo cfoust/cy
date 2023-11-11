@@ -10,12 +10,12 @@ import (
 	"github.com/cfoust/cy/pkg/util"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/rs/zerolog/log"
 )
 
 // A Browser lets the user switch between different stories.
 type Browser struct {
 	util.Lifetime
+	size    geom.Vec2
 	render  *taro.Renderer
 	fuzzy   *taro.Program
 	viewer  *taro.Program
@@ -30,22 +30,81 @@ func (s *Browser) Init() tea.Cmd {
 
 func (s *Browser) View(state *tty.State) {
 	tty.Copy(geom.Vec2{}, state, s.fuzzy.State())
+
+	if s.viewer == nil {
+		return
+	}
+
+	viewState := s.viewer.State()
+	tty.Copy(geom.Vec2{C: 30}, state, viewState)
+}
+
+type loadedStory struct {
+	screen *taro.Program
+}
+
+func (s *Browser) loadStory(story Story) tea.Cmd {
+	size := s.size
+	size.C -= 30
+	return func() tea.Msg {
+		screen := story.init(s.Ctx())
+		config := story.config
+		if !config.Size.IsZero() {
+			screen.Resize(config.Size)
+		}
+
+		viewer := NewViewer(
+			s.Ctx(),
+			screen,
+			config,
+		)
+		viewer.Resize(size)
+		return loadedStory{screen: viewer}
+	}
 }
 
 func (s *Browser) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case loadedStory:
+		s.viewer = msg.screen
 	case tea.WindowSizeMsg:
-		s.fuzzy.Resize(geom.Size{
+		size := geom.Size{
 			R: msg.Height,
 			C: msg.Width,
+		}
+		s.size = size
+		s.fuzzy.Resize(geom.Size{
+			R: msg.Height,
+			C: 30,
 		})
+
+		if s.viewer != nil {
+			s.viewer.Resize(geom.Size{
+				R: msg.Height,
+				C: msg.Width - 30,
+			})
+		}
 		return s, nil
 	case taro.ScreenUpdate:
+		cmds := []taro.Cmd{s.watcher.Wait()}
+
 		switch msg := msg.Msg.(type) {
 		case fuzzy.SelectedEvent:
-			log.Info().Msgf("selected %#v", msg)
+			if story, ok := msg.Option.Result.(Story); ok {
+				if s.viewer != nil {
+					s.viewer.Cancel()
+					s.viewer = nil
+				}
+
+				cmds = append(
+					cmds,
+					s.loadStory(story),
+				)
+				return s, tea.Batch(cmds...)
+			}
 		}
-		return s, s.watcher.Wait()
+
+		return s, tea.Batch(cmds...)
 	case taro.KeyMsg:
 		switch msg.String() {
 		case "q":
@@ -72,7 +131,7 @@ func NewBrowser(
 		)
 	}
 
-	fuzzy := fuzzy.NewFuzzy(ctx, options, fuzzy.WithReverse)
+	fuzzy := fuzzy.NewFuzzy(ctx, options, fuzzy.WithSticky, fuzzy.WithReverse)
 	browser := &Browser{
 		Lifetime: util.NewLifetime(ctx),
 		render:   taro.NewRenderer(),
