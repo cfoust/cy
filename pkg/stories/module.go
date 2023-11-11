@@ -2,7 +2,7 @@ package stories
 
 import (
 	"context"
-	"fmt"
+	"strings"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
@@ -17,37 +17,35 @@ type Config struct {
 	IsSnapshot bool
 }
 
-type Story func(context.Context) mux.Screen
+type InitFunc func(context.Context) mux.Screen
 
-type _story struct {
-	init   Story
+type Story struct {
+	Name   string
+	init   InitFunc
 	config Config
 }
 
-var stories = make(map[string]_story)
+var stories = make(map[string]Story)
 
-func Register(name string, story Story, config Config) {
-	stories[name] = _story{
-		init:   story,
+func Register(name string, init InitFunc, config Config) {
+	stories[name] = Story{
+		Name:   name,
+		init:   init,
 		config: config,
 	}
 }
 
-func Initialize(ctx context.Context, name string) (*taro.Program, error) {
-	story, ok := stories[name]
-	if !ok {
-		return nil, fmt.Errorf("missing story %s", name)
+func Initialize(ctx context.Context, filter string) (*taro.Program, error) {
+	filteredStories := make([]Story, 0)
+	for _, story := range stories {
+		if !strings.HasPrefix(story.Name, filter) {
+			continue
+		}
+		filteredStories = append(filteredStories, story)
 	}
 
-	screen := story.init(ctx)
-	config := story.config
-	if !config.Size.IsZero() {
-		screen.Resize(config.Size)
-	}
-
-	return NewViewer(
+	return NewBrowser(
 		ctx,
-		screen,
-		story.config,
+		filteredStories,
 	), nil
 }

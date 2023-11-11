@@ -12,26 +12,26 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type StoryViewer struct {
+// A Viewer shows a single story.
+type Viewer struct {
 	util.Lifetime
-
 	config  Config
 	render  *taro.Renderer
 	screen  mux.Screen
 	capture *tty.State
 }
 
-var _ taro.Model = (*StoryViewer)(nil)
+var _ taro.Model = (*Viewer)(nil)
 
-func (s *StoryViewer) Init() tea.Cmd {
-	return taro.WaitScreens(s.Ctx(), s.screen)
+func (v *Viewer) Init() tea.Cmd {
+	return taro.WaitScreens(v.Ctx(), v.screen)
 }
 
-func (s *StoryViewer) View(state *tty.State) {
+func (v *Viewer) View(state *tty.State) {
 	size := state.Image.Size()
-	contents := s.screen.State()
-	if s.capture != nil {
-		contents = s.capture
+	contents := v.screen.State()
+	if v.capture != nil {
+		contents = v.capture
 	}
 
 	storySize := contents.Image.Size()
@@ -50,26 +50,22 @@ func (s *StoryViewer) View(state *tty.State) {
 	state.CursorVisible = contents.CursorVisible
 }
 
-func (s *StoryViewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
+func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		if s.config.Size.IsZero() {
-			s.screen.Resize(geom.Size{
-				R: msg.Height,
-				C: msg.Width,
-			})
+		if !v.config.Size.IsZero() {
+			return v, nil
 		}
-		return s, nil
+		v.screen.Resize(geom.Size{
+			R: msg.Height,
+			C: msg.Width,
+		})
+		return v, nil
 	case taro.ScreenUpdate:
-		return s, taro.WaitScreens(s.Ctx(), s.screen)
-	case taro.KeyMsg:
-		switch msg.String() {
-		case "q":
-			return s, tea.Quit
-		}
+		return v, taro.WaitScreens(v.Ctx(), v.screen)
 	}
 
-	return s, nil
+	return v, nil
 }
 
 func NewViewer(
@@ -77,7 +73,7 @@ func NewViewer(
 	screen mux.Screen,
 	config Config,
 ) *taro.Program {
-	viewer := &StoryViewer{
+	viewer := &Viewer{
 		Lifetime: util.NewLifetime(ctx),
 		render:   taro.NewRenderer(),
 		config:   config,

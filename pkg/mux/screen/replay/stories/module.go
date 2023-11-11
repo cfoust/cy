@@ -1,6 +1,3 @@
-//go:build stories
-// +build stories
-
 package replay
 
 import (
@@ -9,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
+	R "github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/stories"
 	"github.com/cfoust/cy/pkg/taro"
@@ -32,14 +30,14 @@ func createTestSession() []sessions.Event {
 }
 
 func createStory(ctx context.Context, events []sessions.Event, msgs ...interface{}) mux.Screen {
-	replay := New(ctx, events, bind.NewBindScope())
+	replay := R.New(ctx, events, bind.NewBindScope())
 
 	var realMsg tea.Msg
 	for _, msg := range msgs {
 		realMsg = msg
 		switch msg := msg.(type) {
-		case ActionType:
-			realMsg = ActionEvent{Type: msg}
+		case R.ActionType:
+			realMsg = R.ActionEvent{Type: msg}
 		case string:
 			keyMsgs := taro.KeysToMsg(msg)
 			if len(keyMsgs) == 1 {
@@ -52,22 +50,22 @@ func createStory(ctx context.Context, events []sessions.Event, msgs ...interface
 	return replay
 }
 
-var SearchTimeForward stories.Story = func(ctx context.Context) mux.Screen {
+var SearchTimeForward stories.InitFunc = func(ctx context.Context) mux.Screen {
 	replay := createStory(
 		ctx,
 		createTestSession(),
-		ActionSearchForward,
+		R.ActionSearchForward,
 		"query",
 	)
 
 	return replay
 }
 
-var Searching stories.Story = func(ctx context.Context) mux.Screen {
+var Searching stories.InitFunc = func(ctx context.Context) mux.Screen {
 	replay := createStory(
 		ctx,
 		createTestSession(),
-		ActionSearchForward,
+		R.ActionSearchForward,
 		"query",
 		"enter",
 	)
@@ -75,33 +73,33 @@ var Searching stories.Story = func(ctx context.Context) mux.Screen {
 	return replay
 }
 
-var JumpForward stories.Story = func(ctx context.Context) mux.Screen {
+var JumpForward stories.InitFunc = func(ctx context.Context) mux.Screen {
 	replay := createStory(
 		ctx,
 		createTestSession(),
-		ActionSearchForward,
+		R.ActionSearchForward,
 		"3m",
 	)
 
 	return replay
 }
 
-var JumpBackward stories.Story = func(ctx context.Context) mux.Screen {
+var JumpBackward stories.InitFunc = func(ctx context.Context) mux.Screen {
 	replay := createStory(
 		ctx,
 		createTestSession(),
-		ActionSearchBackward,
+		R.ActionSearchBackward,
 		"3m",
 	)
 
 	return replay
 }
 
-var SearchTimeBackward stories.Story = func(ctx context.Context) mux.Screen {
+var SearchTimeBackward stories.InitFunc = func(ctx context.Context) mux.Screen {
 	replay := createStory(
 		ctx,
 		createTestSession(),
-		ActionSearchBackward,
+		R.ActionSearchBackward,
 		"query",
 	)
 

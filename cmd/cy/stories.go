@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/cfoust/cy/pkg/geom"
+	_ "github.com/cfoust/cy/pkg/mux/screen/replay/stories"
 	"github.com/cfoust/cy/pkg/mux/stream/cli"
 	"github.com/cfoust/cy/pkg/mux/stream/renderer"
 	"github.com/cfoust/cy/pkg/stories"
@@ -29,7 +30,7 @@ func startStories() {
 	log.Logger = log.Output(logs)
 
 	ctx := context.Background()
-	screen, err := stories.Initialize(ctx, "replay/time/searching")
+	screen, err := stories.Initialize(ctx, "replay/")
 	if err != nil {
 		panic(err)
 	}

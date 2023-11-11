@@ -70,7 +70,7 @@ type replayPreview struct {
 	Path string
 }
 
-func createOption(text string, result interface{}) Option {
+func NewOption(text string, result interface{}) Option {
 	chars := util.ToChars([]byte(text))
 	return Option{
 		Text:   text,
@@ -86,7 +86,7 @@ func UnmarshalOptions(input *janet.Value) (result []Option, err error) {
 		for _, str := range strings {
 			result = append(
 				result,
-				createOption(str, str),
+				NewOption(str, str),
 			)
 		}
 
@@ -99,7 +99,7 @@ func UnmarshalOptions(input *janet.Value) (result []Option, err error) {
 		for _, tuple := range tuples {
 			result = append(
 				result,
-				createOption(
+				NewOption(
 					tuple.Text,
 					tuple.Value,
 				),
@@ -116,7 +116,7 @@ func UnmarshalOptions(input *janet.Value) (result []Option, err error) {
 	}
 
 	for i, triple := range triples {
-		option := createOption(
+		option := NewOption(
 			triple.Text,
 			triple.Value,
 		)

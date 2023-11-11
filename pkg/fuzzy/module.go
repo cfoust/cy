@@ -54,6 +54,9 @@ type Fuzzy struct {
 var _ taro.Model = (*Fuzzy)(nil)
 
 func (f *Fuzzy) quit() (taro.Model, tea.Cmd) {
+	if f.isSticky {
+		return f, nil
+	}
 	return f, tea.Quit
 }
 
@@ -184,12 +187,16 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			R: msg.Height,
 			C: msg.Width,
 		}
-		f.anim.Resize(size)
+		if f.anim != nil {
+			f.anim.Resize(size)
+		}
 		f.size = size
 	case taro.KeyMsg:
 		switch msg.Type {
 		case taro.KeyEsc, taro.KeyCtrlC:
-			f.result <- nil
+			if f.result != nil {
+				f.result <- nil
+			}
 			return f.quit()
 		case taro.KeyDown, taro.KeyCtrlJ, taro.KeyUp, taro.KeyCtrlK:
 			f.haveMoved = true
@@ -276,12 +283,17 @@ func WithResult(result chan<- interface{}) Setting {
 	}
 }
 
+// Displays Fuzzy as a small window at this location on the screen.
 func WithInline(location geom.Vec2) Setting {
 	return func(ctx context.Context, f *Fuzzy) {
 		f.isInline = true
 		f.location = location
 		f.isUp = f.location.R > (f.size.R / 2)
 	}
+}
+
+func WithReverse(ctx context.Context, f *Fuzzy) {
+	f.isUp = false
 }
 
 func NewFuzzy(
