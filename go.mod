@@ -3,6 +3,7 @@ module github.com/cfoust/cy
 go 1.19
 
 require (
+	github.com/alecthomas/kong v0.8.1 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/bubbles v0.16.1 // indirect

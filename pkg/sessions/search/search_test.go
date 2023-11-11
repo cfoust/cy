@@ -21,8 +21,22 @@ func makeWrites(lines ...string) (events []sessions.Event) {
 	return
 }
 
+func TestGetPartial(t *testing.T) {
+	re, err := getPartial("[asd]blah")
+	require.NoError(t, err)
+	require.Equal(t, "[ads]", re.String())
+
+	re, err = getPartial("([asd]|[123])blah")
+	require.NoError(t, err)
+	require.Equal(t, "[1-3ads]", re.String())
+
+	re, err = getPartial("([asd]*|[123]+)blah")
+	require.NoError(t, err)
+	require.Equal(t, "([ads]|[1-3])", re.String())
+}
+
 func TestBasic(t *testing.T) {
-	results, _ := Search(
+	results, err := Search(
 		makeWrites(
 			"foo",
 			"bar",
@@ -31,6 +45,7 @@ func TestBasic(t *testing.T) {
 		"^bar",
 		nil,
 	)
+	require.NoError(t, err)
 	require.Equal(t, 1, len(results))
 	require.Equal(t, SearchResult{
 		Begin: Address{

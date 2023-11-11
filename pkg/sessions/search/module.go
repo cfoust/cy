@@ -3,12 +3,15 @@ package search
 import (
 	"fmt"
 	"regexp"
+	"regexp/syntax"
 	"sort"
+	"strings"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/sessions"
+	"github.com/rs/zerolog/log"
 )
 
 // Address refers to a point inside of a recording.
@@ -43,6 +46,7 @@ func matchCell(re *regexp.Regexp, reader *ScreenReader, cell geom.Vec2) (loc []g
 	reader.Reset(cell)
 	indices := re.FindReaderIndex(reader)
 
+	// there was a full match
 	if len(indices) == 2 {
 		loc = []geom.Vec2{
 			reader.GetLocation(indices[0]),
@@ -62,6 +66,51 @@ func matchCell(re *regexp.Regexp, reader *ScreenReader, cell geom.Vec2) (loc []g
 	return
 }
 
+func getFirst(re *syntax.Regexp) (string, error) {
+	switch re.Op {
+	case syntax.OpNoMatch, syntax.OpEmptyMatch:
+		return "", fmt.Errorf("regex matches nothing")
+	case syntax.OpAnyCharNotNL, syntax.OpAnyChar:
+		// TODO(cfoust): 11/11/23 this should just be a warning
+		return "", fmt.Errorf("regex starts with any char")
+	case syntax.OpLiteral:
+		return string(re.Rune[0]), nil
+	case syntax.OpCharClass:
+		return re.String(), nil
+	case syntax.OpStar, syntax.OpPlus, syntax.OpQuest, syntax.OpRepeat:
+		return re.Sub[0].String(), nil
+	case syntax.OpConcat:
+		return getFirst(re.Sub[0])
+	case syntax.OpCapture:
+		return getFirst(re.Sub[0])
+	case syntax.OpAlternate:
+		var subs []string
+		for _, sub := range re.Sub {
+			pattern, err := getFirst(sub)
+			if err != nil {
+				return "", err
+			}
+			subs = append(subs, pattern)
+		}
+		return fmt.Sprintf("(%s)", strings.Join(subs, "|")), nil
+	default:
+		return "", fmt.Errorf("initial operator not supported: %d", re.Op)
+	}
+}
+
+func getPartial(pattern string) (*regexp.Regexp, error) {
+	ast, err := syntax.Parse(pattern, syntax.Perl)
+	if err != nil {
+		return nil, err
+	}
+
+	first, err := getFirst(ast.Simplify())
+	if err != nil {
+		return nil, err
+	}
+	return regexp.Compile(first)
+}
+
 func Search(events []sessions.Event, pattern string, progress chan<- int) (results []SearchResult, err error) {
 	if len(pattern) == 0 {
 		err = fmt.Errorf("pattern must be non-empty")
@@ -77,6 +126,31 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 	if err != nil {
 		return
 	}
+
+	first, err := getPartial(pattern[1:])
+	log.Info().Msgf("%+v", first)
+	if err != nil {
+		return
+	}
+
+	initial := make([]Address, 0)
+	for index, event := range events {
+		output, ok := event.Message.(P.OutputMessage)
+		if !ok {
+			continue
+		}
+
+		for _, match := range first.FindAllIndex(output.Data, -1) {
+			offset := match[0]
+			initial = append(initial, Address{
+				Index:  index,
+				Offset: offset,
+			})
+		}
+	}
+
+	log.Info().Msgf("%d partial matches", len(initial))
+	return
 
 	term := emu.New()
 	term.EnableHistory(false)

@@ -2,12 +2,18 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"runtime/pprof"
+	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/sessions/search"
+
+	"github.com/alecthomas/kong"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -17,29 +23,83 @@ const (
 	GB        = MB << 10
 )
 
-func main() {
-	sim := sessions.NewSimulator()
-	sim.Add(
-		"\033[20h", // CRLF -- why is this everywhere?
-		geom.DEFAULT_SIZE,
-	)
+var CLI struct {
+	Query string `help:"" optional:""`
+	Limit int    `help:"Limit the number of events."`
 
-	var numBytes, desiredBytes uint64
-	desiredBytes = 2 * MB
-	i := 0
-	numMatches := 0
-	for numBytes < desiredBytes {
-		s := "foo"
-		if (i % 100) == 0 {
-			numMatches++
-			s = "bar"
+	Borg struct {
+		Path string `arg:"" name:"path" help:".borg file to search inside." type:"path"`
+	} `cmd:"" help:"Search inside a borg file."`
+
+	Fake struct{} `cmd:"" help:"Search inside generated data."`
+}
+
+func main() {
+	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	log.Logger = log.Output(consoleWriter)
+
+	ctx := kong.Parse(&CLI,
+		kong.Name("perf"),
+		kong.Description("A small utility to benchmark search performance."),
+		kong.UsageOnError(),
+		kong.ConfigureHelp(kong.HelpOptions{
+			Compact: true,
+			Summary: true,
+		}))
+
+	var events []sessions.Event
+
+	switch ctx.Command() {
+	case "borg <path>":
+		reader, err := sessions.Open(CLI.Borg.Path)
+		if err != nil {
+			panic(err)
 		}
-		sim.Add(s)
-		numBytes += uint64(len([]byte(s)))
-		i++
+
+		for {
+			event, err := reader.Read()
+			if err == io.EOF || err == io.ErrUnexpectedEOF {
+				break
+			}
+			if err != nil {
+				panic(err)
+			}
+			events = append(events, event)
+		}
+
+	case "fake":
+		sim := sessions.NewSimulator()
+		sim.Add(
+			"\033[20h", // CRLF -- why is this everywhere?
+			geom.DEFAULT_SIZE,
+		)
+
+		var numBytes, desiredBytes uint64
+		desiredBytes = 2 * MB
+		i := 0
+		numMatches := 0
+		for numBytes < desiredBytes {
+			s := "foo"
+			if (i % 100) == 0 {
+				numMatches++
+				s = "bar"
+			}
+			sim.Add(s)
+			numBytes += uint64(len([]byte(s)))
+			i++
+		}
+
+		fmt.Printf("%d matches in %d bytes", numMatches, desiredBytes)
+		events = sim.Events()
+	default:
+		panic(ctx.Command())
 	}
 
-	fmt.Printf("%d matches in %d bytes", numMatches, desiredBytes)
+	if CLI.Limit != 0 {
+		events = events[:CLI.Limit]
+	}
+
+	log.Info().Msgf("searching for %s in %d events", CLI.Query, len(events))
 
 	f, err := os.Create("search.prof")
 	if err != nil {
@@ -51,7 +111,7 @@ func main() {
 	}
 	defer pprof.StopCPUProfile()
 
-	_, err = search.Search(sim.Events(), "bar")
+	_, err = search.Search(events, CLI.Query, nil)
 	if err != nil {
 		panic(err)
 	}
