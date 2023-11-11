@@ -82,8 +82,8 @@ func (r *Replay) searchAgain(isForward bool) {
 	r.gotoMatch(initialIndex)
 }
 
-type progressEvent struct {
-	value int
+type ProgressEvent struct {
+	Percent int
 }
 
 func (r *Replay) waitProgress() tea.Cmd {
@@ -92,8 +92,8 @@ func (r *Replay) waitProgress() tea.Cmd {
 	}
 
 	return func() tea.Msg {
-		return progressEvent{
-			value: <-r.searchProgress,
+		return ProgressEvent{
+			Percent: <-r.searchProgress,
 		}
 	}
 }

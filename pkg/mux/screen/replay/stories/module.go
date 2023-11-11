@@ -73,6 +73,19 @@ var Searching stories.InitFunc = func(ctx context.Context) mux.Screen {
 	return replay
 }
 
+var SearchProgress stories.InitFunc = func(ctx context.Context) mux.Screen {
+	replay := createStory(
+		ctx,
+		createTestSession(),
+		R.ActionSearchForward,
+		"query",
+		"enter",
+		R.ProgressEvent{Percent: 60},
+	)
+
+	return replay
+}
+
 var JumpForward stories.InitFunc = func(ctx context.Context) mux.Screen {
 	replay := createStory(
 		ctx,
@@ -112,6 +125,10 @@ func init() {
 	}
 	stories.Register("replay/time/search-forward", SearchTimeForward, config)
 	stories.Register("replay/time/searching", Searching, stories.Config{
+		Size:       geom.DEFAULT_SIZE,
+		IsSnapshot: true,
+	})
+	stories.Register("replay/time/search-progress", SearchProgress, stories.Config{
 		Size:       geom.DEFAULT_SIZE,
 		IsSnapshot: true,
 	})

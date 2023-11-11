@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -189,14 +190,34 @@ func (r *Replay) renderInput() image.Image {
 		}
 	}
 
+	input := inputStyle.Render(r.searchInput.View())
+
 	if r.isWaiting {
-		prompt = fmt.Sprintf("searching...(%d/100)", r.progressPercent)
+		percent := r.progressPercent
+
+		spin := spinner.Dot
+		first := spin.Frames[percent%len(spin.Frames)]
+		left := "searching..."
+		prompt = left + lipgloss.PlaceHorizontal(
+			width-len(left),
+			lipgloss.Right,
+			first,
+		)
+
+		progressStyle := inputStyle.Copy().
+			Background(lipgloss.Color("#4D9DE0"))
+
+		filled := int((float64(percent) / 100) * float64(width))
+
+		input = progressStyle.Width(filled).Render("") + inputStyle.Width(width-filled).Render("")
 	}
 
-	input := lipgloss.JoinVertical(
+	prompt = promptStyle.Render(prompt)
+
+	input = lipgloss.JoinVertical(
 		lipgloss.Left,
-		inputStyle.Render(r.searchInput.View()),
-		promptStyle.Render(prompt),
+		input,
+		prompt,
 	)
 	result := image.New(geom.Size{
 		R: lipgloss.Height(input),
