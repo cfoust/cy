@@ -8,7 +8,9 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/sessions"
+
 	"github.com/stretchr/testify/require"
+	"github.com/xo/terminfo"
 )
 
 func TestSequence(t *testing.T) {
@@ -53,15 +55,17 @@ func TestSearcher(t *testing.T) {
 		Add(geom.DEFAULT_SIZE).
 		Add("oo").
 		Add("bar").
-		Add("foo")
+		Add("foo f").
+		Term(terminfo.ClearScreen).
+		Add("oo")
 
 	pattern, _ := regexp.Compile("foo")
 	s := NewSearcher()
 	s.Parse(sim.Events())
 
 	matches := s.Find(pattern)
-	require.Equal(t, 3, len(matches))
-	require.Equal(t, matches, []Match{
+	require.Equal(t, 4, len(matches))
+	require.Equal(t, []Match{
 		{
 			Begin: Address{
 				Index:  0,
@@ -95,5 +99,16 @@ func TestSearcher(t *testing.T) {
 			},
 			Continuous: true,
 		},
-	})
+		{
+			Begin: Address{
+				Index:  5,
+				Offset: 4,
+			},
+			End: Address{
+				Index:  7,
+				Offset: 2,
+			},
+			Continuous: false,
+		},
+	}, matches)
 }

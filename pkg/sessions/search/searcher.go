@@ -15,10 +15,15 @@ type section struct {
 	Offset int
 	Start  int
 	Bytes  int
+	// Whether this section continues into the next without any unprintable
+	// characters.
+	Continuous bool
 }
 
 type Match struct {
 	Begin, End Address
+	// Whether this Match is unbroken by nonprintable characters. If this
+	// is true, it is definitely a match.
 	Continuous bool
 }
 
@@ -26,10 +31,11 @@ type Match struct {
 // though it were a VT100 terminal, and then allows you to search through them
 // using regexp.
 type searcher struct {
-	buffer   bytes.Buffer
-	parser   *vtparser.Parser
-	printed  bool
-	sections []section
+	buffer      bytes.Buffer
+	parser      *vtparser.Parser
+	didPrint    bool
+	lastPrinted bool
+	sections    []section
 }
 
 func (s *searcher) Bytes() []byte {
@@ -82,8 +88,9 @@ func (s *searcher) Find(re *regexp.Regexp) (result []Match) {
 
 		isContinuous := true
 		for i := startIndex; i < endIndex; i++ {
-			if s.sections[i+1].Start != s.sections[i].Start+s.sections[i].Bytes {
+			if !s.sections[i].Continuous {
 				isContinuous = false
+				break
 			}
 		}
 
@@ -110,10 +117,17 @@ func (s *searcher) parseData(index int, data []byte) {
 	isPrinted := false
 	count := 0
 	for offset, b := range data {
-		s.printed = false
+		s.didPrint = false
 		s.parser.Advance(b)
 
-		if s.printed == isPrinted {
+		// If this is a direct continuation of the previous section, indicate that
+		if offset == 0 && s.didPrint && s.lastPrinted && len(s.sections) > 0 {
+			s.sections[len(s.sections)-1].Continuous = true
+		}
+
+		s.lastPrinted = s.didPrint
+
+		if s.didPrint == isPrinted {
 			count++
 			continue
 		}
@@ -128,7 +142,7 @@ func (s *searcher) parseData(index int, data []byte) {
 		}
 
 		count = 1
-		isPrinted = s.printed
+		isPrinted = s.didPrint
 	}
 
 	if count > 0 && isPrinted {
@@ -153,7 +167,7 @@ func (s *searcher) Parse(events []sessions.Event) {
 
 func (s *searcher) print(c rune) {
 	s.buffer.Write([]byte{byte(c)})
-	s.printed = true
+	s.didPrint = true
 }
 
 func (s *searcher) execute(b byte) {
