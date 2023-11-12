@@ -2,6 +2,7 @@ package search
 
 import (
 	"io"
+	"regexp"
 	"testing"
 
 	"github.com/cfoust/cy/pkg/emu"
@@ -45,17 +46,54 @@ func TestSequence(t *testing.T) {
 	require.Equal(t, io.EOF, err)
 }
 
-func TestByteReader(t *testing.T) {
-	sim := sessions.NewSimulator().Add("foo")
-	reader := NewByteReader(sim.Events())
+func TestSearcher(t *testing.T) {
+	sim := sessions.NewSimulator().
+		Add("foo").
+		Add("f").
+		Add(geom.DEFAULT_SIZE).
+		Add("oo").
+		Add("bar").
+		Add("foo")
 
-	for _, expected := range []rune{'f', 'o', 'o'} {
-		r, _, err := reader.ReadRune()
-		require.Equal(t, expected, r)
-		require.NoError(t, err)
-	}
+	pattern, _ := regexp.Compile("foo")
+	s := NewSearcher()
+	s.Parse(sim.Events())
 
-	_, _, err := reader.ReadRune()
-	require.Error(t, err)
-	require.Equal(t, io.EOF, err)
+	matches := s.Find(pattern)
+	require.Equal(t, 3, len(matches))
+	require.Equal(t, matches, []Match{
+		{
+			Begin: Address{
+				Index:  0,
+				Offset: 0,
+			},
+			End: Address{
+				Index:  0,
+				Offset: 3,
+			},
+			Continuous: true,
+		},
+		{
+			Begin: Address{
+				Index:  1,
+				Offset: 0,
+			},
+			End: Address{
+				Index:  3,
+				Offset: 2,
+			},
+			Continuous: true,
+		},
+		{
+			Begin: Address{
+				Index:  5,
+				Offset: 0,
+			},
+			End: Address{
+				Index:  5,
+				Offset: 3,
+			},
+			Continuous: true,
+		},
+	})
 }

@@ -3,9 +3,7 @@ package search
 import (
 	"fmt"
 	"regexp"
-	"regexp/syntax"
 	"sort"
-	"strings"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
@@ -73,78 +71,12 @@ type SearchResult struct {
 	Selection
 }
 
-func matchCell(re *regexp.Regexp, reader *ScreenReader, cell geom.Vec2) (loc []geom.Vec2, partial bool) {
-	reader.Reset(cell)
-	indices := re.FindReaderIndex(reader)
-
-	// there was a full match
-	if len(indices) == 2 {
-		loc = []geom.Vec2{
-			reader.GetLocation(indices[0]),
-			reader.GetLocation(indices[1]),
-		}
-		return
+func createLookup(matches []Match) map[Address]Match {
+	lookup := make(map[Address]Match)
+	for _, match := range matches {
+		lookup[match.End] = match
 	}
-
-	// FindReaderIndex will always read three runes if you prefix with ^;
-	// if that's all it read, there was no partial match
-	if reader.NumRead() <= 3 {
-		return
-	}
-
-	loc = []geom.Vec2{
-		cell,
-		reader.Next(),
-	}
-
-	// If we read any more, there was a partial match no matter what
-	partial = true
-	return
-}
-
-func getFirst(re *syntax.Regexp) (string, error) {
-	switch re.Op {
-	case syntax.OpNoMatch, syntax.OpEmptyMatch:
-		return "", fmt.Errorf("regex matches nothing")
-	case syntax.OpAnyCharNotNL, syntax.OpAnyChar:
-		// TODO(cfoust): 11/11/23 this should just be a warning
-		return "", fmt.Errorf("regex starts with any char")
-	case syntax.OpLiteral:
-		return string(re.Rune[0]), nil
-	case syntax.OpCharClass:
-		return re.String(), nil
-	case syntax.OpStar, syntax.OpPlus, syntax.OpQuest, syntax.OpRepeat:
-		return re.Sub[0].String(), nil
-	case syntax.OpConcat:
-		return getFirst(re.Sub[0])
-	case syntax.OpCapture:
-		return getFirst(re.Sub[0])
-	case syntax.OpAlternate:
-		var subs []string
-		for _, sub := range re.Sub {
-			pattern, err := getFirst(sub)
-			if err != nil {
-				return "", err
-			}
-			subs = append(subs, pattern)
-		}
-		return fmt.Sprintf("(%s)", strings.Join(subs, "|")), nil
-	default:
-		return "", fmt.Errorf("initial operator not supported: %d", re.Op)
-	}
-}
-
-func getPartial(pattern string) (*regexp.Regexp, error) {
-	ast, err := syntax.Parse(pattern, syntax.Perl)
-	if err != nil {
-		return nil, err
-	}
-
-	first, err := getFirst(ast.Simplify())
-	if err != nil {
-		return nil, err
-	}
-	return regexp.Compile(first)
+	return lookup
 }
 
 func Search(events []sessions.Event, pattern string, progress chan<- int) (results []SearchResult, err error) {
@@ -153,36 +85,25 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 		return
 	}
 
-	// this MUST be set because of how the cell reader works
-	if pattern[0] != '^' {
-		pattern = "^" + pattern
-	}
-
-	re, err := regexp.Compile(pattern)
+	fullPattern, err := regexp.Compile(pattern)
 	if err != nil {
 		return
 	}
 
-	first, err := getPartial(pattern[1:])
+	partialPattern, err := getPartial(pattern)
 	if err != nil {
 		return
 	}
 
-	checkpoints := make(map[int]map[int]struct{}, 0)
-	for index, event := range events {
-		output, ok := event.Message.(P.OutputMessage)
-		if !ok {
-			continue
-		}
+	s := NewSearcher()
+	s.Parse(events)
 
-		for _, match := range first.FindAllIndex(output.Data, -1) {
-			if _, ok := checkpoints[index]; !ok {
-				checkpoints[index] = make(map[int]struct{}, 0)
-			}
+	full := s.Find(fullPattern)
+	fullLookup := createLookup(full)
 
-			checkpoints[index][match[0]] = struct{}{}
-		}
-	}
+	return
+	partial := s.Find(partialPattern)
+	partialLookup := createLookup(partial)
 
 	term := emu.New()
 	term.EnableHistory(false)
@@ -228,16 +149,16 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 			// Advance one byte at a time
 			term.Parse(output.Data[offset : offset+1])
 
-			if !term.ScreenChanged() {
-				continue
-			}
-
 			address = Address{
 				Index:  index,
 				Offset: offset,
 			}
 
-			cell, changed := term.LastCell()
+			if !term.ScreenChanged() {
+				continue
+			}
+
+			cell, _ := term.LastCell()
 
 			// Check all existing candidates
 			for _, candidate := range candidates {
@@ -245,7 +166,7 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 					continue
 				}
 
-				loc, partial := matchCell(re, reader, candidate.From)
+				loc, partial := matchCell(fullPattern, reader, candidate.From)
 
 				// The partial match is still partial
 				if partial {
@@ -278,7 +199,7 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 					)
 					continue
 				}
-				loc, partial := matchCell(re, reader, match.From)
+				loc, partial := matchCell(fullPattern, reader, match.From)
 
 				// Still track it if it was partial
 				if partial {
@@ -305,41 +226,37 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 				)
 			}
 
-			candidates = newCandidates
-			matches = newMatches
+			// to match end
+			address.Offset += 1
 
+			_, haveFull := fullLookup[address]
+			_, havePartial := partialLookup[address]
 			// Check for a new match
-			if !changed {
+			if !haveFull && !havePartial {
+				candidates = newCandidates
+				matches = newMatches
 				continue
 			}
 
-			indexEvents, ok := checkpoints[index]
-			if !ok {
-				continue
-			}
-
-			if _, ok := indexEvents[offset]; !ok {
-				continue
-			}
-
-			loc, partial := matchCell(re, reader, cell.Vec2)
-
-			if partial {
+			if havePartial {
 				candidate := Candidate{}
-				candidate.From = loc[0]
-				candidate.To = loc[1]
+				//candidate.From = loc[0]
+				//candidate.To = loc[1]
 				newCandidates = append(
 					newCandidates,
 					candidate,
 				)
-			} else if len(loc) == 2 {
+			}
+
+			if haveFull {
 				result := SearchResult{}
 				result.Begin = address
-				result.From = loc[0]
-				result.To = loc[1]
+				//result.From = loc[0]
+				//result.To = loc[1]
 				newMatches = append(newMatches, result)
 			}
 
+			matches = newMatches
 			candidates = newCandidates
 		}
 	}

@@ -42,7 +42,7 @@ func TestBasic(t *testing.T) {
 			"bar",
 			"baz",
 		),
-		"^bar",
+		"bar",
 		nil,
 	)
 	require.NoError(t, err)
