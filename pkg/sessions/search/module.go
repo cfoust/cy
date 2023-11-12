@@ -101,9 +101,18 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 	full := s.Find(fullPattern)
 	fullLookup := createLookup(full)
 
-	return
 	partial := s.Find(partialPattern)
 	partialLookup := createLookup(partial)
+
+	// Delete non-continuous matches from the full lookup, but add them to
+	// partial
+	for _, match := range full {
+		if match.Continuous {
+			continue
+		}
+		delete(fullLookup, match.End)
+		partialLookup[match.Begin] = match
+	}
 
 	term := emu.New()
 	term.EnableHistory(false)
