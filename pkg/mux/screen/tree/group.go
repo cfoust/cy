@@ -79,7 +79,7 @@ func (g *Group) NewGroup() *Group {
 		metaData: g.tree.newMetadata(),
 		tree:     g.tree,
 	}
-	g.params = g.params.NewChild()
+	group.params = g.params.NewChild()
 	g.addNode(group)
 	return group
 }
