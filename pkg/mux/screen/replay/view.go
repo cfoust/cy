@@ -69,13 +69,19 @@ func (r *Replay) drawMatches(state *tty.State) {
 		if location.Equal(match.Begin) {
 			bg = bgSelectedColor
 		}
-		r.highlightRange(
-			state,
-			match.From,
-			match.To,
-			fgColor,
-			bg,
-		)
+
+		for _, appearance := range match.Appearances {
+			if location.After(appearance.End) {
+				continue
+			}
+			r.highlightRange(
+				state,
+				appearance.From,
+				appearance.To,
+				fgColor,
+				bg,
+			)
+		}
 	}
 }
 
