@@ -31,7 +31,7 @@ func TestPlainChars(t *testing.T) {
 func TestNewline(t *testing.T) {
 	term := New()
 	expected := "Hello world!\n...and more."
-	_, err := term.Write([]byte("\033[20h")) // set CRLF mode
+	_, err := term.Write([]byte(LineFeedMode))
 	if err != nil && err != io.EOF {
 		t.Fatal(err)
 	}

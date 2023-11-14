@@ -81,7 +81,7 @@ func TestLongLine(t *testing.T) {
 func TestSeveralLines(t *testing.T) {
 	term := New()
 	term.Resize(4, 24)
-	term.Write([]byte("\033[20h")) // set CRLF mode
+	term.Write([]byte(LineFeedMode))
 	term.Write([]byte("test\ntest"))
 	term.Resize(2, 24)
 	term.Resize(4, 24)

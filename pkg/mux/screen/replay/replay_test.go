@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/sessions"
@@ -20,7 +21,7 @@ var sim = sessions.NewSimulator
 func createTestSession() []sessions.Event {
 	return sim().
 		Add(
-			"\033[20h", // CRLF -- why is this everywhere?
+			emu.LineFeedMode,
 			geom.DEFAULT_SIZE,
 			"test string please ignore",
 		).
@@ -153,7 +154,7 @@ func TestScroll(t *testing.T) {
 	s := sessions.NewSimulator()
 	s.Add(
 		geom.Size{R: 5, C: 10},
-		"\033[20h", // CRLF -- why is this everywhere?
+		emu.LineFeedMode,
 		"one\n",
 		"two\n",
 		"three\n",
@@ -206,7 +207,7 @@ func TestCursor(t *testing.T) {
 	s := sessions.NewSimulator()
 	s.Add(
 		geom.Size{R: 5, C: 10},
-		"\033[20h", // CRLF -- why is this everywhere?
+		emu.LineFeedMode,
 		"foo\n",
 		"      foo\n",
 		"foo  foo\n",
@@ -283,7 +284,7 @@ func TestReadString(t *testing.T) {
 	s := sessions.NewSimulator().
 		Add(
 			geom.Size{R: 5, C: 10},
-			"\033[20h", // CRLF -- why is this everywhere?
+			emu.LineFeedMode,
 			"foo\n",
 			"你好 ",
 		)

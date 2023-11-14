@@ -2,6 +2,8 @@ package stream
 
 import (
 	"io"
+
+	"github.com/cfoust/cy/pkg/emu"
 )
 
 type Reader struct {
@@ -35,7 +37,7 @@ func NewReader() *Reader {
 	go func() {
 		// Set the terminal to CRLF mode so that carriage returns go
 		// back to the first column
-		w.Write([]byte("\033[20h"))
+		w.Write([]byte(emu.LineFeedMode))
 	}()
 
 	return &Reader{

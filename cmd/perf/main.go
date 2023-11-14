@@ -7,6 +7,7 @@ import (
 	"runtime/pprof"
 	"time"
 
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/sessions/search"
@@ -70,7 +71,7 @@ func main() {
 	case "fake":
 		sim := sessions.NewSimulator()
 		sim.Add(
-			"\033[20h", // CRLF -- why is this everywhere?
+			emu.LineFeedMode,
 			geom.DEFAULT_SIZE,
 		)
 

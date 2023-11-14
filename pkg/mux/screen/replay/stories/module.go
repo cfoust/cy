@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
 	R "github.com/cfoust/cy/pkg/mux/screen/replay"
@@ -18,7 +19,7 @@ import (
 func createTestSession() []sessions.Event {
 	return sessions.NewSimulator().
 		Add(
-			"\033[20h", // CRLF -- why is this everywhere?
+			emu.LineFeedMode,
 			geom.DEFAULT_SIZE,
 			"test string please ignore",
 		).

@@ -20,7 +20,7 @@ type Renderer struct {
 // RenderAt renders the given string at (row, col) in `state`.
 func (r *Renderer) RenderAt(state image.Image, row, col int, value string) {
 	term := emu.New()
-	term.Write([]byte("\033[20h")) // set CRLF mode
+	term.Write([]byte(emu.LineFeedMode)) // set CRLF mode
 	newCols := lipgloss.Width(value)
 	newRows := lipgloss.Height(value)
 	term.Resize(newCols, newRows)
