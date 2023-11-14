@@ -3,7 +3,6 @@ package sessions
 import (
 	"time"
 
-	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 
@@ -90,11 +89,6 @@ func (s *Simulator) Add(events ...interface{}) *Simulator {
 		}
 	}
 	return s
-}
-
-// LineFeed causes \n to return to the start of the next line.
-func (s *Simulator) LineFeed() {
-	s.Add(emu.LineFeedMode)
 }
 
 func (s *Simulator) Events() []Event {
