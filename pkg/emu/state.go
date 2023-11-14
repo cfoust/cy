@@ -125,7 +125,6 @@ type Cursor struct {
 }
 
 type Cell struct {
-	changed bool
 	geom.Vec2
 	Glyph
 }
@@ -334,7 +333,6 @@ func (t *State) setChar(c rune, attr *Glyph, x, y int) {
 	t.lastCell.R = y
 	t.lastCell.C = x
 	t.lastCell.Glyph = t.lines[y][x]
-	t.lastCell.changed = true
 }
 
 func (t *State) defaultCursor() Cursor {
@@ -552,6 +550,10 @@ func isAltMode(mode ModeFlag) bool {
 	return (mode & ModeAltScreen) != 0
 }
 
+func (t *State) EnableHistory(enabled bool) {
+	t.disableHistory = !enabled
+}
+
 func (t *State) scrollDown(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
 
@@ -581,10 +583,6 @@ func (t *State) scrollDown(orig, n int) {
 		}
 		t.history = t.history[:offset]
 	}
-}
-
-func (t *State) EnableHistory(enabled bool) {
-	t.disableHistory = !enabled
 }
 
 func (t *State) scrollUp(orig, n int) {

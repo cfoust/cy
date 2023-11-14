@@ -10,10 +10,8 @@ func (t *State) markDirtyLine(row int) {
 	t.dirty[index] = true
 }
 
-func (t *State) LastCell() (cell Cell, changed bool) {
+func (t *State) LastCell() (cell Cell) {
 	cell = t.lastCell
-	changed = t.lastCell.changed
-	t.lastCell.changed = false
 	return
 }
 

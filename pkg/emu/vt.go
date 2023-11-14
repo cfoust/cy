@@ -54,10 +54,10 @@ type View interface {
 	History() []Line
 
 	// ToggleHistory allows you to enable and disable saving lines to the
-	// scrollback buffer..
+	// scrollback buffer.
 	EnableHistory(enabled bool)
 
-	LastCell() (cell Cell, changed bool)
+	LastCell() Cell
 
 	ScreenChanged() bool
 }
