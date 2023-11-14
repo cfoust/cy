@@ -88,6 +88,7 @@ func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 		"cmd": &api.Cmd{
 			Lifetime: util.NewLifetime(c.Ctx()),
 			Tree:     c.tree,
+			Binds:    c.replayBinds,
 		},
 		"group": &api.GroupModule{Tree: c.tree},
 		"pane":  &api.PaneModule{Tree: c.tree},
