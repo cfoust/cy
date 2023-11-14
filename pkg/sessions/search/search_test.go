@@ -24,15 +24,13 @@ func TestGetPartial(t *testing.T) {
 }
 
 func TestBasic(t *testing.T) {
-	results, err := Search(
-		makeWrites(
+	sim := sessions.NewSimulator().
+		Add(
 			"foo",
 			"bar",
 			"baz",
-		),
-		"bar",
-		nil,
-	)
+		)
+	results, err := Search(sim.Events(), "bar", nil)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(results))
 	require.Equal(t, SearchResult{
@@ -59,7 +57,7 @@ func TestBasic(t *testing.T) {
 						C: 3,
 					},
 					To: geom.Vec2{
-						C: 6,
+						C: 5,
 					},
 				},
 			},

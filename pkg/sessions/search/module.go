@@ -295,7 +295,6 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 
 			if len(nextFull) > 0 {
 				realAddress := address
-				realAddress.Offset++
 				if realAddress == nextFull[0].Begin {
 					fullEnd := nextFull[0]
 					fullEnd.Appearances[0].To = cell.Vec2
@@ -315,6 +314,7 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 			matchIndex++
 			result := SearchResult{}
 			result.Begin = full.End
+			result.Begin.Offset--
 			appearance := Appearance{}
 			appearance.Begin = result.Begin
 			appearance.From = cell.Vec2
