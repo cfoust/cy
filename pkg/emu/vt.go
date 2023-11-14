@@ -57,9 +57,7 @@ type View interface {
 	// scrollback buffer.
 	EnableHistory(enabled bool)
 
-	LastCell() Cell
-
-	ScreenChanged() bool
+	Changes() *Dirty
 }
 
 type TerminalOption func(*TerminalInfo)

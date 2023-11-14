@@ -59,6 +59,10 @@ func (r Rect) Size() Vec2 {
 	}
 }
 
+func (r Rect) Contains(v Vec2) bool {
+	return v.R >= r.R && v.R < r.R+r.H && v.C >= r.C && v.C < r.C+r.W
+}
+
 func (r Rect) Position() Vec2 {
 	return Vec2{
 		R: r.R,

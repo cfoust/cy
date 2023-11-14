@@ -64,6 +64,32 @@ func (s Selection) Within(pos geom.Vec2, size geom.Vec2) bool {
 	return false
 }
 
+func (s Selection) WithinRect(rect geom.Rect, size geom.Vec2) bool {
+	var startCol, endCol int
+	for row := s.From.R; row <= s.To.R; row++ {
+		startCol = 0
+		if row == s.From.R {
+			startCol = s.From.C
+		}
+
+		endCol = size.C - 1
+		if row == s.To.R {
+			endCol = s.To.C
+		}
+
+		for col := startCol; col <= endCol; col++ {
+			if rect.Contains(geom.Vec2{
+				R: row,
+				C: col,
+			}) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 type Candidate struct {
 	Selection
 	Cells []emu.Cell
@@ -123,6 +149,8 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 	nextFull := make([]SearchResult, 0)
 	matchIndex := 0
 
+	dirty := term.Changes()
+
 	percent := 0
 	for index, event := range events {
 		newPercent := int(float64(index) / float64(len(events)) * 100)
@@ -139,8 +167,7 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 			size = geom.Vec2{C: resize.Columns, R: resize.Rows}
 			reader.Resize(size)
 
-			// TODO(cfoust): 08/24/23 clear all matches and
-			// candidates, scan every cell for candidates
+			// TODO(cfoust): 08/24/23 clear all matches
 			continue
 		}
 
@@ -157,27 +184,113 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 				Offset: offset,
 			}
 
-			if !term.ScreenChanged() {
+			if !dirty.ScreenChanged() {
 				continue
 			}
 
-			cell := term.LastCell()
-			for _, match := range matches {
-				appearances := match.Appearances
-				if !appearances[len(appearances)-1].Within(cell.Vec2, size) {
+			cell := dirty.Print
+			scroll := dirty.Scroll
+			if dirty.Scrolled {
+				for _, match := range matches {
+					appearance := match.Appearances[len(match.Appearances)-1]
+					top := appearance.From.R
+					bottom := appearance.To.R
+					difference := bottom - top
+
+					if scroll.Up {
+						if top > scroll.Origin {
+							top -= scroll.Count
+						}
+						if bottom > scroll.Origin {
+							bottom -= scroll.Count
+						}
+					} else {
+						if top > scroll.Origin {
+							top += scroll.Count
+						}
+						if bottom > scroll.Origin {
+							bottom += scroll.Count
+						}
+					}
+
+					if top == appearance.From.R && bottom == appearance.To.R {
+						newMatches = append(
+							newMatches,
+							match,
+						)
+						continue
+					}
+
+					if bottom-top != difference || top < 0 || bottom >= size.R {
+						match.End = address
+						match.Appearances[len(match.Appearances)-1].End = address
+						results = append(
+							results,
+							match,
+						)
+						continue
+					}
+
+					match.Appearances[len(match.Appearances)-1].End = address
+					newAppearance := Appearance{}
+					newAppearance.Begin = address
+					newAppearance.From = geom.Vec2{
+						R: top,
+						C: appearance.From.C,
+					}
+					newAppearance.To = geom.Vec2{
+						R: bottom,
+						C: appearance.To.C,
+					}
+					match.Appearances = append(match.Appearances, newAppearance)
 					newMatches = append(
 						newMatches,
 						match,
 					)
-					continue
 				}
+			} else if dirty.Printed {
+				for _, match := range matches {
+					appearances := match.Appearances
+					if !appearances[len(appearances)-1].Within(cell.Vec2, size) {
+						newMatches = append(
+							newMatches,
+							match,
+						)
+						continue
+					}
 
-				match.End = address
-				match.Appearances[len(appearances)-1].End = address
-				results = append(
-					results,
-					match,
-				)
+					match.End = address
+					match.Appearances[len(appearances)-1].End = address
+					results = append(
+						results,
+						match,
+					)
+				}
+			} else if dirty.Cleared {
+				for _, match := range matches {
+					appearances := match.Appearances
+					if !appearances[len(appearances)-1].WithinRect(dirty.Clear, size) {
+						newMatches = append(
+							newMatches,
+							match,
+						)
+						continue
+					}
+
+					match.End = address
+					match.Appearances[len(appearances)-1].End = address
+					results = append(
+						results,
+						match,
+					)
+				}
+			} else {
+				for _, match := range matches {
+					newMatches = append(
+						newMatches,
+						match,
+					)
+				}
 			}
 
 			if len(nextFull) > 0 {
@@ -185,12 +298,13 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 				realAddress.Offset++
 				if realAddress == nextFull[0].Begin {
 					fullEnd := nextFull[0]
-					fullEnd.End = address
 					fullEnd.Appearances[0].To = cell.Vec2
 					nextFull = nextFull[1:]
 					newMatches = append(newMatches, fullEnd)
 				}
 			}
+
+			dirty.Reset()
 
 			if matchIndex == len(full) || address != full[matchIndex].Begin {
 				matches = newMatches
