@@ -104,12 +104,12 @@ func (r *Replay) handleSearchResult(msg SearchResultEvent) (taro.Model, tea.Cmd)
 	// TODO(cfoust): 10/13/23 handle error
 
 	matches := msg.results
+	r.matches = matches
 	if len(matches) == 0 {
-		r.matches = matches
+		r.isEmpty = true
 		return r, nil
 	}
 
-	r.matches = matches
 	r.location = msg.origin
 	r.isForward = msg.isForward
 	r.searchAgain(true)

@@ -120,6 +120,19 @@ var SearchTimeBackward stories.InitFunc = func(ctx context.Context) mux.Screen {
 	return replay
 }
 
+var SearchEmpty stories.InitFunc = func(ctx context.Context) mux.Screen {
+	replay := createStory(
+		ctx,
+		createTestSession(),
+		R.ActionBeginning,
+		R.ActionSearchForward,
+		"asdf",
+		"enter",
+	)
+
+	return replay
+}
+
 func init() {
 	config := stories.Config{
 		Size: geom.DEFAULT_SIZE,
@@ -136,4 +149,5 @@ func init() {
 	stories.Register("replay/time/jump-forward", JumpForward, config)
 	stories.Register("replay/time/search-reverse", SearchTimeBackward, config)
 	stories.Register("replay/time/jump-backward", JumpBackward, config)
+	stories.Register("replay/time/search-empty", SearchEmpty, config)
 }

@@ -245,6 +245,8 @@ func (r *Replay) renderInput() image.Image {
 		filled := int((float64(percent) / 100) * float64(width))
 
 		input = progressStyle.Width(filled).Render("") + inputStyle.Width(width-filled).Render("")
+	} else if r.isEmpty {
+		prompt = "no matches found"
 	}
 
 	prompt = promptStyle.Render(prompt)
@@ -311,6 +313,7 @@ func (r *Replay) View(state *tty.State) {
 		state.Cursor = r.terminal.Cursor()
 		state.Cursor.X = termCursor.C
 		state.Cursor.Y = termCursor.R
+		state.CursorVisible = r.terminal.CursorVisible()
 	}
 
 	// Show the selection state
@@ -335,7 +338,7 @@ func (r *Replay) View(state *tty.State) {
 
 	// Render text input
 	/////////////////////////////
-	if r.mode != ModeInput && !r.isWaiting {
+	if r.mode != ModeInput && !r.isWaiting && !r.isEmpty {
 		return
 	}
 

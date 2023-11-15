@@ -71,6 +71,8 @@ type Replay struct {
 
 	isForward       bool
 	isWaiting       bool
+	// Whether no matches came back
+	isEmpty         bool
 	searchProgress  chan int
 	progressPercent int
 	searchInput     textinput.Model

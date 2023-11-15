@@ -75,6 +75,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return r, nil
 		}
 	case taro.KeyMsg:
+		// Clear out the "no matches" dialog
+		r.isEmpty = false
+
 		// Pass unmatched keys into the binding engine; because of how
 		// text input works, :replay bindings have to be activated
 		// selectively
