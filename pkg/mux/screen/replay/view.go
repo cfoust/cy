@@ -81,6 +81,7 @@ func (r *Replay) drawMatches(state *tty.State) {
 				fgColor,
 				bg,
 			)
+			break
 		}
 	}
 }

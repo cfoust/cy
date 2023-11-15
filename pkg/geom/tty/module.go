@@ -31,6 +31,7 @@ func Copy(pos geom.Vec2, dst, src *State) {
 	dst.Cursor = src.Cursor
 	dst.Cursor.X += pos.C
 	dst.Cursor.Y += pos.R
+	dst.CursorVisible = src.CursorVisible
 }
 
 func Capture(view emu.View) *State {
