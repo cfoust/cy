@@ -235,3 +235,53 @@ func TestScroll(t *testing.T) {
 		},
 	}, results[0])
 }
+
+func TestPrinted(t *testing.T) {
+	sim := sessions.NewSimulator().
+		Add(
+			TEST_SIZE,
+			emu.LineFeedMode,
+			"foo\n", // 2
+			"bar\n",
+		).
+		Term(terminfo.CursorAddress, 0, 1). // 4
+		Add(
+			"a",
+		)
+
+	results, err := Search(sim.Events(), "foo", nil)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(results))
+	require.Equal(t, SearchResult{
+		Begin: Address{
+			Index:  2,
+			Offset: 2,
+		},
+		End: Address{
+			Index:  5,
+			Offset: 0,
+		},
+		Appearances: []Appearance{
+			{
+				Begin: Address{
+					Index:  2,
+					Offset: 2,
+				},
+				End: Address{
+					Index:  5,
+					Offset: 0,
+				},
+				Selection: Selection{
+					From: geom.Vec2{
+						R: 0,
+						C: 0,
+					},
+					To: geom.Vec2{
+						R: 0,
+						C: 2,
+					},
+				},
+			},
+		},
+	}, results[0])
+}
