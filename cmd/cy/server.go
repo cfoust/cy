@@ -48,8 +48,8 @@ func serve(path string) error {
 
 func startServer(path string) error {
 	cntxt := &daemon.Context{
-		LogFileName: "cy.log",
-		PidFileName: "cy.pid",
+		LogFileName: fmt.Sprintf("%s.log", path),
+		PidFileName: fmt.Sprintf("%s.pid", path),
 	}
 
 	d, err := cntxt.Reborn()
