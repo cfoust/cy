@@ -313,7 +313,9 @@ func (r *Replay) View(state *tty.State) {
 		state.Cursor = r.terminal.Cursor()
 		state.Cursor.X = termCursor.C
 		state.Cursor.Y = termCursor.R
-		state.CursorVisible = r.terminal.CursorVisible()
+		if r.isPlaying {
+			state.CursorVisible = r.terminal.CursorVisible()
+		}
 	}
 
 	// Show the selection state
