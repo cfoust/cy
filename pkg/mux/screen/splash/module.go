@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cfoust/cy/pkg/anim"
+	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -18,7 +18,7 @@ import (
 
 type Splash struct {
 	util.Lifetime
-	anim   *anim.Animator
+	anim   *frames.Animator
 	render *taro.Renderer
 }
 
@@ -108,9 +108,9 @@ func New(ctx context.Context, size geom.Size) *taro.Program {
 	return taro.New(ctx, &Splash{
 		Lifetime: util.NewLifetime(ctx),
 		render:   render,
-		anim: anim.NewAnimator(
+		anim: frames.NewAnimator(
 			ctx,
-			&anim.Midjo{},
+			&frames.Midjo{},
 			generateBackground(render, size.Scalar(2)),
 			23,
 		),

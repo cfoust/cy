@@ -93,10 +93,8 @@ func (f *Fuzzy) renderPreview(state *tty.State) {
 	}
 
 	state.Image.Clear(geom.Rect{
-		R: previewPos.R,
-		C: previewPos.C,
-		H: previewSize.R,
-		W: previewSize.C,
+		Position: previewPos,
+		Size:     previewSize,
 	})
 	image.Copy(previewPos, state.Image, contents)
 

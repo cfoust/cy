@@ -44,10 +44,14 @@ func getCenter(outer, inner int) int {
 
 func centerRect(outer, inner Size) geom.Rect {
 	return geom.Rect{
-		R: getCenter(outer.R, inner.R),
-		C: getCenter(outer.C, inner.C),
-		H: inner.R,
-		W: inner.C,
+		Position: geom.Vec2{
+			R: getCenter(outer.R, inner.R),
+			C: getCenter(outer.C, inner.C),
+		},
+		Size: geom.Vec2{
+			R: inner.R,
+			C: inner.C,
+		},
 	}
 }
 
@@ -91,8 +95,24 @@ func (l *Margins) State() *tty.State {
 	outer := l.outer
 	l.RUnlock()
 
+	innerState := l.screen.State()
 	state := tty.New(outer)
-	tty.Copy(inner.Position(), state, l.screen.State())
+
+	tty.Copy(inner.Position, state, innerState)
+
+	size := state.Image.Size()
+	for row := 0; row < size.R; row++ {
+		for col := 0; col < size.C; col++ {
+			if inner.Contains(geom.Vec2{
+				R: row,
+				C: col,
+			}) {
+				continue
+			}
+			state.Image[row][col].Transparent = true
+		}
+	}
+
 	return state
 }
 
@@ -105,8 +125,8 @@ func (l *Margins) Send(msg mux.Msg) {
 	l.RUnlock()
 	l.screen.Send(taro.TranslateMouseMessage(
 		msg,
-		-inner.C,
-		-inner.R,
+		-inner.Position.C,
+		-inner.Position.R,
 	))
 }
 
@@ -159,7 +179,7 @@ func (l *Margins) recalculate() error {
 	l.inner = inner
 	l.Unlock()
 
-	err := l.screen.Resize(inner.Size())
+	err := l.screen.Resize(inner.Size)
 	if err != nil {
 		return err
 	}

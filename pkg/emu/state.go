@@ -25,110 +25,6 @@ const (
 	attrWrap
 )
 
-// TODO(cfoust): 05/19/23 combine this with above
-const (
-	AttrReverse = 1 << iota
-	AttrUnderline
-	AttrBold
-	AttrGfx
-	AttrItalic
-	AttrBlink
-	AttrWrap
-)
-
-const (
-	cursorDefault = 1 << iota
-	cursorWrapNext
-	cursorOrigin
-)
-
-// ModeFlag represents various terminal mode states.
-type ModeFlag uint32
-
-// Terminal modes
-const (
-	ModeWrap ModeFlag = 1 << iota
-	ModeInsert
-	ModeAppKeypad
-	ModeAltScreen
-	ModeCRLF
-	ModeMouseButton
-	ModeMouseMotion
-	ModeReverse
-	ModeKeyboardLock
-	ModeHide
-	ModeEcho
-	ModeAppCursor
-	ModeMouseSgr
-	Mode8bit
-	ModeBlink
-	ModeFBlink
-	ModeFocus
-	ModeMouseX10
-	ModeMouseMany
-	ModeMouseMask = ModeMouseButton | ModeMouseMotion | ModeMouseX10 | ModeMouseMany
-)
-
-// ChangeFlag represents possible state changes of the terminal.
-type ChangeFlag uint32
-
-// Terminal changes to occur in VT.ReadState
-const (
-	ChangedScreen ChangeFlag = 1 << iota
-	ChangedTitle
-)
-
-type Glyph struct {
-	Char   rune
-	Mode   int16
-	FG, BG Color
-}
-
-func (g Glyph) IsEmpty() bool {
-	return g.Char == ' '
-}
-
-func EmptyGlyph() Glyph {
-	return Glyph{
-		Char: ' ',
-		FG:   DefaultFG,
-		BG:   DefaultBG,
-	}
-}
-
-type Line []Glyph
-
-func (l Line) String() (str string) {
-	for i := 0; i < len(l); i++ {
-		str += string(l[i].Char)
-	}
-
-	return str
-}
-
-type CursorStyle int
-
-const (
-	CursorStyleBlock CursorStyle = iota
-	CursorStyleSteadyBlock
-	CursorStyleUnderline
-	CursorStyleBlinkUnderline
-	CursorStyleBar
-	CursorStyleBlinkBar
-)
-
-type Cursor struct {
-	Attr  Glyph
-	X, Y  int
-	State uint8
-	Style CursorStyle
-}
-
-type Cell struct {
-	geom.Vec2
-	Glyph
-}
-
 // State represents the terminal emulation state. Use Lock/Unlock
 // methods to synchronize data access with VT.
 type State struct {
@@ -464,10 +360,14 @@ func (t *State) clear(x0, y0, x1, y1 int) {
 
 	t.dirty.Cleared = true
 	t.dirty.Clear = geom.Rect{
-		R: y0,
-		H: y1 - y0,
-		C: x0,
-		W: x1 - x0,
+		Position: geom.Vec2{
+			R: y0,
+			C: x0,
+		},
+		Size: geom.Vec2{
+			R: y1 - y0,
+			C: x1 - x0,
+		},
 	}
 }
 

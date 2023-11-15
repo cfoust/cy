@@ -114,6 +114,11 @@
   (frame/set-size [0 160]))
 
 (key/def
+  cy/random-frame
+  "choose a new frame randomly"
+  (frame/random))
+
+(key/def
   cy/margins-smaller
   "decrease margins by 5 columns"
   (def [lines cols] (frame/size))
@@ -156,6 +161,7 @@
 (key/bind :root [prefix "d"] cy/detach)
 (key/bind :root [prefix "p"] cy/replay)
 (key/bind :root [prefix "P"] cy/paste)
+(key/bind :root [prefix "r" "r"] cy/random-frame)
 
 (key/bind :replay ["q"] replay/quit)
 (key/bind :replay ["ctrl+c"] replay/quit)

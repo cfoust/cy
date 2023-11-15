@@ -1,31 +1,44 @@
-package anim
+package frames
 
 import (
 	"context"
-	"math/rand"
 	"time"
 
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
-	"github.com/cfoust/cy/pkg/mux/screen"
+
+	"github.com/sasha-s/go-deadlock"
 )
 
-type Animation interface {
-	Init(image.Image)
-	Update(time.Duration) image.Image
-}
-
 type Animator struct {
-	*screen.Trigger
+	deadlock.RWMutex
+	*mux.UpdatePublisher
 	animation Animation
 	last      image.Image
 	start     time.Time
+	size      geom.Size
 }
 
 var _ mux.Screen = (*Animator)(nil)
 
 func (a *Animator) Send(msg mux.Msg) {
+}
+
+func (a *Animator) State() *tty.State {
+	a.RLock()
+	size := a.size
+	a.RUnlock()
+	return a.Render(size)
+}
+
+func (a *Animator) Resize(size geom.Size) error {
+	a.Lock()
+	a.size = size
+	a.Unlock()
+	a.Notify()
+	return nil
 }
 
 func (a *Animator) Render(size mux.Size) *tty.State {
@@ -55,25 +68,14 @@ func NewAnimator(
 	fps int,
 ) *Animator {
 	a := &Animator{
-		animation: animation,
-		start:     time.Now(),
+		UpdatePublisher: mux.NewPublisher(),
+		animation:       animation,
+		start:           time.Now(),
 	}
-	a.Trigger = screen.NewTrigger(a)
 
 	animation.Init(initial)
 	a.last = animation.Update(0)
 	go a.poll(ctx, fps)
 
 	return a
-}
-
-func Random() Animation {
-	anims := []Animation{
-		&Collapse{},
-		&Midjo{},
-		&Cyform{},
-		&Conway{},
-	}
-
-	return anims[rand.Int()%len(anims)]
 }

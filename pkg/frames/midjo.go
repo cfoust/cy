@@ -1,4 +1,4 @@
-package anim
+package frames
 
 import (
 	"math"

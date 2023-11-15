@@ -8,6 +8,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/events"
+	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
@@ -46,6 +47,7 @@ type Client struct {
 	toast     *ToastLogger
 	toaster   *taro.Program
 	margins   *screen.Margins
+	frame     *frames.Framer
 	// Layers inside of the margins
 	// This is for rendering content that should obey the user's margin
 	// settings.
@@ -325,11 +327,19 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	c.margins = screen.NewMargins(c.Ctx(), c.innerLayers)
 
 	c.outerLayers = screen.NewLayers()
+	c.frame = frames.NewFramer(c.Ctx(), frames.RandomFrame())
+	c.outerLayers.NewLayer(
+		c.Ctx(),
+		c.frame,
+		screen.PositionTop,
+	)
+
 	c.outerLayers.NewLayer(
 		c.Ctx(),
 		c.margins,
 		screen.PositionTop,
 		screen.WithInteractive,
+		screen.WithOpaque,
 	)
 
 	splashScreen := splash.New(c.Ctx(), handshake.Size)

@@ -2,10 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 
+	"github.com/cfoust/cy/pkg/frames"
 	_ "github.com/cfoust/cy/pkg/fuzzy/stories"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/image"
+	"github.com/cfoust/cy/pkg/mux"
 	_ "github.com/cfoust/cy/pkg/mux/screen/replay/stories"
 	"github.com/cfoust/cy/pkg/mux/stream/cli"
 	"github.com/cfoust/cy/pkg/mux/stream/renderer"
@@ -38,6 +42,42 @@ func main() {
 	log.Logger = log.Output(logs)
 
 	ctx := context.Background()
+
+	for name, frame := range frames.Frames {
+		func(f frames.Frame) {
+			stories.Register(
+				fmt.Sprintf("frame/%s", name),
+				func(ctx context.Context) mux.Screen {
+					framer := frames.NewFramer(
+						ctx,
+						f,
+					)
+					return framer
+				},
+				stories.Config{},
+			)
+		}(frame)
+	}
+
+	for name, animation := range frames.Animations {
+		func(a frames.Animation) {
+			stories.Register(
+				fmt.Sprintf("animation/%s", name),
+				func(ctx context.Context) mux.Screen {
+					animator := frames.NewAnimator(
+						ctx,
+						a,
+						// TODO(cfoust): 11/17/23 replace with cy splash
+						image.New(geom.DEFAULT_SIZE),
+						23,
+					)
+					return animator
+				},
+				stories.Config{},
+			)
+		}(animation)
+	}
+
 	screen, err := stories.Initialize(ctx, CLI.Prefix)
 	if err != nil {
 		panic(err)

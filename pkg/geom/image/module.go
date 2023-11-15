@@ -52,12 +52,12 @@ func (i Image) Clear(region geom.Rect) {
 	size := i.Size()
 
 	min := geom.Vec2{
-		R: geom.Clamp(region.R, 0, size.R-1),
-		C: geom.Clamp(region.C, 0, size.C-1),
+		R: geom.Clamp(region.Position.R, 0, size.R-1),
+		C: geom.Clamp(region.Position.C, 0, size.C-1),
 	}
 	max := geom.Vec2{
-		R: geom.Clamp(region.R+region.H, 0, size.R),
-		C: geom.Clamp(region.C+region.W, 0, size.C),
+		R: geom.Clamp(region.Position.R+region.Size.R, 0, size.R),
+		C: geom.Clamp(region.Position.C+region.Size.C, 0, size.C),
 	}
 
 	for row := min.R; row < max.R; row++ {
@@ -95,7 +95,11 @@ func Copy(pos geom.Vec2, dst, src Image) {
 			if srcR < 0 || srcC < 0 {
 				continue
 			}
-			dst[row][col] = src[row-pos.R][col-pos.C]
+			srcCell := src[row-pos.R][col-pos.C]
+			if srcCell.Transparent {
+				continue
+			}
+			dst[row][col] = srcCell
 		}
 	}
 }

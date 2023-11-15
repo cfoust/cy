@@ -6,6 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/cy/api"
+	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/replayable"
@@ -259,6 +260,13 @@ func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 				return
 			}
 			client.margins.SetSize(size)
+		},
+		"frame/random": func(context interface{}) {
+			client, ok := context.(*Client)
+			if !ok {
+				return
+			}
+			client.frame.Set(frames.RandomFrame())
 		},
 		"cy/toast": func(context interface{}, level *janet.Value, message string) error {
 			defer level.Free()

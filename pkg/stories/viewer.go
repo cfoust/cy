@@ -52,10 +52,8 @@ func (v *Viewer) View(state *tty.State) {
 	}
 
 	state.Image.Clear(geom.Rect{
-		R: storyPos.R,
-		C: storyPos.C,
-		H: storySize.R,
-		W: storySize.C,
+		Position: storyPos,
+		Size:     storySize,
 	})
 	tty.Copy(storyPos, state, contents)
 	state.CursorVisible = contents.CursorVisible

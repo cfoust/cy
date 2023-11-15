@@ -42,32 +42,11 @@ var UnitVec2 = Vec2{R: 1, C: 1}
 type Size = Vec2
 
 type Rect struct {
-	// row (y)
-	R int
-	// column (x)
-	C int
-	// height (y)
-	H int
-	// width (x)
-	W int
-}
-
-func (r Rect) Size() Vec2 {
-	return Vec2{
-		R: r.H,
-		C: r.W,
-	}
+	Position, Size Vec2
 }
 
 func (r Rect) Contains(v Vec2) bool {
-	return v.R >= r.R && v.R < r.R+r.H && v.C >= r.C && v.C < r.C+r.W
-}
-
-func (r Rect) Position() Vec2 {
-	return Vec2{
-		R: r.R,
-		C: r.C,
-	}
+	return v.R >= r.Position.R && v.R < r.Position.R+r.Size.R && v.C >= r.Position.C && v.C < r.Position.C+r.Size.C
 }
 
 var DEFAULT_SIZE = Vec2{
