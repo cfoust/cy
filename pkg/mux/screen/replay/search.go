@@ -99,6 +99,10 @@ func (r *Replay) waitProgress() tea.Cmd {
 }
 
 func (r *Replay) handleSearchResult(msg SearchResultEvent) (taro.Model, tea.Cmd) {
+	if r.isWaiting != true {
+		return r, nil
+	}
+
 	r.isWaiting = false
 
 	// TODO(cfoust): 10/13/23 handle error

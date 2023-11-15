@@ -99,6 +99,12 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		r.isPlaying = false
 		switch msg.Type {
 		case ActionQuit:
+			// Ignore an in-progress search
+			if r.isWaiting {
+				r.isWaiting = false
+				return r, nil
+			}
+
 			if r.isCopyMode() {
 				if r.isSelecting {
 					r.isSelecting = false
@@ -130,6 +136,10 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case ActionSearchAgain, ActionSearchReverse:
 			r.searchAgain(msg.Type != ActionSearchReverse)
 		case ActionSearchForward, ActionSearchBackward:
+			if r.isWaiting {
+				return r, nil
+			}
+
 			r.mode = ModeInput
 			r.isForward = msg.Type == ActionSearchForward
 			r.searchInput.Reset()
