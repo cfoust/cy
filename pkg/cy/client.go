@@ -255,6 +255,10 @@ func (c *Client) Node() tree.Node {
 	return c.node
 }
 
+func (c *Client) OuterLayers() *screen.Layers {
+	return c.outerLayers
+}
+
 func (c *Cy) removeClient(client *Client) {
 	c.Lock()
 	newClients := make([]*Client, 0)

@@ -132,22 +132,30 @@ func TestVM(t *testing.T) {
 
 	t.Run("callback with named arguments", func(t *testing.T) {
 		type Params struct {
-			First  int
-			Second string
+			First   int
+			Second  string
+			NilBool *bool
+			OkBool  *bool
 		}
 
 		var post Params
-		err = vm.Callback("test-named", func(params *Named[Params]) {
+		err = vm.Callback("test-named", func(
+			context interface{},
+			value int,
+			params *Named[Params],
+		) {
 			post = params.WithDefault(Params{
 				First: 2,
 			})
 		})
 		require.NoError(t, err)
 
-		err = vm.Execute(ctx, `(test-named :second "ok")`)
+		err = vm.Execute(ctx, `(test-named 2 :second "ok" :nil-bool nil :ok-bool true)`)
 		require.NoError(t, err)
 
 		require.Equal(t, 2, post.First)
+		require.Equal(t, true, *post.OkBool)
+		require.Equal(t, (*bool)(nil), post.NilBool)
 		require.Equal(t, "ok", post.Second)
 	})
 

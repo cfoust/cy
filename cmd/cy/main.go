@@ -25,11 +25,6 @@ func main() {
 
 	log.Logger = log.Logger.With().Int("pid", os.Getpid()).Logger()
 
-	if isStories() {
-		startStories()
-		return
-	}
-
 	var socketPath string
 
 	if envPath, ok := os.LookupEnv(CY_SOCKET_ENV); ok {
@@ -43,7 +38,19 @@ func main() {
 	}
 
 	if daemon.WasReborn() {
-		err := serve(socketPath)
+		cntx := new(daemon.Context)
+		_, err := cntx.Reborn()
+		if err != nil {
+			log.Panic().Err(err).Msg("failed to reincarnate")
+		}
+
+		defer func() {
+			if err := cntx.Release(); err != nil {
+				log.Panic().Err(err).Msg("unable to release pid-file")
+			}
+		}()
+
+		err = serve(socketPath)
 		if err != nil && err != http.ErrServerClosed {
 			log.Panic().Err(err).Msg("failed to start cy")
 		}

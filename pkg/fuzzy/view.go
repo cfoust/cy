@@ -1,6 +1,8 @@
 package fuzzy
 
 import (
+	"fmt"
+
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -117,9 +119,11 @@ func (f *Fuzzy) renderPreview(state *tty.State) {
 }
 
 func (f *Fuzzy) renderOptions(common lipgloss.Style) string {
-	inactive := common.Copy().Background(lipgloss.Color("#968C83"))
+	inactive := common.Copy().
+		Background(lipgloss.Color("#968C83")).
+		Foreground(lipgloss.Color("#20111B"))
 	active := common.Copy().
-		Background(lipgloss.Color("#EAA549")).
+		Background(lipgloss.Color("#E8E3DF")).
 		Foreground(lipgloss.Color("#20111B"))
 
 	var lines []string
@@ -128,9 +132,9 @@ func (f *Fuzzy) renderOptions(common lipgloss.Style) string {
 	for i, match := range f.getOptions() {
 		var rendered string
 		if f.selected == i {
-			rendered = active.Render(match.Text)
+			rendered = active.Render("> " + match.Text)
 		} else {
-			rendered = inactive.Render(match.Text)
+			rendered = inactive.Render("  " + match.Text)
 		}
 
 		if f.isUp {
@@ -143,6 +147,37 @@ func (f *Fuzzy) renderOptions(common lipgloss.Style) string {
 	return lipgloss.JoinVertical(lipgloss.Left, lines...)
 }
 
+func (f *Fuzzy) renderPrompt(width int) string {
+	style := f.render.NewStyle().
+		Background(lipgloss.Color("#EAA549")).
+		Foreground(lipgloss.Color("#20111B")).
+		Width(width)
+
+	numFiltered := len(f.filtered)
+	if numFiltered == 0 && len(f.textInput.Value()) == 0 {
+		numFiltered = len(f.options)
+	}
+
+	leftSide := f.prompt
+	rightSide := fmt.Sprintf(
+		"%d/%d",
+		numFiltered,
+		len(f.options),
+	)
+
+	return style.Render(
+		lipgloss.JoinHorizontal(
+			lipgloss.Left,
+			leftSide,
+			lipgloss.PlaceHorizontal(
+				width-lipgloss.Width(leftSide),
+				lipgloss.Right,
+				rightSide,
+			),
+		),
+	)
+}
+
 func (f *Fuzzy) renderInline(state *tty.State) {
 	common := f.render.NewStyle().
 		Background(lipgloss.Color("#20111B")).
@@ -150,13 +185,14 @@ func (f *Fuzzy) renderInline(state *tty.State) {
 		Width(30)
 
 	f.textInput.Cursor.Style = f.render.NewStyle().
-		Background(lipgloss.Color("#EAA549"))
+		Background(lipgloss.Color("#E8E3DF"))
 
 	options := f.renderOptions(common)
 	input := common.Render(f.textInput.View())
 	output := lipgloss.JoinVertical(
 		lipgloss.Left,
 		input,
+		f.renderPrompt(30),
 		options,
 	)
 
@@ -164,13 +200,14 @@ func (f *Fuzzy) renderInline(state *tty.State) {
 		output = lipgloss.JoinVertical(
 			lipgloss.Left,
 			options,
+			f.renderPrompt(30),
 			input,
 		)
 	}
 
 	offset := 0
 	if f.isUp {
-		offset += lipgloss.Height(output) - 1
+		offset += lipgloss.Height(output)
 	}
 
 	size := geom.Vec2{
@@ -180,16 +217,8 @@ func (f *Fuzzy) renderInline(state *tty.State) {
 
 	f.render.RenderAt(
 		state.Image,
-		geom.Clamp(
-			f.location.R-offset,
-			0,
-			f.size.R-size.R-1,
-		),
-		geom.Clamp(
-			f.location.C,
-			0,
-			f.size.C-size.C,
-		),
+		f.location.R-offset,
+		geom.Clamp(f.location.C, 0, f.size.C-size.C),
 		output,
 	)
 }
@@ -218,19 +247,21 @@ func (f *Fuzzy) View(state *tty.State) {
 		Width(size.C)
 
 	f.textInput.Cursor.Style = f.render.NewStyle().
-		Background(lipgloss.Color("#EAA549"))
+		Background(lipgloss.Color("#E8E3DF"))
 
 	options := f.renderOptions(common)
 	input := common.Render(f.textInput.View())
 	output := lipgloss.JoinVertical(
 		lipgloss.Left,
 		input,
+		f.renderPrompt(size.C),
 		options,
 	)
 	if f.isUp {
 		output = lipgloss.JoinVertical(
 			lipgloss.Left,
 			options,
+			f.renderPrompt(size.C),
 			input,
 		)
 	}

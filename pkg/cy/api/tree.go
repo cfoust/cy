@@ -63,11 +63,6 @@ type PaneModule struct {
 	Tree *tree.Tree
 }
 
-type Client interface {
-	Attach(tree.Node) error
-	Node() tree.Node
-}
-
 func (p *PaneModule) Attach(context interface{}, id tree.NodeID) error {
 	client, ok := context.(Client)
 	if !ok {

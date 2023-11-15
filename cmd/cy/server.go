@@ -52,14 +52,10 @@ func startServer(path string) error {
 		PidFileName: fmt.Sprintf("%s.pid", path),
 	}
 
-	d, err := cntxt.Reborn()
+	_, err := cntxt.Reborn()
 	if err != nil {
 		log.Panic().Err(err).Msg("failed to daemonize")
 	}
-	if d != nil {
-		return nil
-	}
-	defer cntxt.Release()
 
-	return err
+	return nil
 }

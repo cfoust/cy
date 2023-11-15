@@ -45,6 +45,9 @@ type Fuzzy struct {
 	selected int
 	pattern  string
 
+	// shown before the number of items
+	prompt string
+
 	tree       *tree.Tree
 	client     *server.Client
 	isAttached bool
@@ -191,6 +194,10 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			f.anim.Resize(size)
 		}
 		f.size = size
+		f.location = geom.Vec2{
+			R: geom.Clamp(f.location.R, 0, size.R-1),
+			C: geom.Clamp(f.location.C, 0, size.C-1),
+		}
 	case taro.KeyMsg:
 		switch msg.Type {
 		case taro.KeyEsc, taro.KeyCtrlC:
@@ -294,6 +301,12 @@ func WithInline(location geom.Vec2) Setting {
 
 func WithReverse(ctx context.Context, f *Fuzzy) {
 	f.isUp = false
+}
+
+func WithPrompt(prompt string) Setting {
+	return func(ctx context.Context, f *Fuzzy) {
+		f.prompt = prompt
+	}
 }
 
 func NewFuzzy(

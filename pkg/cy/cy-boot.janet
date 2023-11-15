@@ -15,10 +15,9 @@
 (key/def
   cy/command-palette
   "open command palette"
-  (-?>>
-    actions
-    (fzf/find)
-    (apply)))
+  (as?-> actions _
+         (input/find _ :animated false :prompt "search: actions")
+         (apply _)))
 
 (key/def
   ot/new-shell
@@ -43,22 +42,21 @@
 (key/def
   ot/jump-project
   "oakthree: jump to a project"
-  (-?>>
-    (group/children projects)
-    (map |(tuple (tree/name $) [:node [((group/children $) 0)]] $))
-    (fzf/find)
-    (group/children)
-    (0) # Gets the first index, the editor
-    (pane/attach)))
+  (as?-> projects _
+         (group/children _)
+         (map |(tuple (tree/name $) [:node [((group/children $) 0)]] $) _)
+         (input/find _ :prompt "search: project")
+         (group/children _)
+         (_ 0) # Gets the first index, the editor
+         (pane/attach _)))
 
 (key/def
   ot/jump-shell
   "oakthree: jump to a shell"
-  (-?>>
-    (group/children shells)
-    (map |(tuple (cmd/path $) [:node [$]] $))
-    (fzf/find)
-    (pane/attach)))
+  (as?-> (group/children shells) _
+         (map |(tuple (cmd/path $) [:node [$]] $) _)
+         (input/find _ :prompt "search: shell")
+         (pane/attach _)))
 
 (key/def
   ot/next-pane
@@ -87,11 +85,10 @@
 (key/def
   cy/jump-pane
   "jump to a pane"
-  (-?>>
-    (group/leaves (tree/root))
-    (map |(tuple (tree/path $) [:node [$]] $))
-    (fzf/find)
-    (pane/attach)))
+  (as?-> (group/leaves (tree/root)) _
+         (map |(tuple (tree/path $) [:node [$]] $) _)
+         (input/find _ :prompt "search: pane")
+         (pane/attach _)))
 
 (key/def
   cy/kill-current-pane
@@ -131,12 +128,11 @@
 (key/def
   cy/open-log
   "open an existing log file"
-  (-?>>
-    (path/glob (path/join [(cy/get :data-dir) "*.borg"]))
-    (map |(tuple $ [:replay [$]] $))
-    (fzf/find)
-    (replay/open (tree/root))
-    (pane/attach)))
+  (as?-> (path/glob (path/join [(cy/get :data-dir) "*.borg"])) _
+         (map |(tuple $ [:replay [$]] $) _)
+         (input/find _ :prompt "search: log file")
+         (replay/open (tree/root) _)
+         (pane/attach _)))
 
 (key/bind :root [prefix "j"] ot/new-shell)
 (key/bind :root [prefix "n"] ot/new-project)

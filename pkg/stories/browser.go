@@ -15,11 +15,12 @@ import (
 // A Browser lets the user switch between different stories.
 type Browser struct {
 	util.Lifetime
-	size    geom.Vec2
-	render  *taro.Renderer
-	fuzzy   *taro.Program
-	viewer  *taro.Program
-	watcher *taro.ScreenWatcher
+	size           geom.Vec2
+	render         *taro.Renderer
+	fuzzy          *taro.Program
+	viewer         *taro.Program
+	viewerLifetime util.Lifetime
+	watcher        *taro.ScreenWatcher
 }
 
 var _ taro.Model = (*Browser)(nil)
@@ -40,26 +41,28 @@ func (s *Browser) View(state *tty.State) {
 }
 
 type loadedStory struct {
-	screen *taro.Program
+	screen   *taro.Program
+	lifetime util.Lifetime
 }
 
 func (s *Browser) loadStory(story Story) tea.Cmd {
 	size := s.size
 	size.C -= 30
 	return func() tea.Msg {
-		screen := story.init(s.Ctx())
+		lifetime := util.NewLifetime(s.Ctx())
+		screen := story.init(lifetime.Ctx())
 		config := story.config
 		if !config.Size.IsZero() {
 			screen.Resize(config.Size)
 		}
 
 		viewer := NewViewer(
-			s.Ctx(),
+			lifetime.Ctx(),
 			screen,
 			config,
 		)
 		viewer.Resize(size)
-		return loadedStory{screen: viewer}
+		return loadedStory{screen: viewer, lifetime: lifetime}
 	}
 }
 
@@ -67,6 +70,7 @@ func (s *Browser) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case loadedStory:
 		s.viewer = msg.screen
+		s.viewerLifetime = msg.lifetime
 	case tea.WindowSizeMsg:
 		size := geom.Size{
 			R: msg.Height,
@@ -93,6 +97,7 @@ func (s *Browser) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			if story, ok := msg.Option.Result.(Story); ok {
 				if s.viewer != nil {
 					s.viewer.Cancel()
+					s.viewerLifetime.Cancel()
 					s.viewer = nil
 				}
 
@@ -131,7 +136,13 @@ func NewBrowser(
 		)
 	}
 
-	fuzzy := fuzzy.NewFuzzy(ctx, options, fuzzy.WithSticky, fuzzy.WithReverse)
+	fuzzy := fuzzy.NewFuzzy(
+		ctx,
+		options,
+		fuzzy.WithSticky,
+		fuzzy.WithReverse,
+		fuzzy.WithPrompt("choose a story"),
+	)
 	browser := &Browser{
 		Lifetime: util.NewLifetime(ctx),
 		render:   taro.NewRenderer(),

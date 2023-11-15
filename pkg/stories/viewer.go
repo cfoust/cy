@@ -3,6 +3,7 @@ package stories
 import (
 	"context"
 
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
@@ -28,7 +29,17 @@ func (v *Viewer) Init() tea.Cmd {
 }
 
 func (v *Viewer) View(state *tty.State) {
+	// Show an obvious background
 	size := state.Image.Size()
+	for row := 0; row < size.R; row++ {
+		for col := 0; col < size.C; col++ {
+			glyph := emu.EmptyGlyph()
+			glyph.FG = 8
+			glyph.Char = '-'
+			state.Image[row][col] = glyph
+		}
+	}
+
 	contents := v.screen.State()
 	if v.capture != nil {
 		contents = v.capture

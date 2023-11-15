@@ -184,6 +184,7 @@ func connect(socketPath string) (cy.Connection, error) {
 	var lockPath string
 
 	locked := false
+	started := false
 	for {
 		conn, err := ws.Connect(context.Background(), P.Protocol, socketPath)
 		if err == nil {
@@ -228,10 +229,13 @@ func connect(socketPath string) (cy.Connection, error) {
 			os.Remove(lockPath)
 		}
 
-		// Now we can start the server
-		err = startServer(socketPath)
-		if err != nil {
-			return nil, err
+		if !started {
+			// Now we can start the server
+			err = startServer(socketPath)
+			if err != nil {
+				return nil, err
+			}
+			started = true
 		}
 
 		time.Sleep(50 * time.Millisecond)

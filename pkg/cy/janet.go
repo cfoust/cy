@@ -6,10 +6,8 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/cy/api"
-	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
-	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/replayable"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -99,6 +97,10 @@ func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 			Binds:    c.replayBinds,
 		},
 		"tree": &api.TreeModule{Tree: c.tree},
+		"input": &api.InputModule{
+			Tree:   c.tree,
+			Server: c.muxServer,
+		},
 	}
 
 	for name, module := range modules {
@@ -217,54 +219,6 @@ func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 		},
 		"log": func(text string) {
 			c.log.Info().Msgf(text)
-		},
-		"fzf/find": func(
-			ctx context.Context,
-			user interface{},
-			choices *janet.Value,
-		) (interface{}, error) {
-			defer choices.Free()
-
-			client, ok := user.(*Client)
-			if !ok {
-				return nil, fmt.Errorf("missing client context")
-			}
-
-			options, err := fuzzy.UnmarshalOptions(choices)
-			if err != nil {
-				return nil, err
-			}
-
-			outerLayers := client.outerLayers
-			state := outerLayers.State()
-			cursor := state.Cursor
-			result := make(chan interface{})
-			fuzzy := fuzzy.NewFuzzy(
-				ctx,
-				options,
-				fuzzy.WithInline(geom.Vec2{R: cursor.Y, C: cursor.X}),
-				fuzzy.WithResult(result),
-				fuzzy.WithNodes(
-					c.tree,
-					c.muxServer.AddClient(ctx, geom.Vec2{}),
-				),
-				fuzzy.WithAnimation(state.Image),
-			)
-
-			client.outerLayers.NewLayer(
-				fuzzy.Ctx(),
-				fuzzy,
-				screen.PositionTop,
-				screen.WithInteractive,
-				screen.WithOpaque,
-			)
-
-			select {
-			case match := <-result:
-				return match, nil
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			}
 		},
 		"key/bind": func(target *janet.Value, sequence []string, callback *janet.Function) error {
 			defer target.Free()

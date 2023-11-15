@@ -365,8 +365,15 @@ func validateFunction(in, out []reflect.Type) error {
 				return fmt.Errorf("Named must have a struct type")
 			}
 
-			if !isValidType(namedType) {
-				return fmt.Errorf("Named had field(s) with invalid types")
+			for j := 0; j < namedType.NumField(); j++ {
+				field := namedType.Field(j)
+				if !isParamType(field.Type) {
+					return fmt.Errorf(
+						"Named has invalid field %d (%s)",
+						j,
+						field.Name,
+					)
+				}
 			}
 
 			if i != numArgs-1 {
@@ -412,39 +419,46 @@ func validateFunction(in, out []reflect.Type) error {
 	return nil
 }
 
-func getPrototype(name string, in, out []reflect.Type) string {
+func getPrototype(name string, in, out []reflect.Type) (string, error) {
+	var argCount int
+	var argList []string
+	var namedParams []string
+
 	numArgs := len(in)
 	for i := 0; i < numArgs; i++ {
 		argType := in[i]
-
 		named := getNamable(argType)
-		if named == nil {
+
+		if isInterface(argType) {
 			continue
 		}
 
-		args := make([]string, 0)
-		for j := 0; j < i; j++ {
-			args = append(args, fmt.Sprintf("arg%d ", j))
+		if named == nil {
+			argList = append(argList, fmt.Sprintf("arg%d ", argCount))
+			argCount++
+			continue
 		}
 
-		params := getNamedParams(named)
+		if i != numArgs-1 {
+			return "", fmt.Errorf("named parameter must be last")
+		}
 
-		argStr := strings.Join(args, " ")
-		paramStr := strings.Join(params, " ")
-		return fmt.Sprintf(
-			`[%s &named %s] (go/callback "%s" %s %s)`,
-			argStr,
-			paramStr,
-			name,
-			argStr,
-			paramStr,
-		)
+		namedParams = getNamedParams(named)
+	}
+
+	invocation := argList
+	if len(namedParams) > 0 {
+		argList = append(argList, "&named")
+		argList = append(argList, namedParams...)
+		invocation = append(invocation, namedParams...)
 	}
 
 	return fmt.Sprintf(
-		`[& args] (go/callback "%s" ;args)`,
+		`[%s] (go/callback "%s" %s)`,
+		strings.Join(argList, " "),
 		name,
-	)
+		strings.Join(invocation, " "),
+	), nil
 }
 
 func getFunctionTypes(f reflect.Value) (in, out []reflect.Type, err error) {
@@ -493,9 +507,13 @@ func (v *VM) registerCallback(
 	}
 	v.Unlock()
 
+	prototype, err := getPrototype(name, in, out)
+	if err != nil {
+		return err
+	}
 	call := CallString(fmt.Sprintf(`
 (def %s (fn %s))
-`, name, getPrototype(name, in, out)))
+`, name, prototype))
 	call.Options.UpdateEnv = true
 	err = v.ExecuteCall(context.Background(), nil, call)
 	if err != nil {

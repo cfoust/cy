@@ -336,7 +336,19 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 			return nil
 		}
 
-		return fmt.Errorf("unimplemented pointer type: %s (%s)", type_.String(), type_.Kind().String())
+		if C.janet_checktype(source, C.JANET_NIL) != 1 {
+			ptr := reflect.New(type_.Elem())
+			err := v.unmarshal(source, ptr.Interface())
+			if err != nil {
+			    return err
+			}
+			value.Set(ptr)
+		} else {
+			value.Set(reflect.ValueOf(nil))
+		}
+
+		//return fmt.Errorf("unimplemented pointer type: %s (%s)", type_.String(), type_.Kind().String())
+		return nil
 	case reflect.Struct:
 		if isTuple(type_) {
 			if err := assertType(source, C.JANET_TUPLE); err != nil {
