@@ -116,8 +116,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	statusStyle := r.render.NewStyle().
 		Inherit(statusBarStyle).
 		Background(statusBG).
-		Padding(0, 1).
-		MarginRight(1)
+		Padding(0, 1)
 
 	index := r.location.Index
 	if index < 0 || index >= len(r.events) || len(r.events) == 0 {
@@ -154,13 +153,42 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 			),
 		)
 	}
+	status := statusStyle.Render(statusText)
+
+	leftSide := lipgloss.JoinHorizontal(lipgloss.Top,
+		status,
+		statusBarStyle.
+			Copy().
+			Padding(0, 1).
+			Render(
+				r.currentTime.Format(
+					time.RFC3339,
+				),
+			),
+	)
+
+	progressWidth := size.C - lipgloss.Width(leftSide) - 3
+	percent := int((float64(r.location.Index) / float64(len(r.events))) * float64(progressWidth))
+	progressBar := ""
+	for i := 0; i < progressWidth; i++ {
+		if i <= percent {
+			progressBar += "▒"
+		} else {
+			progressBar += "-"
+		}
+	}
+
+	progressBar = "[" + progressBar + "]"
+	progressBar = statusBarStyle.
+		Copy().
+		Render(progressBar)
 
 	statusBar := statusBarStyle.
 		Width(size.C).
 		Height(1).
-		Render(lipgloss.JoinHorizontal(lipgloss.Top,
-			statusStyle.Render(statusText),
-			statusBarStyle.Render(r.currentTime.Format(time.RFC1123)),
+		Render(lipgloss.JoinHorizontal(lipgloss.Left,
+			leftSide,
+			progressBar,
 		))
 
 	r.render.RenderAt(state.Image, size.R-1, 0, statusBar)
