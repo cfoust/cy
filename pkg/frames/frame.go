@@ -27,3 +27,8 @@ func RandomFrame() Frame {
 
 	return Hive
 }
+
+func init() {
+	registerFrame("none", func(state image.Image) {
+	})
+}

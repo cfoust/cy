@@ -16,7 +16,7 @@
   cy/command-palette
   "open command palette"
   (as?-> actions _
-         (input/find _ :animated false :prompt "search: actions")
+         (input/find _ :prompt "search: actions")
          (apply _)))
 
 (key/def
@@ -114,9 +114,18 @@
   (frame/set-size [0 160]))
 
 (key/def
+  cy/choose-frame
+  "choose a frame"
+  (as?-> (frame/get-all) _
+         (input/find _ :prompt "search: frame")
+         (frame/set _)))
+
+(key/def
   cy/random-frame
-  "choose a new frame randomly"
-  (frame/random))
+  "switch to a random frame"
+  (def frames (frame/get-all))
+  (def rng (math/rng))
+  (frame/set (get frames (math/rng-int rng (length frames)))))
 
 (key/def
   cy/margins-smaller

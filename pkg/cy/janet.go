@@ -261,12 +261,24 @@ func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 			}
 			client.margins.SetSize(size)
 		},
-		"frame/random": func(context interface{}) {
+		"frame/set": func(context interface{}, name string) {
 			client, ok := context.(*Client)
 			if !ok {
 				return
 			}
-			client.frame.Set(frames.RandomFrame())
+
+			frame, ok := frames.Frames[name]
+			if !ok {
+				return
+			}
+			client.frame.Set(frame)
+		},
+		"frame/get-all": func(context interface{}) []string {
+			var names []string
+			for name := range frames.Frames {
+				names = append(names, name)
+			}
+			return names
 		},
 		"cy/toast": func(context interface{}, level *janet.Value, message string) error {
 			defer level.Free()

@@ -3,7 +3,7 @@ package fuzzy
 import (
 	"context"
 
-	"github.com/cfoust/cy/pkg/frames"
+	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/mux/screen/replay"
@@ -18,7 +18,7 @@ import (
 
 type Fuzzy struct {
 	util.Lifetime
-	anim *frames.Animator
+	anim *anim.Animator
 
 	result chan<- interface{}
 	size   geom.Vec2
@@ -262,9 +262,9 @@ type Setting func(context.Context, *Fuzzy)
 
 func WithAnimation(image image.Image) Setting {
 	return func(ctx context.Context, f *Fuzzy) {
-		f.anim = frames.NewAnimator(
+		f.anim = anim.NewAnimator(
 			ctx,
-			frames.RandomAnimation(),
+			anim.RandomAnimation(),
 			image,
 			23,
 		)

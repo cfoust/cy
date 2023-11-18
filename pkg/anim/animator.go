@@ -1,4 +1,4 @@
-package frames
+package anim
 
 import (
 	"context"
