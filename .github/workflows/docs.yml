@@ -35,7 +35,7 @@ jobs:
       - name: Build
         run: >
           go build
-          -ldflags "-X github.com/cfoust/cy/pkg/version.Version=\"readme\""
+          -ldflags "-X github.com/cfoust/cy/pkg/version.Version=readme"
           -o stories ./cmd/stories/main.go
       - uses: charmbracelet/vhs-action@v1
         with:
