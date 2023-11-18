@@ -28,6 +28,11 @@ jobs:
           cd docs
           mdbook build
 
+      - id: cy
+        uses: pozetroninc/github-action-get-latest-release@master
+        with:
+          repository: cfoust/cy
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
@@ -35,7 +40,7 @@ jobs:
       - name: Build
         run: >
           go build
-          -ldflags "-X github.com/cfoust/cy/pkg/version.Version=readme"
+          -ldflags "-X github.com/cfoust/cy/pkg/version.Version=${{ steps.cy.outputs.release }}"
           -o stories ./cmd/stories/main.go
       - uses: charmbracelet/vhs-action@v1
         with:
