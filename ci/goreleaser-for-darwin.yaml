@@ -28,10 +28,10 @@ builds:
     binary: cy
     ldflags:
       - -w -s
-      - -X github.com/cfoust/cy/info.Version={{.Version}}
-      - -X github.com/cfoust/cy/info.GoVersion=${GO_VERSION}
-      - -X github.com/cfoust/cy/info.GitCommit={{.Commit}}
-      - -X github.com/cfoust/cy/info.BuildTime={{.Timestamp}}
+      - -X github.com/cfoust/cy/pkg/version.Version={{.Version}}
+      - -X github.com/cfoust/cy/pkg/version.GoVersion=${GO_VERSION}
+      - -X github.com/cfoust/cy/pkg/version.GitCommit={{.Commit}}
+      - -X github.com/cfoust/cy/pkg/version.BuildTime={{.Timestamp}}
     tags:
       - release
       - embed_frontend
