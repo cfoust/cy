@@ -13,22 +13,50 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// For a point that is off the screen, find the closest point that can be used
+// as the start or end point of a selection.
+func anchorToScreen(size geom.Vec2, v geom.Vec2) geom.Vec2 {
+	if v.R < 0 {
+		return geom.Vec2{}
+	}
+
+	if v.R >= size.R {
+		return geom.Vec2{
+			R: size.R - 1,
+			C: size.C - 1,
+		}
+	}
+
+	if v.C < 0 {
+		return geom.Vec2{
+			R: v.R,
+			C: 0,
+		}
+	}
+
+	if v.C > 0 {
+		return geom.Vec2{
+			R: v.R,
+			C: size.C - 1,
+		}
+	}
+
+	return v
+}
+
 func (r *Replay) highlightRange(state *tty.State, from, to geom.Vec2, fg, bg emu.Color) {
 	from, to = normalizeRange(from, to)
 	from = r.termToViewport(from)
 	to = r.termToViewport(to)
 
+	size := state.Image.Size()
 	if !r.isInViewport(from) {
-		from = geom.Vec2{R: 0, C: 0}
+		from = anchorToScreen(size, from)
 	}
 	if !r.isInViewport(to) {
-		to = geom.Vec2{
-			R: r.viewport.R - 1,
-			C: r.viewport.C - 1,
-		}
+		to = anchorToScreen(size, to)
 	}
 
-	size := state.Image.Size()
 	var startCol, endCol int
 	for row := from.R; row <= to.R; row++ {
 		startCol = 0
