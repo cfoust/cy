@@ -46,7 +46,9 @@ func (t *TestServer) Attach(rows, cols int) (Connection, *Client, error) {
 	}
 
 	conn.Send(P.HandshakeMessage{
-		TERM: "xterm-256color",
+		Env: map[string]string{
+			"TERM": "xterm-256color",
+		},
 		Size: geom.Size{
 			R: rows,
 			C: cols,
@@ -102,7 +104,9 @@ func TestHandshake(t *testing.T) {
 	require.NoError(t, err)
 
 	conn.Send(P.HandshakeMessage{
-		TERM: "xterm-256color",
+		Env: map[string]string{
+			"TERM": "xterm-256color",
+		},
 		Size: geom.Size{
 			R: 26,
 			C: 80,
