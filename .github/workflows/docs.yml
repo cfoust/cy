@@ -8,13 +8,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # To push a branch 
-      pages: write  # To push to a GitHub Pages site
+      contents: write # To push a branch
+      pages: write # To push to a GitHub Pages site
       id-token: write # To update the deployment status
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
       - name: Install latest mdbook
         run: |
           tag=$(curl 'https://api.github.com/repos/rust-lang/mdbook/releases/latest' | jq -r '.tag_name')
@@ -26,13 +27,24 @@ jobs:
         run: |
           cd docs
           mdbook build
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.19"
+      - name: Build
+        run: go build -o stories ./cmd/stories/main.go
+      - uses: charmbracelet/vhs-action@v1
+        with:
+          path: "ci/cy.tape"
+
       - name: Setup pages
         uses: actions/configure-pages@v2
       - name: Upload site
         uses: actions/upload-pages-artifact@v1
         with:
           # Upload entire repository
-          path: 'docs/book'
+          path: "docs/book"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
