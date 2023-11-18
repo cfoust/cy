@@ -72,6 +72,11 @@ func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return v, nil
 	case taro.ScreenUpdate:
 		return v, taro.WaitScreens(v.Ctx(), v.screen)
+	case taro.KeyMsg:
+		switch msg.String() {
+		case "q":
+			return v, tea.Quit
+		}
 	}
 
 	return v, nil

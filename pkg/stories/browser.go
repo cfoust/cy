@@ -50,7 +50,7 @@ func (s *Browser) loadStory(story Story) tea.Cmd {
 	size.C -= 30
 	return func() tea.Msg {
 		lifetime := util.NewLifetime(s.Ctx())
-		screen := story.init(lifetime.Ctx())
+		screen := story.Init(lifetime.Ctx())
 		config := story.config
 		if !config.Size.IsZero() {
 			screen.Resize(config.Size)
@@ -90,7 +90,16 @@ func (s *Browser) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 		return s, nil
 	case taro.ScreenUpdate:
-		cmds := []taro.Cmd{s.watcher.Wait()}
+		cmds := []taro.Cmd{
+			s.watcher.Wait(),
+		}
+
+		if s.viewer != nil {
+			cmds = append(cmds, taro.WaitScreens(
+				s.Ctx(),
+				s.viewer,
+			))
+		}
 
 		switch msg := msg.Msg.(type) {
 		case fuzzy.SelectedEvent:

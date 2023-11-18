@@ -24,23 +24,23 @@ type InitFunc func(context.Context) mux.Screen
 
 type Story struct {
 	Name   string
-	init   InitFunc
+	Init   InitFunc
 	config Config
 }
 
-var stories = make(map[string]Story)
+var Stories = make(map[string]Story)
 
 func Register(name string, init InitFunc, config Config) {
-	stories[name] = Story{
+	Stories[name] = Story{
 		Name:   name,
-		init:   init,
+		Init:   init,
 		config: config,
 	}
 }
 
 func Initialize(ctx context.Context, filter string) (*taro.Program, error) {
 	filteredStories := make([]Story, 0)
-	for _, story := range stories {
+	for _, story := range Stories {
 		if !strings.HasPrefix(story.Name, filter) {
 			continue
 		}
