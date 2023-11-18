@@ -365,8 +365,8 @@ func (t *State) clear(x0, y0, x1, y1 int) {
 			C: x0,
 		},
 		Size: geom.Vec2{
-			R: y1 - y0,
-			C: x1 - x0,
+			R: y1 - y0 + 1,
+			C: x1 - x0 + 1,
 		},
 	}
 }

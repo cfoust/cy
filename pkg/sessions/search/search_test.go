@@ -129,7 +129,8 @@ func TestClearLine(t *testing.T) {
 			"baz",
 		).
 		Term(terminfo.CursorAddress, 0, 0).
-		Term(terminfo.DeleteLine)
+		Term(terminfo.ClrEol).
+		Add("baz")
 
 	results, err := Search(sim.Events(), "foo", nil)
 	require.NoError(t, err)
