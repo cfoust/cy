@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
+	cyParams "github.com/cfoust/cy/pkg/cy/params"
 	"github.com/cfoust/cy/pkg/events"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
@@ -19,6 +20,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream/renderer"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -37,11 +39,16 @@ type Client struct {
 
 	cy *Cy
 
+	env Environment
+
 	node  tree.Node
 	binds *bind.Engine[bind.Action]
 
 	// the text the client has copied
 	buffer string
+
+	// the client can have params of their own
+	params *params.Parameters
 
 	muxClient *server.Client
 	toast     *ToastLogger
@@ -70,6 +77,7 @@ func (c *Cy) addClient(conn Connection) *Client {
 		Lifetime: util.NewLifetime(clientCtx),
 		cy:       c,
 		conn:     conn,
+		params:   params.New(),
 		binds:    bind.NewEngine[bind.Action](),
 	}
 	c.clients = append(c.clients, client)
@@ -297,14 +305,22 @@ func (c *Client) Resize(size geom.Vec2) {
 	c.renderer.Resize(size)
 }
 
+func isSSH(e Environment) bool {
+	return e.IsSet("SSH_CONNECTION") || e.IsSet("SSH_CLIENT") || e.IsSet("SSH_TTY")
+}
+
 func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	c.Lock()
 	defer c.Unlock()
 
-	info, err := terminfo.Load(handshake.TERM)
+	c.env = Environment(handshake.Env)
+
+	info, err := terminfo.Load(c.env.Default("TERM", "xterm-256color"))
 	if err != nil {
 		return err
 	}
+
+	isClientSSH := isSSH(c.env)
 
 	c.info = screen.RenderContext{
 		Terminfo: info,
@@ -342,7 +358,7 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		screen.WithOpaque,
 	)
 
-	splashScreen := splash.New(c.Ctx(), handshake.Size)
+	splashScreen := splash.New(c.Ctx(), handshake.Size, !isClientSSH)
 	c.outerLayers.NewLayer(
 		splashScreen.Ctx(),
 		splashScreen,
@@ -365,6 +381,13 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		handshake.Size,
 		c.outerLayers,
 	)
+
+	if isClientSSH {
+		c.params.Set(cyParams.ParamAnimate, false)
+		c.toast.Send(toasts.Toast{
+			Message: "you joined via SSH; disabling animation",
+		})
+	}
 
 	go c.pollRender()
 
@@ -422,8 +445,13 @@ func (c *Client) Attach(node tree.Node) error {
 	}
 
 	c.binds.SetScopes(scopes...)
+	c.params.SetParent(node.Params())
 
 	return nil
+}
+
+func (c *Client) Params() *params.Parameters {
+	return c.params
 }
 
 func (c *Client) Detach(reason string) error {

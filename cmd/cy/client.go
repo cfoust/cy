@@ -77,6 +77,20 @@ if ((s = getenv("VISUAL")) != NULL || (s = getenv("EDITOR")) != NULL) {
 }
 **/
 
+func getEnv() map[string]string {
+	env := make(map[string]string)
+
+	for _, kv := range os.Environ() {
+		key, value, found := strings.Cut(kv, "=")
+		if !found {
+			continue
+		}
+		env[key] = value
+	}
+
+	return env
+}
+
 func buildHandshake(profile termenv.Profile) (*P.HandshakeMessage, error) {
 	columns, rows, err := term.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
@@ -84,9 +98,8 @@ func buildHandshake(profile termenv.Profile) (*P.HandshakeMessage, error) {
 	}
 
 	return &P.HandshakeMessage{
-		TERM:   os.Getenv("TERM"),
-		EDITOR: os.Getenv("EDITOR"),
-		Shell:  getShell(),
+		Env:   getEnv(),
+		Shell: getShell(),
 		Size: geom.Size{
 			R: rows,
 			C: columns,

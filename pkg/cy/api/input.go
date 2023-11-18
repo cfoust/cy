@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	cyParams "github.com/cfoust/cy/pkg/cy/params"
 	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
@@ -46,6 +47,13 @@ func (i *InputModule) Find(
 		return nil, err
 	}
 
+	shouldAnimate := true
+	clientParams := client.Params()
+	animated, ok := clientParams.Get(cyParams.ParamAnimate)
+	if value, ok := animated.(bool); ok {
+		shouldAnimate = value
+	}
+
 	outerLayers := client.OuterLayers()
 	state := outerLayers.State()
 	cursor := state.Cursor
@@ -61,7 +69,7 @@ func (i *InputModule) Find(
 		fuzzy.WithInline(geom.Vec2{R: cursor.Y, C: cursor.X}),
 	}
 
-	if params.Animated == nil || (*params.Animated) == true {
+	if (params.Animated == nil || (*params.Animated) == true) && shouldAnimate {
 		settings = append(settings, fuzzy.WithAnimation(state.Image))
 	}
 

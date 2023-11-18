@@ -46,6 +46,12 @@ func (p *Parameters) NewChild() *Parameters {
 	return child
 }
 
+func (p *Parameters) SetParent(parent *Parameters) {
+	p.Lock()
+	p.parent = parent
+	p.Unlock()
+}
+
 func New() *Parameters {
 	return &Parameters{
 		table: make(map[string]interface{}),

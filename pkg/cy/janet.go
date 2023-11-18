@@ -126,23 +126,30 @@ func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 		"cy/get": func(user interface{}, key *janet.Value) (interface{}, error) {
 			defer key.Free()
 
-			client, ok := user.(*Client)
-			if !ok {
-				return nil, fmt.Errorf("missing client context")
-			}
-
-			node := client.Node()
-			if node == nil {
-				return nil, fmt.Errorf("client was not attached")
-			}
-
 			var keyword janet.Keyword
 			err := key.Unmarshal(&keyword)
 			if err != nil {
 				return nil, err
 			}
 
-			value, ok := node.Params().Get(string(keyword))
+			client, ok := user.(*Client)
+			if !ok {
+				return nil, fmt.Errorf("missing client context")
+			}
+
+			// First check the client's parameters
+			value, ok := client.params.Get(string(keyword))
+			if ok {
+				return value, nil
+			}
+
+			// Then those found in the tree
+			node := client.Node()
+			if node == nil {
+				return nil, fmt.Errorf("client was not attached")
+			}
+
+			value, ok = node.Params().Get(string(keyword))
 			return value, nil
 		},
 		"cy/set": func(user interface{}, key *janet.Value, value *janet.Value) error {
