@@ -5,12 +5,8 @@
 > the time traveling terminal multiplexer
 
 <p align="center">
-    <a target="_blank" href="https://discord.gg/NRQG3wbWGM">
-        <img src="https://img.shields.io/discord/1175485543421837455?color=5865F2&label=discord&style=flat-square" alt="Discord" />
-    </a>
-    <a target="_blank" href="https://github.com/cfoust/cy/blob/main/LICENSE">
-        <img src="https://img.shields.io/github/license/cfoust/cy?color=48AC75&style=flat-square" alt="cy License Badge MIT" />
-    </a>
+    <a href="https://discord.gg/NRQG3wbWGM"><img src="https://img.shields.io/discord/1175485543421837455?color=5865F2&label=discord&style=flat-square" alt="Discord" /></a>
+    <a href="https://github.com/cfoust/cy/blob/main/LICENSE"><img src="https://img.shields.io/github/license/cfoust/cy?color=48AC75&style=flat-square" alt="cy License Badge MIT" /></a>
 </p>
 
 ## What is this?
