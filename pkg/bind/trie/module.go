@@ -16,7 +16,7 @@ type Trie[T any] struct {
 	nextRe map[string]*Regex
 }
 
-func (t *Trie[T]) resolve(key interface{}) (interface{}, bool) {
+func (t *Trie[T]) resolve(key interface{}) (value interface{}, matched bool, regex bool) {
 	switch key := key.(type) {
 	case string:
 		// try matching against a regex
@@ -25,27 +25,27 @@ func (t *Trie[T]) resolve(key interface{}) (interface{}, bool) {
 				continue
 			}
 
-			return re.next, true
+			return re.next, true, true
 		}
 
 		node, ok := t.next[key]
 		if !ok {
-			return nil, false
+			return nil, false, false
 		}
-		return node, true
+		return node, true, false
 	case *Regex:
 		node, ok := t.nextRe[key.Pattern]
 		if !ok {
-			return nil, false
+			return nil, false, false
 		}
-		return node.next, true
+		return node.next, true, false
 	}
 
-	return nil, false
+	return nil, false, false
 }
 
 func (t *Trie[T]) getParent(key interface{}) *Trie[T] {
-	node, ok := t.resolve(key)
+	node, ok, _ := t.resolve(key)
 	if !ok {
 		return nil
 	}
@@ -58,7 +58,7 @@ func (t *Trie[T]) getParent(key interface{}) *Trie[T] {
 }
 
 func (t *Trie[T]) getLeaf(key string) (value T, ok bool) {
-	node, found := t.resolve(key)
+	node, found, _ := t.resolve(key)
 	if !found {
 		return
 	}
@@ -189,24 +189,37 @@ func (t *Trie[T]) Partial(sequence []string) (result []Leaf[T]) {
 	return parent.Leaves()
 }
 
-func (t *Trie[T]) Get(sequence []string) (value T, matched bool) {
+// Get attempts to retrieve the leaf referred to by `sequence`. Any steps
+// traversed using regex matches will be returned in `re` in the order in which
+// they appeared in the sequence.
+func (t *Trie[T]) Get(sequence []string) (value T, re []string, matched bool) {
 	t.RLock()
 	defer t.RUnlock()
 
-	lastIndex := len(sequence) - 1
-	last := sequence[lastIndex]
-	parent := t.access(strToInterface(sequence[:lastIndex]), false)
-	if parent == nil {
-		return
+	var current *Trie[T] = t
+	for i, step := range sequence {
+		node, ok, isRegex := current.resolve(step)
+		if !ok {
+			return
+		}
+
+		if isRegex {
+			re = append(re, step)
+		}
+		switch node := node.(type) {
+		case T:
+			if i != len(sequence)-1 {
+				return
+			}
+			value = node
+			matched = true
+			return
+		case *Trie[T]:
+			current = node
+		}
+
 	}
 
-	leaf, ok := parent.getLeaf(last)
-	if !ok {
-		return
-	}
-
-	matched = true
-	value = leaf
 	return
 }
 

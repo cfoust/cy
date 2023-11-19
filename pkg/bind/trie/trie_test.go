@@ -22,7 +22,7 @@ func TestTrie(t *testing.T) {
 		"two",
 	}, 2)
 
-	_, matched := trie.Get([]string{
+	_, _, matched := trie.Get([]string{
 		"one",
 		"two",
 	})
@@ -50,13 +50,14 @@ func TestRegex(t *testing.T) {
 		"t",
 	}, 2)
 
-	_, matched := trie.Get([]string{
+	_, re, matched := trie.Get([]string{
 		"a",
 		"t",
 	})
+	require.Equal(t, []string{"a"}, re)
 	require.Equal(t, true, matched)
 
-	_, matched = trie.Get([]string{
+	_, _, matched = trie.Get([]string{
 		"d",
 		"t",
 	})
