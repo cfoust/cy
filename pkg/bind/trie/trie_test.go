@@ -3,12 +3,21 @@ package trie
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func re(pattern string) *Regex {
+	r, err := NewRegex(pattern)
+	if err != nil {
+		panic(err)
+	}
+
+	return r
+}
 
 func TestTrie(t *testing.T) {
 	trie := New[int]()
-	trie.Set([]string{
+	trie.Set([]interface{}{
 		"one",
 		"two",
 	}, 2)
@@ -17,19 +26,39 @@ func TestTrie(t *testing.T) {
 		"one",
 		"two",
 	})
-	assert.Equal(t, true, matched)
+	require.Equal(t, true, matched)
 
-	trie.Set([]string{
+	trie.Set([]interface{}{
 		"one",
 		"three",
 	}, 1)
 
-	trie.Set([]string{
+	trie.Set([]interface{}{
 		"two",
 	}, 1)
 
-	assert.Equal(t, 3, len(trie.Leaves()))
-	assert.Equal(t, 2, len(trie.Partial([]string{
+	require.Equal(t, 3, len(trie.Leaves()))
+	require.Equal(t, 2, len(trie.Partial([]string{
 		"one",
 	})))
+}
+
+func TestRegex(t *testing.T) {
+	trie := New[int]()
+	trie.Set([]interface{}{
+		re("[abc]"),
+		"t",
+	}, 2)
+
+	_, matched := trie.Get([]string{
+		"a",
+		"t",
+	})
+	require.Equal(t, true, matched)
+
+	_, matched = trie.Get([]string{
+		"d",
+		"t",
+	})
+	require.Equal(t, false, matched)
 }

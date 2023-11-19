@@ -1,6 +1,7 @@
 package search
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/cfoust/cy/pkg/emu"
@@ -10,20 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/xo/terminfo"
 )
-
-func TestGetPartial(t *testing.T) {
-	re, err := getPartial("[asd]blah")
-	require.NoError(t, err)
-	require.Equal(t, "[ads]", re.String())
-
-	re, err = getPartial("([asd]|[123])blah")
-	require.NoError(t, err)
-	require.Equal(t, "[1-3ads]", re.String())
-
-	re, err = getPartial("([asd]*|[123]+)blah")
-	require.NoError(t, err)
-	require.Equal(t, "([ads]|[1-3])", re.String())
-}
 
 var TEST_SIZE = geom.Size{
 	R: 4,
@@ -285,4 +272,69 @@ func TestPrinted(t *testing.T) {
 			},
 		},
 	}, results[0])
+}
+
+func TestSearcher(t *testing.T) {
+	sim := sessions.NewSimulator().
+		Add("foo").
+		Add("f").
+		Add(geom.DEFAULT_SIZE).
+		Add("oo").
+		Add("bar").
+		Add("foo f").
+		Term(terminfo.ClearScreen).
+		Add("oo")
+
+	pattern, _ := regexp.Compile("foo")
+	s := NewSearcher()
+	s.Parse(sim.Events())
+
+	matches := s.Find(pattern)
+	require.Equal(t, 4, len(matches))
+	require.Equal(t, []Match{
+		{
+			Begin: Address{
+				Index:  0,
+				Offset: 0,
+			},
+			End: Address{
+				Index:  0,
+				Offset: 3,
+			},
+			Continuous: true,
+		},
+		{
+			Begin: Address{
+				Index:  1,
+				Offset: 0,
+			},
+			End: Address{
+				Index:  3,
+				Offset: 2,
+			},
+			Continuous: true,
+		},
+		{
+			Begin: Address{
+				Index:  5,
+				Offset: 0,
+			},
+			End: Address{
+				Index:  5,
+				Offset: 3,
+			},
+			Continuous: true,
+		},
+		{
+			Begin: Address{
+				Index:  5,
+				Offset: 4,
+			},
+			End: Address{
+				Index:  7,
+				Offset: 2,
+			},
+			Continuous: false,
+		},
+	}, matches)
 }

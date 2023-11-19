@@ -137,8 +137,6 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 	term := emu.New()
 	term.EnableHistory(false)
 
-	reader := NewScreenReader(term, geom.Vec2{}, geom.DEFAULT_SIZE)
-
 	// The full matches we're tracking that are still on the screen
 	var matches, newMatches []SearchResult
 
@@ -165,7 +163,6 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 				resize.Rows,
 			)
 			size = geom.Vec2{C: resize.Columns, R: resize.Rows}
-			reader.Resize(size)
 
 			// TODO(cfoust): 08/24/23 clear all matches
 			continue
