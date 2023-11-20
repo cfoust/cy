@@ -87,7 +87,7 @@ func (r *Replay) recalculateViewport() {
 	r.setOffsetX(r.offset.C)
 }
 
-func (r *Replay) setScroll(offset int) {
+func (r *Replay) setScrollY(offset int) {
 	r.isPlaying = false
 	r.mode = ModeCopy
 	before := r.viewportToTerm(r.cursor)
@@ -107,4 +107,22 @@ func (r *Replay) setScroll(offset int) {
 		R: r.cursor.R + r.offset.R,
 		C: r.desiredCol,
 	})
+}
+
+func (r *Replay) setScrollX(offset int) {
+	r.isPlaying = false
+	r.mode = ModeCopy
+	before := r.viewportToTerm(r.cursor)
+	r.setOffsetX(offset)
+	after := r.termToViewport(before)
+
+	if after.C >= r.viewport.C {
+		r.cursor.C = geom.Max(r.viewport.C-1, 0)
+	} else if after.C < 0 {
+		r.cursor.C = 0
+	} else {
+		r.cursor.C = after.C
+	}
+
+	r.desiredCol = after.C
 }

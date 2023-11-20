@@ -82,10 +82,7 @@ func (s *Splash) View(state *tty.State) {
 		BorderBottom(true)
 
 	boxText := boxStyle.Render(boxContents)
-	boxSize := geom.Vec2{
-		R: lipgloss.Height(boxText),
-		C: lipgloss.Width(boxText),
-	}
+	boxSize := taro.GetSize(boxText)
 
 	box := image.New(boxSize)
 	s.render.RenderAt(

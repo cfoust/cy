@@ -91,9 +91,13 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case taro.MouseMsg:
 		switch msg.Button {
 		case taro.MouseWheelUp:
-			r.setScroll(r.offset.R - 1)
+			r.setScrollY(r.offset.R - 1)
 		case taro.MouseWheelDown:
-			r.setScroll(r.offset.R + 1)
+			r.setScrollY(r.offset.R + 1)
+		case taro.MouseWheelLeft:
+			r.setScrollX(r.offset.C - 1)
+		case taro.MouseWheelRight:
+			r.setScrollX(r.offset.C + 1)
 		}
 	case ActionEvent:
 		r.isPlaying = false
@@ -152,9 +156,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case ActionScrollDownHalf:
 			r.moveCursorDelta((viewport.R / 2), 0)
 		case ActionScrollUp:
-			r.setScroll(r.offset.R - 1)
+			r.setScrollY(r.offset.R - 1)
 		case ActionScrollDown:
-			r.setScroll(r.offset.R + 1)
+			r.setScrollY(r.offset.R + 1)
 		case ActionCursorDown:
 			r.moveCursorDelta(1, 0)
 		case ActionCursorUp:

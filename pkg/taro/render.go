@@ -10,6 +10,14 @@ import (
 	"github.com/xo/terminfo"
 )
 
+// GetSize gets the size of `text` as it would appear on the screen.
+func GetSize(text string) geom.Vec2 {
+	return geom.Vec2{
+		R: lipgloss.Height(text),
+		C: lipgloss.Width(text),
+	}
+}
+
 // Renderer makes it easy to render lipgloss strings.
 type Renderer struct {
 	*lipgloss.Renderer
@@ -29,6 +37,12 @@ func (r *Renderer) RenderAt(state image.Image, row, col int, value string) {
 	term.Write([]byte(value))
 
 	image.Compose(geom.Vec2{R: row, C: col}, state, term.Screen())
+}
+
+func (r *Renderer) RenderImage(value string) image.Image {
+	result := image.New(GetSize(value))
+	r.RenderAt(result, 0, 0, value)
+	return result
 }
 
 func (r *Renderer) ConvertLipgloss(color lipgloss.Color) emu.Color {

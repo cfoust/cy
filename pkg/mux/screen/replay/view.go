@@ -151,36 +151,6 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		return
 	}
 
-	if r.offset.R < 0 {
-		offsetStyle := r.render.NewStyle().
-			Foreground(lipgloss.Color("9")).
-			Background(lipgloss.Color("240"))
-
-		linePos := r.termToViewport(geom.Vec2{R: 0}).R
-		if linePos >= 0 && linePos < r.viewport.R {
-			r.render.RenderAt(
-				state.Image,
-				linePos,
-				r.viewport.C-3,
-				offsetStyle.Render("<--"),
-			)
-		}
-
-		r.render.RenderAt(
-			state.Image,
-			0,
-			0,
-			r.render.PlaceHorizontal(
-				size.C,
-				lipgloss.Right,
-				offsetStyle.Render(fmt.Sprintf(
-					"[%d/%d]",
-					-r.offset.R,
-					-r.minOffset.R,
-				)),
-			),
-		)
-	}
 	status := statusStyle.Render(statusText)
 
 	leftSide := lipgloss.JoinHorizontal(lipgloss.Top,
@@ -220,6 +190,81 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		))
 
 	r.render.RenderAt(state.Image, size.R-1, 0, statusBar)
+}
+
+// drawOffset renders a small indicator that lets the user know where they
+// areon a screen bigger than their viewport.
+func (r *Replay) drawOffset(offset geom.Vec2, isBottom bool) image.Image {
+	style := r.render.NewStyle().
+		Foreground(lipgloss.Color("9")).
+		Background(lipgloss.Color("240"))
+
+	yChar := "⇧"
+	xChar := "⇦"
+	if isBottom {
+		yChar = "⇩"
+		xChar = "⇨"
+	}
+
+	lines := make([]string, 0)
+	if offset.R > 0 {
+		lines = append(lines, style.Render(
+			fmt.Sprintf("%s%d", yChar, offset.R),
+		))
+	}
+
+	if offset.C > 0 {
+		lines = append(lines, style.Render(
+			fmt.Sprintf("%s%d", xChar, offset.C),
+		))
+	}
+
+	if isBottom && len(lines) == 2 {
+		lines = []string{
+			lines[1],
+			lines[0],
+		}
+	}
+
+	return r.render.RenderImage(style.Render(lipgloss.JoinVertical(
+		lipgloss.Left,
+		lines...,
+	)))
+}
+
+// drawScrollbackPosition renders "[1/N]" text in the top-right corner that
+// looks just like tmux's copy mode.
+func (r *Replay) drawScrollbackPosition(state *tty.State) {
+	size := state.Image.Size()
+	offsetStyle := r.render.NewStyle().
+		Foreground(lipgloss.Color("9")).
+		Background(lipgloss.Color("240"))
+
+	// draw where the screen ends and scrollback begins
+	linePos := r.termToViewport(geom.Vec2{R: 0}).R
+	if linePos >= 0 && linePos < r.viewport.R {
+		r.render.RenderAt(
+			state.Image,
+			linePos,
+			r.viewport.C-3,
+			offsetStyle.Render("<--"),
+		)
+	}
+
+	r.render.RenderAt(
+		state.Image,
+		0,
+		0,
+		r.render.PlaceHorizontal(
+			size.C,
+			lipgloss.Right,
+			offsetStyle.Render(fmt.Sprintf(
+				"[%d/%d]",
+				-r.offset.R,
+				-r.minOffset.R,
+			)),
+		),
+	)
 }
 
 func (r *Replay) renderInput() image.Image {
@@ -284,12 +329,7 @@ func (r *Replay) renderInput() image.Image {
 		input,
 		prompt,
 	)
-	result := image.New(geom.Size{
-		R: lipgloss.Height(input),
-		C: lipgloss.Width(input),
-	})
-	r.render.RenderAt(result, 0, 0, input)
-	return result
+	return r.render.RenderImage(input)
 }
 
 func (r *Replay) View(state *tty.State) {
@@ -365,6 +405,18 @@ func (r *Replay) View(state *tty.State) {
 	// Render overlays
 	///////////////////////////
 	r.drawStatusBar(state)
+
+	if r.offset.R < 0 {
+		r.drawScrollbackPosition(state)
+	} else {
+		if !r.offset.IsZero() {
+			image.Copy(
+				geom.Vec2{},
+				state.Image,
+				r.drawOffset(r.offset, false),
+			)
+		}
+	}
 
 	// Render text input
 	/////////////////////////////
