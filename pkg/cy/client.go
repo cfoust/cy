@@ -154,18 +154,26 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 }
 
 func (c *Client) runAction(event bind.BindEvent) {
+	args := make([]interface{}, 0)
+	for _, arg := range event.Args {
+		args = append(args, arg)
+	}
+
 	err := event.Action.Callback.CallContext(
 		c.Ctx(),
 		c,
+		args...,
 	)
-	if err != nil && err != context.Canceled {
-		log.Error().Err(err).Msgf("failed to run callback")
-		c.toast.Error(fmt.Sprintf(
-			"an error occurred while running %+v: %s",
-			event.Sequence,
-			err.Error(),
-		))
+	if err == nil || err == context.Canceled {
+		return
 	}
+
+	log.Error().Err(err).Msgf("failed to run callback")
+	c.toast.Error(fmt.Sprintf(
+		"an error occurred while running %+v: %s",
+		event.Sequence,
+		err.Error(),
+	))
 }
 
 func (c *Client) pollEvents() {

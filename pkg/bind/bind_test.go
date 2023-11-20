@@ -39,7 +39,7 @@ func TestAction(t *testing.T) {
 
 	scope := NewScope[int]()
 	scope.Set(
-		[]string{"ctrl+a"},
+		[]interface{}{"ctrl+a"},
 		2,
 	)
 
@@ -73,7 +73,7 @@ func TestIdle(t *testing.T) {
 
 	scope := NewScope[int]()
 	scope.Set(
-		[]string{"ctrl+a", "a"},
+		[]interface{}{"ctrl+a", "a"},
 		2,
 	)
 

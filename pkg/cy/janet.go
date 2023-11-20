@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/cy/api"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
@@ -29,9 +28,6 @@ func (c *Client) execute(code string) error {
 }
 
 var (
-	KEYWORD_ROOT   = janet.Keyword("root")
-	KEYWORD_REPLAY = janet.Keyword("replay")
-
 	KEYWORD_INFO  = janet.Keyword("info")
 	KEYWORD_WARN  = janet.Keyword("warn")
 	KEYWORD_ERROR = janet.Keyword("error")
@@ -56,27 +52,6 @@ func resolveLevel(level *janet.Value) (toasts.ToastLevel, error) {
 	return toasts.ToastLevelError, fmt.Errorf("you must provide one of :info, :warn, or :error")
 }
 
-func (c *Cy) resolveGroup(target *janet.Value) (*tree.Group, error) {
-	// first try keyword
-	err := target.Unmarshal(&KEYWORD_ROOT)
-	if err == nil {
-		return c.tree.Root(), nil
-	}
-
-	// otherwise, node ID
-	var id tree.NodeID
-	if err := target.Unmarshal(&id); err != nil {
-		return nil, err
-	}
-
-	group, ok := c.tree.GroupById(id)
-	if !ok {
-		return nil, fmt.Errorf("group not found: %d", id)
-	}
-
-	return group, nil
-}
-
 func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 	vm, err := janet.New(ctx)
 	if err != nil {
@@ -85,9 +60,13 @@ func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 
 	modules := map[string]interface{}{
 		"cmd": &api.Cmd{
-			Lifetime: util.NewLifetime(c.Ctx()),
-			Tree:     c.tree,
-			Binds:    c.replayBinds,
+			Lifetime:    util.NewLifetime(c.Ctx()),
+			Tree:        c.tree,
+			ReplayBinds: c.replayBinds,
+		},
+		"key": &api.Key{
+			Tree:        c.tree,
+			ReplayBinds: c.replayBinds,
 		},
 		"group": &api.GroupModule{Tree: c.tree},
 		"pane":  &api.PaneModule{Tree: c.tree},
@@ -227,31 +206,6 @@ func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 		},
 		"log": func(text string) {
 			c.log.Info().Msgf(text)
-		},
-		"key/bind": func(target *janet.Value, sequence []string, callback *janet.Function) error {
-			defer target.Free()
-
-			var scope *bind.BindScope
-			group, err := c.resolveGroup(target)
-			if err == nil {
-				scope = group.Binds()
-			} else {
-				replayErr := target.Unmarshal(&KEYWORD_REPLAY)
-				if replayErr != nil {
-					return fmt.Errorf("target must be one of :root, :replay, or node ID")
-				}
-
-				scope = c.replayBinds
-			}
-
-			scope.Set(
-				sequence,
-				bind.Action{
-					Callback: callback,
-				},
-			)
-
-			return nil
 		},
 		"frame/size": func(context interface{}) *geom.Vec2 {
 			client, ok := context.(*Client)

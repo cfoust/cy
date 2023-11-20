@@ -20,9 +20,9 @@ type CmdParams struct {
 }
 
 type Cmd struct {
-	Lifetime util.Lifetime
-	Tree     *tree.Tree
-	Binds    *bind.BindScope
+	Lifetime    util.Lifetime
+	Tree        *tree.Tree
+	ReplayBinds *bind.BindScope
 }
 
 func (c *Cmd) New(
@@ -53,7 +53,7 @@ func (c *Cmd) New(
 			Directory: path,
 		},
 		dataDir,
-		c.Binds,
+		c.ReplayBinds,
 	)
 	if err != nil {
 		return 0, err
