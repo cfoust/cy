@@ -138,15 +138,7 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 			case replay.CopyEvent:
 				client.buffer = event.Text
 			case bind.BindEvent:
-				go func() {
-					err := event.Action.Callback.CallContext(
-						c.Ctx(),
-						client,
-					)
-					if err != nil && err != context.Canceled {
-						log.Error().Err(err).Msgf("failed to run callback")
-					}
-				}()
+				go client.runAction(event)
 			}
 
 		}

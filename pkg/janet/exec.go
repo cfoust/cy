@@ -135,6 +135,10 @@ func (v *VM) runCode(params Params, call Call) {
 		C.janet_unwrap_function(v.evaluate),
 		args,
 	)
+	if fiber.fiber == nil {
+		params.Error(fmt.Errorf("failed to create fiber"))
+		return
+	}
 	subParams := params.Pipe()
 
 	go func() {
@@ -164,6 +168,10 @@ func (v *VM) runFunction(params Params, fun *C.JanetFunction, args []interface{}
 		fun,
 		cArgs,
 	)
+	if fiber.fiber == nil {
+		params.Error(fmt.Errorf("failed to create fiber"))
+		return
+	}
 
 	go v.runFiber(params, fiber, nil)
 }
