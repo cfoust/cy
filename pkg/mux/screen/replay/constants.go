@@ -17,6 +17,7 @@ type ActionType int
 
 type ActionEvent struct {
 	Type ActionType
+	Arg  string
 }
 
 type PlaybackRateEvent struct {
@@ -108,11 +109,17 @@ const (
 	// history-bottom                               G               M->
 	// history-top                                  g               M-<
 	// jump-again                                   ;               ;
+	ActionJumpAgain
 	// jump-backward <to>                           F               F
+	ActionJumpBackward
 	// jump-forward <to>                            f               f
+	ActionJumpForward
 	// jump-reverse                                 ,               ,
+	ActionJumpReverse
 	// jump-to-backward <to>                        T
+	ActionJumpToBackward
 	// jump-to-forward <to>                         t
+	ActionJumpToForward
 	// jump-to-mark                                 M-x             M-x
 	// middle-line                                  M               M-r
 	// next-matching-bracket                        %               M-C-f

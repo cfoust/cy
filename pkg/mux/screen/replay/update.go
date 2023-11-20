@@ -177,6 +177,29 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.selectStart = r.viewportToTerm(r.cursor)
 		case ActionCopy:
 			return r.handleCopy()
+		case ActionJumpReverse, ActionJumpAgain:
+			if len(r.jumpChar) == 0 {
+				return r, nil
+			}
+
+			direction := r.wasJumpForward
+			if msg.Type == ActionJumpReverse {
+				direction = !direction
+			}
+
+			return r.handleJump(
+				r.jumpChar,
+				direction,
+				r.wasJumpTo,
+			)
+		case ActionJumpForward, ActionJumpBackward, ActionJumpToForward, ActionJumpToBackward:
+			isForward := msg.Type == ActionJumpForward || msg.Type == ActionJumpToForward
+			isTo := msg.Type == ActionJumpToForward || msg.Type == ActionJumpToBackward
+			return r.handleJump(
+				msg.Arg,
+				isForward,
+				isTo,
+			)
 		}
 	}
 

@@ -44,6 +44,16 @@ func (m *ReplayModule) sendAction(context interface{}, action replay.ActionType)
 	})
 }
 
+func (m *ReplayModule) sendArg(context interface{}, action replay.ActionType, arg string) error {
+	if len(arg) != 1 {
+		return nil
+	}
+	return m.send(context, replay.ActionEvent{
+		Type: action,
+		Arg:  arg,
+	})
+}
+
 func (m *ReplayModule) Quit(context interface{}) error {
 	return m.sendAction(context, replay.ActionQuit)
 }
@@ -128,6 +138,30 @@ func (m *ReplayModule) Copy(context interface{}) error {
 
 func (m *ReplayModule) Select(context interface{}) error {
 	return m.sendAction(context, replay.ActionSelect)
+}
+
+func (m *ReplayModule) JumpAgain(context interface{}) error {
+	return m.sendAction(context, replay.ActionJumpAgain)
+}
+
+func (m *ReplayModule) JumpReverse(context interface{}) error {
+	return m.sendAction(context, replay.ActionJumpReverse)
+}
+
+func (m *ReplayModule) JumpBackward(context interface{}, char string) error {
+	return m.sendArg(context, replay.ActionJumpBackward, char)
+}
+
+func (m *ReplayModule) JumpForward(context interface{}, char string) error {
+	return m.sendArg(context, replay.ActionJumpForward, char)
+}
+
+func (m *ReplayModule) JumpToForward(context interface{}, char string) error {
+	return m.sendArg(context, replay.ActionJumpToForward, char)
+}
+
+func (m *ReplayModule) JumpToBackward(context interface{}, char string) error {
+	return m.sendArg(context, replay.ActionJumpToBackward, char)
 }
 
 func (m *ReplayModule) Open(

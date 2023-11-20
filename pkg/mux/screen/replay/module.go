@@ -69,14 +69,21 @@ type Replay struct {
 	// The location in terminal space where the select began
 	selectStart geom.Vec2
 
-	isForward       bool
-	isWaiting       bool
+	isForward bool
+	isWaiting bool
 	// Whether no matches came back
 	isEmpty         bool
 	searchProgress  chan int
 	progressPercent int
 	searchInput     textinput.Model
 	matches         []search.SearchResult
+
+	// The last character the user jumped to
+	jumpChar string
+	// Whether that jump was forward
+	wasJumpForward bool
+	// Whether that jump was "to" or up until
+	wasJumpTo bool
 }
 
 var _ taro.Model = (*Replay)(nil)

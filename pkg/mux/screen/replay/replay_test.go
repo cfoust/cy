@@ -18,6 +18,13 @@ import (
 
 var sim = sessions.NewSimulator
 
+func arg(_type ActionType, arg string) ActionEvent {
+	return ActionEvent{
+		Type: _type,
+		Arg:  arg,
+	}
+}
+
 func createTestSession() []sessions.Event {
 	return sim().
 		Add(
@@ -345,4 +352,30 @@ func TestPrompt(t *testing.T) {
 	r.gotoIndex(0, -1)
 	i(ActionSearchForward, "blah", ActionQuit)
 	require.Equal(t, r.mode, ModeTime)
+}
+
+func TestJump(t *testing.T) {
+	s := sessions.NewSimulator()
+	s.Add(
+		geom.Size{R: 5, C: 50},
+		emu.LineFeedMode,
+		"The five boxing wizards jump quickly. a",
+	)
+
+	r, i := createTest(s.Events())
+	i(geom.Size{R: 3, C: 50})
+	i(arg(ActionJumpBackward, "T"))
+	require.Equal(t, geom.Vec2{}, r.cursor)
+	i(ActionCursorRight, ActionCursorRight, ActionJumpAgain)
+	require.Equal(t, geom.Vec2{}, r.cursor)
+	i(arg(ActionJumpForward, "a"))
+	require.Equal(t, geom.Vec2{C: 19}, r.cursor)
+	i(ActionJumpAgain)
+	require.Equal(t, geom.Vec2{C: 38}, r.cursor)
+	i(arg(ActionJumpBackward, "T"))
+	require.Equal(t, geom.Vec2{}, r.cursor)
+	i(arg(ActionJumpToForward, "x"))
+	require.Equal(t, geom.Vec2{C: 10}, r.cursor)
+	i(arg(ActionJumpToBackward, "e"))
+	require.Equal(t, geom.Vec2{C: 8}, r.cursor)
 }
