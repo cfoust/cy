@@ -68,10 +68,12 @@ func (r *Replay) handleJump(needle string, isForward bool, isTo bool) (taro.Mode
 		}
 	}
 
-	r.cursor = r.termToViewport(geom.Vec2{
+	newPos := geom.Vec2{
 		R: oldPos.R,
 		C: newCol,
-	})
+	}
+	r.moveCursor(newPos)
+	r.desiredCol = r.termToViewport(newPos).C
 
 	return r, nil
 }
