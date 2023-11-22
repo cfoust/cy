@@ -76,6 +76,7 @@ func setupServer(t *testing.T) *TestServer {
 
 	cy, err := Start(context.Background(), Options{
 		DataDir: filepath.Join(t.TempDir(), "data"),
+		Shell:   "/bin/bash",
 	})
 	require.NoError(t, err)
 

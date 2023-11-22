@@ -38,6 +38,7 @@ func serve(path string) error {
 	cy, err := cy.Start(context.Background(), cy.Options{
 		Config:  findConfig(),
 		DataDir: findDataDir(),
+		Shell:   getShell(),
 	})
 	if err != nil {
 		return err

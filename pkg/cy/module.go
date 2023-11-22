@@ -31,6 +31,8 @@ type Options struct {
 	Config string
 	// The default directory in which to store data (e.g. recorded sessions).
 	DataDir string
+	// The default shell
+	Shell string
 }
 
 type historyEvent struct {

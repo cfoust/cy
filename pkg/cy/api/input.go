@@ -48,8 +48,7 @@ func (i *InputModule) Find(
 	}
 
 	shouldAnimate := true
-	clientParams := client.Params()
-	animated, ok := clientParams.Get(cyParams.ParamAnimate)
+	animated, ok := client.Params().Get(cyParams.ParamAnimate)
 	if value, ok := animated.(bool); ok {
 		shouldAnimate = value
 	}

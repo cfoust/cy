@@ -7,4 +7,7 @@ const (
 	// Whether to enable animation.
 	// boolean, default: true
 	ParamAnimate = "animate"
+	// The default shell with which to start panes.
+	// string, default: /bin/bash, but also $SHELL
+	ParamDefaultShell = "default-shell"
 )

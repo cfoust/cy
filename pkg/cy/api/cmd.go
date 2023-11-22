@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/cy/cmd"
 	"github.com/cfoust/cy/pkg/cy/params"
+	cyParams "github.com/cfoust/cy/pkg/cy/params"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/replayable"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -26,12 +27,24 @@ type Cmd struct {
 }
 
 func (c *Cmd) New(
+	user interface{},
 	groupId tree.NodeID,
 	path string,
 	cmdParams *janet.Named[CmdParams],
 ) (tree.NodeID, error) {
+	client, ok := user.(Client)
+	if !ok {
+		return 0, fmt.Errorf("missing client context")
+	}
+
+	shell := "/bin/bash"
+	defaultShell, ok := client.Params().Get(cyParams.ParamDefaultShell)
+	if value, ok := defaultShell.(string); ok {
+		shell = value
+	}
+
 	values := cmdParams.WithDefault(CmdParams{
-		Command: "/bin/bash",
+		Command: shell,
 	})
 
 	group, ok := c.Tree.GroupById(groupId)
