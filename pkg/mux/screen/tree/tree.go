@@ -14,16 +14,16 @@ import (
 type Tree struct {
 	deadlock.RWMutex
 	*mux.UpdatePublisher
-	root      *Group
-	nodes     map[NodeID]Node
-	nodeIndex atomic.Int32
+	root       *Group
+	nodes      map[NodeID]Node
+	nextNodeID atomic.Int32
 }
 
 func (t *Tree) newMetadata() *metaData {
 	t.Lock()
 	defer t.Unlock()
 
-	id := t.nodeIndex.Add(1)
+	id := t.nextNodeID.Add(1)
 	node := &metaData{
 		id:    id,
 		binds: bind.NewBindScope(),

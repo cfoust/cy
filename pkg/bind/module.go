@@ -23,7 +23,7 @@ type ActionEvent[T any] struct {
 	Source   *trie.Trie[T]
 	Sequence []string
 	// Any regex traversals that matched
-	Args     []string
+	Args []string
 }
 
 type Match[T any] struct {
@@ -35,11 +35,6 @@ type Match[T any] struct {
 type PartialEvent[T any] struct {
 	Prefix  []string
 	Matches []Match[T]
-}
-
-// All input that did not match anything in the scope
-type RawEvent struct {
-	Data []byte
 }
 
 // Contains data for a single input event

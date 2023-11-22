@@ -8,13 +8,11 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	cyParams "github.com/cfoust/cy/pkg/cy/params"
-	"github.com/cfoust/cy/pkg/events"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/mux/screen"
-	"github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/splash"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
@@ -31,14 +29,21 @@ import (
 
 type Connection = ws.Client[P.Message]
 
+type ClientID = int32
+
 type Client struct {
 	deadlock.RWMutex
 	util.Lifetime
+
+	// the unique identifier for the client, forever
+	id ClientID
 
 	conn Connection
 
 	cy *Cy
 
+	// All of the environment variables in the client's original
+	// environment at connection time
 	env Environment
 
 	node  tree.Node
@@ -112,39 +117,6 @@ func (c *Client) pollRender() {
 	}
 }
 
-func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case event := <-events:
-			nodeEvent, ok := event.(tree.NodeEvent)
-			if !ok {
-				continue
-			}
-
-			c.RLock()
-			clients := c.clients
-			c.RUnlock()
-
-			// TODO(cfoust): 10/18/23 infer client
-			if len(clients) == 0 {
-				continue
-			}
-
-			client := clients[0]
-
-			switch event := nodeEvent.Event.(type) {
-			case replay.CopyEvent:
-				client.buffer = event.Text
-			case bind.BindEvent:
-				go client.runAction(event)
-			}
-
-		}
-	}
-}
-
 func (c *Client) runAction(event bind.BindEvent) {
 	args := make([]interface{}, 0)
 	for _, arg := range event.Args {
@@ -168,6 +140,17 @@ func (c *Client) runAction(event bind.BindEvent) {
 	))
 }
 
+func (c *Client) interact(out chan historyEvent) {
+	c.RLock()
+	node := c.node.Id()
+	c.RUnlock()
+	out <- historyEvent{
+		Client: c.id,
+		Node:   node,
+		Stamp:  time.Now(),
+	}
+}
+
 func (c *Client) pollEvents() {
 	for {
 		select {
@@ -179,7 +162,12 @@ func (c *Client) pollEvents() {
 				continue
 			}
 
-			// TODO(cfoust): 07/18/23 error handling
+			// We only consider key presses to be an interaction
+			// We don't want mouse motion to trigger this
+			if _, ok := event.(taro.KeyMsg); ok {
+				c.interact(c.cy.writes)
+			}
+
 			c.renderer.Send(event)
 		}
 	}
@@ -215,6 +203,8 @@ func (c *Cy) pollClient(ctx context.Context, client *Client) {
 			return
 		}
 	}
+
+	client.id = c.nextClientID.Add(1)
 
 	go client.pollEvents()
 	go client.binds.Poll(client.Ctx())
@@ -437,6 +427,8 @@ func (c *Client) Attach(node tree.Node) error {
 	c.node = node
 	c.history = append(c.history, node.Id())
 	c.Unlock()
+
+	c.interact(c.cy.visits)
 
 	// Update bindings
 	scopes := make([]*bind.BindScope, 0)
