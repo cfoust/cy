@@ -192,46 +192,6 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	r.render.RenderAt(state.Image, size.R-1, 0, statusBar)
 }
 
-// drawOffset renders a small indicator that lets the user know where they
-// areon a screen bigger than their viewport.
-func (r *Replay) drawOffset(offset geom.Vec2, isBottom bool) image.Image {
-	style := r.render.NewStyle().
-		Foreground(lipgloss.Color("9")).
-		Background(lipgloss.Color("240"))
-
-	yChar := "⇧"
-	xChar := "⇦"
-	if isBottom {
-		yChar = "⇩"
-		xChar = "⇨"
-	}
-
-	lines := make([]string, 0)
-	if offset.R > 0 {
-		lines = append(lines, style.Render(
-			fmt.Sprintf("%s%d", yChar, offset.R),
-		))
-	}
-
-	if offset.C > 0 {
-		lines = append(lines, style.Render(
-			fmt.Sprintf("%s%d", xChar, offset.C),
-		))
-	}
-
-	if isBottom && len(lines) == 2 {
-		lines = []string{
-			lines[1],
-			lines[0],
-		}
-	}
-
-	return r.render.RenderImage(style.Render(lipgloss.JoinVertical(
-		lipgloss.Left,
-		lines...,
-	)))
-}
-
 // drawScrollbackPosition renders "[1/N]" text in the top-right corner that
 // looks just like tmux's copy mode.
 func (r *Replay) drawScrollbackPosition(state *tty.State) {
@@ -408,14 +368,6 @@ func (r *Replay) View(state *tty.State) {
 
 	if r.offset.R < 0 {
 		r.drawScrollbackPosition(state)
-	} else {
-		if !r.offset.IsZero() {
-			image.Copy(
-				geom.Vec2{},
-				state.Image,
-				r.drawOffset(r.offset, false),
-			)
-		}
 	}
 
 	// Render text input

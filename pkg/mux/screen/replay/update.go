@@ -94,10 +94,11 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.setScrollY(r.offset.R - 1)
 		case taro.MouseWheelDown:
 			r.setScrollY(r.offset.R + 1)
-		case taro.MouseWheelLeft:
-			r.setScrollX(r.offset.C - 1)
-		case taro.MouseWheelRight:
-			r.setScrollX(r.offset.C + 1)
+			// TODO(cfoust): 11/22/23 what should happen to cursor?
+			//case taro.MouseWheelLeft:
+			//r.setScrollX(r.offset.C - 1)
+			//case taro.MouseWheelRight:
+			//r.setScrollX(r.offset.C + 1)
 		}
 	case ActionEvent:
 		r.isPlaying = false
