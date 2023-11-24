@@ -8,14 +8,14 @@
 
 - [Installation](./installation.md)
 
+- [Configuration](./configuration.md)
+
 - [Concepts](./concepts.md)
 
   - [Frames](./frames.md)
   - [Animations](./animations.md)
 
 - [Keybindings](./keybindings.md)
-
-- [Configuration](./configuration.md)
 
 # Reference
 
