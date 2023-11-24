@@ -1,9 +1,10 @@
 [book]
-authors = ["Caleb Foust"]
 language = "en"
 multilingual = false
 src = "src"
 title = "cy documentation"
+description = "A next-generation terminal multiplexer that records everything you do."
+authors = ["Caleb Foust"]
 
 [output.html]
 default-theme = "ayu"
