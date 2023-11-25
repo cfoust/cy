@@ -2,6 +2,14 @@
 
 One of `cy`'s most important features is the ability to record, play back, and search through everything that happens in your terminal sessions. You can invoke **replay mode** at any time by typing the key sequence `ctrl+a` `p` [by default](./default-keys.md#general).
 
+> ### A note about recording
+>
+> `cy` does not and will never record what you type (otherwise known as "standard in" or `stdin`). It only records the output of the process that is attached to your virtual terminal and nothing more.
+>
+> This is a basic safety measure so that your passwords (such as for `sudo`) never appear in `cy`'s recordings. Your secrets (such as authentication keys and tokens) still might, though, so caution is advised.
+>
+> In the future, `cy` may give you more fine-grained control over specifically what it records and when, but for now this is not configurable.
+
 ## Modes
 
 Like `vim`, replay mode is modal, meaning that it has several different modes that it can be in that influence both what is shown on the screen and what you can do:
@@ -16,7 +24,11 @@ When you first initiate replay mode, you are greeted with a screen that looks li
 
 ### Copy mode
 
-To enter copy mode, all you need to do is invoke any action that would cause the cursor to move.
+To enter copy mode, all you need to do is invoke any action that would cause the cursor or the viewport to move. Like `tmux`'s copy mode, you can explore the state of the screen and copy text to be pasted elsewhere. Copy mode supports a wide range of cursor and viewport movements that should feel familiar to users of CLI-based text editors such as `vim`.
+
+#### Visual mode
+
+Visual mode is initiated when you press `v` (by default). It works almost exactly like `vim`'s visual mode does; after you have some selected some text, you can yank it into your buffer with `y` and paste it elsewhere with `ctrl+a` `P`.
 
 ## Recording terminal sessions to disk
 
@@ -24,5 +36,11 @@ The history of a pane is not only stored in memory; it is also written to a file
 
 By default, `cy` records all of the activity that occurs in a terminal session to `.borg` files, which it stores in one of the following locations:
 
-1.  `$XDG_DATA_HOME/cy`
-1.  `$HOME/.local/share/cy`
+1.  `$XDG_DATA_HOME/cy` (if `$XDG_DATA_HOME` is set)
+1.  `$HOME/.local/share/cy` (if it's not)
+
+The directory will be created if it does not exist.
+
+You can access previous sessions through the `cy/open-log` action, which by default can be invoked by searching for `open an existing log file` in the command palette (`ctrl+a` `ctrl+p`).
+
+You are also free to use the API call `(replay/open)` to open `.borg` files anywhere on your filesystem.
