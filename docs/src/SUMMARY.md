@@ -8,13 +8,17 @@
 
 - [Installation](./installation.md)
 
+- [Quick start](./quick-start.md)
+
 - [Configuration](./configuration.md)
 
 - [Keybindings](./keybindings.md)
 
-  - [Preset keys](./preset-keys.md)
+  - [Key specifiers](./preset-keys.md)
 
-- [Panes and groups](./groups-and-panes.md)
+  - [Default key bindings](./default-keys.md)
+
+- [Groups and panes](./groups-and-panes.md)
 
 - [Replay mode](./replay-mode.md)
 

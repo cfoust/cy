@@ -24,7 +24,7 @@ On startup, `cy` will search for and execute the first file containing Janet sou
 1. `$HOME/.config/cyrc.janet`
 1. `$HOME/.config/.cy.janet`
 
-Your `cy` configuration can contain any valid Janet statements, but `cy` also provides additions to the standard library in the form of [an API](./api.md) for controlling every aspect of how `cy` works.
+Your `cy` configuration can contain any valid Janet statement, but `cy` also provides additions to the standard library in the form of [an API](./api.md) for controlling every aspect of how `cy` works.
 
 ### Example configuration
 

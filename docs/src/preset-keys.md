@@ -1,4 +1,4 @@
-# Preset keys
+# Key specifiers
 
 `cy` defines the following preset keys:
 
