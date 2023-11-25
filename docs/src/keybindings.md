@@ -13,7 +13,7 @@ This tells `cy` that whenever you type `ctrl+l` it should show a toast with the 
 The `(key/bind)` function takes three parameters:
 
 1. **A scope**: The circumstances in which this binding should apply, such as a [group](./groups-and-panes.md) or mode (e.g. `:replay`). In this case we use the `:root` [keyword](https://janet-lang.org/docs/strings.html), which is a handy way of saying this binding should apply everywhere.
-1. **A key sequence**: A Janet tuple that indicates the keys that must be typed for the callback to execute.
+1. **A key sequence**: A Janet [tuple](https://janet-lang.org/docs/data_structures/tuples.html) that indicates the keys that must be typed for the callback to execute.
 1. **A function**: The callback that should be executed when this key sequence matches.
 
 Scopes will be covered in a later chapter: here we will cover key sequences and functions at length.
@@ -66,7 +66,7 @@ A practical application of this can be found in `cy`'s source code, where we use
 
 [Key specifiers](./preset-keys.md) are matched as though their names were typed by the user; this means that providing the pattern `"ctrl\+[a-c]"` will match `ctrl+a`, `ctrl+b`, and `ctrl+c`.
 
-Match groups are not supported; functions always receive the full string that matched the pattern.
+Accessing individual match groups is not supported; functions always receive the full string that matched the pattern.
 
 ## Functions
 

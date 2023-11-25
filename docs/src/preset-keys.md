@@ -41,7 +41,7 @@
 | `"up"`               |                                 |
 | `"down"`             |                                 |
 | `"right"`            |                                 |
-| `" "`                |                                 |
+| `" "` or `"space"`   |                                 |
 | `"left"`             |                                 |
 | `"shift+tab"`        |                                 |
 | `"home"`             |                                 |

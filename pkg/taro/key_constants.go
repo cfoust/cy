@@ -280,6 +280,7 @@ var keyRefs = map[string]KeyType{
 	"down":             KeyDown,
 	"right":            KeyRight,
 	" ":                KeySpace, // for backwards compatibility
+	"space":            KeySpace,
 	"left":             KeyLeft,
 	"shift+tab":        KeyShiftTab,
 	"home":             KeyHome,
