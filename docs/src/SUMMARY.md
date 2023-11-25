@@ -12,6 +12,8 @@
 
 - [Keybindings](./keybindings.md)
 
+  - [Preset keys](./preset-keys.md)
+
 - [Panes and groups](./groups-and-panes.md)
 
 - [Replay mode](./replay-mode.md)

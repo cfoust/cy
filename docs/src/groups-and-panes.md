@@ -1,4 +1,4 @@
-# The tree
+# Groups and panes
 
 A **pane** refers to a terminal window with a process running inside it, typically a shell or text editor. Every pane has a name. Panes in `cy` work exactly the same way that they do in `tmux`: you can have arbitrarily many panes open and switch between them on demand.
 
