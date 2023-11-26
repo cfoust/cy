@@ -33,6 +33,6 @@ The combination of groups and panes in cy form a tree that is similar to a files
 └── /another-group
 ```
 
-Nodes in the tree can be referred to by their **path**, such as `/my-project/pane-1`. Node paths **are not guaranteed to be unique**, however. They are only presented as a convenient conceptual model for the user.
+Nodes in the tree can be referred to by their **path**, such as `/my-project/pane-1`. Node paths **are not required to be unique**, however. They are only presented as a convenient conceptual model for the user.
 
 Instead, each node is permanently assigned a unique identifier (which is just an integer) referred to as a **node ID** and the related API calls only accept those IDs.

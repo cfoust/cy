@@ -1,8 +1,6 @@
 # Fuzzy finding
 
-Fuzzy finding, popularized by [fzf](https://github.com/junegunn/fzf), has taken the software development world by storm. To that end, `cy` provides a purpose-built fuzzy finder that imports and improves upon a range of functionality from `fzf` in the form of `(input/find)`, which is a function available in `cy`'s API.
-
-This function is complicated enough and provides significant enough functionality that it deserves its own independent chapter.
+Simple, fast, and configurable fuzzy finding is one of `cy`'s most important features. `cy` provides a purpose-built fuzzy finder (similar to [fzf](https://github.com/junegunn/fzf)) in the form of `(input/find)`, which is a function available in the API. `(input/find)` is a powerful fuzzy finder that deserves its own chapter.
 
 ## Choosing a string from a list
 
@@ -30,10 +28,31 @@ By default, the background will be animated with one of `cy`'s [animations](./an
 
 If the user chooses `"one"`, `(input/find)` will return `1`.
 
-## Previews
+## Choosing with previews
 
 Where `(input/find)` really shines, however, is in its ability to show a preview window for each option, which is conceptually similar to `fzf`'s `--preview` command line flag. `(input/find)` can preview three different types of content:
 
 - **Panes:** Show the current state of a pane in `cy`'s [node tree](./groups-and-panes.md#the-node-tree). This is the live view of a pane, regardless of how many other clients are interacting with it or what is happening on the screen.
 - **`.borg` files:** Show a moment in time in a `.borg` file.
-- **Text** Render some text (with, eventually, rich formatting).
+- **Text** Render some text.
+
+Options with previews are passed to `(input/find)` as Janet tuples with three elements:
+
+1. The string value to filter
+1. A tuple describing how it should be previewed
+1. The value that should be returned if the user chooses that option
+
+Here are some examples:
+
+```janet
+(input/find @[
+        # A standard text preview, which will be rendered in an 80x26 window
+        ["some text" [:text ["this is the preview"]] 1]
+        # A replay preview
+        ["this is a borg file" [:replay ["some-file.borg"]] 2]
+        # A pane preview
+        ["this is some other pane" [:node [(pane/current)]] 2]
+    ])
+```
+
+`(input/find)` is used extensively in `cy`'s [default startup script](https://github.com/cfoust/cy/blob/main/pkg/cy/cy-boot.janet). You can find several idiomatic examples of its usage there.

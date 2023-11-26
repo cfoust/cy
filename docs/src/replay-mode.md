@@ -20,11 +20,26 @@ Like `vim`, replay mode is modal, meaning that it has several different modes th
 
 ### Time mode
 
-When you first initiate replay mode, you are greeted with a screen that looks like this:
+Time mode is similar to a video player: you can pause, play, and skip through time to inspect particular moments in the history of a pane. While playing back terminal events, time mode skips inactivity, here defined as any idle period longer than a second.
+
+#### Searching
+
+Time mode also allows you to search through the pane's history using regular expressions. In this way you can find all instances of a string if it ever appeared on the screen--even if it was subsequently cleared away.
+
+You can initiate a search by hitting `/` to search forward in time and `?` to search backward (by default). Searching supports full regex patterns; you must escape any special characters with `\` if you wish to avoid this behavior.
+
+The search bar also supports time expressions, which you can use to jump by a fixed amount of time. Time expressions are in the format `NdNhNmNs` where `N` is the number of that unit that you wish to move by. You will move in time _in the direction of your search_.
+
+Some examples:
+
+```janet
+1h30s # one hour 30 seconds
+3d # three days
+```
 
 ### Copy mode
 
-To enter copy mode, all you need to do is invoke any action that would cause the cursor or the viewport to move. Like `tmux`'s copy mode, you can explore the state of the screen and copy text to be pasted elsewhere. Copy mode supports a wide range of cursor and viewport movements that should feel familiar to users of CLI-based text editors such as `vim`.
+To enter copy mode, all you need to do is invoke any action that would cause the cursor or the viewport to move. Like `tmux`'s copy mode, you can explore the state of the screen and copy text to be pasted elsewhere. Copy mode supports a wide range of cursor and viewport movements that should feel familiar to users of CLI text editors such as `vim`.
 
 #### Visual mode
 
@@ -32,7 +47,7 @@ Visual mode is initiated when you press `v` (by default). It works almost exactl
 
 ## Recording terminal sessions to disk
 
-The history of a pane is not only stored in memory; it is also written to a file on your filesystem! This means that you (and only you--`cy` is careful to make sure the directory is only readable by you) can play back any session, even if it is no longer running in a `cy` instance.
+The history of a pane is not only stored in memory; it is also written to a file on your filesystem. This means that you (and only you--`cy` is careful to make sure the directory is only readable by you) can play back any session, even if it is no longer running in a `cy` instance.
 
 By default, `cy` records all of the activity that occurs in a terminal session to `.borg` files, which it stores in one of the following locations:
 
