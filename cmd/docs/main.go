@@ -98,19 +98,33 @@ func main() {
 
 			source := ""
 			if len(symbol.Link) > 0 {
-				source = fmt.Sprintf("[source](%s)\n", symbol.Link)
+				source = fmt.Sprintf("[source](%s)", symbol.Link)
+			}
+
+			lines := strings.Split(symbol.Docstring, "\n")
+
+			if len(lines) == 0 {
+				continue
+			}
+
+			first := "```janet\n" + lines[0] + "\n```"
+
+			rest := ""
+			if len(lines) > 1 {
+				rest = "\n" + strings.Join(lines[1:], "\n")
 			}
 
 			output += fmt.Sprintf(`
 #### %s
 
-_%s_
-
 %s
+
+%s%s
+
 %s
 
 ---
-`, symbol.Name, _type, source, symbol.Docstring)
+`, symbol.Name, _type, first, rest, source)
 		}
 
 		fmt.Println(output)
