@@ -164,6 +164,13 @@ func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
 				return nil
 			}
 
+			var _bool int
+			err = value.Unmarshal(&_bool)
+			if err == nil {
+				node.Params().Set(string(keyword), _bool)
+				return nil
+			}
+
 			return fmt.Errorf("parameter type not supported")
 		},
 		"cy/replay": func(user interface{}) {

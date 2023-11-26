@@ -17,7 +17,7 @@ Every pane `cy` belongs to a **group**. A group has a name and children, which c
 Groups also have two unique features:
 
 - **Key bindings:** You may define key bindings that will only activate when you type that sequence while attached to any descendant of that group.
-- **Parameters:** A key-value store that can be interacted with using `(cy/get)` and `(cy/set)`. Getting a parameter retrieves the value of that parameter that is nearest to the user's attached pane; this means that descendant groups can override the values present in their ancestor groups. Learn more on [the parameters page](./parameters.md).
+- **Parameters:** A key-value store that can be interacted with using `(cy/get)` and `(cy/set)`. Parameters are used both [to configure aspects of `cy`](./parameters.md) and also to create any functionality you desire by storing state in `cy`'s tree.
 
 ## The node tree
 
@@ -36,3 +36,17 @@ The combination of groups and panes in cy form a tree that is similar to a files
 Nodes in the tree can be referred to by their **path**, such as `/my-project/pane-1`. Node paths **are not required to be unique**, however. They are only presented as a convenient conceptual model for the user.
 
 Instead, each node is permanently assigned a unique identifier (which is just an integer) referred to as a **node ID** and the related API calls only accept those IDs.
+
+### Inheritance
+
+`cy`'s flexibility comes from the way key bindings and parameters interact:
+
+- **Key bindings** are inherited down the tree, but can be overridden by descendant groups.
+- **Parameters** work the same way: `(cy/get)` will get the value of a parameter from the closest parent group that defines it.
+
+Imagine that you are attached to `/my-project/group-2/pane-3` in the example above:
+
+- If `/my-project` defines a binding with the sequence `ctrl+a` `b` and `/my-project/group-2` also defines one that begins with `ctrl+a`, the latter will take precedence.
+- If `/my-project` defines a value for a parameter `:some-parameter` and `/my-project/group-2` does not, `(cy/get :some-parameter)` will retrieve the value from `/my-project`.
+
+One of `cy`'s goals is for everything to be configured solely with key bindings and parameters; in this way `cy` can have completely different behavior depending on the environment and project.

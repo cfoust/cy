@@ -20,11 +20,11 @@
 
 - [Groups and panes](./groups-and-panes.md)
 
+  - [Parameters](./parameters.md)
+
 - [Replay mode](./replay-mode.md)
 
 - [Fuzzy finding](./fuzzy-finding.md)
-
-- [Parameters](./parameters.md)
 
 - [Frames](./frames.md)
 
