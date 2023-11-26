@@ -65,7 +65,7 @@ func isValidType(type_ reflect.Type) bool {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Float64, reflect.Bool, reflect.String:
 		return true
 	case reflect.Pointer:
-		if _, ok := reflect.New(type_.Elem()).Interface().(*Function); ok {
+		if _, ok := reflect.New(type_.Elem()).Interface().(*Value); ok {
 			return true
 		}
 
@@ -340,7 +340,7 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 			ptr := reflect.New(type_.Elem())
 			err := v.unmarshal(source, ptr.Interface())
 			if err != nil {
-			    return err
+				return err
 			}
 			value.Set(ptr)
 		} else {

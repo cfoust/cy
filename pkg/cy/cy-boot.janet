@@ -9,7 +9,7 @@
   "register an action"
   [name docstring & body]
   ~(upscope
-     (def ,name (fn ,name [&] ,;body))
+     (defn ,name ,docstring [&] ,;body)
      (,array/push actions [,docstring ,name])))
 
 (key/def

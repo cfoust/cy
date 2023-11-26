@@ -21,7 +21,7 @@ var CY_BOOT_FILE []byte
 
 // execute runs some Janet code on behalf of the Client. This is only used in testing.
 func (c *Client) execute(code string) error {
-	return c.cy.janet.ExecuteCall(c.Ctx(), c, janet.Call{
+	return c.cy.ExecuteCall(c.Ctx(), c, janet.Call{
 		Code:    []byte(code),
 		Options: janet.DEFAULT_CALL_OPTIONS,
 	})
@@ -52,7 +52,7 @@ func resolveLevel(level *janet.Value) (toasts.ToastLevel, error) {
 	return toasts.ToastLevelError, fmt.Errorf("you must provide one of :info, :warn, or :error")
 }
 
-func (c *Cy) initJanet(ctx context.Context, dataDir string) (*janet.VM, error) {
+func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 	vm, err := janet.New(ctx)
 	if err != nil {
 		return nil, err

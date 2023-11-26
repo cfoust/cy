@@ -44,8 +44,7 @@ type historyEvent struct {
 type Cy struct {
 	util.Lifetime
 	deadlock.RWMutex
-
-	janet *janet.VM
+	*janet.VM
 
 	nextClientID atomic.Int32
 
@@ -79,7 +78,7 @@ type Cy struct {
 }
 
 func (c *Cy) loadUserConfig(ctx context.Context) {
-	err := c.janet.ExecuteFile(ctx, c.configPath)
+	err := c.ExecuteFile(ctx, c.configPath)
 	if err != nil {
 		c.log.Error().Err(err).Msg("failed to execute config")
 		message := fmt.Sprintf("an error occurred while loading %s: %s", c.configPath, err.Error())
@@ -223,16 +222,18 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	go cy.pollInteractions(cy.Ctx(), cy.lastWrite, cy.writes)
 	go cy.pollInteractions(cy.Ctx(), cy.lastVisit, cy.visits)
 
-	replayable, _ := cmd.New(
-		cy.Ctx(),
-		stream.CmdOptions{
-			Command: "/bin/bash",
-		},
-		options.DataDir,
-		replayBinds,
-	)
+	if len(options.Shell) > 0 {
+		replayable, _ := cmd.New(
+			cy.Ctx(),
+			stream.CmdOptions{
+				Command: "/bin/bash",
+			},
+			options.DataDir,
+			replayBinds,
+		)
 
-	t.Root().NewPane(cy.Ctx(), replayable)
+		t.Root().NewPane(cy.Ctx(), replayable)
+	}
 
 	logs := stream.NewReader()
 	terminal := screen.NewTerminal(cy.Ctx(), logs, geom.DEFAULT_SIZE)
@@ -242,12 +243,12 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	consoleWriter := zerolog.ConsoleWriter{Out: logs.Writer(), TimeFormat: time.RFC3339}
 	cy.log = log.Output(zerolog.MultiLevelWriter(consoleWriter, os.Stdout))
 
-	vm, err := cy.initJanet(ctx, options.DataDir)
+	vm, err := cy.initJanet(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	cy.janet = vm
+	cy.VM = vm
 
 	if len(options.Config) != 0 {
 		cy.configPath = options.Config

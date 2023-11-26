@@ -105,10 +105,13 @@ func isErrorType(type_ reflect.Type) bool {
 }
 
 func handleReturn(v *VM, value reflect.Value) (C.Janet, error) {
-	isPointer := value.Kind() == reflect.Pointer
-	if isPointer {
+	if value.Kind() == reflect.Pointer {
 		if value.IsNil() {
 			return C.janet_wrap_nil(), nil
+		}
+
+		if v, ok := value.Interface().(*Value); ok {
+			return v.janet, nil
 		}
 
 		value = value.Elem()

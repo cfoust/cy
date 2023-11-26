@@ -41,6 +41,10 @@ func deInitJanet() {
 	C.janet_deinit()
 }
 
+func (v *VM) Env() *Table {
+	return v.env
+}
+
 // Wait for code calls and process them.
 func (v *VM) poll(ctx context.Context, ready chan bool) {
 	// All Janet state is thread-local, so we explicitly want to execute
