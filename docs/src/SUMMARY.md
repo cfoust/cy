@@ -10,6 +10,12 @@
 
 - [Quick start](./quick-start.md)
 
+- [Viewport](./viewport.md)
+
+  - [Frames](./frames.md)
+
+  - [Animations](./animations.md)
+
 - [Configuration](./configuration.md)
 
 - [Keybindings](./keybindings.md)
@@ -25,10 +31,6 @@
 - [Replay mode](./replay-mode.md)
 
 - [Fuzzy finding](./fuzzy-finding.md)
-
-- [Frames](./frames.md)
-
-- [Animations](./animations.md)
 
 # Reference
 
