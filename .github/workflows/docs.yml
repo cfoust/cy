@@ -23,8 +23,10 @@ jobs:
           mkdir mdbook
           curl -sSL $url | tar -xz --directory=./mdbook
           echo `pwd`/mdbook >> $GITHUB_PATH
+
       - name: Build book
         run: |
+          go run cmd/docs/main.go api > docs/src/generated-api.md
           cd docs
           mdbook build
 

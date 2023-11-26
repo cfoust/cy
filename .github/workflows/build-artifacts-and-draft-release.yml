@@ -92,6 +92,7 @@ jobs:
           cat ./linux/cy*checksums.txt >> checksums.txt
           rm ./darwin/cy*checksums.txt
           rm ./linux/cy*checksums.txt
+          rm cy
       - name: Release
         uses: goreleaser/goreleaser-action@v5
         with:
