@@ -18,7 +18,7 @@ import (
 
 type Fuzzy struct {
 	util.Lifetime
-	anim *anim.Animator
+	anim *taro.Program
 
 	result chan<- interface{}
 	size   geom.Vec2

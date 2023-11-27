@@ -7,59 +7,55 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/mux"
-	"github.com/cfoust/cy/pkg/util"
+	"github.com/cfoust/cy/pkg/taro"
 
-	"github.com/sasha-s/go-deadlock"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type Animator struct {
-	util.Lifetime
-	deadlock.RWMutex
-	*mux.UpdatePublisher
 	animation Animation
-	last      image.Image
 	start     time.Time
-	size      geom.Size
+	state     image.Image
+	fps       int
 }
 
-var _ mux.Screen = (*Animator)(nil)
+var _ taro.Model = (*Animator)(nil)
 
-func (a *Animator) Send(msg mux.Msg) {
+func (a *Animator) Init() tea.Cmd {
+	return a.waitFrame
 }
 
-func (a *Animator) State() *tty.State {
-	a.RLock()
-	size := a.size
-	a.RUnlock()
-	return a.Render(size)
+func (a *Animator) waitFrame() tea.Msg {
+	time.Sleep(time.Second / time.Duration(a.fps))
+	return refresh{}
 }
 
-func (a *Animator) Resize(size geom.Size) error {
-	a.Lock()
-	a.size = size
-	a.Unlock()
-	a.Notify()
-	return nil
-}
-
-func (a *Animator) Render(size mux.Size) *tty.State {
-	image := a.animation.Update(time.Now().Sub(a.start))
-	state := tty.New(image.Size())
-	state.Image = image
+func (a *Animator) View(state *tty.State) {
+	image.Copy(geom.Size{}, state.Image, a.state)
 	state.CursorVisible = false
-	return state
 }
 
-func (a *Animator) poll(ctx context.Context, fps int) {
-	t := time.NewTicker(time.Second / time.Duration(fps))
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-t.C:
-			a.Notify()
+type refresh struct{}
+
+func (a *Animator) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
+	switch msg.(type) {
+	case refresh:
+		now := time.Now()
+		if now.After(a.start) {
+			a.state = a.animation.Update(now.Sub(a.start))
 		}
+
+		return a, a.waitFrame
+	}
+
+	return a, nil
+}
+
+type Option func(*Animator)
+
+func WithStartTime(start time.Time) Option {
+	return func(a *Animator) {
+		a.start = start
 	}
 }
 
@@ -68,17 +64,19 @@ func NewAnimator(
 	animation Animation,
 	initial image.Image,
 	fps int,
-) *Animator {
+	options ...Option,
+) *taro.Program {
 	a := &Animator{
-		Lifetime:        util.NewLifetime(ctx),
-		UpdatePublisher: mux.NewPublisher(),
-		animation:       animation,
-		start:           time.Now(),
+		animation: animation,
+		start:     time.Now(),
+		fps:       fps,
+	}
+
+	for _, option := range options {
+		option(a)
 	}
 
 	animation.Init(initial)
-	a.last = animation.Update(0)
-	go a.poll(a.Ctx(), fps)
 
-	return a
+	return taro.New(ctx, a)
 }

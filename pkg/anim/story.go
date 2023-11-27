@@ -83,7 +83,7 @@ func createInitial(size geom.Size) image.Image {
 type Story struct {
 	util.Lifetime
 	render   *taro.Renderer
-	animator *Animator
+	animator *taro.Program
 	creator  Creator
 }
 
