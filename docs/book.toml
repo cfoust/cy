@@ -9,3 +9,6 @@ authors = ["Caleb Foust"]
 [output.html]
 default-theme = "ayu"
 preferred-dark-theme = "ayu"
+
+[preprocessor.storybook]
+command = "python3 storybook.py"
