@@ -29,6 +29,17 @@ jobs:
         with:
           go-version: "1.19"
 
+      - name: Build
+        run: >
+          go build
+          -ldflags "-X github.com/cfoust/cy/pkg/version.Version=${{ steps.cy.outputs.release }}"
+          -o docs/stories
+          ./cmd/stories/main.go
+
+      - uses: charmbracelet/vhs-action@v1
+        with:
+          path: ""
+
       - name: Build book
         run: |
           go run cmd/docs/main.go api > docs/src/generated-api.md
@@ -39,16 +50,6 @@ jobs:
         uses: pozetroninc/github-action-get-latest-release@master
         with:
           repository: cfoust/cy
-
-      - name: Build
-        run: >
-          go build
-          -ldflags "-X github.com/cfoust/cy/pkg/version.Version=${{ steps.cy.outputs.release }}"
-          -o docs/stories
-          ./cmd/stories/main.go
-      - uses: charmbracelet/vhs-action@v1
-        with:
-          path: "ci/cy.tape"
 
       - name: Setup pages
         uses: actions/configure-pages@v2
