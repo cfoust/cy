@@ -113,11 +113,11 @@ func (s *Story) initialize(size geom.Size) {
 func (s *Story) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		s.animator.Resize(geom.Size{
+		s.initialize(geom.Size{
 			R: msg.Height,
 			C: msg.Width,
 		})
-		return s, nil
+		return s, taro.WaitScreens(s.animator.Ctx(), s.animator)
 	case taro.ScreenUpdate:
 		return s, taro.WaitScreens(s.animator.Ctx(), s.animator)
 	}
