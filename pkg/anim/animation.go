@@ -12,6 +12,8 @@ type Animation interface {
 	Update(delta time.Duration) image.Image
 }
 
+type Creator func() Animation
+
 func RandomAnimation() Animation {
 	anims := []Animation{
 		&Collapse{},
@@ -23,8 +25,8 @@ func RandomAnimation() Animation {
 	return anims[rand.Int()%len(anims)]
 }
 
-var Animations = map[string]Animation{}
+var Animations = map[string]Creator{}
 
-func registerAnimation(name string, animation Animation) {
+func registerAnimation(name string, animation Creator) {
 	Animations[name] = animation
 }

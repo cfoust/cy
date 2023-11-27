@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://cfoust.github.io/cy/cy.gif" alt="cy main gif">
+    <img src="https://cfoust.github.io/cy/images/main.gif" alt="cy main gif">
 </p>
 
 > the time traveling terminal multiplexer

@@ -87,9 +87,9 @@ Set PlaybackSpeed 0.5
 Hide
 Type "./stories -s {command} && clear"
 Enter
-Sleep 2s
+Sleep 500ms
 Show
-Sleep 10s
+Sleep 8s
 """
         elif filename.endswith(".png"):
             script = f"""

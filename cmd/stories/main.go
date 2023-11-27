@@ -113,13 +113,13 @@ func main() {
 	initial := createInitial(geom.DEFAULT_SIZE)
 
 	for name, animation := range anim.Animations {
-		func(a anim.Animation) {
+		func(a anim.Creator) {
 			stories.Register(
 				fmt.Sprintf("animation/%s", name),
 				func(ctx context.Context) mux.Screen {
 					animator := anim.NewAnimator(
 						ctx,
-						a,
+						a(),
 						initial.Clone(),
 						23,
 					)

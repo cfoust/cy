@@ -96,5 +96,7 @@ func (c *Conway) Update(delta time.Duration) image.Image {
 }
 
 func init() {
-	registerAnimation("conway", &Conway{})
+	registerAnimation("conway", func() Animation {
+		return &Conway{}
+	})
 }

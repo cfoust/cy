@@ -47,5 +47,7 @@ func (c *Collapse) Update(delta time.Duration) image.Image {
 }
 
 func init() {
-	registerAnimation("collapse", &Collapse{})
+	registerAnimation("collapse", func() Animation {
+		return &Collapse{}
+	})
 }
