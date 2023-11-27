@@ -41,7 +41,7 @@ jobs:
           -o docs/stories
           ./cmd/stories/main.go
 
-      - uses: charmbracelet/vhs-action@v1
+      - uses: charmbracelet/vhs-action@v2
 
       - name: Build book
         run: |
