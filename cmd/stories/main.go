@@ -9,9 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/frames"
 	_ "github.com/cfoust/cy/pkg/fuzzy/stories"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/mux"
-	"github.com/cfoust/cy/pkg/mux/screen"
 	_ "github.com/cfoust/cy/pkg/mux/screen/replay/stories"
 	_ "github.com/cfoust/cy/pkg/mux/screen/splash/stories"
 	"github.com/cfoust/cy/pkg/mux/stream/cli"
@@ -28,52 +26,6 @@ import (
 var CLI struct {
 	Prefix string `help:"Pre-filter the list of stories." name:"prefix" optional:"" short:"p"`
 	Single string `help:"Show a single story in full screen, overriding its config." name:"single" optional:"" short:"s"`
-}
-
-func createInitial(size geom.Size) image.Image {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	story, ok := stories.Stories["input/find/top-left"]
-	if !ok {
-		panic(fmt.Errorf("no filler story"))
-	}
-
-	viewer := stories.NewViewer(
-		ctx,
-		story.Init(ctx),
-		stories.Config{},
-	)
-
-	innerLayers := screen.NewLayers()
-	innerLayers.NewLayer(
-		ctx,
-		viewer,
-		screen.PositionTop,
-		screen.WithOpaque,
-		screen.WithInteractive,
-	)
-	margins := screen.NewMargins(ctx, innerLayers)
-
-	outerLayers := screen.NewLayers()
-	frame := frames.NewFramer(ctx, frames.RandomFrame())
-	outerLayers.NewLayer(
-		ctx,
-		frame,
-		screen.PositionTop,
-	)
-
-	outerLayers.NewLayer(
-		ctx,
-		margins,
-		screen.PositionTop,
-		screen.WithInteractive,
-		screen.WithOpaque,
-	)
-
-	outerLayers.Resize(size)
-
-	return outerLayers.State().Image
 }
 
 func main() {
@@ -110,20 +62,15 @@ func main() {
 		}(frame)
 	}
 
-	initial := createInitial(geom.DEFAULT_SIZE)
-
 	for name, animation := range anim.Animations {
 		func(a anim.Creator) {
 			stories.Register(
 				fmt.Sprintf("animation/%s", name),
 				func(ctx context.Context) mux.Screen {
-					animator := anim.NewAnimator(
+					return anim.NewStory(
 						ctx,
-						a(),
-						initial.Clone(),
-						23,
+						a,
 					)
-					return animator
 				},
 				stories.Config{},
 			)

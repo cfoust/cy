@@ -8,11 +8,13 @@ import (
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/sasha-s/go-deadlock"
 )
 
 type Animator struct {
+	util.Lifetime
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 	animation Animation
@@ -68,6 +70,7 @@ func NewAnimator(
 	fps int,
 ) *Animator {
 	a := &Animator{
+		Lifetime:        util.NewLifetime(ctx),
 		UpdatePublisher: mux.NewPublisher(),
 		animation:       animation,
 		start:           time.Now(),
@@ -75,7 +78,7 @@ func NewAnimator(
 
 	animation.Init(initial)
 	a.last = animation.Update(0)
-	go a.poll(ctx, fps)
+	go a.poll(a.Ctx(), fps)
 
 	return a
 }

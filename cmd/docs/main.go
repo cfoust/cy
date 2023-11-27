@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	_ "embed"
 
 	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/cy"
@@ -13,8 +14,6 @@ import (
 
 	"github.com/alecthomas/kong"
 )
-
-import _ "embed"
 
 //go:embed gen-api.janet
 var GEN_API string
