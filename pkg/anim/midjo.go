@@ -44,3 +44,7 @@ func (mid *Midjo) Update(delta time.Duration) image.Image {
 	}
 	return mid.out
 }
+
+func init() {
+	registerAnimation("midjo", &Midjo{})
+}

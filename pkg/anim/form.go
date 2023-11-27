@@ -51,3 +51,7 @@ func (c *Cyform) Update(delta time.Duration) image.Image {
 
 	return c.start
 }
+
+func init() {
+	registerAnimation("cy", &Cyform{})
+}

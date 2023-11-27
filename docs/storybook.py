@@ -19,13 +19,10 @@ if __name__ == '__main__':
     # all the rendering jobs that need to be done
     jobs = {}
 
-    for section in book['sections']:
-        if not 'Chapter' in section:
-            continue
-
-        content = section['Chapter']['content']
+    def transform_chapter(chapter):
         replace = []
 
+        content = chapter['content']
         for ref in STORY_REGEX.finditer(content):
             type_ = ref.group(3)
             filename = ref.group(2)
@@ -57,7 +54,19 @@ if __name__ == '__main__':
         for start, end, text in reversed(replace):
             content = content[:start] + text + content[end:]
 
-        section['Chapter']['content'] = content
+        chapter['content'] = content
+
+        for subitem in chapter['sub_items']:
+            if not 'Chapter' in subitem:
+                continue
+
+            transform_chapter(subitem['Chapter'])
+
+    for section in book['sections']:
+        if not 'Chapter' in section:
+            continue
+
+        transform_chapter(section['Chapter'])
 
     Path("./src/images").mkdir(parents=True, exist_ok=True)
 
@@ -65,6 +74,8 @@ if __name__ == '__main__':
     for filename, command in jobs.items():
         if os.path.exists(filename): continue
         if os.path.exists(tape): os.unlink(tape)
+
+        print(f"~> building {filename} ({command})", file=sys.stderr)
 
         script = ""
         if filename.endswith(".gif"):
@@ -82,11 +93,13 @@ Sleep 10s
 """
         elif filename.endswith(".png"):
             script = f"""
+Set Padding 0
 Hide
 Type "./stories -s {command} && clear"
 Enter
 Sleep 2s
 Show
+Sleep 1s
 Screenshot {filename}
 """
 
@@ -103,4 +116,5 @@ Screenshot {filename}
 
     if os.path.exists(tape): os.unlink(tape)
 
+    print("blah", file=sys.stderr)
     print(json.dumps(book))

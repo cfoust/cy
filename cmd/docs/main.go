@@ -6,7 +6,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/cy"
+	F "github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/janet"
 
 	"github.com/alecthomas/kong"
@@ -18,8 +20,9 @@ import _ "embed"
 var GEN_API string
 
 var CLI struct {
-	API struct {
-	} `cmd:"" help:"Generate Markdown for the full API."`
+	API        struct{} `cmd:"" help:"Generate Markdown for the full API."`
+	Frames     struct{} `cmd:"" help:"Generate Markdown for frames."`
+	Animations struct{} `cmd:"" help:"Generate Markdown for animations."`
 }
 
 type Symbol struct {
@@ -125,6 +128,53 @@ func main() {
 
 ---
 `, symbol.Name, _type, first, rest, source)
+		}
+
+		fmt.Println(output)
+	case "frames":
+		frames := make([]string, 0)
+		for name := range F.Frames {
+			frames = append(frames, name)
+		}
+		sort.SliceStable(frames, func(i, j int) bool {
+			return frames[i] < frames[j]
+		})
+
+		output := "\n---\n"
+
+		for _, frame := range frames {
+			set := fmt.Sprintf("```janet\n(frame/set \"%s\")\n```\n", frame)
+			output += fmt.Sprintf(`
+#### %s
+
+%s
+
+{{png frame/%s}}
+
+---
+`, frame, set, frame)
+		}
+
+		fmt.Println(output)
+	case "animations":
+		animations := make([]string, 0)
+		for name := range anim.Animations {
+			animations = append(animations, name)
+		}
+		sort.SliceStable(animations, func(i, j int) bool {
+			return animations[i] < animations[j]
+		})
+
+		output := "\n---\n"
+
+		for _, animation := range animations {
+			output += fmt.Sprintf(`
+#### %s
+
+{{gif animation/%s}}
+
+---
+`, animation, animation)
 		}
 
 		fmt.Println(output)

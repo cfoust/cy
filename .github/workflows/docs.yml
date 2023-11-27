@@ -46,6 +46,8 @@ jobs:
       - name: Build book
         run: |
           go run cmd/docs/main.go api > docs/src/generated-api.md
+          go run cmd/docs/main.go frames > docs/src/generated-frames.md
+          go run cmd/docs/main.go animations > docs/src/generated-animations.md
           cd docs
           mdbook build
 

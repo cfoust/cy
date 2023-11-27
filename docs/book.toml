@@ -13,3 +13,4 @@ site-url = "/cy/"
 
 [preprocessor.storybook]
 command = "python3 storybook.py"
+after = [ "links" ]

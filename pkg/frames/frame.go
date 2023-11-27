@@ -29,6 +29,5 @@ func RandomFrame() Frame {
 }
 
 func init() {
-	registerFrame("none", func(state image.Image) {
-	})
+	registerFrame("none", func(state image.Image) {})
 }
