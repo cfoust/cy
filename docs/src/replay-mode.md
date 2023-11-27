@@ -1,5 +1,7 @@
 # Replay mode
 
+{{gif replay/time/search-progress}}
+
 One of `cy`'s most important features is the ability to record, play back, and search through everything that happens in your terminal sessions. You can invoke **replay mode** at any time by typing the key sequence `ctrl+a` `p` [by default](./default-keys.md#general).
 
 > ### A note about recording

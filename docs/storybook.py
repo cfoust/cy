@@ -1,7 +1,11 @@
-import json
-import sys
-import re
 import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
 
 STORY_REGEX = re.compile("{{((\w+).)?(png|gif) (.+)}}")
 
@@ -37,19 +41,66 @@ if __name__ == '__main__':
                 filename = h.hexdigest()[:12]
 
             filename += "." + type_
+            filename = "images/" + filename
 
-            jobs[filename] = command
             replace.append(
                 (
                     ref.start(0),
                     ref.end(0),
-                    f"![{command}](./stories/{filename})",
+                    f"![{command}]({filename})",
                 )
             )
+
+            filename = "./src/" + filename
+            jobs[filename] = command
 
         for start, end, text in reversed(replace):
             content = content[:start] + text + content[end:]
 
         section['Chapter']['content'] = content
+
+    Path("./src/images").mkdir(parents=True, exist_ok=True)
+
+    tape = "out.tape"
+    for filename, command in jobs.items():
+        if os.path.exists(filename): continue
+        if os.path.exists(tape): os.unlink(tape)
+
+        script = ""
+        if filename.endswith(".gif"):
+            script = f"""
+Output {filename}
+Set Padding 0
+Set Framerate 23
+Set PlaybackSpeed 0.5
+Hide
+Type "./stories -s {command} && clear"
+Enter
+Sleep 2s
+Show
+Sleep 10s
+"""
+        elif filename.endswith(".png"):
+            script = f"""
+Hide
+Type "./stories -s {command} && clear"
+Enter
+Sleep 2s
+Show
+Screenshot {filename}
+"""
+
+        with open(tape, 'w') as f:
+            f.write(script)
+
+        code = subprocess.call(
+            "vhs -q out.tape",
+            shell=True
+        )
+
+        if code != 0:
+            raise Exception(code)
+
+    if os.path.exists(tape): os.unlink(tape)
 
     print(json.dumps(book))

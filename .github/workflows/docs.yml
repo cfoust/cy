@@ -44,7 +44,8 @@ jobs:
         run: >
           go build
           -ldflags "-X github.com/cfoust/cy/pkg/version.Version=${{ steps.cy.outputs.release }}"
-          -o stories ./cmd/stories/main.go
+          -o docs/stories
+          ./cmd/stories/main.go
       - uses: charmbracelet/vhs-action@v1
         with:
           path: "ci/cy.tape"

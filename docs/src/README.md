@@ -1,3 +1,5 @@
+{{main.gif splash}}
+
 **cy** is an experimental terminal multiplexer. It builds on the traditional paradigms of `tmux` and `screen` with advances in form, function, and customization.
 
 Key features:

@@ -9,6 +9,7 @@ authors = ["Caleb Foust"]
 [output.html]
 default-theme = "ayu"
 preferred-dark-theme = "ayu"
+site-url = "/cy/"
 
 [preprocessor.storybook]
 command = "python3 storybook.py"

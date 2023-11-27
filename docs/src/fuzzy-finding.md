@@ -1,5 +1,7 @@
 # Fuzzy finding
 
+{{gif input/find/search}}
+
 Simple, fast, and configurable fuzzy finding is one of `cy`'s most important features. `cy` provides a purpose-built fuzzy finder (similar to [fzf](https://github.com/junegunn/fzf)) in the form of `(input/find)`, which is a function available in the API.
 
 ## Choosing a string from a list
