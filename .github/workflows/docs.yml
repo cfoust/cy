@@ -50,7 +50,7 @@ jobs:
           go build -o ../vhs-bin .
           cd ..
           rm -r vhs
-          mv vhs-bin vhs
+          mv vhs-bin docs/vhs
 
       - name: Build book
         run: |
