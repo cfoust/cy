@@ -107,7 +107,7 @@ Screenshot {filename}
             f.write(script)
 
         vhs = "vhs"
-        if os.environ.get('CI'):
+        if 'CI' in os.environ:
             vhs = "./vhs"
 
         code = subprocess.call(
