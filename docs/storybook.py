@@ -70,10 +70,8 @@ if __name__ == '__main__':
 
     Path("./src/images").mkdir(parents=True, exist_ok=True)
 
-    tape = "out.tape"
     for filename, command in jobs.items():
         if os.path.exists(filename): continue
-        if os.path.exists(tape): os.unlink(tape)
 
         print(f"~> building {filename} ({command})", file=sys.stderr)
 
@@ -103,6 +101,10 @@ Sleep 1s
 Screenshot {filename}
 """
 
+        tape = (
+            filename.replace("png", "tape")
+            .replace("gif", "tape")
+        )
         with open(tape, 'w') as f:
             f.write(script)
 
@@ -111,7 +113,7 @@ Screenshot {filename}
             vhs = "./vhs"
 
         code = subprocess.call(
-            f"{vhs} -q out.tape",
+            f"{vhs} -q {tape}",
             shell=True
         )
 
