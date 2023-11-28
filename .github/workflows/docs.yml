@@ -47,8 +47,10 @@ jobs:
         run: |
           git clone https://github.com/charmbracelet/vhs.git
           cd vhs
-          go install .
+          go build -o ../vhs-bin .
           cd ..
+          rm -r vhs
+          mv vhs-bin vhs
 
       - name: Build book
         run: |

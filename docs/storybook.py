@@ -106,8 +106,12 @@ Screenshot {filename}
         with open(tape, 'w') as f:
             f.write(script)
 
+        vhs = "vhs"
+        if os.environ.get('CI'):
+            vhs = "./vhs"
+
         code = subprocess.call(
-            "vhs -q out.tape",
+            f"{vhs} -q out.tape",
             shell=True
         )
 
@@ -116,5 +120,4 @@ Screenshot {filename}
 
     if os.path.exists(tape): os.unlink(tape)
 
-    print("blah", file=sys.stderr)
     print(json.dumps(book))
