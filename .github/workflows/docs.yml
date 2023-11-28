@@ -29,6 +29,8 @@ jobs:
         with:
           go-version: "1.19"
 
+      - uses: charmbracelet/vhs-action@v2
+
       - id: cy
         uses: pozetroninc/github-action-get-latest-release@master
         with:
@@ -41,7 +43,12 @@ jobs:
           -o docs/stories
           ./cmd/stories/main.go
 
-      - uses: charmbracelet/vhs-action@v2
+      - name: Install VHS from source
+        run: |
+          git clone git@github.com:charmbracelet/vhs.git
+          cd vhs
+          go install .
+          cd ..
 
       - name: Build book
         run: |
