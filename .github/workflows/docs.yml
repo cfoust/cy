@@ -43,9 +43,9 @@ jobs:
           -o docs/stories
           ./cmd/stories/main.go
 
-      - name: Install VHS from source
+      - name: Install the latest VHS
         run: |
-          git clone git@github.com:charmbracelet/vhs.git
+          git clone https://github.com/charmbracelet/vhs.git
           cd vhs
           go install .
           cd ..
