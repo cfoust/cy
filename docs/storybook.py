@@ -112,13 +112,19 @@ Screenshot {filename}
         if 'CI' in os.environ:
             vhs = "./vhs"
 
-        code = subprocess.call(
-            f"{vhs} -q {tape}",
-            shell=True
-        )
+        attempts = 0
+        while not os.path.exists(filename) and attempts < 5:
+            code = subprocess.call(
+                f"{vhs} -q {tape}",
+                shell=True
+            )
 
-        if code != 0:
-            raise Exception(code)
+            if code != 0:
+                raise Exception(code)
+            attempts += 1
+
+        if not os.path.exists(filename):
+            raise Exception(f"failed to produce {filename}")
 
     if os.path.exists(tape): os.unlink(tape)
 
