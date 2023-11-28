@@ -108,6 +108,7 @@ func (s *Story) initialize(size geom.Size) {
 		createInitial(size),
 		23,
 	)
+	s.animator.Resize(size)
 }
 
 func (s *Story) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
