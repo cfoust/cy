@@ -40,7 +40,7 @@ jobs:
         run: >
           go build
           -ldflags "-X github.com/cfoust/cy/pkg/version.Version=${{ steps.cy.outputs.release }}"
-          -o docs/stories
+          -o docs/storybook
           ./cmd/stories/main.go
 
       - name: Install the latest VHS
@@ -54,9 +54,6 @@ jobs:
 
       - name: Build book
         run: |
-          go run cmd/docs/main.go api > docs/src/generated-api.md
-          go run cmd/docs/main.go frames > docs/src/generated-frames.md
-          go run cmd/docs/main.go animations > docs/src/generated-animations.md
           cd docs
           mdbook build
 

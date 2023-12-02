@@ -1,3 +1,3 @@
 # Frames
 
-{{#include generated-frames.md}}
+{{gendoc frames}}

@@ -10,7 +10,12 @@ authors = ["Caleb Foust"]
 default-theme = "ayu"
 preferred-dark-theme = "ayu"
 site-url = "/cy/"
+git-repository-url = "https://github.com/cfoust/cy"
 
 [preprocessor.storybook]
 command = "python3 storybook.py"
 after = [ "links" ]
+
+[preprocessor.gendoc]
+command = "python3 gendoc.py"
+before = [ "storybook" ]

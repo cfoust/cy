@@ -1,3 +1,3 @@
 # Animations
 
-{{#include generated-animations.md}}
+{{gendoc animations}}

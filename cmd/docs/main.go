@@ -148,7 +148,7 @@ func main() {
 
 %s
 
-{{png frame/%s}}
+{{story png frame/%s}}
 
 ---
 `, frame, set, frame)
@@ -170,7 +170,7 @@ func main() {
 			output += fmt.Sprintf(`
 #### %s
 
-{{gif animation/%s}}
+{{story gif animation/%s}}
 
 ---
 `, animation, animation)

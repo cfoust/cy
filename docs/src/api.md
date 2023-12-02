@@ -4,4 +4,4 @@ This is a complete listing of all of the API functions that `cy` provides in the
 
 Janet code executed with `cy` can also access everything from [Janet's standard library](https://janet-lang.org/api/index.html) except for anything in `spork`. In addition, Janet's `ev` family of functions probably will not work; I have never tested them.
 
-{{#include generated-api.md}}
+{{gendoc api}}

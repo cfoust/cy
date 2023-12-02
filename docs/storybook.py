@@ -1,13 +1,17 @@
+"""
+This is a preprocessor for mdbook that generates .png and .gif files for cy's
+stories on demand using vhs.
+"""
+
 import hashlib
 import json
 import os
 import re
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
-STORY_REGEX = re.compile("{{((\w+).)?(png|gif) (.+)}}")
+STORY_REGEX = re.compile("{{story ((\w+).)?(png|gif) (.+)}}")
 
 if __name__ == '__main__':
     args = sys.argv
@@ -15,6 +19,15 @@ if __name__ == '__main__':
         sys.exit(0)
 
     context, book = json.load(sys.stdin)
+
+    # In CI, we use a custom storybook binary because we inject the latest cy
+    # release version, so we don't need to build this again
+    if not 'CI' in os.environ:
+        if subprocess.call(
+            "go build -o storybook ../cmd/stories/main.go",
+            shell=True
+        ) != 0:
+            raise Exception("failed to build storybook")
 
     # all the rendering jobs that need to be done
     jobs = {}
@@ -83,7 +96,7 @@ Set Padding 0
 Set Framerate 23
 Set PlaybackSpeed 0.5
 Hide
-Type "./stories -s {command} && clear"
+Type "./storybook -s {command} && clear"
 Enter
 Sleep 500ms
 Show
@@ -93,7 +106,7 @@ Sleep 8s
             script = f"""
 Set Padding 0
 Hide
-Type "./stories -s {command} && clear"
+Type "./storybook -s {command} && clear"
 Enter
 Sleep 2s
 Show
@@ -123,9 +136,8 @@ Screenshot {filename}
                 raise Exception(code)
             attempts += 1
 
+        os.unlink(tape)
         if not os.path.exists(filename):
             raise Exception(f"failed to produce {filename}")
-
-    if os.path.exists(tape): os.unlink(tape)
 
     print(json.dumps(book))
