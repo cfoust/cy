@@ -4,11 +4,11 @@
 
 [Why cy?](./why-cy.md)
 
+[Installation](./installation.md)
+
+[Quick start](./quick-start.md)
+
 # User guide
-
-- [Installation](./installation.md)
-
-- [Quick start](./quick-start.md)
 
 - [Viewport](./viewport.md)
 

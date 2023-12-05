@@ -20,9 +20,17 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
-// Allow the user to rename struct methods arbitrarily.
+// Renamable provides a mapping from Go method names to Janet function names.
+// This is useful for declaring Janet functions that are not valid Go, such as
+// "boolean?".
 type Renamable interface {
 	Renames() map[string]string
+}
+
+// Docstrings provides docstrings for module methods. This is a mapping from
+// the method's Go name to its Janet docstring.
+type Docstrings interface {
+	Docstrings() map[string]string
 }
 
 // This is a little weird, but it's a workaround to allow us to simplify the
@@ -484,6 +492,7 @@ func getFunctionTypes(f reflect.Value) (in, out []reflect.Type, err error) {
 
 func (v *VM) registerCallback(
 	name string,
+	docstring string,
 	source interface{},
 	callback reflect.Value,
 ) error {
@@ -514,9 +523,36 @@ func (v *VM) registerCallback(
 	if err != nil {
 		return err
 	}
-	call := CallString(fmt.Sprintf(`
-(def %s (fn %s))
-`, name, prototype))
+
+	docstring = strings.TrimSpace(docstring)
+
+	format := "(defn %s %s %s)"
+
+	// You can provide a custom method prototype by providing a docstring
+	// that begins with "([method name]"
+	// This stops Janet from auto-generating a prototype for your
+	// docstring, which is desirable because there is no way to detect
+	// argument names using reflection
+	if strings.HasPrefix(docstring, "("+name) {
+		format = "(def %s %s (fn %s))"
+	}
+
+	if len(docstring) > 0 {
+		// Janet lets you enclose string literals enclosed by as many `
+		// characters as you like; this is a lazy way of "escaping" the
+		// docstring
+		docstring = "`````" + docstring + "\n`````"
+	} else {
+		docstring = `""`
+	}
+
+	code := fmt.Sprintf(
+		format,
+		name,
+		docstring,
+		prototype,
+	)
+	call := CallString(code)
 	call.Options.UpdateEnv = true
 	err = v.ExecuteCall(context.Background(), nil, call)
 	if err != nil {
@@ -526,8 +562,13 @@ func (v *VM) registerCallback(
 	return nil
 }
 
-func (v *VM) Callback(name string, callback interface{}) error {
-	return v.registerCallback(name, nil, reflect.ValueOf(callback))
+func (v *VM) Callback(name string, docstring string, callback interface{}) error {
+	return v.registerCallback(
+		name,
+		docstring,
+		nil,
+		reflect.ValueOf(callback),
+	)
 }
 
 func (v *VM) Module(name string, module interface{}) error {
@@ -542,21 +583,31 @@ func (v *VM) Module(name string, module interface{}) error {
 	}
 
 	type_ = reflect.TypeOf(module)
-	renamable, haveCustom := module.(Renamable)
+	renamable, haveRenames := module.(Renamable)
+	docs := make(map[string]string)
+
+	if docstrings, ok := module.(Docstrings); ok {
+		docs = docstrings.Docstrings()
+	}
+	if documented, ok := module.(Documented); ok {
+		docs = parseDocstrings(documented.Documentation())
+	}
 
 	for i := 0; i < type_.NumMethod(); i++ {
 		method := type_.Method(i)
 		methodName := strcase.ToKebab(method.Name)
 
-		if haveCustom && methodName == "renames" {
+		if (haveRenames && methodName == "renames") || methodName == "docstrings" || methodName == "documentation" {
 			continue
 		}
 
-		if haveCustom {
+		if haveRenames {
 			if replaced, ok := renamable.Renames()[method.Name]; ok {
 				methodName = replaced
 			}
 		}
+
+		docstring, _ := docs[method.Name]
 
 		err := v.registerCallback(
 			fmt.Sprintf(
@@ -564,6 +615,7 @@ func (v *VM) Module(name string, module interface{}) error {
 				name,
 				methodName,
 			),
+			docstring,
 			module,
 			method.Func,
 		)

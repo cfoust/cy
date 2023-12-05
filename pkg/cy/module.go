@@ -245,7 +245,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 
 	vm, err := cy.initJanet(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error initializing Janet: %s", err.Error())
 	}
 
 	cy.VM = vm

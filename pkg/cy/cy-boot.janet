@@ -9,26 +9,26 @@
   "register an action"
   [name docstring & body]
   ~(upscope
-     (defn ,name ,docstring [&] ,;body)
+     (defn ,name ,docstring [] ,;body)
      (,array/push actions [,docstring ,name])))
 
 (key/def
-  cy/command-palette
+  action/command-palette
   "open command palette"
   (as?-> actions _
          (input/find _ :prompt "search: actions")
          (apply _)))
 
 (key/def
-  ot/new-shell
-  "oakthree: create a new shell"
+  action/new-shell
+  "create a new shell"
   (def path (cmd/path (pane/current)))
   (def shell (cmd/new shells path :name (path/base path)))
   (pane/attach shell))
 
 (key/def
-  ot/new-project
-  "oakthree: create a new project"
+  action/new-project
+  "create a new project"
   (def path (cmd/path (pane/current)))
   (def project (group/new projects :name (path/base path)))
   (def editor
@@ -40,8 +40,8 @@
   (pane/attach editor))
 
 (key/def
-  ot/jump-project
-  "oakthree: jump to a project"
+  action/jump-project
+  "jump to a project"
   (as?-> projects _
          (group/children _)
          (map |(tuple (tree/name $) [:node [((group/children $) 0)]] $) _)
@@ -51,16 +51,16 @@
          (pane/attach _)))
 
 (key/def
-  ot/jump-shell
-  "oakthree: jump to a shell"
+  action/jump-shell
+  "jump to a shell"
   (as?-> (group/children shells) _
          (map |(tuple (cmd/path $) [:node [$]] $) _)
          (input/find _ :prompt "search: shell")
          (pane/attach _)))
 
 (key/def
-  ot/next-pane
-  "oakthree: move to the next pane"
+  action/next-pane
+  "move to the next pane"
   (def children
     (-?>>
       (pane/current)
@@ -83,7 +83,7 @@
   (pane/attach next))
 
 (key/def
-  cy/jump-pane
+  action/jump-pane
   "jump to a pane"
   (as?-> (group/leaves (tree/root)) _
          (map |(tuple (tree/path $) [:node [$]] $) _)
@@ -91,56 +91,56 @@
          (pane/attach _)))
 
 (key/def
-  cy/kill-current-pane
+  action/kill-current-pane
   "kill the current pane"
   (tree/kill (pane/current)))
 
 (key/def
-  cy/toggle-margins
+  action/toggle-margins
   "toggle margins"
-  (def size (frame/size))
+  (def size (viewport/size))
   (case (+ (size 0) (size 1))
-    0 (frame/set-size [0 80])
-    (frame/set-size [0 0])))
+    0 (viewport/set-size [0 80])
+    (viewport/set-size [0 0])))
 
 (key/def
-  cy/margins-80
+  action/margins-80
   "set size to 80 columns"
-  (frame/set-size [0 80]))
+  (viewport/set-size [0 80]))
 
 (key/def
-  cy/margins-160
+  action/margins-160
   "set size to 160 columns"
-  (frame/set-size [0 160]))
+  (viewport/set-size [0 160]))
 
 (key/def
-  cy/choose-frame
+  action/choose-frame
   "choose a frame"
-  (as?-> (frame/get-all) _
+  (as?-> (viewport/get-frames) _
          (input/find _ :prompt "search: frame")
-         (frame/set _)))
+         (viewport/set-frame _)))
 
 (key/def
-  cy/random-frame
+  action/random-frame
   "switch to a random frame"
-  (def frames (frame/get-all))
+  (def frames (viewport/get-frames))
   (def rng (math/rng))
-  (frame/set (get frames (math/rng-int rng (length frames)))))
+  (viewport/set-frame (get frames (math/rng-int rng (length frames)))))
 
 (key/def
-  cy/margins-smaller
+  action/margins-smaller
   "decrease margins by 5 columns"
-  (def [lines cols] (frame/size))
-  (frame/set-size [lines (+ cols 10)]))
+  (def [lines cols] (viewport/size))
+  (viewport/set-size [lines (+ cols 10)]))
 
 (key/def
-  cy/margins-bigger
+  action/margins-bigger
   "increase margins by 5 columns"
-  (def [lines cols] (frame/size))
-  (frame/set-size [lines (- cols 10)]))
+  (def [lines cols] (viewport/size))
+  (viewport/set-size [lines (- cols 10)]))
 
 (key/def
-  cy/open-log
+  action/open-log
   "open an existing log file"
   (as?-> (path/glob (path/join [(cy/get :data-dir) "*.borg"])) _
          (map |(tuple $ [:replay [$]] $) _)
@@ -148,29 +148,25 @@
          (replay/open (tree/root) _)
          (pane/attach _)))
 
-(key/bind :root [prefix "j"] ot/new-shell)
-(key/bind :root [prefix "n"] ot/new-project)
-(key/bind :root [prefix "k"] ot/jump-project)
-(key/bind :root [prefix "l"] ot/jump-shell)
-(key/bind :root ["ctrl+l"] ot/next-pane)
+(key/bind :root [prefix "j"] action/new-shell)
+(key/bind :root [prefix "n"] action/new-project)
+(key/bind :root [prefix "k"] action/jump-project)
+(key/bind :root [prefix "l"] action/jump-shell)
+(key/bind :root ["ctrl+l"] action/next-pane)
 
-(key/bind :root [prefix ";"] cy/jump-pane)
-(key/bind :root [prefix "ctrl+p"] cy/command-palette)
-(key/bind :root [prefix "x"] cy/kill-current-pane)
-(key/bind :root [prefix "g"] cy/toggle-margins)
-(key/bind :root [prefix "1"] cy/margins-80)
-(key/bind :root [prefix "2"] cy/margins-160)
-(key/bind :root [prefix "+"] cy/margins-smaller)
-(key/bind :root [prefix "-"] cy/margins-bigger)
-#(key/bind :root [prefix "q"] "kill the cy server" (fn [&] (cy/kill-server)))
-#(key/bind :root [prefix "d"] "detach from the cy server" (fn [&] (cy/detach)))
-#(key/bind :root [prefix "p"] "enter replay mode" (fn [&] (cy/replay)))
-#(key/bind :root [prefix "P"] "" (fn [&] (cy/paste)))
+(key/bind :root [prefix ";"] action/jump-pane)
+(key/bind :root [prefix "ctrl+p"] action/command-palette)
+(key/bind :root [prefix "x"] action/kill-current-pane)
+(key/bind :root [prefix "g"] action/toggle-margins)
+(key/bind :root [prefix "1"] action/margins-80)
+(key/bind :root [prefix "2"] action/margins-160)
+(key/bind :root [prefix "+"] action/margins-smaller)
+(key/bind :root [prefix "-"] action/margins-bigger)
+(key/bind :root [prefix "r" "r"] action/random-frame)
 (key/bind :root [prefix "q"] cy/kill-server)
 (key/bind :root [prefix "d"] cy/detach)
 (key/bind :root [prefix "p"] cy/replay)
 (key/bind :root [prefix "P"] cy/paste)
-(key/bind :root [prefix "r" "r"] cy/random-frame)
 
 (key/bind :replay ["q"] replay/quit)
 (key/bind :replay ["ctrl+c"] replay/quit)

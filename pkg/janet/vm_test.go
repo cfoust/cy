@@ -46,7 +46,7 @@ func TestVM(t *testing.T) {
 	require.NoError(t, err)
 
 	ok := false
-	err = vm.Callback("test", func() {
+	err = vm.Callback("test", "", func() {
 		ok = true
 	})
 	require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestVM(t *testing.T) {
 
 	t.Run("callback with a function", func(t *testing.T) {
 		var fun *Function
-		err = vm.Callback("test-callback", func(f *Function) {
+		err = vm.Callback("test-callback", "", func(f *Function) {
 			fun = f
 		})
 		require.NoError(t, err)
@@ -76,7 +76,7 @@ func TestVM(t *testing.T) {
 
 	t.Run("callback with context", func(t *testing.T) {
 		state := 0
-		err = vm.Callback("test-context", func(context interface{}) {
+		err = vm.Callback("test-context", "", func(context interface{}) {
 			if value, ok := context.(int); ok {
 				state = value
 			}
@@ -91,7 +91,7 @@ func TestVM(t *testing.T) {
 
 	t.Run("callback with user and context", func(t *testing.T) {
 		state := 0
-		err = vm.Callback("test-context-ctx", func(ctx context.Context, user interface{}) {
+		err = vm.Callback("test-context-ctx", "", func(ctx context.Context, user interface{}) {
 			if ctx == nil || user == nil {
 				t.Fail()
 			}
@@ -110,7 +110,7 @@ func TestVM(t *testing.T) {
 
 	t.Run("callback with nil return", func(t *testing.T) {
 		value := 0
-		err = vm.Callback("test-nil", func(param *int) *int {
+		err = vm.Callback("test-nil", "", func(param *int) *int {
 			if param == nil {
 				value = 1
 				return nil
@@ -139,7 +139,7 @@ func TestVM(t *testing.T) {
 		}
 
 		var post Params
-		err = vm.Callback("test-named", func(
+		err = vm.Callback("test-named", "", func(
 			context interface{},
 			value int,
 			params *Named[Params],
@@ -161,7 +161,7 @@ func TestVM(t *testing.T) {
 
 	t.Run("callback with value", func(t *testing.T) {
 		first := 0
-		err = vm.Callback("test-value", func(value *Value) error {
+		err = vm.Callback("test-value", "", func(value *Value) error {
 			defer value.Free()
 
 			var nums []int
@@ -190,7 +190,7 @@ func TestVM(t *testing.T) {
 		}
 
 		first := 0
-		err = vm.Callback("test-tuple", func(t Tuple) {
+		err = vm.Callback("test-tuple", "", func(t Tuple) {
 			first = t.First
 		})
 		require.NoError(t, err)

@@ -1214,7 +1214,7 @@ return He}()
 
 /*! `lisp` grammar compiled for Highlight.js 11.9.0 */
 (()=>{var e=(()=>{"use strict";return e=>{
-const n="[a-zA-Z_\\-+\\*\\/<=>&#][a-zA-Z0-9_\\-+*\\/<=>&#!]*",a="\\|[^]*?\\|",i="(-|\\+)?\\d+(\\.\\d+|\\/\\d+)?((d|e|f|l|s|D|E|F|L|S)(\\+|-)?\\d+)?",s={
+const n="[a-zA-Z_\\-+\\*\\/<=>&#][a-zA-Z0-9_\\-+*\\/<=>&#!?]*",a="\\|[^]*?\\|",i="(-|\\+)?\\d+(\\.\\d+|\\/\\d+)?((d|e|f|l|s|D|E|F|L|S)(\\+|-)?\\d+)?",s={
 className:"literal",begin:"\\b(t{1}|nil)\\b"},l={className:"number",variants:[{
 begin:i,relevance:0},{begin:"#(b|B)[0-1]+(/[0-1]+)?"},{
 begin:"#(o|O)[0-7]+(/[0-7]+)?"},{begin:"#(x|X)[0-9a-fA-F]+(/[0-9a-fA-F]+)?"},{

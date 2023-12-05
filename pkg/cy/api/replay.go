@@ -1,6 +1,7 @@
 package api
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
 

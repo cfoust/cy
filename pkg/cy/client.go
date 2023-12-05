@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/cy/api"
 	cyParams "github.com/cfoust/cy/pkg/cy/params"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
@@ -73,6 +74,8 @@ type Client struct {
 
 	info screen.RenderContext
 }
+
+var _ api.Client = (*Client)(nil)
 
 func (c *Cy) addClient(conn Connection) *Client {
 	clientCtx := conn.Ctx()
@@ -444,6 +447,14 @@ func (c *Client) Attach(node tree.Node) error {
 
 func (c *Client) Params() *params.Parameters {
 	return c.params
+}
+
+func (c *Client) Margins() *screen.Margins {
+	return c.margins
+}
+
+func (c *Client) Frame() *frames.Framer {
+	return c.frame
 }
 
 func (c *Client) Detach(reason string) error {

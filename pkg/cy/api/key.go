@@ -9,7 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 )
 
-type Key struct {
+type KeyModule struct {
 	Tree        *tree.Tree
 	ReplayBinds *bind.BindScope
 }
@@ -21,7 +21,7 @@ var (
 	KEYWORD_RE = janet.Keyword("re")
 )
 
-func (k *Key) resolveGroup(target *janet.Value) (*tree.Group, error) {
+func (k *KeyModule) resolveGroup(target *janet.Value) (*tree.Group, error) {
 	// first try keyword
 	err := target.Unmarshal(&KEYWORD_ROOT)
 	if err == nil {
@@ -84,7 +84,7 @@ func getKeySequence(value *janet.Value) (result []interface{}, err error) {
 	return
 }
 
-func (k *Key) Bind(target *janet.Value, sequence *janet.Value, callback *janet.Function) error {
+func (k *KeyModule) Bind(target *janet.Value, sequence *janet.Value, callback *janet.Function) error {
 	defer target.Free()
 	defer sequence.Free()
 

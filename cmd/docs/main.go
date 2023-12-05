@@ -47,7 +47,7 @@ func main() {
 			panic(err)
 		}
 
-		err = cy.Callback("cy/env", func() *janet.Value {
+		err = cy.Callback("cy/env", "", func() *janet.Value {
 			return cy.Env().Value
 		})
 		if err != nil {
@@ -55,7 +55,7 @@ func main() {
 		}
 
 		symbols := make([]Symbol, 0)
-		cy.Callback("cy/doc", func(name string, docstring string, link string, macro bool) {
+		cy.Callback("cy/doc", "", func(name string, docstring string, link string, macro bool) {
 			symbols = append(symbols, Symbol{
 				Name:      name,
 				Docstring: docstring,
@@ -76,10 +76,10 @@ func main() {
 		var output string
 
 		// Generate the table of contents
-		output += "## Index\n\n"
+		output += "## Functions\n\n"
 		for _, symbol := range symbols {
 			header := strings.Map(func(r rune) rune {
-				if r == '/' {
+				if r == '/' || r == '?' {
 					return -1
 				}
 
@@ -142,7 +142,7 @@ func main() {
 		output := "\n---\n"
 
 		for _, frame := range frames {
-			set := fmt.Sprintf("```janet\n(frame/set \"%s\")\n```\n", frame)
+			set := fmt.Sprintf("```janet\n(viewport/set-frame \"%s\")\n```\n", frame)
 			output += fmt.Sprintf(`
 #### %s
 

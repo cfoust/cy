@@ -106,7 +106,7 @@ Copy mode is entered from time mode by triggering any form of movement, whether 
 | Sequence | Action          | Description                               |
 | -------- | --------------- | ----------------------------------------- |
 | `v`      | `replay/select` | enter visual select mode                  |
-| `y`      | `replay/copy`   | copy the selection into the user's buffer |
+| `y`      | `replay/copy`   | yank the selection into the copy buffer |
 
 #### Scrolling
 

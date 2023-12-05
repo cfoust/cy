@@ -116,6 +116,10 @@ func (t *TreeModule) Pane(id tree.NodeID) bool {
 }
 
 func (t *TreeModule) SetName(id tree.NodeID, name string) {
+	if id == t.Tree.Root().Id() {
+		return
+	}
+
 	node, ok := t.Tree.NodeById(id)
 	if !ok {
 		return

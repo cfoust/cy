@@ -24,7 +24,7 @@ Key sequences in `cy` are more flexible than they appear at first glance. Valid 
 
 1. **Printable Unicode characters**: `你`, `Щ`, `a`
 1. **Preset keys**: `return`, `ctrl+a`, `f1` You can find a comprehensive list of the available keys [here](./preset-keys.md).
-1. Regexes: `[:re "^[a-z]$"]`
+1. **Regexes**: `[:re "^[a-z]$"]`
 
 The first two work exactly as you expect them to: `cy` will execute the first complete match for the keys that you type. After each key, `cy` gives you a second (=1000ms) to type the next key in the sequence. If you do not, `cy` does nothing. All keys that are not matched by any sequence are sent to the current pane.
 
