@@ -53,7 +53,7 @@ To illustrate:
 (key/bind :root ["ctrl+b" [:re "[abc]"]] toast-me)
 ```
 
-Now if you type `ctrl+a` followed by `a`, the `toast-me` function will be invoked with one argument, the Janet value `"a"`. The same applies if you follow the `ctrl+a` with `b` or `c`.
+Now if you type `ctrl+b` followed by `a`, the `toast-me` function will be invoked with one argument, the Janet value `"a"`. The same applies if you follow the `ctrl+b` with `b` or `c`.
 
 This allows you to build more sophisticated functionality without defining a binding for every possible character.
 
