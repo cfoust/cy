@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 	"os"
+	"runtime/pprof"
+	"runtime/trace"
 
 	"github.com/alecthomas/kong"
 	"github.com/rs/zerolog/log"
@@ -11,6 +13,9 @@ import (
 
 var CLI struct {
 	Socket string `help:"Specify the name of the socket." name:"socket-name" optional:"" short:"L" default:"default"`
+
+	CPU   string `help:"Save a CPU performance report to the given path." name:"perf-file" optional:"" default:""`
+	Trace string `help:"Save a trace report to the given path." name:"trace-file" optional:"" default:""`
 }
 
 func main() {
@@ -49,6 +54,30 @@ func main() {
 				log.Panic().Err(err).Msg("unable to release pid-file")
 			}
 		}()
+
+		if len(CLI.CPU) > 0 {
+			f, err := os.Create(CLI.CPU)
+			if err != nil {
+				log.Panic().Err(err).Msgf("unable to create %s", CLI.CPU)
+			}
+			defer f.Close()
+			if err := pprof.StartCPUProfile(f); err != nil {
+				log.Panic().Err(err).Msgf("could not start CPU profile")
+			}
+			defer pprof.StopCPUProfile()
+		}
+
+		if len(CLI.Trace) > 0 {
+			f, err := os.Create(CLI.Trace)
+			if err != nil {
+				log.Panic().Err(err).Msgf("unable to create %s", CLI.Trace)
+			}
+			defer f.Close()
+			if err := trace.Start(f); err != nil {
+				log.Panic().Err(err).Msgf("could not start trace profile")
+			}
+			defer trace.Stop()
+		}
 
 		err = serve(socketPath)
 		if err != nil && err != http.ErrServerClosed {
