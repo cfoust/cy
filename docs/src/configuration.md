@@ -48,5 +48,5 @@ An example configuration that uses functionality from this API is shown below. V
   )
 
 # Bind a key sequence to this function
-(key/bind :root ["ctrl+a" "g"] caleb/test)
+(key/bind :root ["ctrl+a" "g"] toast-pane-path)
 ```
