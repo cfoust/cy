@@ -126,7 +126,7 @@ Screenshot {filename}
             vhs = "./vhs"
 
         attempts = 0
-        while not os.path.exists(filename) and attempts < 5:
+        while not os.path.exists(filename) and attempts < 10:
             code = subprocess.call(
                 f"{vhs} -q {tape}",
                 shell=True
