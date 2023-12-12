@@ -125,8 +125,7 @@ Screenshot {filename}
         if 'CI' in os.environ:
             vhs = "./vhs"
 
-        attempts = 0
-        while not os.path.exists(filename) and attempts < 10:
+        while not os.path.exists(filename):
             code = subprocess.call(
                 f"{vhs} -q {tape}",
                 shell=True
@@ -134,7 +133,6 @@ Screenshot {filename}
 
             if code != 0:
                 raise Exception(code)
-            attempts += 1
 
         os.unlink(tape)
         if not os.path.exists(filename):
