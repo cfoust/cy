@@ -35,7 +35,13 @@ func (s *Splash) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case taro.ScreenUpdate:
 		return s, taro.WaitScreens(s.Ctx(), s.bg)
 	case taro.KeyMsg:
-		return s, tea.Quit
+		return s, tea.Batch(
+			func() tea.Msg {
+				s.Cancel()
+				return nil
+			},
+			tea.Quit,
+		)
 	}
 
 	return s, nil
@@ -103,11 +109,12 @@ func (s *Splash) View(state *tty.State) {
 }
 
 func New(ctx context.Context, size geom.Size, shouldAnimate bool) *taro.Program {
+	lifetime := util.NewLifetime(ctx)
 	render := taro.NewRenderer()
 	var bg mux.Screen
 	initial := generateBackground(render, size.Scalar(2))
 	if shouldAnimate {
-		bg = anim.NewAnimator(ctx, &anim.Midjo{}, initial, 23)
+		bg = anim.NewAnimator(lifetime.Ctx(), &anim.Midjo{}, initial, 23)
 	} else {
 		bg = frames.NewFramer(
 			ctx,
@@ -123,7 +130,7 @@ func New(ctx context.Context, size geom.Size, shouldAnimate bool) *taro.Program 
 	}
 
 	return taro.New(ctx, &Splash{
-		Lifetime: util.NewLifetime(ctx),
+		Lifetime: lifetime,
 		render:   render,
 		bg:       bg,
 	})
