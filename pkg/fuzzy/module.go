@@ -60,7 +60,13 @@ func (f *Fuzzy) quit() (taro.Model, tea.Cmd) {
 	if f.isSticky {
 		return f, nil
 	}
-	return f, tea.Quit
+	return f, tea.Batch(
+		func() tea.Msg {
+			f.Cancel()
+			return nil
+		},
+		tea.Quit,
+	)
 }
 
 type AttachEvent struct {
@@ -333,7 +339,7 @@ func NewFuzzy(
 		setting(f.Ctx(), f)
 	}
 
-	return taro.New(ctx, f)
+	return taro.New(f.Ctx(), f)
 }
 
 type matchResult struct {
