@@ -171,10 +171,10 @@ func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) {
 		}
 	} else {
 		for i := r.location.Index + 1; i < len(r.events); i++ {
-			if newTime.After(r.events[i].Stamp) {
-				r.setIndex(i, -1, false)
+			if newTime.Before(r.events[i].Stamp) {
 				break
 			}
+			nextIndex = i
 		}
 	}
 

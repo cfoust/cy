@@ -39,8 +39,6 @@ type Replay struct {
 	skipInactivity bool
 
 	// The location of Replay in time
-	// R: the index of the displayed event in `events`
-	// C: the byte within it
 	location search.Address
 	events   []sessions.Event
 

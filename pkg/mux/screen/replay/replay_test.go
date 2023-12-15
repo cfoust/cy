@@ -276,15 +276,48 @@ func TestTime(t *testing.T) {
 	i(size)
 	r.gotoIndex(0, -1)
 	require.Equal(t, e[0].Stamp, r.currentTime)
+
+	// Move into first text event
 	r.setTimeDelta(delta, true)
 	require.Equal(t, 1, r.location.Index)
+
+	// Play again, which should trigger a skip since the time is greater
+	// than IDLE_THRESHOLD
 	r.setTimeDelta(delta, true)
 	require.Equal(t, 2, r.location.Index)
 	require.Equal(t, e[2].Stamp, r.currentTime)
+
+	// Go backwards, which should bring us back to the previous event
 	r.setTimeDelta(-delta, true)
 	require.Equal(t, 1, r.location.Index)
+	require.Equal(t, e[2].Stamp.Add(-delta), r.currentTime)
+
+	// Backwards again, which will skip inactivity back to 0
 	r.setTimeDelta(-delta, true)
 	require.Equal(t, 0, r.location.Index)
+	require.Equal(t, e[0].Stamp, r.currentTime)
+}
+
+func TestTimeBug(t *testing.T) {
+	size := geom.Size{R: 5, C: 10}
+	e := sim().
+		Add(size).
+		AddTime(0, "test").
+		AddTime(3*time.Minute, "test").
+		AddTime(60*time.Minute, "test").
+		Events()
+
+	r, i := createTest(e)
+	i(size)
+	r.gotoIndex(0, -1)
+
+	// Simulate a jump forward
+	r.setTimeDelta(5*time.Minute, false)
+	require.Equal(t, 2, r.location.Index)
+	require.Equal(t, r.currentTime.Sub(e[0].Stamp), 5*time.Minute)
+	// And then a play
+	r.setTimeDelta(time.Second, r.skipInactivity)
+	require.Greater(t, r.currentTime.Sub(e[0].Stamp), 5*time.Minute)
 }
 
 func TestReadString(t *testing.T) {
@@ -329,21 +362,19 @@ func TestReadString(t *testing.T) {
 }
 
 func TestTimeJump(t *testing.T) {
-	hour := 3600 * time.Second
 	size := geom.Size{R: 5, C: 10}
 	e := sim().
 		Add(size).
 		AddTime(0, "test").
-		AddTime(hour, "test").
+		AddTime(3*time.Minute, "test").
+		AddTime(60*time.Minute, "test").
 		Events()
 
 	r, i := createTest(e)
-	i(size)
-	r.gotoIndex(1, -1)
-	i(ActionSearchForward, "5m", "enter")
-	require.Equal(t, e[0].Stamp.Add(5*time.Minute), r.currentTime)
+	i(size, ActionBeginning, ActionSearchForward, "5m", "enter")
+	require.Equal(t, r.currentTime.Sub(e[0].Stamp), 5*time.Minute)
 	i(ActionSearchBackward, "5m", "enter")
-	require.Equal(t, e[0].Stamp, r.currentTime)
+	require.Equal(t, 0, r.location.Index)
 }
 
 func TestPrompt(t *testing.T) {
