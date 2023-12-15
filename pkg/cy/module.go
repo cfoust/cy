@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
-	"github.com/cfoust/cy/pkg/cy/cmd"
 	"github.com/cfoust/cy/pkg/events"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
@@ -86,26 +85,30 @@ func (c *Cy) loadUserConfig(ctx context.Context) {
 	}
 }
 
-// Get the pane that new clients attach to. If there are other clients, we
-// attach to the pane of the first other client. Otherwise we attach to the
-// first pane we find, depth-first.
-func (c *Cy) findInitialPane() tree.Node {
+// Get the first pane that another client is attached to or return nil if there
+// are no other clients.
+func (c *Cy) getFirstClientPane(except *Client) tree.Node {
 	c.RLock()
 	defer c.RUnlock()
 
-	if len(c.clients) > 0 {
-		node := c.clients[0].Node()
+	clients := c.clients
+
+	if len(clients) == 0 {
+		return nil
+	}
+
+	for _, client := range clients {
+		if client == except {
+			continue
+		}
+
+		node := client.Node()
 		if node != nil {
 			return node
 		}
 	}
 
-	leaves := c.tree.Leaves()
-	if len(leaves) == 0 {
-		return nil
-	}
-
-	return leaves[0]
+	return nil
 }
 
 func (c *Cy) Shutdown() error {
@@ -221,19 +224,6 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	go cy.pollNodeEvents(cy.Ctx(), subscriber.Recv())
 	go cy.pollInteractions(cy.Ctx(), cy.lastWrite, cy.writes)
 	go cy.pollInteractions(cy.Ctx(), cy.lastVisit, cy.visits)
-
-	if len(options.Shell) > 0 {
-		replayable, _ := cmd.New(
-			cy.Ctx(),
-			stream.CmdOptions{
-				Command: "/bin/bash",
-			},
-			options.DataDir,
-			replayBinds,
-		)
-
-		t.Root().NewPane(cy.Ctx(), replayable)
-	}
 
 	logs := stream.NewReader()
 	terminal := screen.NewTerminal(cy.Ctx(), logs, geom.DEFAULT_SIZE)

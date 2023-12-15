@@ -153,7 +153,7 @@ func TestEmpty(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	leaves := cy.tree.Leaves()
-	require.Equal(t, client.Node(), leaves[0])
+	require.Equal(t, client.Node(), leaves[1])
 }
 
 func TestSize(t *testing.T) {
@@ -175,7 +175,7 @@ func TestScopes(t *testing.T) {
 
 	_, client, err := server.Standard()
 	require.NoError(t, err)
-	require.Equal(t, 2, len(client.binds.Scopes()))
+	require.Equal(t, 3, len(client.binds.Scopes()))
 
 	cy := server.cy
 
@@ -205,14 +205,15 @@ func TestPaneKill(t *testing.T) {
 
 	_, client, err := server.Standard()
 	require.NoError(t, err)
+	leaves := server.cy.tree.Leaves()
+	id := client.Node().Id()
+	require.Equal(t, leaves[1].Id(), id)
 
 	require.NoError(t, client.execute(`
-(def shell (cmd/new (tree/root) "/tmp"))
-(pp shell)
-(pane/attach shell)
-(tree/kill shell)
+(tree/kill (pane/current))
 `))
 	time.Sleep(2 * time.Second) // lol
-	leaves := server.cy.tree.Leaves()
-	require.Equal(t, leaves[0].Id(), client.Node().Id())
+	require.NotEqual(t, id, client.Node().Id())
+	leaves = server.cy.tree.Leaves()
+	require.Equal(t, leaves[1].Id(), client.Node().Id())
 }

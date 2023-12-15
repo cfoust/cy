@@ -22,14 +22,6 @@ var CY_BOOT_FILE []byte
 //go:embed docs-cy.md
 var DOCS_CY string
 
-// execute runs some Janet code on behalf of the Client. This is only used in testing.
-func (c *Client) execute(code string) error {
-	return c.cy.ExecuteCall(c.Ctx(), c, janet.Call{
-		Code:    []byte(code),
-		Options: janet.DEFAULT_CALL_OPTIONS,
-	})
-}
-
 var (
 	KEYWORD_INFO  = janet.Keyword("info")
 	KEYWORD_WARN  = janet.Keyword("warn")

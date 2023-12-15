@@ -13,6 +13,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
+	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/splash"
@@ -212,13 +213,11 @@ func (c *Cy) pollClient(ctx context.Context, client *Client) {
 	go client.pollEvents()
 	go client.binds.Poll(client.Ctx())
 
-	node := c.findInitialPane()
-	if node == nil {
-		// TODO(cfoust): 06/08/23 handle this
+	err := client.findNewPane()
+	if err != nil {
+		client.closeError(err)
 		return
 	}
-
-	client.Attach(node)
 
 	c.sendQueuedToasts()
 
@@ -387,6 +386,32 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	return nil
 }
 
+// findNewPane looks for a pane that the client can attach to or creates a new
+// one if none are suitable.
+func (c *Client) findNewPane() error {
+	c.RLock()
+	history := c.history
+	c.RUnlock()
+
+	// First look back in history
+	for i := len(history) - 2; i >= 0; i-- {
+		node, ok := c.cy.tree.NodeById(history[i])
+		if !ok {
+			continue
+		}
+		return c.Attach(node)
+	}
+
+	// Then see if there are any other client panes
+	clientNode := c.cy.getFirstClientPane(c)
+	if clientNode != nil {
+		return c.Attach(clientNode)
+	}
+
+	// Otherwise just create a new shell and attach to it
+	return c.execute(`(shell/attach)`)
+}
+
 func (c *Client) Attach(node tree.Node) error {
 	pane, ok := node.(*tree.Pane)
 	if !ok {
@@ -407,21 +432,8 @@ func (c *Client) Attach(node tree.Node) error {
 		case <-c.muxClient.Attachment().Ctx().Done():
 			return
 		case <-pane.Ctx().Done():
-			// if the pane dies, just re-attach to the last node the user visited
-			c.RLock()
-			history := c.history
-			c.RUnlock()
-
-			if len(history) < 2 {
-				// TODO(cfoust): 09/20/23
-				return
-			}
-
-			node, ok := c.cy.tree.NodeById(history[len(history)-2])
-			if !ok {
-				return
-			}
-			c.Attach(node)
+			// TODO(cfoust): 12/15/23 handle error
+			c.findNewPane()
 			return
 		}
 	}()
@@ -471,6 +483,14 @@ func (c *Client) Detach(reason string) error {
 func (c *Cy) HandleWSClient(conn ws.Client[P.Message]) {
 	c.addClient(conn)
 	<-conn.Ctx().Done()
+}
+
+// execute runs some Janet code on behalf of the client.
+func (c *Client) execute(code string) error {
+	return c.cy.ExecuteCall(c.Ctx(), c, janet.Call{
+		Code:    []byte(code),
+		Options: janet.DEFAULT_CALL_OPTIONS,
+	})
 }
 
 var _ ws.Server[P.Message] = (*Cy)(nil)

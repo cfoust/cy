@@ -19,6 +19,20 @@
          (input/find _ :prompt "search: actions")
          (apply _)))
 
+(defn
+  shell/new
+  ```Create a new shell initialized in the working directory `path`.```
+  [&opt path]
+  (default path "")
+  (cmd/new shells path))
+
+(defn
+  shell/attach
+  ```Create a new shell initialized in the working directory `path` and attach to it.```
+  [&opt path]
+  (default path "")
+  (pane/attach (cmd/new shells path)))
+
 (key/def
   action/new-shell
   "create a new shell"

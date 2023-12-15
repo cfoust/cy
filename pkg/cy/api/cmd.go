@@ -32,15 +32,13 @@ func (c *Cmd) New(
 	path string,
 	cmdParams *janet.Named[CmdParams],
 ) (tree.NodeID, error) {
-	client, ok := user.(Client)
-	if !ok {
-		return 0, fmt.Errorf("missing client context")
-	}
-
 	shell := "/bin/bash"
-	defaultShell, ok := client.Params().Get(cyParams.ParamDefaultShell)
-	if value, ok := defaultShell.(string); ok {
-		shell = value
+
+	if client, ok := user.(Client); ok {
+		defaultShell, _ := client.Params().Get(cyParams.ParamDefaultShell)
+		if value, ok := defaultShell.(string); ok {
+			shell = value
+		}
 	}
 
 	values := cmdParams.WithDefault(CmdParams{
