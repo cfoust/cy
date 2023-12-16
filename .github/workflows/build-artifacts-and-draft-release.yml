@@ -91,21 +91,6 @@ jobs:
         with:
           name: cy-darwin
           path: ./cy-build/darwin
-      - name: Merge checksum file
-        run: |
-          cd ./cy-build
-          cat ./darwin/cy*checksums.txt >> checksums.txt
-          cat ./linux/cy*checksums.txt >> checksums.txt
-          rm ./darwin/cy*checksums.txt
-          rm ./linux/cy*checksums.txt
-          # where do these come from?
-          rm -f linux/cy darwin/cy
-      - name: Release
-        uses: goreleaser/goreleaser-action@v5
-        with:
-          args: release --config ci/goreleaser-release.yaml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create tap PR
         run: |
           # Remove last line from darwin formula
@@ -164,3 +149,22 @@ jobs:
             --title "update cy to $TAG" \
             --head "$BRANCH" \
             --base "main"
+
+          cd ..
+          rm *.rb
+          rm -r "$DIRECTORY"
+      - name: Merge checksum file
+        run: |
+          cd ./cy-build
+          cat ./darwin/cy*checksums.txt >> checksums.txt
+          cat ./linux/cy*checksums.txt >> checksums.txt
+          rm ./darwin/cy*checksums.txt
+          rm ./linux/cy*checksums.txt
+          # where do these come from?
+          rm -f linux/cy darwin/cy
+      - name: Release
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          args: release --config ci/goreleaser-release.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
