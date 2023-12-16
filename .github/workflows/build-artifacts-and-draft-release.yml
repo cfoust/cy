@@ -96,7 +96,7 @@ jobs:
           # Remove last line from darwin formula
           sed '$d' ./cy-build/darwin/cy.rb > cy.rb
           # Include all other lines from linux
-          sed -n '/on_linux/,$p' ./cy-build/darwin/cy-linux.rb >> cy.rb
+          sed -n '/on_linux/,$p' ./cy-build/darwin/cy.rb >> cy.rb
 
           TAG=$(git describe --tags --always --abbrev=0)
 
