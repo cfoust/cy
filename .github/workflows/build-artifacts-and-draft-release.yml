@@ -42,7 +42,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Copy homebrew
         run: |
-          cp dist/homebrew/cy.rb dist/cy-linux.rb
+          cp dist/homebrew/cy.rb dist/cy.rb
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
