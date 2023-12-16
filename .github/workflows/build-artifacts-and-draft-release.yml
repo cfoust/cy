@@ -43,6 +43,7 @@ jobs:
       - name: Copy homebrew
         run: |
           cp dist/homebrew/cy.rb dist/cy.rb
+          rm dist/*/cy
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
@@ -64,6 +65,7 @@ jobs:
       - name: Copy homebrew
         run: |
           cp dist/homebrew/cy.rb dist/cy.rb
+          rm dist/*/cy
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
