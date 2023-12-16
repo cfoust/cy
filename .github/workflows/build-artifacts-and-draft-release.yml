@@ -161,7 +161,7 @@ jobs:
           rm ./darwin/cy*checksums.txt
           rm ./linux/cy*checksums.txt
           # where do these come from?
-          rm -f linux/cy darwin/cy
+          rm -f cy{,.rb} linux/cy{,.rb} darwin/cy{,.rb}
       - name: Release
         uses: goreleaser/goreleaser-action@v5
         with:
