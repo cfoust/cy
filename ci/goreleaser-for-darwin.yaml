@@ -50,9 +50,9 @@ builds:
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 brews:
-  repository:
-    owner: cfoust
-    name: homebrew-taps
-    branch: "{{.ProjectName}}-{{.Version}}"
-    pull_request:
-      enabled: true
+  - repository:
+      owner: cfoust
+      name: homebrew-taps
+      branch: "{{.ProjectName}}-{{.Version}}"
+      pull_request:
+        enabled: true
