@@ -91,6 +91,64 @@ jobs:
         with:
           name: cy-darwin
           path: ./cy-build/darwin
+      - name: Create tap PR
+        run: |
+          # Remove last line from darwin formula
+          sed '$d' ./cy-build/darwin/cy.rb > cy.rb
+          # Include all other lines from linux
+          sed -n '/on_linux/,$p' ./cy-build/darwin/cy-linux.rb >> cy.rb
+
+          TAG=$(git describe --tags --always --abbrev=0)
+
+          # Remove "v"
+          TAG=${TAG:1}
+
+          # Create versioned formula
+          cp cy.rb "cy@${TAG}.rb"
+
+          # PR flow inspired by:
+          # https://github.com/orgs/community/discussions/49745#discussioncomment-5275999
+          REPOSITORY="cfoust/homebrew-taps"
+          DIRECTORY="homebrew-taps"
+          BRANCH="feat/update-to-$TAG"
+
+          # Clone the remote repository and change working directory to the
+          # folder it was cloned to.
+          git clone \
+            --depth=1 \
+            --branch=main \
+            https://some-user:${{ secrets.ACCESS_TOKEN }}@github.com/$REPOSITORY \
+            $DIRECTORY
+
+          cd $DIRECTORY
+
+          # Setup the committers identity.
+          git config user.email "cfoust@sqweebloid.com"
+          git config user.name "CyBot"
+
+          # Create a new feature branch for the changes.
+          git checkout -b $BRANCH
+
+          # Update the script files to the latest version.
+          cp ../cy*.rb .
+
+          # Commit the changes and push the feature branch to origin
+          git add .
+          git commit -m "feat: update cy formula to $TAG"
+          git push origin "$BRANCH"
+
+          # Store the PAT in a file that can be accessed by the
+          # GitHub CLI.
+          echo "${{ secrets.ACCESS_TOKEN }}" > token.txt
+
+          # Authorize GitHub CLI for the current repository and
+          # create a pull-requests containing the updates.
+          gh auth login --with-token < token.txt
+          gh pr create \
+            --body "" \
+            --title "update cy to $TAG" \
+            --head "$BRANCH" \
+            --base "main"
       - name: Merge checksum file
         run: |
           cd ./cy-build
@@ -98,6 +156,8 @@ jobs:
           cat ./linux/cy*checksums.txt >> checksums.txt
           rm ./darwin/cy*checksums.txt
           rm ./linux/cy*checksums.txt
+          # where do these come from?
+          rm -f linux/cy darwin/cy
       - name: Release
         uses: goreleaser/goreleaser-action@v5
         with:
