@@ -40,6 +40,9 @@ jobs:
           args: release --skip=publish --config ci/goreleaser-for-linux.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Copy homebrew
+        run: |
+          cp dist/homebrew/cy.rb dist/cy-linux.rb
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
@@ -55,10 +58,12 @@ jobs:
       - name: Build
         uses: goreleaser/goreleaser-action@v5
         with:
-          #args: release --skip=publish --config ci/goreleaser-for-darwin.yaml
-          args: release --config ci/goreleaser-for-darwin.yaml
+          args: release --skip=publish --config ci/goreleaser-for-darwin.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Copy homebrew
+        run: |
+          cp dist/homebrew/cy.rb dist/cy.rb
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
