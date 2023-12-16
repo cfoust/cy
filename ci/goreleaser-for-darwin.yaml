@@ -50,10 +50,10 @@ builds:
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 brews:
-  - repository:
+  - skip_upload: false
+    repository:
       owner: cfoust
       name: homebrew-taps
       branch: "{{.ProjectName}}-{{.Version}}"
-      skip_upload: false
       pull_request:
         enabled: true
