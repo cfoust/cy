@@ -54,5 +54,6 @@ brews:
       owner: cfoust
       name: homebrew-taps
       branch: "{{.ProjectName}}-{{.Version}}"
+      skip_upload: false
       pull_request:
         enabled: true
