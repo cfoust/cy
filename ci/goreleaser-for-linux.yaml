@@ -55,3 +55,6 @@ snapshot:
   name_template: "{{ incpatch .Version }}-next"
 brews:
   - skip_upload: true
+    repository:
+      owner: cfoust
+      name: homebrew-taps
