@@ -44,7 +44,6 @@ builds:
       - BUILD_USER="unknown"
     goos:
       - linux
-    # We currently cannot run mysqlbinlog on arm64.
     goarch:
       - amd64
     overrides:
@@ -54,3 +53,8 @@ builds:
           - CC=gcc
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
+brews:
+  - skip_upload: true
+    repository:
+      owner: cfoust
+      name: homebrew-taps

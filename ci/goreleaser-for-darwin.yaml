@@ -49,3 +49,11 @@ builds:
       - arm64
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
+brews:
+  - skip_upload: true
+    homepage: "https://github.com/cfoust/cy"
+    description: "The time-traveling terminal multiplexer."
+    license: "MIT"
+    repository:
+      owner: cfoust
+      name: homebrew-taps
