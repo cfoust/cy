@@ -2,7 +2,7 @@
 
 [Introduction](./README.md)
 
-[Why cy?](./why-cy.md)
+[Why not tmux?](./why-not-tmux.md)
 
 [Installation](./installation.md)
 
@@ -10,13 +10,13 @@
 
 # User guide
 
+- [Configuration](./configuration.md)
+
 - [Viewport](./viewport.md)
 
   - [Frames](./frames.md)
 
   - [Animations](./animations.md)
-
-- [Configuration](./configuration.md)
 
 - [Keybindings](./keybindings.md)
 
