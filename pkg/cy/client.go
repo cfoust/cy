@@ -457,6 +457,15 @@ func (c *Client) Attach(node tree.Node) error {
 	return nil
 }
 
+func (c *Client) Get(key string) (value interface{}, ok bool) {
+	value, ok = c.params.Get(key)
+	if ok {
+		return
+	}
+
+	return c.cy.defaults.Get(key)
+}
+
 func (c *Client) Params() *params.Parameters {
 	return c.params
 }

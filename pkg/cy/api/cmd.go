@@ -32,17 +32,17 @@ func (c *Cmd) New(
 	path string,
 	cmdParams *janet.Named[CmdParams],
 ) (tree.NodeID, error) {
-	shell := "/bin/bash"
+	command := "/bin/bash"
 
 	if client, ok := user.(Client); ok {
-		defaultShell, _ := client.Params().Get(cyParams.ParamDefaultShell)
+		defaultShell, _ := client.Get(cyParams.ParamDefaultShell)
 		if value, ok := defaultShell.(string); ok {
-			shell = value
+			command = value
 		}
 	}
 
 	values := cmdParams.WithDefault(CmdParams{
-		Command: shell,
+		Command: command,
 	})
 
 	group, ok := c.Tree.GroupById(groupId)

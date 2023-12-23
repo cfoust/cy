@@ -10,6 +10,7 @@ import (
 type Client interface {
 	Attach(tree.Node) error
 	Node() tree.Node
+	Get(key string) (value interface{}, ok bool)
 	Params() *params.Parameters
 	OuterLayers() *screen.Layers
 	Margins() *screen.Margins

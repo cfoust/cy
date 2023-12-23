@@ -61,12 +61,10 @@ func getShell() string {
 		return env
 	}
 
-	/**
-	TODO(cfoust): 07/22/23
-	pw = getpwuid(getuid());
-	if (pw != NULL && checkshell(pw->pw_shell))
-		return (pw->pw_shell);
-	**/
+	pwShell, err := getUserShell(os.Getuid())
+	if err == nil && checkShell(pwShell) {
+		return pwShell
+	}
 
 	return "/bin/bash"
 }
