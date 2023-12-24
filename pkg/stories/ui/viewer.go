@@ -1,4 +1,4 @@
-package stories
+package ui
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/stories"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -16,7 +17,7 @@ import (
 // A Viewer shows a single story.
 type Viewer struct {
 	util.Lifetime
-	config  Config
+	config  stories.Config
 	render  *taro.Renderer
 	screen  mux.Screen
 	capture *tty.State
@@ -85,7 +86,7 @@ func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 func NewViewer(
 	ctx context.Context,
 	screen mux.Screen,
-	config Config,
+	config stories.Config,
 ) *taro.Program {
 	viewer := &Viewer{
 		Lifetime: util.NewLifetime(ctx),

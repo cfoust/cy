@@ -2,8 +2,6 @@ package stories
 
 import (
 	"context"
-	"sort"
-	"strings"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
@@ -25,7 +23,7 @@ type InitFunc func(context.Context) mux.Screen
 type Story struct {
 	Name   string
 	Init   InitFunc
-	config Config
+	Config Config
 }
 
 var Stories = make(map[string]Story)
@@ -34,27 +32,8 @@ func Register(name string, init InitFunc, config Config) {
 	Stories[name] = Story{
 		Name:   name,
 		Init:   init,
-		config: config,
+		Config: config,
 	}
-}
-
-func Initialize(ctx context.Context, filter string) (*taro.Program, error) {
-	filteredStories := make([]Story, 0)
-	for _, story := range Stories {
-		if !strings.HasPrefix(story.Name, filter) {
-			continue
-		}
-		filteredStories = append(filteredStories, story)
-	}
-
-	sort.SliceStable(filteredStories, func(i, j int) bool {
-		return filteredStories[i].Name < filteredStories[j].Name
-	})
-
-	return NewBrowser(
-		ctx,
-		filteredStories,
-	), nil
 }
 
 func Send(s mux.Screen, msgs ...interface{}) {
