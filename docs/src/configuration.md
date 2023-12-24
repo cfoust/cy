@@ -4,7 +4,7 @@ All of `cy`'s behavior is determined using a programming language called [Janet]
 
 Janet looks like this:
 
-```
+```janet
 (print "hello world!")
 ```
 
