@@ -13,6 +13,13 @@ from pathlib import Path
 
 STORY_REGEX = re.compile("{{story ((\w+).)?(png|gif) (.+)}}")
 
+COMMON = """
+Set FontSize 15
+Set Width 1300
+Set Height 650
+Set Padding 0
+"""
+
 if __name__ == '__main__':
     args = sys.argv
     if len(args) > 1 and args[1] == "supports":
@@ -91,8 +98,8 @@ if __name__ == '__main__':
         script = ""
         if filename.endswith(".gif"):
             script = f"""
+{COMMON}
 Output {filename}
-Set Padding 0
 Set Framerate 23
 Set PlaybackSpeed 0.5
 Hide
@@ -104,7 +111,7 @@ Sleep 8s
 """
         elif filename.endswith(".png"):
             script = f"""
-Set Padding 0
+{COMMON}
 Hide
 Type "./storybook -s {command} && clear"
 Enter

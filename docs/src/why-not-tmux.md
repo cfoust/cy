@@ -1,6 +1,6 @@
 # Why not tmux?
 
-`cy` shares some basic similarities with `tmux`. For example, it runs as a daemon, so its state is preserved across sessions. But for `cy` to be a compelling alternative, it has to do more than just be written in a fashionable systems programming language.
+`cy` shares some basic similarities with `tmux`. For example, it runs as a daemon, so its state is preserved across sessions. But for `cy` to be a compelling alternative, it has to do more than just mimic `tmux`'s functionality and be written in a fashionable systems programming language.
 
 `cy` improves on `tmux` in three main ways:
 
@@ -20,7 +20,9 @@ Without trying it for yourself, it's hard to appreciate just how useful it is to
 
 ## Interface
 
-`cy` does not have windows and panes like `tmux` does. It displays one terminal session at a time, and by default that session is centered on your screen with a fixed number of columns. This lets you concentrate on one "pane" at a time.
+{{story png placeholder}}
+
+`cy` does not (yet) have windows and panes like `tmux` does. It displays one terminal session at a time, and by default that session is centered on your screen with a fixed number of columns. This lets you concentrate on one "pane" at a time.
 
 To some, this may seem like a surprising decision. The predominant abstraction for terminal multiplexers for at least a couple of decades has been the familiar pattern of vertical and horizontal splits.
 
@@ -30,7 +32,7 @@ This is practical because `cy` makes it easy to switch between panes. It emphasi
 
 As of writing, `cy` also lacks `tmux`'s status line. Because there is no notion of windows, there is nothing akin to the tab-like behavior that `tmux` encourages (and thus little immediate need to display it.)
 
-It is worth stating that neither of these are principled omissions. My intent with `cy` is to, sooner or later, address these use cases in a flexible way.
+Neither of these are principled omissions. My intent with `cy` is to, sooner or later, address these use cases in a flexible way.
 
 ## Configuration
 
