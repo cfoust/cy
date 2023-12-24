@@ -16,7 +16,7 @@ var BottomRight stories.InitFunc = func(ctx context.Context) mux.Screen {
 	return fuzzy.NewFuzzy(
 		ctx,
 		pokemon,
-		fuzzy.WithInline(location),
+		fuzzy.WithInline(location, geom.DEFAULT_SIZE),
 	)
 }
 
@@ -24,7 +24,7 @@ var TopLeft stories.InitFunc = func(ctx context.Context) mux.Screen {
 	return fuzzy.NewFuzzy(
 		ctx,
 		pokemon,
-		fuzzy.WithInline(geom.Size{}),
+		fuzzy.WithInline(geom.Size{}, geom.DEFAULT_SIZE),
 	)
 }
 
@@ -32,7 +32,7 @@ var Search stories.InitFunc = func(ctx context.Context) mux.Screen {
 	f := fuzzy.NewFuzzy(
 		ctx,
 		pokemon,
-		fuzzy.WithInline(geom.Size{}),
+		fuzzy.WithInline(geom.Size{}, geom.DEFAULT_SIZE),
 	)
 
 	stories.Send(f, "Pid")
