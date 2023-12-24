@@ -47,11 +47,7 @@ func (v *Viewer) View(state *tty.State) {
 	}
 
 	storySize := contents.Image.Size()
-	storyPos := geom.Vec2{
-		R: (size.R / 2) - (storySize.R / 2),
-		C: (size.C / 2) - (storySize.C / 2),
-	}
-
+	storyPos := size.Center(storySize)
 	state.Image.Clear(geom.Rect{
 		Position: storyPos,
 		Size:     storySize,

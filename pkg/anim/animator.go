@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/taro"
@@ -31,7 +30,7 @@ func (a *Animator) waitFrame() tea.Msg {
 }
 
 func (a *Animator) View(state *tty.State) {
-	image.Copy(geom.Size{}, state.Image, a.state)
+	image.Copy(state.Image.Size().Center(a.state.Size()), state.Image, a.state)
 	state.CursorVisible = false
 }
 

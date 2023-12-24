@@ -30,6 +30,15 @@ func (v Vec2) Add(other Vec2) Vec2 {
 	}
 }
 
+// Calculate the position that centers the rectangle described by `other`
+// inside of the rectangle described by `v`.
+func (v Vec2) Center(other Vec2) Vec2 {
+	return Vec2{
+		R: (v.R / 2) - (other.R / 2),
+		C: (v.C / 2) - (other.C / 2),
+	}
+}
+
 func (v Vec2) Clamp(min, max Vec2) Vec2 {
 	return Vec2{
 		R: Clamp(v.R, min.R, max.R),

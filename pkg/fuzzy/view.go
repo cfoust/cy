@@ -87,11 +87,7 @@ func (f *Fuzzy) renderPreview(state *tty.State) {
 	}
 
 	previewSize := contents.Size()
-	previewPos := geom.Vec2{
-		R: (size.R / 2) - (previewSize.R / 2),
-		C: (size.C / 2) - (previewSize.C / 2),
-	}
-
+	previewPos := size.Center(previewSize)
 	state.Image.Clear(geom.Rect{
 		Position: previewPos,
 		Size:     previewSize,

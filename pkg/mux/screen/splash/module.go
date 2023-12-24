@@ -31,7 +31,13 @@ func (s *Splash) Init() taro.Cmd {
 }
 
 func (s *Splash) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
-	switch msg.(type) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		s.bg.Resize(geom.Size{
+			R: msg.Height,
+			C: msg.Width,
+		})
+		return s, nil
 	case taro.ScreenUpdate:
 		return s, taro.WaitScreens(s.Ctx(), s.bg)
 	case taro.KeyMsg:
@@ -53,14 +59,7 @@ func (s *Splash) View(state *tty.State) {
 
 	bg := s.bg.State().Image
 	bgSize := bg.Size()
-	image.Copy(
-		geom.Vec2{
-			R: (size.R / 2) - (bgSize.R / 2),
-			C: (size.C / 2) - (bgSize.C / 2),
-		},
-		state.Image,
-		bg,
-	)
+	image.Copy(size.Center(bgSize), state.Image, bg)
 
 	boxContents := lipgloss.JoinVertical(
 		lipgloss.Center,
@@ -98,14 +97,7 @@ func (s *Splash) View(state *tty.State) {
 		boxText,
 	)
 
-	image.Copy(
-		geom.Vec2{
-			R: (size.R / 2) - (boxSize.R / 2),
-			C: (size.C / 2) - (boxSize.C / 2),
-		},
-		state.Image,
-		box,
-	)
+	image.Copy(size.Center(boxSize), state.Image, box)
 }
 
 func New(ctx context.Context, size geom.Size, shouldAnimate bool) *taro.Program {
@@ -126,8 +118,8 @@ func New(ctx context.Context, size geom.Size, shouldAnimate bool) *taro.Program 
 				)
 			},
 		)
-		bg.Resize(size)
 	}
+	bg.Resize(size)
 
 	return taro.New(ctx, &Splash{
 		Lifetime: lifetime,
