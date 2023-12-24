@@ -297,11 +297,11 @@ func WithResult(result chan<- interface{}) Setting {
 }
 
 // Displays Fuzzy as a small window at this location on the screen.
-func WithInline(location geom.Vec2) Setting {
+func WithInline(location, size geom.Vec2) Setting {
 	return func(ctx context.Context, f *Fuzzy) {
 		f.isInline = true
 		f.location = location
-		f.isUp = f.location.R > (f.size.R / 2)
+		f.isUp = f.location.R > (size.R / 2)
 	}
 }
 

@@ -65,7 +65,10 @@ func (i *InputModule) Find(
 		),
 		fuzzy.WithResult(result),
 		fuzzy.WithPrompt(params.Prompt),
-		fuzzy.WithInline(geom.Vec2{R: cursor.Y, C: cursor.X}),
+		fuzzy.WithInline(
+			geom.Vec2{R: cursor.Y, C: cursor.X},
+			state.Image.Size(),
+		),
 	}
 
 	if (params.Animated == nil || (*params.Animated) == true) && shouldAnimate {
