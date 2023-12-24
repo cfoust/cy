@@ -38,7 +38,7 @@ Neither of these are principled omissions. My intent with `cy` is to, sooner or 
 
 Anyone who has tried to do anything sophisticated with `tmux` runs into a familiar set of problems:
 
-1. `tmux` uses a hacky, primitive programming language for configuration, which makes it hard to do anything interesting without running an external command.
+1. `tmux`'s configuration language is hacky and primitive, which makes it hard to do anything interesting without running an external command.
 2. Its key binding system is limited.
 
 `cy` allows you to bind arbitrary sequences of keys to [Janet](https://janet-lang.org/) functions. It even supports binding [regexes](./keybindings.md#regexes), matches for which will be passed to the function you bound.
