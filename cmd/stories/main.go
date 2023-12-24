@@ -15,6 +15,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/stream/cli"
 	"github.com/cfoust/cy/pkg/mux/stream/renderer"
 	"github.com/cfoust/cy/pkg/stories"
+	"github.com/cfoust/cy/pkg/stories/ui"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/alecthomas/kong"
@@ -93,13 +94,13 @@ func main() {
 		if !ok {
 			panic(fmt.Errorf("story %s not found", CLI.Single))
 		}
-		screen = stories.NewViewer(
+		screen = ui.NewViewer(
 			ctx,
 			story.Init(ctx),
 			stories.Config{},
 		)
 	} else {
-		screen, err = stories.Initialize(ctx, CLI.Prefix)
+		screen, err = ui.New(ctx, CLI.Prefix)
 		if err != nil {
 			panic(err)
 		}

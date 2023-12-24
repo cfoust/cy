@@ -4,79 +4,22 @@ import (
 	"context"
 	_ "embed"
 
-	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/mux/screen/placeholder"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/glamour"
 )
-
-//go:embed example.md
-var EXAMPLE_MD string
-
-type Markdown struct {
-	render *taro.Renderer
-}
-
-var _ taro.Model = (*Markdown)(nil)
-
-func (s *Markdown) Init() tea.Cmd {
-	return nil
-}
-
-func (s *Markdown) View(state *tty.State) {
-	text, _ := glamour.Render(EXAMPLE_MD, "dark")
-	s.render.RenderAt(
-		state.Image,
-		0,
-		0,
-		text,
-	)
-}
-
-func (s *Markdown) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
-	return s, nil
-}
 
 func createInitial(size geom.Size) image.Image {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	innerLayers := screen.NewLayers()
-	innerLayers.NewLayer(
-		ctx,
-		taro.New(ctx, &Markdown{
-			render: taro.NewRenderer(),
-		}),
-		screen.PositionTop,
-		screen.WithOpaque,
-		screen.WithInteractive,
-	)
-	margins := screen.NewMargins(ctx, innerLayers)
-
-	outerLayers := screen.NewLayers()
-	frame := frames.NewFramer(ctx, frames.RandomFrame())
-	outerLayers.NewLayer(
-		ctx,
-		frame,
-		screen.PositionTop,
-	)
-
-	outerLayers.NewLayer(
-		ctx,
-		margins,
-		screen.PositionTop,
-		screen.WithInteractive,
-		screen.WithOpaque,
-	)
-
+	outerLayers := screen.AddMargins(ctx, placeholder.New(ctx))
 	outerLayers.Resize(size)
-
 	return outerLayers.State().Image
 }
 

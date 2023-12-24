@@ -1,4 +1,4 @@
-package stories
+package ui
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	S "github.com/cfoust/cy/pkg/stories"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -45,13 +46,13 @@ type loadedStory struct {
 	lifetime util.Lifetime
 }
 
-func (s *Browser) loadStory(story Story) tea.Cmd {
+func (s *Browser) loadStory(story S.Story) tea.Cmd {
 	size := s.size
 	size.C -= 30
 	return func() tea.Msg {
 		lifetime := util.NewLifetime(s.Ctx())
 		screen := story.Init(lifetime.Ctx())
-		config := story.config
+		config := story.Config
 		if !config.Size.IsZero() {
 			screen.Resize(config.Size)
 		}
@@ -103,7 +104,7 @@ func (s *Browser) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 		switch msg := msg.Msg.(type) {
 		case fuzzy.SelectedEvent:
-			if story, ok := msg.Option.Result.(Story); ok {
+			if story, ok := msg.Option.Result.(S.Story); ok {
 				if s.viewer != nil {
 					s.viewer.Cancel()
 					s.viewerLifetime.Cancel()
@@ -132,7 +133,7 @@ func (s *Browser) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 func NewBrowser(
 	ctx context.Context,
-	stories []Story,
+	stories []S.Story,
 ) *taro.Program {
 	options := make([]fuzzy.Option, 0)
 	for _, story := range stories {

@@ -3,6 +3,7 @@ package screen
 import (
 	"context"
 
+	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
@@ -207,4 +208,34 @@ func NewMargins(ctx context.Context, screen Screen) *Margins {
 	go margins.poll(ctx)
 
 	return margins
+}
+
+func AddMargins(ctx context.Context, screen Screen) mux.Screen {
+	innerLayers := NewLayers()
+	innerLayers.NewLayer(
+		ctx,
+		screen,
+		PositionTop,
+		WithOpaque,
+		WithInteractive,
+	)
+	margins := NewMargins(ctx, innerLayers)
+
+	outerLayers := NewLayers()
+	frame := frames.NewFramer(ctx, frames.RandomFrame())
+	outerLayers.NewLayer(
+		ctx,
+		frame,
+		PositionTop,
+	)
+
+	outerLayers.NewLayer(
+		ctx,
+		margins,
+		PositionTop,
+		WithInteractive,
+		WithOpaque,
+	)
+
+	return outerLayers
 }

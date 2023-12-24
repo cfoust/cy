@@ -7,7 +7,7 @@ description = "A next-generation terminal multiplexer that records everything yo
 authors = ["Caleb Foust"]
 
 [output.html]
-default-theme = "ayu"
+default-theme = "light"
 preferred-dark-theme = "ayu"
 site-url = "/cy/"
 git-repository-url = "https://github.com/cfoust/cy"

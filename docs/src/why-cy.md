@@ -1,1 +1,1 @@
-# Why cy?
+# Philosophy
