@@ -1,31 +1,44 @@
 # Why not tmux?
 
-In order for `cy` to be a compelling alternative to `tmux`, it has to do more than just be written in a fashionable systems programming language.
+`cy` shares some basic similarities with `tmux`. For example, it runs as a daemon, so its state is preserved across sessions. But for `cy` to be a compelling alternative, it has to do more than just be written in a fashionable systems programming language.
 
 `cy` improves on `tmux` in three main ways:
 
 1. **Session playback**: `cy` records your terminal sessions and lets you play back and search through them.
-1. **Interface**: `cy` has a simple, flexible layout designed for use on large screens.
+1. **Interface**: `cy` has a simple layout designed for use on large screens.
 1. **Configuration**: `cy` uses a real programming language, [Janet](https://janet-lang.org/), for configuration.
 
 ## Session playback
 
-If you use `tmux`, you might be familiar with `copy-mode`, which allows you to view lines from [the scrollback buffer](https://unix.stackexchange.com/q/145050). This is nice when you're using a program like `bash`, where you issue commands that produce output. Yet by definition, `copy-mode` ceases to work when you use a program with any interactivity.
+If you use `tmux`, you might be familiar with `copy-mode`, which allows you to view lines from [the scrollback buffer](https://unix.stackexchange.com/q/145050). This is nice when you're using a program like `bash`, where you issue commands that produce static output.
 
-`cy` takes this even further. By default, it records all of your terminal sessions, just like a screen recording. It has a mode called [replay mode](./replay-mode.md) in which you can seek, play back, and search through the history of a pane--regardless of the application that was running in it. `cy` [saves these recordings](replay-mode.md#recording-terminal-sessions-to-disk) and allows you to open them later at your leisure.
+But by definition, `copy-mode` ceases to be useful when you use a program with any interactivity, such as `vim`: you only see the last lines it left on the screen, and certainly cannot see what the screen used to look like.
+
+`cy` solves this problem by recording all of your terminal sessions. In [replay mode](./replay-mode.md) you can seek, play back, and search through the history of a pane--regardless of the application that was running in it. `cy` [saves these recordings to disk](replay-mode.md#recording-terminal-sessions-to-disk) and allows you to open them later at your leisure.
+
+Without trying it for yourself, it's hard to appreciate just how useful it is to be able to go back in time to replay everything you've ever seen or done in the terminal. `cy` aims to augment your memory in a way that other programs cannot.
 
 ## Interface
 
 `cy` does not have windows and panes like `tmux` does. It displays one terminal session at a time, and by default that session is centered on your screen with a fixed number of columns. This lets you concentrate on one "pane" at a time.
 
-To some, this may seem like a surprising decision. The predominant abstraction for terminal multiplexers for at least a couple of decades has been the familiar pattern of vertical and horizontal splits. Yet in my experience, particularly as someone who does all of their work in the terminal, I found that I spent more time fighting with this (or writing [plugins to remove it](https://github.com/cfoust/tmux-oakthree)) than benefiting from it. Rarely do I feel like I need to see more than one pane at a time.
+To some, this may seem like a surprising decision. The predominant abstraction for terminal multiplexers for at least a couple of decades has been the familiar pattern of vertical and horizontal splits.
 
-This is practical because `cy` makes it easy to switch between panes. It also contains a sensible, [filesystem-like abstraction](./groups-and-panes.md) for grouping panes together.
+Yet I found that I have spent more time fighting with this (or writing [plugins to remove it](https://github.com/cfoust/tmux-oakthree)) than benefiting from it. Rarely do I feel like I need to see more than one pane at a time.
 
-As of writing, `cy` also lacks `tmux`'s status line. Because there is no notion of windows, there is nothing akin to the tab-like behavior that `tmux` encourages (and thus, little immediate need to display it.)
+This is practical because `cy` makes it easy to switch between panes. It emphasizes using [fuzzy finding](./fuzzy-finding.md) (with previews!) so you can quickly find what you're looking for. It also contains a minimal, [filesystem-like abstraction](./groups-and-panes.md) for grouping panes together.
 
-It is worth stating that neither of these are principled omissions. My intent with `cy` is to, sooner or later, address these use cases in a flexible, configurable way.
+As of writing, `cy` also lacks `tmux`'s status line. Because there is no notion of windows, there is nothing akin to the tab-like behavior that `tmux` encourages (and thus little immediate need to display it.)
+
+It is worth stating that neither of these are principled omissions. My intent with `cy` is to, sooner or later, address these use cases in a flexible way.
 
 ## Configuration
 
-`tmux` uses a strange quasi-programming language for configuration, which makes it hard to do anything very sophisticated without running an external command. `cy` uses [Janet](https://janet-lang.org/).
+Anyone who has tried to do anything sophisticated with `tmux` runs into a familiar set of problems:
+
+1. `tmux` uses a hacky, primitive programming language for configuration, which makes it hard to do anything interesting without running an external command.
+2. Its key binding system is limited.
+
+`cy` allows you to bind arbitrary sequences of keys to [Janet](https://janet-lang.org/) functions. It even supports binding [regexes](./keybindings.md#regexes), matches for which will be passed to the function you bound.
+
+You can also create bindings that apply only in a [specific pane or group of panes](./groups-and-panes.md#groups).
