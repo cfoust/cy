@@ -232,7 +232,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 	}
 
 	modules := map[string]interface{}{
-		"cmd": &api.Cmd{
+		"cmd": &api.CmdModule{
 			Lifetime:    util.NewLifetime(c.Ctx()),
 			Tree:        c.tree,
 			ReplayBinds: c.replayBinds,

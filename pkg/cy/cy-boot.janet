@@ -24,20 +24,20 @@
   ```Create a new shell initialized in the working directory `path`.```
   [&opt path]
   (default path "")
-  (cmd/new shells path))
+  (cmd/new shells :path path))
 
 (defn
   shell/attach
   ```Create a new shell initialized in the working directory `path` and attach to it.```
   [&opt path]
   (default path "")
-  (pane/attach (cmd/new shells path)))
+  (pane/attach (cmd/new shells :path path)))
 
 (key/def
   action/new-shell
   "create a new shell"
   (def path (cmd/path (pane/current)))
-  (def shell (cmd/new shells path :name (path/base path)))
+  (def shell (cmd/new shells :path path :name (path/base path)))
   (pane/attach shell))
 
 (key/def
@@ -47,10 +47,10 @@
   (def project (group/new projects :name (path/base path)))
   (def editor
     (cmd/new project
-             path
+             :path path
              :name "editor"
              :command (os/getenv "EDITOR" "vim")))
-  (def shell (cmd/new project path :name "shell"))
+  (def shell (cmd/new project :path path :name "shell"))
   (pane/attach editor))
 
 (key/def

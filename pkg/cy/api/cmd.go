@@ -18,22 +18,28 @@ type CmdParams struct {
 	Command string
 	Args    []string
 	Name    string
+	Path    string
 }
 
-type Cmd struct {
+type CmdModule struct {
 	Lifetime    util.Lifetime
 	Tree        *tree.Tree
 	ReplayBinds *bind.BindScope
 }
 
-func (c *Cmd) New(
+func (c *CmdModule) New(
 	user interface{},
-	groupId tree.NodeID,
-	path string,
+	groupId *janet.Value,
 	cmdParams *janet.Named[CmdParams],
 ) (tree.NodeID, error) {
-	command := "/bin/bash"
+	defer groupId.Free()
 
+	group, err := resolveGroup(c.Tree, groupId)
+	if err != nil {
+		return 0, err
+	}
+
+	command := "/bin/bash"
 	if client, ok := user.(Client); ok {
 		defaultShell, _ := client.Get(cyParams.ParamDefaultShell)
 		if value, ok := defaultShell.(string); ok {
@@ -44,11 +50,6 @@ func (c *Cmd) New(
 	values := cmdParams.WithDefault(CmdParams{
 		Command: command,
 	})
-
-	group, ok := c.Tree.GroupById(groupId)
-	if !ok {
-		return 0, fmt.Errorf("node not found: %d", groupId)
-	}
 
 	param, _ := group.Params().Get(params.ParamDataDirectory)
 	dataDir, ok := param.(string)
@@ -61,7 +62,7 @@ func (c *Cmd) New(
 		stream.CmdOptions{
 			Command:   values.Command,
 			Args:      values.Args,
-			Directory: path,
+			Directory: values.Path,
 		},
 		dataDir,
 		c.ReplayBinds,
@@ -78,10 +79,12 @@ func (c *Cmd) New(
 	return pane.Id(), nil
 }
 
-func (c *Cmd) Path(id tree.NodeID) (*string, error) {
-	pane, ok := c.Tree.PaneById(id)
-	if !ok {
-		return nil, fmt.Errorf("pane not found: %d", id)
+func (c *CmdModule) Path(id *janet.Value) (*string, error) {
+	defer id.Free()
+
+	pane, err := resolvePane(c.Tree, id)
+	if err != nil {
+		return nil, err
 	}
 
 	r, ok := pane.Screen().(*replayable.Replayable)

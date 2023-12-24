@@ -77,3 +77,12 @@ var _ janet.Documented = (*ViewportModule)(nil)
 func (i *ViewportModule) Documentation() string {
 	return DOCS_VIEWPORT
 }
+
+//go:embed docs-cmd.md
+var DOCS_CMD string
+
+var _ janet.Documented = (*CmdModule)(nil)
+
+func (i *CmdModule) Documentation() string {
+	return DOCS_CMD
+}
