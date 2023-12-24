@@ -14,34 +14,6 @@ type KeyModule struct {
 	ReplayBinds *bind.BindScope
 }
 
-var (
-	KEYWORD_ROOT   = janet.Keyword("root")
-	KEYWORD_REPLAY = janet.Keyword("replay")
-
-	KEYWORD_RE = janet.Keyword("re")
-)
-
-func (k *KeyModule) resolveGroup(target *janet.Value) (*tree.Group, error) {
-	// first try keyword
-	err := target.Unmarshal(&KEYWORD_ROOT)
-	if err == nil {
-		return k.Tree.Root(), nil
-	}
-
-	// otherwise, node ID
-	var id tree.NodeID
-	if err := target.Unmarshal(&id); err != nil {
-		return nil, err
-	}
-
-	group, ok := k.Tree.GroupById(id)
-	if !ok {
-		return nil, fmt.Errorf("group not found: %d", id)
-	}
-
-	return group, nil
-}
-
 type regexKey struct {
 	_       struct{} `janet:"tuple"`
 	Type    janet.Keyword
@@ -89,9 +61,9 @@ func (k *KeyModule) Bind(target *janet.Value, sequence *janet.Value, callback *j
 	defer sequence.Free()
 
 	var scope *bind.BindScope
-	group, err := k.resolveGroup(target)
+	node, err := resolveNode(k.Tree, target)
 	if err == nil {
-		scope = group.Binds()
+		scope = node.Binds()
 	} else {
 		replayErr := target.Unmarshal(&KEYWORD_REPLAY)
 		if replayErr != nil {

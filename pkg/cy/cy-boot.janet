@@ -1,7 +1,7 @@
 (def prefix "ctrl+a")
 
-(def projects (group/new (tree/root) :name "projects"))
-(def shells (group/new (tree/root) :name "shells"))
+(def projects (group/new :root :name "projects"))
+(def shells (group/new :root :name "shells"))
 
 (def- actions @[])
 
@@ -99,7 +99,7 @@
 (key/def
   action/jump-pane
   "jump to a pane"
-  (as?-> (group/leaves (tree/root)) _
+  (as?-> (group/leaves :root) _
          (map |(tuple (tree/path $) [:node [$]] $) _)
          (input/find _ :prompt "search: pane")
          (pane/attach _)))
@@ -159,7 +159,7 @@
   (as?-> (path/glob (path/join [(cy/get :data-dir) "*.borg"])) _
          (map |(tuple $ [:replay [$]] $) _)
          (input/find _ :prompt "search: log file")
-         (replay/open (tree/root) _)
+         (replay/open :root _)
          (pane/attach _)))
 
 (key/bind :root [prefix "j"] action/new-shell)

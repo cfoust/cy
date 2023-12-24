@@ -16,13 +16,15 @@ type GroupModule struct {
 }
 
 func (g *GroupModule) New(
-	parentId tree.NodeID,
+	parentId *janet.Value,
 	params *janet.Named[NodeParams],
 ) (tree.NodeID, error) {
+	defer parentId.Free()
 	values := params.Values()
-	group, ok := g.Tree.GroupById(parentId)
-	if !ok {
-		return 0, fmt.Errorf("node not found: %d", parentId)
+
+	group, err := resolveGroup(g.Tree, parentId)
+	if err != nil {
+		return 0, err
 	}
 
 	newGroup := group.NewGroup()
@@ -33,10 +35,12 @@ func (g *GroupModule) New(
 	return newGroup.Id(), nil
 }
 
-func (g *GroupModule) Children(parentId tree.NodeID) ([]tree.NodeID, error) {
-	group, ok := g.Tree.GroupById(parentId)
-	if !ok {
-		return nil, fmt.Errorf("node not found: %d", parentId)
+func (g *GroupModule) Children(parentId *janet.Value) ([]tree.NodeID, error) {
+	defer parentId.Free()
+
+	group, err := resolveGroup(g.Tree, parentId)
+	if err != nil {
+		return nil, err
 	}
 
 	nodes := make([]tree.NodeID, 0)
@@ -46,16 +50,19 @@ func (g *GroupModule) Children(parentId tree.NodeID) ([]tree.NodeID, error) {
 	return nodes, nil
 }
 
-func (g *GroupModule) Leaves(parentId tree.NodeID) ([]tree.NodeID, error) {
-	group, ok := g.Tree.GroupById(parentId)
-	if !ok {
-		return nil, fmt.Errorf("node not found: %d", parentId)
+func (g *GroupModule) Leaves(parentId *janet.Value) ([]tree.NodeID, error) {
+	defer parentId.Free()
+
+	group, err := resolveGroup(g.Tree, parentId)
+	if err != nil {
+		return nil, err
 	}
 
 	nodes := make([]tree.NodeID, 0)
 	for _, child := range group.Leaves() {
 		nodes = append(nodes, child.Id())
 	}
+
 	return nodes, nil
 }
 
@@ -63,18 +70,20 @@ type PaneModule struct {
 	Tree *tree.Tree
 }
 
-func (p *PaneModule) Attach(context interface{}, id tree.NodeID) error {
+func (p *PaneModule) Attach(context interface{}, id *janet.Value) error {
+	defer id.Free()
+
 	client, ok := context.(Client)
 	if !ok {
 		return fmt.Errorf("missing client context")
 	}
 
-	node, ok := p.Tree.NodeById(id)
-	if !ok {
-		return fmt.Errorf("node not found: %d", id)
+	pane, err := resolvePane(p.Tree, id)
+	if err != nil {
+		return err
 	}
 
-	return client.Attach(node)
+	return client.Attach(pane)
 }
 
 func (p *PaneModule) Current(context interface{}) *tree.NodeID {
@@ -105,32 +114,39 @@ func (t *TreeModule) Renames() map[string]string {
 
 var _ janet.Renamable = (*TreeModule)(nil)
 
-func (t *TreeModule) Group(id tree.NodeID) bool {
-	_, ok := t.Tree.GroupById(id)
-	return ok
+func (t *TreeModule) Group(id *janet.Value) bool {
+	defer id.Free()
+	_, err := resolveGroup(t.Tree, id)
+	return err == nil
 }
 
-func (t *TreeModule) Pane(id tree.NodeID) bool {
-	_, ok := t.Tree.PaneById(id)
-	return ok
+func (t *TreeModule) Pane(id *janet.Value) bool {
+	defer id.Free()
+	_, err := resolvePane(t.Tree, id)
+	return err == nil
 }
 
-func (t *TreeModule) SetName(id tree.NodeID, name string) {
-	if id == t.Tree.Root().Id() {
-		return
+func (t *TreeModule) SetName(id *janet.Value, name string) error {
+	defer id.Free()
+
+	node, err := resolveNode(t.Tree, id)
+	if err != nil {
+		return err
 	}
 
-	node, ok := t.Tree.NodeById(id)
-	if !ok {
-		return
+	if node.Id() == t.Tree.Root().Id() {
+		return fmt.Errorf("cannot rename :root")
 	}
 
 	node.SetName(name)
+	return nil
 }
 
-func (t *TreeModule) Name(id tree.NodeID) *string {
-	node, ok := t.Tree.NodeById(id)
-	if !ok {
+func (t *TreeModule) Name(id *janet.Value) *string {
+	defer id.Free()
+
+	node, err := resolveNode(t.Tree, id)
+	if err != nil {
 		return nil
 	}
 
@@ -138,15 +154,17 @@ func (t *TreeModule) Name(id tree.NodeID) *string {
 	return &name
 }
 
-func (t *TreeModule) Path(id tree.NodeID) *string {
-	node, ok := t.Tree.NodeById(id)
-	if !ok {
-		return nil
+func (t *TreeModule) Path(id *janet.Value) (*string, error) {
+	defer id.Free()
+
+	node, err := resolveNode(t.Tree, id)
+	if err != nil {
+		return nil, err
 	}
 
 	path := t.Tree.PathTo(node)
 	if path == nil {
-		return nil
+		return nil, fmt.Errorf("could not find path to node")
 	}
 
 	var result string
@@ -159,26 +177,35 @@ func (t *TreeModule) Path(id tree.NodeID) *string {
 		result += fmt.Sprintf("/%s", node.Name())
 	}
 
-	return &result
+	return &result, nil
 }
 
-func (t *TreeModule) Parent(id tree.NodeID) *tree.NodeID {
-	node, ok := t.Tree.NodeById(id)
-	if !ok {
-		return nil
+func (t *TreeModule) Parent(id *janet.Value) (*tree.NodeID, error) {
+	defer id.Free()
+
+	node, err := resolveNode(t.Tree, id)
+	if err != nil {
+		return nil, err
 	}
 
 	path := t.Tree.PathTo(node)
 	if len(path) <= 1 {
-		return nil
+		return nil, fmt.Errorf("node has no parent")
 	}
 
 	parentId := path[len(path)-2].Id()
-	return &parentId
+	return &parentId, nil
 }
 
-func (t *TreeModule) Kill(id tree.NodeID) error {
-	return t.Tree.RemoveNode(id)
+func (t *TreeModule) Kill(id *janet.Value) error {
+	defer id.Free()
+
+	node, err := resolveNode(t.Tree, id)
+	if err != nil {
+		return err
+	}
+
+	return t.Tree.RemoveNode(node.Id())
 }
 
 func (t *TreeModule) Root() tree.NodeID {
