@@ -97,4 +97,4 @@
 
   (case status
     :value result
-    :error (go/stacktrace (fiber/current) result 2)))
+    :error (error (go/stacktrace (fiber/current) result 3))))
