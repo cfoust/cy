@@ -7,7 +7,6 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
-	R "github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/stories"
 	"github.com/cfoust/cy/pkg/taro"
@@ -16,7 +15,7 @@ import (
 	"github.com/xo/terminfo"
 )
 
-func createTestSession() []sessions.Event {
+func createStorySession() []sessions.Event {
 	return sessions.NewSimulator().
 		Add(
 			emu.LineFeedMode,
@@ -31,14 +30,14 @@ func createTestSession() []sessions.Event {
 }
 
 func createStory(ctx context.Context, events []sessions.Event, msgs ...interface{}) mux.Screen {
-	replay := R.New(ctx, events, bind.NewBindScope())
+	replay := New(ctx, events, bind.NewBindScope())
 
 	var realMsg tea.Msg
 	for _, msg := range msgs {
 		realMsg = msg
 		switch msg := msg.(type) {
-		case R.ActionType:
-			realMsg = R.ActionEvent{Type: msg}
+		case ActionType:
+			realMsg = ActionEvent{Type: msg}
 		case string:
 			keyMsgs := taro.KeysToMsg(msg)
 			if len(keyMsgs) == 1 {
@@ -54,8 +53,8 @@ func createStory(ctx context.Context, events []sessions.Event, msgs ...interface
 var SearchTimeForward stories.InitFunc = func(ctx context.Context) mux.Screen {
 	replay := createStory(
 		ctx,
-		createTestSession(),
-		R.ActionSearchForward,
+		createStorySession(),
+		ActionSearchForward,
 		"query",
 	)
 
@@ -65,8 +64,8 @@ var SearchTimeForward stories.InitFunc = func(ctx context.Context) mux.Screen {
 var Searching stories.InitFunc = func(ctx context.Context) mux.Screen {
 	replay := createStory(
 		ctx,
-		createTestSession(),
-		R.ActionSearchForward,
+		createStorySession(),
+		ActionSearchForward,
 		"query",
 		"enter",
 	)
@@ -77,11 +76,11 @@ var Searching stories.InitFunc = func(ctx context.Context) mux.Screen {
 var SearchProgress stories.InitFunc = func(ctx context.Context) mux.Screen {
 	replay := createStory(
 		ctx,
-		createTestSession(),
-		R.ActionSearchForward,
+		createStorySession(),
+		ActionSearchForward,
 		"query",
 		"enter",
-		R.ProgressEvent{Percent: 60},
+		ProgressEvent{Percent: 60},
 	)
 
 	return replay
@@ -90,8 +89,8 @@ var SearchProgress stories.InitFunc = func(ctx context.Context) mux.Screen {
 var JumpForward stories.InitFunc = func(ctx context.Context) mux.Screen {
 	replay := createStory(
 		ctx,
-		createTestSession(),
-		R.ActionSearchForward,
+		createStorySession(),
+		ActionSearchForward,
 		"3m",
 	)
 
@@ -101,8 +100,8 @@ var JumpForward stories.InitFunc = func(ctx context.Context) mux.Screen {
 var JumpBackward stories.InitFunc = func(ctx context.Context) mux.Screen {
 	replay := createStory(
 		ctx,
-		createTestSession(),
-		R.ActionSearchBackward,
+		createStorySession(),
+		ActionSearchBackward,
 		"3m",
 	)
 
@@ -112,8 +111,8 @@ var JumpBackward stories.InitFunc = func(ctx context.Context) mux.Screen {
 var SearchTimeBackward stories.InitFunc = func(ctx context.Context) mux.Screen {
 	replay := createStory(
 		ctx,
-		createTestSession(),
-		R.ActionSearchBackward,
+		createStorySession(),
+		ActionSearchBackward,
 		"query",
 	)
 
@@ -123,9 +122,9 @@ var SearchTimeBackward stories.InitFunc = func(ctx context.Context) mux.Screen {
 var SearchEmpty stories.InitFunc = func(ctx context.Context) mux.Screen {
 	replay := createStory(
 		ctx,
-		createTestSession(),
-		R.ActionBeginning,
-		R.ActionSearchForward,
+		createStorySession(),
+		ActionBeginning,
+		ActionSearchForward,
 		"asdf",
 		"enter",
 	)

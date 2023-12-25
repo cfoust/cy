@@ -7,4 +7,5 @@
 **.prof
 /cy
 /main
+/stories
 cy-build

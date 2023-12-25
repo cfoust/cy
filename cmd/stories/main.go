@@ -6,12 +6,10 @@ import (
 	"os"
 
 	"github.com/cfoust/cy/pkg/anim"
+	_ "github.com/cfoust/cy/pkg/cy"
 	"github.com/cfoust/cy/pkg/frames"
-	_ "github.com/cfoust/cy/pkg/fuzzy/stories"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
-	_ "github.com/cfoust/cy/pkg/mux/screen/replay/stories"
-	_ "github.com/cfoust/cy/pkg/mux/screen/splash/stories"
 	"github.com/cfoust/cy/pkg/mux/stream/cli"
 	"github.com/cfoust/cy/pkg/mux/stream/renderer"
 	"github.com/cfoust/cy/pkg/stories"
