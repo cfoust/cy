@@ -24,7 +24,6 @@ import (
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
-	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 	"github.com/xo/terminfo"
 )
@@ -136,12 +135,14 @@ func (c *Client) runAction(event bind.BindEvent) {
 		return
 	}
 
-	log.Error().Err(err).Msgf("failed to run callback")
-	c.toast.Error(fmt.Sprintf(
+	msg := fmt.Sprintf(
 		"an error occurred while running %+v: %s",
 		event.Sequence,
 		err.Error(),
-	))
+	)
+
+	c.cy.log.Error().Msg(msg)
+	c.toast.Error(msg)
 }
 
 func (c *Client) interact(out chan historyEvent) {

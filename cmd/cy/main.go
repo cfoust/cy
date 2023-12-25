@@ -28,8 +28,6 @@ func main() {
 			Summary: true,
 		}))
 
-	log.Logger = log.Logger.With().Int("pid", os.Getpid()).Logger()
-
 	var socketPath string
 
 	if envPath, ok := os.LookupEnv(CY_SOCKET_ENV); ok {
