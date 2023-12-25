@@ -30,13 +30,15 @@ Here are a few you can try:
 1. To increase the width by 5 columns, type `ctrl+a` `+`.
 1. To decrease the width by 5 columns, type `ctrl+a` `-`.
 
-## 3. Creating a new shell
+## 3. Entering replay mode
 
-To create a new pane, type `ctrl+a` `j`. This creates a shell in the current directory. You can return to the old one with `ctrl+l`; this cycles between all of the panes in the current **group**. In `cy`, a group is just a container for panes or other groups.
+## 4. Creating a new shell
+
+To create a new shell, type `ctrl+a` `j`. This creates a new pane running your default shell in your current working directory. You can return to the old one with `ctrl+l`; this cycles between all of the panes in the current **group**. In `cy`, a group is just a container for panes or other groups.
 
 Every **group** and **pane** in `cy` has a path, just like a file in a filesystem. The new shell you created has a path like `/shells/3`.
 
-The collection of all **groups** and **panes** is referred to as **the node tree**. When you first start `cy`, the node tree looks like this:
+The collection of all **groups** and **panes** is referred to as [**the node tree**](./groups-and-panes.md). When you first start `cy`, the node tree looks like this:
 
 ```
 / (group)
@@ -57,7 +59,7 @@ And here's how it looks after you create a new shell with `ctrl+a` `j`:
 
 When you are attached to a pane in the `/shells` group, `ctrl+l` cycles to the next sibling pane.
 
-## 4. Creating a new project
+## 5. Creating a new project
 
 Often, you will be doing some work in a single directory, like a Git repository. `cy` ships with a way to create a new group of panes for exactly this purpose. To use it, navigate to a directory and type `ctrl+a` `n`.
 
@@ -66,4 +68,33 @@ This creates two panes:
 1. `/projects/[base-name]/editor`: A pane running the program specified by the `$EDITOR` environment variable.
 1. `/projects/[base-name]/shell`: A pane running your default shell (or the value of `$SHELL`).
 
-`[base-name]` is the basename (a la the Bash `basename` command) of the directory in which you opened the project. For example, if you type `ctrl+a` `n` while in a pane with the working directory `/tmp/test-dir`, `[base-name]` would be `test-dir`.
+`[base-name]` is the basename (a la the Bash `basename` command) of the directory in which you opened the project.
+
+For example, if you type `ctrl+a` `n` while in a pane with the working directory `/tmp/test-dir`, `[base-name]` would be `test-dir` and the node tree would have the following structure:
+
+```
+/ (group)
+├── /shells (group)
+│   └── [...]
+├── /projects (group)
+│   └── /test-dir (group)
+│       ├── /editor (pane) <- attached here
+│       └── /shell (pane)
+└── /logs (pane)
+```
+
+## 6. Switching between shells and projects
+
+`cy` allows you to quickly jump between panes using a built-in fuzzy finder. Try it out by hitting `ctrl+a` `;`, which presents you with a list of all of the running panes.
+
+The controls should be familiar to you if you have ever used a fuzzy finder:
+
+- Typing filters the list.
+- Use `ctrl+j` and `ctrl+k` (or the arrow keys) to move up and down.
+- Press `enter` to make a selection.
+- Quit without making a choice by typing `ctrl+c` or `esc`.
+
+`cy` ships with a few different key bindings for choosing a pane:
+
+- `ctrl+a` `k`: Jump to a project.
+- `ctrl+a` `l`: Jump to a shell based on its current working directory.
