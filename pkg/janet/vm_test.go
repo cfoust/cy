@@ -286,14 +286,3 @@ func TestVM(t *testing.T) {
 		require.Error(t, err)
 	})
 }
-
-func TestStacktrace(t *testing.T) {
-	ctx := context.Background()
-	vm, err := New(ctx)
-	require.NoError(t, err)
-
-	err = vm.Execute(ctx, `(error "test")`)
-	require.Error(t, err)
-	t.Logf("%s", err.Error())
-	t.Fail()
-}
