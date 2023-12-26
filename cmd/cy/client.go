@@ -4,17 +4,16 @@ import (
 	"context"
 	"io"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
+	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/mux/stream/cli"
 
 	"github.com/muesli/termenv"
-	"github.com/rs/zerolog/log"
 	"golang.org/x/term"
 )
 
@@ -25,6 +24,7 @@ const (
 
 type ClientIO struct {
 	conn Connection
+	r    *io.PipeReader
 }
 
 func (c *ClientIO) Write(p []byte) (n int, err error) {
@@ -35,7 +35,18 @@ func (c *ClientIO) Write(p []byte) (n int, err error) {
 	return len(p), err
 }
 
-var _ io.Writer = (*ClientIO)(nil)
+func (c *ClientIO) Read(p []byte) (n int, err error) {
+	return c.r.Read(p)
+}
+
+func (c *ClientIO) Resize(size geom.Vec2) error {
+	return c.conn.Send(P.SizeMessage{
+		Rows:    size.R,
+		Columns: size.C,
+	})
+}
+
+var _ mux.Stream = (*ClientIO)(nil)
 
 // Do some sanity checks on a shell string.
 func checkShell(shell string) bool {
@@ -115,77 +126,36 @@ func poll(conn Connection) error {
 
 	conn.Send(*handshake)
 
-	writer := ClientIO{
+	r, w := io.Pipe()
+	writer := &ClientIO{
 		conn: conn,
+		r:    r,
 	}
 
-	output.AltScreen()
-	output.EnableMouseAllMotion()
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		return err
-	}
-	defer func() {
-		output.ExitAltScreen()
-		output.DisableMouseAllMotion()
-		term.Restore(int(os.Stdin.Fd()), oldState)
-	}()
-
-	go func() { _, _ = io.Copy(&writer, os.Stdin) }()
-
-	// Handle window size changes
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGWINCH)
 	go func() {
-		currentRows := 0
-		currentCols := 0
-
+		events := conn.Receive()
 		for {
 			select {
-			case <-context.Background().Done():
+			case <-conn.Ctx().Done():
 				return
-			case <-ch:
-				columns, rows, err := term.GetSize(int(os.Stdin.Fd()))
-				if err != nil {
-					log.Error().Err(err).Msg("failed to get terminal dimensions")
+			case packet := <-events:
+				if packet.Error != nil {
+					// TODO(cfoust): 12/25/23
 					return
 				}
 
-				if columns == currentCols && rows == currentRows {
-					continue
+				switch msg := packet.Contents.(type) {
+				case *P.OutputMessage:
+					w.Write(msg.Data)
+				case *P.CloseMessage:
+					// TODO(cfoust): 12/25/23
+					return
 				}
-
-				conn.Send(P.SizeMessage{
-					Rows:    rows,
-					Columns: columns,
-				})
-
-				currentCols = columns
-				currentRows = rows
 			}
 		}
 	}()
-	ch <- syscall.SIGWINCH
-	defer func() { signal.Stop(ch); close(ch) }()
 
-	events := conn.Receive()
-	for {
-		select {
-		case <-conn.Ctx().Done():
-			return nil
-		case packet := <-events:
-			if packet.Error != nil {
-				return packet.Error
-			}
-
-			switch msg := packet.Contents.(type) {
-			case *P.OutputMessage:
-				os.Stdout.Write(msg.Data)
-			case *P.CloseMessage:
-				return nil
-			}
-		}
-	}
+	return cli.Attach(conn.Ctx(), writer, os.Stdin, os.Stdout)
 }
 
 func connect(socketPath string) (Connection, error) {
