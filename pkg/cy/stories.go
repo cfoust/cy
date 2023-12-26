@@ -45,6 +45,8 @@ func init() {
 		Size: geom.DEFAULT_SIZE,
 		Input: []interface{}{
 			stories.Wait(time.Second),
+			"q",
+			stories.Wait(time.Second),
 			"test",
 		},
 	})

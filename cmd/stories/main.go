@@ -93,15 +93,9 @@ func main() {
 			panic(fmt.Errorf("story %s not found", CLI.Single))
 		}
 
-		storyScreen, err := story.Init(ctx)
-		if err != nil {
-			panic(fmt.Errorf("failed to create story %s: %s", CLI.Single, err.Error()))
-		}
-
 		screen = ui.NewViewer(
 			ctx,
-			storyScreen,
-			stories.Config{},
+			story,
 		)
 	} else {
 		screen, err = ui.New(ctx, CLI.Prefix)

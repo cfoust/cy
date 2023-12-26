@@ -41,39 +41,26 @@ func (s *Browser) View(state *tty.State) {
 	tty.Copy(geom.Vec2{C: 30}, state, viewState)
 }
 
-type loadedStory struct {
-	screen   *taro.Program
+type loadedViewer struct {
+	viewer   *taro.Program
 	lifetime util.Lifetime
 }
 
-func (s *Browser) loadStory(story S.Story) tea.Cmd {
+func (s *Browser) loadViewer(story S.Story) tea.Cmd {
 	size := s.size
 	size.C -= 30
 	return func() tea.Msg {
 		lifetime := util.NewLifetime(s.Ctx())
-
-		// TODO(cfoust): 12/25/23 handle story errors
-		screen, _ := story.Init(lifetime.Ctx())
-
-		config := story.Config
-		if !config.Size.IsZero() {
-			screen.Resize(config.Size)
-		}
-
-		viewer := NewViewer(
-			lifetime.Ctx(),
-			screen,
-			config,
-		)
+		viewer := NewViewer(lifetime.Ctx(), story)
 		viewer.Resize(size)
-		return loadedStory{screen: viewer, lifetime: lifetime}
+		return loadedViewer{viewer: viewer, lifetime: lifetime}
 	}
 }
 
 func (s *Browser) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case loadedStory:
-		s.viewer = msg.screen
+	case loadedViewer:
+		s.viewer = msg.viewer
 		s.viewerLifetime = msg.lifetime
 	case tea.WindowSizeMsg:
 		size := geom.Size{
@@ -116,7 +103,7 @@ func (s *Browser) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 				cmds = append(
 					cmds,
-					s.loadStory(story),
+					s.loadViewer(story),
 				)
 				return s, tea.Batch(cmds...)
 			}
