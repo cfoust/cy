@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"time"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
@@ -29,7 +30,6 @@ type Viewer struct {
 var _ taro.Model = (*Viewer)(nil)
 
 func (v *Viewer) Init() tea.Cmd {
-	//return taro.WaitScreens(v.Ctx(), v.screen)
 	return v.loadStory()
 }
 
@@ -39,41 +39,57 @@ type loadedScreen struct {
 	capture  *tty.State
 }
 
+type reloadScreen struct{}
+
 func (v *Viewer) loadStory() tea.Cmd {
 	story := v.story
+	config := story.Config
+	inputs := config.Input
 
-	//inputs := config.Input
-	//if len(inputs) > 0 {
-	//go func() {
-	//for _, input := range inputs {
-	//switch input := input.(type) {
-	//case stories.WaitEvent:
-	//time.Sleep(input.Duration)
-	//continue
-	//}
+	loaded := make(chan mux.Screen, 1)
 
-	//stories.Send(screen, input)
-	//}
-	//}()
-	//}
+	return tea.Batch(
+		func() tea.Msg {
+			lifetime := util.NewLifetime(v.Ctx())
+			screen, _ := story.Init(lifetime.Ctx())
 
-	return func() tea.Msg {
-		lifetime := util.NewLifetime(v.Ctx())
-		screen, _ := story.Init(lifetime.Ctx())
+			if !config.Size.IsZero() {
+				screen.Resize(config.Size)
+			}
 
-		config := story.Config
-		if !config.Size.IsZero() {
-			screen.Resize(config.Size)
-		}
+			msg := loadedScreen{screen: screen, lifetime: lifetime}
 
-		msg := loadedScreen{screen: screen, lifetime: lifetime}
+			if config.IsSnapshot {
+				msg.capture = screen.State()
+			}
 
-		if config.IsSnapshot {
-			msg.capture = screen.State()
-		}
+			loaded <- screen
 
-		return msg
-	}
+			return msg
+		},
+		// If the story includes any inputs, cycle through them and
+		// reload the screen when they're done
+		func() tea.Msg {
+			if len(inputs) == 0 {
+				return nil
+			}
+
+			screen := <-loaded
+
+			for _, input := range inputs {
+				switch input := input.(type) {
+				case stories.WaitEvent:
+					time.Sleep(input.Duration)
+					continue
+				}
+
+				stories.Send(screen, input)
+			}
+
+			return reloadScreen{}
+		},
+	)
+
 }
 
 func (v *Viewer) View(state *tty.State) {
@@ -110,9 +126,17 @@ func (v *Viewer) View(state *tty.State) {
 
 func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case reloadScreen:
+		return v, v.loadStory()
 	case loadedScreen:
+		if v.screen != nil {
+			v.screenLifetime.Cancel()
+			v.screen = nil
+		}
+
 		v.capture = msg.capture
 		v.screen = msg.screen
+		v.screenLifetime = msg.lifetime
 
 		if v.story.Config.Size.IsZero() {
 			v.screen.Resize(v.size)
