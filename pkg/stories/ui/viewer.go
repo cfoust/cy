@@ -6,6 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/stories"
@@ -79,10 +80,6 @@ func (v *Viewer) loadStory() tea.Cmd {
 		}
 
 		keys := NewKeys(lifetime.Ctx())
-		keys.Resize(geom.Size{
-			R: 26,
-			C: 8,
-		})
 		msg := loadedScreen{
 			lifetime: lifetime,
 			screen:   screen,
@@ -96,6 +93,13 @@ func (v *Viewer) loadStory() tea.Cmd {
 		return msg
 	}
 
+}
+
+const KEY_COLUMNS = 8
+
+func (v *Viewer) showKeys() bool {
+	config := v.story.Config
+	return config.Size.IsZero() && len(config.Input) > 0
 }
 
 func (v *Viewer) View(state *tty.State) {
@@ -126,10 +130,36 @@ func (v *Viewer) View(state *tty.State) {
 		Position: storyPos,
 		Size:     storySize,
 	})
-	tty.Copy(storyPos, state, contents)
-	state.CursorVisible = contents.CursorVisible
 
-	tty.Copy(geom.Size{}, state, v.keys.State())
+	if !v.showKeys() {
+		tty.Copy(storyPos, state, contents)
+		return
+	}
+
+	tty.Copy(geom.Size{C: KEY_COLUMNS}, state, contents)
+	image.Copy(geom.Size{}, state.Image, v.keys.State().Image)
+}
+
+func (v *Viewer) resize(size geom.Size) {
+	config := v.story.Config
+	if !v.showKeys() {
+		if !config.Size.IsZero() {
+			return
+		}
+
+		v.screen.Resize(size)
+		return
+	}
+
+	keySize := geom.Size{
+		R: v.size.R,
+		C: KEY_COLUMNS,
+	}
+	v.keys.Resize(keySize)
+	v.screen.Resize(geom.Size{
+		R: v.size.R,
+		C: geom.Max(0, v.size.C-keySize.C),
+	})
 }
 
 func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
@@ -146,10 +176,7 @@ func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		v.screen = msg.screen
 		v.keys = msg.keys
 		v.screenLifetime = msg.lifetime
-
-		if v.story.Config.Size.IsZero() {
-			v.screen.Resize(v.size)
-		}
+		v.resize(v.size)
 
 		return v, tea.Batch(
 			v.sendInputs,
@@ -162,8 +189,8 @@ func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 		v.size = size
 
-		if v.screen != nil && v.story.Config.Size.IsZero() {
-			v.screen.Resize(size)
+		if v.screen != nil {
+			v.resize(v.size)
 		}
 
 		return v, nil

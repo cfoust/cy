@@ -2,6 +2,7 @@ package fuzzy
 
 import (
 	"context"
+	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
@@ -212,6 +213,14 @@ var FullBottom stories.InitFunc = func(ctx context.Context) (mux.Screen, error) 
 func init() {
 	config := stories.Config{
 		Size: geom.DEFAULT_SIZE,
+		Input: []interface{}{
+			"B",
+			stories.Wait(time.Second),
+			"u",
+			stories.Wait(time.Second),
+			"t",
+			stories.Wait(time.Second),
+		},
 	}
 	stories.Register("input/find/bottom-right", BottomRight, config)
 	stories.Register("input/find/top-left", TopLeft, config)

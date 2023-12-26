@@ -42,7 +42,6 @@ var SplashStory stories.InitFunc = func(ctx context.Context) (mux.Screen, error)
 
 func init() {
 	stories.Register("cy/clear-splash", SplashStory, stories.Config{
-		Size: geom.DEFAULT_SIZE,
 		Input: []interface{}{
 			stories.Wait(time.Second),
 			"q",
