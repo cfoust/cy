@@ -51,7 +51,10 @@ func (s *Browser) loadStory(story S.Story) tea.Cmd {
 	size.C -= 30
 	return func() tea.Msg {
 		lifetime := util.NewLifetime(s.Ctx())
-		screen := story.Init(lifetime.Ctx())
+
+		// TODO(cfoust): 12/25/23 handle story errors
+		screen, _ := story.Init(lifetime.Ctx())
+
 		config := story.Config
 		if !config.Size.IsZero() {
 			screen.Resize(config.Size)

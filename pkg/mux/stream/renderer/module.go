@@ -40,8 +40,7 @@ func (r *Renderer) Resize(size geom.Size) error {
 	r.raw.Resize(size.C, size.R)
 	r.clearScreen(r.raw)
 	r.clearScreen(r.w)
-	err := r.screen.Resize(size)
-	return err
+	return r.screen.Resize(size)
 }
 
 func (r *Renderer) Send(msg mux.Msg) {

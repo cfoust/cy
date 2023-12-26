@@ -18,7 +18,7 @@ type Config struct {
 	IsSnapshot bool
 }
 
-type InitFunc func(context.Context) mux.Screen
+type InitFunc func(context.Context) (mux.Screen, error)
 
 type Story struct {
 	Name   string

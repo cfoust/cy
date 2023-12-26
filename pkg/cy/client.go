@@ -3,7 +3,6 @@ package cy
 import (
 	"context"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
@@ -12,8 +11,8 @@ import (
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
-	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/splash"
@@ -28,9 +27,9 @@ import (
 	"github.com/xo/terminfo"
 )
 
-type Connection = ws.Client[P.Message]
-
 type ClientID = int32
+
+type ClientOptions = P.HandshakeMessage
 
 type Client struct {
 	deadlock.RWMutex
@@ -38,8 +37,6 @@ type Client struct {
 
 	// the unique identifier for the client, forever
 	id ClientID
-
-	conn Connection
 
 	cy *Cy
 
@@ -77,47 +74,65 @@ type Client struct {
 
 var _ api.Client = (*Client)(nil)
 
-func (c *Cy) addClient(conn Connection) *Client {
-	clientCtx := conn.Ctx()
+var _ mux.Stream = (*Client)(nil)
 
+func (c *Cy) NewClient(ctx context.Context, options ClientOptions) (*Client, error) {
 	c.Lock()
 	client := &Client{
-		Lifetime: util.NewLifetime(clientCtx),
+		Lifetime: util.NewLifetime(ctx),
 		cy:       c,
-		conn:     conn,
 		params:   params.New(),
 		binds:    bind.NewEngine[bind.Action](),
 	}
 	c.clients = append(c.clients, client)
 	c.Unlock()
 
-	go c.pollClient(clientCtx, client)
+	err := client.initialize(options)
+	if err != nil {
+		return nil, err
+	}
 
-	return client
+	client.id = c.nextClientID.Add(1)
+
+	go client.pollEvents()
+	go client.binds.Poll(client.Ctx())
+
+	err = client.findNewPane()
+	if err != nil {
+		return nil, err
+	}
+
+	c.sendQueuedToasts()
+
+	c.broadcastToast(client, toasts.Toast{
+		Message: "a client joined the server",
+	})
+
+	go func() {
+		select {
+		case <-c.Ctx().Done():
+		case <-client.Ctx().Done():
+		}
+
+		c.removeClient(client)
+	}()
+
+	return client, nil
 }
 
-func (c *Client) pollRender() {
-	// TODO(cfoust): 07/16/23 replace with io.Copy
-	buffer := make([]byte, 4096)
+func (c *Client) Read(p []byte) (n int, err error) {
+	return c.renderer.Read(p)
+}
 
-	for {
-		numBytes, err := c.renderer.Read(buffer)
-		if err == io.EOF {
-			return
-		}
-		if err != nil {
-			// TODO(cfoust): 07/16/23
-			return
-		}
-		if c.Ctx().Err() != nil {
-			return
-		}
-		if numBytes == 0 {
-			continue
-		}
+func (c *Client) Write(data []byte) (n int, err error) {
+	c.binds.Input(data)
+	return len(data), nil
+}
 
-		c.output(buffer[:numBytes])
-	}
+func (c *Client) Resize(size geom.Vec2) error {
+	c.muxClient.Resize(size)
+	c.renderer.Resize(size)
+	return nil
 }
 
 func (c *Client) runAction(event bind.BindEvent) {
@@ -178,80 +193,6 @@ func (c *Client) pollEvents() {
 	}
 }
 
-func (c *Cy) pollClient(ctx context.Context, client *Client) {
-	conn := client.conn
-	events := conn.Receive()
-
-	defer c.removeClient(client)
-
-	// First we need to wait for the client's handshake to know how to
-	// handle its terminal
-	handshakeCtx, cancel := context.WithTimeout(client.Ctx(), 1*time.Second)
-	defer cancel()
-
-	select {
-	case <-handshakeCtx.Done():
-		client.closeError(fmt.Errorf("no handshake received"))
-		return
-	case message, more := <-events:
-		var err error
-		if handshake, ok := message.Contents.(*P.HandshakeMessage); ok {
-			err = client.initialize(handshake)
-		} else if !more {
-			err = fmt.Errorf("closed by remote")
-		} else {
-			err = fmt.Errorf("must send handshake first")
-		}
-
-		if err != nil {
-			client.closeError(err)
-			return
-		}
-	}
-
-	client.id = c.nextClientID.Add(1)
-
-	go client.pollEvents()
-	go client.binds.Poll(client.Ctx())
-
-	err := client.findNewPane()
-	if err != nil {
-		client.closeError(err)
-		return
-	}
-
-	c.sendQueuedToasts()
-
-	c.broadcastToast(client, toasts.Toast{
-		Message: "a client joined the server",
-	})
-
-	for {
-		select {
-		case <-conn.Ctx().Done():
-			return
-		case packet := <-events:
-			if packet.Error != nil {
-				// TODO(cfoust): 06/08/23 handle gracefully
-				continue
-			}
-
-			switch packet.Contents.Type() {
-			case P.MessageTypeSize:
-				msg := packet.Contents.(*P.SizeMessage)
-				client.Resize(geom.Vec2{
-					R: msg.Rows,
-					C: msg.Columns,
-				})
-
-			case P.MessageTypeInput:
-				msg := packet.Contents.(*P.InputMessage)
-				client.binds.Input(msg.Data)
-			}
-		}
-	}
-}
-
 func (c *Client) Node() tree.Node {
 	c.RLock()
 	defer c.RUnlock()
@@ -276,37 +217,15 @@ func (c *Cy) removeClient(client *Client) {
 	c.Unlock()
 }
 
-func (c *Client) output(data []byte) error {
-	return c.conn.Send(P.OutputMessage{
-		Data: data,
-	})
-}
-
-func (c *Client) closeError(reason error) error {
-	err := c.conn.Send(P.ErrorMessage{
-		Message: fmt.Sprintf("error: %s", reason),
-	})
-	if err != nil {
-		return err
-	}
-
-	return c.conn.Close()
-}
-
-func (c *Client) Resize(size geom.Vec2) {
-	c.muxClient.Resize(size)
-	c.renderer.Resize(size)
-}
-
 func isSSH(e Environment) bool {
 	return e.IsSet("SSH_CONNECTION") || e.IsSet("SSH_CLIENT") || e.IsSet("SSH_TTY")
 }
 
-func (c *Client) initialize(handshake *P.HandshakeMessage) error {
+func (c *Client) initialize(options ClientOptions) error {
 	c.Lock()
 	defer c.Unlock()
 
-	c.env = Environment(handshake.Env)
+	c.env = Environment(options.Env)
 
 	info, err := terminfo.Load(c.env.Default("TERM", "xterm-256color"))
 	if err != nil {
@@ -317,12 +236,12 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 
 	c.info = screen.RenderContext{
 		Terminfo: info,
-		Colors:   handshake.Profile,
+		Colors:   options.Profile,
 	}
 
 	c.muxClient = c.cy.muxServer.AddClient(
 		c.Ctx(),
-		handshake.Size,
+		options.Size,
 	)
 
 	c.innerLayers = screen.NewLayers()
@@ -351,7 +270,7 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 		screen.WithOpaque,
 	)
 
-	splashScreen := splash.New(c.Ctx(), handshake.Size, !isClientSSH)
+	splashScreen := splash.New(c.Ctx(), options.Size, !isClientSSH)
 	c.outerLayers.NewLayer(
 		splashScreen.Ctx(),
 		splashScreen,
@@ -371,7 +290,7 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 	c.renderer = renderer.NewRenderer(
 		c.Ctx(),
 		info,
-		handshake.Size,
+		options.Size,
 		c.outerLayers,
 	)
 
@@ -381,8 +300,6 @@ func (c *Client) initialize(handshake *P.HandshakeMessage) error {
 			Message: "you joined via SSH; disabling animation",
 		})
 	}
-
-	go c.pollRender()
 
 	return nil
 }
@@ -480,19 +397,16 @@ func (c *Client) Frame() *frames.Framer {
 }
 
 func (c *Client) Detach(reason string) error {
-	err := c.conn.Send(P.CloseMessage{
-		Reason: reason,
-	})
-	if err != nil {
-		return err
-	}
+	//err := c.conn.Send(P.CloseMessage{
+	//Reason: reason,
+	//})
+	//if err != nil {
+	//return err
+	//}
 
-	return c.conn.Close()
-}
-
-func (c *Cy) HandleWSClient(conn ws.Client[P.Message]) {
-	c.addClient(conn)
-	<-conn.Ctx().Done()
+	//return c.conn.Close()
+	// TODO(cfoust): 12/25/23
+	return nil
 }
 
 // execute runs some Janet code on behalf of the client.
@@ -502,5 +416,3 @@ func (c *Client) execute(code string) error {
 		Options: janet.DEFAULT_CALL_OPTIONS,
 	})
 }
-
-var _ ws.Server[P.Message] = (*Cy)(nil)

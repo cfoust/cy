@@ -50,7 +50,7 @@ func createStory(ctx context.Context, events []sessions.Event, msgs ...interface
 	return replay
 }
 
-var SearchTimeForward stories.InitFunc = func(ctx context.Context) mux.Screen {
+var SearchTimeForward stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	replay := createStory(
 		ctx,
 		createStorySession(),
@@ -58,10 +58,10 @@ var SearchTimeForward stories.InitFunc = func(ctx context.Context) mux.Screen {
 		"query",
 	)
 
-	return replay
+	return replay, nil
 }
 
-var Searching stories.InitFunc = func(ctx context.Context) mux.Screen {
+var Searching stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	replay := createStory(
 		ctx,
 		createStorySession(),
@@ -70,10 +70,10 @@ var Searching stories.InitFunc = func(ctx context.Context) mux.Screen {
 		"enter",
 	)
 
-	return replay
+	return replay, nil
 }
 
-var SearchProgress stories.InitFunc = func(ctx context.Context) mux.Screen {
+var SearchProgress stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	replay := createStory(
 		ctx,
 		createStorySession(),
@@ -83,10 +83,10 @@ var SearchProgress stories.InitFunc = func(ctx context.Context) mux.Screen {
 		ProgressEvent{Percent: 60},
 	)
 
-	return replay
+	return replay, nil
 }
 
-var JumpForward stories.InitFunc = func(ctx context.Context) mux.Screen {
+var JumpForward stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	replay := createStory(
 		ctx,
 		createStorySession(),
@@ -94,10 +94,10 @@ var JumpForward stories.InitFunc = func(ctx context.Context) mux.Screen {
 		"3m",
 	)
 
-	return replay
+	return replay, nil
 }
 
-var JumpBackward stories.InitFunc = func(ctx context.Context) mux.Screen {
+var JumpBackward stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	replay := createStory(
 		ctx,
 		createStorySession(),
@@ -105,10 +105,10 @@ var JumpBackward stories.InitFunc = func(ctx context.Context) mux.Screen {
 		"3m",
 	)
 
-	return replay
+	return replay, nil
 }
 
-var SearchTimeBackward stories.InitFunc = func(ctx context.Context) mux.Screen {
+var SearchTimeBackward stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	replay := createStory(
 		ctx,
 		createStorySession(),
@@ -116,10 +116,10 @@ var SearchTimeBackward stories.InitFunc = func(ctx context.Context) mux.Screen {
 		"query",
 	)
 
-	return replay
+	return replay, nil
 }
 
-var SearchEmpty stories.InitFunc = func(ctx context.Context) mux.Screen {
+var SearchEmpty stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	replay := createStory(
 		ctx,
 		createStorySession(),
@@ -129,7 +129,7 @@ var SearchEmpty stories.InitFunc = func(ctx context.Context) mux.Screen {
 		"enter",
 	)
 
-	return replay
+	return replay, nil
 }
 
 func init() {

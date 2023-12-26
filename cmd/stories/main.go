@@ -49,12 +49,12 @@ func main() {
 		func(f frames.Frame) {
 			stories.Register(
 				fmt.Sprintf("frame/%s", name),
-				func(ctx context.Context) mux.Screen {
+				func(ctx context.Context) (mux.Screen, error) {
 					framer := frames.NewFramer(
 						ctx,
 						f,
 					)
-					return framer
+					return framer, nil
 				},
 				stories.Config{},
 			)
@@ -65,11 +65,11 @@ func main() {
 		func(a anim.Creator) {
 			stories.Register(
 				fmt.Sprintf("animation/%s", name),
-				func(ctx context.Context) mux.Screen {
+				func(ctx context.Context) (mux.Screen, error) {
 					return anim.NewStory(
 						ctx,
 						a,
-					)
+					), nil
 				},
 				stories.Config{},
 			)
@@ -92,9 +92,15 @@ func main() {
 		if !ok {
 			panic(fmt.Errorf("story %s not found", CLI.Single))
 		}
+
+		screen, err := story.Init(ctx)
+		if err != nil {
+			panic(fmt.Errorf("failed to create story %s: %s", CLI.Single, err.Error()))
+		}
+
 		screen = ui.NewViewer(
 			ctx,
-			story.Init(ctx),
+			screen,
 			stories.Config{},
 		)
 	} else {

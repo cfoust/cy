@@ -9,7 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cfoust/cy/pkg/cy"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
@@ -25,7 +24,7 @@ const (
 )
 
 type ClientIO struct {
-	conn cy.Connection
+	conn Connection
 }
 
 func (c *ClientIO) Write(p []byte) (n int, err error) {
@@ -106,7 +105,7 @@ func buildHandshake(profile termenv.Profile) (*P.HandshakeMessage, error) {
 	}, nil
 }
 
-func poll(conn cy.Connection) error {
+func poll(conn Connection) error {
 	output := termenv.NewOutput(os.Stdout)
 
 	handshake, err := buildHandshake(output.Profile)
@@ -189,7 +188,7 @@ func poll(conn cy.Connection) error {
 	}
 }
 
-func connect(socketPath string) (cy.Connection, error) {
+func connect(socketPath string) (Connection, error) {
 	// mimics client_connect() in tmux's client.c
 	var lockFd *os.File
 	var lockPath string

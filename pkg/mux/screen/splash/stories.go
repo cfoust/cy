@@ -8,12 +8,12 @@ import (
 	"github.com/cfoust/cy/pkg/stories"
 )
 
-var SplashStory stories.InitFunc = func(ctx context.Context) mux.Screen {
+var SplashStory stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	return New(
 		ctx,
 		geom.DEFAULT_SIZE,
 		true,
-	)
+	), nil
 }
 
 func init() {

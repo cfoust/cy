@@ -8,8 +8,8 @@ import (
 	"github.com/cfoust/cy/pkg/stories"
 )
 
-var Placeholder stories.InitFunc = func(ctx context.Context) mux.Screen {
-	return screen.AddMargins(ctx, New(ctx))
+var Placeholder stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
+	return screen.AddMargins(ctx, New(ctx)), nil
 }
 
 func init() {

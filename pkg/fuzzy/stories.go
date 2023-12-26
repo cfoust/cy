@@ -162,7 +162,7 @@ var pokemon []Option = []Option{
 	NewOption("Mew", nil),
 }
 
-var BottomRight stories.InitFunc = func(ctx context.Context) mux.Screen {
+var BottomRight stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	location := geom.DEFAULT_SIZE
 	location.C -= 1
 	location.R -= 1
@@ -170,18 +170,18 @@ var BottomRight stories.InitFunc = func(ctx context.Context) mux.Screen {
 		ctx,
 		pokemon,
 		WithInline(location, geom.DEFAULT_SIZE),
-	)
+	), nil
 }
 
-var TopLeft stories.InitFunc = func(ctx context.Context) mux.Screen {
+var TopLeft stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	return NewFuzzy(
 		ctx,
 		pokemon,
 		WithInline(geom.Size{}, geom.DEFAULT_SIZE),
-	)
+	), nil
 }
 
-var Search stories.InitFunc = func(ctx context.Context) mux.Screen {
+var Search stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	f := NewFuzzy(
 		ctx,
 		pokemon,
@@ -189,24 +189,24 @@ var Search stories.InitFunc = func(ctx context.Context) mux.Screen {
 	)
 
 	stories.Send(f, "Pid")
-	return f
+	return f, nil
 }
 
-var FullTop stories.InitFunc = func(ctx context.Context) mux.Screen {
+var FullTop stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	f := NewFuzzy(
 		ctx,
 		pokemon,
 		WithReverse,
 	)
-	return f
+	return f, nil
 }
 
-var FullBottom stories.InitFunc = func(ctx context.Context) mux.Screen {
+var FullBottom stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	f := NewFuzzy(
 		ctx,
 		pokemon,
 	)
-	return f
+	return f, nil
 }
 
 func init() {
