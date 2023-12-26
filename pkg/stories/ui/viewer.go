@@ -20,10 +20,10 @@ type Viewer struct {
 	util.Lifetime
 	size    geom.Vec2
 	story   stories.Story
-	render  *taro.Renderer
 	capture *tty.State
 
 	screen         mux.Screen
+	keys           mux.Screen
 	screenLifetime util.Lifetime
 }
 
@@ -35,6 +35,7 @@ func (v *Viewer) Init() tea.Cmd {
 
 type loadedScreen struct {
 	screen   mux.Screen
+	keys     mux.Screen
 	lifetime util.Lifetime
 	capture  *tty.State
 }
@@ -45,6 +46,7 @@ type reloadScreen struct{}
 // reload the screen when they're done
 func (v *Viewer) sendInputs() tea.Msg {
 	screen := v.screen
+	keys := v.keys
 	inputs := v.story.Config.Input
 	if screen == nil || len(inputs) == 0 {
 		return nil
@@ -58,6 +60,7 @@ func (v *Viewer) sendInputs() tea.Msg {
 		}
 
 		stories.Send(screen, input)
+		stories.Send(keys, input)
 	}
 
 	return reloadScreen{}
@@ -75,7 +78,16 @@ func (v *Viewer) loadStory() tea.Cmd {
 			screen.Resize(config.Size)
 		}
 
-		msg := loadedScreen{screen: screen, lifetime: lifetime}
+		keys := NewKeys(lifetime.Ctx())
+		keys.Resize(geom.Size{
+			R: 26,
+			C: 8,
+		})
+		msg := loadedScreen{
+			lifetime: lifetime,
+			screen:   screen,
+			keys:     keys,
+		}
 
 		if config.IsSnapshot {
 			msg.capture = screen.State()
@@ -116,6 +128,8 @@ func (v *Viewer) View(state *tty.State) {
 	})
 	tty.Copy(storyPos, state, contents)
 	state.CursorVisible = contents.CursorVisible
+
+	tty.Copy(geom.Size{}, state, v.keys.State())
 }
 
 func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
@@ -130,6 +144,7 @@ func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 		v.capture = msg.capture
 		v.screen = msg.screen
+		v.keys = msg.keys
 		v.screenLifetime = msg.lifetime
 
 		if v.story.Config.Size.IsZero() {
@@ -170,7 +185,6 @@ func NewViewer(
 ) *taro.Program {
 	viewer := &Viewer{
 		Lifetime: util.NewLifetime(ctx),
-		render:   taro.NewRenderer(),
 		story:    story,
 	}
 
