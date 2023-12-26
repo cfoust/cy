@@ -48,6 +48,9 @@ func init() {
 			"q",
 			stories.Wait(time.Second),
 			"test",
+			"ctrl+a",
+			"p",
+			stories.Wait(10 * time.Second),
 		},
 	})
 }

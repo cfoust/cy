@@ -41,54 +41,48 @@ type loadedScreen struct {
 
 type reloadScreen struct{}
 
+// If the story includes any inputs, cycle through them and
+// reload the screen when they're done
+func (v *Viewer) sendInputs() tea.Msg {
+	screen := v.screen
+	inputs := v.story.Config.Input
+	if screen == nil || len(inputs) == 0 {
+		return nil
+	}
+
+	for _, input := range inputs {
+		switch input := input.(type) {
+		case stories.WaitEvent:
+			time.Sleep(input.Duration)
+			continue
+		}
+
+		stories.Send(screen, input)
+	}
+
+	return reloadScreen{}
+}
+
 func (v *Viewer) loadStory() tea.Cmd {
 	story := v.story
 	config := story.Config
-	inputs := config.Input
 
-	loaded := make(chan mux.Screen, 1)
+	return func() tea.Msg {
+		lifetime := util.NewLifetime(v.Ctx())
+		screen, _ := story.Init(lifetime.Ctx())
 
-	return tea.Batch(
-		func() tea.Msg {
-			lifetime := util.NewLifetime(v.Ctx())
-			screen, _ := story.Init(lifetime.Ctx())
+		if !config.Size.IsZero() {
+			screen.Resize(config.Size)
+		}
 
-			if !config.Size.IsZero() {
-				screen.Resize(config.Size)
-			}
+		msg := loadedScreen{screen: screen, lifetime: lifetime}
 
-			msg := loadedScreen{screen: screen, lifetime: lifetime}
+		if config.IsSnapshot {
+			msg.capture = screen.State()
+		}
 
-			if config.IsSnapshot {
-				msg.capture = screen.State()
-			}
-
-			loaded <- screen
-
-			return msg
-		},
-		// If the story includes any inputs, cycle through them and
-		// reload the screen when they're done
-		func() tea.Msg {
-			if len(inputs) == 0 {
-				return nil
-			}
-
-			screen := <-loaded
-
-			for _, input := range inputs {
-				switch input := input.(type) {
-				case stories.WaitEvent:
-					time.Sleep(input.Duration)
-					continue
-				}
-
-				stories.Send(screen, input)
-			}
-
-			return reloadScreen{}
-		},
-	)
+		return msg
+	}
 
 }
 
@@ -142,7 +136,10 @@ func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			v.screen.Resize(v.size)
 		}
 
-		return v, taro.WaitScreens(v.Ctx(), v.screen)
+		return v, tea.Batch(
+			v.sendInputs,
+			taro.WaitScreens(v.Ctx(), v.screen),
+		)
 	case tea.WindowSizeMsg:
 		size := geom.Size{
 			R: msg.Height,
