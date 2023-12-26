@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"time"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
@@ -96,5 +97,21 @@ func NewViewer(
 	}
 
 	program := taro.New(ctx, viewer)
+
+	inputs := config.Input
+	if len(inputs) > 0 {
+		go func() {
+			for _, input := range inputs {
+				switch input := input.(type) {
+				case stories.WaitEvent:
+					time.Sleep(input.Duration)
+					continue
+				}
+
+				stories.Send(screen, input)
+			}
+		}()
+	}
+
 	return program
 }

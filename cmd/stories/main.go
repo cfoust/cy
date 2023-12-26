@@ -93,14 +93,14 @@ func main() {
 			panic(fmt.Errorf("story %s not found", CLI.Single))
 		}
 
-		screen, err := story.Init(ctx)
+		storyScreen, err := story.Init(ctx)
 		if err != nil {
 			panic(fmt.Errorf("failed to create story %s: %s", CLI.Single, err.Error()))
 		}
 
 		screen = ui.NewViewer(
 			ctx,
-			screen,
+			storyScreen,
 			stories.Config{},
 		)
 	} else {

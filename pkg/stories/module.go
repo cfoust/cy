@@ -2,6 +2,7 @@ package stories
 
 import (
 	"context"
+	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
@@ -16,6 +17,17 @@ type Config struct {
 	// If true, the viewer captures the screen immediately and uses that
 	// instead of a live view.
 	IsSnapshot bool
+	// A list of inputs that will be executed in order when the story
+	// begins.
+	Input []interface{}
+}
+
+type WaitEvent struct {
+	Duration time.Duration
+}
+
+func Wait(duration time.Duration) WaitEvent {
+	return WaitEvent{Duration: duration}
 }
 
 type InitFunc func(context.Context) (mux.Screen, error)
