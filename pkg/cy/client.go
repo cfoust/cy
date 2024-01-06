@@ -270,14 +270,16 @@ func (c *Client) initialize(options ClientOptions) error {
 		screen.WithOpaque,
 	)
 
-	splashScreen := splash.New(c.Ctx(), options.Size, !isClientSSH)
-	c.outerLayers.NewLayer(
-		splashScreen.Ctx(),
-		splashScreen,
-		screen.PositionTop,
-		screen.WithOpaque,
-		screen.WithInteractive,
-	)
+	if c.cy.showSplash {
+		splashScreen := splash.New(c.Ctx(), options.Size, !isClientSSH)
+		c.outerLayers.NewLayer(
+			splashScreen.Ctx(),
+			splashScreen,
+			screen.PositionTop,
+			screen.WithOpaque,
+			screen.WithInteractive,
+		)
+	}
 
 	c.toaster = toasts.New(c.Ctx())
 	c.toast = NewToastLogger(c.sendToast)

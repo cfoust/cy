@@ -32,6 +32,8 @@ type Options struct {
 	DataDir string
 	// The default shell
 	Shell string
+	// Whether to show the splash screen on client join
+	HideSplash bool
 }
 
 type historyEvent struct {
@@ -65,6 +67,7 @@ type Cy struct {
 	log zerolog.Logger
 
 	configPath string
+	showSplash bool
 
 	toast        *ToastLogger
 	queuedToasts []toasts.Toast
@@ -209,6 +212,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 		muxServer:   server.New(),
 		replayBinds: replayBinds,
 		defaults:    defaults,
+		showSplash:  !options.HideSplash,
 		lastVisit:   make(map[tree.NodeID]historyEvent),
 		lastWrite:   make(map[tree.NodeID]historyEvent),
 		writes:      make(chan historyEvent),

@@ -2,7 +2,6 @@ package fuzzy
 
 import (
 	"context"
-	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
@@ -214,12 +213,7 @@ func init() {
 	config := stories.Config{
 		Size: geom.DEFAULT_SIZE,
 		Input: []interface{}{
-			"B",
-			stories.Wait(time.Second),
-			"u",
-			stories.Wait(time.Second),
-			"t",
-			stories.Wait(time.Second),
+			stories.Type("But"),
 		},
 	}
 	stories.Register("input/find/bottom-right", BottomRight, config)

@@ -53,15 +53,25 @@ func (v *Viewer) sendInputs() tea.Msg {
 		return nil
 	}
 
-	for _, input := range inputs {
+	var handleInput func(input interface{})
+	handleInput = func(input interface{}) {
 		switch input := input.(type) {
 		case stories.WaitEvent:
 			time.Sleep(input.Duration)
-			continue
+			return
+		case []interface{}:
+			for _, input := range input {
+				handleInput(input)
+			}
+			return
 		}
 
 		stories.Send(screen, input)
 		stories.Send(keys, input)
+	}
+
+	for _, input := range inputs {
+		handleInput(input)
 	}
 
 	return reloadScreen{}
@@ -94,8 +104,6 @@ func (v *Viewer) loadStory() tea.Cmd {
 	}
 
 }
-
-const KEY_COLUMNS = 8
 
 func (v *Viewer) showKeys() bool {
 	config := v.story.Config
@@ -180,7 +188,7 @@ func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 		return v, tea.Batch(
 			v.sendInputs,
-			taro.WaitScreens(v.Ctx(), v.screen),
+			taro.WaitScreens(v.Ctx(), v.screen, v.keys),
 		)
 	case tea.WindowSizeMsg:
 		size := geom.Size{
@@ -195,7 +203,7 @@ func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 		return v, nil
 	case taro.ScreenUpdate:
-		return v, taro.WaitScreens(v.Ctx(), v.screen)
+		return v, taro.WaitScreens(v.Ctx(), v.screen, v.keys)
 	case taro.KeyMsg:
 		switch msg.String() {
 		case "q":

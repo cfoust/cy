@@ -26,8 +26,35 @@ type WaitEvent struct {
 	Duration time.Duration
 }
 
+const (
+	ABit = 300 * time.Millisecond
+	Some = time.Second
+	More = 3 * time.Second
+	ALot = 5 * time.Second
+)
+
 func Wait(duration time.Duration) WaitEvent {
 	return WaitEvent{Duration: duration}
+}
+
+const TYPE_DELAY = 100 * time.Millisecond
+
+// Simulate typing.
+func Type(msgs ...string) (result []interface{}) {
+	for _, key := range taro.KeysToMsg(msgs...) {
+		if len(key.Runes) == 0 {
+			result = append(result, key, Wait(TYPE_DELAY))
+			continue
+		}
+
+		for _, r := range key.Runes {
+			newKey := key
+			newKey.Runes = []rune{r}
+			result = append(result, newKey, Wait(TYPE_DELAY))
+		}
+	}
+
+	return
 }
 
 type InitFunc func(context.Context) (mux.Screen, error)
