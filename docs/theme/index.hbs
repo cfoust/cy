@@ -321,6 +321,27 @@
         <script src="{{ ../path_to_root }}{{this}}"></script>
         {{/each}}
 
+        <script>
+            // Find all divs with a data-cast attribute and load
+            // AsciinemaPlayer for them
+            const nodes = [ ...document
+                .getElementById('content')
+                .getElementsByTagName('div')
+            ] .map((v) => {
+                    const cast = v.attributes['data-cast']
+                    if (cast == null) {
+                        return
+                    }
+                    AsciinemaPlayer.create(
+                        `/images/${cast.value}.cast`,
+                        v,
+                        {
+                            loop: true,
+                        },
+                    );
+            })
+        </script>
+
         {{#if is_print}}
         {{#if mathjax_support}}
         <script>

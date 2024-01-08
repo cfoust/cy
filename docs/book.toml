@@ -11,6 +11,8 @@ default-theme = "light"
 preferred-dark-theme = "ayu"
 site-url = "/cy/"
 git-repository-url = "https://github.com/cfoust/cy"
+additional-css = ["./theme/asciinema-player.css"]
+additional-js = ["./theme/asciinema-player.min.js"]
 
 [preprocessor.storybook]
 command = "python3 storybook.py"
