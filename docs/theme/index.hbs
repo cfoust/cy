@@ -333,9 +333,10 @@
                         return
                     }
                     AsciinemaPlayer.create(
-                        `/images/${cast.value}.cast`,
+                        `{{ path_to_root }}images/${cast.value}.cast`,
                         v,
                         {
+                            autoPlay: true,
                             loop: true,
                         },
                     );
