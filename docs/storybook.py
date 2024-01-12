@@ -129,7 +129,8 @@ Screenshot {filename}
         elif filename.endswith(".cast"):
             subprocess.check_call(
                 f"./storybook --cast {filename} -s {command}",
-                shell=True
+                shell=True,
+                env={"TERM": "xterm-256color"},
             )
             continue
 
