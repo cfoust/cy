@@ -11,10 +11,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-STORY_REGEX = re.compile("{{story ((\w+).)?(png|gif) (.+)}}")
+STORY_REGEX = re.compile("{{story ((\w+).)?(png|gif|cast) (.+)}}")
 
 COMMON = """
-Set FontSize 15
+Set FontSize 18
 Set Width 1300
 Set Height 650
 Set Padding 0
@@ -57,14 +57,20 @@ if __name__ == '__main__':
                 h.update(command.encode('utf-8'))
                 filename = h.hexdigest()[:12]
 
+            original = filename
+
             filename += "." + type_
             filename = "images/" + filename
+
+            replacement = f"![{command}]({filename})"
+            if filename.endswith("cast"):
+                replacement = f"<div data-cast=\"{original}\"></div>"
 
             replace.append(
                 (
                     ref.start(0),
                     ref.end(0),
-                    f"![{command}]({filename})",
+                    replacement,
                 )
             )
 
@@ -107,7 +113,7 @@ Type "./storybook -s {command} && clear"
 Enter
 Sleep 500ms
 Show
-Sleep 8s
+Sleep 15s
 """
         elif filename.endswith(".png"):
             script = f"""
@@ -120,6 +126,12 @@ Show
 Sleep 1s
 Screenshot {filename}
 """
+        elif filename.endswith(".cast"):
+            subprocess.check_call(
+                f"./storybook --cast {filename} -s {command}",
+                shell=True
+            )
+            continue
 
         tape = (
             filename.replace("png", "tape")
@@ -133,13 +145,10 @@ Screenshot {filename}
             vhs = "./vhs"
 
         while not os.path.exists(filename):
-            code = subprocess.call(
+            subprocess.check_call(
                 f"{vhs} -q {tape}",
                 shell=True
             )
-
-            if code != 0:
-                raise Exception(code)
 
         os.unlink(tape)
         if not os.path.exists(filename):
