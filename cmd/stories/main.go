@@ -30,6 +30,8 @@ var CLI struct {
 	Prefix string `help:"Pre-filter the list of stories." name:"prefix" optional:"" short:"p"`
 	Single string `help:"Show a single story in full screen, overriding its config." name:"single" optional:"" short:"s"`
 	Cast   string `help:"Save an asciinema cast to the given filename. Must be used in tandem with --single." name:"cast" optional:"" short:"c"`
+	Width  int    `help:"Set the width of the terminal when saving an asciinema cast." name:"width" optional:"" short:"w" default:"80"`
+	Height int    `help:"Set the height of the terminal when saving an asciinema cast." name:"height" optional:"" short:"h" default:"26"`
 }
 
 func main() {
@@ -85,7 +87,10 @@ func main() {
 	}
 
 	var cols, rows int = 80, 26
-	if !haveCast {
+	if haveCast {
+		cols = CLI.Width
+		rows = CLI.Height
+	} else {
 		cols, rows, err = term.GetSize(int(os.Stdin.Fd()))
 		if err != nil {
 			panic(err)
