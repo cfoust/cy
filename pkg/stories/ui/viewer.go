@@ -26,6 +26,8 @@ type Viewer struct {
 	screen         mux.Screen
 	keys           mux.Screen
 	screenLifetime util.Lifetime
+	// Whether the viewer should reload the screen and loop, or just quit
+	shouldLoop bool
 }
 
 var _ taro.Model = (*Viewer)(nil)
@@ -173,6 +175,10 @@ func (v *Viewer) resize(size geom.Size) {
 func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case reloadScreen:
+		if !v.shouldLoop {
+			return v, tea.Quit
+		}
+
 		return v, v.loadStory()
 	case loadedScreen:
 		if v.screen != nil {
@@ -217,10 +223,12 @@ func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 func NewViewer(
 	ctx context.Context,
 	story stories.Story,
+	shouldLoop bool,
 ) *taro.Program {
 	viewer := &Viewer{
-		Lifetime: util.NewLifetime(ctx),
-		story:    story,
+		Lifetime:   util.NewLifetime(ctx),
+		story:      story,
+		shouldLoop: shouldLoop,
 	}
 
 	program := taro.New(ctx, viewer)

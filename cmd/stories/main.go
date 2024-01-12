@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/cfoust/cy/pkg/anim"
 	_ "github.com/cfoust/cy/pkg/cy"
@@ -12,6 +15,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/stream/cli"
 	"github.com/cfoust/cy/pkg/mux/stream/renderer"
+	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/stories"
 	"github.com/cfoust/cy/pkg/stories/ui"
 	"github.com/cfoust/cy/pkg/taro"
@@ -25,6 +29,7 @@ import (
 var CLI struct {
 	Prefix string `help:"Pre-filter the list of stories." name:"prefix" optional:"" short:"p"`
 	Single string `help:"Show a single story in full screen, overriding its config." name:"single" optional:"" short:"s"`
+	Cast   string `help:"Save an asciinema cast to the given filename. Must be used in tandem with --single." name:"cast" optional:"" short:"c"`
 }
 
 func main() {
@@ -42,8 +47,6 @@ func main() {
 		panic(err)
 	}
 	log.Logger = log.Output(logs)
-
-	ctx := context.Background()
 
 	for name, frame := range frames.Frames {
 		func(f frames.Frame) {
@@ -76,15 +79,27 @@ func main() {
 		}(animation)
 	}
 
-	cols, rows, err := term.GetSize(int(os.Stdin.Fd()))
-	if err != nil {
-		panic(err)
+	haveCast := len(CLI.Cast) > 0
+	if len(CLI.Single) == 0 && haveCast {
+		panic(fmt.Errorf("to use --cast, you must provide a single story"))
 	}
+
+	var cols, rows int = 80, 26
+	if !haveCast {
+		cols, rows, err = term.GetSize(int(os.Stdin.Fd()))
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	size := geom.Size{C: cols, R: rows}
 
 	info, err := terminfo.LoadFromEnv()
 	if err != nil {
 		panic(err)
 	}
+
+	ctx := context.Background()
 
 	var screen *taro.Program
 	if len(CLI.Single) > 0 {
@@ -96,7 +111,15 @@ func main() {
 		screen = ui.NewViewer(
 			ctx,
 			story,
+			!haveCast,
 		)
+
+		if haveCast && !story.Config.HasInputs() {
+			go func() {
+				time.Sleep(5 * time.Second)
+				screen.Cancel()
+			}()
+		}
 	} else {
 		screen, err = ui.New(ctx, CLI.Prefix)
 		if err != nil {
@@ -104,14 +127,27 @@ func main() {
 		}
 	}
 
-	renderer := renderer.NewRenderer(
-		screen.Ctx(),
-		info,
-		geom.Vec2{
-			R: rows,
-			C: cols,
-		},
-		screen,
+	renderer := renderer.NewRenderer(screen.Ctx(), info, size, screen)
+
+	if !haveCast {
+		cli.Attach(screen.Ctx(), renderer, os.Stdin, os.Stdout)
+		return
+	}
+
+	recorder, _ := sessions.NewRecorder(
+		ctx,
+		"",
+		renderer,
 	)
-	cli.Attach(screen.Ctx(), renderer, os.Stdin, os.Stdout)
+
+	// The recorder only stores data on Read() calls, so we need to drain
+	// it
+	go func() { _, _ = io.Copy(ioutil.Discard, recorder) }()
+	recorder.Resize(size)
+	<-screen.Ctx().Done()
+
+	err = sessions.WriteAsciinema(CLI.Cast, recorder.Events())
+	if err != nil {
+		panic(err)
+	}
 }

@@ -71,7 +71,6 @@ func (s *Recorder) Resize(size stream.Size) error {
 
 func NewRecorder(ctx context.Context, filename string, stream stream.Stream) (*Recorder, error) {
 	r := &Recorder{
-		events: make([]Event, 0),
 		stream: stream,
 	}
 

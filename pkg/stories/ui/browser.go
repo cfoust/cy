@@ -51,7 +51,7 @@ func (s *Browser) loadViewer(story S.Story) tea.Cmd {
 	size.C -= 30
 	return func() tea.Msg {
 		lifetime := util.NewLifetime(s.Ctx())
-		viewer := NewViewer(lifetime.Ctx(), story)
+		viewer := NewViewer(lifetime.Ctx(), story, true)
 		viewer.Resize(size)
 		return loadedViewer{viewer: viewer, lifetime: lifetime}
 	}

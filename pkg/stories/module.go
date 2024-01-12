@@ -22,6 +22,10 @@ type Config struct {
 	Input []interface{}
 }
 
+func (c *Config) HasInputs() bool {
+	return len(c.Input) > 0
+}
+
 type WaitEvent struct {
 	Duration time.Duration
 }
