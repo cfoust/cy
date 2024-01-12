@@ -22,7 +22,7 @@ If your terminal is wider than 80 columns, you'll notice that the pane does not 
 
 All actions in `cy`, such as creating panes and switching between them, are triggered by sequences of keys.
 
-{{story cast cy/viewport -w 100}}
+{{story cast cy/viewport --width 120 --height 26}}
 
 Here are a few you can try:
 
@@ -33,6 +33,8 @@ Here are a few you can try:
 1. To decrease the width by 5 columns, type `ctrl+a` `-`.
 
 ## 3. Entering replay mode
+
+{{story cast cy/replay}}
 
 ## 4. Creating a new shell
 

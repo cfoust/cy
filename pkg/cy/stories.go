@@ -66,14 +66,20 @@ func init() {
 	stories.Register("cy/replay", Replay, stories.Config{
 		Input: []interface{}{
 			stories.Wait(stories.Some),
-			stories.Type("seq 1 100", "enter"),
+			stories.Type("this is a test", "enter"),
+			stories.Wait(stories.More),
+			stories.Type("seq 1 10", "enter"),
 			stories.Wait(stories.More),
 			stories.Type("ctrl+a", "p"),
 			stories.Wait(stories.Some),
-			stories.Type("gg", "space"),
+			stories.Type("left", "left", "left", "left"),
 			stories.Wait(stories.ALot),
-			stories.Type("@", "space"),
-			stories.Wait(stories.Some),
+			stories.Type("space"),
+			stories.Wait(stories.ALot),
+			stories.Type("?", "test", "enter"),
+			stories.Wait(stories.ALot),
+			stories.Type("h", "h", "h"),
+			stories.Wait(stories.ALot),
 		},
 	})
 }
