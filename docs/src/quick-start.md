@@ -12,13 +12,9 @@ To start `cy` after installation, just run `cy` without any arguments. `cy` will
 
 ## 2. Using the viewport
 
-When you first connect, `cy` creates a new **pane** and attaches to it. By default, it runs your user's default shell.
-
-If your terminal is wider than 80 columns, you'll notice that the pane does not occupy the full width of the screen; `cy` centers the pane and fills the rest of the horizontal space with a patterned background.
+When you first connect, `cy` creates a new **pane** and attaches to it. By default, it runs your default shell. `cy` centers the pane and fills the rest of the horizontal space with a patterned background. `cy` refers to the state of your screen as the **viewport**.
 
 {{story png placeholder}}
-
-`cy` refers to this as **the viewport**.
 
 All actions in `cy`, such as creating panes and switching between them, are triggered by sequences of keys.
 
@@ -36,7 +32,15 @@ Here are a few you can try:
 
 {{story cast cy/replay}}
 
+`cy`'s most important feature is that it records all of your terminal sessions in their entirety and lets you jump back in time and replay them at will. It has an interface called **replay mode** that is conceptually similar to `tmux`'s `copy-mode`, but also gives you access to time controls.
+
+You open replay mode for a given pane by typing `ctrl+a` `p`.
+
+Replay mode is powerful and complicated, but for basic usage you can move through time using the left and right arrow keys and hit `space` to play and pause. For more information, refer to [the chapter dedicated to replay mode](./replay-mode.md) and [the list of all of its key bindings](./default-keys.md#replay-mode).
+
 ## 4. Creating a new shell
+
+{{story cast cy/shell}}
 
 To create a new shell, type `ctrl+a` `j`. This creates a new pane running your default shell in your current working directory. You can return to the old one with `ctrl+l`; this cycles between all of the panes in the current **group**. In `cy`, a group is just a container for panes or other groups.
 
