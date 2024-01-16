@@ -13,8 +13,8 @@
 
 `cy` is an experimental terminal multiplexer that aims to be a simple, modern, and ergonomic alternative to `tmux`. You can find out more in **[the documentation](https://cfoust.github.io/cy/)**.
 
-The `cy` project has a few main goals:
+Features:
 
-- To shape the experience of using terminal applications.
-- Be beautiful, fast, and easy-to-use, particularly for users who have not used `tmux` or who are intimidated by its default configuration.
-- Allow users to search in and replay any `cy` session.
+- [Replay and search through](https://cfoust.github.io/cy/replay-mode.html) any terminal session
+- [Flexible configuration](https://cfoust.github.io/cy/configuration.html) with [Janet](https://janet-lang.org/), a simple imperative programming language
+- Built-in [fuzzy finding](https://cfoust.github.io/cy/fuzzy-finding.html) using concepts from [fzf](https://github.com/junegunn/fzf)
