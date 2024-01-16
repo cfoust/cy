@@ -2,6 +2,8 @@
 
 You can install `cy` using pre-compiled binaries or from source.
 
+**Note:** `cy` is still highly experimental. Some things may not work very well, but I would appreciate it if you [created an issue](https://github.com/cfoust/cy/issues) if something breaks or you spot something `cy` could do better.
+
 ### brew
 
 You can use `brew` to install `cy` on macOS and Linux:
