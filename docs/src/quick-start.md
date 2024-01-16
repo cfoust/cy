@@ -113,7 +113,7 @@ The controls should be familiar to you if you have ever used a fuzzy finder:
 
 ## 7. Using the command palette
 
-{{story cast cy/palette}}
+{{story cast cy/palette --width 120 --height 26}}
 
 Like most modern applications, `cy` includes a command palette, which lets you search through and execute all of the available actions. You can access it by typing `ctrl+a` `ctrl+p`.
 
