@@ -130,7 +130,11 @@ Screenshot {filename}
             subprocess.check_call(
                 f"./storybook --cast {filename} -s {command}",
                 shell=True,
-                env={"TERM": "xterm-256color"},
+                env={
+                    "TERM": "xterm-256color",
+                    "EDITOR": "/usr/bin/vim",
+                    "PS1": " \[\e[0;31m\]▸▸▹\[\e[0m\] \[\e[0;31m\]\[\e[0m\]\[\033[00m\]",
+                },
             )
             continue
 

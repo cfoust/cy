@@ -17,7 +17,5 @@ var SplashStory stories.InitFunc = func(ctx context.Context) (mux.Screen, error)
 }
 
 func init() {
-	stories.Register("splash", SplashStory, stories.Config{
-		Size: geom.DEFAULT_SIZE,
-	})
+	stories.Register("splash", SplashStory, stories.Config{})
 }

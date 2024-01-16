@@ -20,7 +20,8 @@ func createStory(ctx context.Context) (cy *Cy, client *Client, screen mux.Screen
 
 	client, err = cy.NewClient(ctx, ClientOptions{
 		Env: map[string]string{
-			"TERM": "xterm-256color",
+			"TERM":   "xterm-256color",
+			"EDITOR": "/usr/bin/vim",
 		},
 		Size: geom.DEFAULT_SIZE,
 	})
@@ -97,6 +98,54 @@ func init() {
 			stories.Type("ctrl+l"),
 			stories.Wait(stories.Some),
 			stories.Type("ctrl+l"),
+			stories.Wait(stories.ALot),
+		},
+	})
+
+	stories.Register("cy/project", initNoFrame, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("mkdir -p test-dir", "enter"),
+			stories.Wait(stories.More),
+			stories.Type("cd test-dir", "enter"),
+			stories.Wait(stories.More),
+			stories.Type("ctrl+a", "n"),
+			stories.Wait(stories.ALot),
+			stories.Type("ctrl+l"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+l"),
+			stories.Wait(stories.ALot),
+		},
+	})
+
+	stories.Register("cy/switch-shells", initNoFrame, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("mkdir -p test-dir", "enter"),
+			stories.Wait(stories.More),
+			stories.Type("cd test-dir", "enter"),
+			stories.Wait(stories.More),
+			stories.Type("ctrl+a", "n"),
+			stories.Wait(stories.ALot),
+			stories.Type("ctrl+l"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+l"),
+			stories.Wait(stories.ALot),
+			stories.Type("ctrl+a", "j"),
+			stories.Wait(stories.Some),
+			stories.Type("this is a new shell"),
+			stories.Wait(stories.ALot),
+			stories.Type("ctrl+a", ";"),
+			stories.Wait(stories.More),
+			stories.Type("down"),
+			stories.Wait(stories.Some),
+			stories.Type("down"),
+			stories.Wait(stories.Some),
+			stories.Type("up"),
+			stories.Wait(stories.ALot),
+			stories.Type("testshell", "down"),
+			stories.Wait(stories.ALot),
+			stories.Type("enter"),
 			stories.Wait(stories.ALot),
 		},
 	})

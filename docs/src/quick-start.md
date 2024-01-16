@@ -69,6 +69,8 @@ When you are attached to a pane in the `/shells` group, `ctrl+l` cycles to the n
 
 ## 5. Creating a new project
 
+{{story cast cy/project}}
+
 Often, you will be doing some work in a single directory, like a Git repository. `cy` ships with a way to create a new group of panes for exactly this purpose. To use it, navigate to a directory and type `ctrl+a` `n`.
 
 This creates two panes:
@@ -92,6 +94,8 @@ For example, if you type `ctrl+a` `n` while in a pane with the working directory
 ```
 
 ## 6. Switching between shells and projects
+
+{{story cast cy/switch-shells}}
 
 `cy` allows you to quickly jump between panes using a built-in fuzzy finder. Try it out by hitting `ctrl+a` `;`, which presents you with a list of all of the running panes.
 

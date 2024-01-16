@@ -36,6 +36,10 @@ jobs:
         with:
           repository: cfoust/cy
 
+      - name: Install vim
+        # This is used for the "cy/project" story
+        run: sudo apt-get install -qqy vim
+
       - name: Build
         run: >
           go build
