@@ -149,4 +149,22 @@ func init() {
 			stories.Wait(stories.ALot),
 		},
 	})
+
+	stories.Register("cy/palette", initWithFrame, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "ctrl+p"),
+			stories.Wait(stories.More),
+			stories.Type("choose"),
+			stories.Wait(stories.Some),
+			stories.Type("enter"),
+			stories.Wait(stories.Some),
+			stories.Type("down"),
+			stories.Wait(stories.Some),
+			stories.Type("down"),
+			stories.Wait(stories.Some),
+			stories.Type("enter"),
+			stories.Wait(stories.ALot),
+		},
+	})
 }

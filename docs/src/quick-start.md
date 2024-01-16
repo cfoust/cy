@@ -110,3 +110,13 @@ The controls should be familiar to you if you have ever used a fuzzy finder:
 
 - `ctrl+a` `k`: Jump to a project.
 - `ctrl+a` `l`: Jump to a shell based on its current working directory.
+
+## 7. Using the command palette
+
+{{story cast cy/palette}}
+
+Like most modern applications, `cy` includes a command palette, which lets you search through and execute all of the available actions. You can access it by typing `ctrl+a` `ctrl+p`.
+
+## 8. Quitting cy
+
+You can kill the cy server by hitting `ctrl+a` `q` and detach from it (but leave the server running with `ctrl+a` `d`.

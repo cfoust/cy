@@ -1,6 +1,6 @@
 # Configuration
 
-All of `cy`'s behavior is determined using a programming language called [Janet](https://janet-lang.org/), which is a fun, embeddable [Lisp](<https://en.wikipedia.org/wiki/Lisp_(programming_language)>) that is easy to learn and comes out of the box with a comprehensive standard library. If you are new to Janet, I recommend starting out with its [documentation](https://janet-lang.org/docs/syntax.html) and Ian Henry's fantastic [_Janet for Mortals_](https://janet.guide/).
+All of `cy`'s behavior is determined using a programming language called [Janet](https://janet-lang.org/), which is a fun, embeddable [Lisp-like](<https://en.wikipedia.org/wiki/Lisp_(programming_language)>) language that is easy to learn. If you are new to Janet, I recommend starting out with its [documentation](https://janet-lang.org/docs/syntax.html) and Ian Henry's fantastic [_Janet for Mortals_](https://janet.guide/).
 
 Janet looks like this:
 
@@ -23,6 +23,8 @@ On startup, `cy` will search for and execute the first file containing Janet sou
 1. `$HOME/.config/cy/cyrc.janet`
 1. `$HOME/.config/cyrc.janet`
 1. `$HOME/.config/.cy.janet`
+
+For now, there is no way to reload your configuration; if you make changes to your configuration file, you'll need to restart cy.
 
 Your `cy` configuration can contain any valid Janet statement, but `cy` also provides additions to the standard library in the form of [an API](./api.md) for controlling every aspect of how `cy` works.
 
