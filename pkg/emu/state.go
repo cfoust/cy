@@ -293,7 +293,7 @@ func (t *State) resize(cols, rows int) bool {
 		t.clear(0, 0, cols-1, rows-1)
 	}
 
-	if isAltMode(t.mode) {
+	if IsAltMode(t.mode) {
 		history, lines, _, _ := reflow(
 			altHistory,
 			altLines,
@@ -453,7 +453,7 @@ func between(val, min, max int) bool {
 	return true
 }
 
-func isAltMode(mode ModeFlag) bool {
+func IsAltMode(mode ModeFlag) bool {
 	return (mode & ModeAltScreen) != 0
 }
 
@@ -480,7 +480,7 @@ func (t *State) scrollDown(orig, n int) {
 	}
 
 	// don't save history lines on alt screen
-	if orig != 0 || isAltMode(t.mode) {
+	if orig != 0 || IsAltMode(t.mode) {
 		return
 	}
 
@@ -502,7 +502,7 @@ func (t *State) scrollDown(orig, n int) {
 func (t *State) scrollUp(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
 
-	if orig == 0 && !isAltMode(t.mode) && !t.disableHistory {
+	if orig == 0 && !IsAltMode(t.mode) && !t.disableHistory {
 		for i := 0; i < n; i++ {
 			t.history = append(t.history, copyLine(t.lines[i]))
 		}

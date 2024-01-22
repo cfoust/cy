@@ -5,7 +5,6 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/replayable"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/sessions"
@@ -39,10 +38,8 @@ func New(
 		return nil, err
 	}
 
-	terminal := screen.NewTerminal(ctx, recorder, geom.DEFAULT_SIZE)
 	replayable := replayable.New(
 		ctx,
-		terminal,
 		cmd,
 		recorder,
 		replayBinds,

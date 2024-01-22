@@ -34,6 +34,10 @@ func (t *Terminal) Resize(size Size) error {
 	return nil
 }
 
+func (t *Terminal) IsAltMode() bool {
+	return emu.IsAltMode(t.terminal.Mode())
+}
+
 func (t *Terminal) Send(msg mux.Msg) {
 	input := make([]byte, 0)
 	mode := t.terminal.Mode()

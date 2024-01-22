@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/replay"
@@ -19,7 +20,7 @@ type Replayable struct {
 	util.Lifetime
 	*S.Layers
 
-	screen   mux.Screen
+	terminal *S.Terminal
 	stream   mux.Stream
 	recorder *sessions.Recorder
 	replay   *taro.Program
@@ -33,14 +34,28 @@ func (r *Replayable) Stream() mux.Stream {
 }
 
 func (r *Replayable) Screen() mux.Screen {
-	return r.screen
+	return r.terminal
+}
+
+func (r *Replayable) Send(msg mux.Msg) {
+	// We want to automatically trigger replay mode when the user scrolls
+	// up with the mouse
+	if mouse, ok := msg.(taro.MouseMsg); ok {
+		isMouseUp := mouse.Type == taro.MousePress && mouse.Button == taro.MouseWheelUp
+		if isMouseUp && !r.terminal.IsAltMode() && r.Layers.NumLayers() == 1 {
+			r.EnterReplay()
+			return
+		}
+	}
+
+	r.Layers.Send(msg)
 }
 
 func (r *Replayable) EnterReplay() {
 	r.Lock()
 	defer r.Unlock()
 
-	if r.NumLayers() > 1 {
+	if r.Layers.NumLayers() > 1 {
 		return
 	}
 
@@ -51,7 +66,7 @@ func (r *Replayable) EnterReplay() {
 		r.binds,
 	)
 
-	r.NewLayer(
+	r.Layers.NewLayer(
 		replay.Ctx(),
 		replay,
 		S.PositionTop,
@@ -64,7 +79,7 @@ func (r *Replayable) EnterReplay() {
 		for {
 			select {
 			case event := <-events:
-				r.Publish(event)
+				r.Layers.Publish(event)
 			case <-replay.Ctx().Done():
 				return
 			}
@@ -81,16 +96,16 @@ func (r *Replayable) EnterReplay() {
 
 func New(
 	ctx context.Context,
-	screen mux.Screen,
 	stream mux.Stream,
 	recorder *sessions.Recorder,
 	binds *bind.BindScope,
 ) *Replayable {
 	lifetime := util.NewLifetime(ctx)
+	terminal := S.NewTerminal(lifetime.Ctx(), recorder, geom.DEFAULT_SIZE)
 	layers := S.NewLayers()
 	layers.NewLayer(
 		lifetime.Ctx(),
-		screen,
+		terminal,
 		S.PositionTop,
 		S.WithInteractive,
 		S.WithOpaque,
@@ -99,7 +114,7 @@ func New(
 	return &Replayable{
 		Lifetime: lifetime,
 		binds:    binds,
-		screen:   screen,
+		terminal: terminal,
 		stream:   stream,
 		recorder: recorder,
 		Layers:   layers,
