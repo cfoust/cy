@@ -333,6 +333,8 @@ var keyRefs = map[string]KeyType{
 
 // Sequence mappings.
 var sequences = map[string]Key{
+	"\x1b": {Type: KeyEscape},
+
 	// Arrow keys
 	"\x1b[A":    {Type: KeyUp},
 	"\x1b[B":    {Type: KeyDown},
