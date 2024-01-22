@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/sessions"
@@ -166,12 +167,14 @@ func (m *ReplayModule) JumpToBackward(context interface{}, char string) error {
 }
 
 func (m *ReplayModule) Open(
-	groupId tree.NodeID,
+	groupId *janet.Value,
 	path string,
 ) (tree.NodeID, error) {
-	group, ok := m.Tree.GroupById(groupId)
-	if !ok {
-		return 0, fmt.Errorf("node not found: %d", groupId)
+	defer groupId.Free()
+
+	group, err := resolveGroup(m.Tree, groupId)
+	if err != nil {
+		return 0, err
 	}
 
 	reader, err := sessions.Open(path)
