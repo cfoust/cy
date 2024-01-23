@@ -56,10 +56,7 @@ func getKeySequence(value *janet.Value) (result []interface{}, err error) {
 	return
 }
 
-func (k *KeyModule) Bind(target *janet.Value, sequence *janet.Value, callback *janet.Function) error {
-	defer target.Free()
-	defer sequence.Free()
-
+func (k *KeyModule) getScope(target *janet.Value) (*bind.BindScope, error) {
 	var scope *bind.BindScope
 	node, err := resolveNode(k.Tree, target)
 	if err == nil {
@@ -67,10 +64,22 @@ func (k *KeyModule) Bind(target *janet.Value, sequence *janet.Value, callback *j
 	} else {
 		replayErr := target.Unmarshal(&KEYWORD_REPLAY)
 		if replayErr != nil {
-			return fmt.Errorf("target must be one of :root, :replay, or node ID")
+			return nil, fmt.Errorf("target must be one of :root, :replay, or node ID")
 		}
 
 		scope = k.ReplayBinds
+	}
+
+	return scope, nil
+}
+
+func (k *KeyModule) Bind(target *janet.Value, sequence *janet.Value, callback *janet.Function) error {
+	defer target.Free()
+	defer sequence.Free()
+
+	scope, err := k.getScope(target)
+	if err != nil {
+		return err
 	}
 
 	translated, err := getKeySequence(sequence)
@@ -84,6 +93,50 @@ func (k *KeyModule) Bind(target *janet.Value, sequence *janet.Value, callback *j
 			Callback: callback,
 		},
 	)
+
+	return nil
+}
+
+func (k *KeyModule) Unbind(target *janet.Value, sequence *janet.Value) error {
+	defer target.Free()
+	defer sequence.Free()
+
+	scope, err := k.getScope(target)
+	if err != nil {
+		return err
+	}
+
+	translated, err := getKeySequence(sequence)
+	if err != nil {
+		return err
+	}
+
+	scope.Clear(translated)
+
+	return nil
+}
+
+func (k *KeyModule) Remap(target *janet.Value, from, to *janet.Value) error {
+	defer target.Free()
+	defer from.Free()
+	defer to.Free()
+
+	scope, err := k.getScope(target)
+	if err != nil {
+		return err
+	}
+
+	fromSequence, err := getKeySequence(from)
+	if err != nil {
+		return err
+	}
+
+	toSequence, err := getKeySequence(to)
+	if err != nil {
+		return err
+	}
+
+	scope.Remap(fromSequence, toSequence)
 
 	return nil
 }
