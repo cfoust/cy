@@ -69,6 +69,9 @@ func TestTrie(t *testing.T) {
 	require.Equal(t, 0, len(trie.Partial([]string{
 		"one",
 	})))
+
+	trie.Clear([]interface{}{})
+	require.Equal(t, 0, len(trie.Leaves()))
 }
 
 func TestRegex(t *testing.T) {

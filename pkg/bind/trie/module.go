@@ -248,9 +248,10 @@ func (t *Trie[T]) Set(sequence []interface{}, value T) {
 	}
 }
 
-// Clear all mappings in the trie with the prefix `sequence`.
 func (t *Trie[T]) clear(sequence []interface{}) {
 	if len(sequence) == 0 {
+		t.next = make(map[string]interface{})
+		t.nextRe = make(map[string]*Regex)
 		return
 	}
 
@@ -301,6 +302,8 @@ func (t *Trie[T]) clear(sequence []interface{}) {
 	}
 }
 
+// Clear all mappings in the trie with the prefix `sequence`. An empty sequence
+// will clear all mappings.
 func (t *Trie[T]) Clear(sequence []interface{}) {
 	t.Lock()
 	defer t.Unlock()
