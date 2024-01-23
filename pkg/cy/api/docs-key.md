@@ -20,7 +20,7 @@ Clear all bindings that begin with `sequence` for node `target`, which is a [Nod
 
 (key/remap target from to)
 
-Remap all bindings that begin with sequence `from` to sequence `to` for node `target`, which is a [NodeID](api.md#nodeid) or `:replay`.
+Remap all bindings that begin with sequence `from` to sequence `to` for node `target`, which is a [NodeID](api.md#nodeid) or `:replay`. Empty sequences (`[]`) are not currently supported for `from` and `to`.
 
 For example, to remap all of the default bindings that begin with `ctrl+a` to `ctrl+v`:
 
