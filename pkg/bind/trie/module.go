@@ -248,6 +248,60 @@ func (t *Trie[T]) Set(sequence []interface{}, value T) {
 	}
 }
 
+// Clear all mappings in the trie with the prefix `sequence`.
+func (t *Trie[T]) Clear(sequence []interface{}) {
+	t.Lock()
+	defer t.Unlock()
+
+	if len(sequence) == 0 {
+		return
+	}
+
+	// First, delete the portion of the tree that this sequence refers to
+	lastIndex := len(sequence) - 1
+	last := sequence[lastIndex]
+	parent := t.access(sequence[:lastIndex], false)
+	if parent == nil {
+		return
+	}
+
+	switch step := last.(type) {
+	case string:
+		delete(parent.next, step)
+	case *Regex:
+		delete(parent.nextRe, step.Pattern)
+	}
+
+	// Then prune any portions of the tree that no longer have any leaves
+	// For example:
+	// a -> b -> c
+	// |    |    |
+	// |    |    leaf
+	// |    parent
+	// parent
+	// we've already cleared b's leaves, we need to check whether b has any
+	// other keys, if it does not, remove it from a
+	for i := len(sequence) - 3; i >= 0; i-- {
+		parent := t.access(sequence[:i+1], false)
+		child := t.access(sequence[:i+2], false)
+		if parent == nil || child == nil {
+			return
+		}
+
+		numLeaves := len(child.next) + len(child.nextRe)
+		if numLeaves != 0 {
+			break
+		}
+
+		switch step := sequence[i].(type) {
+		case string:
+			delete(parent.next, step)
+		case *Regex:
+			delete(parent.nextRe, step.Pattern)
+		}
+	}
+}
+
 func New[T any]() *Trie[T] {
 	return &Trie[T]{
 		next:   make(map[string]interface{}),
