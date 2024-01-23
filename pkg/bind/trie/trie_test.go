@@ -37,14 +37,34 @@ func TestTrie(t *testing.T) {
 		"two",
 	}, 1)
 
+	// The tree:
+	// one -> two -> 2
+	// one -> three -> 1
+	// two -> 1
 	require.Equal(t, 3, len(trie.Leaves()))
 	require.Equal(t, 2, len(trie.Partial([]string{
 		"one",
 	})))
 
-	trie.Clear([]interface{}{
+	trie.Remap([]interface{}{
 		"one",
+	}, []interface{}{
+		"three",
 	})
+	// The tree:
+	// three -> two -> 2
+	// three -> three -> 1
+	// two -> 1
+	require.Equal(t, 3, len(trie.Leaves()))
+	require.Equal(t, 2, len(trie.Partial([]string{
+		"three",
+	})))
+
+	trie.Clear([]interface{}{
+		"three",
+	})
+	// The tree:
+	// two -> 1
 	require.Equal(t, 1, len(trie.Leaves()))
 	require.Equal(t, 0, len(trie.Partial([]string{
 		"one",

@@ -249,27 +249,26 @@ func (t *Trie[T]) Set(sequence []interface{}, value T) {
 }
 
 // Clear all mappings in the trie with the prefix `sequence`.
-func (t *Trie[T]) Clear(sequence []interface{}) {
-	t.Lock()
-	defer t.Unlock()
-
+func (t *Trie[T]) clear(sequence []interface{}) {
 	if len(sequence) == 0 {
 		return
 	}
 
 	// First, delete the portion of the tree that this sequence refers to
-	lastIndex := len(sequence) - 1
-	last := sequence[lastIndex]
-	parent := t.access(sequence[:lastIndex], false)
-	if parent == nil {
-		return
-	}
+	{
+		lastIndex := len(sequence) - 1
+		last := sequence[lastIndex]
+		parent := t.access(sequence[:lastIndex], false)
+		if parent == nil {
+			return
+		}
 
-	switch step := last.(type) {
-	case string:
-		delete(parent.next, step)
-	case *Regex:
-		delete(parent.nextRe, step.Pattern)
+		switch step := last.(type) {
+		case string:
+			delete(parent.next, step)
+		case *Regex:
+			delete(parent.nextRe, step.Pattern)
+		}
 	}
 
 	// Then prune any portions of the tree that no longer have any leaves
@@ -299,6 +298,55 @@ func (t *Trie[T]) Clear(sequence []interface{}) {
 		case *Regex:
 			delete(parent.nextRe, step.Pattern)
 		}
+	}
+}
+
+func (t *Trie[T]) Clear(sequence []interface{}) {
+	t.Lock()
+	defer t.Unlock()
+
+	t.clear(sequence)
+}
+
+// Remap the subtree at sequence `from` to sequence `to`.
+func (t *Trie[T]) Remap(from, to []interface{}) {
+	t.Lock()
+	defer t.Unlock()
+
+	if len(from) == 0 || len(to) == 0 {
+		return
+	}
+
+	oldParent := t.access(from[:len(from)-1], false)
+	if oldParent == nil {
+		return
+	}
+
+	// Get the node or leaf that this step referred to
+	var next interface{}
+	switch step := from[len(from)-1].(type) {
+	case string:
+		next = oldParent.next[step]
+	case *Regex:
+		next = oldParent.nextRe[step.Pattern].next
+	}
+
+	// Remove that path
+	t.clear(from)
+
+	// Then create the path to the new parent if necessary
+	newParent := t.access(from[:len(to)-1], true)
+	if newParent == nil {
+		// can't happen, we're creating
+		return
+	}
+
+	switch step := to[len(to)-1].(type) {
+	case string:
+		newParent.next[step] = next
+	case *Regex:
+		step.next = next
+		newParent.nextRe[step.Pattern] = step
 	}
 }
 
