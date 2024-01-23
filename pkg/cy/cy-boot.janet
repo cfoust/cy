@@ -12,6 +12,29 @@
      (defn ,name ,docstring [] ,;body)
      (,array/push actions [,docstring ,name])))
 
+(defmacro key/bind-many
+  ````Bind many bindings at once in the same scope.
+
+For example:
+```janet
+(key/bind-many :root
+               [prefix "j"] action/new-shell
+               [prefix "n"] action/new-project)
+```
+````
+  [scope & body]
+
+  (when (not (= (% (length body) 2) 0))
+    (error "key/bind-many requires an even number of arguments"))
+
+  (as?-> body _
+         (length _)
+         (range 0 _ 2)
+         (map |(tuple ;(array/slice body $ (+ $ 2))) _)
+         (map |(do
+                 (def [binding func] $)
+                 (tuple 'key/bind scope binding func)) _)))
+
 (key/def
   action/command-palette
   "open command palette"
@@ -162,57 +185,58 @@
          (replay/open :root _)
          (pane/attach _)))
 
-(key/bind :root [prefix "j"] action/new-shell)
-(key/bind :root [prefix "n"] action/new-project)
-(key/bind :root [prefix "k"] action/jump-project)
-(key/bind :root [prefix "l"] action/jump-shell)
-(key/bind :root ["ctrl+l"] action/next-pane)
+(key/bind-many :root
+               [prefix "j"] action/new-shell
+               [prefix "n"] action/new-project
+               [prefix "k"] action/jump-project
+               [prefix "l"] action/jump-shell
+               ["ctrl+l"] action/next-pane
+               [prefix ";"] action/jump-pane
+               [prefix "ctrl+p"] action/command-palette
+               [prefix "x"] action/kill-current-pane
+               [prefix "g"] action/toggle-margins
+               [prefix "1"] action/margins-80
+               [prefix "2"] action/margins-160
+               [prefix "+"] action/margins-smaller
+               [prefix "-"] action/margins-bigger
+               [prefix "r" "r"] action/random-frame
+               [prefix "q"] cy/kill-server
+               [prefix "d"] cy/detach
+               [prefix "p"] cy/replay
+               [prefix "P"] cy/paste)
 
-(key/bind :root [prefix ";"] action/jump-pane)
-(key/bind :root [prefix "ctrl+p"] action/command-palette)
-(key/bind :root [prefix "x"] action/kill-current-pane)
-(key/bind :root [prefix "g"] action/toggle-margins)
-(key/bind :root [prefix "1"] action/margins-80)
-(key/bind :root [prefix "2"] action/margins-160)
-(key/bind :root [prefix "+"] action/margins-smaller)
-(key/bind :root [prefix "-"] action/margins-bigger)
-(key/bind :root [prefix "r" "r"] action/random-frame)
-(key/bind :root [prefix "q"] cy/kill-server)
-(key/bind :root [prefix "d"] cy/detach)
-(key/bind :root [prefix "p"] cy/replay)
-(key/bind :root [prefix "P"] cy/paste)
-
-(key/bind :replay ["q"] replay/quit)
-(key/bind :replay ["ctrl+c"] replay/quit)
-(key/bind :replay ["esc"] replay/quit)
-(key/bind :replay ["right"] replay/time-step-forward)
-(key/bind :replay ["left"] replay/time-step-back)
-(key/bind :replay ["up"] replay/scroll-up)
-(key/bind :replay ["down"] replay/scroll-down)
-(key/bind :replay ["ctrl+u"] replay/half-page-up)
-(key/bind :replay ["ctrl+d"] replay/half-page-down)
-(key/bind :replay ["/"] replay/search-forward)
-(key/bind :replay ["?"] replay/search-backward)
-(key/bind :replay ["g" "g"] replay/beginning)
-(key/bind :replay ["G"] replay/end)
-(key/bind :replay ["l"] replay/cursor-right)
-(key/bind :replay ["h"] replay/cursor-left)
-(key/bind :replay ["j"] replay/cursor-down)
-(key/bind :replay ["k"] replay/cursor-up)
-(key/bind :replay ["v"] replay/select)
-(key/bind :replay ["y"] replay/copy)
-(key/bind :replay ["n"] replay/search-again)
-(key/bind :replay ["N"] replay/search-reverse)
-(key/bind :replay [" "] replay/time-play)
-(key/bind :replay ["1"] (fn [&] (replay/time-playback-rate 1)))
-(key/bind :replay ["2"] (fn [&] (replay/time-playback-rate 2)))
-(key/bind :replay ["3"] (fn [&] (replay/time-playback-rate 5)))
-(key/bind :replay ["!"] (fn [&] (replay/time-playback-rate -1)))
-(key/bind :replay ["@"] (fn [&] (replay/time-playback-rate -2)))
-(key/bind :replay ["#"] (fn [&] (replay/time-playback-rate -5)))
-(key/bind :replay [";"] replay/jump-again)
-(key/bind :replay [","] replay/jump-reverse)
-(key/bind :replay ["f" [:re "."]] replay/jump-forward)
-(key/bind :replay ["F" [:re "."]] replay/jump-backward)
-(key/bind :replay ["t" [:re "."]] replay/jump-to-forward)
-(key/bind :replay ["T" [:re "."]] replay/jump-to-backward)
+(key/bind-many :replay
+               ["q"] replay/quit
+               ["ctrl+c"] replay/quit
+               ["esc"] replay/quit
+               ["right"] replay/time-step-forward
+               ["left"] replay/time-step-back
+               ["up"] replay/scroll-up
+               ["down"] replay/scroll-down
+               ["ctrl+u"] replay/half-page-up
+               ["ctrl+d"] replay/half-page-down
+               ["/"] replay/search-forward
+               ["?"] replay/search-backward
+               ["g" "g"] replay/beginning
+               ["G"] replay/end
+               ["l"] replay/cursor-right
+               ["h"] replay/cursor-left
+               ["j"] replay/cursor-down
+               ["k"] replay/cursor-up
+               ["v"] replay/select
+               ["y"] replay/copy
+               ["n"] replay/search-again
+               ["N"] replay/search-reverse
+               [" "] replay/time-play
+               ["1"] (fn [&] (replay/time-playback-rate 1))
+               ["2"] (fn [&] (replay/time-playback-rate 2))
+               ["3"] (fn [&] (replay/time-playback-rate 5))
+               ["!"] (fn [&] (replay/time-playback-rate -1))
+               ["@"] (fn [&] (replay/time-playback-rate -2))
+               ["#"] (fn [&] (replay/time-playback-rate -5))
+               [";"] replay/jump-again
+               [","] replay/jump-reverse
+               ["f" [:re "."]] replay/jump-forward
+               ["F" [:re "."]] replay/jump-backward
+               ["t" [:re "."]] replay/jump-to-forward
+               ["T" [:re "."]] replay/jump-to-backward)
