@@ -18,6 +18,16 @@ The `(key/bind)` function takes three parameters:
 
 Scopes will be covered in a later chapter: here we will cover key sequences and functions at length.
 
+You can avoid calling `(key/bind)` over and over by using the [`(key/bind-many)`](./api.md#keybind-many) macro. Here is an example:
+
+```janet
+(key/bind-many :root
+               ["ctrl+b" "1"] do-something
+               ["ctrl+b" "2"] do-something-else)
+```
+
+You can also clear previously bound key bindings with [`(key/unbind)`](./api.md#keyunbind) or rebind them with [`(key/remap)`](./api.md#keyremap).
+
 ## Key sequences
 
 Key sequences in `cy` are more flexible than they appear at first glance. Valid sequences can consist of the following elements:

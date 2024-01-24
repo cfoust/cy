@@ -2,13 +2,13 @@
 
 {{story cast cy/replay}}
 
-One of `cy`'s most important features is the ability to record, play back, and search through everything that happens in your terminal sessions. You can invoke **replay mode** at any time by typing the key sequence `ctrl+a` `p` [by default](./default-keys.md#general).
+One of `cy`'s most important features is the ability to record, play back, and search through everything that happens in your terminal sessions. You can invoke **replay mode** at any time by typing the key sequence `ctrl+a` `p` [by default](./default-keys.md#general) or by scrolling up with the mouse if the pane is connected to a shell.
 
 ### A note about recording
 
 `cy` does not and will never record what you type (otherwise known as "standard in" or `stdin`). It only records the output of the process (otherwise known as "standard out" or `stdout`) that is attached to your virtual terminal and nothing more.
 
-This is a basic safety measure so that your passwords (such as for `sudo`) never appear in `cy`'s recordings. Your secrets (such as authentication keys and tokens) still might, though, so caution is advised.
+This is a basic safety measure so that your passwords (such as for `sudo`) never appear in `cy`'s recordings. Your secrets (such as authentication keys and tokens) still will if they ever appear on your screen, so caution is advised.
 
 In the future, `cy` may give you more fine-grained control over specifically what it records and when, but for now this is not configurable.
 
