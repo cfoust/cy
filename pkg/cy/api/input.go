@@ -25,6 +25,7 @@ type FuzzyParams struct {
 	Full     bool
 	Reverse  bool
 	Animated *bool
+	Headers  *[]string
 }
 
 func (i *InputModule) Find(

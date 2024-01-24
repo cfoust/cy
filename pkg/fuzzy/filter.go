@@ -2,6 +2,7 @@ package fuzzy
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cfoust/cy/pkg/fuzzy/fzf"
 	"github.com/cfoust/cy/pkg/fuzzy/fzf/util"
@@ -15,7 +16,8 @@ type Match struct {
 }
 
 type Option struct {
-	Text string
+	Text    string
+	Columns []string
 	// Supported types:
 	// - string: will be passed to a blank terminal
 	// - NodeID: will show in the background
@@ -23,6 +25,12 @@ type Option struct {
 	Chars   *util.Chars
 	Match   *Match
 	Result  interface{}
+}
+
+type tableInput struct {
+	_       struct{} `janet:"tuple"`
+	Columns []string
+	Value   *janet.Value
 }
 
 type tupleInput struct {
@@ -79,90 +87,113 @@ func NewOption(text string, result interface{}) Option {
 	}
 }
 
-func UnmarshalOptions(input *janet.Value) (result []Option, err error) {
-	var strings []string
-	err = input.Unmarshal(&strings)
+func unmarshalOption(input *janet.Value) (result Option, err error) {
+	var str string
+	err = input.Unmarshal(&str)
 	if err == nil {
-		for _, str := range strings {
-			result = append(
-				result,
-				NewOption(str, str),
-			)
-		}
-
+		result = NewOption(str, str)
 		return
 	}
 
-	var tuples []tupleInput
-	err = input.Unmarshal(&tuples)
+	var tuple tupleInput
+	err = input.Unmarshal(&tuple)
 	if err == nil {
-		for _, tuple := range tuples {
-			result = append(
-				result,
-				NewOption(
-					tuple.Text,
-					tuple.Value,
-				),
-			)
-		}
+		result = NewOption(
+			tuple.Text,
+			tuple.Value,
+		)
 		return
 	}
 
-	var triples []tripleInput
-	err = input.Unmarshal(&triples)
+	var triple tripleInput
+	err = input.Unmarshal(&triple)
 	if err != nil {
 		err = fmt.Errorf("input must be array of strings or tuples")
 		return
 	}
 
-	for i, triple := range triples {
-		option := NewOption(
-			triple.Text,
-			triple.Value,
-		)
+	option := NewOption(
+		triple.Text,
+		triple.Value,
+	)
 
-		preview := previewInput{}
-		preview.Type = KEYWORD_TEXT
-		err = triple.Preview.Unmarshal(&preview)
-		if err == nil {
-			text := textPreview{}
-			err = preview.Value.Unmarshal(&text)
-			if err != nil {
-				return
-			}
-			option.Preview = text
-			result = append(result, option)
-			continue
+	preview := previewInput{}
+	preview.Type = KEYWORD_TEXT
+	err = triple.Preview.Unmarshal(&preview)
+	if err == nil {
+		text := textPreview{}
+		err = preview.Value.Unmarshal(&text)
+		if err != nil {
+			return
 		}
-
-		preview.Type = KEYWORD_NODE
-		err = triple.Preview.Unmarshal(&preview)
-		if err == nil {
-			node := nodePreview{}
-			err = preview.Value.Unmarshal(&node)
-			if err != nil {
-				return
-			}
-			option.Preview = node
-			result = append(result, option)
-			continue
-		}
-
-		preview.Type = KEYWORD_REPLAY
-		err = triple.Preview.Unmarshal(&preview)
-		if err == nil {
-			replay := replayPreview{}
-			err = preview.Value.Unmarshal(&replay)
-			if err != nil {
-				return
-			}
-			option.Preview = replay
-			result = append(result, option)
-			continue
-		}
-
-		err = fmt.Errorf("invalid preview for option %d", i)
+		option.Preview = text
+		result = option
 		return
+	}
+
+	preview.Type = KEYWORD_NODE
+	err = triple.Preview.Unmarshal(&preview)
+	if err == nil {
+		node := nodePreview{}
+		err = preview.Value.Unmarshal(&node)
+		if err != nil {
+			return
+		}
+		option.Preview = node
+		result = option
+		return
+	}
+
+	preview.Type = KEYWORD_REPLAY
+	err = triple.Preview.Unmarshal(&preview)
+	if err == nil {
+		replay := replayPreview{}
+		err = preview.Value.Unmarshal(&replay)
+		if err != nil {
+			return
+		}
+		option.Preview = replay
+		result = option
+		return
+	}
+
+	err = fmt.Errorf("invalid preview")
+	return
+}
+
+func UnmarshalOptions(input *janet.Value) (result []Option, err error) {
+	var rows []tableInput
+	err = input.Unmarshal(&rows)
+	if err == nil {
+		for i, row := range rows {
+			option, parseErr := unmarshalOption(row.Value)
+			if parseErr != nil {
+				err = fmt.Errorf("row %d is malformed: %s", i, parseErr.Error())
+				return
+			}
+
+			// Join the columns to be used as a search string
+			columnOption := NewOption(strings.Join(row.Columns, "|"), nil)
+			option.Columns = row.Columns
+			option.Text = columnOption.Text
+			option.Chars = columnOption.Chars
+
+			result = append(result, option)
+		}
+
+		return
+	}
+
+	var values []*janet.Value
+	var option Option
+	err = input.Unmarshal(&values)
+	for i, value := range values {
+		option, err = unmarshalOption(value)
+		if err != nil {
+			err = fmt.Errorf("item %d is malformed: %s", i, err.Error())
+			return
+		}
+		result = append(result, option)
 	}
 
 	return
