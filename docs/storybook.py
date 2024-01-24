@@ -113,7 +113,7 @@ Type "./storybook -s {command} && clear"
 Enter
 Sleep 500ms
 Show
-Sleep 15s
+Sleep 8s
 """
         elif filename.endswith(".png"):
             script = f"""
