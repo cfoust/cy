@@ -81,7 +81,13 @@ For example:
   "jump to a project"
   (as?-> projects _
          (group/children _)
-         (map |(tuple (tree/name $) [:node [((group/children $) 0)]] $) _)
+         (map
+           |(tuple
+              (tree/name $)
+              {:type :node
+               :id ((group/children $) 0)}
+              $)
+           _)
          (input/find _ :prompt "search: project")
          (group/children _)
          (_ 0) # Gets the first index, the editor
@@ -91,7 +97,11 @@ For example:
   action/jump-shell
   "jump to a shell"
   (as?-> (group/children shells) _
-         (map |(tuple (cmd/path $) [:node [$]] $) _)
+         (map |(tuple
+                 (cmd/path $)
+                 {:type :node
+                  :id $}
+                 $) _)
          (input/find _ :prompt "search: shell")
          (pane/attach _)))
 
@@ -123,7 +133,7 @@ For example:
   action/jump-pane
   "jump to a pane"
   (as?-> (group/leaves :root) _
-         (map |(tuple (tree/path $) [:node [$]] $) _)
+         (map |(tuple (tree/path $) {:type :node :id $} $) _)
          (input/find _ :prompt "search: pane")
          (pane/attach _)))
 
@@ -180,7 +190,7 @@ For example:
   action/open-log
   "open an existing log file"
   (as?-> (path/glob (path/join [(cy/get :data-dir) "*.borg"])) _
-         (map |(tuple $ [:replay [$]] $) _)
+         (map |(tuple $ {:type :replay :path $} $) _)
          (input/find _ :prompt "search: log file")
          (replay/open :root _)
          (pane/attach _)))

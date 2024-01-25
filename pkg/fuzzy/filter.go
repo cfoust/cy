@@ -177,13 +177,24 @@ func UnmarshalOptions(input *janet.Value) (result []Option, err error) {
 	var values []*janet.Value
 	var option Option
 	err = input.Unmarshal(&values)
+	numColumns := 0
 	for i, value := range values {
 		option, err = unmarshalOption(value)
 		if err != nil {
 			err = fmt.Errorf("item %d is malformed: %s", i, err.Error())
 			return
 		}
+		if len(option.Columns) > 0 {
+			numColumns = len(option.Columns)
+		}
 		result = append(result, option)
+	}
+
+	for i, option := range result {
+		if len(option.Columns) != numColumns {
+			err = fmt.Errorf("row %d has invalid number of columns (has %d, need %d)", i, len(option.Columns), numColumns)
+			return
+		}
 	}
 
 	return
