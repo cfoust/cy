@@ -2,12 +2,14 @@ package fuzzy
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 )
 
 // Return an image representing the contents of the preview window.
@@ -112,13 +114,62 @@ func (f *Fuzzy) renderPreview(state *tty.State) {
 	)
 }
 
-func (f *Fuzzy) renderOptions(common lipgloss.Style) string {
+func (f *Fuzzy) renderTable(common, active, inactive, prompt lipgloss.Style, options []Option) string {
+	var rows [][]string
+
+	for _, option := range options {
+		rows = append(rows, option.Columns)
+	}
+
+	lines := strings.Split(table.New().
+		Border(lipgloss.Border{}).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			switch {
+			case row == 0:
+				return prompt
+			case row == f.selected+1:
+				return active
+			default:
+				return inactive
+			}
+		}).
+		Headers(f.headers...).
+		Width(common.GetWidth()+4).
+		Rows(rows...).
+		String(), "\n")
+
+	// lipgloss adds some blank lines that we want to skip
+	var output []string
+	output = append(
+		output,
+		lines[1],
+	)
+	output = append(
+		output,
+		lines[3:len(lines)-1]...,
+	)
+
+	return strings.Join(output, "\n")
+}
+
+func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style) string {
 	inactive := common.Copy().
 		Background(lipgloss.Color("#968C83")).
 		Foreground(lipgloss.Color("#20111B"))
 	active := common.Copy().
 		Background(lipgloss.Color("#E8E3DF")).
 		Foreground(lipgloss.Color("#20111B"))
+
+	options := f.getOptions()
+	if len(options) > 0 && len(options[0].Columns) > 0 {
+		return f.renderTable(
+			common,
+			active,
+			inactive,
+			prompt,
+			options,
+		)
+	}
 
 	var lines []string
 
@@ -141,11 +192,8 @@ func (f *Fuzzy) renderOptions(common lipgloss.Style) string {
 	return lipgloss.JoinVertical(lipgloss.Left, lines...)
 }
 
-func (f *Fuzzy) renderPrompt(width int) string {
-	style := f.render.NewStyle().
-		Background(lipgloss.Color("#EAA549")).
-		Foreground(lipgloss.Color("#20111B")).
-		Width(width)
+func (f *Fuzzy) renderPrompt(prompt lipgloss.Style, width int) string {
+	style := prompt.Copy().Width(width)
 
 	numFiltered := len(f.filtered)
 	if numFiltered == 0 && len(f.textInput.Value()) == 0 {
@@ -172,7 +220,7 @@ func (f *Fuzzy) renderPrompt(width int) string {
 	)
 }
 
-func (f *Fuzzy) renderInline(state *tty.State) {
+func (f *Fuzzy) renderInline(prompt lipgloss.Style, state *tty.State) {
 	common := f.render.NewStyle().
 		Background(lipgloss.Color("#20111B")).
 		Foreground(lipgloss.Color("#D5CCBA")).
@@ -181,12 +229,12 @@ func (f *Fuzzy) renderInline(state *tty.State) {
 	f.textInput.Cursor.Style = f.render.NewStyle().
 		Background(lipgloss.Color("#E8E3DF"))
 
-	options := f.renderOptions(common)
+	options := f.renderOptions(common, prompt)
 	input := common.Render(f.textInput.View())
 	output := lipgloss.JoinVertical(
 		lipgloss.Left,
 		input,
-		f.renderPrompt(30),
+		f.renderPrompt(prompt, 30),
 		options,
 	)
 
@@ -194,7 +242,7 @@ func (f *Fuzzy) renderInline(state *tty.State) {
 		output = lipgloss.JoinVertical(
 			lipgloss.Left,
 			options,
-			f.renderPrompt(30),
+			f.renderPrompt(prompt, 30),
 			input,
 		)
 	}
@@ -229,8 +277,12 @@ func (f *Fuzzy) View(state *tty.State) {
 	// the text input provides its own cursor
 	state.CursorVisible = false
 
+	prompt := f.render.NewStyle().
+		Background(lipgloss.Color("#EAA549")).
+		Foreground(lipgloss.Color("#20111B"))
+
 	if f.isInline {
-		f.renderInline(state)
+		f.renderInline(prompt, state)
 		return
 	}
 
@@ -243,19 +295,19 @@ func (f *Fuzzy) View(state *tty.State) {
 	f.textInput.Cursor.Style = f.render.NewStyle().
 		Background(lipgloss.Color("#E8E3DF"))
 
-	options := f.renderOptions(common)
+	options := f.renderOptions(common, prompt)
 	input := common.Render(f.textInput.View())
 	output := lipgloss.JoinVertical(
 		lipgloss.Left,
 		input,
-		f.renderPrompt(size.C),
+		f.renderPrompt(prompt, size.C),
 		options,
 	)
 	if f.isUp {
 		output = lipgloss.JoinVertical(
 			lipgloss.Left,
 			options,
-			f.renderPrompt(size.C),
+			f.renderPrompt(prompt, size.C),
 			input,
 		)
 	}

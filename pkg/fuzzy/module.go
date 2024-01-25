@@ -48,6 +48,9 @@ type Fuzzy struct {
 	// shown before the number of items
 	prompt string
 
+	// headers for the table
+	headers []string
+
 	tree       *tree.Tree
 	client     *server.Client
 	isAttached bool
@@ -312,6 +315,12 @@ func WithReverse(ctx context.Context, f *Fuzzy) {
 func WithPrompt(prompt string) Setting {
 	return func(ctx context.Context, f *Fuzzy) {
 		f.prompt = prompt
+	}
+}
+
+func WithHeaders(headers ...string) Setting {
+	return func(ctx context.Context, f *Fuzzy) {
+		f.headers = headers
 	}
 }
 

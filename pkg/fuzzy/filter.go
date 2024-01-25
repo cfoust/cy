@@ -27,7 +27,7 @@ type Option struct {
 	Result  interface{}
 }
 
-func (o Option) setText(text string) {
+func (o *Option) setText(text string) {
 	chars := util.ToChars([]byte(text))
 	o.Text = text
 	o.Chars = &chars
