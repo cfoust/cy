@@ -27,16 +27,16 @@ type Option struct {
 	Result  interface{}
 }
 
-type tableInput struct {
-	_       struct{} `janet:"tuple"`
-	Columns []string
-	Value   *janet.Value
+func (o Option) setText(text string) {
+	chars := util.ToChars([]byte(text))
+	o.Text = text
+	o.Chars = &chars
 }
 
 type tupleInput struct {
 	_ struct{} `janet:"tuple"`
 	// the text that the user will filter
-	Text string
+	Text *janet.Value
 	// the value returned if the user chooses this option
 	Value *janet.Value
 }
@@ -44,7 +44,7 @@ type tupleInput struct {
 type tripleInput struct {
 	_ struct{} `janet:"tuple"`
 	// the text that the user will filter
-	Text string
+	Text *janet.Value
 	// contains the configuration for the preview window
 	Preview *janet.Value
 	// the value returned if the user chooses this option
@@ -58,23 +58,18 @@ var (
 )
 
 type previewInput struct {
-	_     struct{} `janet:"tuple"`
-	Type  janet.Keyword
-	Value *janet.Value
+	Type janet.Keyword
 }
 
 type textPreview struct {
-	_    struct{} `janet:"tuple"`
 	Text string
 }
 
 type nodePreview struct {
-	_  struct{} `janet:"tuple"`
 	Id tree.NodeID
 }
 
 type replayPreview struct {
-	_    struct{} `janet:"tuple"`
 	Path string
 }
 
@@ -87,21 +82,44 @@ func NewOption(text string, result interface{}) Option {
 	}
 }
 
-func unmarshalOption(input *janet.Value) (result Option, err error) {
+// The displayed text of an option can consist of either a string or a
+// tuple/array of strings, which is used when filtering on a table.
+func unmarshalText(input *janet.Value, option *Option) error {
 	var str string
-	err = input.Unmarshal(&str)
+	err := input.Unmarshal(&str)
 	if err == nil {
-		result = NewOption(str, str)
+		option.setText(str)
+		option.Result = str
+		return nil
+	}
+
+	var columns []string
+	err = input.Unmarshal(&columns)
+	if err != nil {
+		return err
+	}
+
+	// Join the columns to be used as a search string
+	option.setText(strings.Join(columns, "|"))
+	option.Columns = columns
+	return nil
+}
+
+// Unmarshal a single Option from a Janet value.
+func unmarshalOption(input *janet.Value) (result Option, err error) {
+	err = unmarshalText(input, &result)
+	if err == nil {
 		return
 	}
 
 	var tuple tupleInput
 	err = input.Unmarshal(&tuple)
 	if err == nil {
-		result = NewOption(
-			tuple.Text,
-			tuple.Value,
-		)
+		err = unmarshalText(tuple.Text, &result)
+		if err != nil {
+			return
+		}
+		result.Result = tuple.Value
 		return
 	}
 
@@ -112,78 +130,50 @@ func unmarshalOption(input *janet.Value) (result Option, err error) {
 		return
 	}
 
-	option := NewOption(
-		triple.Text,
-		triple.Value,
-	)
+	err = unmarshalText(triple.Text, &result)
+	if err != nil {
+		return
+	}
+	result.Result = tuple.Value
 
 	preview := previewInput{}
-	preview.Type = KEYWORD_TEXT
 	err = triple.Preview.Unmarshal(&preview)
-	if err == nil {
+	if err != nil {
+		return
+	}
+
+	switch preview.Type {
+	case KEYWORD_TEXT:
 		text := textPreview{}
-		err = preview.Value.Unmarshal(&text)
+		err = triple.Preview.Unmarshal(&text)
 		if err != nil {
 			return
 		}
-		option.Preview = text
-		result = option
-		return
-	}
-
-	preview.Type = KEYWORD_NODE
-	err = triple.Preview.Unmarshal(&preview)
-	if err == nil {
+		result.Preview = text
+	case KEYWORD_NODE:
 		node := nodePreview{}
-		err = preview.Value.Unmarshal(&node)
+		err = triple.Preview.Unmarshal(&node)
 		if err != nil {
 			return
 		}
-		option.Preview = node
-		result = option
+		result.Preview = node
 		return
-	}
-
-	preview.Type = KEYWORD_REPLAY
-	err = triple.Preview.Unmarshal(&preview)
-	if err == nil {
+	case KEYWORD_REPLAY:
 		replay := replayPreview{}
-		err = preview.Value.Unmarshal(&replay)
+		err = triple.Preview.Unmarshal(&replay)
 		if err != nil {
 			return
 		}
-		option.Preview = replay
-		result = option
+		result.Preview = replay
+	default:
+		err = fmt.Errorf("invalid preview type %s", preview.Type)
 		return
 	}
 
-	err = fmt.Errorf("invalid preview")
 	return
 }
 
 func UnmarshalOptions(input *janet.Value) (result []Option, err error) {
-	var rows []tableInput
-	err = input.Unmarshal(&rows)
-	if err == nil {
-		for i, row := range rows {
-			option, parseErr := unmarshalOption(row.Value)
-			if parseErr != nil {
-				err = fmt.Errorf("row %d is malformed: %s", i, parseErr.Error())
-				return
-			}
-
-			// Join the columns to be used as a search string
-			columnOption := NewOption(strings.Join(row.Columns, "|"), nil)
-			option.Columns = row.Columns
-			option.Text = columnOption.Text
-			option.Chars = columnOption.Chars
-
-			result = append(result, option)
-		}
-
-		return
-	}
-
 	var values []*janet.Value
 	var option Option
 	err = input.Unmarshal(&values)
