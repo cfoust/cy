@@ -114,10 +114,30 @@ func (f *Fuzzy) renderPreview(state *tty.State) {
 	)
 }
 
-func (f *Fuzzy) renderTable(common, active, inactive, prompt lipgloss.Style, options []Option) string {
+func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style) string {
+	inactive := common.Copy().
+		Background(lipgloss.Color("#968C83")).
+		Foreground(lipgloss.Color("#20111B"))
+	active := common.Copy().
+		Background(lipgloss.Color("#E8E3DF")).
+		Foreground(lipgloss.Color("#20111B"))
+
+	options := f.getOptions()
 	var rows [][]string
 
+	headers := f.headers
+	haveHeaders := len(f.headers) != 0
+	// The table library requires headers, even if we skip them
+	if len(headers) == 0 {
+		headers = []string{""}
+	}
+
 	for _, option := range options {
+		if len(option.Columns) == 0 {
+			rows = append(rows, []string{option.Text})
+			continue
+		}
+
 		rows = append(rows, option.Columns)
 	}
 
@@ -133,17 +153,23 @@ func (f *Fuzzy) renderTable(common, active, inactive, prompt lipgloss.Style, opt
 				return inactive
 			}
 		}).
-		Headers(f.headers...).
+		Headers(headers...).
 		Width(common.GetWidth()+4).
 		Rows(rows...).
 		String(), "\n")
 
+	if len(lines) < 4 {
+		return ""
+	}
+
 	// lipgloss adds some blank lines that we want to skip
 	var output []string
-	output = append(
-		output,
-		lines[1],
-	)
+	if haveHeaders {
+		output = append(
+			output,
+			lines[1],
+		)
+	}
 	output = append(
 		output,
 		lines[3:len(lines)-1]...,
@@ -152,49 +178,7 @@ func (f *Fuzzy) renderTable(common, active, inactive, prompt lipgloss.Style, opt
 	return strings.Join(output, "\n")
 }
 
-func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style) string {
-	inactive := common.Copy().
-		Background(lipgloss.Color("#968C83")).
-		Foreground(lipgloss.Color("#20111B"))
-	active := common.Copy().
-		Background(lipgloss.Color("#E8E3DF")).
-		Foreground(lipgloss.Color("#20111B"))
-
-	options := f.getOptions()
-	if len(options) > 0 && len(options[0].Columns) > 0 {
-		return f.renderTable(
-			common,
-			active,
-			inactive,
-			prompt,
-			options,
-		)
-	}
-
-	var lines []string
-
-	// first, the options
-	for i, match := range f.getOptions() {
-		var rendered string
-		if f.selected == i {
-			rendered = active.Render("> " + match.Text)
-		} else {
-			rendered = inactive.Render("  " + match.Text)
-		}
-
-		if f.isUp {
-			lines = append([]string{rendered}, lines...)
-		} else {
-			lines = append(lines, rendered)
-		}
-	}
-
-	return lipgloss.JoinVertical(lipgloss.Left, lines...)
-}
-
-func (f *Fuzzy) renderPrompt(prompt lipgloss.Style, width int) string {
-	style := prompt.Copy().Width(width)
-
+func (f *Fuzzy) renderPrompt(prompt lipgloss.Style) string {
 	numFiltered := len(f.filtered)
 	if numFiltered == 0 && len(f.textInput.Value()) == 0 {
 		numFiltered = len(f.options)
@@ -207,12 +191,12 @@ func (f *Fuzzy) renderPrompt(prompt lipgloss.Style, width int) string {
 		len(f.options),
 	)
 
-	return style.Render(
+	return prompt.Render(
 		lipgloss.JoinHorizontal(
 			lipgloss.Left,
 			leftSide,
 			lipgloss.PlaceHorizontal(
-				width-lipgloss.Width(leftSide),
+				prompt.GetWidth()-lipgloss.Width(leftSide),
 				lipgloss.Right,
 				rightSide,
 			),
@@ -220,49 +204,43 @@ func (f *Fuzzy) renderPrompt(prompt lipgloss.Style, width int) string {
 	)
 }
 
-func (f *Fuzzy) renderInline(prompt lipgloss.Style, state *tty.State) {
-	common := f.render.NewStyle().
+func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
+	commonStyle := f.render.NewStyle().Width(size.C)
+	promptStyle := commonStyle.Copy().
+		Background(lipgloss.Color("#EAA549")).
+		Foreground(lipgloss.Color("#20111B"))
+
+	options := f.renderOptions(commonStyle, promptStyle)
+
+	textInput := commonStyle.Copy().
 		Background(lipgloss.Color("#20111B")).
 		Foreground(lipgloss.Color("#D5CCBA")).
-		Width(30)
+		Render(f.textInput.View())
 
-	f.textInput.Cursor.Style = f.render.NewStyle().
-		Background(lipgloss.Color("#E8E3DF"))
+	prompt := f.renderPrompt(promptStyle)
 
-	options := f.renderOptions(common, prompt)
-	input := common.Render(f.textInput.View())
 	output := lipgloss.JoinVertical(
 		lipgloss.Left,
-		input,
-		f.renderPrompt(prompt, 30),
+		textInput,
+		prompt,
 		options,
 	)
-
 	if f.isUp {
 		output = lipgloss.JoinVertical(
 			lipgloss.Left,
 			options,
-			f.renderPrompt(prompt, 30),
-			input,
+			prompt,
+			textInput,
 		)
 	}
 
-	offset := 0
-	if f.isUp {
-		offset += lipgloss.Height(output)
-	}
+	window := image.New(geom.Size{
+		R: geom.Min(lipgloss.Height(output), size.R),
+		C: size.C,
+	})
+	f.render.RenderAt(window, 0, 0, output)
 
-	size := geom.Vec2{
-		R: lipgloss.Height(output),
-		C: lipgloss.Width(output),
-	}
-
-	f.render.RenderAt(
-		state.Image,
-		f.location.R-offset,
-		geom.Clamp(f.location.C, 0, f.size.C-size.C),
-		output,
-	)
+	return window
 }
 
 func (f *Fuzzy) View(state *tty.State) {
@@ -277,50 +255,40 @@ func (f *Fuzzy) View(state *tty.State) {
 	// the text input provides its own cursor
 	state.CursorVisible = false
 
-	prompt := f.render.NewStyle().
-		Background(lipgloss.Color("#EAA549")).
-		Foreground(lipgloss.Color("#20111B"))
-
-	if f.isInline {
-		f.renderInline(prompt, state)
-		return
-	}
-
-	size := state.Image.Size()
-	common := f.render.NewStyle().
-		Background(lipgloss.Color("#20111B")).
-		Foreground(lipgloss.Color("#D5CCBA")).
-		Width(size.C)
-
 	f.textInput.Cursor.Style = f.render.NewStyle().
 		Background(lipgloss.Color("#E8E3DF"))
 
-	options := f.renderOptions(common, prompt)
-	input := common.Render(f.textInput.View())
-	output := lipgloss.JoinVertical(
-		lipgloss.Left,
-		input,
-		f.renderPrompt(prompt, size.C),
-		options,
-	)
-	if f.isUp {
-		output = lipgloss.JoinVertical(
-			lipgloss.Left,
-			options,
-			f.renderPrompt(prompt, size.C),
-			input,
-		)
+	screenSize := state.Image.Size()
+
+	windowBounds := geom.Rect{
+		Position: f.location,
+		Size: geom.Vec2{
+			R: screenSize.R - f.location.R,
+			C: 40,
+		},
 	}
 
-	offset := 0
 	if f.isUp {
-		offset = size.R - lipgloss.Height(output)
+		windowBounds.Position = geom.Vec2{
+			R: 0,
+			C: f.location.C,
+		}
+		windowBounds.Size.R = f.location.R
 	}
 
-	f.render.RenderAt(
-		state.Image,
-		offset,
-		0,
-		output,
-	)
+	if !f.isInline {
+		windowBounds.Size = screenSize
+		windowBounds.Position = geom.Vec2{}
+	}
+
+	matchWindow := f.renderMatchWindow(windowBounds.Size)
+
+	// We give the match window all the possible space it needs,
+	// but it doesn't have to use it
+	emptyRows := matchWindow.Size().R - windowBounds.Size.R
+	if f.isUp && emptyRows > 0 {
+		windowBounds.Position.R += emptyRows
+	}
+
+	image.Copy(windowBounds.Position, state.Image, matchWindow)
 }
