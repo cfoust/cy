@@ -285,7 +285,7 @@ func (f *Fuzzy) View(state *tty.State) {
 
 	// We give the match window all the possible space it needs,
 	// but it doesn't have to use it
-	emptyRows := matchWindow.Size().R - windowBounds.Size.R
+	emptyRows := windowBounds.Size.R - matchWindow.Size().R
 	if f.isUp && emptyRows > 0 {
 		windowBounds.Position.R += emptyRows
 	}
