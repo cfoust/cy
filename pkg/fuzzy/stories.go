@@ -74,6 +74,15 @@ var FullBottomTable stories.InitFunc = func(ctx context.Context) (mux.Screen, er
 	return f, nil
 }
 
+var TopLeftTable stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
+	return NewFuzzy(
+		ctx,
+		pokemonTable,
+		WithHeaders("Name", "Number", "Type"),
+		WithInline(geom.Size{}, geom.DEFAULT_SIZE),
+	), nil
+}
+
 func init() {
 	config := stories.Config{
 		Size: geom.DEFAULT_SIZE,
@@ -89,4 +98,5 @@ func init() {
 	stories.Register("input/find/full-bottom", FullBottom, config)
 	stories.Register("input/find/table/full-top", FullTopTable, config)
 	stories.Register("input/find/table/full-bottom", FullBottomTable, config)
+	stories.Register("input/find/table/top-left", TopLeftTable, config)
 }

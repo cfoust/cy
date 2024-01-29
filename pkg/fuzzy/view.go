@@ -276,7 +276,16 @@ func (f *Fuzzy) View(state *tty.State) {
 		windowBounds.Size.R = f.location.R
 	}
 
-	if !f.isInline {
+	bottomRight := windowBounds.BottomRight()
+	if bottomRight.C >= screenSize.C {
+		windowBounds.Position.C -= bottomRight.C - screenSize.C
+	}
+	if bottomRight.R >= screenSize.R {
+		windowBounds.Position.R -= bottomRight.R - screenSize.R
+	}
+
+	// Default to full screen if we can't fit the match window
+	if !f.isInline || windowBounds.Position.C < 0 || windowBounds.Position.R < 0 {
 		windowBounds.Size = screenSize
 		windowBounds.Position = geom.Vec2{}
 	}
