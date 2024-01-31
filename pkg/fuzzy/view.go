@@ -169,7 +169,7 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) str
 		rows = append(rows, columns)
 	}
 
-	lines := strings.Split(table.New().
+	table := strings.Split(table.New().
 		Border(lipgloss.Border{}).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			switch {
@@ -186,7 +186,7 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) str
 		Rows(rows...).
 		String(), "\n")
 
-	if len(lines) < 4 {
+	if len(table) < 4 {
 		return ""
 	}
 
@@ -195,13 +195,20 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) str
 	if haveHeaders {
 		output = append(
 			output,
-			lines[1],
+			table[1],
 		)
 	}
-	output = append(
-		output,
-		lines[3:len(lines)-1]...,
-	)
+
+	// Invert the lines of the table when `isUp`
+	lines := make([]string, 0)
+	for _, line := range table[3 : len(table)-1] {
+		if f.isUp {
+			lines = append([]string{line}, lines...)
+		} else {
+			lines = append(lines, line)
+		}
+	}
+	output = append(output, lines...)
 
 	return strings.Join(output, "\n")
 }
