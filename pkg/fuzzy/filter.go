@@ -134,7 +134,7 @@ func unmarshalOption(input *janet.Value) (result Option, err error) {
 	if err != nil {
 		return
 	}
-	result.Result = tuple.Value
+	result.Result = triple.Value
 
 	preview := previewInput{}
 	err = triple.Preview.Unmarshal(&preview)
