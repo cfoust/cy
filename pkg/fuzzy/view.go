@@ -115,10 +115,12 @@ func (f *Fuzzy) renderPreview(state *tty.State) {
 }
 
 func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) string {
-	inactive := common.Copy().
+	rowStyle := common.Copy().
+		MaxHeight(1)
+	inactive := rowStyle.Copy().
 		Background(lipgloss.Color("#968C83")).
 		Foreground(lipgloss.Color("#20111B"))
-	active := common.Copy().
+	active := rowStyle.Copy().
 		Background(lipgloss.Color("#E8E3DF")).
 		Foreground(lipgloss.Color("#20111B"))
 
@@ -147,13 +149,24 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) str
 	)
 	windowEnd := geom.Min(len(options), windowOffset+maxOptions)
 
-	for _, option := range options[windowOffset:windowEnd] {
-		if len(option.Columns) == 0 {
-			rows = append(rows, []string{option.Text})
-			continue
+	for index, option := range options[windowOffset:windowEnd] {
+		columns := append(
+			[]string{},
+			option.Columns...,
+		)
+
+		if len(columns) == 0 {
+			columns = []string{option.Text}
 		}
 
-		rows = append(rows, option.Columns)
+		// Add in the > in front of each row
+		prefix := "  "
+		if windowOffset+index == f.selected {
+			prefix = "> "
+		}
+		columns[0] = prefix + columns[0]
+
+		rows = append(rows, columns)
 	}
 
 	lines := strings.Split(table.New().
