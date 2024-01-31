@@ -114,7 +114,7 @@ func (f *Fuzzy) renderPreview(state *tty.State) {
 	)
 }
 
-func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style) string {
+func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) string {
 	inactive := common.Copy().
 		Background(lipgloss.Color("#968C83")).
 		Foreground(lipgloss.Color("#20111B"))
@@ -123,6 +123,10 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style) string {
 		Foreground(lipgloss.Color("#20111B"))
 
 	options := f.getOptions()
+	if len(options) == 0 {
+		return ""
+	}
+
 	var rows [][]string
 
 	headers := f.headers
@@ -132,7 +136,18 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style) string {
 		headers = []string{""}
 	}
 
-	for _, option := range options {
+	if haveHeaders {
+		maxOptions -= 1
+	}
+
+	windowOffset := geom.Clamp(
+		f.selected-(maxOptions/2),
+		0,
+		geom.Max(0, len(options)-maxOptions),
+	)
+	windowEnd := geom.Min(len(options), windowOffset+maxOptions)
+
+	for _, option := range options[windowOffset:windowEnd] {
 		if len(option.Columns) == 0 {
 			rows = append(rows, []string{option.Text})
 			continue
@@ -147,7 +162,7 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style) string {
 			switch {
 			case row == 0:
 				return prompt
-			case row == f.selected+1:
+			case row == (f.selected-windowOffset)+1:
 				return active
 			default:
 				return inactive
@@ -210,7 +225,7 @@ func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
 		Background(lipgloss.Color("#EAA549")).
 		Foreground(lipgloss.Color("#20111B"))
 
-	options := f.renderOptions(commonStyle, promptStyle)
+	options := f.renderOptions(commonStyle, promptStyle, size.R-2)
 
 	textInput := commonStyle.Copy().
 		Background(lipgloss.Color("#20111B")).

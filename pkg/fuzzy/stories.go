@@ -87,7 +87,19 @@ func init() {
 	config := stories.Config{
 		Size: geom.DEFAULT_SIZE,
 		Input: []interface{}{
-			stories.Type("But"),
+			stories.Type("ctrl+j"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+j"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+k"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+k"),
+			stories.Wait(stories.Some),
+			stories.Type("B"),
+			stories.Wait(stories.Some),
+			stories.Type("u"),
+			stories.Wait(stories.Some),
+			stories.Type("t"),
 			stories.Wait(stories.ALot),
 		},
 	}
@@ -96,6 +108,24 @@ func init() {
 	stories.Register("input/find/search", Search, config)
 	stories.Register("input/find/full-top", FullTop, config)
 	stories.Register("input/find/full-bottom", FullBottom, config)
+
+	scrollingInputs := []interface{}{}
+	for i := 0; i < 150; i++ {
+		scrollingInputs = append(
+			scrollingInputs,
+			stories.Type("ctrl+k"),
+			stories.Wait(stories.ABit),
+		)
+	}
+	scrolling := stories.Config{
+		Size: geom.Size{
+			R: 5,
+			C: 80,
+		},
+		Input: scrollingInputs,
+	}
+	stories.Register("input/find/scroll/full-bottom", FullBottom, scrolling)
+
 	stories.Register("input/find/table/full-top", FullTopTable, config)
 	stories.Register("input/find/table/full-bottom", FullBottomTable, config)
 	stories.Register("input/find/table/top-left", TopLeftTable, config)
