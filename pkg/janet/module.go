@@ -72,22 +72,22 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 			return
 		case req := <-v.requests:
 			switch req := req.(type) {
-			case CallRequest:
+			case callRequest:
 				params := req.Params
 				v.runCode(params, req.Call)
-			case FiberRequest:
+			case fiberRequest:
 				params := req.Params
 				v.continueFiber(params, req.Fiber, req.In)
-			case UnlockRequest:
+			case unlockRequest:
 				req.Value.unroot()
-			case FunctionRequest:
+			case functionRequest:
 				params := req.Params
 				v.runFunction(
 					params,
 					req.Function.function,
 					req.Args,
 				)
-			case ResolveRequest:
+			case resolveRequest:
 				result, err := v.resolveCallback(
 					req.Type,
 					req.Out,
@@ -104,6 +104,11 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 					req.Params,
 					req.Fiber,
 					v.value(wrapped),
+				)
+			case unmarshalRequest:
+				req.errc <- v.unmarshal(
+					req.source,
+					req.dest,
 				)
 			}
 		}

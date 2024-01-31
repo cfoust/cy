@@ -102,6 +102,10 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 
 	if value.Kind() == reflect.Pointer {
 		if v, ok := item.(*Value); ok {
+			// TODO(cfoust): 02/01/24 this is spooky
+			if v == nil {
+				return
+			}
 			result = v.janet
 			return
 		}
@@ -450,4 +454,14 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 	}
 
 	return nil
+}
+
+func (v *VM) Unmarshal(source C.Janet, dest interface{}) error {
+	errc := make(chan error)
+	v.requests <- unmarshalRequest{
+		source: source,
+		dest:   dest,
+		errc:   errc,
+	}
+	return <-errc
 }

@@ -264,7 +264,7 @@ func TestVM(t *testing.T) {
 
 		bools := make([]bool, 2)
 		bools[0] = true
-		cmp(t, vm, Value{
+		structValue := Value{
 			One:   2,
 			Two:   true,
 			Three: "test",
@@ -273,7 +273,19 @@ func TestVM(t *testing.T) {
 				3,
 			},
 			Bools: bools,
-		})
+		}
+		cmp(t, vm, structValue)
+
+		before, err := vm.marshal(structValue)
+		require.NoError(t, err)
+
+		// Ensure that unmarshaling in a separate goroutine works
+		go func() {
+			var after Value
+			err := vm.Unmarshal(before, &after)
+			require.NoError(t, err)
+			require.Equal(t, before, after, "should yield same result")
+		}()
 
 		// keywords
 		keyword := Keyword("test")

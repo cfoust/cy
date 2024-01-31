@@ -45,7 +45,7 @@ func CallString(code string) Call {
 	}
 }
 
-type CallRequest struct {
+type callRequest struct {
 	Params
 	Call
 }
@@ -178,7 +178,7 @@ func (v *VM) runFunction(params Params, fun *C.JanetFunction, args []interface{}
 
 func (v *VM) ExecuteCall(ctx context.Context, user interface{}, call Call) error {
 	result := make(chan Result)
-	req := CallRequest{
+	req := callRequest{
 		Params: Params{
 			Context: ctx,
 			User:    user,

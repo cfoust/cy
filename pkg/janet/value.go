@@ -34,7 +34,7 @@ func (v *VM) value(janet C.Janet) *Value {
 	}
 }
 
-type UnlockRequest struct {
+type unlockRequest struct {
 	Value *Value
 }
 
@@ -56,9 +56,15 @@ func (v *Value) Free() {
 	}
 	v.wasFreed = true
 
-	v.vm.requests <- UnlockRequest{
+	v.vm.requests <- unlockRequest{
 		Value: v,
 	}
+}
+
+type unmarshalRequest struct {
+	source C.Janet
+	dest   interface{}
+	errc   chan error
 }
 
 func (v *Value) Unmarshal(dest interface{}) error {
@@ -66,7 +72,7 @@ func (v *Value) Unmarshal(dest interface{}) error {
 		return ERROR_FREED
 	}
 
-	return v.vm.unmarshal(v.janet, dest)
+	return v.vm.Unmarshal(v.janet, dest)
 }
 
 type Table struct {
@@ -86,7 +92,7 @@ type Function struct {
 	function *C.JanetFunction
 }
 
-type FunctionRequest struct {
+type functionRequest struct {
 	Params
 	Args     []interface{}
 	Function *Function
@@ -98,7 +104,7 @@ func (f *Function) CallContext(
 	params ...interface{},
 ) error {
 	result := make(chan Result)
-	req := FunctionRequest{
+	req := functionRequest{
 		Args:     params,
 		Function: f,
 		Params: Params{

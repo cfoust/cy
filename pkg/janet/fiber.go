@@ -65,7 +65,7 @@ func (p Params) Wait() error {
 	}
 }
 
-type FiberRequest struct {
+type fiberRequest struct {
 	Params
 	// The fiber to run
 	Fiber Fiber
@@ -94,7 +94,7 @@ func (v *VM) createFiber(fun *C.JanetFunction, args []C.Janet) Fiber {
 
 // Run a fiber to completion.
 func (v *VM) runFiber(params Params, fiber Fiber, in *Value) {
-	v.requests <- FiberRequest{
+	v.requests <- fiberRequest{
 		Params: params,
 		Fiber:  fiber,
 		In:     in,
@@ -134,7 +134,7 @@ func (v *VM) handleYield(params Params, fiber Fiber, out C.Janet) {
 			params.Error(params.Context.Err())
 			return
 		case out := <-outc:
-			v.requests <- ResolveRequest{
+			v.requests <- resolveRequest{
 				Params: params,
 				Fiber:  fiber,
 				Type:   partial.Type,
