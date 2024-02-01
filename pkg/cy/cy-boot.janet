@@ -38,7 +38,17 @@ For example:
 (key/def
   action/command-palette
   "open command palette"
+  (def binds (key/current))
   (as?-> actions _
+         (map
+           |(do
+              (def [desc func] $)
+              (def sequence (as?-> binds x
+                                   (find |(= func ($ :function)) x)
+                                   (get x :sequence)
+                                   (string/join x " ")))
+              (tuple [desc (string sequence)] func))
+           _)
          (input/find _ :prompt "search: actions")
          (apply _)))
 
@@ -250,3 +260,10 @@ For example:
                ["F" [:re "."]] replay/jump-backward
                ["t" [:re "."]] replay/jump-to-forward
                ["T" [:re "."]] replay/jump-to-backward)
+
+
+(key/def
+  action/current
+  "print stuff"
+  (pp (key/current))
+  (pp (key/get :root)))
