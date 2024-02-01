@@ -76,6 +76,13 @@ func (i *InputModule) Find(
 		settings = append(settings, fuzzy.WithAnimation(state.Image))
 	}
 
+	if params.Headers != nil {
+		settings = append(
+			settings,
+			fuzzy.WithHeaders(*params.Headers...),
+		)
+	}
+
 	fuzzy := fuzzy.NewFuzzy(
 		ctx,
 		options,

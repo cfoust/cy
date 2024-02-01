@@ -398,6 +398,23 @@ func (c *Client) Frame() *frames.Framer {
 	return c.frame
 }
 
+func (c *Client) Binds() (binds []api.Binding) {
+	for _, scope := range c.binds.Scopes() {
+		node, ok := scope.Source().(tree.Node)
+		if !ok {
+			continue
+		}
+
+		for _, leaf := range scope.Leaves() {
+			binds = append(
+				binds,
+				api.NewBinding(node, leaf),
+			)
+		}
+	}
+	return
+}
+
 func (c *Client) Detach(reason string) error {
 	//err := c.conn.Send(P.CloseMessage{
 	//Reason: reason,

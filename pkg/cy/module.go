@@ -202,7 +202,7 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 }
 
 func Start(ctx context.Context, options Options) (*Cy, error) {
-	replayBinds := bind.NewBindScope()
+	replayBinds := bind.NewBindScope(nil)
 
 	defaults := params.New()
 	t := tree.NewTree(tree.WithParams(defaults.NewChild()))

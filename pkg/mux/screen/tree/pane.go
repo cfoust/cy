@@ -21,7 +21,6 @@ func (p *Pane) Screen() mux.Screen {
 
 func newPane(
 	ctx context.Context,
-	id NodeID,
 	s mux.Screen,
 ) *Pane {
 	return &Pane{

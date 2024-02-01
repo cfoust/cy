@@ -60,7 +60,7 @@ func (r *ReplayPreview) Init() tea.Cmd {
 		replay := New(
 			ctx,
 			events,
-			bind.NewBindScope(),
+			bind.NewBindScope(nil),
 		)
 		replay.Resize(size)
 

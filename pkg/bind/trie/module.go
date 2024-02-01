@@ -14,6 +14,9 @@ type Trie[T any] struct {
 
 	// a mapping from raw regex pattern -> node or T
 	nextRe map[string]*Regex
+
+	// arbitrary extra data associated with this Trie
+	source interface{}
 }
 
 func (t *Trie[T]) resolve(key interface{}) (value interface{}, matched bool, regex bool) {
@@ -84,7 +87,7 @@ func (t *Trie[T]) access(sequence []interface{}, shouldCreate bool) *Trie[T] {
 			if !shouldCreate {
 				return nil
 			}
-			next = New[T]()
+			next = New[T](nil)
 		}
 
 		if shouldCreate {
@@ -353,9 +356,14 @@ func (t *Trie[T]) Remap(from, to []interface{}) {
 	}
 }
 
-func New[T any]() *Trie[T] {
+func (t *Trie[T]) Source() interface{} {
+	return t.source
+}
+
+func New[T any](source interface{}) *Trie[T] {
 	return &Trie[T]{
 		next:   make(map[string]interface{}),
 		nextRe: make(map[string]*Regex),
+		source: source,
 	}
 }

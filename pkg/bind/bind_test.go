@@ -37,7 +37,7 @@ func TestAction(t *testing.T) {
 	engine := NewEngine[int]()
 	go engine.Poll(context.Background())
 
-	scope := NewScope[int]()
+	scope := NewScope[int](nil)
 	scope.Set(
 		[]interface{}{"ctrl+a"},
 		2,
@@ -71,7 +71,7 @@ func TestIdle(t *testing.T) {
 		}
 	}()
 
-	scope := NewScope[int]()
+	scope := NewScope[int](nil)
 	scope.Set(
 		[]interface{}{"ctrl+a", "a"},
 		2,

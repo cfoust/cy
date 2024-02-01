@@ -16,7 +16,7 @@ func re(pattern string) *Regex {
 }
 
 func TestTrie(t *testing.T) {
-	trie := New[int]()
+	trie := New[int](nil)
 	trie.Set([]interface{}{
 		"one",
 		"two",
@@ -75,7 +75,7 @@ func TestTrie(t *testing.T) {
 }
 
 func TestRegex(t *testing.T) {
-	trie := New[int]()
+	trie := New[int](nil)
 	trie.Set([]interface{}{
 		re("[abc]"),
 		"t",

@@ -15,4 +15,5 @@ type Client interface {
 	OuterLayers() *screen.Layers
 	Margins() *screen.Margins
 	Frame() *frames.Framer
+	Binds() []Binding
 }

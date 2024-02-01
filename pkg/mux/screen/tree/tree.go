@@ -19,18 +19,18 @@ type Tree struct {
 	nextNodeID atomic.Int32
 }
 
-func (t *Tree) newMetadata() *metaData {
+func (t *Tree) newMetadata(node Node) *metaData {
 	t.Lock()
 	defer t.Unlock()
 
 	id := t.nextNodeID.Add(1)
-	node := &metaData{
+	metadata := &metaData{
 		id:    id,
-		binds: bind.NewBindScope(),
+		binds: bind.NewBindScope(node),
 		name:  fmt.Sprintf("%d", id),
 	}
 
-	return node
+	return metadata
 }
 
 func (t *Tree) storeNode(node Node) {
@@ -155,11 +155,9 @@ func NewTree(options ...TreeOption) *Tree {
 		nodes:           make(map[NodeID]Node),
 	}
 
-	tree.root = &Group{
-		metaData: tree.newMetadata(),
-		tree:     tree,
-	}
-
+	root := &Group{tree: tree}
+	root.metaData = tree.newMetadata(root)
+	tree.root = root
 	tree.storeNode(tree.root)
 
 	for _, option := range options {

@@ -6,13 +6,12 @@ import (
 )
 
 type Action struct {
-	Description string
-	Callback    *janet.Function
+	Callback *janet.Function
 }
 
 type BindScope = trie.Trie[Action]
 type BindEvent = ActionEvent[Action]
 
-func NewBindScope() *BindScope {
-	return NewScope[Action]()
+func NewBindScope(source interface{}) *BindScope {
+	return NewScope[Action](source)
 }

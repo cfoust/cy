@@ -50,8 +50,8 @@ func (g *Group) Leaves() []Node {
 }
 
 func (g *Group) NewPane(ctx context.Context, screen mux.Screen) *Pane {
-	metadata := g.tree.newMetadata()
-	pane := newPane(ctx, metadata.Id(), screen)
+	pane := newPane(ctx, screen)
+	metadata := g.tree.newMetadata(pane)
 	pane.metaData = metadata
 	metadata.params = g.params.NewChild()
 	g.addNode(pane)
@@ -76,9 +76,9 @@ func (g *Group) NewPane(ctx context.Context, screen mux.Screen) *Pane {
 
 func (g *Group) NewGroup() *Group {
 	group := &Group{
-		metaData: g.tree.newMetadata(),
-		tree:     g.tree,
+		tree: g.tree,
 	}
+	group.metaData = g.tree.newMetadata(group)
 	group.params = g.params.NewChild()
 	g.addNode(group)
 	return group
