@@ -46,7 +46,8 @@ For example:
               (def sequence (as?-> binds x
                                    (find |(= func ($ :function)) x)
                                    (get x :sequence)
-                                   (string/join x " ")))
+                                   (string/join x " ")
+                                   (string " " x " ")))
               (tuple [desc (string sequence)] func))
            _)
          (input/find _ :prompt "search: actions")

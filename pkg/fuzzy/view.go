@@ -115,8 +115,7 @@ func (f *Fuzzy) renderPreview(state *tty.State) {
 }
 
 func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) string {
-	rowStyle := common.Copy().
-		MaxHeight(1)
+	rowStyle := f.render.NewStyle()
 	inactive := rowStyle.Copy().
 		Background(lipgloss.Color("#968C83")).
 		Foreground(lipgloss.Color("#20111B"))
@@ -169,7 +168,7 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) str
 		rows = append(rows, columns)
 	}
 
-	table := strings.Split(table.New().
+	table := table.New().
 		Border(lipgloss.Border{}).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			switch {
@@ -182,11 +181,12 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) str
 			}
 		}).
 		Headers(headers...).
-		Width(common.GetWidth()+4).
-		Rows(rows...).
-		String(), "\n")
+		Width(common.GetWidth() + 3).
+		Rows(rows...)
 
-	if len(table) < 4 {
+	rendered := strings.Split(table.String(), "\n")
+
+	if len(rendered) < 4 {
 		return ""
 	}
 
@@ -195,13 +195,13 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) str
 	if haveHeaders {
 		output = append(
 			output,
-			table[1],
+			rendered[1],
 		)
 	}
 
 	// Invert the lines of the table when `isUp`
 	lines := make([]string, 0)
-	for _, line := range table[3 : len(table)-1] {
+	for _, line := range rendered[3 : len(rendered)-1] {
 		if f.isUp {
 			lines = append([]string{line}, lines...)
 		} else {
@@ -299,7 +299,7 @@ func (f *Fuzzy) View(state *tty.State) {
 		Position: f.location,
 		Size: geom.Vec2{
 			R: screenSize.R - f.location.R,
-			C: 40,
+			C: 50,
 		},
 	}
 

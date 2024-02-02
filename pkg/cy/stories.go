@@ -167,4 +167,10 @@ func init() {
 			stories.Wait(stories.ALot),
 		},
 	})
+
+	stories.Register("cy/palette-static", func(ctx context.Context) (mux.Screen, error) {
+		_, client, screen, err := createStory(ctx)
+		go client.execute(`(action/command-palette)`)
+		return screen, err
+	}, stories.Config{})
 }
