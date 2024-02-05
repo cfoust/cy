@@ -48,7 +48,12 @@ For example:
                                    (get x :sequence)
                                    (string/join x " ")
                                    (string " " x " ")))
-              (tuple [desc (string sequence)] func))
+              (tuple [desc
+                      (string
+                        # Padding on the left prevents the table library from
+                        # shrinking the key sequence string
+                        (string/repeat " " (max (- 15 (length (string sequence))) 0))
+                        sequence)] func))
            _)
          (input/find _ :prompt "search: actions")
          (apply _)))
