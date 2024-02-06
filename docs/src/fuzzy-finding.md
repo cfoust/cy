@@ -1,8 +1,8 @@
 # Fuzzy finding
 
-{{story gif input/find/search}}
+{{story cast input/find/full-bottom}}
 
-Simple, fast, and configurable fuzzy finding is one of `cy`'s most important features. `cy` provides a purpose-built fuzzy finder (similar to [fzf](https://github.com/junegunn/fzf)) in the form of `(input/find)`, which is a function available in [the API](./api.md#inputfind).
+Simple, fast, and configurable fuzzy finding is one of `cy`'s most important features. `cy` provides a purpose-built fuzzy finder (similar to [fzf](https://github.com/junegunn/fzf)) in the form of [`(input/find)`](./api.md#inputfind), which is a function available in [the API](./api.md#inputfind).
 
 ## Choosing a string from a list
 
@@ -16,7 +16,9 @@ By default, the background will be animated with one of `cy`'s [animations](./an
 
 ## Choosing an arbitrary value from a list
 
-`(input/find)` also allows you to ask the user to choose from a list of items, each of which has an underlying Janet value that is returned instead of the string value that the user filters. You do this by providing a Janet array of tuples, each of which has two elements:
+`(input/find)` also allows you to ask the user to choose from a list of items, each of which has an underlying Janet value that is returned instead of the string value that the user filters.
+
+You do this by providing a Janet array of tuples, each of which has two elements:
 
 - The text to be filtered
 - The value that should be returned
@@ -30,6 +32,23 @@ By default, the background will be animated with one of `cy`'s [animations](./an
 
 If the user chooses `"one"`, `(input/find)` will return `1`.
 
+## Filtering tabular data
+
+{{story cast input/find/table/full-bottom}}
+
+It is sometimes handy to be able to have the user choose from a row in a table rather than a single line of text. `(input/find)` allows you to provide tabular data in addition to titles for each column in the form of tuples.
+
+```janet
+(input/find
+    @[
+        [["boba" "$5" "not much"] 3]
+        [["latte" "$7" "too much"] 2]
+        [["black tea" "$2" "just right"] 1]
+     ]
+    # Providing headers is optional
+    :headers ["drink" "price" "caffeine"])
+```
+
 ## Choosing with previews
 
 Where `(input/find)` really shines, however, is in its ability to show a preview window for each option, which is conceptually similar to `fzf`'s `--preview` command line flag. `(input/find)` can preview three different types of content:
@@ -40,20 +59,20 @@ Where `(input/find)` really shines, however, is in its ability to show a preview
 
 Options with previews are passed to `(input/find)` as Janet tuples with three elements:
 
-1. The string value to filter
-1. A tuple describing how it should be previewed
-1. The value that should be returned if the user chooses that option
+1. The text (or columns) that the user will filter against
+1. A Janet [table](https://janet-lang.org/docs/data_structures/tables.html) describing how this option should be previewed
+1. The value that should be returned if the user chooses this option
 
 Here are some examples:
 
 ```janet
 (input/find @[
         # A standard text preview, which will be rendered in an 80x26 window
-        ["some text" [:text ["this is the preview"]] 1]
+        ["some text" {:type :text :text "this is the preview"} 1]
         # A replay preview
-        ["this is a borg file" [:replay ["some-file.borg"]] 2]
+        ["this is a borg file" {:type :replay :path "some-file.borg"} 2]
         # A pane preview
-        ["this is some other pane" [:node [(pane/current)]] 2]
+        ["this is some other pane" {:type :node :id (pane/current)} 3]
     ])
 ```
 

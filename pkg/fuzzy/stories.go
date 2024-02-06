@@ -60,7 +60,7 @@ var FullTopTable stories.InitFunc = func(ctx context.Context) (mux.Screen, error
 		ctx,
 		pokemonTable,
 		WithReverse,
-		WithHeaders("Name", "Number", "Type"),
+		WithHeaders("Name", "#", "Type"),
 	)
 	return f, nil
 }
@@ -69,7 +69,7 @@ var FullBottomTable stories.InitFunc = func(ctx context.Context) (mux.Screen, er
 	f := NewFuzzy(
 		ctx,
 		pokemonTable,
-		WithHeaders("Name", "Number", "Type"),
+		WithHeaders("Name", "#", "Type"),
 	)
 	return f, nil
 }
@@ -78,7 +78,7 @@ var TopLeftTable stories.InitFunc = func(ctx context.Context) (mux.Screen, error
 	return NewFuzzy(
 		ctx,
 		pokemonTable,
-		WithHeaders("Name", "Number", "Type"),
+		WithHeaders("Name", "#", "Type"),
 		WithInline(geom.Size{}, geom.DEFAULT_SIZE),
 	), nil
 }

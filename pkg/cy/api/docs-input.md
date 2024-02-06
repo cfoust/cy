@@ -1,6 +1,6 @@
 # doc: Find
 
-(input/find inputs &named prompt full reverse animated)
+(input/find inputs &named prompt full reverse animated headers)
 
 `(input/find)` is a general-purpose fuzzy finder that is similar to `fzf`. When invoked, it prompts the user to choose from one of the items provided in `inputs`. `(input/find)` does not return until the user makes a choice; if they choose nothing (such as by hitting `ctrl+c`), it returns `nil`.
 
@@ -12,3 +12,4 @@ This function supports a range of named parameters that adjust its functionality
 - `:prompt` (string): The text that will be shown beneath the search window.
 - `:reverse` (boolean): Display from the top of the screen (rather than the bottom.)
 - `:animated` (boolean): Enable and disable background animation.
+- `:headers` ([]string): Provide a title for each column. This mostly used for filtering tabular data.
