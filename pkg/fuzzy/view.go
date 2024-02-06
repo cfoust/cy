@@ -148,6 +148,8 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) str
 	)
 	windowEnd := geom.Min(len(options), windowOffset+maxOptions)
 
+	numColumns := 0
+
 	for index, option := range options[windowOffset:windowEnd] {
 		columns := append(
 			[]string{},
@@ -165,6 +167,7 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) str
 		}
 		columns[0] = prefix + columns[0]
 
+		numColumns = geom.Max(numColumns, len(columns))
 		rows = append(rows, columns)
 	}
 
@@ -181,7 +184,7 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) str
 			}
 		}).
 		Headers(headers...).
-		Width(common.GetWidth() + 3).
+		Width(common.GetWidth() + 2 + geom.Max(numColumns-1, 0)).
 		Rows(rows...)
 
 	rendered := strings.Split(table.String(), "\n")
