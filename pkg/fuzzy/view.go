@@ -250,7 +250,12 @@ func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
 
 	options := f.renderOptions(commonStyle, promptStyle, size.R-2)
 
-	textInput := commonStyle.Copy().
+	promptStyle.GetBackground()
+	arrow := f.render.NewStyle().
+		Background(promptStyle.GetForeground()).
+		Foreground(promptStyle.GetBackground()).
+		Render("~>")
+	textInput := arrow + commonStyle.Copy().
 		Background(lipgloss.Color("#20111B")).
 		Foreground(lipgloss.Color("#D5CCBA")).
 		Render(f.textInput.View())
