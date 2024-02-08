@@ -33,42 +33,12 @@ type Margins struct {
 
 var _ Screen = (*Margins)(nil)
 
-func getCenter(outer, inner int) int {
-	offset := 0
-	extra := outer - inner
-	if extra > 0 {
-		offset = extra / 2
-	}
-
-	return offset
-}
-
-func centerRect(outer, inner Size) geom.Rect {
-	return geom.Rect{
-		Position: geom.Vec2{
-			R: getCenter(outer.R, inner.R),
-			C: getCenter(outer.C, inner.C),
-		},
-		Size: geom.Vec2{
-			R: inner.R,
-			C: inner.C,
-		},
-	}
-}
-
 func fitMargin(outer, margin int) int {
 	if margin == 0 {
 		return outer
 	}
 
 	return geom.Max(outer-(margin*2), 1)
-}
-
-func fitMargins(outer, margins Size) geom.Rect {
-	return centerRect(outer, Size{
-		R: fitMargin(outer.R, margins.R),
-		C: fitMargin(outer.C, margins.C),
-	})
 }
 
 func getSize(outer, desired int) int {
@@ -81,13 +51,6 @@ func getSize(outer, desired int) int {
 	}
 
 	return desired
-}
-
-func fitSize(outer, size Size) geom.Rect {
-	return centerRect(outer, Size{
-		R: geom.Max(getSize(outer.R, size.R), 1),
-		C: geom.Max(getSize(outer.C, size.C), 1),
-	})
 }
 
 func (l *Margins) State() *tty.State {
@@ -117,9 +80,6 @@ func (l *Margins) State() *tty.State {
 	return state
 }
 
-func (l *Margins) rerender() {
-}
-
 func (l *Margins) Send(msg mux.Msg) {
 	l.RLock()
 	inner := l.inner
@@ -131,12 +91,27 @@ func (l *Margins) Send(msg mux.Msg) {
 	))
 }
 
-func (l *Margins) getInner(size Size) geom.Rect {
-	if l.isMargins {
-		return fitMargins(size, l.margins)
+func (l *Margins) getInner(outer Size) geom.Rect {
+	// Resolve the desired margins to a real inner window size
+	factor := Size{
+		R: fitMargin(outer.R, l.margins.R),
+		C: fitMargin(outer.C, l.margins.C),
 	}
 
-	return fitSize(size, l.size)
+	// Or just ignore it if there's a predetermined size
+	if !l.isMargins {
+		factor = l.size
+	}
+
+	inner := Size{
+		R: geom.Max(getSize(outer.R, factor.R), 1),
+		C: geom.Max(getSize(outer.C, factor.C), 1),
+	}
+
+	return geom.Rect{
+		Position: outer.Center(inner),
+		Size:     inner,
+	}
 }
 
 func (l *Margins) SetSize(size Size) error {
@@ -185,7 +160,6 @@ func (l *Margins) recalculate() error {
 		return err
 	}
 
-	l.rerender()
 	return nil
 }
 

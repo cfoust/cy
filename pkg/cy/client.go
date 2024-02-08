@@ -68,8 +68,6 @@ type Client struct {
 
 	// history is an array of all of the panes this client has attached to
 	history []tree.NodeID
-
-	info screen.RenderContext
 }
 
 var _ api.Client = (*Client)(nil)
@@ -233,11 +231,6 @@ func (c *Client) initialize(options ClientOptions) error {
 	}
 
 	isClientSSH := isSSH(c.env)
-
-	c.info = screen.RenderContext{
-		Terminfo: info,
-		Colors:   options.Profile,
-	}
 
 	c.muxClient = c.cy.muxServer.AddClient(
 		c.Ctx(),
