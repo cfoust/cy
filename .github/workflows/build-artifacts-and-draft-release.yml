@@ -38,6 +38,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           args: release --skip=publish --config ci/goreleaser-for-linux.yaml
+          version: v1.23.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Copy homebrew
@@ -60,6 +61,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           args: release --skip=publish --config ci/goreleaser-for-darwin.yaml
+          version: v1.23.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Copy homebrew
@@ -167,5 +169,6 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           args: release --config ci/goreleaser-release.yaml
+          version: v1.23.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
