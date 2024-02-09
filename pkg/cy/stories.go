@@ -2,6 +2,7 @@ package cy
 
 import (
 	"context"
+	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
@@ -9,7 +10,7 @@ import (
 	"github.com/cfoust/cy/pkg/stories"
 )
 
-func createStory(ctx context.Context) (cy *Cy, client *Client, screen mux.Screen, err error) {
+func createStoryServer(ctx context.Context) (cy *Cy, err error) {
 	cy, err = Start(ctx, Options{
 		Shell:      "/bin/bash",
 		HideSplash: true,
@@ -17,7 +18,10 @@ func createStory(ctx context.Context) (cy *Cy, client *Client, screen mux.Screen
 	if err != nil {
 		return
 	}
+	return
+}
 
+func createStoryClient(ctx context.Context, cy *Cy) (client *Client, screen mux.Screen, err error) {
 	client, err = cy.NewClient(ctx, ClientOptions{
 		Env: map[string]string{
 			"TERM":   "xterm-256color",
@@ -35,6 +39,16 @@ func createStory(ctx context.Context) (cy *Cy, client *Client, screen mux.Screen
 		geom.DEFAULT_SIZE,
 	)
 
+	return
+}
+
+func createStory(ctx context.Context) (cy *Cy, client *Client, screen mux.Screen, err error) {
+	cy, err = createStoryServer(ctx)
+	if err != nil {
+		return
+	}
+
+	client, screen, err = createStoryClient(ctx, cy)
 	return
 }
 
@@ -172,5 +186,49 @@ func init() {
 		_, client, screen, err := createStory(ctx)
 		go client.execute(`(action/command-palette)`)
 		return screen, err
+	}, stories.Config{})
+
+	stories.Register("cy/multiple-clients", func(ctx context.Context) (mux.Screen, error) {
+		cy, err := createStoryServer(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		_, screenA, err := createStoryClient(ctx, cy)
+		if err != nil {
+			return nil, err
+		}
+
+		_, screenB, err := createStoryClient(ctx, cy)
+		if err != nil {
+			return nil, err
+		}
+
+		split := S.NewSplit(
+			ctx,
+			screenA,
+			screenB,
+			.5,
+			false,
+		)
+
+		go func() {
+			proportion := 0
+
+			for {
+				if ctx.Err() != nil {
+					return
+				}
+				split.SetPercent(0.2 + float64(proportion)*0.1)
+
+				time.Sleep(time.Second)
+				proportion++
+				if proportion >= 6 {
+					proportion = 0
+				}
+			}
+		}()
+
+		return split, err
 	}, stories.Config{})
 }
