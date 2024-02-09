@@ -54,7 +54,7 @@ All of the bindings in this table are prefixed by `ctrl+a` by default. This curr
 
 ## Fuzzy finding
 
-`(input/find)` has several key bindings that are not yet configurable, but are worth documenting.
+[`(input/find)`](api.md#inputfind) has several key bindings that are not yet configurable, but are worth documenting.
 
 | Sequence           | Description                        |
 | ------------------ | ---------------------------------- |
@@ -65,7 +65,7 @@ All of the bindings in this table are prefixed by `ctrl+a` by default. This curr
 
 ## Replay mode
 
-The actions found in the tables below are only valid in a pane that is in replay mode. Replay mode uses an isolated binding scope that can be accessed by providing `:replay` to a `(key/bind)` call:
+The actions found in the tables below are only valid in a pane that is in replay mode. Replay mode uses an isolated binding scope that can be accessed by providing `:replay` to a [`(key/bind)`](api.md#keybind) call:
 
 ```janet
 (key/bind :replay ["ctrl+b"] (fn [&] (do-something)))

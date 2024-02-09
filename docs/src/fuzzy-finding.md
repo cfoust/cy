@@ -6,7 +6,7 @@ Simple, fast, and configurable fuzzy finding is one of `cy`'s most important fea
 
 ## Choosing a string from a list
 
-In its simplest form, `(input/find)` takes a single parameter: a [Janet array](https://janet-lang.org/docs/data_structures/arrays.html) of strings that it will present to the user and from which they can choose a single option:
+In its simplest form, [`(input/find)`](api.md#inputfind) takes a single parameter: a [Janet array](https://janet-lang.org/docs/data_structures/arrays.html) of strings that it will present to the user and from which they can choose a single option:
 
 ```janet
 (input/find @["one" "two" "three"])
@@ -16,7 +16,7 @@ By default, the background will be animated with one of `cy`'s [animations](./an
 
 ## Choosing an arbitrary value from a list
 
-`(input/find)` also allows you to ask the user to choose from a list of items, each of which has an underlying Janet value that is returned instead of the string value that the user filters.
+[`(input/find)`](api.md#inputfind) also allows you to ask the user to choose from a list of items, each of which has an underlying Janet value that is returned instead of the string value that the user filters.
 
 You do this by providing a Janet array of tuples, each of which has two elements:
 
@@ -30,13 +30,13 @@ You do this by providing a Janet array of tuples, each of which has two elements
     ["three" 3]])
 ```
 
-If the user chooses `"one"`, `(input/find)` will return `1`.
+If the user chooses `"one"`, [`(input/find)`](api.md#inputfind) will return `1`.
 
 ## Filtering tabular data
 
 {{story cast input/find/table/full-bottom}}
 
-It is sometimes handy to be able to have the user choose from a row in a table rather than a single line of text. `(input/find)` allows you to provide tabular data in addition to titles for each column in the form of tuples.
+It is sometimes handy to be able to have the user choose from a row in a table rather than a single line of text. [`(input/find)`](api.md#inputfind) allows you to provide tabular data in addition to titles for each column in the form of tuples.
 
 ```janet
 (input/find
@@ -51,13 +51,13 @@ It is sometimes handy to be able to have the user choose from a row in a table r
 
 ## Choosing with previews
 
-Where `(input/find)` really shines, however, is in its ability to show a preview window for each option, which is conceptually similar to `fzf`'s `--preview` command line flag. `(input/find)` can preview three different types of content:
+Where [`(input/find)`](api.md#inputfind) really shines, however, is in its ability to show a preview window for each option, which is conceptually similar to `fzf`'s `--preview` command line flag. [`(input/find)`](api.md#inputfind) can preview three different types of content:
 
 - **Panes:** Show the current state of a pane in `cy`'s [node tree](./groups-and-panes.md#the-node-tree). This is the live view of a pane, regardless of how many other clients are interacting with it or what is happening on the screen.
 - **`.borg` files:** Show a moment in time in a `.borg` file.
 - **Text** Render some text.
 
-Options with previews are passed to `(input/find)` as Janet tuples with three elements:
+Options with previews are passed to [`(input/find)`](api.md#inputfind) as Janet tuples with three elements:
 
 1. The text (or columns) that the user will filter against
 1. A Janet [table](https://janet-lang.org/docs/data_structures/tables.html) describing how this option should be previewed
@@ -76,4 +76,4 @@ Here are some examples:
     ])
 ```
 
-`(input/find)` is used extensively in `cy`'s [default startup script](https://github.com/cfoust/cy/blob/main/pkg/cy/cy-boot.janet). You can find several idiomatic examples of its usage there.
+[`(input/find)`](api.md#inputfind) is used extensively in `cy`'s [default startup script](https://github.com/cfoust/cy/blob/main/pkg/cy/cy-boot.janet). You can find several idiomatic examples of its usage there.

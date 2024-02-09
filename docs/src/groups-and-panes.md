@@ -38,7 +38,7 @@ Instead, each node is permanently assigned a unique identifier (which is just an
 `cy`'s flexibility comes from the way key bindings and parameters interact:
 
 - **Key bindings** are inherited down the tree, but can be overridden by descendant groups.
-- **Parameters** work the same way: `(cy/get)` will get the value of a parameter from the closest parent group that defines it.
+- **Parameters** work the same way: [`(cy/get)`](api.md#cyget) will get the value of a parameter from the closest parent group that defines it.
 
 Imagine that you are attached to `/my-project/group-2/pane-3` in the example above:
 

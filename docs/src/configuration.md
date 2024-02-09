@@ -34,7 +34,7 @@ An example configuration that uses functionality from this API is shown below. V
 
 ```janet
 # Define a new action (which is just a function) with the name toast-pane-path
-(key/def
+(key/action
   # the name of the function by which it can be referenced in the current
   # scope
   toast-pane-path

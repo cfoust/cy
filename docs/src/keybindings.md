@@ -1,6 +1,6 @@
 # Keybindings
 
-In `cy`, keybindings consist of a sequence of one or more keys that execute Janet code when you type them. You define new key sequences with the `(key/bind)` function.
+In `cy`, keybindings consist of a sequence of one or more keys that execute Janet code when you type them. You define new key sequences with the [`(key/bind)`](api.md#keybind) function.
 
 For example:
 
@@ -10,7 +10,7 @@ For example:
 
 This tells `cy` that whenever you type `ctrl+l` it should show a toast with the text "you hit ctrl+l".
 
-The `(key/bind)` function takes three parameters:
+The [`(key/bind)`](api.md#keybind) function takes three parameters:
 
 1. **A scope**: The circumstances in which this binding should apply, such as a [group](./groups-and-panes.md) or mode (e.g. `:replay`). In this case we use the `:root` [keyword](https://janet-lang.org/docs/strings.html), which is a handy way of saying this binding should apply everywhere.
 1. **A key sequence**: A Janet [tuple](https://janet-lang.org/docs/data_structures/tuples.html) that indicates the keys that must be typed for the callback to execute.
@@ -18,7 +18,7 @@ The `(key/bind)` function takes three parameters:
 
 Scopes will be covered in a later chapter: here we will cover key sequences and functions at length.
 
-You can avoid calling `(key/bind)` over and over by using the [`(key/bind-many)`](./api.md#keybind-many) macro. Here is an example:
+You can avoid calling [`(key/bind)`](api.md#keybind) over and over by using the [`(key/bind-many)`](./api.md#keybind-many) macro. Here is an example:
 
 ```janet
 (key/bind-many :root
@@ -80,20 +80,20 @@ Accessing individual match groups is not supported; functions always receive the
 
 ## Functions
 
-Any Janet function can be passed as a callback to `(key/bind)`. The arity of that function should match the output of the provided sequence; for key sequences that do not include any regex patterns, this means that the function should not take any arguments.
+Any Janet function can be passed as a callback to [`(key/bind)`](api.md#keybind). The arity of that function should match the output of the provided sequence; for key sequences that do not include any regex patterns, this means that the function should not take any arguments.
 
-Like `tmux`, many users at once can connect to the same `cy` server. The function provided to `(key/bind)` **is executed in the context of the user that invoked it**. Certain functions in `cy`'s API, such as `(pane/current)`, return information about the state of the current user, rather than the server as a whole. This means that if two users type the same sequence, they will get different results.
+Like `tmux`, many users at once can connect to the same `cy` server. The function provided to [`(key/bind)`](api.md#keybind) **is executed in the context of the user that invoked it**. Certain functions in `cy`'s API, such as [`(pane/current)`](api.md#panecurrent), return information about the state of the current user, rather than the server as a whole. This means that if two users type the same sequence, they will get different results.
 
 ### Actions
 
-In some cases it is inconvenient to have to provide functions directly to `(key/bind)`. For example, if you are writing a plugin, you might want to be able to provide new actions that a user can take without forcing them to use your key bindings. The user also may not want to assign all of your plugin's functionality to arcane bindings they won't remember.
+In some cases it is inconvenient to have to provide functions directly to [`(key/bind)`](api.md#keybind). For example, if you are writing a plugin, you might want to be able to provide new actions that a user can take without forcing them to use your key bindings. The user also may not want to assign all of your plugin's functionality to arcane bindings they won't remember.
 
 To assist with this, `cy` has a system for **actions**, which are similar in nature to commands [in VSCode](https://code.visualstudio.com/api/extension-guides/command) or [in Sublime Text](https://docs.sublimetext.io/reference/commands.html). An action consists of a short description and a function. When the user opens the command palette (which is bound by default to `"ctrl+a" "ctrl+p"`), they can search for and execute an action based on that description.
 
-You define new actions using the `(key/def)` macro. Here is an example from `cy`'s source code:
+You define new actions using the [`(key/action)`](api.md#keyaction) macro. Here is an example from `cy`'s source code:
 
 ```janet
-(key/def
+(key/action
   # The identifier to which this action will be bound
   # This is never shown in the UI
   cy/kill-current-pane
@@ -107,12 +107,12 @@ You define new actions using the `(key/def)` macro. Here is an example from `cy`
 (key/bind :root ["ctrl+b" "b"] cy/kill-current-pane)
 ```
 
-`(key/def)` actually just invokes Janet's `(defn)` macro under the hood. This means that actions are just ordinary Janet functions that happen to be registered with `cy`. `(key/def)` exists so that you can clearly identify to the user the functionality your plugin provides.
+[`(key/action)`](api.md#keyaction) actually just invokes Janet's `(defn)` macro under the hood. This means that actions are just ordinary Janet functions that happen to be registered with `cy`. [`(key/action)`](api.md#keyaction) exists so that you can clearly identify to the user the functionality your plugin provides.
 
 You can also just use actions to avoid memorizing a key binding you rarely use:
 
 ```janet
-(key/def
+(key/action
   thing-i-rarely-do
   "this is something I do once a year"
   (pp "hi"))

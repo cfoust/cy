@@ -5,8 +5,14 @@
 
 (def- actions @[])
 
-(defmacro key/def
-  "register an action"
+(defmacro key/action
+  ````Register an action. Equivalent to the Janet built-in `(defn`), but requires a docstring.
+
+An action is just a Janet function that is registered to the cy server with a short human-readable string description. It provides a convenient method for making some functionality you use often more discoverable.
+
+In a similar way to other modern applications, cy has a command palette (invoked by default with `ctrl+a` `ctrl+p`, see [`(action/command-palette)
+`](api.md#actioncommand-palette)) in which all registered actions will appear.
+````
   [name docstring & body]
   ~(upscope
      (defn ,name ,docstring [] ,;body)
@@ -35,7 +41,7 @@ For example:
                  (def [binding func] $)
                  (tuple 'key/bind scope binding func)) _)))
 
-(key/def
+(key/action
   action/command-palette
   "open command palette"
   (def binds (key/current))
@@ -72,14 +78,14 @@ For example:
   (default path "")
   (pane/attach (cmd/new shells :path path)))
 
-(key/def
+(key/action
   action/new-shell
   "create a new shell"
   (def path (cmd/path (pane/current)))
   (def shell (cmd/new shells :path path :name (path/base path)))
   (pane/attach shell))
 
-(key/def
+(key/action
   action/new-project
   "create a new project"
   (def path (cmd/path (pane/current)))
@@ -92,7 +98,7 @@ For example:
   (def shell (cmd/new project :path path :name "shell"))
   (pane/attach editor))
 
-(key/def
+(key/action
   action/jump-project
   "jump to a project"
   (as?-> projects _
@@ -109,7 +115,7 @@ For example:
          (_ 0) # Gets the first index, the editor
          (pane/attach _)))
 
-(key/def
+(key/action
   action/jump-shell
   "jump to a shell"
   (as?-> (group/children shells) _
@@ -121,7 +127,7 @@ For example:
          (input/find _ :prompt "search: shell")
          (pane/attach _)))
 
-(key/def
+(key/action
   action/next-pane
   "move to the next pane"
   (def children
@@ -145,7 +151,7 @@ For example:
   (def [next] next-panes)
   (pane/attach next))
 
-(key/def
+(key/action
   action/jump-pane
   "jump to a pane"
   (as?-> (group/leaves :root) _
@@ -153,12 +159,12 @@ For example:
          (input/find _ :prompt "search: pane")
          (pane/attach _)))
 
-(key/def
+(key/action
   action/kill-current-pane
   "kill the current pane"
   (tree/kill (pane/current)))
 
-(key/def
+(key/action
   action/toggle-margins
   "toggle margins"
   (def size (viewport/size))
@@ -166,43 +172,43 @@ For example:
     0 (viewport/set-size [0 80])
     (viewport/set-size [0 0])))
 
-(key/def
+(key/action
   action/margins-80
   "set size to 80 columns"
   (viewport/set-size [0 80]))
 
-(key/def
+(key/action
   action/margins-160
   "set size to 160 columns"
   (viewport/set-size [0 160]))
 
-(key/def
+(key/action
   action/choose-frame
   "choose a frame"
   (as?-> (viewport/get-frames) _
          (input/find _ :prompt "search: frame")
          (viewport/set-frame _)))
 
-(key/def
+(key/action
   action/random-frame
   "switch to a random frame"
   (def frames (viewport/get-frames))
   (def rng (math/rng))
   (viewport/set-frame (get frames (math/rng-int rng (length frames)))))
 
-(key/def
+(key/action
   action/margins-smaller
   "decrease margins by 5 columns"
   (def [lines cols] (viewport/size))
   (viewport/set-size [lines (+ cols 10)]))
 
-(key/def
+(key/action
   action/margins-bigger
   "increase margins by 5 columns"
   (def [lines cols] (viewport/size))
   (viewport/set-size [lines (- cols 10)]))
 
-(key/def
+(key/action
   action/open-log
   "open an existing log file"
   (as?-> (path/glob (path/join [(cy/get :data-dir) "*.borg"])) _
@@ -266,10 +272,3 @@ For example:
                ["F" [:re "."]] replay/jump-backward
                ["t" [:re "."]] replay/jump-to-forward
                ["T" [:re "."]] replay/jump-to-backward)
-
-
-(key/def
-  action/current
-  "print stuff"
-  (pp (key/current))
-  (pp (key/get :root)))
