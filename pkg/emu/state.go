@@ -207,10 +207,16 @@ func (t *State) setChar(c rune, attr *Glyph, x, y int) {
 	t.dirty.markScreen()
 	t.markDirtyLine(y)
 
+	t.dirty.Printed = false
+	t.dirty.Print.R = y
+	t.dirty.Print.C = x
+
 	for i := x; i < len(t.lines[y]) && i < x+w; i++ {
 		t.lines[y][i] = *attr
 		if i == x {
 			t.lines[y][i].Char = c
+			t.dirty.Print.Glyph = t.lines[y][i]
+			t.dirty.Printed = true
 		} else {
 			t.lines[y][i].Char = ' '
 		}
@@ -223,11 +229,6 @@ func (t *State) setChar(c rune, attr *Glyph, x, y int) {
 			t.lines[y][i].BG = attr.FG
 		}
 	}
-
-	t.dirty.Print.R = y
-	t.dirty.Print.C = x
-	t.dirty.Print.Glyph = t.lines[y][x]
-	t.dirty.Printed = true
 }
 
 func (t *State) defaultCursor() Cursor {

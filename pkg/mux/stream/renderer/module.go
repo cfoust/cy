@@ -70,7 +70,7 @@ func (r *Renderer) poll(ctx context.Context) error {
 			tty.Capture(r.raw),
 			r.screen.State(),
 		)
-		r.raw.Parse(changes)
+		r.raw.Write(changes)
 		_, err := r.w.Write(changes)
 		if err != nil {
 			return err

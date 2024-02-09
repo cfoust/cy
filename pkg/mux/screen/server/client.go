@@ -32,7 +32,27 @@ func (c *Client) State() *tty.State {
 		return tty.New(size)
 	}
 
-	return screen.State()
+	state := screen.State()
+	stateSize := state.Image.Size()
+	if stateSize.R >= size.R && stateSize.C >= size.C {
+		return state
+	}
+
+	centered := tty.New(size)
+	for row := 0; row < size.R; row++ {
+		for col := 0; col < size.C; col++ {
+			centered.Image[row][col].Char = '-'
+			centered.Image[row][col].FG = 8
+		}
+	}
+
+	tty.Copy(
+		size.Center(stateSize),
+		centered,
+		state,
+	)
+
+	return centered
 }
 
 func (c *Client) Attachment() *util.Lifetime {
