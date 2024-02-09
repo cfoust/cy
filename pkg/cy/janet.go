@@ -103,14 +103,14 @@ func (c *CyModule) Get(user interface{}, key *janet.Value) (interface{}, error) 
 func (c *CyModule) Set(user interface{}, key *janet.Value, value *janet.Value) error {
 	defer key.Free()
 
-	client, ok := user.(*Client)
-	if !ok {
-		return fmt.Errorf("missing client context")
-	}
-
-	node := client.Node()
-	if node == nil {
-		return fmt.Errorf("client was not attached")
+	// If there is no client, this probably means a parameter is being set
+	// in cy's startup script.
+	var node tree.Node = c.cy.tree.Root()
+	if client, ok := user.(*Client); ok {
+		node = client.Node()
+		if node == nil {
+			return fmt.Errorf("client was not attached")
+		}
 	}
 
 	var keyword janet.Keyword
@@ -133,7 +133,7 @@ func (c *CyModule) Set(user interface{}, key *janet.Value, value *janet.Value) e
 		return nil
 	}
 
-	var _bool int
+	var _bool bool
 	err = value.Unmarshal(&_bool)
 	if err == nil {
 		node.Params().Set(string(keyword), _bool)
