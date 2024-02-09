@@ -6,6 +6,24 @@ Janet code executed with `cy` can also access everything from [Janet's standard 
 
 ## Concepts
 
+#### Binding
+
+Several API functions related to binding keys return a `Binding`. A `Binding` table represents a single key sequence and its associated function. Each table has the following properties:
+
+- `:node`: the [NodeID](api.md#nodeid) where the binding is defined.
+- `:sequence`: a list of strings representing the key sequence that will execute this action. If the original call to [`(key/bind)`](api.md#keybind) used a [regex](keybindings.md#regexes), it will be returned as a string with a `re:` prefix.
+- `:function`: the Janet function that will be called when this sequence is executed.
+
+For example:
+
+```janet
+{
+  :node 1
+  :sequence ["ctrl+a" "t"]
+  :function <some function>
+}
+```
+
 #### NodeID
 
 Many API functions have a parameter of type `NodeID`, which can be one of two values:

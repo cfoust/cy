@@ -16,6 +16,12 @@ Clear all bindings that begin with `sequence` for node `target`, which is a [Nod
 
 `sequence` is a [key sequence](./keybindings.md#key-sequences), which consists of a tuple with string elements that are either key literals (`"h"`), preset key specifiers (`"ctrl+a"`), or regex patterns (`[:re "^[a-z]$"]`).
 
+The following code snippet will unbind all of `cy`'s default keybindings that begin with `ctrl+a`:
+
+```janet
+(key/unbind :root ["ctrl+a"])
+```
+
 # doc: Remap
 
 (key/remap target from to)
@@ -27,3 +33,15 @@ For example, to remap all of the default bindings that begin with `ctrl+a` to `c
 ```janet
 (key/remap :root ["ctrl+a"] ["ctrl+v"])
 ```
+
+# doc: Get
+
+(key/get target)
+
+Get all of `target`'s bindings. `target` is a [NodeID](api.md#nodeid). Returns an array of [Binding](api.md#binding)s. Note that this **does not** return bindings defined in an ancestor node, only those defined on the node itself.
+
+# doc: Current
+
+(key/current)
+
+Get all of the bindings accessible to the current client as an array of [Binding](api.md#binding)s. It contains all of the bindings defined by the node to which the client is attached and its ancestors. In other words, this is equivalent to the list of bindings against which the client's key presses are compared.
