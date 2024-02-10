@@ -119,7 +119,7 @@ type Terminal interface {
 	View
 
 	// Parse parses input and writes terminal changes to state.
-	Parse(p []byte) (n int, err error)
+	Parse(p []byte) (n int)
 
 	// Write does the same as Parse, but locks first.
 	io.Writer

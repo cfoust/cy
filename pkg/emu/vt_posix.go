@@ -3,11 +3,6 @@
 
 package emu
 
-import (
-	"bufio"
-	"unicode/utf8"
-)
-
 type terminal struct {
 	*State
 }
@@ -27,29 +22,19 @@ func (t *terminal) init(cols, rows int) {
 }
 
 // Write parses input and writes terminal changes to state.
-func (t *terminal) Parse(p []byte) (int, error) {
-	var written int
+func (t *terminal) Parse(p []byte) (written int) {
 	for _, b := range p {
 		t.parser.Advance(b)
 		written++
 	}
-	return written, nil
+	return
 }
 
 func (t *terminal) Write(p []byte) (int, error) {
 	t.Lock()
-	w, err := t.Parse(p)
+	w := t.Parse(p)
 	t.Unlock()
-	return w, err
-}
-
-func fullRuneBuffered(br *bufio.Reader) bool {
-	n := br.Buffered()
-	buf, err := br.Peek(n)
-	if err != nil {
-		return false
-	}
-	return utf8.FullRune(buf)
+	return w, nil
 }
 
 func (t *terminal) Resize(cols, rows int) {

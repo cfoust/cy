@@ -76,37 +76,18 @@ func (t *Terminal) Send(msg mux.Msg) {
 	t.stream.Write(input)
 }
 
-func (t *Terminal) poll(ctx context.Context) error {
-	// TODO(cfoust): 07/17/23 replace with io.Copy
-	buffer := make([]byte, 4096)
+func (t *Terminal) Write(p []byte) (n int, err error) {
+	t.terminal.Changes()
 
-	for {
-		numBytes, err := t.stream.Read(buffer)
-		if err == io.EOF {
-			return nil
-		}
-		if err != nil {
-			// TODO(cfoust): 05/17/23
-			return err
-		}
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-		if numBytes == 0 {
-			continue
-		}
-
-		copied := make([]byte, numBytes)
-		copy(copied, buffer[:numBytes])
-
-		_, err = t.terminal.Write(copied)
-		if err != nil {
-			return err
-		}
-
-		// Let any clients know that this pane changed
-		t.Notify()
+	n, err = t.terminal.Write(p)
+	if err != nil {
+		return 0, err
 	}
+
+	// Let any clients know that this pane changed
+	t.Notify()
+
+	return n, err
 }
 
 func NewTerminal(ctx context.Context, stream Stream, size Size) *Terminal {
@@ -116,8 +97,7 @@ func NewTerminal(ctx context.Context, stream Stream, size Size) *Terminal {
 		stream:          stream,
 	}
 
-	// TODO(cfoust): 07/14/23 error handling
-	go terminal.poll(ctx)
+	go io.Copy(terminal, stream)
 
 	return terminal
 }
