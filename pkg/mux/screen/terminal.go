@@ -77,8 +77,6 @@ func (t *Terminal) Send(msg mux.Msg) {
 }
 
 func (t *Terminal) Write(p []byte) (n int, err error) {
-	t.terminal.Changes()
-
 	n, err = t.terminal.Write(p)
 	if err != nil {
 		return 0, err

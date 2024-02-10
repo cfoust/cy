@@ -23,6 +23,8 @@ func (t *terminal) init(cols, rows int) {
 
 // Write parses input and writes terminal changes to state.
 func (t *terminal) Parse(p []byte) (written int) {
+	t.dirty.writeId++
+
 	for _, b := range p {
 		t.parser.Advance(b)
 		written++

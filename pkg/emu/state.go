@@ -59,7 +59,10 @@ func newState(w io.Writer) *State {
 	t := &State{
 		w:             w,
 		colorOverride: make(map[Color]Color),
-		dirty:         &Dirty{},
+		dirty: &Dirty{
+			hooks:     make(map[string]bool),
+			hookState: make([]byte, 256),
+		},
 	}
 
 	t.parser = vtparser.New(
@@ -213,6 +216,8 @@ func (t *State) setChar(c rune, attr *Glyph, x, y int) {
 
 	for i := x; i < len(t.lines[y]) && i < x+w; i++ {
 		t.lines[y][i] = *attr
+		t.lines[y][i].Write = t.dirty.writeId
+
 		if i == x {
 			t.lines[y][i].Char = c
 			t.dirty.Print.Glyph = t.lines[y][i]
@@ -356,6 +361,7 @@ func (t *State) clear(x0, y0, x1, y1 int) {
 		for x := x0; x <= x1; x++ {
 			t.lines[y][x] = t.cur.Attr
 			t.lines[y][x].Char = ' '
+			t.lines[y][x].Write = t.dirty.writeId
 		}
 	}
 

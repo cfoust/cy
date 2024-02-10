@@ -55,6 +55,10 @@ const (
 // ChangeFlag represents possible state changes of the terminal.
 type ChangeFlag uint32
 
+// WriteID represents the unique ID of a single contiguous Write() to the
+// terminal.
+type WriteID uint32
+
 // Terminal changes to occur in VT.ReadState
 const (
 	ChangedScreen ChangeFlag = 1 << iota
@@ -66,6 +70,7 @@ type Glyph struct {
 	Mode        int16
 	FG, BG      Color
 	Transparent bool
+	Write       WriteID
 }
 
 func (g Glyph) IsEmpty() bool {
@@ -189,8 +194,8 @@ func WithSize(size geom.Vec2) TerminalOption {
 func New(opts ...TerminalOption) Terminal {
 	info := TerminalInfo{
 		w:    ioutil.Discard,
-		cols: 80,
-		rows: 24,
+		cols: geom.DEFAULT_SIZE.C,
+		rows: geom.DEFAULT_SIZE.R,
 	}
 	for _, opt := range opts {
 		opt(&info)

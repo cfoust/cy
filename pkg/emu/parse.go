@@ -44,16 +44,29 @@ func (t *State) Execute(b byte) {
 }
 
 func (t *State) Put(b byte) {
+	t.dirty.hookState[t.dirty.hookCount] = b
+	t.dirty.hookCount++
 	// TODO(cfoust): 08/10/23
 	//fmt.Printf("[Put] %02x\n", b)
 }
 
 func (t *State) Unhook() {
+	hook := string(t.dirty.hookState[0:t.dirty.hookCount])
+
+	_, ok := t.dirty.hooks[hook]
+	if !ok {
+		return
+	}
+
+	t.dirty.hooks[hook] = true
+
 	// TODO(cfoust): 08/10/23
 	//fmt.Printf("[Unhook]\n")
 }
 
 func (t *State) Hook(params []int64, intermediates []byte, ignore bool, r rune) {
+	t.dirty.hookCount = 1
+	t.dirty.hookState[0] = byte(r)
 	// TODO(cfoust): 08/10/23
 	//fmt.Printf("[Hook] params=%v, intermediates=%v, ignore=%v, r=%v\n", params, intermediates, ignore, r)
 }
