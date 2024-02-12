@@ -163,18 +163,15 @@ type View interface {
 	// History returns the scrollback buffer.
 	History() []Line
 
-	// ToggleHistory allows you to enable and disable saving lines to the
-	// scrollback buffer.
-	EnableHistory(enabled bool)
-
 	Changes() *Dirty
 }
 
 type TerminalOption func(*TerminalInfo)
 
 type TerminalInfo struct {
-	w          io.Writer
-	cols, rows int
+	w              io.Writer
+	cols, rows     int
+	disableHistory bool
 }
 
 func WithWriter(w io.Writer) TerminalOption {
@@ -187,6 +184,14 @@ func WithSize(size geom.Vec2) TerminalOption {
 	return func(info *TerminalInfo) {
 		info.cols = size.C
 		info.rows = size.R
+	}
+}
+
+// Providing WithoutHistory disables the scrollback buffer, which drastically
+// reduces the amount of memory a Terminal uses.
+func WithoutHistory() TerminalOption {
+	return func(info *TerminalInfo) {
+		info.disableHistory = true
 	}
 }
 

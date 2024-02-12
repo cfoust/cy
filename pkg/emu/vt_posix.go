@@ -10,6 +10,7 @@ type terminal struct {
 func newTerminal(info TerminalInfo) *terminal {
 	t := &terminal{newState(info.w)}
 	t.init(info.cols, info.rows)
+	t.disableHistory = info.disableHistory
 	return t
 }
 

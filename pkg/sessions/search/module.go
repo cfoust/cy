@@ -134,8 +134,7 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 		return
 	}
 
-	term := emu.New()
-	term.EnableHistory(false)
+	term := emu.New(emu.WithoutHistory())
 
 	// The full matches we're tracking that are still on the screen
 	var matches, newMatches []SearchResult

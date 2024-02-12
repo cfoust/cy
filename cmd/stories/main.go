@@ -139,16 +139,13 @@ func main() {
 		return
 	}
 
-	recorder, _ := sessions.NewRecorder(
-		ctx,
-		"",
-		renderer,
-	)
+	recorder := sessions.NewMemoryRecorder()
+	stream := sessions.NewEventStream(renderer, recorder)
 
 	// The recorder only stores data on Read() calls, so we need to drain
 	// it
-	go func() { _, _ = io.Copy(ioutil.Discard, recorder) }()
-	recorder.Resize(size)
+	go func() { _, _ = io.Copy(ioutil.Discard, stream) }()
+	stream.Resize(size)
 	<-screen.Ctx().Done()
 
 	err = sessions.WriteAsciinema(CLI.Cast, recorder.Events())

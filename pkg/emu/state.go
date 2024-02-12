@@ -464,10 +464,6 @@ func IsAltMode(mode ModeFlag) bool {
 	return (mode & ModeAltScreen) != 0
 }
 
-func (t *State) EnableHistory(enabled bool) {
-	t.disableHistory = !enabled
-}
-
 func (t *State) scrollDown(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
 
