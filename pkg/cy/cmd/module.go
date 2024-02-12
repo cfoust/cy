@@ -5,7 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/mux/screen/replayable"
+	"github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/sessions"
 )
@@ -15,7 +15,7 @@ func New(
 	options stream.CmdOptions,
 	dataDir string,
 	replayBinds *bind.BindScope,
-) (*replayable.Replayable, error) {
+) (*replay.Replayable, error) {
 	cmd, err := stream.NewCmd(
 		ctx,
 		options,
@@ -33,15 +33,15 @@ func New(
 		}
 	}
 
-	recorder, err := sessions.NewRecorder(ctx, borgPath, cmd)
+	// TODO(cfoust): 02/12/24 handle empty path
+	recorder, err := sessions.NewFileRecorder(ctx, borgPath)
 	if err != nil {
 		return nil, err
 	}
 
-	replayable := replayable.New(
+	replayable := replay.NewReplayable(
 		ctx,
-		cmd,
-		recorder,
+		sessions.NewEventStream(cmd, recorder),
 		replayBinds,
 	)
 	return replayable, nil

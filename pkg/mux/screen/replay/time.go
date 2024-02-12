@@ -66,6 +66,10 @@ func (r *Replay) setIndex(index, indexByte int, updateTime bool) {
 		}
 	}
 
+	if toIndex < 0 {
+		return
+	}
+
 	r.location.Index = toIndex
 	r.location.Offset = toByte
 	if updateTime {

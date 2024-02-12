@@ -6,7 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/cy/api"
 	"github.com/cfoust/cy/pkg/janet"
-	"github.com/cfoust/cy/pkg/mux/screen/replayable"
+	"github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/util"
@@ -159,7 +159,7 @@ func (c *CyModule) Replay(user interface{}) {
 		return
 	}
 
-	r, ok := pane.Screen().(*replayable.Replayable)
+	r, ok := pane.Screen().(*replay.Replayable)
 	if !ok {
 		return
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/cy/params"
 	cyParams "github.com/cfoust/cy/pkg/cy/params"
 	"github.com/cfoust/cy/pkg/janet"
-	"github.com/cfoust/cy/pkg/mux/screen/replayable"
+	"github.com/cfoust/cy/pkg/mux/screen/replay"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
@@ -87,7 +87,7 @@ func (c *CmdModule) Path(id *janet.Value) (*string, error) {
 		return nil, err
 	}
 
-	r, ok := pane.Screen().(*replayable.Replayable)
+	r, ok := pane.Screen().(*replay.Replayable)
 	if !ok {
 		return nil, fmt.Errorf("pane was not a cmd")
 	}

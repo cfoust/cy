@@ -38,7 +38,7 @@ type Stream interface {
 	Resizable
 }
 
-// A Screen is the "end" of a chain of IO, or the result that the user sees.
+// A Screen is a resizable box that can publish updates.
 type Screen interface {
 	State() *tty.State
 	Subscribe(context.Context) *Updater
