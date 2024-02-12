@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
@@ -136,8 +137,9 @@ func NewReplayable(
 	}
 	r.terminal = S.NewTerminal(
 		lifetime.Ctx(),
-		stream,
+		sessions.NewEventStream(stream, r),
 		geom.DEFAULT_SIZE,
+		emu.WithoutHistory(),
 	)
 
 	go r.poll(ctx)

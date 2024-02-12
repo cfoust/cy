@@ -88,10 +88,17 @@ func (t *Terminal) Write(p []byte) (n int, err error) {
 	return n, err
 }
 
-func NewTerminal(ctx context.Context, stream Stream, size Size) *Terminal {
+func NewTerminal(
+	ctx context.Context,
+	stream Stream,
+	size Size,
+	options ...emu.TerminalOption,
+) *Terminal {
+	options = append(options, emu.WithWriter(stream), emu.WithSize(size))
+
 	terminal := &Terminal{
 		UpdatePublisher: mux.NewPublisher(),
-		terminal:        emu.New(emu.WithWriter(stream), emu.WithSize(size)),
+		terminal:        emu.New(options...),
 		stream:          stream,
 	}
 
