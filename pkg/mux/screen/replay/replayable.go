@@ -21,10 +21,7 @@ type Replayable struct {
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 
-	stream mux.Stream
-
-	showPlayer bool
-
+	stream   mux.Stream
 	terminal *S.Terminal
 	replay   *taro.Program
 
@@ -44,7 +41,7 @@ func (r *Replayable) Screen() mux.Screen {
 
 func (r *Replayable) isPlayerMode() bool {
 	r.RLock()
-	showPlayer := r.showPlayer
+	showPlayer := r.replay != nil
 	r.RUnlock()
 	return showPlayer
 }
@@ -68,12 +65,15 @@ func (r *Replayable) Resize(size geom.Size) error {
 		return err
 	}
 
+	if !r.isPlayerMode() {
+		return nil
+	}
+
 	return r.replay.Resize(size)
 }
 
 func (r *Replayable) poll(ctx context.Context) {
 	terminalEvents := r.terminal.Subscribe(ctx)
-	replayEvents := r.replay.Subscribe(ctx)
 
 	for {
 		select {
@@ -81,11 +81,6 @@ func (r *Replayable) poll(ctx context.Context) {
 			return
 		case event := <-terminalEvents.Recv():
 			if r.isPlayerMode() {
-				continue
-			}
-			r.Publish(event)
-		case event := <-replayEvents.Recv():
-			if !r.isPlayerMode() {
 				continue
 			}
 			r.Publish(event)
@@ -115,7 +110,33 @@ func (r *Replayable) Send(msg mux.Msg) {
 func (r *Replayable) EnterReplay() {
 	r.Lock()
 	defer r.Unlock()
-	r.showPlayer = true
+
+	replay := New(
+		r.Ctx(),
+		[]sessions.Event{},
+		r.binds,
+	)
+
+	r.replay = replay
+
+	go func() {
+		events := replay.Subscribe(r.Ctx())
+		for {
+			select {
+			case event := <-events.Recv():
+				r.Publish(event)
+			case <-replay.Ctx().Done():
+				return
+			}
+		}
+	}()
+
+	go func() {
+		<-replay.Ctx().Done()
+		r.Lock()
+		r.replay = nil
+		r.Unlock()
+	}()
 }
 
 func NewReplayable(
@@ -129,11 +150,6 @@ func NewReplayable(
 		UpdatePublisher: mux.NewPublisher(),
 		binds:           binds,
 		stream:          stream,
-		replay: New(
-			lifetime.Ctx(),
-			[]sessions.Event{},
-			binds,
-		),
 	}
 	r.terminal = S.NewTerminal(
 		lifetime.Ctx(),
