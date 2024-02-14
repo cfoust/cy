@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/mux/screen/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
@@ -24,12 +25,12 @@ type Replayable struct {
 	stream   mux.Stream
 	terminal *S.Terminal
 	replay   *taro.Program
+	player   *player.Player
 
 	binds *bind.BindScope
 }
 
 var _ mux.Screen = (*Replayable)(nil)
-var _ sessions.EventHandler = (*Replayable)(nil)
 
 func (r *Replayable) Stream() mux.Stream {
 	return r.stream
@@ -39,24 +40,20 @@ func (r *Replayable) Screen() mux.Screen {
 	return r.terminal
 }
 
-func (r *Replayable) isPlayerMode() bool {
+func (r *Replayable) isReplayMode() bool {
 	r.RLock()
-	showPlayer := r.replay != nil
+	showReplay := r.replay != nil
 	r.RUnlock()
-	return showPlayer
+	return showReplay
 }
 
 func (r *Replayable) State() *tty.State {
 	var currentScreen mux.Screen = r.terminal
-	if r.isPlayerMode() {
+	if r.isReplayMode() {
 		currentScreen = r.replay
 	}
 
 	return currentScreen.State()
-}
-
-func (r *Replayable) Process(event sessions.Event) error {
-	return nil
 }
 
 func (r *Replayable) Resize(size geom.Size) error {
@@ -65,7 +62,7 @@ func (r *Replayable) Resize(size geom.Size) error {
 		return err
 	}
 
-	if !r.isPlayerMode() {
+	if !r.isReplayMode() {
 		return nil
 	}
 
@@ -80,7 +77,7 @@ func (r *Replayable) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-terminalEvents.Recv():
-			if r.isPlayerMode() {
+			if r.isReplayMode() {
 				continue
 			}
 			r.Publish(event)
@@ -89,7 +86,7 @@ func (r *Replayable) poll(ctx context.Context) {
 }
 
 func (r *Replayable) Send(msg mux.Msg) {
-	if r.isPlayerMode() {
+	if r.isReplayMode() {
 		r.replay.Send(msg)
 		return
 	}
@@ -108,9 +105,14 @@ func (r *Replayable) Send(msg mux.Msg) {
 }
 
 func (r *Replayable) EnterReplay() {
+	if r.isReplayMode() {
+		return
+	}
+
 	r.Lock()
 	defer r.Unlock()
 
+	r.player.Acquire()
 	replay := New(
 		r.Ctx(),
 		[]sessions.Event{},
@@ -135,6 +137,7 @@ func (r *Replayable) EnterReplay() {
 		<-replay.Ctx().Done()
 		r.Lock()
 		r.replay = nil
+		r.player.Release()
 		r.Unlock()
 	}()
 }
@@ -150,10 +153,11 @@ func NewReplayable(
 		UpdatePublisher: mux.NewPublisher(),
 		binds:           binds,
 		stream:          stream,
+		player:          player.New(),
 	}
 	r.terminal = S.NewTerminal(
 		lifetime.Ctx(),
-		sessions.NewEventStream(stream, r),
+		sessions.NewEventStream(stream, r.player),
 		geom.DEFAULT_SIZE,
 		emu.WithoutHistory(),
 	)

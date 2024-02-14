@@ -22,7 +22,6 @@ type Replay struct {
 	// whether Replay will actually quit itself
 	preventExit bool
 
-	// the size of the terminal
 	terminal emu.Terminal
 
 	// the size of the client, but minus one row
