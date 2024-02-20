@@ -217,6 +217,8 @@ func (t *State) setChar(c rune, attr *Glyph, x, y int) {
 	for i := x; i < len(t.lines[y]) && i < x+w; i++ {
 		t.lines[y][i] = *attr
 		t.lines[y][i].Write = t.dirty.writeId
+		// super useful for debugging
+		//t.lines[y][i].BG = Color(t.dirty.writeId)
 
 		if i == x {
 			t.lines[y][i].Char = c
