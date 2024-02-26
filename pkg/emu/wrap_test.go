@@ -88,3 +88,30 @@ func TestSeveralLines(t *testing.T) {
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
 	require.Equal(t, "test", extractStr(term, 0, 3, 1))
 }
+
+func TestDisappear(t *testing.T) {
+	term := New()
+	term.Resize(4, 2)
+	term.Write([]byte(LineFeedMode))
+	term.Write([]byte("foobar\ntest"))
+	require.Equal(t, "ar", extractStr(term, 0, 1, 0))
+	require.Equal(t, "test", extractStr(term, 0, 3, 1))
+	term.Resize(4, 3)
+	require.Equal(t, "test", extractStr(term, 0, 3, 0))
+}
+
+func TestExpand(t *testing.T) {
+	term := New()
+	term.Resize(4, 4)
+	term.Write([]byte(LineFeedMode))
+	term.Write([]byte("test\ntest"))
+	term.Resize(2, 4)
+	require.Equal(t, "te", extractStr(term, 0, 1, 0))
+	require.Equal(t, "st", extractStr(term, 0, 1, 1))
+	require.Equal(t, "te", extractStr(term, 0, 1, 2))
+	require.Equal(t, "st", extractStr(term, 0, 1, 3))
+	term.Resize(4, 4)
+	require.Equal(t, "test", extractStr(term, 0, 3, 0))
+	require.Equal(t, "test", extractStr(term, 0, 3, 1))
+	require.Equal(t, "", extractStr(term, 0, 3, 2))
+}

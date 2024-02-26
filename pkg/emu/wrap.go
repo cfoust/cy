@@ -65,35 +65,18 @@ func wrapLine(line Line, cols int) []Line {
 	return result
 }
 
-type rowRange struct {
-	Start int
-	// exclusive
-	End int
-}
-
-type lineMapping struct {
-	Before rowRange
-	After  rowRange
-}
-
-func wrapLines(history, lines []Line, cols, origin int) (newLines []Line, mappings []lineMapping) {
+func wrapLines(lines []Line, cols int) (newLines []Line) {
 	var current Line = nil
-	var start int
 
-	numLines := len(history) + len(lines)
+	numLines := len(lines)
 	var line Line
 	for row := 0; row < numLines; row++ {
-		if row < len(history) {
-			line = history[row]
-		} else {
-			line = lines[row-len(history)]
-		}
+		line = lines[row]
 
 		// the line was wrapped originally, aggregate it
 		wasWrapped := line[len(line)-1].Mode == attrWrap
 
 		if current == nil {
-			start = row
 			current = copyLine(line)
 		} else {
 			current = append(current, line...)
@@ -107,29 +90,18 @@ func wrapLines(history, lines []Line, cols, origin int) (newLines []Line, mappin
 
 		// We've accumulated the whole line, wrap it
 		wrapped := wrapLine(current, cols)
-		mappings = append(mappings, lineMapping{
-			Before: rowRange{
-				Start: start - origin,
-				End:   (row - origin) + 1,
-			},
-			After: rowRange{
-				Start: len(newLines),
-				End:   len(newLines) + len(wrapped),
-			},
-		})
 		for _, wrappedLine := range wrapped {
 			newLines = append(newLines, wrappedLine)
 		}
 		current = nil
 	}
 
-	return newLines, mappings
+	return newLines
 }
 
 // reflow recalculates the wrap point for all lines in `lines` and `history`.
-func reflow(history, lines []Line, rows, cols, y, x int) (newHistory []Line, newLines []Line, curY int, curX int) {
-	// TODO(cfoust): 08/22/23 use mappings to move cursor to stay at offset in line
-	wrapped, _ := wrapLines(history, lines, cols, len(history))
+func reflow(screen []Line, cols int) []Line {
+	wrapped := wrapLines(screen, cols)
 
 	// Remove trailing empty lines
 	for i := len(wrapped) - 1; i >= 0; i-- {
@@ -139,8 +111,5 @@ func reflow(history, lines []Line, rows, cols, y, x int) (newHistory []Line, new
 		wrapped = wrapped[:i]
 	}
 
-	numHistory := clamp(len(wrapped)-rows, 0, len(wrapped))
-	newHistory = wrapped[:numHistory]
-	newLines = wrapped[numHistory:]
-	return newHistory, newLines, 0, 0
+	return wrapped
 }

@@ -270,6 +270,14 @@ func (t *State) resize(cols, rows int) bool {
 	if cols < 1 || rows < 1 {
 		return false
 	}
+
+	// Get rid of any wrapped lines (kitty does this too)
+	if !t.disableHistory {
+		for hasTrailingWrap(t.history) {
+			t.scrollUp(0, 1)
+		}
+	}
+
 	slide := t.cur.Y - rows + 1
 	if slide > 0 {
 		copy(t.screen, t.screen[slide:slide+rows])
@@ -277,7 +285,7 @@ func (t *State) resize(cols, rows int) bool {
 	}
 
 	tabs := t.tabs
-	lines, altLines := t.screen, t.altScreen
+	screen, altScreen := t.screen, t.altScreen
 	history, altHistory := t.history, t.altHistory
 	t.screen = make([]Line, rows)
 	t.altScreen = make([]Line, rows)
@@ -292,8 +300,8 @@ func (t *State) resize(cols, rows int) bool {
 		t.altScreen[i] = make(Line, cols)
 	}
 	for i := 0; i < minrows; i++ {
-		copy(t.screen[i], lines[i])
-		copy(t.altScreen[i], altLines[i])
+		copy(t.screen[i], screen[i])
+		copy(t.altScreen[i], altScreen[i])
 	}
 
 	t.cols = cols
@@ -302,31 +310,36 @@ func (t *State) resize(cols, rows int) bool {
 		t.clear(0, 0, cols-1, rows-1)
 	}
 
-	if IsAltMode(t.mode) {
-		history, lines, _, _ := reflow(
-			altHistory,
-			altLines,
-			rows,
-			cols,
-			t.cur.Y,
-			t.cur.X,
+	// Reflow lines and send lines to history when necessary
+	{
+		var (
+			oldScreen  = screen
+			newScreen  = t.screen
+			newHistory = history
 		)
-		t.altHistory = history
-		for i := range lines {
-			copy(t.altScreen[i], lines[i])
+		if IsAltMode(t.mode) {
+			oldScreen = altScreen
+			newScreen = t.altScreen
+			newHistory = altHistory
 		}
-	} else {
-		history, lines, _, _ := reflow(
-			history,
-			lines,
-			rows,
-			cols,
-			t.cur.Y,
-			t.cur.X,
-		)
-		t.history = history
-		for i := range lines {
-			copy(t.screen[i], lines[i])
+
+		wrapped := reflow(oldScreen, cols)
+
+		numExtra := max(len(wrapped)-rows, 0)
+		if numExtra > 0 {
+			for i := range wrapped[:numExtra] {
+				newHistory = appendWrapped(newHistory, wrapped[i])
+			}
+		}
+
+		if IsAltMode(t.mode) {
+			t.altHistory = newHistory
+		} else {
+			t.history = newHistory
+		}
+
+		for i := range wrapped[numExtra:] {
+			copy(newScreen[i], wrapped[i])
 		}
 	}
 
@@ -486,31 +499,35 @@ func (t *State) scrollDown(orig, n int) {
 	}
 }
 
+// Return true if the last line in `lines` continues on to the
+// screen (in other words, it's wrapped.)
+func hasTrailingWrap(lines []Line) bool {
+	if len(lines) == 0 {
+		return false
+	}
+
+	lastLine := lines[len(lines)-1]
+	return lastLine[len(lastLine)-1].Mode == attrWrap
+}
+
+func appendWrapped(lines []Line, line Line) []Line {
+	cloned := copyLine(line)
+
+	if !hasTrailingWrap(lines) {
+		return append(lines, cloned)
+	}
+
+	lastIndex := len(lines) - 1
+	lines[lastIndex] = append(lines[lastIndex], cloned...)
+	return lines
+}
+
 func (t *State) scrollUp(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
 
 	if orig == 0 && !IsAltMode(t.mode) && !t.disableHistory {
 		for i := 0; i < n; i++ {
-			line := copyLine(t.screen[i])
-
-			if len(t.history) == 0 {
-				t.history = append(t.history, line)
-				continue
-			}
-
-			// Check to see if we should append this to the end of
-			// the previous line
-
-			lastIndex := len(t.history) - 1
-			lastLine := t.history[lastIndex]
-			lastLength := len(lastLine)
-
-			if lastLength == 0 || lastLine[lastLength-1].Mode != attrWrap {
-				t.history = append(t.history, line)
-				continue
-			}
-
-			t.history[lastIndex] = append(lastLine, line...)
+			t.history = appendWrapped(t.history, t.screen[i])
 		}
 	}
 
@@ -811,8 +828,8 @@ func (t *State) History() []Line {
 }
 
 func (t *State) String() string {
-	t.Lock()
-	defer t.Unlock()
+	//t.Lock()
+	//defer t.Unlock()
 
 	var view []rune
 	for y := 0; y < t.rows; y++ {
