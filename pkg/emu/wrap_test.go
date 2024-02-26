@@ -100,9 +100,7 @@ func TestDisappear(t *testing.T) {
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
 	history := term.History()
 	require.Equal(t, len(history), 1)
-	line := history[0]
-	t.Logf("'%+v'", line)
-	require.Equal(t, 6, len(line))
+	require.Equal(t, "foobar", history[0].String())
 }
 
 func TestExpand(t *testing.T) {
