@@ -31,25 +31,26 @@ type State struct {
 	deadlock.RWMutex
 	DebugLogger *log.Logger
 
-	w             io.Writer
-	cols, rows    int
-	lines         []Line
-	history       []Line
-	altLines      []Line
-	altHistory    []Line
+	w          io.Writer
+	cols, rows int
+
+	screen     []Line
+	history    []Line
+	altScreen  []Line
+	altHistory []Line
+
 	cur, curSaved Cursor
 	top, bottom   int // scroll limits
 	mode          ModeFlag
 	str           strEscape
 	csi           csiEscape
-	numlock       bool
 	tabs          []bool
 	title         string
 	colorOverride map[Color]Color
 
 	dirty *Dirty
 
-	// whether scrollingup should send lines to the scrollback buffer
+	// whether scrolling up should send lines to the scrollback buffer
 	disableHistory bool
 
 	parser *vtparser.Parser
@@ -95,7 +96,7 @@ func (t *State) logln(s string) {
 // background color at position (x, y) relative to the top left of the terminal.
 // TODO(cfoust): 08/24/23 move this to row, col
 func (t *State) Cell(x, y int) Glyph {
-	cell := t.lines[y][x]
+	cell := t.screen[y][x]
 	fg, ok := t.colorOverride[cell.FG]
 	if ok {
 		cell.FG = fg
@@ -214,26 +215,26 @@ func (t *State) setChar(c rune, attr *Glyph, x, y int) {
 	t.dirty.Print.R = y
 	t.dirty.Print.C = x
 
-	for i := x; i < len(t.lines[y]) && i < x+w; i++ {
-		t.lines[y][i] = *attr
-		t.lines[y][i].Write = t.dirty.writeId
+	for i := x; i < len(t.screen[y]) && i < x+w; i++ {
+		t.screen[y][i] = *attr
+		t.screen[y][i].Write = t.dirty.writeId
 		// super useful for debugging
 		//t.lines[y][i].BG = Color(t.dirty.writeId)
 
 		if i == x {
-			t.lines[y][i].Char = c
-			t.dirty.Print.Glyph = t.lines[y][i]
+			t.screen[y][i].Char = c
+			t.dirty.Print.Glyph = t.screen[y][i]
 			t.dirty.Printed = true
 		} else {
-			t.lines[y][i].Char = ' '
+			t.screen[y][i].Char = ' '
 		}
 		//if t.options.BrightBold && attr.Mode&attrBold != 0 && attr.FG < 8 {
 		if attr.Mode&attrBold != 0 && attr.FG < 8 {
-			t.lines[y][i].FG = attr.FG + 8
+			t.screen[y][i].FG = attr.FG + 8
 		}
 		if attr.Mode&attrReverse != 0 {
-			t.lines[y][i].FG = attr.BG
-			t.lines[y][i].BG = attr.FG
+			t.screen[y][i].FG = attr.BG
+			t.screen[y][i].BG = attr.FG
 		}
 	}
 }
@@ -271,15 +272,15 @@ func (t *State) resize(cols, rows int) bool {
 	}
 	slide := t.cur.Y - rows + 1
 	if slide > 0 {
-		copy(t.lines, t.lines[slide:slide+rows])
-		copy(t.altLines, t.altLines[slide:slide+rows])
+		copy(t.screen, t.screen[slide:slide+rows])
+		copy(t.altScreen, t.altScreen[slide:slide+rows])
 	}
 
 	tabs := t.tabs
-	lines, altLines := t.lines, t.altLines
+	lines, altLines := t.screen, t.altScreen
 	history, altHistory := t.history, t.altHistory
-	t.lines = make([]Line, rows)
-	t.altLines = make([]Line, rows)
+	t.screen = make([]Line, rows)
+	t.altScreen = make([]Line, rows)
 	t.dirty.Lines = make(map[int]bool, rows)
 	t.tabs = make([]bool, cols)
 
@@ -287,12 +288,12 @@ func (t *State) resize(cols, rows int) bool {
 	t.dirty.markScreen()
 	for i := 0; i < rows; i++ {
 		t.markDirtyLine(i)
-		t.lines[i] = make(Line, cols)
-		t.altLines[i] = make(Line, cols)
+		t.screen[i] = make(Line, cols)
+		t.altScreen[i] = make(Line, cols)
 	}
 	for i := 0; i < minrows; i++ {
-		copy(t.lines[i], lines[i])
-		copy(t.altLines[i], altLines[i])
+		copy(t.screen[i], lines[i])
+		copy(t.altScreen[i], altLines[i])
 	}
 
 	t.cols = cols
@@ -312,7 +313,7 @@ func (t *State) resize(cols, rows int) bool {
 		)
 		t.altHistory = history
 		for i := range lines {
-			copy(t.altLines[i], lines[i])
+			copy(t.altScreen[i], lines[i])
 		}
 	} else {
 		history, lines, _, _ := reflow(
@@ -325,7 +326,7 @@ func (t *State) resize(cols, rows int) bool {
 		)
 		t.history = history
 		for i := range lines {
-			copy(t.lines[i], lines[i])
+			copy(t.screen[i], lines[i])
 		}
 	}
 
@@ -361,9 +362,9 @@ func (t *State) clear(x0, y0, x1, y1 int) {
 	for y := y0; y <= y1; y++ {
 		t.markDirtyLine(y)
 		for x := x0; x <= x1; x++ {
-			t.lines[y][x] = t.cur.Attr
-			t.lines[y][x].Char = ' '
-			t.lines[y][x].Write = t.dirty.writeId
+			t.screen[y][x] = t.cur.Attr
+			t.screen[y][x].Char = ' '
+			t.screen[y][x].Write = t.dirty.writeId
 		}
 	}
 
@@ -409,7 +410,7 @@ func (t *State) moveTo(x, y int) {
 }
 
 func (t *State) swapScreen() {
-	t.lines, t.altLines = t.altLines, t.lines
+	t.screen, t.altScreen = t.altScreen, t.screen
 	t.history, t.altHistory = t.altHistory, t.history
 	t.mode ^= ModeAltScreen
 	t.dirtyAll()
@@ -472,7 +473,7 @@ func (t *State) scrollDown(orig, n int) {
 	t.clear(0, t.bottom-n+1, t.cols-1, t.bottom)
 	t.dirty.markScreen()
 	for i := t.bottom; i >= orig+n; i-- {
-		t.lines[i], t.lines[i-n] = t.lines[i-n], t.lines[i]
+		t.screen[i], t.screen[i-n] = t.screen[i-n], t.screen[i]
 		t.markDirtyLine(i)
 		t.markDirtyLine(i - n)
 	}
@@ -483,25 +484,6 @@ func (t *State) scrollDown(orig, n int) {
 		Origin: orig,
 		Count:  n,
 	}
-
-	// don't save history lines on alt screen
-	if orig != 0 || IsAltMode(t.mode) {
-		return
-	}
-
-	// Bring lines back from the scrollback buffer rather than using empty ones
-	if len(t.history) < n {
-		return
-	}
-
-	offset := len(t.history) - n
-	newLines := t.history[offset:]
-	for row := 0; row < n; row++ {
-		for col := 0; col < len(t.lines[row]) && col < len(newLines[row]); col++ {
-			t.lines[row][col] = newLines[row][col]
-		}
-		t.history = t.history[:offset]
-	}
 }
 
 func (t *State) scrollUp(orig, n int) {
@@ -509,14 +491,33 @@ func (t *State) scrollUp(orig, n int) {
 
 	if orig == 0 && !IsAltMode(t.mode) && !t.disableHistory {
 		for i := 0; i < n; i++ {
-			t.history = append(t.history, copyLine(t.lines[i]))
+			line := copyLine(t.screen[i])
+
+			if len(t.history) == 0 {
+				t.history = append(t.history, line)
+				continue
+			}
+
+			// Check to see if we should append this to the end of
+			// the previous line
+
+			lastIndex := len(t.history) - 1
+			lastLine := t.history[lastIndex]
+			lastLength := len(lastLine)
+
+			if lastLength == 0 || lastLine[lastLength-1].Mode != attrWrap {
+				t.history = append(t.history, line)
+				continue
+			}
+
+			t.history[lastIndex] = append(lastLine, line...)
 		}
 	}
 
 	t.clear(0, orig, t.cols-1, orig+n-1)
 	t.dirty.markScreen()
 	for i := orig; i <= t.bottom-n; i++ {
-		t.lines[i], t.lines[i+n] = t.lines[i+n], t.lines[i]
+		t.screen[i], t.screen[i+n] = t.screen[i+n], t.screen[i]
 		t.markDirtyLine(i)
 		t.markDirtyLine(i + n)
 	}
@@ -746,7 +747,7 @@ func (t *State) insertBlanks(n int) {
 	if dst >= t.cols {
 		t.clear(t.cur.X, t.cur.Y, t.cols-1, t.cur.Y)
 	} else {
-		copy(t.lines[t.cur.Y][dst:dst+size], t.lines[t.cur.Y][src:src+size])
+		copy(t.screen[t.cur.Y][dst:dst+size], t.screen[t.cur.Y][src:src+size])
 		t.clear(src, t.cur.Y, dst-1, t.cur.Y)
 	}
 }
@@ -775,7 +776,7 @@ func (t *State) deleteChars(n int) {
 	if src >= t.cols {
 		t.clear(t.cur.X, t.cur.Y, t.cols-1, t.cur.Y)
 	} else {
-		copy(t.lines[t.cur.Y][dst:dst+size], t.lines[t.cur.Y][src:src+size])
+		copy(t.screen[t.cur.Y][dst:dst+size], t.screen[t.cur.Y][src:src+size])
 		t.clear(t.cols-n, t.cur.Y, t.cols-1, t.cur.Y)
 	}
 }
@@ -797,26 +798,10 @@ func copyLine(line Line) Line {
 	return copied
 }
 
-func (t *State) clone(sets ...[]Line) []Line {
-	lines := make([]Line, 0)
-
-	for _, set := range sets {
-		for _, line := range set {
-			copied := copyLine(line)
-			lines = append(
-				lines,
-				copied,
-			)
-		}
-	}
-
-	return lines
-}
-
 func (t *State) Screen() []Line {
 	t.Lock()
 	defer t.Unlock()
-	return t.lines
+	return t.screen
 }
 
 func (t *State) History() []Line {

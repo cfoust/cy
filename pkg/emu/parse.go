@@ -8,7 +8,7 @@ import (
 
 func (t *State) Print(c rune) {
 	if t.mode&ModeWrap != 0 && t.cur.State&cursorWrapNext != 0 {
-		t.lines[t.cur.Y][t.cur.X].Mode |= attrWrap
+		t.screen[t.cur.Y][t.cur.X].Mode |= attrWrap
 		t.newline(true)
 	}
 
