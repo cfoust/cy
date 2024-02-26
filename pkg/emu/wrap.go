@@ -1,5 +1,28 @@
 package emu
 
+// Return true if the last line in `lines` continues on to the
+// screen (in other words, it's wrapped.)
+func hasTrailingWrap(lines []Line) bool {
+	if len(lines) == 0 {
+		return false
+	}
+
+	lastLine := lines[len(lines)-1]
+	return lastLine[len(lastLine)-1].Mode == attrWrap
+}
+
+func appendWrapped(lines []Line, line Line) []Line {
+	cloned := copyLine(line)
+
+	if !hasTrailingWrap(lines) {
+		return append(lines, cloned)
+	}
+
+	lastIndex := len(lines) - 1
+	lines[lastIndex] = append(lines[lastIndex], cloned...)
+	return lines
+}
+
 func emptyLine(cols int) Line {
 	line := make(Line, cols)
 	for i := range line {
@@ -18,6 +41,14 @@ func getLineLength(line Line) int {
 		}
 	}
 	return length
+}
+
+func getOccupiedLine(line Line) Line {
+	if line[len(line)-1].Mode == attrWrap {
+		return line
+	}
+
+	return line[:getLineLength(line)]
 }
 
 func wrapLine(line Line, cols int) []Line {
