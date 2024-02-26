@@ -98,6 +98,11 @@ func TestDisappear(t *testing.T) {
 	require.Equal(t, "test", extractStr(term, 0, 3, 1))
 	term.Resize(4, 3)
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
+	history := term.History()
+	require.Equal(t, len(history), 1)
+	line := history[0]
+	t.Logf("'%+v'", line)
+	require.Equal(t, 6, len(line))
 }
 
 func TestExpand(t *testing.T) {
@@ -113,5 +118,5 @@ func TestExpand(t *testing.T) {
 	term.Resize(4, 4)
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
 	require.Equal(t, "test", extractStr(term, 0, 3, 1))
-	require.Equal(t, "", extractStr(term, 0, 3, 2))
+	require.Equal(t, "    ", extractStr(term, 0, 3, 2))
 }

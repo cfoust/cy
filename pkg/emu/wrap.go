@@ -12,7 +12,7 @@ func hasTrailingWrap(lines []Line) bool {
 }
 
 func appendWrapped(lines []Line, line Line) []Line {
-	cloned := copyLine(line)
+	cloned := getOccupiedLine(copyLine(line))
 
 	if !hasTrailingWrap(lines) {
 		return append(lines, cloned)
