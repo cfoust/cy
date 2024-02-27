@@ -204,11 +204,18 @@ func TestFullAlt(t *testing.T) {
 	require.Equal(t, 2, term.Cursor().Y)
 	term.Write([]byte(EnterAltScreen))
 	term.Resize(4, 3)
-	term.Write([]byte(ExitAltScreen)) // leave altscreen
+	term.Write([]byte(ExitAltScreen))
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
 	require.Equal(t, "te  ", extractStr(term, 0, 3, 1))
 	require.Equal(t, "    ", extractStr(term, 0, 3, 2))
-	t.Logf("%d %d", term.Cursor().Y, term.Cursor().X)
 	require.Equal(t, 2, term.Cursor().X)
 	require.Equal(t, 1, term.Cursor().Y)
+
+	// fill up the rest
+	term.Write([]byte("st\ntest\nok"))
+	term.Write([]byte(EnterAltScreen))
+	term.Resize(2, 5)
+	term.Resize(1, 1)
+	term.Resize(6, 3)
+	term.Write([]byte(ExitAltScreen))
 }

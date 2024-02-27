@@ -347,6 +347,8 @@ func (t *State) resize(cols, rows int) bool {
 		// actually were lines involved
 		if cursorValid {
 			newCursor.Y -= numExtra
+			newCursor.X = clamp(newCursor.X, 0, cols-1)
+			newCursor.Y = clamp(newCursor.Y, 0, rows-1)
 			if !IsAltMode(t.mode) {
 				t.cur = newCursor
 			} else {
