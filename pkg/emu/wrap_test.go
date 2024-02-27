@@ -118,3 +118,17 @@ func TestExpand(t *testing.T) {
 	require.Equal(t, "test", extractStr(term, 0, 3, 1))
 	require.Equal(t, "    ", extractStr(term, 0, 3, 2))
 }
+
+func TestAlt(t *testing.T) {
+	term := New()
+	term.Resize(4, 4)
+	term.Write([]byte(LineFeedMode))
+	term.Write([]byte("test"))
+	term.Write([]byte("\033[?1049h"))
+	term.Write([]byte("asd\nasdasdasdasdasdasd"))
+	term.Resize(4, 2)
+	term.Resize(4, 4)
+	term.Write([]byte("\033[?1049l"))
+	t.Logf("'%s'", term.String())
+	t.Fail()
+}

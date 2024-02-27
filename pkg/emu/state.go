@@ -296,8 +296,8 @@ func (t *State) resize(cols, rows int) bool {
 	t.dirty.markScreen()
 	for i := 0; i < rows; i++ {
 		t.markDirtyLine(i)
-		t.screen[i] = make(Line, cols)
-		t.altScreen[i] = make(Line, cols)
+		t.screen[i] = emptyLine(cols)
+		t.altScreen[i] = emptyLine(cols)
 	}
 	for i := 0; i < minrows; i++ {
 		copy(t.screen[i], screen[i])
@@ -338,8 +338,8 @@ func (t *State) resize(cols, rows int) bool {
 			t.history = newHistory
 		}
 
-		for i := range wrapped[numExtra:] {
-			copy(newScreen[i], wrapped[i])
+		for i, line := range wrapped[numExtra:] {
+			copy(newScreen[i], line)
 		}
 	}
 
