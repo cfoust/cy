@@ -6,5 +6,7 @@ const (
 	// See:
 	// https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 	// https://vt100.net/docs/vt510-rm/LineFeedMode.html
-	LineFeedMode = "\033[20h"
+	LineFeedMode   = "\033[20h"
+	EnterAltScreen = "\033[?1049h"
+	ExitAltScreen  = "\033[?1049l"
 )

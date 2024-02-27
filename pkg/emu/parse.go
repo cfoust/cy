@@ -213,7 +213,7 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 	case 's': // DECSC - save cursor position (ANSI.SYS)
 		t.saveCursor()
 	case 'u': // DECRC - restore cursor position (ANSI.SYS)
-		t.restoreCursor()
+		t.restoreCursor(false)
 	case 'q': // DECSCUSR - set cursor style
 		style := CursorStyleBlock
 		switch c.arg(0, 0) {
@@ -269,7 +269,7 @@ func (t *State) EscDispatch(intermediates []byte, ignore bool, b byte) {
 	case '7': // DECSC - save cursor
 		t.saveCursor()
 	case '8': // DECRC - restore cursor
-		t.restoreCursor()
+		t.restoreCursor(false)
 	case '\\': // ST - stop
 
 	// Character Sets (G0 and G1 Designators)

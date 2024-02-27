@@ -8,6 +8,7 @@ import (
 
 	"github.com/danielgatis/go-vte/vtparser"
 	"github.com/mattn/go-runewidth"
+	L "github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -147,9 +148,15 @@ func (t *State) saveCursor() {
 	t.curSaved = t.cur
 }
 
-func (t *State) restoreCursor() {
+// Restore the cursor, retaining its state if `keepState` is true.
+func (t *State) restoreCursor(keepState bool) {
 	t.cur = t.curSaved
+	state := t.curSaved.State
 	t.moveTo(t.cur.X, t.cur.Y)
+	if !keepState {
+		return
+	}
+	t.cur.State = state
 }
 
 func (t *State) putTab(forward bool) {
@@ -294,16 +301,11 @@ func (t *State) resize(cols, rows int) bool {
 	t.dirty.Lines = make(map[int]bool, rows)
 	t.tabs = make([]bool, cols)
 
-	minrows := min(rows, t.rows)
 	t.dirty.markScreen()
 	for i := 0; i < rows; i++ {
 		t.markDirtyLine(i)
 		t.screen[i] = emptyLine(cols)
 		t.altScreen[i] = emptyLine(cols)
-	}
-	for i := 0; i < minrows; i++ {
-		copy(t.screen[i], screen[i])
-		copy(t.altScreen[i], altScreen[i])
 	}
 
 	t.cols = cols
@@ -323,17 +325,11 @@ func (t *State) resize(cols, rows int) bool {
 		if IsAltMode(t.mode) {
 			oldScreen = altScreen
 			newScreen = t.altScreen
-			newHistory = altHistory
 			oldCursor = t.curSaved
+			newHistory = altHistory
 		}
 
 		wrapped, newCursor := reflow(oldScreen, oldCursor, cols)
-
-		if !IsAltMode(t.mode) {
-			t.cur = newCursor
-		} else {
-			t.curSaved = newCursor
-		}
 
 		numExtra := max(len(wrapped)-rows, 0)
 		if numExtra > 0 {
@@ -348,9 +344,19 @@ func (t *State) resize(cols, rows int) bool {
 			t.history = newHistory
 		}
 
+		newCursor.Y -= numExtra
+		if !IsAltMode(t.mode) {
+			t.cur = newCursor
+		} else {
+			t.curSaved = newCursor
+		}
+
+		L.Info().Msgf("%dx%d old %+v new %+v", rows, cols, oldCursor, newCursor)
+
 		for i, line := range wrapped[numExtra:] {
 			copy(newScreen[i], line)
 		}
+
 	}
 
 	copy(t.tabs, tabs)
@@ -613,7 +619,11 @@ func (t *State) setMode(priv bool, set bool, args []int) {
 				if set {
 					t.saveCursor()
 				} else {
-					t.restoreCursor()
+					// TODO(cfoust): 02/27/24 is this
+					// accurate? it should only apply if
+					// transitioning between alt and main
+					// screen
+					t.restoreCursor(true)
 				}
 			case 1001:
 				// mouse highlight mode; can hang the terminal by design when
@@ -815,8 +825,8 @@ func (t *State) History() []Line {
 }
 
 func (t *State) String() string {
-	//t.Lock()
-	//defer t.Unlock()
+	t.Lock()
+	defer t.Unlock()
 
 	var view []rune
 	for y := 0; y < t.rows; y++ {

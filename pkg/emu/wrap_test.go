@@ -154,16 +154,18 @@ func TestAlt(t *testing.T) {
 	term.Write([]byte("testt"))
 	require.Equal(t, 1, term.Cursor().X)
 	require.Equal(t, 1, term.Cursor().Y)
-	term.Write([]byte("\033[?1049h")) // enter altscreen
+	term.Write([]byte(EnterAltScreen))
 	term.Write([]byte("foobar foobar foobar"))
 	term.Resize(2, 4)
-	term.Write([]byte("\033[?1049l")) // leave altscreen
+	term.Write([]byte(ExitAltScreen)) // leave altscreen
 	require.Equal(t, "te", extractStr(term, 0, 1, 0))
 	require.Equal(t, "st", extractStr(term, 0, 1, 1))
 	require.Equal(t, 1, term.Cursor().X)
 	require.Equal(t, 2, term.Cursor().Y)
 }
 
+// Ensure that the cursor remains stationary relative to the physical line it's
+// on.
 func TestCursor(t *testing.T) {
 	term := New()
 	term.Resize(6, 4)
@@ -174,4 +176,32 @@ func TestCursor(t *testing.T) {
 	term.Resize(5, 4)
 	require.Equal(t, 4, term.Cursor().X)
 	require.Equal(t, 2, term.Cursor().Y)
+}
+
+// Ensure that the (full) main screen is reflowed correctly when on the alt
+// screen.
+func TestFullAlt(t *testing.T) {
+	term := New()
+	term.Resize(4, 3)
+	term.Write([]byte(LineFeedMode))
+	term.Write([]byte("test\ntest\nte"))
+	require.Equal(t, 2, term.Cursor().X)
+	require.Equal(t, 2, term.Cursor().Y)
+	term.Write([]byte(EnterAltScreen))
+	term.Resize(2, 3)
+	term.Write([]byte(ExitAltScreen))
+	require.Equal(t, "te", extractStr(term, 0, 1, 0))
+	require.Equal(t, "st", extractStr(term, 0, 1, 1))
+	require.Equal(t, "te", extractStr(term, 0, 1, 2))
+	require.Equal(t, 1, term.Cursor().X)
+	require.Equal(t, 2, term.Cursor().Y)
+	term.Write([]byte(EnterAltScreen))
+	term.Resize(4, 3)
+	term.Write([]byte(ExitAltScreen)) // leave altscreen
+	require.Equal(t, "test", extractStr(term, 0, 3, 0))
+	require.Equal(t, "te  ", extractStr(term, 0, 3, 1))
+	require.Equal(t, "    ", extractStr(term, 0, 3, 2))
+	t.Logf("%d %d", term.Cursor().Y, term.Cursor().X)
+	require.Equal(t, 2, term.Cursor().X)
+	require.Equal(t, 1, term.Cursor().Y)
 }
