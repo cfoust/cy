@@ -8,6 +8,10 @@ func hasTrailingWrap(lines []Line) bool {
 	}
 
 	lastLine := lines[len(lines)-1]
+	if len(lastLine) == 0 {
+		return false
+	}
+
 	return lastLine[len(lastLine)-1].Mode == attrWrap
 }
 

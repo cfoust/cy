@@ -78,6 +78,8 @@ func TestLongLine(t *testing.T) {
 	require.Equal(t, "b", extractStr(term, 40, 40, 0))
 }
 
+// Ensure that returning the terminal to its original size puts lines back into
+// their original location.
 func TestSeveralLines(t *testing.T) {
 	term := New()
 	term.Resize(4, 24)
@@ -89,6 +91,8 @@ func TestSeveralLines(t *testing.T) {
 	require.Equal(t, "test", extractStr(term, 0, 3, 1))
 }
 
+// Ensure that wrapped lines that continue from the history onto the screen are
+// moved completely into history when a resize occurs.
 func TestDisappear(t *testing.T) {
 	term := New()
 	term.Resize(4, 2)
@@ -103,6 +107,7 @@ func TestDisappear(t *testing.T) {
 	require.Equal(t, "foobar", history[0].String())
 }
 
+// A more constrained version of TestSeveralLines.
 func TestExpand(t *testing.T) {
 	term := New()
 	term.Resize(4, 4)
@@ -119,16 +124,38 @@ func TestExpand(t *testing.T) {
 	require.Equal(t, "    ", extractStr(term, 0, 3, 2))
 }
 
+// Like TestExpand, but even more constrained, which pushes a line into the
+// history.
+func TestFull(t *testing.T) {
+	term := New()
+	term.Resize(4, 2)
+	term.Write([]byte(LineFeedMode))
+	term.Write([]byte("test\ntest"))
+	require.Equal(t, "test", extractStr(term, 0, 3, 0))
+	require.Equal(t, "test", extractStr(term, 0, 3, 1))
+	term.Resize(2, 2)
+	require.Equal(t, "te", extractStr(term, 0, 1, 0))
+	require.Equal(t, "st", extractStr(term, 0, 1, 1))
+	term.Resize(4, 2)
+	require.Equal(t, "test", extractStr(term, 0, 3, 0))
+	require.Equal(t, "    ", extractStr(term, 0, 3, 1))
+
+	history := term.History()
+	require.Equal(t, len(history), 1)
+	require.Equal(t, "test", history[0].String())
+}
+
+// Ensure that when the terminal is on the alt screen, resizing causes a reflow
+// of the main screen.
 func TestAlt(t *testing.T) {
 	term := New()
 	term.Resize(4, 4)
 	term.Write([]byte(LineFeedMode))
 	term.Write([]byte("test"))
-	term.Write([]byte("\033[?1049h"))
-	term.Write([]byte("asd\nasdasdasdasdasdasd"))
-	term.Resize(4, 2)
-	term.Resize(4, 4)
-	term.Write([]byte("\033[?1049l"))
-	t.Logf("'%s'", term.String())
-	t.Fail()
+	term.Write([]byte("\033[?1049h")) // enter altscreen
+	term.Write([]byte("foobar foobar foobar"))
+	term.Resize(2, 4)
+	term.Write([]byte("\033[?1049l")) // leave altscreen
+	require.Equal(t, "te", extractStr(term, 0, 1, 0))
+	require.Equal(t, "st", extractStr(term, 0, 1, 1))
 }
