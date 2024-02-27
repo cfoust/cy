@@ -273,8 +273,10 @@ func (t *State) resize(cols, rows int) bool {
 
 	// Get rid of any wrapped lines (kitty does this too)
 	if !t.disableHistory {
+		consumed := 0
 		for hasTrailingWrap(t.history) {
 			t.scrollUp(0, 1)
+			consumed++
 		}
 	}
 
@@ -315,15 +317,23 @@ func (t *State) resize(cols, rows int) bool {
 		var (
 			oldScreen  = screen
 			newScreen  = t.screen
+			oldCursor  = t.cur
 			newHistory = history
 		)
 		if IsAltMode(t.mode) {
 			oldScreen = altScreen
 			newScreen = t.altScreen
 			newHistory = altHistory
+			oldCursor = t.curSaved
 		}
 
-		wrapped := reflow(oldScreen, cols)
+		wrapped, newCursor := reflow(oldScreen, oldCursor, cols)
+
+		if !IsAltMode(t.mode) {
+			t.cur = newCursor
+		} else {
+			t.curSaved = newCursor
+		}
 
 		numExtra := max(len(wrapped)-rows, 0)
 		if numExtra > 0 {

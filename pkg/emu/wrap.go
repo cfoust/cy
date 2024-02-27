@@ -100,8 +100,19 @@ func wrapLine(line Line, cols int) []Line {
 	return result
 }
 
-func wrapLines(lines []Line, cols int) (newLines []Line) {
+type rowRange struct {
+	Start int
+	End   int // exclusive
+}
+
+type lineMapping struct {
+	Before rowRange
+	After  rowRange
+}
+
+func wrapLines(lines []Line, cols int) (newLines []Line, mappings []lineMapping) {
 	var current Line = nil
+	var start int
 
 	numLines := len(lines)
 	var line Line
@@ -112,6 +123,7 @@ func wrapLines(lines []Line, cols int) (newLines []Line) {
 		wasWrapped := line[len(line)-1].Mode == attrWrap
 
 		if current == nil {
+			start = row
 			current = copyLine(line)
 		} else {
 			current = append(current, line...)
@@ -125,18 +137,30 @@ func wrapLines(lines []Line, cols int) (newLines []Line) {
 
 		// We've accumulated the whole line, wrap it
 		wrapped := wrapLine(current, cols)
+		mappings = append(mappings, lineMapping{
+			Before: rowRange{
+				Start: start,
+				End:   row + 1,
+			},
+			After: rowRange{
+				Start: len(newLines),
+				End:   len(newLines) + len(wrapped),
+			},
+		})
+
 		for _, wrappedLine := range wrapped {
 			newLines = append(newLines, wrappedLine)
 		}
 		current = nil
 	}
 
-	return newLines
+	return newLines, mappings
 }
 
-// reflow recalculates the wrap point for all lines in `lines` and `history`.
-func reflow(screen []Line, cols int) []Line {
-	wrapped := wrapLines(screen, cols)
+// reflow recalculates the wrap point for all lines in `screen`.
+func reflow(oldLines []Line, oldCursor Cursor, newCols int) (newLines []Line, newCursor Cursor) {
+	newCursor = oldCursor
+	wrapped, mappings := wrapLines(oldLines, newCols)
 
 	// Remove trailing empty lines
 	for i := len(wrapped) - 1; i >= 0; i-- {
@@ -146,5 +170,24 @@ func reflow(screen []Line, cols int) []Line {
 		wrapped = wrapped[:i]
 	}
 
-	return wrapped
+	if len(wrapped) == 0 {
+		return wrapped, newCursor
+	}
+
+	oldCols := len(oldLines[0])
+	curRow := oldCursor.Y
+	for _, mapping := range mappings {
+		before := mapping.Before
+		after := mapping.After
+		if curRow < before.Start || curRow >= before.End {
+			continue
+		}
+
+		offset := (curRow-before.Start)*oldCols + oldCursor.X
+		newCursor.X = offset % newCols
+		newCursor.Y = after.Start + (offset-newCursor.X)/newCols
+		break
+	}
+
+	return wrapped, newCursor
 }

@@ -151,11 +151,27 @@ func TestAlt(t *testing.T) {
 	term := New()
 	term.Resize(4, 4)
 	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("test"))
+	term.Write([]byte("testt"))
+	require.Equal(t, 1, term.Cursor().X)
+	require.Equal(t, 1, term.Cursor().Y)
 	term.Write([]byte("\033[?1049h")) // enter altscreen
 	term.Write([]byte("foobar foobar foobar"))
 	term.Resize(2, 4)
 	term.Write([]byte("\033[?1049l")) // leave altscreen
 	require.Equal(t, "te", extractStr(term, 0, 1, 0))
 	require.Equal(t, "st", extractStr(term, 0, 1, 1))
+	require.Equal(t, 1, term.Cursor().X)
+	require.Equal(t, 2, term.Cursor().Y)
+}
+
+func TestCursor(t *testing.T) {
+	term := New()
+	term.Resize(6, 4)
+	term.Write([]byte(LineFeedMode))
+	term.Write([]byte("foobar\ntest"))
+	require.Equal(t, 4, term.Cursor().X)
+	require.Equal(t, 1, term.Cursor().Y)
+	term.Resize(5, 4)
+	require.Equal(t, 4, term.Cursor().X)
+	require.Equal(t, 2, term.Cursor().Y)
 }
