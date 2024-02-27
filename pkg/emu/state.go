@@ -8,7 +8,6 @@ import (
 
 	"github.com/danielgatis/go-vte/vtparser"
 	"github.com/mattn/go-runewidth"
-	L "github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -329,7 +328,7 @@ func (t *State) resize(cols, rows int) bool {
 			newHistory = altHistory
 		}
 
-		wrapped, newCursor := reflow(oldScreen, oldCursor, cols)
+		wrapped, newCursor, cursorValid := reflow(oldScreen, oldCursor, cols)
 
 		numExtra := max(len(wrapped)-rows, 0)
 		if numExtra > 0 {
@@ -344,14 +343,16 @@ func (t *State) resize(cols, rows int) bool {
 			t.history = newHistory
 		}
 
-		newCursor.Y -= numExtra
-		if !IsAltMode(t.mode) {
-			t.cur = newCursor
-		} else {
-			t.curSaved = newCursor
+		// Only respect the cursor position we received if there
+		// actually were lines involved
+		if cursorValid {
+			newCursor.Y -= numExtra
+			if !IsAltMode(t.mode) {
+				t.cur = newCursor
+			} else {
+				t.curSaved = newCursor
+			}
 		}
-
-		L.Info().Msgf("%dx%d old %+v new %+v", rows, cols, oldCursor, newCursor)
 
 		for i, line := range wrapped[numExtra:] {
 			copy(newScreen[i], line)

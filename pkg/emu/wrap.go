@@ -158,7 +158,7 @@ func wrapLines(lines []Line, cols int) (newLines []Line, mappings []lineMapping)
 }
 
 // reflow recalculates the wrap point for all lines in `screen`.
-func reflow(oldLines []Line, oldCursor Cursor, newCols int) (newLines []Line, newCursor Cursor) {
+func reflow(oldLines []Line, oldCursor Cursor, newCols int) (newLines []Line, newCursor Cursor, cursorValid bool) {
 	wrapped, mappings := wrapLines(oldLines, newCols)
 
 	// Remove trailing empty lines
@@ -170,7 +170,7 @@ func reflow(oldLines []Line, oldCursor Cursor, newCols int) (newLines []Line, ne
 	}
 
 	if len(wrapped) == 0 {
-		return wrapped, newCursor
+		return
 	}
 
 	oldCols := len(oldLines[0])
@@ -182,6 +182,7 @@ func reflow(oldLines []Line, oldCursor Cursor, newCols int) (newLines []Line, ne
 			continue
 		}
 
+		cursorValid = true
 		newCursor = oldCursor
 		offset := (curRow-before.Start)*oldCols + oldCursor.X
 
@@ -204,5 +205,6 @@ func reflow(oldLines []Line, oldCursor Cursor, newCols int) (newLines []Line, ne
 		break
 	}
 
-	return wrapped, newCursor
+	newLines = wrapped
+	return
 }

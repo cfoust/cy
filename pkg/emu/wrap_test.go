@@ -176,6 +176,13 @@ func TestCursor(t *testing.T) {
 	term.Resize(5, 4)
 	require.Equal(t, 4, term.Cursor().X)
 	require.Equal(t, 2, term.Cursor().Y)
+
+	// There was a bug where our cursor was being cleared incorrectly --
+	// check for it
+	screen := term.Screen()
+	cell := screen[len(screen)-1][0]
+	require.Equal(t, DefaultFG, cell.FG)
+	require.Equal(t, DefaultBG, cell.BG)
 }
 
 // Ensure that the (full) main screen is reflowed correctly when on the alt
