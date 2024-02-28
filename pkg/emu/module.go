@@ -189,10 +189,8 @@ func WithSize(size geom.Vec2) TerminalOption {
 
 // Providing WithoutHistory disables the scrollback buffer, which drastically
 // reduces the amount of memory a Terminal uses.
-func WithoutHistory() TerminalOption {
-	return func(info *TerminalInfo) {
-		info.disableHistory = true
-	}
+var WithoutHistory TerminalOption = func(info *TerminalInfo) {
+	info.disableHistory = true
 }
 
 // New returns a new virtual terminal emulator.

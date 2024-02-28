@@ -159,7 +159,7 @@ func NewReplayable(
 		lifetime.Ctx(),
 		sessions.NewEventStream(stream, r.player),
 		geom.DEFAULT_SIZE,
-		emu.WithoutHistory(),
+		emu.WithoutHistory,
 	)
 
 	go r.poll(ctx)

@@ -34,10 +34,12 @@ type State struct {
 	w          io.Writer
 	cols, rows int
 
-	screen     []Line
-	history    []Line
-	altScreen  []Line
-	altHistory []Line
+	screen, altScreen   []Line
+	history, altHistory []Line
+	// Whether the last cell of history _continues to wrap onto the screen_.
+	// This is only used when `disableHistory` is true, since we still need
+	// the wrapping behavior to be correct.
+	wrapped, altWrapped bool
 
 	cur, curSaved Cursor
 	top, bottom   int // scroll limits
@@ -269,27 +271,18 @@ func (t *State) reset() {
 }
 
 // TODO: definitely can improve allocs
-func (t *State) resize(cols, rows int) bool {
+func (t *State) resize(cols, rows int) {
 	if cols == t.cols && rows == t.rows {
-		return false
+		return
 	}
 	if cols < 1 || rows < 1 {
-		return false
+		return
 	}
 
 	// Get rid of any wrapped lines (kitty does this too)
-	if !t.disableHistory {
-		consumed := 0
-		for hasTrailingWrap(t.history) {
-			t.scrollUp(0, 1)
-			consumed++
-		}
-	}
-
-	slide := t.cur.Y - rows + 1
-	if slide > 0 {
-		copy(t.screen, t.screen[slide:slide+rows])
-		copy(t.altScreen, t.altScreen[slide:slide+rows])
+	// TODO(cfoust): 02/28/24 what about in the alt screen?
+	for hasTrailingWrap(t.history) || (t.disableHistory && t.wrapped) {
+		t.scrollUp(0, 1)
 	}
 
 	tabs := t.tabs
@@ -321,6 +314,7 @@ func (t *State) resize(cols, rows int) bool {
 			oldCursor  = t.cur
 			newHistory = history
 		)
+		wrapped := false
 		if IsAltMode(t.mode) {
 			oldScreen = altScreen
 			newScreen = t.altScreen
@@ -328,12 +322,19 @@ func (t *State) resize(cols, rows int) bool {
 			newHistory = altHistory
 		}
 
-		wrapped, newCursor, cursorValid := reflow(oldScreen, oldCursor, cols)
+		newLines, newCursor, cursorValid := reflow(oldScreen, oldCursor, cols)
 
-		numExtra := max(len(wrapped)-rows, 0)
+		numExtra := max(len(newLines)-rows, 0)
 		if numExtra > 0 {
-			for i := range wrapped[:numExtra] {
-				newHistory = appendWrapped(newHistory, wrapped[i])
+			for i := range newLines[:numExtra] {
+				wrapped = isWrapped(newLines[i])
+				if t.disableHistory {
+					continue
+				}
+				newHistory = appendWrapped(
+					newHistory,
+					newLines[i],
+				)
 			}
 		}
 
@@ -341,6 +342,14 @@ func (t *State) resize(cols, rows int) bool {
 			t.altHistory = newHistory
 		} else {
 			t.history = newHistory
+		}
+
+		if t.disableHistory {
+			if IsAltMode(t.mode) {
+				t.altWrapped = wrapped
+			} else {
+				t.wrapped = wrapped
+			}
 		}
 
 		// Only respect the cursor position we received if there
@@ -356,7 +365,7 @@ func (t *State) resize(cols, rows int) bool {
 			}
 		}
 
-		for i, line := range wrapped[numExtra:] {
+		for i, line := range newLines[numExtra:] {
 			copy(newScreen[i], line)
 		}
 
@@ -375,8 +384,6 @@ func (t *State) resize(cols, rows int) bool {
 
 	t.setScroll(0, rows-1)
 	t.moveTo(t.cur.X, t.cur.Y)
-
-	return slide > 0
 }
 
 func (t *State) clear(x0, y0, x1, y1 int) {
@@ -523,6 +530,10 @@ func (t *State) scrollUp(orig, n int) {
 
 	if orig == 0 && !IsAltMode(t.mode) && !t.disableHistory {
 		for i := 0; i < n; i++ {
+			t.wrapped = isWrapped(t.screen[i])
+			if t.disableHistory {
+				continue
+			}
 			t.history = appendWrapped(t.history, t.screen[i])
 		}
 	}

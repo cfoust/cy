@@ -219,3 +219,19 @@ func TestFullAlt(t *testing.T) {
 	term.Resize(6, 3)
 	term.Write([]byte(ExitAltScreen))
 }
+
+// Ensure that terminals that disable history and those that do not end up with
+// the same results.
+func TestHistory(t *testing.T) {
+	a := New()
+	b := New(WithoutHistory)
+
+	for _, term := range []Terminal{a, b} {
+		term.Resize(4, 3)
+		term.Write([]byte(LineFeedMode))
+		term.Write([]byte("foobar\nfoo\ntest"))
+		term.Resize(4, 2)
+	}
+
+	require.Equal(t, a.String(), b.String())
+}

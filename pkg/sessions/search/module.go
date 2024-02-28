@@ -90,11 +90,6 @@ func (s Selection) WithinRect(rect geom.Rect, size geom.Vec2) bool {
 	return false
 }
 
-type Candidate struct {
-	Selection
-	Cells []emu.Cell
-}
-
 type Appearance struct {
 	Selection
 	Begin, End Address
@@ -134,7 +129,7 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 		return
 	}
 
-	term := emu.New(emu.WithoutHistory())
+	term := emu.New(emu.WithoutHistory)
 
 	// The full matches we're tracking that are still on the screen
 	var matches, newMatches []SearchResult

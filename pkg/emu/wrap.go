@@ -1,8 +1,12 @@
 package emu
 
-import (
-	"github.com/rs/zerolog/log"
-)
+func isWrapped(line Line) bool {
+	if len(line) == 0 {
+		return false
+	}
+
+	return line[len(line)-1].Mode == attrWrap
+}
 
 // Return true if the last line in `lines` continues on to the
 // screen (in other words, it's wrapped.)
@@ -11,12 +15,7 @@ func hasTrailingWrap(lines []Line) bool {
 		return false
 	}
 
-	lastLine := lines[len(lines)-1]
-	if len(lastLine) == 0 {
-		return false
-	}
-
-	return lastLine[len(lastLine)-1].Mode == attrWrap
+	return isWrapped(lines[len(lines)-1])
 }
 
 func appendWrapped(lines []Line, line Line) []Line {
@@ -207,10 +206,6 @@ func reflow(oldLines []Line, oldCursor Cursor, newCols int) (newLines []Line, ne
 			newCursor.State |= cursorWrapNext
 		}
 		break
-	}
-
-	if !cursorValid {
-		log.Info().Msgf("%+v %+v %+v", oldCursor, oldLines, mappings)
 	}
 
 	newLines = wrapped

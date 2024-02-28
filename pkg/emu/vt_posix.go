@@ -42,5 +42,5 @@ func (t *terminal) Write(p []byte) (int, error) {
 func (t *terminal) Resize(cols, rows int) {
 	t.Lock()
 	defer t.Unlock()
-	_ = t.resize(cols, rows)
+	t.resize(cols, rows)
 }
