@@ -5,9 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cfoust/cy/pkg/emu"
-	"github.com/cfoust/cy/pkg/geom"
-	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,65 +12,15 @@ import (
 
 // Move the terminal back in time to the event at `index` and byte offset (if
 // the event is an OutputMessage) of `indexByte`.
-func (r *Replay) setIndex(index, indexByte int, updateTime bool) {
-	numEvents := len(r.events)
-	// Allow for negative indices from end of stream
-	if index < 0 {
-		index = geom.Clamp(numEvents+index, 0, numEvents-1)
-	}
+func (r *Replay) setIndex(index, indexByte int, updateTime bool) tea.Cmd {
+	events := r.player.Events()
 
-	fromIndex := geom.Clamp(r.location.Index, 0, numEvents-1)
-	toIndex := geom.Clamp(index, 0, numEvents-1)
-	fromByte := r.location.Offset
-	toByte := indexByte
+	// r.player.Goto(index, indexByte)
 
-	// Going back in time; must start over
-	if toIndex < fromIndex || (toIndex == fromIndex && toByte < fromByte) {
-		r.terminal = emu.New()
-		fromIndex = 0
-		fromByte = -1
-	}
+	location := r.player.Location()
 
-	for i := fromIndex; i <= toIndex; i++ {
-		event := r.events[i]
-		switch e := event.Message.(type) {
-		case P.OutputMessage:
-			data := e.Data
-
-			if toIndex == i {
-				if toByte < 0 {
-					toByte += len(data)
-				}
-				toByte = geom.Clamp(toByte, 0, len(data)-1)
-			}
-
-			if len(data) > 0 {
-				if fromIndex == toIndex {
-					data = data[fromByte+1 : toByte+1]
-				} else if fromIndex == i {
-					data = data[fromByte+1:]
-				} else if toIndex == i {
-					data = data[:toByte+1]
-				}
-			}
-
-			r.terminal.Parse(data)
-		case P.SizeMessage:
-			r.terminal.Resize(
-				e.Columns,
-				e.Rows,
-			)
-		}
-	}
-
-	if toIndex < 0 {
-		return
-	}
-
-	r.location.Index = toIndex
-	r.location.Offset = toByte
 	if updateTime {
-		r.currentTime = r.events[toIndex].Stamp
+		r.currentTime = events[location.Index].Stamp
 	}
 
 	r.recalculateViewport()
@@ -89,11 +36,13 @@ func (r *Replay) setIndex(index, indexByte int, updateTime bool) {
 
 	r.cursor = r.termToViewport(termCursor)
 	r.desiredCol = r.cursor.C
+
+	return nil
 }
 
-func (r *Replay) gotoIndex(index, indexByte int) {
+func (r *Replay) gotoIndex(index, indexByte int) tea.Cmd {
 	r.isPlaying = false
-	r.setIndex(index, indexByte, true)
+	return r.setIndex(index, indexByte, true)
 }
 
 func (r *Replay) scheduleUpdate() (taro.Model, tea.Cmd) {
@@ -140,7 +89,8 @@ func parseTimeDelta(delta []string) (result time.Duration) {
 }
 
 func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) {
-	if len(r.events) == 0 {
+	events := r.player.Events()
+	if len(events) == 0 {
 		return
 	}
 
@@ -149,9 +99,9 @@ func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) {
 		return
 	}
 
-	beginning := r.events[0].Stamp
-	lastIndex := len(r.events) - 1
-	end := r.events[lastIndex].Stamp
+	beginning := events[0].Stamp
+	lastIndex := len(events) - 1
+	end := events[lastIndex].Stamp
 	if newTime.Before(beginning) || newTime.Equal(beginning) {
 		r.gotoIndex(0, -1)
 		return
@@ -166,16 +116,16 @@ func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) {
 	currentIndex := r.location.Index
 	var nextIndex int = currentIndex
 	if newTime.Before(r.currentTime) {
-		indexStamp := r.events[currentIndex].Stamp
+		indexStamp := events[currentIndex].Stamp
 		for i := currentIndex; i >= 0; i-- {
-			if newTime.Before(indexStamp) && newTime.After(r.events[i].Stamp) {
+			if newTime.Before(indexStamp) && newTime.After(events[i].Stamp) {
 				nextIndex = i
 				break
 			}
 		}
 	} else {
-		for i := r.location.Index + 1; i < len(r.events); i++ {
-			if newTime.Before(r.events[i].Stamp) {
+		for i := r.location.Index + 1; i < len(events); i++ {
+			if newTime.Before(events[i].Stamp) {
 				break
 			}
 			nextIndex = i
@@ -197,10 +147,10 @@ func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) {
 	// It didn't, which can only mean that we're waiting for the next event
 	var nextTime time.Time
 	if newTime.Before(r.currentTime) {
-		nextTime = r.events[currentIndex].Stamp
+		nextTime = events[currentIndex].Stamp
 	} else {
 		// we know `currentIndex` is not the last one because `end` is the time of the last event
-		nextTime = r.events[currentIndex+1].Stamp
+		nextTime = events[currentIndex+1].Stamp
 	}
 
 	if newTime.Sub(nextTime).Abs() < IDLE_THRESHOLD {

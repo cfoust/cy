@@ -8,6 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/replay"
+	"github.com/cfoust/cy/pkg/mux/screen/replay/player"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
@@ -194,10 +195,11 @@ func (m *ReplayModule) Open(
 		events = append(events, event)
 	}
 
+	// TODO(cfoust): 03/04/24 open progress
 	ctx := m.Lifetime.Ctx()
 	replay := replay.New(
 		ctx,
-		events,
+		player.FromEvents(events),
 		m.Binds,
 		replay.WithNoQuit,
 	)

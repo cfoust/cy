@@ -115,7 +115,7 @@ func (r *Replayable) EnterReplay() {
 	r.player.Acquire()
 	replay := New(
 		r.Ctx(),
-		[]sessions.Event{},
+		r.player,
 		r.binds,
 	)
 

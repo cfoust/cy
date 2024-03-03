@@ -20,6 +20,8 @@ func (r *Replay) gotoMatch(index int) {
 }
 
 func (r *Replay) searchAgain(isForward bool) {
+	events := r.player.Events()
+
 	if r.isCopyMode() {
 		return
 	}
@@ -39,14 +41,14 @@ func (r *Replay) searchAgain(isForward bool) {
 	lastMatch := matches[len(matches)-1].Begin
 
 	if !isForward && (location.Before(firstMatch) || location.Equal(firstMatch)) {
-		location.Index = len(r.events) - 1
+		location.Index = len(events) - 1
 		location.Offset = -1
 	}
 
 	// In order for the comparison to work, we have to turn our special -1
 	// offset into a real value
 	if location.Offset == -1 {
-		event := r.events[location.Index]
+		event := events[location.Index]
 		if output, ok := event.Message.(P.OutputMessage); ok {
 			location.Offset = len(output.Data) - 1
 		}
@@ -121,6 +123,7 @@ func (r *Replay) handleSearchResult(msg SearchResultEvent) (taro.Model, tea.Cmd)
 }
 
 func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
+	events := r.player.Events()
 	switch msg := msg.(type) {
 	case ActionEvent:
 		switch msg.Type {
@@ -153,7 +156,6 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 			location := r.location
 			isForward := r.isForward
-			events := r.events
 
 			return r, tea.Batch(
 				func() tea.Msg {

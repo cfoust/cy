@@ -7,7 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/sessions"
+	"github.com/cfoust/cy/pkg/mux/screen/replay/player"
 	"github.com/cfoust/cy/pkg/sessions/search"
 	"github.com/cfoust/cy/pkg/taro"
 
@@ -21,8 +21,6 @@ type Replay struct {
 
 	// whether Replay will actually quit itself
 	preventExit bool
-
-	terminal emu.Terminal
 
 	// the size of the client, but minus one row
 	// we don't want to obscure content
@@ -39,20 +37,15 @@ type Replay struct {
 
 	// The location of Replay in time
 	location search.Address
-	events   []sessions.Event
+	player   *player.Player
 
-	// The offset of the viewport relative to the top-left corner of the
-	// underlying terminal.
-	//
-	// offset.R is in the range
-	// [-1 * number of scrollback lines, min(-(height of terminal - height of viewport), 0)]
-	// positive indices mean the viewport is inside of the scrollback buffer
-	// negative indices mean the viewport is viewing only part of the terminal's screen
-	//
-	// offset.C is in the range [0, max(width of terminal - width of viewport, 0)]
-	//
-	// For example:
-	// * offset.R == 1: the viewport shows the first scrollback line
+	// `offset` is used in two different ways depending on whether the
+	// terminal is on the alt screen:
+	// * On the main screen: the `R` field refers to the line in history
+	//   and the `C` refers to a column in that line that the top-left cell
+	//   of the screen contains.
+	// * On the alt screen: the [R, C] offset of the viewport relative to
+	//   the top-left corner of the underlying terminal.
 	offset, minOffset, maxOffset geom.Vec2
 
 	// The cursor's position relative to the viewport.
@@ -90,7 +83,7 @@ func (r *Replay) isCopyMode() bool {
 }
 
 func (r *Replay) getTerminalCursor() geom.Vec2 {
-	cursor := r.terminal.Cursor()
+	cursor := r.player.Cursor()
 	return geom.Vec2{
 		R: cursor.Y,
 		C: cursor.X,
@@ -98,7 +91,7 @@ func (r *Replay) getTerminalCursor() geom.Vec2 {
 }
 
 func (r *Replay) getTerminalSize() geom.Vec2 {
-	cols, rows := r.terminal.Size()
+	cols, rows := r.player.Size()
 	return geom.Vec2{
 		R: rows,
 		C: cols,
@@ -107,8 +100,8 @@ func (r *Replay) getTerminalSize() geom.Vec2 {
 
 // Get the glyphs for a row in term space.
 func (r *Replay) getLine(row int) emu.Line {
-	screen := r.terminal.Screen()
-	history := r.terminal.History()
+	screen := r.player.Screen()
+	history := r.player.History()
 
 	// Handle out-of-bounds lines
 	clamped := geom.Clamp(row, -len(history), r.getTerminalSize().R-1)
@@ -140,7 +133,7 @@ func (r *Replay) Init() tea.Cmd {
 }
 
 func newReplay(
-	events []sessions.Event,
+	player *player.Player,
 	binds *bind.Engine[bind.Action],
 ) *Replay {
 	ti := textinput.New()
@@ -150,8 +143,7 @@ func newReplay(
 	ti.Prompt = ""
 	m := &Replay{
 		render:         taro.NewRenderer(),
-		events:         events,
-		terminal:       emu.New(),
+		player:         player,
 		searchInput:    ti,
 		playbackRate:   1,
 		binds:          binds,
@@ -170,14 +162,14 @@ func WithNoQuit(r *Replay) {
 
 func New(
 	ctx context.Context,
-	events []sessions.Event,
+	player *player.Player,
 	replayBinds *bind.BindScope,
 	options ...ReplayOption,
 ) *taro.Program {
 	engine := bind.NewEngine[bind.Action]()
 	engine.SetScopes(replayBinds)
 	go engine.Poll(ctx)
-	r := newReplay(events, engine)
+	r := newReplay(player, engine)
 	for _, option := range options {
 		option(r)
 	}

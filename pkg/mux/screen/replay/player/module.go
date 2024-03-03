@@ -10,12 +10,16 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
+const (
+	CY_HOOK = "cy"
+)
+
 type Player struct {
+	emu.Terminal
 	mu       deadlock.RWMutex
 	inUse    bool
 	buffer   []sessions.Event
 	events   []sessions.Event
-	terminal emu.Terminal
 	location search.Address
 }
 
@@ -25,6 +29,11 @@ func (p *Player) Acquire() {
 	p.mu.Lock()
 	p.inUse = true
 	p.mu.Unlock()
+}
+
+func (p *Player) resetTerminal() {
+	p.Terminal = emu.New()
+	p.Terminal.Changes().SetHooks([]string{CY_HOOK})
 }
 
 func (p *Player) consume(event sessions.Event) {
@@ -47,6 +56,20 @@ func (p *Player) Release() {
 	}
 }
 
+func (p *Player) Events() []sessions.Event {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.events
+}
+
+func (p *Player) Location() search.Address {
+	return p.location
+}
+
+func (p *Player) IsAltMode() bool {
+	return emu.IsAltMode(p.Terminal.Mode())
+}
+
 func (p *Player) Goto(index, offset int) {
 	numEvents := len(p.events)
 	if numEvents == 0 {
@@ -65,7 +88,7 @@ func (p *Player) Goto(index, offset int) {
 
 	// Going back in time; must start over
 	if toIndex < fromIndex || (toIndex == fromIndex && toByte < fromByte) {
-		p.terminal = emu.New()
+		p.resetTerminal()
 		fromIndex = 0
 		fromByte = -1
 	}
@@ -93,9 +116,9 @@ func (p *Player) Goto(index, offset int) {
 				}
 			}
 
-			p.terminal.Parse(data)
+			p.Terminal.Parse(data)
 		case P.SizeMessage:
-			p.terminal.Resize(
+			p.Terminal.Resize(
 				e.Columns,
 				e.Rows,
 			)
@@ -104,6 +127,7 @@ func (p *Player) Goto(index, offset int) {
 
 	p.location.Index = toIndex
 	p.location.Offset = toByte
+	return
 }
 
 func (p *Player) Process(event sessions.Event) error {
@@ -121,7 +145,17 @@ func (p *Player) Process(event sessions.Event) error {
 }
 
 func New() *Player {
-	return &Player{
-		terminal: emu.New(),
+	p := &Player{}
+	p.resetTerminal()
+	return p
+}
+
+func FromEvents(events []sessions.Event) *Player {
+	player := New()
+
+	for _, event := range events {
+		player.Process(event)
 	}
+
+	return player
 }

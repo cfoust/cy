@@ -147,7 +147,8 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		Padding(0, 1)
 
 	index := r.location.Index
-	if index < 0 || index >= len(r.events) || len(r.events) == 0 {
+	events := r.player.Events()
+	if index < 0 || index >= len(events) || len(events) == 0 {
 		return
 	}
 
@@ -166,7 +167,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	)
 
 	progressWidth := size.C - lipgloss.Width(leftSide) - 3
-	percent := int((float64(r.location.Index) / float64(len(r.events))) * float64(progressWidth))
+	percent := int((float64(r.location.Index) / float64(len(events))) * float64(progressWidth))
 	progressBar := ""
 	for i := 0; i < progressWidth; i++ {
 		if i <= percent {
@@ -293,8 +294,8 @@ func (r *Replay) renderInput() image.Image {
 }
 
 func (r *Replay) View(state *tty.State) {
-	screen := r.terminal.Screen()
-	history := r.terminal.History()
+	screen := r.player.Screen()
+	history := r.player.History()
 	state.CursorVisible = true
 
 	// Return nothing when View() is called before we've actually gotten
@@ -338,11 +339,11 @@ func (r *Replay) View(state *tty.State) {
 			state.Image[termCursor.R][termCursor.C].BG = 8
 		}
 	} else {
-		state.Cursor = r.terminal.Cursor()
+		state.Cursor = r.player.Cursor()
 		state.Cursor.X = termCursor.C
 		state.Cursor.Y = termCursor.R
 		if r.isPlaying {
-			state.CursorVisible = r.terminal.CursorVisible()
+			state.CursorVisible = r.player.CursorVisible()
 		}
 	}
 

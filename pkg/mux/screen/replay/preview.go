@@ -8,6 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/mux/screen/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
@@ -59,7 +60,7 @@ func (r *ReplayPreview) Init() tea.Cmd {
 		ctx := r.Lifetime.Ctx()
 		replay := New(
 			ctx,
-			events,
+			player.FromEvents(events),
 			bind.NewBindScope(nil),
 		)
 		replay.Resize(size)

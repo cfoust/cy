@@ -76,7 +76,7 @@ func (r *Replay) centerPoint(point geom.Vec2) {
 func (r *Replay) recalculateViewport() {
 	termSize := r.getTerminalSize()
 	r.minOffset = geom.Vec2{
-		R: -len(r.terminal.History()),
+		R: -len(r.player.History()),
 		C: 0, // always, but for clarity
 	}
 	r.maxOffset = geom.Vec2{
