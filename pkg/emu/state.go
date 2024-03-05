@@ -281,7 +281,7 @@ func (t *State) resize(cols, rows int) {
 
 	// Get rid of any wrapped lines (kitty does this too)
 	// TODO(cfoust): 02/28/24 what about in the alt screen?
-	for hasTrailingWrap(t.history) || (t.disableHistory && t.wrapped) {
+	for isWrappedLines(t.history) || (t.disableHistory && t.wrapped) {
 		t.scrollUp(0, 1)
 	}
 
@@ -327,7 +327,7 @@ func (t *State) resize(cols, rows int) {
 		numExtra := max(len(newLines)-rows, 0)
 		if numExtra > 0 {
 			for i := range newLines[:numExtra] {
-				wrapped = isWrapped(newLines[i])
+				wrapped = newLines[i].IsWrapped()
 				if t.disableHistory {
 					continue
 				}
@@ -530,7 +530,7 @@ func (t *State) scrollUp(orig, n int) {
 
 	if orig == 0 && !IsAltMode(t.mode) && !t.disableHistory {
 		for i := 0; i < n; i++ {
-			t.wrapped = isWrapped(t.screen[i])
+			t.wrapped = t.screen[i].IsWrapped()
 			if t.disableHistory {
 				continue
 			}
@@ -812,6 +812,29 @@ func (t *State) deleteChars(n int) {
 func (t *State) setTitle(title string) {
 	t.dirty.Flag |= ChangedTitle
 	t.title = title
+}
+
+func (t *State) Root() geom.Vec2 {
+	t.RLock()
+	defer t.RUnlock()
+
+	if IsAltMode(t.mode) {
+		return geom.Vec2{}
+	}
+
+	numHistory := len(t.history)
+	root := geom.Vec2{
+		R: numHistory,
+	}
+
+	if !isWrappedLines(t.history) {
+		return root
+	}
+
+	return geom.Vec2{
+		R: numHistory - 1,
+		C: len(t.history[numHistory-1]),
+	}
 }
 
 func (t *State) Size() (cols, rows int) {

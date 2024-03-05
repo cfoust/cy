@@ -1,27 +1,19 @@
 package emu
 
-func isWrapped(line Line) bool {
-	if len(line) == 0 {
-		return false
-	}
-
-	return line[len(line)-1].Mode == attrWrap
-}
-
 // Return true if the last line in `lines` continues on to the
 // screen (in other words, it's wrapped.)
-func hasTrailingWrap(lines []Line) bool {
+func isWrappedLines(lines []Line) bool {
 	if len(lines) == 0 {
 		return false
 	}
 
-	return isWrapped(lines[len(lines)-1])
+	return lines[len(lines)-1].IsWrapped()
 }
 
 func appendWrapped(lines []Line, line Line) []Line {
 	cloned := getOccupiedLine(copyLine(line))
 
-	if !hasTrailingWrap(lines) {
+	if !isWrappedLines(lines) {
 		return append(lines, cloned)
 	}
 

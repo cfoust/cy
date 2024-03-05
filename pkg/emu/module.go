@@ -95,6 +95,14 @@ func (l Line) String() (str string) {
 	return str
 }
 
+func (l Line) IsWrapped() bool {
+	if len(l) == 0 {
+		return false
+	}
+
+	return l[len(l)-1].Mode == attrWrap
+}
+
 type CursorStyle int
 
 const (
@@ -162,6 +170,13 @@ type View interface {
 
 	// History returns the scrollback buffer.
 	History() []Line
+
+	// The location in history of the top-left cell of the screen. The `R`
+	// field refers to the line in history and the `C` refers to a column
+	// in that line that the cell contains. For example, when only one line
+	// is in the scrollback buffer and it does not wrap onto the screen,
+	// Root() will return [1, 0].
+	Root() geom.Vec2
 
 	Changes() *Dirty
 }

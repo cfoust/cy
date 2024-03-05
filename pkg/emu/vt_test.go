@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cfoust/cy/pkg/geom"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -63,6 +65,31 @@ func TestNewline(t *testing.T) {
 	if attr.FG != DefaultFG {
 		t.Fatal(st.cur.X, st.cur.Y, attr.FG, attr.BG)
 	}
+}
+
+func TestRoot(t *testing.T) {
+	term := New()
+	term.Resize(6, 2)
+	term.Write([]byte(LineFeedMode))
+	term.Write([]byte("foo\nbar"))
+	require.Equal(t, geom.Vec2{}, term.Root())
+	term.Write([]byte("\nbaz"))
+	require.Equal(t, geom.Vec2{
+		R: 1,
+		C: 0,
+	}, term.Root())
+
+	// Wrap onto screen
+	term.Write([]byte("foobar\n"))
+	require.Equal(t, geom.Vec2{
+		R: 2,
+		C: 6,
+	}, term.Root())
+
+	// Alt screen always zero
+	term.Write([]byte(EnterAltScreen))
+	term.Write([]byte("test\ntest\ntest"))
+	require.Equal(t, geom.Vec2{}, term.Root())
 }
 
 func TestPrompt(t *testing.T) {
