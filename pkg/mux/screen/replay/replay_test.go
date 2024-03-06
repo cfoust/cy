@@ -8,10 +8,13 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/mux/screen/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
 
+	"github.com/charmbracelet/bubbles/cursor"
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/stretchr/testify/require"
 	"github.com/xo/terminfo"
 )
@@ -40,12 +43,40 @@ func createTestSession() []sessions.Event {
 }
 
 func createTest(events []sessions.Event) (*Replay, func(msgs ...interface{})) {
-	var r = newReplay(events, bind.NewEngine[bind.Action]())
+	var r = newReplay(
+		player.FromEvents(events),
+		bind.NewEngine[bind.Action](),
+	)
+
+	// If we don't do this, the cursor blink causes tests to hang forever
+	r.searchInput.Cursor.SetMode(cursor.CursorHide)
+
 	var m taro.Model = r
 
 	return r, func(msgs ...interface{}) {
-		var cmd tea.Cmd
+		var cmd, subCmd tea.Cmd
 		var realMsg tea.Msg
+
+		var handleCmd func(tea.Cmd)
+		handleCmd = func(cmd tea.Cmd) {
+			for cmd != nil {
+				msg := cmd()
+
+				switch msg := msg.(type) {
+				case cursor.BlinkMsg:
+				case tea.BatchMsg:
+					for _, cmd := range msg {
+						m, subCmd = m.Update(cmd())
+						handleCmd(subCmd)
+					}
+					cmd = nil
+				default:
+					m, cmd = m.Update(msg)
+				}
+				m.View(tty.New(geom.DEFAULT_SIZE))
+			}
+		}
+
 		for _, msg := range msgs {
 			realMsg = msg
 			switch msg := msg.(type) {
@@ -64,21 +95,8 @@ func createTest(events []sessions.Event) (*Replay, func(msgs ...interface{})) {
 			}
 
 			m, cmd = m.Update(realMsg)
+			handleCmd(cmd)
 			m.View(tty.New(geom.DEFAULT_SIZE))
-			for cmd != nil {
-				msg := cmd()
-
-				switch msg := msg.(type) {
-				case tea.BatchMsg:
-					for _, cmd := range msg {
-						m, _ = m.Update(cmd())
-					}
-					cmd = nil
-				default:
-					m, cmd = m.Update(msg)
-				}
-				m.View(tty.New(geom.DEFAULT_SIZE))
-			}
 		}
 	}
 }
@@ -101,46 +119,52 @@ func TestSearch(t *testing.T) {
 		)
 
 	r, i := createTest(s.Events())
+	r.searchInput.Cursor.Blink = false
 	r.searchProgress = nil
-	i(ActionBeginning, ActionSearchForward, "bar", "enter")
+	i(
+		ActionBeginning,
+		ActionSearchForward,
+		"bar",
+		"enter",
+	)
 	require.Equal(t, 3, len(r.matches))
-	require.Equal(t, 2, r.location.Index)
+	require.Equal(t, 2, r.Location().Index)
 	i(ActionSearchAgain)
-	require.Equal(t, 7, r.location.Index)
+	require.Equal(t, 7, r.Location().Index)
 	i(ActionSearchReverse)
-	require.Equal(t, 2, r.location.Index)
+	require.Equal(t, 2, r.Location().Index)
 	// Loop back from beginning
 	i(ActionSearchReverse)
-	require.Equal(t, 9, r.location.Index)
+	require.Equal(t, 9, r.Location().Index)
 	// Loop over end
 	i(ActionSearchAgain)
-	require.Equal(t, 2, r.location.Index)
+	require.Equal(t, 2, r.Location().Index)
 
 	// Ensure that the -1 rewriting works
-	r.gotoIndex(2, -1)
+	r.forceIndex(2, -1)
 	i(ActionSearchReverse)
-	require.Equal(t, 2, r.location.Index)
+	require.Equal(t, 2, r.Location().Index)
 
 	// Now search backward
 	i(ActionEnd, ActionSearchBackward, "bar", "enter")
-	require.Equal(t, 9, r.location.Index)
+	require.Equal(t, 9, r.Location().Index)
 	i(ActionSearchAgain)
-	require.Equal(t, 7, r.location.Index)
+	require.Equal(t, 7, r.Location().Index)
 	i(ActionSearchReverse)
-	require.Equal(t, 9, r.location.Index)
+	require.Equal(t, 9, r.Location().Index)
 }
 
 func TestIndex(t *testing.T) {
 	r, _ := createTest(createTestSession())
-	r.gotoIndex(2, 0)
+	r.forceIndex(2, 0)
 	require.Equal(t, "t ", r.getLine(0).String()[:2])
-	r.gotoIndex(2, 1)
+	r.forceIndex(2, 1)
 	require.Equal(t, "te ", r.getLine(0).String()[:3])
-	r.gotoIndex(2, 0)
+	r.forceIndex(2, 0)
 	require.Equal(t, "t ", r.getLine(0).String()[:2])
-	r.gotoIndex(2, -1)
+	r.forceIndex(2, -1)
 	require.Equal(t, "test", r.getLine(0).String()[:4])
-	r.gotoIndex(4, -1)
+	r.forceIndex(4, -1)
 	require.Equal(t, "take", r.getLine(0).String()[:4])
 }
 
@@ -274,27 +298,27 @@ func TestTime(t *testing.T) {
 
 	r, i := createTest(e)
 	i(size)
-	r.gotoIndex(0, -1)
+	r.forceIndex(0, -1)
 	require.Equal(t, e[0].Stamp, r.currentTime)
 
 	// Move into first text event
 	r.setTimeDelta(delta, true)
-	require.Equal(t, 1, r.location.Index)
+	require.Equal(t, 1, r.Location().Index)
 
 	// Play again, which should trigger a skip since the time is greater
 	// than IDLE_THRESHOLD
 	r.setTimeDelta(delta, true)
-	require.Equal(t, 2, r.location.Index)
+	require.Equal(t, 2, r.Location().Index)
 	require.Equal(t, e[2].Stamp, r.currentTime)
 
 	// Go backwards, which should bring us back to the previous event
 	r.setTimeDelta(-delta, true)
-	require.Equal(t, 1, r.location.Index)
+	require.Equal(t, 1, r.Location().Index)
 	require.Equal(t, e[2].Stamp.Add(-delta), r.currentTime)
 
 	// Backwards again, which will skip inactivity back to 0
 	r.setTimeDelta(-delta, true)
-	require.Equal(t, 0, r.location.Index)
+	require.Equal(t, 0, r.Location().Index)
 	require.Equal(t, e[0].Stamp, r.currentTime)
 }
 
@@ -309,11 +333,11 @@ func TestTimeBug(t *testing.T) {
 
 	r, i := createTest(e)
 	i(size)
-	r.gotoIndex(0, -1)
+	r.forceIndex(0, -1)
 
 	// Simulate a jump forward
 	r.setTimeDelta(5*time.Minute, false)
-	require.Equal(t, 2, r.location.Index)
+	require.Equal(t, 2, r.Location().Index)
 	require.Equal(t, r.currentTime.Sub(e[0].Stamp), 5*time.Minute)
 	// And then a play
 	r.setTimeDelta(time.Second, r.skipInactivity)
@@ -374,13 +398,13 @@ func TestTimeJump(t *testing.T) {
 	i(size, ActionBeginning, ActionSearchForward, "5m", "enter")
 	require.Equal(t, r.currentTime.Sub(e[0].Stamp), 5*time.Minute)
 	i(ActionSearchBackward, "5m", "enter")
-	require.Equal(t, 0, r.location.Index)
+	require.Equal(t, 0, r.Location().Index)
 }
 
 func TestPrompt(t *testing.T) {
 	r, i := createTest(createTestSession())
 	i(geom.DEFAULT_SIZE)
-	r.gotoIndex(0, -1)
+	r.forceIndex(0, -1)
 	i(ActionSearchForward, "blah", ActionQuit)
 	require.Equal(t, r.mode, ModeTime)
 }

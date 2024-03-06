@@ -21,6 +21,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	viewport := r.viewport
 
 	switch msg := msg.(type) {
+	case seekEvent:
+		r.handleSeek(msg.updateTime)
+		return r, nil
 	case ProgressEvent:
 		r.progressPercent = msg.Percent
 		return r, r.waitProgress()
@@ -36,12 +39,14 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 
 		delta := int64(time.Now().Sub(msg.Since)) * int64(r.playbackRate)
-		r.setTimeDelta(
-			time.Duration(delta),
-			r.skipInactivity,
+		_, update := r.scheduleUpdate()
+		return r, tea.Batch(
+			r.setTimeDelta(
+				time.Duration(delta),
+				r.skipInactivity,
+			),
+			update,
 		)
-
-		return r.scheduleUpdate()
 	case tea.WindowSizeMsg:
 		return r.setViewport(
 			r.viewport,
@@ -51,7 +56,12 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			},
 		)
 	case SearchResultEvent:
-		return r.handleSearchResult(msg)
+		return r, r.handleSearchResult(msg)
+	}
+
+	// Don't allow user input while we're seeking
+	if r.isSeeking {
+		return r, nil
 	}
 
 	// TODO(cfoust): 11/10/23 this is actually wrong; if we do this,
@@ -126,20 +136,23 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 					-r.viewportToTerm(r.cursor).R+r.minOffset.R,
 					0,
 				)
-			} else {
-				r.gotoIndex(0, -1)
+				return r, nil
 			}
+
+			return r, r.gotoIndex(0, -1)
 		case ActionEnd:
 			if r.isCopyMode() {
 				r.moveCursorDelta(
 					(r.getTerminalSize().R-1)-r.viewportToTerm(r.cursor).R,
 					0,
 				)
-			} else {
-				r.gotoIndex(-1, -1)
+				return r, nil
 			}
+			return r, r.gotoIndex(-1, -1)
 		case ActionSearchAgain, ActionSearchReverse:
-			r.searchAgain(msg.Type != ActionSearchReverse)
+			return r, r.searchAgain(
+				msg.Type != ActionSearchReverse,
+			)
 		case ActionSearchForward, ActionSearchBackward:
 			if r.isWaiting {
 				return r, nil
@@ -149,9 +162,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.isForward = msg.Type == ActionSearchForward
 			r.searchInput.Reset()
 		case ActionTimeStepBack:
-			r.gotoIndex(r.location.Index-1, -1)
+			return r, r.gotoIndex(r.Location().Index-1, -1)
 		case ActionTimeStepForward:
-			r.gotoIndex(r.location.Index+1, -1)
+			return r, r.gotoIndex(r.Location().Index+1, -1)
 		case ActionScrollUpHalf:
 			r.moveCursorDelta(-(viewport.R / 2), 0)
 		case ActionScrollDownHalf:

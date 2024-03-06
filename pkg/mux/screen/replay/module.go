@@ -16,11 +16,16 @@ import (
 )
 
 type Replay struct {
+	*player.Player
+
 	render *taro.Renderer
 	binds  *bind.Engine[bind.Action]
 
 	// whether Replay will actually quit itself
 	preventExit bool
+
+	// whether the player is seeking
+	isSeeking bool
 
 	// the size of the client, but minus one row
 	// we don't want to obscure content
@@ -35,17 +40,12 @@ type Replay struct {
 	// Whether moving in time should skip inactivity
 	skipInactivity bool
 
-	// The location of Replay in time
-	location search.Address
-	player   *player.Player
+	// The location of the viewport in the history of the terminal's main
+	// screen. See emu.Root().
+	root geom.Vec2
 
-	// `offset` is used in two different ways depending on whether the
-	// terminal is on the alt screen:
-	// * On the main screen: the `R` field refers to the line in history
-	//   and the `C` refers to a column in that line that the top-left cell
-	//   of the screen contains.
-	// * On the alt screen: the [R, C] offset of the viewport relative to
-	//   the top-left corner of the underlying terminal.
+	// The [R, C] offset of the viewport relative to the top-left corner of
+	// the underlying terminal.
 	offset, minOffset, maxOffset geom.Vec2
 
 	// The cursor's position relative to the viewport.
@@ -83,7 +83,7 @@ func (r *Replay) isCopyMode() bool {
 }
 
 func (r *Replay) getTerminalCursor() geom.Vec2 {
-	cursor := r.player.Cursor()
+	cursor := r.Cursor()
 	return geom.Vec2{
 		R: cursor.Y,
 		C: cursor.X,
@@ -91,7 +91,7 @@ func (r *Replay) getTerminalCursor() geom.Vec2 {
 }
 
 func (r *Replay) getTerminalSize() geom.Vec2 {
-	cols, rows := r.player.Size()
+	cols, rows := r.Size()
 	return geom.Vec2{
 		R: rows,
 		C: cols,
@@ -100,8 +100,8 @@ func (r *Replay) getTerminalSize() geom.Vec2 {
 
 // Get the glyphs for a row in term space.
 func (r *Replay) getLine(row int) emu.Line {
-	screen := r.player.Screen()
-	history := r.player.History()
+	screen := r.Screen()
+	history := r.History()
 
 	// Handle out-of-bounds lines
 	clamped := geom.Clamp(row, -len(history), r.getTerminalSize().R-1)
@@ -142,15 +142,15 @@ func newReplay(
 	ti.Width = 20
 	ti.Prompt = ""
 	m := &Replay{
+		Player:         player,
 		render:         taro.NewRenderer(),
-		player:         player,
 		searchInput:    ti,
 		playbackRate:   1,
 		binds:          binds,
 		searchProgress: make(chan int),
 		skipInactivity: true,
 	}
-	m.gotoIndex(-1, -1)
+	m.Update(m.gotoIndex(-1, -1)())
 	return m
 }
 

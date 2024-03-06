@@ -86,7 +86,7 @@ func (r *Replay) drawMatches(state *tty.State) {
 	bgColor := r.render.ConvertLipgloss(lipgloss.Color("14"))
 	bgSelectedColor := r.render.ConvertLipgloss(lipgloss.Color("13"))
 
-	location := r.location
+	location := r.Location()
 	for _, match := range matches {
 		// This match is not on the screen
 		if location.Before(match.Begin) || location.After(match.End) {
@@ -146,8 +146,8 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		Background(statusBG).
 		Padding(0, 1)
 
-	index := r.location.Index
-	events := r.player.Events()
+	index := r.Location().Index
+	events := r.Events()
 	if index < 0 || index >= len(events) || len(events) == 0 {
 		return
 	}
@@ -167,7 +167,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	)
 
 	progressWidth := size.C - lipgloss.Width(leftSide) - 3
-	percent := int((float64(r.location.Index) / float64(len(events))) * float64(progressWidth))
+	percent := int((float64(r.Location().Index) / float64(len(events))) * float64(progressWidth))
 	progressBar := ""
 	for i := 0; i < progressWidth; i++ {
 		if i <= percent {
@@ -294,8 +294,8 @@ func (r *Replay) renderInput() image.Image {
 }
 
 func (r *Replay) View(state *tty.State) {
-	screen := r.player.Screen()
-	history := r.player.History()
+	screen := r.Screen()
+	history := r.History()
 	state.CursorVisible = true
 
 	// Return nothing when View() is called before we've actually gotten
@@ -339,11 +339,11 @@ func (r *Replay) View(state *tty.State) {
 			state.Image[termCursor.R][termCursor.C].BG = 8
 		}
 	} else {
-		state.Cursor = r.player.Cursor()
+		state.Cursor = r.Cursor()
 		state.Cursor.X = termCursor.C
 		state.Cursor.Y = termCursor.R
 		if r.isPlaying {
-			state.CursorVisible = r.player.CursorVisible()
+			state.CursorVisible = r.CursorVisible()
 		}
 	}
 

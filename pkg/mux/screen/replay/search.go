@@ -9,33 +9,33 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func (r *Replay) gotoMatch(index int) {
+func (r *Replay) gotoMatch(index int) tea.Cmd {
 	if len(r.matches) == 0 {
-		return
+		return nil
 	}
 
 	index = geom.Clamp(index, 0, len(r.matches)-1)
 	match := r.matches[index].Begin
-	r.gotoIndex(match.Index, match.Offset)
+	return r.gotoIndex(match.Index, match.Offset)
 }
 
-func (r *Replay) searchAgain(isForward bool) {
-	events := r.player.Events()
+func (r *Replay) searchAgain(isForward bool) tea.Cmd {
+	events := r.Events()
 
 	if r.isCopyMode() {
-		return
+		return nil
 	}
 
 	matches := r.matches
 	if len(matches) == 0 {
-		return
+		return nil
 	}
 
 	if !r.isForward {
 		isForward = !isForward
 	}
 
-	location := r.location
+	location := r.Location()
 
 	firstMatch := matches[0].Begin
 	lastMatch := matches[len(matches)-1].Begin
@@ -81,7 +81,7 @@ func (r *Replay) searchAgain(isForward bool) {
 		}
 	}
 
-	r.gotoMatch(initialIndex)
+	return r.gotoMatch(initialIndex)
 }
 
 type ProgressEvent struct {
@@ -100,9 +100,9 @@ func (r *Replay) waitProgress() tea.Cmd {
 	}
 }
 
-func (r *Replay) handleSearchResult(msg SearchResultEvent) (taro.Model, tea.Cmd) {
+func (r *Replay) handleSearchResult(msg SearchResultEvent) tea.Cmd {
 	if r.isWaiting != true {
-		return r, nil
+		return nil
 	}
 
 	r.isWaiting = false
@@ -113,17 +113,15 @@ func (r *Replay) handleSearchResult(msg SearchResultEvent) (taro.Model, tea.Cmd)
 	r.matches = matches
 	if len(matches) == 0 {
 		r.isEmpty = true
-		return r, nil
+		return nil
 	}
 
-	r.location = msg.origin
 	r.isForward = msg.isForward
-	r.searchAgain(true)
-	return r, nil
+	return r.searchAgain(true)
 }
 
 func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
-	events := r.player.Events()
+	events := r.Events()
 	switch msg := msg.(type) {
 	case ActionEvent:
 		switch msg.Type {
@@ -147,14 +145,13 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 				if !r.isForward {
 					delta *= -1
 				}
-				r.setTimeDelta(delta, false)
-				return r, nil
+				return r, r.setTimeDelta(delta, false)
 			}
 
 			r.isWaiting = true
 			r.matches = make([]search.SearchResult, 0)
 
-			location := r.location
+			location := r.Location()
 			isForward := r.isForward
 
 			return r, tea.Batch(

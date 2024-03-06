@@ -156,7 +156,7 @@ func (r *Replay) moveCursorDelta(dy, dx int) {
 
 	// Don't allow user to move onto blank lines at end of terminal
 	numBlank := 0
-	screen := r.player.Screen()
+	screen := r.Screen()
 	termSize := r.getTerminalSize()
 	for row := termSize.R - 1; row >= 0; row-- {
 		if !isLineEmpty(screen[row]) {

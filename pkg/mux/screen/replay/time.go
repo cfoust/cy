@@ -10,14 +10,15 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// Move the terminal back in time to the event at `index` and byte offset (if
-// the event is an OutputMessage) of `indexByte`.
-func (r *Replay) setIndex(index, indexByte int, updateTime bool) tea.Cmd {
-	events := r.player.Events()
+type seekEvent struct {
+	updateTime bool
+}
 
-	// r.player.Goto(index, indexByte)
+func (r *Replay) handleSeek(updateTime bool) {
+	r.isSeeking = false
 
-	location := r.player.Location()
+	events := r.Events()
+	location := r.Location()
 
 	if updateTime {
 		r.currentTime = events[location.Index].Stamp
@@ -28,6 +29,7 @@ func (r *Replay) setIndex(index, indexByte int, updateTime bool) tea.Cmd {
 	viewportCursor := r.termToViewport(termCursor)
 
 	r.mode = ModeTime
+	r.root = r.Root()
 
 	// Center the cursor if it's not in the viewport
 	if !r.isInViewport(viewportCursor) {
@@ -36,13 +38,33 @@ func (r *Replay) setIndex(index, indexByte int, updateTime bool) tea.Cmd {
 
 	r.cursor = r.termToViewport(termCursor)
 	r.desiredCol = r.cursor.C
+}
 
-	return nil
+// Move the terminal back in time to the event at `index` and byte offset (if
+// the event is an OutputMessage) of `indexByte`.
+func (r *Replay) setIndex(index, indexByte int, updateTime bool) tea.Cmd {
+	r.isSeeking = true
+	return func() tea.Msg {
+		r.Goto(index, indexByte)
+		return seekEvent{
+			updateTime: updateTime,
+		}
+	}
 }
 
 func (r *Replay) gotoIndex(index, indexByte int) tea.Cmd {
 	r.isPlaying = false
 	return r.setIndex(index, indexByte, true)
+}
+
+// Jump to an index without using a tea.Cmd. Only used in testing.
+func (r *Replay) forceIndex(index, indexByte int) {
+	cmd := r.gotoIndex(index, indexByte)
+
+	msg := cmd()
+	if seek, ok := msg.(seekEvent); ok {
+		r.handleSeek(seek.updateTime)
+	}
 }
 
 func (r *Replay) scheduleUpdate() (taro.Model, tea.Cmd) {
@@ -88,32 +110,30 @@ func parseTimeDelta(delta []string) (result time.Duration) {
 	return
 }
 
-func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) {
-	events := r.player.Events()
+func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) tea.Cmd {
+	events := r.Events()
 	if len(events) == 0 {
-		return
+		return nil
 	}
 
 	newTime := r.currentTime.Add(delta)
 	if newTime.Equal(r.currentTime) {
-		return
+		return nil
 	}
 
 	beginning := events[0].Stamp
 	lastIndex := len(events) - 1
 	end := events[lastIndex].Stamp
 	if newTime.Before(beginning) || newTime.Equal(beginning) {
-		r.gotoIndex(0, -1)
-		return
+		return r.gotoIndex(0, -1)
 	}
 
 	if newTime.After(end) || newTime.Equal(end) {
-		r.gotoIndex(lastIndex, -1)
-		return
+		return r.gotoIndex(lastIndex, -1)
 	}
 
 	// First, just check to see whether we've entered another event
-	currentIndex := r.location.Index
+	currentIndex := r.Location().Index
 	var nextIndex int = currentIndex
 	if newTime.Before(r.currentTime) {
 		indexStamp := events[currentIndex].Stamp
@@ -124,7 +144,7 @@ func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) {
 			}
 		}
 	} else {
-		for i := r.location.Index + 1; i < len(events); i++ {
+		for i := r.Location().Index + 1; i < len(events); i++ {
 			if newTime.Before(events[i].Stamp) {
 				break
 			}
@@ -135,13 +155,12 @@ func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) {
 	// If this resulted in a change, we just jump to it immediately
 	if currentIndex != nextIndex {
 		r.currentTime = newTime
-		r.setIndex(nextIndex, -1, false)
-		return
+		return r.setIndex(nextIndex, -1, false)
 	}
 
 	if !skipInactivity {
 		r.currentTime = newTime
-		return
+		return nil
 	}
 
 	// It didn't, which can only mean that we're waiting for the next event
@@ -155,13 +174,15 @@ func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) {
 
 	if newTime.Sub(nextTime).Abs() < IDLE_THRESHOLD {
 		r.currentTime = newTime
-		return
+		return nil
 	}
 
-	if newTime.Before(r.currentTime) {
-		r.setIndex(currentIndex-1, -1, false)
-	} else {
-		r.setIndex(currentIndex+1, -1, false)
-	}
+	currentTime := r.currentTime
 	r.currentTime = nextTime
+
+	if newTime.Before(currentTime) {
+		return r.setIndex(currentIndex-1, -1, false)
+	}
+
+	return r.setIndex(currentIndex+1, -1, false)
 }
