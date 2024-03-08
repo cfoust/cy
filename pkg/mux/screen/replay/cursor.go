@@ -62,7 +62,6 @@ func getNonWhitespace(line emu.Line) (first, last int) {
 	return
 }
 
-
 // Given a point in term space representing a desired cursor position, return
 // the best available cursor position. This enables behavior akin to moving up
 // and down in a text editor.
@@ -142,17 +141,24 @@ func (r *Replay) moveCursor(point geom.Vec2) {
 		r.setOffsetY(r.offset.R + (newCursor.R - viewport.R + 1))
 	}
 
-	r.cursor = r.termToViewport(point)
+	r.cursor = newCursor
 }
 
-// Attempt to move the cursor relative to its current position. Sets
-// `desiredCol` if the motion is horizontal.
+// moveCursorDelta attempts to move the cursor relative to its current
+// position. Sets `desiredCol` if the motion is horizontal (ie dx != 0).
 func (r *Replay) moveCursorDelta(dy, dx int) {
 	oldPos := r.viewportToTerm(r.cursor)
 	newPos := r.clampToTerminal(oldPos.Add(geom.Vec2{
 		R: dy,
 		C: dx,
 	}))
+
+	// We only do a simple bounds check in image mode
+	if r.isImageMode() {
+		r.mode = ModeCopy
+		r.moveCursor(newPos)
+		return
+	}
 
 	// Don't allow user to move onto blank lines at end of terminal
 	numBlank := 0
@@ -165,11 +171,6 @@ func (r *Replay) moveCursorDelta(dy, dx int) {
 		numBlank++
 	}
 	newPos.R = geom.Min(termSize.R-1-numBlank, newPos.R)
-
-	// Don't do anything if we can't move
-	if newPos == oldPos {
-		return
-	}
 
 	// Motion to the right is bounded to the last non-whitespace character
 	if newPos.C > oldPos.C {
@@ -186,6 +187,11 @@ func (r *Replay) moveCursorDelta(dy, dx int) {
 			R: newPos.R,
 			C: r.desiredCol,
 		})
+	}
+
+	// Don't do anything if we can't move
+	if newPos == oldPos {
+		return
 	}
 
 	r.mode = ModeCopy

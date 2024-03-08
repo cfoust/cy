@@ -103,6 +103,10 @@ func (l Line) IsWrapped() bool {
 	return l[len(l)-1].Mode == attrWrap
 }
 
+func (l Line) Clone() Line {
+	return copyLine(l)
+}
+
 type CursorStyle int
 
 const (

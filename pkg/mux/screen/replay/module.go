@@ -50,6 +50,7 @@ type Replay struct {
 
 	// The cursor's position relative to the viewport.
 	cursor geom.Vec2
+
 	// Used to mimic the behavior in text editors wherein moving the cursor
 	// up and down "sticks" to a certain column index wherever possible
 	desiredCol int
@@ -80,6 +81,16 @@ var _ taro.Model = (*Replay)(nil)
 
 func (r *Replay) isCopyMode() bool {
 	return r.mode == ModeCopy
+}
+
+// Replay allows you to browse the contents of the terminal screen in two
+// different ways:
+//   - By treating the screen as an image with arbitrary content that may not
+//     take the form of lines, such as when a full-screen application is open
+//   - By treating the screen as a text file with human-readable text, such as
+//     when a shell is running
+func (r *Replay) isImageMode() bool {
+	return emu.IsAltMode(r.Mode())
 }
 
 func (r *Replay) getTerminalCursor() geom.Vec2 {

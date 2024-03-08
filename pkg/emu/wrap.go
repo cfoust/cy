@@ -105,6 +105,33 @@ type lineMapping struct {
 	After  rowRange
 }
 
+// Unwrap takes a set of wrapped lines (ie those wrapped to fit a screen) and
+// returns unwrapped lines.
+func UnwrapLines(lines []Line) (unwrapped []Line) {
+	var current Line = nil
+	var line Line
+	for row := 0; row < len(lines); row++ {
+		line = lines[row]
+
+		if current == nil {
+			current = copyLine(line)
+		} else {
+			current = append(current, line...)
+		}
+
+		if line.IsWrapped() && row != len(lines)-1 {
+			// Remove attrWrap
+			current[len(current)-1].Mode ^= attrWrap
+			continue
+		}
+
+		unwrapped = append(unwrapped, current)
+		current = nil
+	}
+
+	return unwrapped
+}
+
 func wrapLines(lines []Line, cols int) (newLines []Line, mappings []lineMapping) {
 	var current Line = nil
 	var start int
