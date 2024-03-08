@@ -14,6 +14,44 @@ type flowLine struct {
 	Chars emu.Line
 }
 
+// breakLine turns a single line into `flowLine`s by wrapping to fit into
+// `cols`.
+func breakLine(line emu.Line, R, C0, cols int) (lines []flowLine) {
+	numChars := line.Length()
+	// special case: an empty line still returns a flowLine
+	if numChars == 0 {
+		lines = append(lines, flowLine{
+			R: R,
+		})
+		return
+	}
+
+	i := 0
+	for i < numChars {
+		broken := line[i:geom.Min(i+cols, numChars)]
+
+		// This can only happen if the final character is a double wide
+		// glyph
+		if len(broken) > 0 && broken.Length() > len(broken) {
+			broken = broken[:len(broken)-1]
+		}
+
+		if len(broken) == 0 {
+			return
+		}
+
+		lines = append(lines, flowLine{
+			R:     R,
+			C0:    C0 + i,
+			C1:    C0 + i + len(broken),
+			Chars: broken,
+		})
+		i += len(broken)
+	}
+
+	return
+}
+
 // getFlowLines returns `count` lines from the perspective of `from` respecting
 // the bounds of the current viewport. A negative `count` will return -1 *
 // `count` lines from before where `from` begins. If there are not enough lines
@@ -43,12 +81,16 @@ func (r *Replay) getFlowLines(from geom.Vec2, count int) (lines []flowLine, line
 	var (
 		history     = r.History()
 		numHistory  = len(history)
-		isWrapped   = history[numHistory-1].IsWrapped()
+		isWrapped   = false
 		screen      = emu.UnwrapLines(r.Screen())
 		numLines    = numHistory + len(screen)
+		cols        = r.viewport.C
 		screenStart = 0
-		root        = r.Root()
 	)
+
+	if numHistory > 0 {
+		isWrapped = history[numHistory-1].IsWrapped()
+	}
 
 	// If the last line of history continues onto the screen, we have one less
 	// line
@@ -57,7 +99,7 @@ func (r *Replay) getFlowLines(from geom.Vec2, count int) (lines []flowLine, line
 		screenStart = 1
 	}
 
-	if from.R < 0 || from.R >= numLines {
+	if count == 0 || from.C < 0 || from.R < 0 || from.R >= numLines {
 		return
 	}
 
@@ -83,7 +125,62 @@ func (r *Replay) getFlowLines(from geom.Vec2, count int) (lines []flowLine, line
 		return
 	}
 
-	return
+	rootLine, rootOk := getLine(from.R)
+	if !rootOk || from.C >= len(rootLine) {
+		return
+	}
+
+	linesOk = true
+	isBackwards := count < 0
+	count = geom.Abs(count)
+
+	var ok bool
+	row := from.R
+	c0 := from.C
+	line := rootLine[from.C:]
+
+	if isBackwards {
+		c0 = 0
+		line = rootLine[:from.C]
+	}
+
+	for {
+		broken := breakLine(
+			line,
+			row,
+			c0,
+			cols,
+		)
+
+		numBroken := len(broken)
+		if isBackwards {
+			lines = append(
+				broken[geom.Max(numBroken-count, 0):],
+				lines...,
+			)
+		} else {
+			lines = append(
+				lines,
+				broken[:geom.Min(numBroken, count)]...,
+			)
+		}
+
+		if len(lines) == count {
+			return
+		}
+
+		c0 = 0
+		if isBackwards {
+			row--
+		} else {
+			row++
+		}
+
+		line, ok = getLine(row)
+		if !ok {
+			return
+		}
+	}
 }
 
 // viewportToFlow returns the point `out` in flow space that corresponds to the

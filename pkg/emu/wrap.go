@@ -1,5 +1,9 @@
 package emu
 
+import (
+	"github.com/mattn/go-runewidth"
+)
+
 // Return true if the last line in `lines` continues on to the
 // screen (in other words, it's wrapped.)
 func isWrappedLines(lines []Line) bool {
@@ -34,10 +38,12 @@ func getLineLength(line Line) int {
 	var length int = 0
 	for i := len(line) - 1; i >= 0; i-- {
 		glyph := line[i]
-		if glyph.Char != ' ' || glyph.FG != DefaultFG || glyph.BG != DefaultBG {
-			length = i + 1
-			break
+		if glyph.IsDefault() {
+			continue
 		}
+
+		length = i + runewidth.RuneWidth(glyph.Char)
+		break
 	}
 	return length
 }
@@ -68,6 +74,8 @@ func wrapLine(line Line, cols int) []Line {
 	for i := 0; i < numLines; i++ {
 		start := i * cols
 		end := (i + 1) * cols
+
+		// TODO(cfoust): 03/08/24 handle CJK wrapping
 
 		if end <= length {
 			result = append(result, line[start:end])
@@ -125,7 +133,7 @@ func UnwrapLines(lines []Line) (unwrapped []Line) {
 			continue
 		}
 
-		unwrapped = append(unwrapped, current)
+		unwrapped = append(unwrapped, current[:getLineLength(current)])
 		current = nil
 	}
 

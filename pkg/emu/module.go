@@ -77,6 +77,10 @@ func (g Glyph) IsEmpty() bool {
 	return g.Char == ' '
 }
 
+func (g Glyph) IsDefault() bool {
+	return g.Char == ' ' && g.FG == DefaultFG && g.BG == DefaultBG
+}
+
 func EmptyGlyph() Glyph {
 	return Glyph{
 		Char: ' ',
@@ -101,6 +105,10 @@ func (l Line) IsWrapped() bool {
 	}
 
 	return l[len(l)-1].Mode == attrWrap
+}
+
+func (l Line) Length() int {
+	return getLineLength(l)
 }
 
 func (l Line) Clone() Line {

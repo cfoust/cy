@@ -4,6 +4,14 @@ import (
 	"math"
 )
 
+// Abs returns the absolute value of an integer.
+func Abs(value int) int {
+	if value < 0 {
+		return -1 * value
+	}
+	return value
+}
+
 // Max returns the largest integer
 func Max(first int, second int) int {
 	if first >= second {
