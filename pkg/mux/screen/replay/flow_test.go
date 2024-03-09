@@ -20,13 +20,13 @@ func TestFlowLines(t *testing.T) {
 			// 0: foo
 			// 1: foob
 			// ---
-			// ar
+			// 1: ar
 			// 2: baz
 		)
 
 	r, i := createTest(s.Events())
-	i(geom.Size{R: 3, C: 2})
-	lines, ok := r.getFlowLines(geom.Vec2{R: 1}, 6)
+	i(geom.Size{R: 3, C: 4})
+	lines, ok := r.getFlowLines(geom.Vec2{R: 1}, -2)
 	t.Logf("%+v %+v", lines, ok)
 	t.Fail()
 }

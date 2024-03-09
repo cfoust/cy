@@ -142,9 +142,15 @@ func (r *Replay) getFlowLines(from geom.Vec2, count int) (lines []flowLine, line
 	if isBackwards {
 		c0 = 0
 		line = rootLine[:from.C]
+
+		if len(line) == 0 {
+			row--
+			line, ok = getLine(row)
+		}
 	}
 
 	for {
+		numLeft := geom.Max(count-len(lines), 0)
 		broken := breakLine(
 			line,
 			row,
@@ -155,13 +161,13 @@ func (r *Replay) getFlowLines(from geom.Vec2, count int) (lines []flowLine, line
 		numBroken := len(broken)
 		if isBackwards {
 			lines = append(
-				broken[geom.Max(numBroken-count, 0):],
+				broken[geom.Max(numBroken-numLeft, 0):],
 				lines...,
 			)
 		} else {
 			lines = append(
 				lines,
-				broken[:geom.Min(numBroken, count)]...,
+				broken[:geom.Min(numBroken, numLeft)]...,
 			)
 		}
 
