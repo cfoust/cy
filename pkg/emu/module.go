@@ -190,6 +190,32 @@ type View interface {
 	// Root() will return [1, 0].
 	Root() geom.Vec2
 
+	// Flow returns `count` lines from the perspective of `from` respecting
+	// the bounds of the given viewport. A negative `count` will return -1
+	// * `count` lines from before where `from` begins. If there are not
+	// enough lines before or after `from` to satisfy the request, fewer
+	// lines than `count` will be returned.
+	//
+	// For example, with a history that looks like this:
+	// ```
+	// abcdefg
+	// !abc
+	// foobarbaz
+	// ```
+	// where "!" represents `from`, a `count` of 2 with a viewport width of 3 would
+	// return:
+	// ```
+	// abc
+	// foo
+	// ```
+	//
+	// A count of -2 and a viewport width of 3 would return:
+	// ```
+	// bcd
+	// efg
+	// ```
+	Flow(viewport, root geom.Vec2, count int) ([]FlowLine, bool)
+
 	Changes() *Dirty
 }
 
