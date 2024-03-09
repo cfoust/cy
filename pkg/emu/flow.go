@@ -60,7 +60,7 @@ func (s *State) Flow(
 		history     = s.history
 		numHistory  = len(history)
 		isWrapped   = false
-		screen      = UnwrapLines(s.screen)
+		screen      = unwrapLines(s.screen)
 		numLines    = numHistory + len(screen)
 		cols        = viewport.C
 		screenStart = 0

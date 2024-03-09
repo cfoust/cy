@@ -115,7 +115,7 @@ type lineMapping struct {
 
 // Unwrap takes a set of wrapped lines (ie those wrapped to fit a screen) and
 // returns unwrapped lines.
-func UnwrapLines(lines []Line) (unwrapped []Line) {
+func unwrapLines(lines []Line) (unwrapped []Line) {
 	var current Line = nil
 	var line Line
 	for row := 0; row < len(lines); row++ {
