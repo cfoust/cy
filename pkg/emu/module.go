@@ -214,7 +214,7 @@ type View interface {
 	// bcd
 	// efg
 	// ```
-	Flow(viewport, root geom.Vec2, count int) ([]FlowLine, bool)
+	Flow(viewport, root geom.Vec2) ([]FlowLine, geom.Vec2, bool)
 
 	Changes() *Dirty
 }

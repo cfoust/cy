@@ -51,10 +51,11 @@ func breakLine(line Line, R, C0, cols int) (lines []FlowLine) {
 	return
 }
 
-func (s *State) Flow(
-	viewport, root geom.Vec2,
-	count int,
-) (lines []FlowLine, linesOk bool) {
+func (s *State) Flow(viewport, root geom.Vec2) (
+	lines []FlowLine,
+	cursor geom.Vec2,
+	linesOk bool,
+) {
 	// We flow the screen right away since we need to do bounds checks
 	var (
 		history     = s.history
@@ -70,14 +71,14 @@ func (s *State) Flow(
 		isWrapped = history[numHistory-1].IsWrapped()
 	}
 
-	// If the last line of history continues onto the screen, we have one less
-	// line
+	// If the last line of history continues onto the screen, we have one
+	// less line
 	if isWrapped {
 		numLines--
 		screenStart = 1
 	}
 
-	if count == 0 || root.C < 0 || root.R < 0 || root.R >= numLines {
+	if viewport.R == 0 || root.C < 0 || root.R < 0 || root.R >= numLines {
 		return
 	}
 
@@ -109,8 +110,8 @@ func (s *State) Flow(
 	}
 
 	linesOk = true
-	isBackwards := count < 0
-	count = geom.Abs(count)
+	isBackwards := viewport.R < 0
+	viewport.R = geom.Abs(viewport.R)
 
 	var ok bool
 	row := root.R
@@ -128,13 +129,8 @@ func (s *State) Flow(
 	}
 
 	for {
-		numLeft := geom.Max(count-len(lines), 0)
-		broken := breakLine(
-			line,
-			row,
-			c0,
-			cols,
-		)
+		numLeft := geom.Max(viewport.R-len(lines), 0)
+		broken := breakLine(line, row, c0, cols)
 
 		numBroken := len(broken)
 		if isBackwards {
@@ -149,8 +145,8 @@ func (s *State) Flow(
 			)
 		}
 
-		if len(lines) == count {
-			return
+		if len(lines) == viewport.R {
+			break
 		}
 
 		c0 = 0
@@ -162,7 +158,26 @@ func (s *State) Flow(
 
 		line, ok = getLine(row)
 		if !ok {
-			return
+			break
 		}
 	}
+
+	cursor = s.Root()
+	termCursor := s.cur
+	for row, line := range s.screen {
+		if termCursor.Y == row {
+			cursor.C += termCursor.X
+			break
+		}
+
+		if line.IsWrapped() {
+			cursor.C += len(line)
+			continue
+		}
+
+		cursor.R++
+		cursor.C = 0
+	}
+
+	return
 }

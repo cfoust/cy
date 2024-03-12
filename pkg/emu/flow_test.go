@@ -98,14 +98,18 @@ func TestFlowLines(t *testing.T) {
 
 	// 1. Just check that the screen is correct
 	{
-		lines, ok := term.Flow(
+		lines, cursor, ok := term.Flow(
 			geom.Vec2{
 				R: 2,
 				C: 4,
 			},
 			term.Root(),
-			2,
 		)
+
+		require.Equal(t, geom.Vec2{
+			R: 2,
+			C: 3,
+		}, cursor)
 
 		cleanLines(lines)
 
@@ -135,14 +139,18 @@ func TestFlowLines(t *testing.T) {
 
 	// 2. Check that negative counts work correctly
 	{
-		lines, ok := term.Flow(
+		lines, cursor, ok := term.Flow(
 			geom.Vec2{
-				R: 2,
+				R: -2,
 				C: 4,
 			},
 			term.Root(),
-			-2,
 		)
+
+		require.Equal(t, geom.Vec2{
+			R: 2,
+			C: 3,
+		}, cursor)
 
 		cleanLines(lines)
 
@@ -172,10 +180,12 @@ func TestFlowLines(t *testing.T) {
 
 	// 3. Do something really weird
 	{
-		lines, ok := term.Flow(
-			geom.Vec2{C: 2},
+		lines, _, ok := term.Flow(
+			geom.Vec2{
+				C: 2,
+				R: 10,
+			},
 			geom.Vec2{},
-			10,
 		)
 
 		cleanLines(lines)
