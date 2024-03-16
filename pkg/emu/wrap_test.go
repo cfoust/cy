@@ -40,26 +40,41 @@ func makeWrapped(lines ...string) []Line {
 }
 
 func ensureWrap(t *testing.T, input string, cols int, expected []Line) {
-	result := wrapLine(makeLine(input), cols)
-	require.Equal(t, expected, result)
+	line := makeLine(input)
+	lines := []Line{}
+	for _, r := range wrapLine(line, cols) {
+		lines = append(
+			lines,
+			resolveLine([]Line{line}, []charRange{r}),
+		)
+	}
+
+	require.Equal(t, expected, lines)
 }
 
 func TestWrap(t *testing.T) {
 	ensureWrap(t, "a a", 2, makeWrapped(
 		"a ",
-		"a ",
+		"a",
 	))
 	ensureWrap(t, "bbbb", 2, makeWrapped(
 		"bb",
 		"bb",
 	))
 	ensureWrap(t, "a   ", 2, makeWrapped(
-		"a ",
+		"a",
 	))
 	ensureWrap(t, "你好", 2, makeWrapped(
 		"你",
 		"好",
 	))
+
+	// We need to be careful that wrapping and unwrapping a line with
+	// double-width characters does not cause additional whitespace to
+	// appear
+	//cjk := unwrapLines(wrapLine(makeLine("你好"), 3))
+	//require.Equal(t, 1, len(cjk))
+	//require.Equal(t, "你好", cjk[0].String())
 }
 
 func TestLongLine(t *testing.T) {

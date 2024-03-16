@@ -23,6 +23,7 @@ const (
 	attrItalic
 	attrBlink
 	attrWrap
+	attrBlank
 )
 
 // State represents the terminal emulation state. Use Lock/Unlock
@@ -225,6 +226,9 @@ func (t *State) setChar(c rune, attr *Glyph, x, y int) {
 
 	for i := x; i < len(t.screen[y]) && i < x+w; i++ {
 		t.screen[y][i] = *attr
+		// Every explicit character change means cell is no longer
+		// blank (important for wrapping)
+		t.screen[y][i].Mode &= ^attrBlank
 		t.screen[y][i].Write = t.dirty.writeId
 		// super useful for debugging
 		//t.lines[y][i].BG = Color(t.dirty.writeId)
@@ -404,6 +408,7 @@ func (t *State) clear(x0, y0, x1, y1 int) {
 			t.screen[y][x] = t.cur.Attr
 			t.screen[y][x].Char = ' '
 			t.screen[y][x].Write = t.dirty.writeId
+			t.screen[y][x].Mode |= attrBlank
 		}
 	}
 

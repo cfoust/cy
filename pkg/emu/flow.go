@@ -64,7 +64,7 @@ func (s *State) Flow(viewport, root geom.Vec2) (
 		screen      = unwrapLines(s.screen)
 		numLines    = numHistory + len(screen)
 		cols        = viewport.C
-		screenStart = 0
+		//screenStart = 0
 	)
 
 	if numHistory > 0 {
@@ -75,7 +75,7 @@ func (s *State) Flow(viewport, root geom.Vec2) (
 	// less line
 	if isWrapped {
 		numLines--
-		screenStart = 1
+		//screenStart = 1
 	}
 
 	if viewport.R == 0 || root.C < 0 || root.R < 0 || root.R >= numLines {
@@ -96,11 +96,11 @@ func (s *State) Flow(viewport, root geom.Vec2) (
 		// special case: history line continues onto screen
 		if index == numHistory-1 {
 			line = history[len(history)-1].Clone()
-			line = append(line, screen[0]...)
+			//line = append(line, screen[0]...)
 			return
 		}
 
-		line = screen[(index-numHistory)+screenStart]
+		//line = screen[(index-numHistory)+screenStart]
 		return
 	}
 

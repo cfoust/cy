@@ -16,7 +16,6 @@ const (
 	AttrGfx
 	AttrItalic
 	AttrBlink
-	AttrWrap
 )
 
 const (
@@ -78,7 +77,7 @@ func (g Glyph) IsEmpty() bool {
 }
 
 func (g Glyph) IsDefault() bool {
-	return g.Char == ' ' && g.FG == DefaultFG && g.BG == DefaultBG
+	return g.Mode&attrBlank != 0
 }
 
 func EmptyGlyph() Glyph {

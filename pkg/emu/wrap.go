@@ -1,11 +1,86 @@
 package emu
 
 import (
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/mattn/go-runewidth"
 )
 
-// Return true if the last line in `lines` continues on to the
-// screen (in other words, it's wrapped.)
+type charRange struct{ y, x0, x1 int }
+type physicalLine []charRange
+
+func wrapLine(line Line, cols int) (lines physicalLine) {
+	numChars := line.Length()
+	// special case: an empty line still returns a flowLine
+	if numChars == 0 {
+		lines = append(lines, charRange{})
+		return
+	}
+
+	// if cursor is on or directly after a non-attrBlank cell, flow it
+	// normally
+	// if cursor is on a blank line, just do .X % cols
+	// if cursor is after end of line with non-attrBlank characters, move
+	// back to cell after last
+	// if cursor is after last line, move back to the first blank line
+
+	i := 0
+	for i < numChars {
+		broken := line[i:geom.Min(i+cols, numChars)]
+
+		// This can only happen if the final character is a double wide
+		// glyph
+		if len(broken) > 0 && broken.Length() > len(broken) {
+			broken = broken[:len(broken)-1]
+		}
+
+		if len(broken) == 0 {
+			return
+		}
+
+		lines = append(lines, charRange{
+			x0: i,
+			x1: i + len(broken),
+		})
+		i += len(broken)
+	}
+
+	return
+}
+
+// Unwrap takes a set of wrapped lines (ie those wrapped to fit a screen) and
+// returns unwrapped lines.
+func unwrapLines(lines []Line) (unwrapped []physicalLine) {
+	var current []charRange
+	var line Line
+	for row := 0; row < len(lines); row++ {
+		line = lines[row]
+
+		current = append(
+			current,
+			charRange{y: row, x1: line.Length()},
+		)
+
+		if line.IsWrapped() && row != len(lines)-1 {
+			// Remove attrWrap
+			// current[len(current)-1].Mode ^= attrWrap
+			continue
+		}
+
+		unwrapped = append(unwrapped, current)
+		current = make([]charRange, 0)
+	}
+
+	return unwrapped
+}
+
+func resolveLine(lines []Line, screen physicalLine) (line Line) {
+	for _, r := range screen {
+		line = append(line, lines[r.y][r.x0:r.x1]...)
+	}
+	return
+}
+
+// isWrappedLines returns true if the last line in `lines` is wrapped.
 func isWrappedLines(lines []Line) bool {
 	if len(lines) == 0 {
 		return false
@@ -56,185 +131,153 @@ func getOccupiedLine(line Line) Line {
 	return line[:getLineLength(line)]
 }
 
-func wrapLine(line Line, cols int) []Line {
-	// We only want to wrap non-whitespace characters
-	length := getLineLength(line)
+func wrapCursor(
+	oldLines, newLines []Line,
+	oldLine, newLine []charRange,
+	oldCursor Cursor,
+) (newCursor Cursor) {
+	// Set styles
+	newCursor = oldCursor
 
-	result := make([]Line, 0)
+	// Find the oldOffset of the old cursor in the old line
+	oldOffset := 0
+	didFind := false
+findOld:
+	for row, line := range oldLine {
+		numChars := line.x1 - line.x0
+		for col := 0; col < numChars; col++ {
+			width := runewidth.RuneWidth(
+				oldLines[line.y][line.x0+col].Char,
+			)
 
-	if length == 0 {
-		return []Line{emptyLine(cols)}
-	}
-
-	numLines := length / cols
-	if (length % cols) > 0 {
-		numLines++
-	}
-
-	for i := 0; i < numLines; i++ {
-		start := i * cols
-		end := (i + 1) * cols
-
-		// TODO(cfoust): 03/08/24 handle CJK wrapping
-
-		if end <= length {
-			result = append(result, line[start:end])
-			continue
-		}
-
-		// It's the last line, split it up
-		newLine := make(Line, cols)
-		for j := start; j < end; j++ {
-			if j < length {
-				newLine[j-start] = line[j]
-				continue
+			if oldCursor.Y == row && oldCursor.X >= col && oldCursor.X <= col+width {
+				didFind = true
+				break findOld
 			}
 
-			newLine[j-start] = EmptyGlyph()
+			oldOffset++
+			col += width - 1
 		}
-		result = append(result, newLine)
 	}
 
-	// Mark attrWrap
-	for i := 0; i < len(result)-1; i++ {
-		result[i][cols-1].Mode = attrWrap
+	// If lines are full, but cursor was beyond, we need to set wrap
+	// e.g:
+	// xxxx|
+	// xxxx|
+	//   c
+	// becomes
+	// xxxx|
+	// xxxx|c
+	//
+	// This also is a safety mechanism for when the cursor doesn't fall
+	// within a cell that contains a printable character
+	if !didFind || (oldCursor.State&cursorWrapNext) == 1 {
+		oldOffset++
 	}
 
-	return result
-}
+	// Find the cell occupied by the same offset in the new line
+	newOffset := 0
+findNew:
+	for row, line := range newLine {
+		numChars := line.x1 - line.x0
+		newCursor.Y = row
 
-type rowRange struct {
-	Start int
-	End   int // exclusive
-}
+		for col := 0; col < numChars; col++ {
+			newCursor.X = col
+			if newOffset == oldOffset {
+				break findNew
+			}
 
-type lineMapping struct {
-	Before rowRange
-	After  rowRange
-}
-
-// Unwrap takes a set of wrapped lines (ie those wrapped to fit a screen) and
-// returns unwrapped lines.
-func unwrapLines(lines []Line) (unwrapped []Line) {
-	var current Line = nil
-	var line Line
-	for row := 0; row < len(lines); row++ {
-		line = lines[row]
-
-		if current == nil {
-			current = copyLine(line)
-		} else {
-			current = append(current, line...)
+			width := runewidth.RuneWidth(
+				newLines[line.y][line.x0+col].Char,
+			)
+			newOffset++
+			col += width - 1
 		}
 
-		if line.IsWrapped() && row != len(lines)-1 {
-			// Remove attrWrap
-			current[len(current)-1].Mode ^= attrWrap
-			continue
-		}
-
-		unwrapped = append(unwrapped, current[:getLineLength(current)])
-		current = nil
-	}
-
-	return unwrapped
-}
-
-func wrapLines(lines []Line, cols int) (newLines []Line, mappings []lineMapping) {
-	var current Line = nil
-	var start int
-
-	numLines := len(lines)
-	var line Line
-	for row := 0; row < numLines; row++ {
-		line = lines[row]
-
-		// the line was wrapped originally, aggregate it
-		wasWrapped := line[len(line)-1].Mode == attrWrap
-
-		if current == nil {
-			start = row
-			current = copyLine(line)
-		} else {
-			current = append(current, line...)
-		}
-
-		if wasWrapped && row != len(lines)-1 {
-			// Remove attrWrap
-			current[len(current)-1].Mode ^= attrWrap
-			continue
-		}
-
-		// We've accumulated the whole line, wrap it
-		wrapped := wrapLine(current, cols)
-		mappings = append(mappings, lineMapping{
-			Before: rowRange{
-				Start: start,
-				End:   row + 1,
-			},
-			After: rowRange{
-				Start: len(newLines),
-				End:   len(newLines) + len(wrapped),
-			},
-		})
-
-		for _, wrappedLine := range wrapped {
-			newLines = append(newLines, wrappedLine)
-		}
-		current = nil
-	}
-
-	return newLines, mappings
-}
-
-// reflow recalculates the wrap point for all lines in `screen`.
-func reflow(oldLines []Line, oldCursor Cursor, newCols int) (newLines []Line, newCursor Cursor, cursorValid bool) {
-	wrapped, mappings := wrapLines(oldLines, newCols)
-
-	// Remove trailing empty lines
-	for i := len(wrapped) - 1; i >= 0; i-- {
-		if getLineLength(wrapped[i]) != 0 {
+		// This can only happen if the offset falls on the "next"
+		// character after the end of the line, so we need to wrap
+		if newOffset == oldOffset {
+			newCursor.State |= cursorWrapNext
 			break
 		}
-		wrapped = wrapped[:i]
 	}
 
-	if len(wrapped) == 0 {
-		return
+	return
+}
+
+func reflow(oldScreen []Line, oldCursor Cursor, cols int) (newLines []Line, newCursor Cursor, cursorValid bool) {
+	// 1. Get the offsets of all of the "physical" lines
+	oldWrapped := unwrapLines(oldScreen)
+
+	// 2. Resolve them to full []Lines for calculation purposes
+	oldResolved := make([]Line, 0)
+	for _, line := range oldWrapped {
+		oldResolved = append(
+			oldResolved,
+			resolveLine(oldScreen, line),
+		)
 	}
 
-	oldCols := len(oldLines[0])
-	curRow := oldCursor.Y
-	for _, mapping := range mappings {
-		before := mapping.Before
-		after := mapping.After
-		if curRow < before.Start || curRow >= before.End {
+	// Remove trailing empty lines
+	for i := len(oldResolved) - 1; i >= 0; i-- {
+		line := oldResolved[i]
+		if line.Length() != 0 {
+			break
+		}
+		oldResolved = oldResolved[:i]
+	}
+
+	// 3. Wrap those full []Lines into new physicalLines
+	newWrapped := make([]physicalLine, 0)
+	for _, line := range oldResolved {
+		newWrapped = append(newWrapped, wrapLine(line, cols))
+	}
+
+	// Find the cursor position
+	for i := len(oldResolved) - 1; i >= 0; i++ {
+		// We want to skip any trailing physical lines we removed
+		oldLine := oldWrapped[i]
+		if len(oldLine) == 0 {
 			continue
 		}
 
-		cursorValid = true
-		newCursor = oldCursor
-		offset := (curRow-before.Start)*oldCols + oldCursor.X
-
-		// Logically, if the cursor is about to wrap to the next line,
-		// it really means that it's "occupying" the next cell
-		if oldCursor.State&cursorWrapNext != 0 {
-			offset += 1
+		origin := oldLine[0]
+		if oldCursor.Y <= origin.y {
+			continue
 		}
 
-		newCursor.X = offset % newCols
-		newCursor.Y = after.Start + (offset-newCursor.X)/newCols
-
-		// If the cursor falls on a line boundary, we pretend as though
-		// it were about to wrap
-		if newCols > 0 && offset > 0 && newCursor.X == 0 {
-			newCursor.X = newCols - 1
-			newCursor.Y -= 1
-			newCursor.State |= cursorWrapNext
-		}
-		break
+		oldCursor.Y -= origin.y
+		newCursor = wrapCursor(
+			oldScreen,
+			oldResolved,
+			oldLine,
+			newWrapped[i],
+			oldCursor,
+		)
 	}
 
-	newLines = wrapped
+	// 4. Turn those physicalLines into a screen
+	for _, physical := range newWrapped {
+		for i, line := range physical {
+			numBlank := cols - (line.x1 - line.x0)
+			newLine := make(Line, cols)
+			copy(newLine, oldResolved[line.y][line.x0:line.x1])
+
+			// Fill in any blank cells
+			for j := cols - numBlank; j < cols; j++ {
+				newLine[j] = EmptyGlyph()
+				newLine[j].Mode |= attrBlank
+			}
+
+			// Mark wrapped
+			if i != len(physical)-1 {
+				newLine[cols-1].Mode ^= attrWrap
+			}
+
+			newLines = append(newLines, newLine)
+		}
+	}
+
 	return
 }
