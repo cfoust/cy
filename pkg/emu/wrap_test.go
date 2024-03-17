@@ -49,6 +49,12 @@ func ensureWrap(t *testing.T, input string, cols int, expected []Line) {
 		)
 	}
 
+	for _, line := range expected {
+		for i := 0; i < len(line); i++ {
+			line[i].Mode = 0
+		}
+	}
+
 	require.Equal(t, expected, lines)
 }
 
@@ -62,19 +68,13 @@ func TestWrap(t *testing.T) {
 		"bb",
 	))
 	ensureWrap(t, "a   ", 2, makeWrapped(
-		"a",
+		"a ",
+		"  ",
 	))
 	ensureWrap(t, "你好", 2, makeWrapped(
 		"你",
 		"好",
 	))
-
-	// We need to be careful that wrapping and unwrapping a line with
-	// double-width characters does not cause additional whitespace to
-	// appear
-	//cjk := unwrapLines(wrapLine(makeLine("你好"), 3))
-	//require.Equal(t, 1, len(cjk))
-	//require.Equal(t, "你好", cjk[0].String())
 }
 
 func TestLongLine(t *testing.T) {
@@ -217,6 +217,7 @@ func TestFullAlt(t *testing.T) {
 	require.Equal(t, "te", extractStr(term, 0, 1, 2))
 	require.Equal(t, 1, term.Cursor().X)
 	require.Equal(t, 2, term.Cursor().Y)
+	require.True(t, term.Cursor().State&cursorWrapNext != 0)
 	term.Write([]byte(EnterAltScreen))
 	term.Resize(4, 3)
 	term.Write([]byte(ExitAltScreen))

@@ -175,7 +175,7 @@ findOld:
 	// becomes
 	// xxxx|
 	// xxxx|c
-	if (oldCursor.State & cursorWrapNext) == 1 {
+	if (oldCursor.State & cursorWrapNext) != 0 {
 		oldOffset++
 	}
 
@@ -277,6 +277,7 @@ func reflow(oldScreen []Line, oldCursor Cursor, cols int) (newLines []Line, newC
 		for j := 0; j < i; j++ {
 			newCursor.Y += len(newWrapped[j])
 		}
+
 		break
 	}
 
