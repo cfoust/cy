@@ -4,13 +4,16 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 )
 
+type FlowResult struct {
+	Lines    []ScreenLine
+	OK       bool
+	Cursor   Cursor
+	CursorOK bool
+}
+
 func (s *State) Flow(
 	viewport, root geom.Vec2,
-) (
-	lines []ScreenLine,
-	cursor geom.Vec2,
-	linesOk bool,
-) {
+) (result FlowResult) {
 	viewport.C = geom.Max(viewport.C, 1)
 
 	// We flow the screen right away since we need to do bounds checks
@@ -67,7 +70,7 @@ func (s *State) Flow(
 		return
 	}
 
-	linesOk = true
+	result.OK = true
 	isBackwards := viewport.R < 0
 	viewport.R = geom.Abs(viewport.R)
 
@@ -92,7 +95,7 @@ func (s *State) Flow(
 	}
 
 	for {
-		numLeft := geom.Max(viewport.R-len(lines), 0)
+		numLeft := geom.Max(viewport.R-len(result.Lines), 0)
 		broken := wrapLine(line, cols)
 
 		for i := range broken {
@@ -103,18 +106,18 @@ func (s *State) Flow(
 
 		numBroken := len(broken)
 		if isBackwards {
-			lines = append(
+			result.Lines = append(
 				broken[geom.Max(numBroken-numLeft, 0):],
-				lines...,
+				result.Lines...,
 			)
 		} else {
-			lines = append(
-				lines,
+			result.Lines = append(
+				result.Lines,
 				broken[:geom.Min(numBroken, numLeft)]...,
 			)
 		}
 
-		if len(lines) == viewport.R {
+		if len(result.Lines) == viewport.R {
 			break
 		}
 
@@ -133,12 +136,12 @@ func (s *State) Flow(
 	}
 
 	// Resolve lines
-	for i, screenLine := range lines {
+	for i, screenLine := range result.Lines {
 		line, ok := getLine(screenLine.R)
 		if !ok {
 			continue
 		}
-		lines[i].Chars = line[screenLine.C0:screenLine.C1]
+		result.Lines[i].Chars = line[screenLine.C0:screenLine.C1]
 	}
 
 	// TODO(cfoust): 03/18/24 cursor

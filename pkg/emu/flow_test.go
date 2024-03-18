@@ -41,7 +41,7 @@ func TestFlowLines(t *testing.T) {
 
 	// 1. Just check that the screen is correct
 	{
-		lines, _, ok := term.Flow(
+		result := term.Flow(
 			geom.Vec2{
 				R: 2,
 				C: 4,
@@ -49,9 +49,9 @@ func TestFlowLines(t *testing.T) {
 			term.Root(),
 		)
 
-		cleanLines(lines)
+		cleanLines(result.Lines)
 
-		require.True(t, ok)
+		require.True(t, result.OK)
 		require.Equal(t,
 			[]ScreenLine{
 				{
@@ -71,13 +71,13 @@ func TestFlowLines(t *testing.T) {
 					),
 				},
 			},
-			lines,
+			result.Lines,
 		)
 	}
 
 	// 2. Check that negative counts work correctly
 	{
-		lines, _, ok := term.Flow(
+		result := term.Flow(
 			geom.Vec2{
 				R: -2,
 				C: 4,
@@ -85,9 +85,9 @@ func TestFlowLines(t *testing.T) {
 			term.Root(),
 		)
 
-		cleanLines(lines)
+		cleanLines(result.Lines)
 
-		require.True(t, ok)
+		require.True(t, result.OK)
 		require.Equal(t,
 			[]ScreenLine{
 				{
@@ -107,13 +107,13 @@ func TestFlowLines(t *testing.T) {
 					),
 				},
 			},
-			lines,
+			result.Lines,
 		)
 	}
 
 	// 3. Do something really weird
 	{
-		lines, _, ok := term.Flow(
+		result := term.Flow(
 			geom.Vec2{
 				C: 2,
 				R: 10,
@@ -121,9 +121,9 @@ func TestFlowLines(t *testing.T) {
 			geom.Vec2{},
 		)
 
-		cleanLines(lines)
+		cleanLines(result.Lines)
 
-		require.True(t, ok)
+		require.True(t, result.OK)
 		require.Equal(t,
 			[]ScreenLine{
 				{
@@ -183,7 +183,7 @@ func TestFlowLines(t *testing.T) {
 					),
 				},
 			},
-			lines,
+			result.Lines,
 		)
 	}
 }

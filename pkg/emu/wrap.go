@@ -145,7 +145,7 @@ func getOccupiedLine(line Line) Line {
 
 func wrapCursor(
 	oldLines, newLines []Line,
-	oldLine, newLine []ScreenLine,
+	oldLine, newLine physicalLine,
 	oldCursor Cursor,
 	numCols int,
 ) (newCursor Cursor) {
@@ -228,6 +228,45 @@ findNew:
 	return
 }
 
+func translateCursor(
+	oldLines, newLines []Line,
+	oldPhysical, newPhysical []physicalLine,
+	oldCursor Cursor,
+	cols int,
+) (newCursor Cursor) {
+	for i := len(newLines) - 1; i >= 0; i-- {
+		// We want to skip any trailing physical lines we removed
+		oldLine := oldPhysical[i]
+		if len(oldLine) == 0 {
+			continue
+		}
+
+		origin := oldLine[0]
+		if oldCursor.Y < origin.R {
+			continue
+		}
+
+		oldCursor.Y -= origin.R
+		newCursor = wrapCursor(
+			oldLines,
+			newLines,
+			oldLine,
+			newPhysical[i],
+			oldCursor,
+			cols,
+		)
+
+		// Make cursor row relative to new lines
+		for j := 0; j < i; j++ {
+			newCursor.Y += len(newPhysical[j])
+		}
+
+		break
+	}
+
+	return
+}
+
 func resolveLines(lines []Line, physical []physicalLine) (resolved []Line) {
 	for _, line := range physical {
 		resolved = append(resolved, resolveLine(lines, line))
@@ -265,35 +304,14 @@ func reflow(oldScreen []Line, oldCursor Cursor, cols int) (newLines []Line, newC
 	}
 
 	// Find the cursor position
-	for i := len(oldResolved) - 1; i >= 0; i-- {
-		// We want to skip any trailing physical lines we removed
-		oldLine := oldWrapped[i]
-		if len(oldLine) == 0 {
-			continue
-		}
-
-		origin := oldLine[0]
-		if oldCursor.Y < origin.R {
-			continue
-		}
-
-		oldCursor.Y -= origin.R
-		newCursor = wrapCursor(
-			oldScreen,
-			oldResolved,
-			oldLine,
-			newWrapped[i],
-			oldCursor,
-			cols,
-		)
-
-		// Make cursor row relative to new lines
-		for j := 0; j < i; j++ {
-			newCursor.Y += len(newWrapped[j])
-		}
-
-		break
-	}
+	newCursor = translateCursor(
+		oldScreen,
+		oldResolved,
+		oldWrapped,
+		newWrapped,
+		oldCursor,
+		cols,
+	)
 
 	// 4. Turn those physicalLines into a screen
 	for _, physical := range newWrapped {

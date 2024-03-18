@@ -209,7 +209,7 @@ type View interface {
 	// bcd
 	// efg
 	// ```
-	Flow(viewport, root geom.Vec2) ([]ScreenLine, geom.Vec2, bool)
+	Flow(viewport, root geom.Vec2) FlowResult
 
 	Changes() *Dirty
 }
