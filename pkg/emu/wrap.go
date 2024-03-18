@@ -5,14 +5,22 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-type charRange struct{ y, x0, x1 int }
-type physicalLine []charRange
+type ScreenLine struct {
+	// The coordinate of this row
+	R int
+	// The columns in that row this line occupies, [C0,C1)
+	C0, C1 int
+	// The slice containing the glyphs in this range
+	Chars Line
+}
+
+type physicalLine []ScreenLine
 
 func wrapLine(line Line, cols int) (lines physicalLine) {
 	numChars := line.Length()
 	// special case: an empty line still returns a flowLine
 	if numChars == 0 {
-		lines = append(lines, charRange{})
+		lines = append(lines, ScreenLine{})
 		return
 	}
 
@@ -37,9 +45,9 @@ func wrapLine(line Line, cols int) (lines physicalLine) {
 			return
 		}
 
-		lines = append(lines, charRange{
-			x0: i,
-			x1: i + len(broken),
+		lines = append(lines, ScreenLine{
+			C0: i,
+			C1: i + len(broken),
 		})
 		i += len(broken)
 	}
@@ -50,24 +58,22 @@ func wrapLine(line Line, cols int) (lines physicalLine) {
 // Unwrap takes a set of wrapped lines (ie those wrapped to fit a screen) and
 // returns unwrapped lines.
 func unwrapLines(lines []Line) (unwrapped []physicalLine) {
-	var current []charRange
+	var current []ScreenLine
 	var line Line
 	for row := 0; row < len(lines); row++ {
 		line = lines[row]
 
 		current = append(
 			current,
-			charRange{y: row, x1: line.Length()},
+			ScreenLine{R: row, C1: line.Length()},
 		)
 
 		if line.IsWrapped() && row != len(lines)-1 {
-			// Remove attrWrap
-			// current[len(current)-1].Mode ^= attrWrap
 			continue
 		}
 
 		unwrapped = append(unwrapped, current)
-		current = make([]charRange, 0)
+		current = make([]ScreenLine, 0)
 	}
 
 	return unwrapped
@@ -75,8 +81,14 @@ func unwrapLines(lines []Line) (unwrapped []physicalLine) {
 
 func resolveLine(lines []Line, screen physicalLine) (line Line) {
 	for _, r := range screen {
-		line = append(line, lines[r.y][r.x0:r.x1]...)
+		line = append(line, lines[r.R][r.C0:r.C1]...)
 	}
+
+	// Remove the wrap state
+	for i := range line {
+		line[i].Mode &= ^attrWrap
+	}
+
 	return
 }
 
@@ -133,7 +145,7 @@ func getOccupiedLine(line Line) Line {
 
 func wrapCursor(
 	oldLines, newLines []Line,
-	oldLine, newLine []charRange,
+	oldLine, newLine []ScreenLine,
 	oldCursor Cursor,
 	numCols int,
 ) (newCursor Cursor) {
@@ -145,10 +157,10 @@ func wrapCursor(
 	didFind := false
 findOld:
 	for row, line := range oldLine {
-		numChars := line.x1 - line.x0
+		numChars := line.C1 - line.C0
 		for col := 0; col < numChars; col++ {
 			width := runewidth.RuneWidth(
-				oldLines[line.y][line.x0+col].Char,
+				oldLines[line.R][line.C0+col].Char,
 			)
 
 			if oldCursor.Y == row && oldCursor.X >= col && oldCursor.X < col+width {
@@ -183,7 +195,7 @@ findOld:
 	newOffset := 0
 findNew:
 	for row, line := range newLine {
-		numChars := line.x1 - line.x0
+		numChars := line.C1 - line.C0
 		newCursor.Y = row
 		isLast := false
 
@@ -194,7 +206,7 @@ findNew:
 			}
 
 			width := runewidth.RuneWidth(
-				newLines[line.y][line.x0+col].Char,
+				newLines[line.R][line.C0+col].Char,
 			)
 			isLast = (col + width) == numCols
 			newOffset++
@@ -216,18 +228,20 @@ findNew:
 	return
 }
 
+func resolveLines(lines []Line, physical []physicalLine) (resolved []Line) {
+	for _, line := range physical {
+		resolved = append(resolved, resolveLine(lines, line))
+	}
+
+	return
+}
+
 func reflow(oldScreen []Line, oldCursor Cursor, cols int) (newLines []Line, newCursor Cursor, cursorValid bool) {
 	// 1. Get the offsets of all of the "physical" lines
 	oldWrapped := unwrapLines(oldScreen)
 
 	// 2. Resolve them to full []Lines for calculation purposes
-	oldResolved := make([]Line, 0)
-	for _, line := range oldWrapped {
-		oldResolved = append(
-			oldResolved,
-			resolveLine(oldScreen, line),
-		)
-	}
+	oldResolved := resolveLines(oldScreen, oldWrapped)
 
 	// Remove trailing empty lines
 	for i := len(oldResolved) - 1; i >= 0; i-- {
@@ -245,7 +259,7 @@ func reflow(oldScreen []Line, oldCursor Cursor, cols int) (newLines []Line, newC
 	for row, line := range oldResolved {
 		wrappedLine := wrapLine(line, cols)
 		for i := range wrappedLine {
-			wrappedLine[i].y = row
+			wrappedLine[i].R = row
 		}
 		newWrapped = append(newWrapped, wrappedLine)
 	}
@@ -259,11 +273,11 @@ func reflow(oldScreen []Line, oldCursor Cursor, cols int) (newLines []Line, newC
 		}
 
 		origin := oldLine[0]
-		if oldCursor.Y < origin.y {
+		if oldCursor.Y < origin.R {
 			continue
 		}
 
-		oldCursor.Y -= origin.y
+		oldCursor.Y -= origin.R
 		newCursor = wrapCursor(
 			oldScreen,
 			oldResolved,
@@ -284,9 +298,9 @@ func reflow(oldScreen []Line, oldCursor Cursor, cols int) (newLines []Line, newC
 	// 4. Turn those physicalLines into a screen
 	for _, physical := range newWrapped {
 		for i, line := range physical {
-			numBlank := cols - (line.x1 - line.x0)
+			numBlank := cols - (line.C1 - line.C0)
 			newLine := make(Line, cols)
-			copy(newLine, oldResolved[line.y][line.x0:line.x1])
+			copy(newLine, oldResolved[line.R][line.C0:line.C1])
 
 			// Fill in any blank cells
 			for j := cols - numBlank; j < cols; j++ {

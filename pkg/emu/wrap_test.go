@@ -45,7 +45,7 @@ func ensureWrap(t *testing.T, input string, cols int, expected []Line) {
 	for _, r := range wrapLine(line, cols) {
 		lines = append(
 			lines,
-			resolveLine([]Line{line}, []charRange{r}),
+			resolveLine([]Line{line}, []ScreenLine{r}),
 		)
 	}
 

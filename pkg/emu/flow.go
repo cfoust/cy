@@ -4,67 +4,25 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 )
 
-type FlowLine struct {
-	// The coordinate of this row
-	R int
-	// The columns in that row this line occupies, [C0,C1)
-	C0, C1 int
-	// The slice containing the glyphs in this range
-	Chars Line
-}
-
-// breakLine turns a single line into `flowLine`s by wrapping to fit into
-// `cols`.
-func breakLine(line Line, R, C0, cols int) (lines []FlowLine) {
-	numChars := line.Length()
-	// special case: an empty line still returns a flowLine
-	if numChars == 0 {
-		lines = append(lines, FlowLine{
-			R: R,
-		})
-		return
-	}
-
-	i := 0
-	for i < numChars {
-		broken := line[i:geom.Min(i+cols, numChars)]
-
-		// This can only happen if the final character is a double wide
-		// glyph
-		if len(broken) > 0 && broken.Length() > len(broken) {
-			broken = broken[:len(broken)-1]
-		}
-
-		if len(broken) == 0 {
-			return
-		}
-
-		lines = append(lines, FlowLine{
-			R:     R,
-			C0:    C0 + i,
-			C1:    C0 + i + len(broken),
-			Chars: broken,
-		})
-		i += len(broken)
-	}
-
-	return
-}
-
-func (s *State) Flow(viewport, root geom.Vec2) (
-	lines []FlowLine,
+func (s *State) Flow(
+	viewport, root geom.Vec2,
+) (
+	lines []ScreenLine,
 	cursor geom.Vec2,
 	linesOk bool,
 ) {
+	viewport.C = geom.Max(viewport.C, 1)
+
 	// We flow the screen right away since we need to do bounds checks
 	var (
 		history     = s.history
 		numHistory  = len(history)
 		isWrapped   = false
-		screen      = unwrapLines(s.screen)
+		screenLines = unwrapLines(s.screen)
+		screen      = resolveLines(s.screen, screenLines)
 		numLines    = numHistory + len(screen)
 		cols        = viewport.C
-		//screenStart = 0
+		screenStart = 0
 	)
 
 	if numHistory > 0 {
@@ -75,7 +33,7 @@ func (s *State) Flow(viewport, root geom.Vec2) (
 	// less line
 	if isWrapped {
 		numLines--
-		//screenStart = 1
+		screenStart = 1
 	}
 
 	if viewport.R == 0 || root.C < 0 || root.R < 0 || root.R >= numLines {
@@ -96,11 +54,11 @@ func (s *State) Flow(viewport, root geom.Vec2) (
 		// special case: history line continues onto screen
 		if index == numHistory-1 {
 			line = history[len(history)-1].Clone()
-			//line = append(line, screen[0]...)
+			line = append(line, screen[0]...)
 			return
 		}
 
-		//line = screen[(index-numHistory)+screenStart]
+		line = screen[(index-numHistory)+screenStart]
 		return
 	}
 
@@ -115,12 +73,17 @@ func (s *State) Flow(viewport, root geom.Vec2) (
 
 	var ok bool
 	row := root.R
-	c0 := root.C
 	line := rootLine[root.C:]
+	location := ScreenLine{
+		R:  row,
+		C0: root.C,
+	}
 
 	if isBackwards {
-		c0 = 0
 		line = rootLine[:root.C]
+		location = ScreenLine{
+			R: row,
+		}
 
 		if len(line) == 0 {
 			row--
@@ -130,7 +93,13 @@ func (s *State) Flow(viewport, root geom.Vec2) (
 
 	for {
 		numLeft := geom.Max(viewport.R-len(lines), 0)
-		broken := breakLine(line, row, c0, cols)
+		broken := wrapLine(line, cols)
+
+		for i := range broken {
+			broken[i].R = location.R
+			broken[i].C0 += location.C0
+			broken[i].C1 += location.C0
+		}
 
 		numBroken := len(broken)
 		if isBackwards {
@@ -149,12 +118,13 @@ func (s *State) Flow(viewport, root geom.Vec2) (
 			break
 		}
 
-		c0 = 0
 		if isBackwards {
 			row--
 		} else {
 			row++
 		}
+
+		location = ScreenLine{R: row}
 
 		line, ok = getLine(row)
 		if !ok {
@@ -162,22 +132,16 @@ func (s *State) Flow(viewport, root geom.Vec2) (
 		}
 	}
 
-	cursor = s.Root()
-	termCursor := s.cur
-	for row, line := range s.screen {
-		if termCursor.Y == row {
-			cursor.C += termCursor.X
-			break
-		}
-
-		if line.IsWrapped() {
-			cursor.C += len(line)
+	// Resolve lines
+	for i, screenLine := range lines {
+		line, ok := getLine(screenLine.R)
+		if !ok {
 			continue
 		}
-
-		cursor.R++
-		cursor.C = 0
+		lines[i].Chars = line[screenLine.C0:screenLine.C1]
 	}
+
+	// TODO(cfoust): 03/18/24 cursor
 
 	return
 }

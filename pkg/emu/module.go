@@ -189,11 +189,7 @@ type View interface {
 	// Root() will return [1, 0].
 	Root() geom.Vec2
 
-	// Flow returns `count` lines from the perspective of `from` respecting
-	// the bounds of the given viewport. A negative `count` will return -1
-	// * `count` lines from before where `from` begins. If there are not
-	// enough lines before or after `from` to satisfy the request, fewer
-	// lines than `count` will be returned.
+	// TODO(cfoust): 03/18/24
 	//
 	// For example, with a history that looks like this:
 	// ```
@@ -213,7 +209,7 @@ type View interface {
 	// bcd
 	// efg
 	// ```
-	Flow(viewport, root geom.Vec2) ([]FlowLine, geom.Vec2, bool)
+	Flow(viewport, root geom.Vec2) ([]ScreenLine, geom.Vec2, bool)
 
 	Changes() *Dirty
 }
