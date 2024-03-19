@@ -16,7 +16,6 @@ func (s *State) Flow(
 ) (result FlowResult) {
 	viewport.C = geom.Max(viewport.C, 1)
 
-	// We flow the screen right away since we need to do bounds checks
 	var (
 		history     = s.history
 		numHistory  = len(history)
@@ -39,7 +38,7 @@ func (s *State) Flow(
 		screenStart = 1
 	}
 
-	if viewport.R == 0 || root.C < 0 || root.R < 0 || root.R >= numLines {
+	if root.C < 0 || root.R < 0 || root.R >= numLines {
 		return
 	}
 
@@ -66,7 +65,7 @@ func (s *State) Flow(
 	}
 
 	rootLine, rootOk := getLine(root.R)
-	if !rootOk || root.C >= len(rootLine) {
+	if !rootOk || (root.C > 0 && root.C >= len(rootLine)) {
 		return
 	}
 
@@ -105,6 +104,12 @@ func (s *State) Flow(
 		}
 
 		numBroken := len(broken)
+
+		// We take ALL line if viewport.R == 0
+		if viewport.R == 0 {
+			numLeft = numBroken
+		}
+
 		if isBackwards {
 			result.Lines = append(
 				broken[geom.Max(numBroken-numLeft, 0):],
@@ -144,7 +149,7 @@ func (s *State) Flow(
 		result.Lines[i].Chars = line[screenLine.C0:screenLine.C1]
 	}
 
-	// translateCursor corrects the newCursor by snapping it to the the
+	// translateCursor corrects the cursor by snapping it to the the
 	// nearest line
 	newCursor := translateCursor(
 		s.screen,
@@ -168,7 +173,7 @@ func (s *State) Flow(
 	for row, screenLine := range result.Lines {
 		result.Cursor.Y = row
 
-		if cursorLoc.R != screenLine.R || cursorLoc.C < screenLine.C0 || cursorLoc.C >= screenLine.C1 {
+		if cursorLoc.R != screenLine.R || cursorLoc.C < screenLine.C0 || (screenLine.C1 != screenLine.C0 && cursorLoc.C >= screenLine.C1) {
 			continue
 		}
 
@@ -182,6 +187,7 @@ func (s *State) Flow(
 				viewport.C,
 			)
 		}
+		break
 	}
 
 	return

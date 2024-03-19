@@ -12,22 +12,6 @@ func TestFlowLines(t *testing.T) {
 	term := New()
 	term.Resize(4, 2)
 	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("foo\nfoobar\nbaz"))
-	// flow should be:
-	// 0: foo
-	// 1: foob
-	// --- the screen starts
-	// 1: ar
-	// 2: baz
-
-	require.Equal(
-		t,
-		geom.Vec2{
-			R: 1,
-			C: 4,
-		},
-		term.Root(),
-	)
 
 	// Remove anything in lines that can mess with comparisons
 	cleanLines := func(lines []ScreenLine) {
@@ -39,7 +23,39 @@ func TestFlowLines(t *testing.T) {
 		}
 	}
 
-	// 1. Just check that the screen is correct
+	// Flow an empty screen
+	{
+		result := term.Flow(
+			geom.Vec2{
+				R: 2,
+				C: 4,
+			},
+			term.Root(),
+		)
+
+		require.True(t, result.OK)
+		require.True(t, result.CursorOK)
+		require.Equal(t, 0, result.Cursor.Y)
+		require.Equal(t, 0, result.Cursor.X)
+	}
+
+	term.Write([]byte("foo\nfoobar\nbaz"))
+	// flow should be:
+	// 0: foo
+	// 1: foob
+	// --- the screen starts
+	// 1: ar
+	// 2: baz
+	require.Equal(
+		t,
+		geom.Vec2{
+			R: 1,
+			C: 4,
+		},
+		term.Root(),
+	)
+
+	// Just check that the screen is correct
 	{
 		result := term.Flow(
 			geom.Vec2{
@@ -79,7 +95,7 @@ func TestFlowLines(t *testing.T) {
 		require.Equal(t, 3, result.Cursor.X)
 	}
 
-	// 2. Check that negative counts work correctly
+	// Check that negative counts work correctly
 	{
 		result := term.Flow(
 			geom.Vec2{
@@ -117,7 +133,7 @@ func TestFlowLines(t *testing.T) {
 		require.False(t, result.CursorOK)
 	}
 
-	// 3. Do something really weird
+	// Do something really weird
 	{
 		result := term.Flow(
 			geom.Vec2{
