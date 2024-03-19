@@ -181,6 +181,30 @@ func TestViewport(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 11, C: 10}, r.offset)
 }
 
+func TestFlow(t *testing.T) {
+	s := sessions.NewSimulator()
+	s.Add(
+		geom.Size{R: 4, C: 10},
+		emu.LineFeedMode,
+		"foo\nbar\nbaz",
+		"\nsix",
+	)
+
+	r, i := createTest(s.Events())
+	i(geom.Size{R: 4, C: 10})
+
+	// the first write should not force us to move
+	r.forceIndex(2, -1)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
+	require.Equal(t, geom.Vec2{R: 2, C: 3}, r.cursor)
+
+	// the next will, though
+	r.forceIndex(3, -1)
+	// centers the cursor on the screen
+	require.Equal(t, geom.Vec2{R: 1, C: 3}, r.cursor)
+	require.Equal(t, geom.Vec2{R: 2, C: 0}, r.root)
+}
+
 func TestScroll(t *testing.T) {
 	s := sessions.NewSimulator()
 	s.Add(

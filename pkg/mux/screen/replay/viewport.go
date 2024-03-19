@@ -5,6 +5,7 @@ import (
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/rs/zerolog/log"
 )
 
 // Ensure a point in term space falls inside of the terminal and its scrollback.
@@ -40,6 +41,8 @@ func (r *Replay) setViewport(oldViewport, newViewport geom.Size) (taro.Model, te
 	r.viewport = newViewport
 	r.recalculateViewport()
 	r.setOffsetY(-1)
+
+	log.Info().Msgf("%+v %+v", newViewport, r.viewport)
 
 	if r.isCopyMode() {
 		r.centerPoint(r.cursor)

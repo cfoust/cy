@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -24,20 +25,56 @@ func (r *Replay) handleSeek(updateTime bool) {
 		r.currentTime = events[location.Index].Stamp
 	}
 
-	r.recalculateViewport()
-	termCursor := r.getTerminalCursor()
-	viewportCursor := r.termToViewport(termCursor)
-
 	r.mode = ModeTime
 	r.root = r.Root()
+	r.recalculateViewport()
 
-	// Center the cursor if it's not in the viewport
-	if !r.isInViewport(viewportCursor) {
-		r.centerPoint(termCursor)
+	if r.isImageMode() {
+		termCursor := r.getTerminalCursor()
+		viewportCursor := r.termToViewport(termCursor)
+
+		// Center the cursor if it's not in the viewport
+		if !r.isInViewport(viewportCursor) {
+			r.centerPoint(termCursor)
+		}
+
+		r.cursor = r.termToViewport(termCursor)
+		r.desiredCol = r.cursor.C
 	}
 
-	r.cursor = r.termToViewport(termCursor)
-	r.desiredCol = r.cursor.C
+	// First just flow the viewport; if the whole screen fits, do
+	// nothing
+	result := r.Flow(r.viewport, r.root)
+	if result.CursorOK {
+		r.cursor = geom.Vec2{
+			R: result.Cursor.Y,
+			C: result.Cursor.X,
+		}
+		return
+	}
+
+	// Flow the screen no matter how big it is
+	// By definition, cursor must be OK (we flow all lines)
+	result = r.Flow(geom.Vec2{C: r.viewport.C}, r.root)
+
+	// Center the cursor on the screen
+	row := geom.Clamp(
+		result.Cursor.Y-(r.viewport.R/2),
+		0,
+		len(result.Lines)-1,
+	)
+	rootLine := result.Lines[row]
+	r.root = geom.Vec2{
+		R: rootLine.R,
+		C: rootLine.C0,
+	}
+
+	// Now we reflow and set the cursor
+	result = r.Flow(r.viewport, r.root)
+	r.cursor = geom.Vec2{
+		R: result.Cursor.Y,
+		C: result.Cursor.X,
+	}
 }
 
 // Move the terminal back in time to the event at `index` and byte offset (if
