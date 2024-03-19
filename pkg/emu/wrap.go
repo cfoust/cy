@@ -225,11 +225,11 @@ findNew:
 
 		// This can only happen if the offset falls on the "next"
 		// character after the end of the line, so we need to wrap
-		if newOffset == oldOffset {
-			newCursor.isEnd = true
+		if row == len(newLine)-1 && newOffset == oldOffset {
+			newCursor.isEnd = numChars > 0
 			if isLast {
 				newCursor.cursor.State |= cursorWrapNext
-			} else {
+			} else if numChars > 0 {
 				newCursor.cursor.X++
 			}
 			break
@@ -245,7 +245,7 @@ func translateCursor(
 	oldCursor Cursor,
 	cols int,
 ) (newCursor wrappedCursor) {
-	for i := len(newLines) - 1; i >= 0; i-- {
+	for i := len(newPhysical) - 1; i >= 0; i-- {
 		// We want to skip any trailing physical lines we removed
 		oldLine := oldPhysical[i]
 		if len(oldLine) == 0 {
@@ -286,6 +286,17 @@ func resolveLines(lines []Line, physical []physicalLine) (resolved []Line) {
 	return
 }
 
+func wrapLines(lines []Line, cols int) (wrapped []physicalLine) {
+	for row, line := range lines {
+		wrappedLine := wrapLine(line, cols)
+		for i := range wrappedLine {
+			wrappedLine[i].R = row
+		}
+		wrapped = append(wrapped, wrappedLine)
+	}
+	return
+}
+
 func reflow(oldScreen []Line, oldCursor Cursor, cols int) (newLines []Line, newCursor Cursor, cursorValid bool) {
 	// 1. Get the offsets of all of the "physical" lines
 	oldWrapped := unwrapLines(oldScreen)
@@ -305,14 +316,7 @@ func reflow(oldScreen []Line, oldCursor Cursor, cols int) (newLines []Line, newC
 	cursorValid = len(oldResolved) > 0
 
 	// 3. Wrap those full []Lines into new physicalLines
-	newWrapped := make([]physicalLine, 0)
-	for row, line := range oldResolved {
-		wrappedLine := wrapLine(line, cols)
-		for i := range wrappedLine {
-			wrappedLine[i].R = row
-		}
-		newWrapped = append(newWrapped, wrappedLine)
-	}
+	newWrapped := wrapLines(oldResolved, cols)
 
 	// Find the cursor position
 	newCursor = translateCursor(

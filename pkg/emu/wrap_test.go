@@ -251,3 +251,71 @@ func TestHistory(t *testing.T) {
 
 	require.Equal(t, a.String(), b.String())
 }
+
+func translateTest(
+	t *testing.T,
+	oldCols, newCols int,
+	oldCursor, expectedCursor Cursor,
+	screen ...string,
+) {
+	lines := make([]Line, 0)
+	for _, line := range screen {
+		lines = append(lines, makeLine(line))
+	}
+	oldPhysical := wrapLines(lines, oldCols)
+	newPhysical := wrapLines(lines, newCols)
+
+	newCursor := translateCursor(
+		lines, lines,
+		oldPhysical, newPhysical,
+		oldCursor,
+		newCols,
+	)
+
+	require.Equal(t, expectedCursor, newCursor.cursor)
+}
+
+func TestTranslateCursor(t *testing.T) {
+	// Stays at end
+	translateTest(t, 4, 2,
+		Cursor{Y: 0, X: 3},
+		Cursor{Y: 1, X: 1},
+		"foo",
+	)
+
+	// Blank does nothing
+	translateTest(t, 4, 2,
+		Cursor{Y: 0, X: 0},
+		Cursor{Y: 0, X: 0},
+		"",
+	)
+
+	// Still nothing
+	translateTest(t, 4, 4,
+		Cursor{Y: 1, X: 0},
+		Cursor{Y: 1, X: 0},
+		"foo",
+		"",
+	)
+
+	// Stays in line
+	translateTest(t, 4, 2,
+		Cursor{Y: 0, X: 2},
+		Cursor{Y: 1, X: 0},
+		"foobar",
+	)
+
+	// Sent to end
+	translateTest(t, 8, 8,
+		Cursor{Y: 999, X: 999},
+		Cursor{Y: 0, X: 6},
+		"foobar",
+	)
+
+	// Preserves wrapped state
+	translateTest(t, 8, 2,
+		Cursor{Y: 0, X: 6},
+		Cursor{Y: 2, X: 1, State: cursorWrapNext},
+		"foobar",
+	)
+}
