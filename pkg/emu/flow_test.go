@@ -73,6 +73,10 @@ func TestFlowLines(t *testing.T) {
 			},
 			result.Lines,
 		)
+
+		require.True(t, result.CursorOK)
+		require.Equal(t, 1, result.Cursor.Y)
+		require.Equal(t, 3, result.Cursor.X)
 	}
 
 	// 2. Check that negative counts work correctly
@@ -109,6 +113,8 @@ func TestFlowLines(t *testing.T) {
 			},
 			result.Lines,
 		)
+
+		require.False(t, result.CursorOK)
 	}
 
 	// 3. Do something really weird
@@ -185,5 +191,9 @@ func TestFlowLines(t *testing.T) {
 			},
 			result.Lines,
 		)
+
+		require.True(t, result.CursorOK)
+		require.Equal(t, 6, result.Cursor.Y)
+		require.Equal(t, 1, result.Cursor.X)
 	}
 }

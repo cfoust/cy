@@ -144,7 +144,45 @@ func (s *State) Flow(
 		result.Lines[i].Chars = line[screenLine.C0:screenLine.C1]
 	}
 
-	// TODO(cfoust): 03/18/24 cursor
+	// translateCursor corrects the newCursor by snapping it to the the
+	// nearest line
+	newCursor := translateCursor(
+		s.screen,
+		s.screen,
+		screenLines,
+		screenLines,
+		s.Cursor(),
+		cols,
+	)
+
+	result.Cursor = newCursor.cursor
+	cursorLoc := newCursor.location
+
+	// Transform the result into the reference frame of the terminal and
+	// its history
+	cursorLoc.R += numHistory
+	if isWrapped {
+		cursorLoc.R--
+	}
+
+	for row, screenLine := range result.Lines {
+		result.Cursor.Y = row
+
+		if cursorLoc.R != screenLine.R || cursorLoc.C < screenLine.C0 || cursorLoc.C >= screenLine.C1 {
+			continue
+		}
+
+		result.CursorOK = true
+		result.Cursor.X = cursorLoc.C - screenLine.C0
+
+		if newCursor.isEnd {
+			result.Cursor.X = geom.Clamp(
+				result.Cursor.X+1,
+				0,
+				viewport.C,
+			)
+		}
+	}
 
 	return
 }

@@ -143,14 +143,20 @@ func getOccupiedLine(line Line) Line {
 	return line[:getLineLength(line)]
 }
 
+type wrappedCursor struct {
+	cursor   Cursor
+	location geom.Vec2
+	isEnd    bool
+}
+
 func wrapCursor(
 	oldLines, newLines []Line,
 	oldLine, newLine physicalLine,
 	oldCursor Cursor,
 	numCols int,
-) (newCursor Cursor) {
+) (newCursor wrappedCursor) {
 	// Set styles
-	newCursor = oldCursor
+	newCursor.cursor = oldCursor
 
 	// Find the oldOffset of the old cursor in the old line
 	oldOffset := 0
@@ -196,11 +202,15 @@ findOld:
 findNew:
 	for row, line := range newLine {
 		numChars := line.C1 - line.C0
-		newCursor.Y = row
+		newCursor.location.R = line.R
+		newCursor.cursor.Y = row
 		isLast := false
 
 		for col := 0; col < numChars; col++ {
-			newCursor.X = col
+			newCursor.location.C = line.C0 + col
+			newCursor.cursor.X = col
+
+			// The cursor is within the line (not at the end)
 			if newOffset == oldOffset {
 				break findNew
 			}
@@ -216,10 +226,11 @@ findNew:
 		// This can only happen if the offset falls on the "next"
 		// character after the end of the line, so we need to wrap
 		if newOffset == oldOffset {
+			newCursor.isEnd = true
 			if isLast {
-				newCursor.State |= cursorWrapNext
+				newCursor.cursor.State |= cursorWrapNext
 			} else {
-				newCursor.X++
+				newCursor.cursor.X++
 			}
 			break
 		}
@@ -233,7 +244,7 @@ func translateCursor(
 	oldPhysical, newPhysical []physicalLine,
 	oldCursor Cursor,
 	cols int,
-) (newCursor Cursor) {
+) (newCursor wrappedCursor) {
 	for i := len(newLines) - 1; i >= 0; i-- {
 		// We want to skip any trailing physical lines we removed
 		oldLine := oldPhysical[i]
@@ -258,7 +269,7 @@ func translateCursor(
 
 		// Make cursor row relative to new lines
 		for j := 0; j < i; j++ {
-			newCursor.Y += len(newPhysical[j])
+			newCursor.cursor.Y += len(newPhysical[j])
 		}
 
 		break
@@ -311,7 +322,7 @@ func reflow(oldScreen []Line, oldCursor Cursor, cols int) (newLines []Line, newC
 		newWrapped,
 		oldCursor,
 		cols,
-	)
+	).cursor
 
 	// 4. Turn those physicalLines into a screen
 	for _, physical := range newWrapped {
