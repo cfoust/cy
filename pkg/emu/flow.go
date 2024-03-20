@@ -2,6 +2,7 @@ package emu
 
 import (
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/rs/zerolog/log"
 )
 
 type FlowResult struct {
@@ -73,7 +74,6 @@ func (s *State) Flow(
 		return
 	}
 
-	result.OK = true
 	isBackwards := viewport.R < 0
 	viewport.R = geom.Abs(viewport.R)
 
@@ -91,11 +91,19 @@ func (s *State) Flow(
 			R: row,
 		}
 
+		// If we're going backwards but we're keeping none of the root
+		// line, just go up one line.
 		if len(line) == 0 {
 			row--
+			location.R = row
 			line, ok = getLine(row)
+			if !ok {
+				return
+			}
 		}
 	}
+
+	result.OK = true
 
 	for {
 		numLeft := geom.Max(viewport.R-len(result.Lines), 0)
@@ -109,7 +117,7 @@ func (s *State) Flow(
 
 		numBroken := len(broken)
 
-		// We take ALL line if viewport.R == 0
+		// We take ALL lines if viewport.R == 0
 		if viewport.R == 0 {
 			numLeft = numBroken
 		}
@@ -145,6 +153,8 @@ func (s *State) Flow(
 	}
 
 	// Resolve lines
+	log.Info().Msgf("%+v", screen)
+	log.Info().Msgf("%+v", result.Lines)
 	for i, screenLine := range result.Lines {
 		line, ok := getLine(screenLine.R)
 		if !ok {
