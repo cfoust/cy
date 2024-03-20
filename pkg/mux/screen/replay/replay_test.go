@@ -226,7 +226,6 @@ func TestScroll(t *testing.T) {
 	// -- history:
 	// one
 	// two
-	// three
 	// -- screen:
 	// three
 	// four
@@ -236,33 +235,58 @@ func TestScroll(t *testing.T) {
 
 	// six
 	// seven[ ]
-	require.Equal(t, 1, r.cursor.R)
-	require.Equal(t, 5, r.cursor.C)
+	require.Equal(t, geom.Vec2{
+		R: 1,
+		C: 5,
+	}, r.cursor)
+	require.Equal(t, geom.Vec2{
+		R: 5,
+	}, r.root)
 	require.Equal(t, 5, r.desiredCol)
 
 	i(ActionScrollUp)
 	// five
 	// si[x]
-	require.Equal(t, 2, r.cursor.C)
-	require.Equal(t, 5, r.desiredCol)
+	require.Equal(t, geom.Vec2{
+		R: 1,
+		C: 2,
+	}, r.cursor)
+	require.Equal(t, geom.Vec2{
+		R: 4,
+	}, r.root)
 
 	i(ActionScrollUp)
 	// four
 	// fiv[e]
-	require.Equal(t, 3, r.cursor.C)
-	require.Equal(t, 5, r.desiredCol)
+	require.Equal(t, geom.Vec2{
+		R: 1,
+		C: 3,
+	}, r.cursor)
+	require.Equal(t, geom.Vec2{
+		R: 3,
+	}, r.root)
 
 	i(ActionScrollDown)
 	// fiv[e]
 	// six
-	require.Equal(t, 0, r.cursor.R)
-	require.Equal(t, 3, r.cursor.C)
+	require.Equal(t, geom.Vec2{
+		R: 0,
+		C: 3,
+	}, r.cursor)
+	require.Equal(t, geom.Vec2{
+		R: 4,
+	}, r.root)
 
 	i(ActionScrollDown)
 	// si[x]
 	// seven
-	require.Equal(t, 0, r.cursor.R)
-	require.Equal(t, 2, r.cursor.C)
+	require.Equal(t, geom.Vec2{
+		R: 0,
+		C: 2,
+	}, r.cursor)
+	require.Equal(t, geom.Vec2{
+		R: 5,
+	}, r.root)
 
 	i(ActionBeginning)
 	require.Equal(t, -2, r.viewportToTerm(r.cursor).R)
