@@ -109,27 +109,6 @@ func (r *Replay) getTerminalSize() geom.Vec2 {
 	}
 }
 
-// Get the glyphs for a row in term space.
-func (r *Replay) getLine(row int) emu.Line {
-	screen := r.Screen()
-	history := r.History()
-
-	// Handle out-of-bounds lines
-	clamped := geom.Clamp(row, -len(history), r.getTerminalSize().R-1)
-	if clamped != row {
-		return nil
-	}
-
-	var line emu.Line
-	if row < 0 {
-		line = history[len(history)+row]
-	} else {
-		line = screen[row]
-	}
-
-	return line
-}
-
 func (r *Replay) exitCopyMode() {
 	r.mode = ModeTime
 	r.isSelecting = false

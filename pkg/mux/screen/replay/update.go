@@ -101,9 +101,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case taro.MouseMsg:
 		switch msg.Button {
 		case taro.MouseWheelUp:
-			r.setScrollY(r.offset.R - 1)
+			r.scrollYDelta(-1)
 		case taro.MouseWheelDown:
-			r.setScrollY(r.offset.R + 1)
+			r.scrollYDelta(+1)
 			// TODO(cfoust): 11/22/23 what should happen to cursor?
 			//case taro.MouseWheelLeft:
 			//r.setScrollX(r.offset.C - 1)
@@ -170,9 +170,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case ActionScrollDownHalf:
 			r.moveCursorDelta((viewport.R / 2), 0)
 		case ActionScrollUp:
-			r.setScrollY(r.offset.R - 1)
+			r.scrollYDelta(-1)
 		case ActionScrollDown:
-			r.setScrollY(r.offset.R + 1)
+			r.scrollYDelta(+1)
 		case ActionCursorDown:
 			r.moveCursorDelta(1, 0)
 		case ActionCursorUp:

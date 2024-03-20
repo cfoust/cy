@@ -66,12 +66,22 @@ func getNonWhitespace(line emu.Line) (first, last int) {
 // the best available cursor position. This enables behavior akin to moving up
 // and down in a text editor.
 func (r *Replay) resolveDesiredColumn(point geom.Vec2) int {
-	line := r.getLine(point.R)
-	if line == nil {
+	row := point.R
+	result := r.Flow(r.viewport, r.root)
+	if !result.OK {
 		return 0
 	}
 
+	lines := result.Lines
+	if row < 0 || row >= len(lines) {
+		return 0
+	}
+
+	line := lines[row].Chars
 	occupancy := getOccupancy(line)
+	if point.C > len(occupancy) {
+		return len(occupancy) - 1
+	}
 
 	// desiredCol occupied -> return that col
 	if occupancy[point.C] {
@@ -126,19 +136,19 @@ func (r *Replay) moveCursor(point geom.Vec2) {
 	newCursor := r.termToViewport(point)
 
 	if newCursor.C < 0 {
-		r.setOffsetX(r.offset.C + newCursor.C)
+		r.setImageOffsetX(r.offset.C + newCursor.C)
 	}
 
 	if newCursor.C >= viewport.C {
-		r.setOffsetX(r.offset.C + (newCursor.C - viewport.C + 1))
+		r.setImageOffsetX(r.offset.C + (newCursor.C - viewport.C + 1))
 	}
 
 	if newCursor.R < 0 {
-		r.setOffsetY(r.offset.R + newCursor.R)
+		r.setImageOffsetY(r.offset.R + newCursor.R)
 	}
 
 	if newCursor.R >= viewport.R {
-		r.setOffsetY(r.offset.R + (newCursor.R - viewport.R + 1))
+		r.setImageOffsetY(r.offset.R + (newCursor.R - viewport.R + 1))
 	}
 
 	r.cursor = newCursor

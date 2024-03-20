@@ -40,6 +40,7 @@ func (r *Replay) handleSeek(updateTime bool) {
 
 		r.cursor = r.termToViewport(termCursor)
 		r.desiredCol = r.cursor.C
+		return
 	}
 
 	// First just flow the viewport; if the whole screen fits, do
@@ -50,6 +51,7 @@ func (r *Replay) handleSeek(updateTime bool) {
 			R: result.Cursor.Y,
 			C: result.Cursor.X,
 		}
+		r.desiredCol = r.cursor.C
 		return
 	}
 
@@ -75,6 +77,7 @@ func (r *Replay) handleSeek(updateTime bool) {
 		R: result.Cursor.Y,
 		C: result.Cursor.X,
 	}
+	r.desiredCol = r.cursor.C
 }
 
 // Move the terminal back in time to the event at `index` and byte offset (if

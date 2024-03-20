@@ -220,12 +220,25 @@ func TestScroll(t *testing.T) {
 	)
 
 	r, i := createTest(s.Events())
-	i(geom.Size{R: 3, C: 10})
+	i(geom.Size{R: 3, C: 10}) // 2x10
+	r.forceIndex(8, -1)
+
+	// -- history:
+	// one
+	// two
+	// three
+	// -- screen:
+	// three
+	// four
+	// five
+	// six
+	// seven[ ]
+
+	// six
+	// seven[ ]
 	require.Equal(t, 1, r.cursor.R)
 	require.Equal(t, 5, r.cursor.C)
 	require.Equal(t, 5, r.desiredCol)
-	// six
-	// seven[ ]
 
 	i(ActionScrollUp)
 	// five

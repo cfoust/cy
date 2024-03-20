@@ -2,7 +2,6 @@ package emu
 
 import (
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/rs/zerolog/log"
 )
 
 type FlowResult struct {
@@ -153,8 +152,6 @@ func (s *State) Flow(
 	}
 
 	// Resolve lines
-	log.Info().Msgf("%+v", screen)
-	log.Info().Msgf("%+v", result.Lines)
 	for i, screenLine := range result.Lines {
 		line, ok := getLine(screenLine.R)
 		if !ok {
