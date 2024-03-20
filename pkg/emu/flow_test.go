@@ -35,6 +35,7 @@ func TestFlowLines(t *testing.T) {
 
 		require.True(t, result.OK)
 		require.True(t, result.CursorOK)
+		require.Equal(t, 2, result.NumLines)
 		require.Equal(t, 0, result.Cursor.Y)
 		require.Equal(t, 0, result.Cursor.X)
 	}
@@ -68,6 +69,7 @@ func TestFlowLines(t *testing.T) {
 		cleanLines(result.Lines)
 
 		require.True(t, result.OK)
+		require.Equal(t, 3, result.NumLines)
 		require.Equal(t,
 			[]ScreenLine{
 				{
@@ -108,6 +110,7 @@ func TestFlowLines(t *testing.T) {
 		cleanLines(result.Lines)
 
 		require.True(t, result.OK)
+		require.Equal(t, 3, result.NumLines)
 		require.Equal(t,
 			[]ScreenLine{
 				{
@@ -146,6 +149,7 @@ func TestFlowLines(t *testing.T) {
 		cleanLines(result.Lines)
 
 		require.True(t, result.OK)
+		require.Equal(t, 3, result.NumLines)
 		require.Equal(t,
 			[]ScreenLine{
 				{

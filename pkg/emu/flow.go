@@ -5,6 +5,8 @@ import (
 )
 
 type FlowResult struct {
+	// The total number of physical lines in the history AND on the screen
+	NumLines int
 	Lines    []ScreenLine
 	OK       bool
 	Cursor   Cursor
@@ -37,6 +39,8 @@ func (s *State) Flow(
 		numLines--
 		screenStart = 1
 	}
+
+	result.NumLines = numLines
 
 	if root.C < 0 || root.R < 0 || root.R >= numLines {
 		return
