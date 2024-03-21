@@ -309,33 +309,71 @@ func TestCursor(t *testing.T) {
 	r, i := createTest(s.Events())
 	i(geom.Size{R: 3, C: 10})
 	r.forceIndex(5, -1)
-	require.Equal(t, 1, r.cursor.R)
-	require.Equal(t, 4, r.cursor.C)
+	require.Equal(t, geom.Vec2{
+		R: 1,
+		C: 4,
+	}, r.cursor)
 	require.Equal(t, 4, r.desiredCol)
+
 	i(ActionCursorUp)
-	require.Equal(t, 4, r.cursor.C)
+	require.Equal(t, geom.Vec2{
+		R: 0,
+		C: 4,
+	}, r.cursor)
+
 	i(ActionCursorUp)
-	require.Equal(t, 5, r.cursor.C)
+	require.Equal(t, geom.Vec2{
+		R: 0,
+		C: 5,
+	}, r.cursor)
+
 	i(ActionCursorUp)
-	require.Equal(t, 2, r.cursor.C)
+	require.Equal(t, geom.Vec2{
+		R: 0,
+		C: 2,
+	}, r.cursor)
+
 	i(ActionCursorRight)
-	require.Equal(t, 2, r.cursor.C)
+	require.Equal(t, geom.Vec2{
+		R: 0,
+		C: 2,
+	}, r.cursor)
+
 	i(ActionCursorLeft, ActionCursorLeft, ActionCursorLeft, ActionCursorLeft)
-	require.Equal(t, 0, r.cursor.C)
+	require.Equal(t, geom.Vec2{
+		R: 0,
+		C: 0,
+	}, r.cursor)
+
 	i(ActionCursorDown)
-	require.Equal(t, 5, r.cursor.C)
+	require.Equal(t, geom.Vec2{
+		R: 1,
+		C: 5,
+	}, r.cursor)
+
 	i(ActionCursorDown)
-	require.Equal(t, 0, r.cursor.C)
+	require.Equal(t, geom.Vec2{
+		R: 1,
+		C: 0,
+	}, r.cursor)
 
 	// at end of screen
 	i(ActionCursorDown)
-	require.Equal(t, 0, r.cursor.C)
-	require.Equal(t, 1, r.cursor.R)
+	require.Equal(t, geom.Vec2{
+		R: 1,
+		C: 0,
+	}, r.cursor)
+	require.Equal(t, geom.Vec2{
+		R: 2,
+		C: 0,
+	}, r.root)
 
 	// moving down past last occupied line should do nothing
 	i(ActionCursorDown)
-	require.Equal(t, 0, r.cursor.C)
-	require.Equal(t, 1, r.cursor.R)
+	require.Equal(t, geom.Vec2{
+		R: 1,
+		C: 0,
+	}, r.cursor)
 }
 
 func TestEmpty(t *testing.T) {
