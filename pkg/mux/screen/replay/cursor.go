@@ -133,7 +133,7 @@ func (r *Replay) resolveScreenColumn(row int) int {
 
 func (r *Replay) moveCursorX(delta int) {
 	if r.isImageMode() {
-		r.moveCursorDelta(geom.Vec2{C: delta})
+		r.moveCursorDeltaImage(geom.Vec2{C: delta})
 		return
 	}
 
@@ -170,7 +170,7 @@ func (r *Replay) moveCursorX(delta int) {
 func (r *Replay) moveCursorY(delta int) {
 	// We only do a simple bounds check in image mode
 	if r.isImageMode() {
-		r.moveCursorDelta(geom.Vec2{R: delta})
+		r.moveCursorDeltaImage(geom.Vec2{R: delta})
 		return
 	}
 

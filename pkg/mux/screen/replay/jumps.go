@@ -10,7 +10,7 @@ import (
 
 func (r *Replay) handleJump(needle string, isForward bool, isTo bool) (taro.Model, tea.Cmd) {
 	oldPos := r.viewportToTerm(r.cursor)
-	line := r.getLine(oldPos.R)
+	line := r.getImageLine(oldPos.R)
 
 	newCol := oldPos.C
 	if isForward {
@@ -72,7 +72,7 @@ func (r *Replay) handleJump(needle string, isForward bool, isTo bool) (taro.Mode
 		R: oldPos.R,
 		C: newCol,
 	}
-	r.moveCursor(newPos)
+	r.moveCursorImage(newPos)
 	r.desiredCol = r.termToViewport(newPos).C
 
 	return r, nil

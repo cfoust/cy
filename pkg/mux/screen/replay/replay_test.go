@@ -157,15 +157,15 @@ func TestSearch(t *testing.T) {
 func TestIndex(t *testing.T) {
 	r, _ := createTest(createTestSession())
 	r.forceIndex(2, 0)
-	require.Equal(t, "t ", r.getLine(0).String()[:2])
+	require.Equal(t, "t ", r.getImageLine(0).String()[:2])
 	r.forceIndex(2, 1)
-	require.Equal(t, "te ", r.getLine(0).String()[:3])
+	require.Equal(t, "te ", r.getImageLine(0).String()[:3])
 	r.forceIndex(2, 0)
-	require.Equal(t, "t ", r.getLine(0).String()[:2])
+	require.Equal(t, "t ", r.getImageLine(0).String()[:2])
 	r.forceIndex(2, -1)
-	require.Equal(t, "test", r.getLine(0).String()[:4])
+	require.Equal(t, "test", r.getImageLine(0).String()[:4])
 	r.forceIndex(4, -1)
-	require.Equal(t, "take", r.getLine(0).String()[:4])
+	require.Equal(t, "take", r.getImageLine(0).String()[:4])
 }
 
 func TestViewport(t *testing.T) {
@@ -374,6 +374,28 @@ func TestCursor(t *testing.T) {
 		R: 1,
 		C: 0,
 	}, r.cursor)
+
+	// force a big movement
+	r.moveCursorY(-5)
+	require.Equal(t, geom.Vec2{
+		R: 0,
+		C: 0,
+	}, r.cursor)
+	require.Equal(t, geom.Vec2{
+		R: 0,
+		C: 0,
+	}, r.root)
+
+	// then back
+	r.moveCursorY(5)
+	require.Equal(t, geom.Vec2{
+		R: 1,
+		C: 0,
+	}, r.cursor)
+	require.Equal(t, geom.Vec2{
+		R: 2,
+		C: 0,
+	}, r.root)
 }
 
 func TestEmpty(t *testing.T) {

@@ -25,7 +25,7 @@ func (r *Replay) readString(start, end geom.Vec2) (result string) {
 	var char rune
 	var startCol, endCol, lastChar int
 	for row := start.R; row <= end.R; row++ {
-		line := r.getLine(row)
+		line := r.getImageLine(row)
 		startCol = 0
 		if row == start.R {
 			startCol = start.C

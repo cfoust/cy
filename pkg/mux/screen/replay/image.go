@@ -63,7 +63,7 @@ func (r *Replay) setImageOffsetX(offset int) {
 }
 
 // Get the glyphs for a row in term space.
-func (r *Replay) getLine(row int) emu.Line {
+func (r *Replay) getImageLine(row int) emu.Line {
 	screen := r.Screen()
 	history := r.History()
 
@@ -85,7 +85,7 @@ func (r *Replay) getLine(row int) emu.Line {
 
 // Move the cursor to a point in term space, adjusting the viewport the minimum
 // amount necessary to keep the cursor in view.
-func (r *Replay) moveCursor(point geom.Vec2) {
+func (r *Replay) moveCursorImage(point geom.Vec2) {
 	viewport := r.viewport
 	newCursor := r.termToViewport(point)
 
@@ -108,9 +108,9 @@ func (r *Replay) moveCursor(point geom.Vec2) {
 	r.cursor = newCursor
 }
 
-func (r *Replay) moveCursorDelta(delta geom.Vec2) {
+func (r *Replay) moveCursorDeltaImage(delta geom.Vec2) {
 	r.mode = ModeCopy
 	oldPos := r.viewportToTerm(r.cursor)
 	newPos := r.clampToTerminal(oldPos.Add(delta))
-	r.moveCursor(newPos)
+	r.moveCursorImage(newPos)
 }
