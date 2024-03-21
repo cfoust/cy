@@ -82,3 +82,35 @@ func (r *Replay) getLine(row int) emu.Line {
 
 	return line
 }
+
+// Move the cursor to a point in term space, adjusting the viewport the minimum
+// amount necessary to keep the cursor in view.
+func (r *Replay) moveCursor(point geom.Vec2) {
+	viewport := r.viewport
+	newCursor := r.termToViewport(point)
+
+	if newCursor.C < 0 {
+		r.setImageOffsetX(r.offset.C + newCursor.C)
+	}
+
+	if newCursor.C >= viewport.C {
+		r.setImageOffsetX(r.offset.C + (newCursor.C - viewport.C + 1))
+	}
+
+	if newCursor.R < 0 {
+		r.setImageOffsetY(r.offset.R + newCursor.R)
+	}
+
+	if newCursor.R >= viewport.R {
+		r.setImageOffsetY(r.offset.R + (newCursor.R - viewport.R + 1))
+	}
+
+	r.cursor = newCursor
+}
+
+func (r *Replay) moveCursorDelta(delta geom.Vec2) {
+	r.mode = ModeCopy
+	oldPos := r.viewportToTerm(r.cursor)
+	newPos := r.clampToTerminal(oldPos.Add(delta))
+	r.moveCursor(newPos)
+}

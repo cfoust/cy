@@ -14,6 +14,14 @@ type ScreenLine struct {
 	Chars Line
 }
 
+// Root returns the coordinate of the beginning of this ScreenLine.
+func (l ScreenLine) Root() geom.Vec2 {
+	return geom.Vec2{
+		R: l.R,
+		C: l.C0,
+	}
+}
+
 type physicalLine []ScreenLine
 
 func wrapLine(line Line, cols int) (lines physicalLine) {

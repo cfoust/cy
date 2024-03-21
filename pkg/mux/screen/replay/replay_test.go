@@ -308,7 +308,7 @@ func TestCursor(t *testing.T) {
 
 	r, i := createTest(s.Events())
 	i(geom.Size{R: 3, C: 10})
-	require.Equal(t, 2, r.offset.R)
+	r.forceIndex(5, -1)
 	require.Equal(t, 1, r.cursor.R)
 	require.Equal(t, 4, r.cursor.C)
 	require.Equal(t, 4, r.desiredCol)
@@ -334,10 +334,8 @@ func TestCursor(t *testing.T) {
 
 	// moving down past last occupied line should do nothing
 	i(ActionCursorDown)
-	require.Equal(t, geom.Vec2{
-		R: 3,
-		C: 0,
-	}, r.viewportToTerm(r.cursor))
+	require.Equal(t, 0, r.cursor.C)
+	require.Equal(t, 1, r.cursor.R)
 }
 
 func TestEmpty(t *testing.T) {

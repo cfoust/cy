@@ -91,10 +91,7 @@ func (r *Replay) scrollYDelta(delta int) {
 	newRow = geom.Clamp(newRow, 0, r.viewport.R-1)
 	r.cursor = geom.Vec2{
 		R: newRow,
-		C: r.resolveDesiredColumn(geom.Vec2{
-			R: newRow,
-			C: r.desiredCol,
-		}),
+		C: r.resolveScreenColumn(newRow),
 	}
 }
 

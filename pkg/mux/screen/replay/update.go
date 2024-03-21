@@ -132,9 +132,8 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return r.quit()
 		case ActionBeginning:
 			if r.isCopyMode() {
-				r.moveCursorDelta(
-					-r.viewportToTerm(r.cursor).R+r.minOffset.R,
-					0,
+				r.moveCursorY(
+					-r.viewportToTerm(r.cursor).R + r.minOffset.R,
 				)
 				return r, nil
 			}
@@ -142,9 +141,8 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return r, r.gotoIndex(0, -1)
 		case ActionEnd:
 			if r.isCopyMode() {
-				r.moveCursorDelta(
-					(r.getTerminalSize().R-1)-r.viewportToTerm(r.cursor).R,
-					0,
+				r.moveCursorY(
+					(r.getTerminalSize().R - 1) - r.viewportToTerm(r.cursor).R,
 				)
 				return r, nil
 			}
@@ -166,21 +164,21 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case ActionTimeStepForward:
 			return r, r.gotoIndex(r.Location().Index+1, -1)
 		case ActionScrollUpHalf:
-			r.moveCursorDelta(-(viewport.R / 2), 0)
+			r.moveCursorY(-(viewport.R / 2))
 		case ActionScrollDownHalf:
-			r.moveCursorDelta((viewport.R / 2), 0)
+			r.moveCursorY((viewport.R / 2))
 		case ActionScrollUp:
 			r.scrollYDelta(-1)
 		case ActionScrollDown:
 			r.scrollYDelta(+1)
 		case ActionCursorDown:
-			r.moveCursorDelta(1, 0)
+			r.moveCursorY(1)
 		case ActionCursorUp:
-			r.moveCursorDelta(-1, 0)
+			r.moveCursorY(-1)
 		case ActionCursorLeft:
-			r.moveCursorDelta(0, -1)
+			r.moveCursorX(-1)
 		case ActionCursorRight:
-			r.moveCursorDelta(0, 1)
+			r.moveCursorX(1)
 		case ActionSelect:
 			if !r.isCopyMode() {
 				return r, nil
