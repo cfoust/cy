@@ -2,6 +2,7 @@ package replay
 
 import (
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/mux/screen/replay/movement"
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -72,8 +73,16 @@ func (r *Replay) handleCopy() (taro.Model, tea.Cmd) {
 	}
 }
 
+func (r *Replay) initializeMovement() {
+	r.movement = movement.NewImage(r.Terminal)
+	if !r.isImageMode() {
+		r.movement = movement.NewFlow(r.Terminal)
+	}
+	r.movement.Resize(r.viewport)
+}
+
 func (r *Replay) exitCopyMode() {
 	r.mode = ModeTime
 	r.isSelecting = false
-	r.movement.Reset()
+	r.initializeMovement()
 }

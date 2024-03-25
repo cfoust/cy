@@ -23,10 +23,11 @@ type flowMovement struct {
 
 var _ Movement = (*flowMovement)(nil)
 
-func NewFlow(terminal emu.Terminal) Movement {
+func NewFlow(terminal emu.Terminal, viewport geom.Size) Movement {
 	f := &flowMovement{Terminal: terminal}
 
 	f.root = f.Root()
+	f.viewport = viewport
 
 	// First just flow the viewport; if the whole screen fits, do
 	// nothing
@@ -237,7 +238,7 @@ func (f *flowMovement) resolveScreenColumn(row int) int {
 }
 
 func (f *flowMovement) Resize(size geom.Vec2) {
-	// TODO(cfoust): 03/25/24
+	f.viewport = size
 }
 
 func (f *flowMovement) Cursor() geom.Vec2 {

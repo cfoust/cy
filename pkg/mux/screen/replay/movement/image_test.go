@@ -13,8 +13,8 @@ import (
 
 var sim = sessions.NewSimulator
 
-func createImageTest(terminal emu.Terminal) *imageMovement {
-	movement := NewImage(terminal)
+func createImageTest(terminal emu.Terminal, size geom.Size) *imageMovement {
+	movement := NewImage(terminal, size)
 	i := movement.(*imageMovement)
 	return i
 }
@@ -25,8 +25,7 @@ func TestViewport(t *testing.T) {
 		Term(terminfo.ClearScreen).
 		Term(terminfo.CursorAddress, 19, 19)
 
-	i := createImageTest(s.Terminal())
-	i.Resize(geom.Size{R: 9, C: 10})
+	i := createImageTest(s.Terminal(), geom.Size{R: 9, C: 10})
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.minOffset)
 	require.Equal(t, geom.Vec2{R: 11, C: 10}, i.maxOffset)
 	require.Equal(t, geom.Vec2{R: 11, C: 10}, i.offset)
@@ -41,8 +40,7 @@ func TestReadString(t *testing.T) {
 			"你好 ",
 		)
 
-	r := createImageTest(s.Terminal())
-	r.Resize(geom.Size{R: 5, C: 10})
+	r := createImageTest(s.Terminal(), geom.Size{R: 5, C: 10})
 	require.Equal(t, `foo`, r.ReadString(
 		geom.Vec2{R: 0, C: 0},
 		geom.Vec2{R: 0, C: 2},

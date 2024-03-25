@@ -19,8 +19,11 @@ type imageMovement struct {
 
 var _ Movement = (*imageMovement)(nil)
 
-func NewImage(terminal emu.Terminal) Movement {
+func NewImage(terminal emu.Terminal, viewport geom.Size) Movement {
 	i := &imageMovement{Terminal: terminal}
+
+	i.viewport = viewport
+	i.recalculateViewport()
 
 	termCursor := getTerminalCursor(i.Terminal)
 	viewportCursor := i.termToViewport(termCursor)
@@ -45,12 +48,6 @@ func (i *imageMovement) ScrollBottom() {
 	i.MoveCursorY(
 		(getTerminalSize(i.Terminal).R - 1) - i.viewportToTerm(i.cursor).R,
 	)
-}
-
-func (i *imageMovement) Reset() {
-	termCursor := getTerminalCursor(i.Terminal)
-	i.centerPoint(termCursor)
-	i.cursor = i.termToViewport(termCursor)
 }
 
 // Check whether the given point in viewport space actually falls within it.

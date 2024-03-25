@@ -12,7 +12,6 @@ type Movement interface {
 	MoveCursorX(delta int)
 	MoveCursorY(delta int)
 	ReadString(start, end geom.Vec2) string
-	Reset()
 	Resize(geom.Size)
 	ScrollBottom()
 	ScrollTop()
