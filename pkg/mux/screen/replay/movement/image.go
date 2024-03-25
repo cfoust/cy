@@ -38,7 +38,7 @@ func (i *imageMovement) clampToTerminal(point geom.Vec2) geom.Vec2 {
 
 // Center the viewport on a point in the reference frame of the terminal.
 func (i *imageMovement) centerPoint(point geom.Vec2) {
-	i.setImageOffsetX(point.C - (i.viewport.C / 2))
+	i.setOffsetX(point.C - (i.viewport.C / 2))
 	i.setImageOffsetY(point.R - (i.viewport.R / 2))
 }
 
@@ -64,7 +64,7 @@ func (i *imageMovement) setImageOffsetY(offset int) {
 	i.setImageOffset(geom.Vec2{R: offset})
 }
 
-func (i *imageMovement) setImageOffsetX(offset int) {
+func (i *imageMovement) setOffsetX(offset int) {
 	i.setImageOffset(geom.Vec2{C: offset})
 }
 
@@ -100,11 +100,11 @@ func (i *imageMovement) moveCursorImage(point geom.Vec2) {
 	newCursor := i.termToViewport(point)
 
 	if newCursor.C < 0 {
-		i.setImageOffsetX(i.offset.C + newCursor.C)
+		i.setOffsetX(i.offset.C + newCursor.C)
 	}
 
 	if newCursor.C >= viewport.C {
-		i.setImageOffsetX(i.offset.C + (newCursor.C - viewport.C + 1))
+		i.setOffsetX(i.offset.C + (newCursor.C - viewport.C + 1))
 	}
 
 	if newCursor.R < 0 {
@@ -148,7 +148,7 @@ func (i *imageMovement) recalculateViewport() {
 		C: geom.Max(termSize.C-i.viewport.C, 0),
 	}
 	i.setImageOffsetY(i.offset.R)
-	i.setImageOffsetX(i.offset.C)
+	i.setOffsetX(i.offset.C)
 }
 
 func (r *imageMovement) HandleSeek() {
@@ -165,7 +165,7 @@ func (r *imageMovement) HandleSeek() {
 
 func (i *imageMovement) setScrollX(offset int) {
 	before := i.viewportToTerm(i.cursor)
-	i.setImageOffsetX(offset)
+	i.setOffsetX(offset)
 	after := i.termToViewport(before)
 
 	if after.C >= i.viewport.C {
@@ -236,4 +236,21 @@ func (i *imageMovement) Resize(size geom.Vec2) {
 	i.recalculateViewport()
 	i.setImageOffsetY(-1)
 	i.centerPoint(i.cursor)
+}
+
+func (i *imageMovement) MoveCursorX(delta int) {
+	i.moveCursorDeltaImage(geom.Vec2{C: delta})
+}
+
+func (i *imageMovement) MoveCursorY(delta int) {
+	i.moveCursorDeltaImage(geom.Vec2{R: delta})
+}
+
+func (f *imageMovement) Jump(needle string, isForward bool, isTo bool) {
+	oldPos := f.viewportToTerm(f.cursor)
+	line := f.getImageLine(oldPos.R)
+	f.moveCursorImage(geom.Vec2{
+		R: oldPos.R,
+		C: calculateJump(line, needle, isForward, isTo, oldPos.C),
+	})
 }

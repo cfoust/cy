@@ -251,3 +251,102 @@ func (f *flowMovement) Cursor() geom.Vec2 {
 func (f *flowMovement) ReadString(start, end geom.Vec2) (result string) {
 	return ""
 }
+
+func (f *flowMovement) MoveCursorX(delta int) {
+	current, ok := f.getFlowLine(f.cursor.R)
+	if !ok {
+		return
+	}
+
+	oldCol := f.cursor.C
+	newCol := geom.Clamp(
+		f.cursor.C+delta,
+		0,
+		len(current.Chars)-1,
+	)
+
+	// Motion to the right is bounded by the last non-whitespace character
+	if newCol > oldCol {
+		_, lastCell := getNonWhitespace(current.Chars)
+		newCol = geom.Min(lastCell, newCol)
+	}
+
+	// Don't do anything if we can't move
+	if newCol == oldCol {
+		return
+	}
+
+	f.cursor.C = newCol
+	f.desiredCol = newCol
+}
+
+func (f *flowMovement) MoveCursorY(delta int) {
+	current, ok := f.getFlowLine(f.cursor.R)
+	if !ok {
+		return
+	}
+
+	numRows := delta
+	if delta >= 0 {
+		// Include the root line
+		numRows++
+	}
+
+	// We want to flow from the current line of the cursor to its
+	// destination so that we can determine how much to move the viewport
+	// and where to leave the cursor.
+	flow := f.Flow(geom.Vec2{
+		R: numRows,
+		C: f.viewport.C,
+	}, geom.Vec2{
+		R: current.R,
+		C: current.C0,
+	})
+	if !flow.OK {
+		return
+	}
+
+	// Ensure the user can't move past the last physical line
+	lastLine := f.getLastFlow()
+	for i := 0; i < len(flow.Lines); i++ {
+		if flow.Lines[i].Root().R <= lastLine {
+			continue
+		}
+
+		flow.Lines = flow.Lines[:i]
+		break
+	}
+
+	destLine := flow.Lines[0]
+	if delta >= 0 {
+		destLine = flow.Lines[len(flow.Lines)-1]
+	}
+
+	if destLine.Root() == current.Root() {
+		return
+	}
+
+	f.cursor.C = resolveDesiredColumn(destLine.Chars, f.desiredCol)
+
+	// If the line is on the screen, we don't need to scroll
+	viewport := f.Flow(f.viewport, f.root)
+	for row, line := range viewport.Lines {
+		if line.Root() != destLine.Root() {
+			continue
+		}
+
+		f.cursor.R = row
+		break
+	}
+
+	position := ScrollPositionBottom
+	if delta < 0 {
+		position = ScrollPositionTop
+	}
+
+	f.scrollToFlowLine(destLine.Root(), position)
+}
+
+func (f *flowMovement) Jump(needle string, isForward bool, isTo bool) {
+	// TODO(cfoust): 03/25/24
+}

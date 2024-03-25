@@ -201,19 +201,21 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				direction = !direction
 			}
 
-			return r.handleJump(
+			r.handleJump(
 				r.jumpChar,
 				direction,
 				r.wasJumpTo,
 			)
+			return r, nil
 		case ActionJumpForward, ActionJumpBackward, ActionJumpToForward, ActionJumpToBackward:
 			isForward := msg.Type == ActionJumpForward || msg.Type == ActionJumpToForward
 			isTo := msg.Type == ActionJumpToForward || msg.Type == ActionJumpToBackward
-			return r.handleJump(
+			r.handleJump(
 				msg.Arg,
 				isForward,
 				isTo,
 			)
+			return r, nil
 		}
 	}
 
