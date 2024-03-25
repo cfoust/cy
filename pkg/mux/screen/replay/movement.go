@@ -2,13 +2,12 @@ package replay
 
 import (
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/taro"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func (r *Replay) moveCursorX(delta int) {
-	if r.isImageMode() {
-		return
-	}
-
 	r.mode = ModeCopy
 	r.movement.MoveCursorX(delta)
 }
@@ -16,16 +15,11 @@ func (r *Replay) moveCursorX(delta int) {
 // moveCursorDelta attempts to move the cursor relative to its current
 // position. Sets `desiredCol` if the motion is horizontal (ie dx != 0).
 func (r *Replay) moveCursorY(delta int) {
-	// We only do a simple bounds check in image mode
-	if r.isImageMode() {
-		return
-	}
-
 	r.mode = ModeCopy
 	r.movement.MoveCursorY(delta)
 }
 
-func (r *Replay) setViewport(newViewport geom.Size) {
+func (r *Replay) resize(newViewport geom.Size) {
 	// Remove one row for our status line
 	newViewport.R = geom.Max(newViewport.R-1, 0)
 	r.viewport = newViewport
@@ -60,4 +54,26 @@ func (r *Replay) handleJump(needle string, isForward bool, isTo bool) {
 	r.wasJumpTo = isTo
 	r.mode = ModeCopy
 	r.movement.Jump(needle, isForward, isTo)
+}
+
+func (r *Replay) handleCopy() (taro.Model, tea.Cmd) {
+	if !r.isCopyMode() || !r.isSelecting {
+		return r, nil
+	}
+
+	r.isSelecting = false
+	text := r.movement.ReadString(r.selectStart, r.movement.Cursor())
+	return r, func() tea.Msg {
+		return taro.PublishMsg{
+			Msg: CopyEvent{
+				Text: text,
+			},
+		}
+	}
+}
+
+func (r *Replay) exitCopyMode() {
+	r.mode = ModeTime
+	r.isSelecting = false
+	r.movement.Reset()
 }

@@ -19,6 +19,40 @@ type imageMovement struct {
 
 var _ Movement = (*imageMovement)(nil)
 
+func NewImage(terminal emu.Terminal) Movement {
+	i := &imageMovement{Terminal: terminal}
+
+	termCursor := getTerminalCursor(i.Terminal)
+	viewportCursor := i.termToViewport(termCursor)
+
+	// Center the cursor if it's not in the viewport
+	if !i.isInViewport(viewportCursor) {
+		i.centerPoint(termCursor)
+	}
+
+	i.cursor = i.termToViewport(termCursor)
+
+	return i
+}
+
+func (i *imageMovement) ScrollTop() {
+	i.MoveCursorY(
+		-i.viewportToTerm(i.cursor).R + i.minOffset.R,
+	)
+}
+
+func (i *imageMovement) ScrollBottom() {
+	i.MoveCursorY(
+		(getTerminalSize(i.Terminal).R - 1) - i.viewportToTerm(i.cursor).R,
+	)
+}
+
+func (i *imageMovement) Reset() {
+	termCursor := getTerminalCursor(i.Terminal)
+	i.centerPoint(termCursor)
+	i.cursor = i.termToViewport(termCursor)
+}
+
 // Check whether the given point in viewport space actually falls within it.
 func (i *imageMovement) isInViewport(point geom.Vec2) bool {
 	if point.R < 0 || point.C < 0 || point.R >= i.viewport.R || point.C >= i.viewport.C {
@@ -39,7 +73,7 @@ func (i *imageMovement) clampToTerminal(point geom.Vec2) geom.Vec2 {
 // Center the viewport on a point in the reference frame of the terminal.
 func (i *imageMovement) centerPoint(point geom.Vec2) {
 	i.setOffsetX(point.C - (i.viewport.C / 2))
-	i.setImageOffsetY(point.R - (i.viewport.R / 2))
+	i.setOffsetY(point.R - (i.viewport.R / 2))
 }
 
 // Translate a coordinate in the reference frame of the terminal to a point in
@@ -52,7 +86,7 @@ func (i *imageMovement) viewportToTerm(point geom.Vec2) geom.Vec2 {
 	return point.Add(i.offset)
 }
 
-func (i *imageMovement) setImageOffset(offset geom.Vec2) {
+func (i *imageMovement) setOffset(offset geom.Vec2) {
 	cursor := i.viewportToTerm(i.cursor)
 	i.offset = i.offset.
 		Add(offset).
@@ -60,16 +94,16 @@ func (i *imageMovement) setImageOffset(offset geom.Vec2) {
 	i.cursor = i.termToViewport(cursor)
 }
 
-func (i *imageMovement) setImageOffsetY(offset int) {
-	i.setImageOffset(geom.Vec2{R: offset})
+func (i *imageMovement) setOffsetY(offset int) {
+	i.setOffset(geom.Vec2{R: offset})
 }
 
 func (i *imageMovement) setOffsetX(offset int) {
-	i.setImageOffset(geom.Vec2{C: offset})
+	i.setOffset(geom.Vec2{C: offset})
 }
 
 // Get the glyphs for a row in term space.
-func (i *imageMovement) getImageLine(row int) emu.Line {
+func (i *imageMovement) getLine(row int) emu.Line {
 	screen := i.Screen()
 	history := i.History()
 
@@ -95,7 +129,7 @@ func (i *imageMovement) getImageLine(row int) emu.Line {
 
 // Move the cursor to a point in term space, adjusting the viewport the minimum
 // amount necessary to keep the cursor in view.
-func (i *imageMovement) moveCursorImage(point geom.Vec2) {
+func (i *imageMovement) moveCursor(point geom.Vec2) {
 	viewport := i.viewport
 	newCursor := i.termToViewport(point)
 
@@ -108,25 +142,25 @@ func (i *imageMovement) moveCursorImage(point geom.Vec2) {
 	}
 
 	if newCursor.R < 0 {
-		i.setImageOffsetY(i.offset.R + newCursor.R)
+		i.setOffsetY(i.offset.R + newCursor.R)
 	}
 
 	if newCursor.R >= viewport.R {
-		i.setImageOffsetY(i.offset.R + (newCursor.R - viewport.R + 1))
+		i.setOffsetY(i.offset.R + (newCursor.R - viewport.R + 1))
 	}
 
 	i.cursor = newCursor
 }
 
-func (i *imageMovement) moveCursorDeltaImage(delta geom.Vec2) {
+func (i *imageMovement) moveCursorDelta(delta geom.Vec2) {
 	oldPos := i.viewportToTerm(i.cursor)
 	newPos := i.clampToTerminal(oldPos.Add(delta))
-	i.moveCursorImage(newPos)
+	i.moveCursor(newPos)
 }
 
 func (i *imageMovement) ScrollYDelta(delta int) {
 	before := i.viewportToTerm(i.cursor)
-	i.setImageOffsetY(i.offset.R + delta)
+	i.setOffsetY(i.offset.R + delta)
 	i.cursor = i.termToViewport(before).Clamp(
 		geom.Vec2{},
 		geom.Vec2{
@@ -147,20 +181,8 @@ func (i *imageMovement) recalculateViewport() {
 		R: geom.Max(termSize.R-i.viewport.R, 0),
 		C: geom.Max(termSize.C-i.viewport.C, 0),
 	}
-	i.setImageOffsetY(i.offset.R)
+	i.setOffsetY(i.offset.R)
 	i.setOffsetX(i.offset.C)
-}
-
-func (r *imageMovement) HandleSeek() {
-	termCursor := getTerminalCursor(r.Terminal)
-	viewportCursor := r.termToViewport(termCursor)
-
-	// Center the cursor if it's not in the viewport
-	if !r.isInViewport(viewportCursor) {
-		r.centerPoint(termCursor)
-	}
-
-	r.cursor = r.termToViewport(termCursor)
 }
 
 func (i *imageMovement) setScrollX(offset int) {
@@ -202,7 +224,7 @@ func (i *imageMovement) ReadString(start, end geom.Vec2) (result string) {
 	var char rune
 	var startCol, endCol, lastChar int
 	for row := start.R; row <= end.R; row++ {
-		line := i.getImageLine(row)
+		line := i.getLine(row)
 		startCol = 0
 		if row == start.R {
 			startCol = start.C
@@ -233,23 +255,24 @@ func (i *imageMovement) ReadString(start, end geom.Vec2) (result string) {
 }
 
 func (i *imageMovement) Resize(size geom.Vec2) {
+	i.viewport = size
 	i.recalculateViewport()
-	i.setImageOffsetY(-1)
+	i.setOffsetY(-1)
 	i.centerPoint(i.cursor)
 }
 
 func (i *imageMovement) MoveCursorX(delta int) {
-	i.moveCursorDeltaImage(geom.Vec2{C: delta})
+	i.moveCursorDelta(geom.Vec2{C: delta})
 }
 
 func (i *imageMovement) MoveCursorY(delta int) {
-	i.moveCursorDeltaImage(geom.Vec2{R: delta})
+	i.moveCursorDelta(geom.Vec2{R: delta})
 }
 
 func (f *imageMovement) Jump(needle string, isForward bool, isTo bool) {
 	oldPos := f.viewportToTerm(f.cursor)
-	line := f.getImageLine(oldPos.R)
-	f.moveCursorImage(geom.Vec2{
+	line := f.getLine(oldPos.R)
+	f.moveCursor(geom.Vec2{
 		R: oldPos.R,
 		C: calculateJump(line, needle, isForward, isTo, oldPos.C),
 	})

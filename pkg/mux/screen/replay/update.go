@@ -48,7 +48,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			update,
 		)
 	case tea.WindowSizeMsg:
-		r.setViewport(geom.Size{
+		r.resize(geom.Size{
 			R: msg.Height,
 			C: msg.Width,
 		})
@@ -102,11 +102,10 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.scrollYDelta(-1)
 		case taro.MouseWheelDown:
 			r.scrollYDelta(+1)
-			// TODO(cfoust): 11/22/23 what should happen to cursor?
-			//case taro.MouseWheelLeft:
-			//r.setScrollX(r.offset.C - 1)
-			//case taro.MouseWheelRight:
-			//r.setScrollX(r.offset.C + 1)
+		case taro.MouseWheelLeft:
+			r.scrollXDelta(-1)
+		case taro.MouseWheelRight:
+			r.scrollXDelta(+1)
 		}
 	case ActionEvent:
 		r.isPlaying = false
@@ -130,18 +129,14 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return r.quit()
 		case ActionBeginning:
 			if r.isCopyMode() {
-				r.moveCursorY(
-					-r.viewportToTerm(r.cursor).R + r.minOffset.R,
-				)
+				r.movement.ScrollTop()
 				return r, nil
 			}
 
 			return r, r.gotoIndex(0, -1)
 		case ActionEnd:
 			if r.isCopyMode() {
-				r.moveCursorY(
-					(r.getTerminalSize().R - 1) - r.viewportToTerm(r.cursor).R,
-				)
+				r.movement.ScrollBottom()
 				return r, nil
 			}
 			return r, r.gotoIndex(-1, -1)

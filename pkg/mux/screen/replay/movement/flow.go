@@ -23,6 +23,49 @@ type flowMovement struct {
 
 var _ Movement = (*flowMovement)(nil)
 
+func NewFlow(terminal emu.Terminal) Movement {
+	f := &flowMovement{Terminal: terminal}
+
+	f.root = f.Root()
+
+	// First just flow the viewport; if the whole screen fits, do
+	// nothing
+	result := f.Flow(f.viewport, f.root)
+	if result.CursorOK {
+		f.cursor = geom.Vec2{
+			R: result.Cursor.Y,
+			C: result.Cursor.X,
+		}
+		f.desiredCol = f.cursor.C
+		return f
+	}
+
+	// Flow the screen no matter how big it is
+	// By definition, cursor must be OK (we flow all lines)
+	result = f.Flow(geom.Vec2{C: f.viewport.C}, f.root)
+	f.cursor.C = result.Cursor.X
+	f.desiredCol = f.cursor.C
+	f.scrollToLine(
+		result.Lines[result.Cursor.Y].Root(),
+		ScrollPositionCenter,
+	)
+
+	return f
+}
+
+func (f *flowMovement) ScrollTop() {
+	// TODO(cfoust): 03/25/24
+}
+
+func (f *flowMovement) ScrollBottom() {
+	// TODO(cfoust): 03/25/24
+}
+
+func (f *flowMovement) Reset() {
+	//i.desiredCol = i.cursor.C
+	// TODO(cfoust): 03/25/24
+}
+
 func (f *flowMovement) ScrollYDelta(delta int) {
 	isUp := delta < 0
 
@@ -69,35 +112,9 @@ func (f *flowMovement) ScrollXDelta(delta int) {
 	// no-op in this mode
 }
 
-func (f *flowMovement) HandleSeek() {
-	f.root = f.Root()
-
-	// First just flow the viewport; if the whole screen fits, do
-	// nothing
-	result := f.Flow(f.viewport, f.root)
-	if result.CursorOK {
-		f.cursor = geom.Vec2{
-			R: result.Cursor.Y,
-			C: result.Cursor.X,
-		}
-		f.desiredCol = f.cursor.C
-		return
-	}
-
-	// Flow the screen no matter how big it is
-	// By definition, cursor must be OK (we flow all lines)
-	result = f.Flow(geom.Vec2{C: f.viewport.C}, f.root)
-	f.cursor.C = result.Cursor.X
-	f.desiredCol = f.cursor.C
-	f.scrollToFlowLine(
-		result.Lines[result.Cursor.Y].Root(),
-		ScrollPositionCenter,
-	)
-}
-
-// getFlowLine gets a line on the screen in flow mode. Providing a negative
+// getLine gets a line on the screen in flow mode. Providing a negative
 // `row` returns lines from history.
-func (f *flowMovement) getFlowLine(row int) (line emu.ScreenLine, ok bool) {
+func (f *flowMovement) getLine(row int) (line emu.ScreenLine, ok bool) {
 	if row >= 0 {
 		// Include the root line
 		row++
@@ -125,11 +142,11 @@ func (f *flowMovement) getFlowLine(row int) (line emu.ScreenLine, ok bool) {
 	return
 }
 
-// getLastFlow returns the last root representing the upper limit for the
+// getLastLine returns the last root representing the upper limit for the
 // scrollable region the user can reach. Mostly this is the last physical line
 // on the screen; it's used primarily to prevent the user from scrolling onto
 // blank lines at the end of the terminal screen.
-func (f *flowMovement) getLastFlow() int {
+func (f *flowMovement) getLastLine() int {
 	screen := f.Flow(getTerminalSize(f.Terminal), f.Root())
 	if len(screen.Lines) == 0 {
 		return 0
@@ -153,12 +170,12 @@ const (
 	ScrollPositionBottom
 )
 
-func (f *flowMovement) scrollToFlowLine(dest geom.Vec2, position ScrollPosition) {
+func (f *flowMovement) scrollToLine(dest geom.Vec2, position ScrollPosition) {
 	if dest.R < 0 || dest.C < 0 {
 		return
 	}
 
-	if dest.R > f.getLastFlow() {
+	if dest.R > f.getLastLine() {
 		return
 	}
 
@@ -176,7 +193,7 @@ func (f *flowMovement) scrollToFlowLine(dest geom.Vec2, position ScrollPosition)
 	var rows int
 	switch position {
 	case ScrollPositionCenter:
-		rows = f.viewport.R/2 - 1
+		rows = f.viewport.R / 2
 	case ScrollPositionBottom:
 		rows = f.viewport.R - 1
 	}
@@ -253,7 +270,7 @@ func (f *flowMovement) ReadString(start, end geom.Vec2) (result string) {
 }
 
 func (f *flowMovement) MoveCursorX(delta int) {
-	current, ok := f.getFlowLine(f.cursor.R)
+	current, ok := f.getLine(f.cursor.R)
 	if !ok {
 		return
 	}
@@ -281,7 +298,7 @@ func (f *flowMovement) MoveCursorX(delta int) {
 }
 
 func (f *flowMovement) MoveCursorY(delta int) {
-	current, ok := f.getFlowLine(f.cursor.R)
+	current, ok := f.getLine(f.cursor.R)
 	if !ok {
 		return
 	}
@@ -307,7 +324,7 @@ func (f *flowMovement) MoveCursorY(delta int) {
 	}
 
 	// Ensure the user can't move past the last physical line
-	lastLine := f.getLastFlow()
+	lastLine := f.getLastLine()
 	for i := 0; i < len(flow.Lines); i++ {
 		if flow.Lines[i].Root().R <= lastLine {
 			continue
@@ -344,7 +361,7 @@ func (f *flowMovement) MoveCursorY(delta int) {
 		position = ScrollPositionTop
 	}
 
-	f.scrollToFlowLine(destLine.Root(), position)
+	f.scrollToLine(destLine.Root(), position)
 }
 
 func (f *flowMovement) Jump(needle string, isForward bool, isTo bool) {

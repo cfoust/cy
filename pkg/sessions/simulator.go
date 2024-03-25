@@ -3,6 +3,7 @@ package sessions
 import (
 	"time"
 
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 
@@ -93,6 +94,25 @@ func (s *Simulator) Add(events ...interface{}) *Simulator {
 
 func (s *Simulator) Events() []Event {
 	return s.events
+}
+
+// Terminal processes all of the events in the simulator in a new terminal and
+// returns it.
+func (s *Simulator) Terminal() emu.Terminal {
+	term := emu.New()
+	for _, event := range s.events {
+		switch e := event.Message.(type) {
+		case P.OutputMessage:
+			term.Parse(e.Data)
+		case P.SizeMessage:
+			term.Resize(
+				e.Columns,
+				e.Rows,
+			)
+		}
+	}
+
+	return term
 }
 
 func NewSimulator() *Simulator {

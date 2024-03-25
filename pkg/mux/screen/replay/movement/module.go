@@ -7,15 +7,17 @@ import (
 )
 
 type Movement interface {
-	HandleSeek()
-	ScrollXDelta(delta int)
-	ScrollYDelta(delta int)
+	Cursor() geom.Vec2
+	Jump(needle string, isForward bool, isTo bool)
 	MoveCursorX(delta int)
 	MoveCursorY(delta int)
-	Resize(geom.Size)
-	Cursor() geom.Vec2
 	ReadString(start, end geom.Vec2) string
-	Jump(needle string, isForward bool, isTo bool)
+	Reset()
+	Resize(geom.Size)
+	ScrollBottom()
+	ScrollTop()
+	ScrollXDelta(delta int)
+	ScrollYDelta(delta int)
 }
 
 func getTerminalCursor(terminal emu.Terminal) geom.Vec2 {

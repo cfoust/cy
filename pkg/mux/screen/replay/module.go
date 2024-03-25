@@ -97,15 +97,6 @@ func (r *Replay) getTerminalSize() geom.Vec2 {
 	}
 }
 
-func (r *Replay) exitCopyMode() {
-	r.mode = ModeTime
-	r.isSelecting = false
-	termCursor := r.getTerminalCursor()
-	r.centerPoint(termCursor)
-	r.cursor = r.termToViewport(termCursor)
-	r.desiredCol = r.cursor.C
-}
-
 func (r *Replay) Init() tea.Cmd {
 	return textinput.Blink
 }

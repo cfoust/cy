@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cfoust/cy/pkg/mux/screen/replay/movement"
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -25,7 +26,10 @@ func (r *Replay) handleSeek(updateTime bool) {
 	}
 
 	r.mode = ModeTime
-	r.movement.HandleSeek()
+	r.movement = movement.NewImage(r.Terminal)
+	if !r.isImageMode() {
+		r.movement = movement.NewFlow(r.Terminal)
+	}
 }
 
 // Move the terminal back in time to the event at `index` and byte offset (if
