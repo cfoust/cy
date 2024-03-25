@@ -174,16 +174,6 @@ func (r *Replay) moveCursorY(delta int) {
 		return
 	}
 
-	// Don't allow user to move onto blank lines at end of terminal
-	screen := r.Flow(r.getTerminalSize(), r.Root())
-	lastLine := screen.Lines[len(screen.Lines)-1].Root()
-	for row := len(screen.Lines) - 1; row >= 0; row-- {
-		if !isLineEmpty(screen.Lines[row].Chars) {
-			break
-		}
-		lastLine = screen.Lines[row].Root()
-	}
-
 	current, ok := r.getFlowLine(r.cursor.R)
 	if !ok {
 		return
@@ -209,9 +199,10 @@ func (r *Replay) moveCursorY(delta int) {
 		return
 	}
 
-	// Ensure the user can't move past the last line
+	// Ensure the user can't move past the last physical line
+	lastLine := r.getLastFlow()
 	for i := 0; i < len(flow.Lines); i++ {
-		if flow.Lines[i].Root() != lastLine {
+		if flow.Lines[i].Root().R <= lastLine {
 			continue
 		}
 
@@ -228,8 +219,9 @@ func (r *Replay) moveCursorY(delta int) {
 		return
 	}
 
-	destCol := resolveDesiredColumn(destLine.Chars, r.desiredCol)
 	r.mode = ModeCopy
+
+	r.cursor.C = resolveDesiredColumn(destLine.Chars, r.desiredCol)
 
 	// If the line is on the screen, we don't need to scroll
 	viewport := r.Flow(r.viewport, r.root)
@@ -238,28 +230,14 @@ func (r *Replay) moveCursorY(delta int) {
 			continue
 		}
 
-		r.cursor = geom.Vec2{
-			R: row,
-			C: destCol,
-		}
+		r.cursor.R = row
 		break
 	}
 
+	position := ScrollPositionBottom
 	if delta < 0 {
-		r.root = destLine.Root()
-		r.cursor = geom.Vec2{
-			R: 0,
-			C: destCol,
-		}
-		return
+		position = ScrollPositionTop
 	}
 
-	scrollLines := []emu.ScreenLine{}
-	scrollLines = append(scrollLines, viewport.Lines[:r.cursor.R]...)
-	scrollLines = append(scrollLines, flow.Lines...)
-	r.root = scrollLines[geom.Max(len(scrollLines)-r.viewport.R, 0)].Root()
-	r.cursor = geom.Vec2{
-		R: r.viewport.R - 1,
-		C: destCol,
-	}
+	r.scrollToFlowLine(destLine.Root(), position)
 }
