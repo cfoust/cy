@@ -48,13 +48,11 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			update,
 		)
 	case tea.WindowSizeMsg:
-		return r.setViewport(
-			r.viewport,
-			geom.Size{
-				R: msg.Height,
-				C: msg.Width,
-			},
-		)
+		r.setViewport(geom.Size{
+			R: msg.Height,
+			C: msg.Width,
+		})
+		return r, nil
 	case SearchResultEvent:
 		return r, r.handleSearchResult(msg)
 	}
@@ -190,7 +188,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			}
 
 			r.isSelecting = true
-			r.selectStart = r.viewportToTerm(r.cursor)
+			r.selectStart = r.movement.Cursor()
 		case ActionCopy:
 			return r.handleCopy()
 		case ActionJumpReverse, ActionJumpAgain:

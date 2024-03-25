@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/mux/screen/replay/movement"
 	"github.com/cfoust/cy/pkg/mux/screen/replay/player"
 	"github.com/cfoust/cy/pkg/sessions/search"
 	"github.com/cfoust/cy/pkg/taro"
@@ -37,23 +38,10 @@ type Replay struct {
 	playbackRate int
 	currentTime  time.Time
 
+	movement movement.Movement
+
 	// Whether moving in time should skip inactivity
 	skipInactivity bool
-
-	// The location of the viewport in the history of the terminal's main
-	// screen. See emu.Root().
-	root geom.Vec2
-
-	// The [R, C] offset of the viewport relative to the top-left corner of
-	// the underlying terminal.
-	offset, minOffset, maxOffset geom.Vec2
-
-	// The cursor's position relative to the viewport.
-	cursor geom.Vec2
-
-	// Used to mimic the behavior in text editors wherein moving the cursor
-	// up and down "sticks" to a certain column index wherever possible
-	desiredCol int
 
 	// Whether the user has started selecting.
 	isSelecting bool

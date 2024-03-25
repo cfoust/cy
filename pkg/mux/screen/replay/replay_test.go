@@ -233,23 +233,23 @@ func TestScroll(t *testing.T) {
 	// six
 	// seven[ ]
 
+	// seven[ ]
+	//
+	require.Equal(t, geom.Vec2{
+		R: 0,
+		C: 5,
+	}, r.cursor)
+	require.Equal(t, geom.Vec2{
+		R: 6,
+	}, r.root)
+	require.Equal(t, 5, r.desiredCol)
+
+	i(ActionScrollUp)
 	// six
 	// seven[ ]
 	require.Equal(t, geom.Vec2{
 		R: 1,
 		C: 5,
-	}, r.cursor)
-	require.Equal(t, geom.Vec2{
-		R: 5,
-	}, r.root)
-	require.Equal(t, 5, r.desiredCol)
-
-	i(ActionScrollUp)
-	// five
-	// si[x]
-	require.Equal(t, geom.Vec2{
-		R: 1,
-		C: 2,
 	}, r.cursor)
 	require.Equal(t, geom.Vec2{
 		R: 4,
