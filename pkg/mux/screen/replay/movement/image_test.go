@@ -71,28 +71,33 @@ func TestReadString(t *testing.T) {
 	))
 }
 
-//func TestJump(t *testing.T) {
-//s := sessions.NewSimulator()
-//s.Add(
-//geom.Size{R: 5, C: 50},
-//emu.LineFeedMode,
-//"The five boxing wizards jump quickly. a",
-//)
+func TestJump(t *testing.T) {
+	s := sessions.NewSimulator()
+	size := geom.Size{R: 5, C: 50}
+	s.Add(
+		size,
+		emu.LineFeedMode,
+		"The five boxing wizards jump quickly. a",
+	)
 
-//r, i := createTest(s.Events())
-//i(geom.Size{R: 3, C: 50})
-//i(arg(ActionJumpBackward, "T"))
-//require.Equal(t, geom.Vec2{}, r.cursor)
-//i(ActionCursorRight, ActionCursorRight, ActionJumpAgain)
-//require.Equal(t, geom.Vec2{}, r.cursor)
-//i(arg(ActionJumpForward, "a"))
-//require.Equal(t, geom.Vec2{C: 19}, r.cursor)
-//i(ActionJumpAgain)
-//require.Equal(t, geom.Vec2{C: 38}, r.cursor)
-//i(arg(ActionJumpBackward, "T"))
-//require.Equal(t, geom.Vec2{}, r.cursor)
-//i(arg(ActionJumpToForward, "x"))
-//require.Equal(t, geom.Vec2{C: 10}, r.cursor)
-//i(arg(ActionJumpToBackward, "e"))
-//require.Equal(t, geom.Vec2{C: 8}, r.cursor)
-//}
+	i := createImageTest(s.Terminal(), size)
+	f := createFlowTest(s.Terminal(), size)
+	for _, m := range []Movement{f, i} {
+		m.Jump("T", false, false)
+		require.Equal(t, geom.Vec2{}, m.Cursor())
+		m.MoveCursorX(1)
+		m.MoveCursorX(1)
+		m.Jump("T", false, false)
+		require.Equal(t, geom.Vec2{}, m.Cursor())
+		m.Jump("a", true, false)
+		require.Equal(t, geom.Vec2{C: 19}, m.Cursor())
+		m.Jump("a", true, false)
+		require.Equal(t, geom.Vec2{C: 38}, m.Cursor())
+		m.Jump("T", false, false)
+		require.Equal(t, geom.Vec2{}, m.Cursor())
+		m.Jump("x", true, true)
+		require.Equal(t, geom.Vec2{C: 10}, m.Cursor())
+		m.Jump("e", false, true)
+		require.Equal(t, geom.Vec2{C: 8}, m.Cursor())
+	}
+}

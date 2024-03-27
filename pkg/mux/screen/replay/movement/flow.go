@@ -425,5 +425,18 @@ func (f *flowMovement) MoveCursorY(delta int) {
 }
 
 func (f *flowMovement) Jump(needle string, isForward bool, isTo bool) {
-	// TODO(cfoust): 03/25/24
+	line, ok := f.getLine(f.cursor.R)
+	if !ok {
+		return
+	}
+
+	oldCol := f.cursor.C
+	newCol := calculateJump(
+		line.Chars,
+		needle,
+		isForward,
+		isTo,
+		oldCol,
+	)
+	f.MoveCursorX(newCol - oldCol)
 }
