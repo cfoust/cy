@@ -3,7 +3,6 @@ package movement
 import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/rs/zerolog/log"
 )
 
 type flowMovement struct {
@@ -60,12 +59,33 @@ func (f *flowMovement) centerTerminalCursor() {
 
 func (f *flowMovement) ScrollTop() {
 	f.haveMoved = true
-	// TODO(cfoust): 03/25/24
+	f.scrollToLine(
+		geom.Vec2{R: 0, C: 0},
+		ScrollPositionTop,
+	)
 }
 
 func (f *flowMovement) ScrollBottom() {
 	f.haveMoved = true
-	// TODO(cfoust): 03/25/24
+
+	lastLine := f.getLastLine()
+	flow := f.Flow(
+		geom.Vec2{C: f.viewport.C},
+		geom.Vec2{R: lastLine},
+	)
+
+	for i := len(flow.Lines) - 1; i >= 0; i-- {
+		line := flow.Lines[i]
+		if line.R > lastLine {
+			continue
+		}
+
+		f.scrollToLine(
+			line.Root(),
+			ScrollPositionBottom,
+		)
+		break
+	}
 }
 
 func (f *flowMovement) ScrollYDelta(delta int) {
@@ -268,7 +288,6 @@ func (f *flowMovement) Resize(newSize geom.Vec2) {
 			continue
 		}
 
-		log.Info().Msgf("%+v %+v %+v", line, cursor, f.cursor)
 		dest = line
 		f.cursor.C = cursor.C - line.C0
 		f.desiredCol = f.cursor.C

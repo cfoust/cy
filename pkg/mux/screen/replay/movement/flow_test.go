@@ -124,11 +124,13 @@ func TestScroll(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 5, C: 0}, r.root)
 	require.Equal(t, geom.Vec2{R: 0, C: 2}, r.cursor)
 
-	//i(ActionBeginning)
-	//require.Equal(t, -2, r.viewportToTerm(r.cursor).R)
+	r.ScrollTop()
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
+	require.Equal(t, geom.Vec2{R: 0, C: 2}, r.cursor)
 
-	//i(ActionEnd)
-	//require.Equal(t, 4, r.viewportToTerm(r.cursor).R)
+	r.ScrollBottom()
+	require.Equal(t, geom.Vec2{R: 5, C: 0}, r.root)
+	require.Equal(t, geom.Vec2{R: 1, C: 2}, r.cursor)
 }
 
 func TestCursor(t *testing.T) {
