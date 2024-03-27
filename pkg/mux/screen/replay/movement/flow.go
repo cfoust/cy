@@ -63,6 +63,7 @@ func (f *flowMovement) ScrollTop() {
 		geom.Vec2{R: 0, C: 0},
 		ScrollPositionTop,
 	)
+	f.cursor.C = f.resolveScreenColumn(f.cursor.R)
 }
 
 func (f *flowMovement) ScrollBottom() {
@@ -86,6 +87,8 @@ func (f *flowMovement) ScrollBottom() {
 		)
 		break
 	}
+
+	f.cursor.C = f.resolveScreenColumn(f.cursor.R)
 }
 
 func (f *flowMovement) ScrollYDelta(delta int) {

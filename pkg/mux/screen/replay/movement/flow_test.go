@@ -130,7 +130,7 @@ func TestScroll(t *testing.T) {
 
 	r.ScrollBottom()
 	require.Equal(t, geom.Vec2{R: 5, C: 0}, r.root)
-	require.Equal(t, geom.Vec2{R: 1, C: 2}, r.cursor)
+	require.Equal(t, geom.Vec2{R: 1, C: 4}, r.cursor)
 }
 
 func TestCursor(t *testing.T) {
