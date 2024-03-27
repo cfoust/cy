@@ -16,7 +16,7 @@ func createFlowTest(terminal emu.Terminal, size geom.Size) *flowMovement {
 	return i
 }
 
-func TestFlow(t *testing.T) {
+func TestCenter(t *testing.T) {
 	s := sessions.NewSimulator()
 	s.Add(
 		geom.Size{R: 4, C: 10},
@@ -40,6 +40,32 @@ func TestFlow(t *testing.T) {
 	// centers the cursor on the screen
 	require.Equal(t, geom.Vec2{R: 1, C: 3}, r.cursor)
 	require.Equal(t, geom.Vec2{R: 2, C: 0}, r.root)
+}
+
+func TestResize(t *testing.T) {
+	s := sessions.NewSimulator()
+	s.Add(
+		geom.Size{R: 5, C: 10},
+		emu.LineFeedMode,
+		"foo\nbar\nbaz",
+	)
+
+	r := createFlowTest(s.Terminal(), geom.Size{R: 3, C: 10})
+	require.Equal(t, geom.Vec2{R: 2, C: 3}, r.cursor)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
+
+	// We have not yet moved, so we should keep the OG cursor
+	r.Resize(geom.Size{R: 3, C: 3})
+	require.Equal(t, geom.Vec2{R: 2, C: 2}, r.cursor)
+
+	r.MoveCursorX(-1)
+	require.Equal(t, geom.Vec2{R: 2, C: 1}, r.cursor)
+
+	r.Resize(geom.Size{R: 10, C: 1})
+	// The centering should push us down a bit
+	require.Equal(t, geom.Vec2{R: 0, C: 2}, r.root)
+	// Cursor is on the "a" in "baz"
+	require.Equal(t, geom.Vec2{R: 5, C: 0}, r.cursor)
 }
 
 func TestScroll(t *testing.T) {

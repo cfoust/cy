@@ -195,7 +195,7 @@ func (s *State) Flow(
 			result.Cursor.X = geom.Clamp(
 				result.Cursor.X+1,
 				0,
-				viewport.C,
+				viewport.C-1,
 			)
 		}
 		break

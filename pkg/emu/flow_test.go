@@ -216,4 +216,22 @@ func TestFlowLines(t *testing.T) {
 		require.Equal(t, 6, result.Cursor.Y)
 		require.Equal(t, 1, result.Cursor.X)
 	}
+
+	// Handle the cursor going off the end
+	{
+		result := term.Flow(
+			geom.Vec2{
+				C: 3,
+				R: 10,
+			},
+			geom.Vec2{},
+		)
+
+		cleanLines(result.Lines)
+
+		require.True(t, result.OK)
+		require.True(t, result.CursorOK)
+		require.Equal(t, 3, result.Cursor.Y)
+		require.Equal(t, 2, result.Cursor.X)
+	}
 }

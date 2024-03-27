@@ -3,18 +3,21 @@ package movement
 import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/rs/zerolog/log"
 )
 
 type flowMovement struct {
 	emu.Terminal
+	viewport geom.Size
+
+	haveMoved bool
 
 	// The location of the viewport in the history of the terminal's main
 	// screen. See emu.Root().
 	root geom.Vec2
 
 	// The cursor's position relative to the viewport.
-	cursor   geom.Vec2
-	viewport geom.Size
+	cursor geom.Vec2
 
 	// Used to mimic the behavior in text editors wherein moving the cursor
 	// up and down "sticks" to a certain column index wherever possible
@@ -25,10 +28,13 @@ var _ Movement = (*flowMovement)(nil)
 
 func NewFlow(terminal emu.Terminal, viewport geom.Size) Movement {
 	f := &flowMovement{Terminal: terminal}
-
 	f.root = f.Root()
 	f.viewport = viewport
+	f.centerTerminalCursor()
+	return f
+}
 
+func (f *flowMovement) centerTerminalCursor() {
 	// First just flow the viewport; if the whole screen fits, do
 	// nothing
 	result := f.Flow(f.viewport, f.root)
@@ -38,7 +44,7 @@ func NewFlow(terminal emu.Terminal, viewport geom.Size) Movement {
 			C: result.Cursor.X,
 		}
 		f.desiredCol = f.cursor.C
-		return f
+		return
 	}
 
 	// Flow the screen no matter how big it is
@@ -50,24 +56,21 @@ func NewFlow(terminal emu.Terminal, viewport geom.Size) Movement {
 		result.Lines[result.Cursor.Y].Root(),
 		ScrollPositionCenter,
 	)
-
-	return f
 }
 
 func (f *flowMovement) ScrollTop() {
+	f.haveMoved = true
 	// TODO(cfoust): 03/25/24
 }
 
 func (f *flowMovement) ScrollBottom() {
-	// TODO(cfoust): 03/25/24
-}
-
-func (f *flowMovement) Reset() {
-	//i.desiredCol = i.cursor.C
+	f.haveMoved = true
 	// TODO(cfoust): 03/25/24
 }
 
 func (f *flowMovement) ScrollYDelta(delta int) {
+	f.haveMoved = true
+
 	isUp := delta < 0
 
 	// Account for the fact that Flow() returns the root line as well
@@ -237,27 +240,62 @@ func (f *flowMovement) resolveScreenColumn(row int) int {
 	return resolveDesiredColumn(lines[row].Chars, f.desiredCol)
 }
 
-func (f *flowMovement) Resize(size geom.Vec2) {
-	f.viewport = size
+func (f *flowMovement) Resize(newSize geom.Vec2) {
+	cursor := f.Cursor()
+	oldSize := f.viewport
+	f.viewport = newSize
+
+	// The normal terminal cursor can be anywhere, so we have to use the
+	// built-in cursor reflow when we haven't moved yet. After moving,
+	// movement is constrained to cells with printable characters.
+	if !f.haveMoved {
+		f.centerTerminalCursor()
+		return
+	}
+
+	flow := f.Flow(
+		geom.Vec2{
+			C: newSize.C,
+			R: (oldSize.C*oldSize.R)/newSize.C + 1,
+		},
+		f.root,
+	)
+
+	// By definition the cursor must be on the new screen
+	var dest emu.ScreenLine
+	for _, line := range flow.Lines {
+		if cursor.R != line.R || cursor.C < line.C0 || cursor.C >= line.C1 {
+			continue
+		}
+
+		log.Info().Msgf("%+v %+v %+v", line, cursor, f.cursor)
+		dest = line
+		f.cursor.C = cursor.C - line.C0
+		f.desiredCol = f.cursor.C
+		break
+	}
+
+	f.scrollToLine(dest.Root(), ScrollPositionCenter)
 }
 
 func (f *flowMovement) Cursor() geom.Vec2 {
 	result := f.Flow(f.viewport, f.root)
+
 	for row, line := range result.Lines {
-		if result.Cursor.Y != row {
+		if f.cursor.R != row {
 			continue
 		}
 
 		numChars := line.C1 - line.C0
 		cursor := geom.Vec2{
 			R: line.R,
-			C: result.Cursor.X,
+			C: line.C0 + f.cursor.C,
 		}
 
 		// We need to return the address of a real cell
-		// TODO(cfoust): 03/25/24 dual-width chars?
-		if result.Cursor.X >= numChars {
-			cursor.C = numChars - 1
+		if f.cursor.C >= numChars {
+			_, lastCell := getNonWhitespace(line.Chars)
+			cursor.C = lastCell
 		}
 
 		return cursor
@@ -271,23 +309,20 @@ func (f *flowMovement) ReadString(start, end geom.Vec2) (result string) {
 }
 
 func (f *flowMovement) MoveCursorX(delta int) {
+	f.haveMoved = true
+
 	current, ok := f.getLine(f.cursor.R)
 	if !ok {
 		return
 	}
 
+	_, lastCell := getNonWhitespace(current.Chars)
 	oldCol := f.cursor.C
 	newCol := geom.Clamp(
 		f.cursor.C+delta,
 		0,
-		len(current.Chars)-1,
+		lastCell,
 	)
-
-	// Motion to the right is bounded by the last non-whitespace character
-	if newCol > oldCol {
-		_, lastCell := getNonWhitespace(current.Chars)
-		newCol = geom.Min(lastCell, newCol)
-	}
 
 	// Don't do anything if we can't move
 	if newCol == oldCol {
@@ -299,6 +334,8 @@ func (f *flowMovement) MoveCursorX(delta int) {
 }
 
 func (f *flowMovement) MoveCursorY(delta int) {
+	f.haveMoved = true
+
 	current, ok := f.getLine(f.cursor.R)
 	if !ok {
 		return
