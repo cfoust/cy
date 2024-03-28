@@ -129,9 +129,17 @@ func TestScroll(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
 	require.Equal(t, geom.Vec2{R: 0, C: 2}, r.cursor)
 
+	// should not cause a panic
+	r.ScrollYDelta(-1)
+
 	r.ScrollBottom()
 	require.Equal(t, geom.Vec2{R: 5, C: 0}, r.root)
 	require.Equal(t, geom.Vec2{R: 1, C: 4}, r.cursor)
+
+	r.ScrollYDelta(1)
+	// Should not scroll further
+	r.ScrollYDelta(1)
+	require.Equal(t, geom.Vec2{R: 6, C: 0}, r.root)
 }
 
 func TestCursor(t *testing.T) {
@@ -216,7 +224,7 @@ func TestNormalHighlight(t *testing.T) {
 	state := tty.New(size)
 	bg := emu.Color(1)
 	r.View(state, []Highlight{
-		Highlight{
+		{
 			From: geom.Vec2{R: 0, C: 1},
 			To:   geom.Vec2{R: 2, C: 1},
 			BG:   bg,
@@ -255,7 +263,7 @@ func TestLongHighlight(t *testing.T) {
 	state := tty.New(size)
 	bg := emu.Color(1)
 	r.View(state, []Highlight{
-		Highlight{
+		{
 			From: geom.Vec2{R: 0, C: 1},
 			To:   geom.Vec2{R: 0, C: 7},
 			BG:   bg,
@@ -291,7 +299,7 @@ func TestLongScreenHighlight(t *testing.T) {
 	state := tty.New(size)
 	bg := emu.Color(1)
 	r.View(state, []Highlight{
-		Highlight{
+		{
 			Screen: true,
 			From:   geom.Vec2{R: 0, C: 1},
 			To:     geom.Vec2{R: 2, C: 1},

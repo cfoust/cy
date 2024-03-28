@@ -71,35 +71,13 @@ func (f *flowMovement) centerTerminalCursor() {
 
 func (f *flowMovement) ScrollTop() {
 	f.haveMoved = true
-	f.scrollToLine(
-		geom.Vec2{R: 0, C: 0},
-		ScrollPositionTop,
-	)
+	f.scrollToLine(geom.Vec2{R: 0, C: 0}, ScrollPositionTop)
 	f.cursor.C = f.resolveScreenColumn(f.cursor.R)
 }
 
 func (f *flowMovement) ScrollBottom() {
 	f.haveMoved = true
-
-	lastLine := f.getLastLine()
-	flow := f.Flow(
-		geom.Vec2{C: f.viewport.C},
-		geom.Vec2{R: lastLine},
-	)
-
-	for i := len(flow.Lines) - 1; i >= 0; i-- {
-		line := flow.Lines[i]
-		if line.R > lastLine {
-			continue
-		}
-
-		f.scrollToLine(
-			line.Root(),
-			ScrollPositionBottom,
-		)
-		break
-	}
-
+	f.scrollToLine(f.getLastRoot(), ScrollPositionBottom)
 	f.cursor.C = f.resolveScreenColumn(f.cursor.R)
 }
 
@@ -119,6 +97,10 @@ func (f *flowMovement) ScrollYDelta(delta int) {
 	}, f.root)
 
 	numLines := len(result.Lines)
+
+	if numLines == 0 {
+		return
+	}
 
 	// Find the new root
 	target := 0
@@ -181,24 +163,28 @@ func (f *flowMovement) getLine(row int) (line emu.ScreenLine, ok bool) {
 	return
 }
 
-// getLastLine returns the last root representing the upper limit for the
+// getLastRoot returns the last root representing the upper limit for the
 // scrollable region the user can reach. Mostly this is the last physical line
 // on the screen; it's used primarily to prevent the user from scrolling onto
 // blank lines at the end of the terminal screen.
-func (f *flowMovement) getLastLine() int {
+func (f *flowMovement) getLastRoot() (lastRoot geom.Vec2) {
 	screen := f.Flow(getTerminalSize(f.Terminal), f.Root())
 	if len(screen.Lines) == 0 {
-		return 0
+		return
 	}
 
 	// Return the row of the last non-empty physical line
 	for row := len(screen.Lines) - 1; row >= 0; row-- {
 		if !isLineEmpty(screen.Lines[row].Chars) {
-			return screen.Lines[row].Root().R
+			return screen.Lines[row].Root()
 		}
 	}
 
-	return 0
+	return
+}
+
+func (f *flowMovement) getLastLine() int {
+	return f.getLastRoot().R
 }
 
 type ScrollPosition int
