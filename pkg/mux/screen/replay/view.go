@@ -4,79 +4,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/mux/screen/replay/movement"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/lipgloss"
 )
 
-// For a point that is off the screen, find the closest point that can be used
-// as the start or end point of a selection.
-func anchorToScreen(size geom.Vec2, v geom.Vec2) geom.Vec2 {
-	if v.R < 0 {
-		return geom.Vec2{}
-	}
-
-	if v.R >= size.R {
-		return geom.Vec2{
-			R: size.R - 1,
-			C: size.C - 1,
-		}
-	}
-
-	if v.C < 0 {
-		return geom.Vec2{
-			R: v.R,
-			C: 0,
-		}
-	}
-
-	if v.C > 0 {
-		return geom.Vec2{
-			R: v.R,
-			C: size.C - 1,
-		}
-	}
-
-	return v
-}
-
-func (r *Replay) highlightRange(state *tty.State, from, to geom.Vec2, fg, bg emu.Color) {
-	from, to = normalizeRange(from, to)
-	from = r.termToViewport(from)
-	to = r.termToViewport(to)
-
-	size := state.Image.Size()
-	if !r.isInViewport(from) {
-		from = anchorToScreen(size, from)
-	}
-	if !r.isInViewport(to) {
-		to = anchorToScreen(size, to)
-	}
-
-	var startCol, endCol int
-	for row := from.R; row <= to.R; row++ {
-		startCol = 0
-		if row == from.R {
-			startCol = from.C
-		}
-
-		endCol = size.C - 1
-		if row == to.R {
-			endCol = to.C
-		}
-
-		for col := startCol; col <= endCol; col++ {
-			state.Image[row][col].FG = fg
-			state.Image[row][col].BG = bg
-		}
-	}
-}
-
-func (r *Replay) drawMatches(state *tty.State) {
+func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 	matches := r.matches
 	if len(matches) == 0 {
 		return
@@ -102,16 +39,21 @@ func (r *Replay) drawMatches(state *tty.State) {
 			if location.After(appearance.End) {
 				continue
 			}
-			r.highlightRange(
-				state,
-				appearance.From,
-				appearance.To,
-				fgColor,
-				bg,
+
+			highlights = append(
+				highlights,
+				movement.Highlight{
+					Screen: true,
+					From:   appearance.From,
+					To:     appearance.To,
+					FG:     fgColor,
+					BG:     bg,
+				},
 			)
 			break
 		}
 	}
+	return
 }
 
 func (r *Replay) drawStatusBar(state *tty.State) {
@@ -193,41 +135,6 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	r.render.RenderAt(state.Image, size.R-1, 0, statusBar)
 }
 
-// drawScrollbackPosition renders "[1/N]" text in the top-right corner that
-// looks just like tmux's copy mode.
-func (r *Replay) drawScrollbackPosition(state *tty.State) {
-	size := state.Image.Size()
-	offsetStyle := r.render.NewStyle().
-		Foreground(lipgloss.Color("9")).
-		Background(lipgloss.Color("240"))
-
-	// draw where the screen ends and scrollback begins
-	linePos := r.termToViewport(geom.Vec2{R: 0}).R
-	if linePos >= 0 && linePos < r.viewport.R {
-		r.render.RenderAt(
-			state.Image,
-			linePos,
-			r.viewport.C-3,
-			offsetStyle.Render("<--"),
-		)
-	}
-
-	r.render.RenderAt(
-		state.Image,
-		0,
-		0,
-		r.render.PlaceHorizontal(
-			size.C,
-			lipgloss.Right,
-			offsetStyle.Render(fmt.Sprintf(
-				"[%d/%d]",
-				-r.offset.R,
-				-r.minOffset.R,
-			)),
-		),
-	)
-}
-
 func (r *Replay) renderInput() image.Image {
 	r.searchInput.Cursor.Style = r.render.NewStyle().
 		Background(lipgloss.Color("15"))
@@ -294,82 +201,46 @@ func (r *Replay) renderInput() image.Image {
 }
 
 func (r *Replay) View(state *tty.State) {
-	screen := r.Screen()
-	history := r.History()
-	state.CursorVisible = true
-
 	// Return nothing when View() is called before we've actually gotten
 	// the viewport
 	if r.viewport.R == 0 && r.viewport.C == 0 {
 		return
 	}
 
-	// Draw the underlying terminal state
-	//////////////////////////////////////////////
-	termSize := r.getTerminalSize()
-	var point geom.Vec2
-	var glyph emu.Glyph
-	for row := 0; row <= r.viewport.R; row++ {
-		point.R = row + r.offset.R
-		for col := 0; col < r.viewport.C; col++ {
-			point.C = r.offset.C + col
-
-			if point.C >= termSize.C || point.R >= termSize.R {
-				glyph = emu.EmptyGlyph()
-				glyph.FG = 8
-				glyph.Char = '-'
-			} else if point.R < 0 {
-				glyph = history[len(history)+point.R][point.C]
-			} else {
-				glyph = screen[point.R][point.C]
-			}
-
-			state.Image[row][col] = glyph
-		}
-	}
-
-	termCursor := r.termToViewport(r.getTerminalCursor())
-	if r.isCopyMode() {
-		state.Cursor.X = r.cursor.C
-		state.Cursor.Y = r.cursor.R
-
-		// In copy mode, leave behind a ghost cursor where the
-		// terminal's cursor is
-		if r.isInViewport(termCursor) {
-			state.Image[termCursor.R][termCursor.C].BG = 8
-		}
-	} else {
-		state.Cursor = r.Cursor()
-		state.Cursor.X = termCursor.C
-		state.Cursor.Y = termCursor.R
-		if r.isPlaying {
-			state.CursorVisible = r.CursorVisible()
-		}
-	}
+	highlights := r.getSearchHighlights()
 
 	// Show the selection state
 	////////////////////////////
 	if r.isCopyMode() && r.isSelecting {
-		r.highlightRange(
-			state,
-			r.selectStart,
-			r.viewportToTerm(r.cursor),
-			r.render.ConvertLipgloss(lipgloss.Color("9")),
-			r.render.ConvertLipgloss(lipgloss.Color("240")),
+		highlights = append(
+			highlights,
+			movement.Highlight{
+				From: r.selectStart,
+				To:   r.movement.Cursor(),
+				FG: r.render.ConvertLipgloss(
+					lipgloss.Color("9"),
+				),
+				BG: r.render.ConvertLipgloss(
+					lipgloss.Color("240"),
+				),
+			},
 		)
 	}
 
-	// Highlight any matches on the screen
-	///////////////////////////////////////////////
-	r.drawMatches(state)
+	// Draw the  terminal state
+	///////////////////////////
+	viewport := tty.New(r.viewport)
+	r.movement.View(viewport, highlights)
+	tty.Copy(geom.Vec2{}, state, viewport)
+	state.CursorVisible = true
+
+	if r.isPlaying {
+		state.CursorVisible = r.CursorVisible()
+	}
 
 	// Render overlays
 	///////////////////////////
 	r.drawStatusBar(state)
-
-	if r.offset.R < 0 {
-		r.drawScrollbackPosition(state)
-	}
 
 	// Render text input
 	/////////////////////////////
@@ -386,8 +257,8 @@ func (r *Replay) View(state *tty.State) {
 	image.Copy(
 		geom.Vec2{
 			// -1 for the status bar
-			R: geom.Clamp(r.cursor.R, 0, size.R-inputSize.R-1),
-			C: geom.Clamp(r.cursor.C, 0, size.C-inputSize.C),
+			R: geom.Clamp(state.Cursor.Y, 0, size.R-inputSize.R-1),
+			C: geom.Clamp(state.Cursor.X, 0, size.C-inputSize.C),
 		},
 		state.Image,
 		input,

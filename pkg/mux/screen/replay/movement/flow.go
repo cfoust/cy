@@ -1,12 +1,21 @@
 package movement
 
 import (
+	"fmt"
+
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/taro"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 type flowMovement struct {
 	emu.Terminal
+
+	render *taro.Renderer
+
 	viewport geom.Size
 
 	haveMoved bool
@@ -26,7 +35,10 @@ type flowMovement struct {
 var _ Movement = (*flowMovement)(nil)
 
 func NewFlow(terminal emu.Terminal, viewport geom.Size) Movement {
-	f := &flowMovement{Terminal: terminal}
+	f := &flowMovement{
+		Terminal: terminal,
+		render:   taro.NewRenderer(),
+	}
 	f.root = f.Root()
 	f.viewport = viewport
 	f.centerTerminalCursor()
@@ -439,4 +451,116 @@ func (f *flowMovement) Jump(needle string, isForward bool, isTo bool) {
 		oldCol,
 	)
 	f.MoveCursorX(newCol - oldCol)
+}
+
+func (f *flowMovement) highlightRow(
+	row emu.Line,
+	start, end geom.Vec2,
+	screenLine emu.ScreenLine,
+	highlight Highlight,
+) {
+	//-e |     |
+	//   |     | s-
+	if highlight.From.GTE(end) || highlight.To.LT(start) {
+		return
+	}
+
+	var startCol, endCol int
+
+	//   |  s--|-
+	if highlight.From.LT(end) && highlight.From.GTE(start) {
+		startCol = highlight.From.C - screenLine.C0
+	}
+
+	//  -|--e  |
+	if highlight.To.GTE(start) || highlight.To.LT(end) {
+		endCol = highlight.To.C - screenLine.C0
+	}
+
+	//   |-----|-e
+	if highlight.To.GTE(end) {
+		endCol = len(row) - 1
+	}
+
+	if startCol > endCol {
+		return
+	}
+
+	for col := startCol; col <= endCol; col++ {
+		row[col].FG = highlight.FG
+		row[col].BG = highlight.BG
+	}
+}
+
+func (f *flowMovement) View(state *tty.State, highlights []Highlight) {
+	r := f.render
+
+	flow := f.Flow(f.viewport, f.root)
+	screen := f.Flow(getTerminalSize(f.Terminal), f.Root())
+	if !flow.OK || !screen.OK {
+		return
+	}
+
+	// Transform all highlights into physical line coordinates
+	for i, highlight := range highlights {
+		if !highlight.Screen {
+			continue
+		}
+
+		from, fromOK := screen.Coord(highlight.From)
+		to, toOK := screen.Coord(highlight.To)
+		if !fromOK || !toOK {
+			continue
+		}
+
+		from, to = normalizeRange(from, to)
+		highlight.From = from
+		highlight.To = to
+		highlight.Screen = false
+		highlights[i] = highlight
+	}
+
+	image := state.Image
+	var start, end geom.Vec2
+	for row, line := range flow.Lines {
+		copy(image[row], line.Chars)
+
+		start = line.Root()
+		end = geom.Vec2{R: line.R, C: line.C1}
+
+		for _, highlight := range highlights {
+			f.highlightRow(
+				image[row],
+				start, end,
+				line,
+				highlight,
+			)
+		}
+	}
+
+	if f.root.R >= f.Root().R {
+		return
+	}
+
+	// Renders "[1/N]" text in the top-right corner that looks just like
+	// tmux's copy mode, but works on physical lines instead.
+	size := state.Image.Size()
+	offsetStyle := f.render.NewStyle().
+		Foreground(lipgloss.Color("9")).
+		Background(lipgloss.Color("240"))
+
+	r.RenderAt(
+		state.Image,
+		0,
+		0,
+		r.PlaceHorizontal(
+			size.C,
+			lipgloss.Right,
+			offsetStyle.Render(fmt.Sprintf(
+				"[%d/%d]",
+				f.root.R,
+				flow.NumLines,
+			)),
+		),
+	)
 }

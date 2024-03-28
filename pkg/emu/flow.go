@@ -13,6 +13,24 @@ type FlowResult struct {
 	CursorOK bool
 }
 
+// Coord gets the coordinate for a cell on the "screen" produced by the
+// original viewport.
+func (f *FlowResult) Coord(pos geom.Vec2) (result geom.Vec2, ok bool) {
+	if pos.R < 0 || pos.R >= len(f.Lines) {
+		return
+	}
+
+	line := f.Lines[pos.R]
+	if pos.C < 0 || pos.C >= len(line.Chars) {
+		return
+	}
+
+	ok = true
+	result.R = line.R
+	result.C = line.C0 + pos.C
+	return
+}
+
 func (s *State) Flow(
 	viewport, root geom.Vec2,
 ) (result FlowResult) {

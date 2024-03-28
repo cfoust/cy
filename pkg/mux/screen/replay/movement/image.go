@@ -3,6 +3,7 @@ package movement
 import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/tty"
 
 	"github.com/mattn/go-runewidth"
 )
@@ -201,7 +202,7 @@ func (i *imageMovement) ScrollXDelta(delta int) {
 }
 
 func normalizeRange(start, end geom.Vec2) (newStart, newEnd geom.Vec2) {
-	if end.R < start.R || (end.R == start.R && end.C < start.C) {
+	if end.LT(start) {
 		intermediate := start
 		start = end
 		end = intermediate
@@ -266,11 +267,113 @@ func (i *imageMovement) MoveCursorY(delta int) {
 	i.moveCursorDelta(geom.Vec2{R: delta})
 }
 
-func (f *imageMovement) Jump(needle string, isForward bool, isTo bool) {
-	oldPos := f.viewportToTerm(f.cursor)
-	line := f.getLine(oldPos.R)
-	f.moveCursor(geom.Vec2{
+func (i *imageMovement) Jump(needle string, isForward bool, isTo bool) {
+	oldPos := i.viewportToTerm(i.cursor)
+	line := i.getLine(oldPos.R)
+	i.moveCursor(geom.Vec2{
 		R: oldPos.R,
 		C: calculateJump(line, needle, isForward, isTo, oldPos.C),
 	})
+}
+
+// For a point that is off the screen, find the closest point that can be used
+// as the start or end point of a selection.
+func anchorToScreen(size geom.Vec2, v geom.Vec2) geom.Vec2 {
+	if v.R < 0 {
+		return geom.Vec2{}
+	}
+
+	if v.R >= size.R {
+		return geom.Vec2{
+			R: size.R - 1,
+			C: size.C - 1,
+		}
+	}
+
+	if v.C < 0 {
+		return geom.Vec2{
+			R: v.R,
+			C: 0,
+		}
+	}
+
+	if v.C > 0 {
+		return geom.Vec2{
+			R: v.R,
+			C: size.C - 1,
+		}
+	}
+
+	return v
+}
+
+func (i *imageMovement) highlightRange(state *tty.State, from, to geom.Vec2, fg, bg emu.Color) {
+	from, to = normalizeRange(from, to)
+	from = i.termToViewport(from)
+	to = i.termToViewport(to)
+
+	size := state.Image.Size()
+	if !i.isInViewport(from) {
+		from = anchorToScreen(size, from)
+	}
+	if !i.isInViewport(to) {
+		to = anchorToScreen(size, to)
+	}
+
+	var startCol, endCol int
+	for row := from.R; row <= to.R; row++ {
+		startCol = 0
+		if row == from.R {
+			startCol = from.C
+		}
+
+		endCol = size.C - 1
+		if row == to.R {
+			endCol = to.C
+		}
+
+		for col := startCol; col <= endCol; col++ {
+			state.Image[row][col].FG = fg
+			state.Image[row][col].BG = bg
+		}
+	}
+}
+
+func (i *imageMovement) View(state *tty.State, highlights []Highlight) {
+	screen := i.Screen()
+	termSize := getTerminalSize(i.Terminal)
+	var point geom.Vec2
+	var glyph emu.Glyph
+	for row := 0; row <= i.viewport.R; row++ {
+		point.R = row + i.offset.R
+		for col := 0; col < i.viewport.C; col++ {
+			point.C = i.offset.C + col
+
+			if point.C >= termSize.C || point.R >= termSize.R {
+				glyph = emu.EmptyGlyph()
+				glyph.FG = 8
+				glyph.Char = '-'
+			} else {
+				glyph = screen[point.R][point.C]
+			}
+
+			state.Image[row][col] = glyph
+		}
+	}
+
+	termCursor := i.termToViewport(getTerminalCursor(i.Terminal))
+	if i.cursor != termCursor {
+		state.Cursor.X = i.cursor.C
+		state.Cursor.Y = i.cursor.R
+
+		// In copy mode, leave behind a ghost cursor where the
+		// terminal's cursor is
+		if i.isInViewport(termCursor) {
+			state.Image[termCursor.R][termCursor.C].BG = 8
+		}
+	} else {
+		state.Cursor = i.Terminal.Cursor()
+		state.Cursor.X = termCursor.C
+		state.Cursor.Y = termCursor.R
+	}
 }

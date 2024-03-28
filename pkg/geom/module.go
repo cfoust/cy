@@ -46,6 +46,38 @@ func (v Vec2) Clamp(min, max Vec2) Vec2 {
 	}
 }
 
+func (v Vec2) GT(other Vec2) bool {
+	if v.R > other.R {
+		return true
+	}
+
+	if v.R == other.R {
+		return v.C > other.C
+	}
+
+	return false
+}
+
+func (v Vec2) GTE(other Vec2) bool {
+	return v.GT(other) || v == other
+}
+
+func (v Vec2) LT(other Vec2) bool {
+	if v.R < other.R {
+		return true
+	}
+
+	if v.R == other.R {
+		return v.C < other.C
+	}
+
+	return false
+}
+
+func (v Vec2) LTE(other Vec2) bool {
+	return v.LT(other) || v == other
+}
+
 var UnitVec2 = Vec2{R: 1, C: 1}
 
 type Size = Vec2

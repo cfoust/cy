@@ -3,8 +3,18 @@ package movement
 import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/tty"
+
 	"github.com/mattn/go-runewidth"
 )
+
+type Highlight struct {
+	// Whether this Highlight is in screen space or in the reference frame
+	// of the Movement.
+	Screen   bool
+	From, To geom.Vec2
+	FG, BG   emu.Color
+}
 
 type Movement interface {
 	Cursor() geom.Vec2
@@ -17,6 +27,7 @@ type Movement interface {
 	ScrollTop()
 	ScrollXDelta(delta int)
 	ScrollYDelta(delta int)
+	View(state *tty.State, highlights []Highlight)
 }
 
 func getTerminalCursor(terminal emu.Terminal) geom.Vec2 {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/sessions"
 
 	"github.com/stretchr/testify/require"
@@ -199,4 +200,116 @@ func TestCursor(t *testing.T) {
 	r.MoveCursorY(5)
 	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.root)
 	require.Equal(t, geom.Vec2{R: 2, C: 0}, r.cursor)
+}
+
+func TestNormalHighlight(t *testing.T) {
+	size := geom.Size{R: 4, C: 10}
+	s := sessions.NewSimulator()
+	s.Add(
+		size,
+		emu.LineFeedMode,
+		"foo\nbar\nbaz\nblah",
+	)
+
+	r := createFlowTest(s.Terminal(), size)
+	r.ScrollTop()
+	state := tty.New(size)
+	bg := emu.Color(1)
+	r.View(state, []Highlight{
+		Highlight{
+			From: geom.Vec2{R: 0, C: 1},
+			To:   geom.Vec2{R: 2, C: 1},
+			BG:   bg,
+		},
+	})
+
+	image := state.Image
+	// "foo" line is filled from first "o" onwards
+	require.NotEqual(t, bg, image[0][0].BG)
+	require.Equal(t, bg, image[0][1].BG)
+	require.Equal(t, bg, image[0][9].BG)
+
+	// "bar" line is completely filled in
+	require.Equal(t, bg, image[1][0].BG)
+	require.Equal(t, bg, image[1][9].BG)
+
+	// "baz" line is filled to a
+	require.Equal(t, bg, image[2][1].BG)
+	require.NotEqual(t, bg, image[2][2].BG)
+
+	// "blah" line is untouched
+	require.NotEqual(t, bg, image[3][0].BG)
+}
+
+func TestLongHighlight(t *testing.T) {
+	size := geom.Size{R: 4, C: 3}
+	s := sessions.NewSimulator()
+	s.Add(
+		size,
+		emu.LineFeedMode,
+		"foobarbaz",
+	)
+
+	r := createFlowTest(s.Terminal(), size)
+	r.ScrollTop()
+	state := tty.New(size)
+	bg := emu.Color(1)
+	r.View(state, []Highlight{
+		Highlight{
+			From: geom.Vec2{R: 0, C: 1},
+			To:   geom.Vec2{R: 0, C: 7},
+			BG:   bg,
+		},
+	})
+
+	image := state.Image
+	// "foo" line is filled from first "o" onwards
+	require.NotEqual(t, bg, image[0][0].BG)
+	require.Equal(t, bg, image[0][1].BG)
+	require.Equal(t, bg, image[0][2].BG)
+
+	// "bar" line is completely filled in
+	require.Equal(t, bg, image[1][0].BG)
+	require.Equal(t, bg, image[1][2].BG)
+
+	// "baz" line is filled to a
+	require.Equal(t, bg, image[2][1].BG)
+	require.NotEqual(t, bg, image[2][2].BG)
+}
+
+func TestLongScreenHighlight(t *testing.T) {
+	size := geom.Size{R: 4, C: 3}
+	s := sessions.NewSimulator()
+	s.Add(
+		size,
+		emu.LineFeedMode,
+		"foobarbaz",
+	)
+
+	r := createFlowTest(s.Terminal(), size)
+	r.ScrollTop()
+	state := tty.New(size)
+	bg := emu.Color(1)
+	r.View(state, []Highlight{
+		Highlight{
+			Screen: true,
+			From:   geom.Vec2{R: 0, C: 1},
+			To:     geom.Vec2{R: 2, C: 1},
+			BG:     bg,
+		},
+	})
+
+	image := state.Image
+	// "foo" line is filled from first "o" onwards
+	require.NotEqual(t, bg, image[0][0].BG)
+	require.Equal(t, bg, image[0][1].BG)
+	require.Equal(t, bg, image[0][2].BG)
+
+	// "bar" line is completely filled in
+	require.Equal(t, bg, image[1][0].BG)
+	require.Equal(t, bg, image[1][2].BG)
+
+	// "baz" line is filled to a
+	require.Equal(t, bg, image[2][1].BG)
+	require.NotEqual(t, bg, image[2][2].BG)
 }
