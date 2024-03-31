@@ -5,6 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/sessions"
 
 	"github.com/stretchr/testify/require"
@@ -100,4 +101,18 @@ func TestJump(t *testing.T) {
 		m.Jump("e", false, true)
 		require.Equal(t, geom.Vec2{C: 8}, m.Cursor())
 	}
+}
+
+func TestInteractions(t *testing.T) {
+	s := sim().
+		Add(
+			geom.Size{R: 10, C: 10},
+			emu.LineFeedMode,
+			"foo\nbar\nbaz",
+		)
+
+	size := geom.Size{R: 5, C: 5}
+	i := createImageTest(s.Terminal(), size)
+	state := tty.New(size)
+	i.View(state, []Highlight{})
 }

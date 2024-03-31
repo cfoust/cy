@@ -344,7 +344,7 @@ func (i *imageMovement) View(state *tty.State, highlights []Highlight) {
 	termSize := getTerminalSize(i.Terminal)
 	var point geom.Vec2
 	var glyph emu.Glyph
-	for row := 0; row <= i.viewport.R; row++ {
+	for row := 0; row < i.viewport.R; row++ {
 		point.R = row + i.offset.R
 		for col := 0; col < i.viewport.C; col++ {
 			point.C = i.offset.C + col
