@@ -15,6 +15,12 @@ func (t *State) Print(c rune) {
 	w := runewidth.RuneWidth(c)
 	destCol := t.cur.X + w
 
+	// TODO(cfoust): 04/03/24 this is a nasty problem, what is the expected
+	// behavior? For now we just avoid an infinite loop
+	if w > t.cols {
+		return
+	}
+
 	// Specifically can only happen if a double-width character is printed
 	// to the final cell in a row
 	if destCol > t.cols {
