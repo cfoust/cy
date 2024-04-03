@@ -13,9 +13,19 @@ func (t *State) Print(c rune) {
 	}
 
 	w := runewidth.RuneWidth(c)
+	destCol := t.cur.X + w
+
+	// Specifically can only happen if a double-width character is printed
+	// to the final cell in a row
+	if destCol > t.cols {
+		t.newline(true)
+		t.Print(c)
+		return
+	}
+
 	t.setChar(c, &t.cur.Attr, t.cur.X, t.cur.Y)
-	if t.cur.X+w < t.cols {
-		t.moveTo(t.cur.X+w, t.cur.Y)
+	if destCol < t.cols {
+		t.moveTo(destCol, t.cur.Y)
 	} else {
 		t.cur.State |= cursorWrapNext
 	}

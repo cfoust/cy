@@ -319,3 +319,19 @@ func TestTranslateCursor(t *testing.T) {
 		"foobar",
 	)
 }
+
+// Double-width characters cannot occupy the last column in a row. Instead, we
+// must wrap to a new line instead of just setting cursorWrapNext.
+func TestCJKWrap(t *testing.T) {
+	term := New()
+	term.Resize(4, 2)
+	term.Write([]byte(LineFeedMode))
+	// Leaves us in the last cell
+	term.Write([]byte("foo"))
+	// Should cause 你 to be written to the next line instead
+	term.Write([]byte("你"))
+
+	lines := term.Screen()
+	require.Equal(t, "foo ", lines[0].String())
+	require.Equal(t, '你', lines[1][0].Char)
+}

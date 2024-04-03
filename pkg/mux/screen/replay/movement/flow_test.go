@@ -137,6 +137,7 @@ func TestScroll(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 1, C: 4}, r.cursor)
 
 	r.ScrollYDelta(1)
+	require.Equal(t, geom.Vec2{R: 6, C: 0}, r.root)
 	// Should not scroll further
 	r.ScrollYDelta(1)
 	require.Equal(t, geom.Vec2{R: 6, C: 0}, r.root)

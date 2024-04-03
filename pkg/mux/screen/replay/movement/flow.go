@@ -392,6 +392,11 @@ func (f *flowMovement) MoveCursorY(delta int) {
 		break
 	}
 
+	// TODO(cfoust): 04/01/24 how can this happen?
+	if len(flow.Lines) == 0 {
+		return
+	}
+
 	destLine := flow.Lines[0]
 	if delta >= 0 {
 		destLine = flow.Lines[len(flow.Lines)-1]

@@ -106,6 +106,10 @@ func (l Line) IsWrapped() bool {
 	return l[len(l)-1].Mode == attrWrap
 }
 
+// Length returns the physical length of the line, accounting for the width of
+// the final rune. Be aware that when the final rune is a double-width
+// character (such as a CJK ideogram) Length can return a number that is
+// greater than the number of Glyphs in the Line.
 func (l Line) Length() int {
 	return getLineLength(l)
 }
