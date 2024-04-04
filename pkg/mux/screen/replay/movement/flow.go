@@ -433,7 +433,7 @@ func (f *flowMovement) MoveCursorY(delta int) {
 		}
 
 		f.cursor.R = row
-		break
+		return
 	}
 
 	position := ScrollPositionBottom

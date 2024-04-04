@@ -163,6 +163,11 @@ func TestCursor(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 2, C: 0}, r.root)
 	require.Equal(t, geom.Vec2{R: 0, C: 4}, r.cursor)
 
+	r.MoveCursorY(1)
+	require.Equal(t, geom.Vec2{R: 2, C: 0}, r.root)
+	require.Equal(t, geom.Vec2{R: 1, C: 3}, r.cursor)
+	r.MoveCursorY(-1)
+
 	r.MoveCursorY(-1)
 	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.root)
 	require.Equal(t, geom.Vec2{R: 0, C: 5}, r.cursor)
