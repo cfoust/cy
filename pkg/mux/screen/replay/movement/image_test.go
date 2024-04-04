@@ -197,3 +197,120 @@ func TestInteractions(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 2, C: 0}, i.cursor)
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.offset)
 }
+
+func TestImageHighlight(t *testing.T) {
+	s := sessions.NewSimulator()
+	s.Add(
+		geom.Size{R: 5, C: 5},
+		emu.LineFeedMode,
+		// fill the screen
+		"xxxxx\nxxxxx\nxxxxx\nxxxxx\nxxxxx",
+	)
+
+	size := geom.Size{R: 3, C: 3}
+	i := createImageTest(s.Terminal(), size)
+	i.ScrollTop()
+	i.ScrollXDelta(-10)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.offset)
+
+	testHighlight(t, i, size,
+		[]Highlight{
+			{
+				From: geom.Vec2{R: 0, C: 1},
+				To:   geom.Vec2{R: 4, C: 2},
+			},
+		},
+		"011",
+		"011",
+		"011",
+	)
+
+	i.ScrollXDelta(2)
+	testHighlight(t, i, size,
+		[]Highlight{
+			{
+				From: geom.Vec2{R: 0, C: 1},
+				To:   geom.Vec2{R: 4, C: 2},
+			},
+		},
+		"100",
+		"100",
+		"100",
+	)
+
+	i.ScrollXDelta(-2)
+	testHighlight(t, i, size,
+		[]Highlight{
+			{
+				From: geom.Vec2{R: 0, C: 1},
+				To:   geom.Vec2{R: 0, C: 2},
+			},
+		},
+		"011",
+		"000",
+		"000",
+	)
+
+	testHighlight(t, i, size,
+		[]Highlight{
+			{
+				From: geom.Vec2{R: 0, C: 1},
+				To:   geom.Vec2{R: 1, C: 2},
+			},
+		},
+		"011",
+		"011",
+		"000",
+	)
+
+	testHighlight(t, i, size,
+		[]Highlight{
+			{
+				Screen: true,
+				From:   geom.Vec2{R: 0, C: 1},
+				To:     geom.Vec2{R: 2, C: 1},
+			},
+		},
+		"011",
+		"111",
+		"110",
+	)
+
+	testHighlight(t, i, size,
+		[]Highlight{
+			{
+				Screen: true,
+				From:   geom.Vec2{R: 0, C: 1},
+				To:     geom.Vec2{R: 0, C: 2},
+			},
+		},
+		"011",
+		"000",
+		"000",
+	)
+
+	testHighlight(t, i, size,
+		[]Highlight{
+			{
+				From: geom.Vec2{R: 3, C: 0},
+				To:   geom.Vec2{R: 3, C: 4},
+			},
+		},
+		"000",
+		"000",
+		"000",
+	)
+
+	testHighlight(t, i, size,
+		[]Highlight{
+			{
+				Screen: true,
+				From:   geom.Vec2{R: 3, C: 0},
+				To:     geom.Vec2{R: 3, C: 4},
+			},
+		},
+		"000",
+		"000",
+		"000",
+	)
+}

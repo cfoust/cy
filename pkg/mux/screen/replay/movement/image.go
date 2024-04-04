@@ -353,13 +353,86 @@ func (i *imageMovement) highlightRange(state *tty.State, from, to geom.Vec2, fg,
 	}
 }
 
+func (i *imageMovement) highlightRow(
+	row emu.Line,
+	start, end geom.Vec2,
+	highlight Highlight,
+) {
+	from := highlight.From
+	to := highlight.To
+	if to.R < start.R || from.R > end.R {
+		return
+	}
+
+	// Non-Screen highlights are just boxes
+	if !highlight.Screen {
+		if to.C < start.C {
+			return
+		}
+
+		if from.C > end.C {
+			return
+		}
+	}
+
+	var startCol, endCol int
+
+	lastIndex := len(row) - 1
+
+	if !highlight.Screen {
+		startCol = from.C - start.C
+		endCol = to.C - start.C
+	} else {
+		if from.R == start.R {
+			startCol = from.C - start.C
+			endCol = lastIndex
+		}
+
+		if to.R == end.R {
+			endCol = to.C - start.C
+		}
+
+		if from.R < start.R && to.R > end.R {
+			startCol = 0
+			endCol = lastIndex
+		}
+	}
+
+	if startCol > endCol {
+		return
+	}
+
+	startCol = geom.Clamp(startCol, 0, lastIndex)
+	endCol = geom.Clamp(endCol, 0, lastIndex)
+
+	for col := startCol; col <= endCol; col++ {
+		row[col].FG = highlight.FG
+		row[col].BG = highlight.BG
+	}
+}
+
 func (i *imageMovement) View(state *tty.State, highlights []Highlight) {
 	screen := i.Screen()
 	termSize := i.Terminal.Size()
 	var point geom.Vec2
 	var glyph emu.Glyph
+	var start, end geom.Vec2
+	image := state.Image
 	for row := 0; row < i.viewport.R; row++ {
-		point.R = row + i.offset.R
+		point.R = i.offset.R + row
+
+		start = geom.Vec2{
+			R: point.R,
+			C: i.offset.C,
+		}
+		end = geom.Vec2{
+			R: point.R,
+			C: geom.Min(
+				i.offset.C+i.viewport.C-1,
+				termSize.C-1,
+			),
+		}
+
 		for col := 0; col < i.viewport.C; col++ {
 			point.C = i.offset.C + col
 
@@ -371,7 +444,11 @@ func (i *imageMovement) View(state *tty.State, highlights []Highlight) {
 				glyph = screen[point.R][point.C]
 			}
 
-			state.Image[row][col] = glyph
+			image[row][col] = glyph
+		}
+
+		for _, highlight := range highlights {
+			i.highlightRow(image[row], start, end, highlight)
 		}
 	}
 
@@ -382,7 +459,7 @@ func (i *imageMovement) View(state *tty.State, highlights []Highlight) {
 		// In copy mode, leave behind a ghost cursor where the
 		// terminal's cursor is
 		if i.isInViewport(termCursor) {
-			state.Image[termCursor.R][termCursor.C].BG = 8
+			image[termCursor.R][termCursor.C].BG = 8
 		}
 	} else {
 		state.Cursor = i.Terminal.Cursor()
