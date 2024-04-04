@@ -211,6 +211,54 @@ func TestCursor(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 2, C: 0}, r.cursor)
 }
 
+func testHighlight(
+	t *testing.T,
+	m Movement,
+	size geom.Size,
+	highlights []Highlight,
+	lines ...string,
+) {
+	bg := emu.Color(1)
+	for i := range highlights {
+		highlights[i].BG = bg
+	}
+
+	state := tty.New(size)
+	m.View(state, highlights)
+	image := state.Image
+
+	for row := range lines {
+		for col, char := range lines[row] {
+			switch char {
+			case '0':
+				require.NotEqual(
+					t,
+					bg,
+					image[row][col].BG,
+					"cell [%d, %d] should not be highlighted",
+					row,
+					col,
+				)
+			case '1':
+				require.Equal(
+					t,
+					bg,
+					image[row][col].BG,
+					"cell [%d, %d] should be highlighted",
+					row,
+					col,
+				)
+			default:
+				t.Logf(
+					"invalid char %+v, must be 1 or 0",
+					char,
+				)
+				t.FailNow()
+			}
+		}
+	}
+}
+
 func TestNormalHighlight(t *testing.T) {
 	size := geom.Size{R: 4, C: 10}
 	s := sessions.NewSimulator()
@@ -222,32 +270,23 @@ func TestNormalHighlight(t *testing.T) {
 
 	r := createFlowTest(s.Terminal(), size)
 	r.ScrollTop()
-	state := tty.New(size)
-	bg := emu.Color(1)
-	r.View(state, []Highlight{
-		{
-			From: geom.Vec2{R: 0, C: 1},
-			To:   geom.Vec2{R: 2, C: 1},
-			BG:   bg,
+
+	testHighlight(t, r, size,
+		[]Highlight{
+			{
+				From: geom.Vec2{R: 0, C: 1},
+				To:   geom.Vec2{R: 2, C: 1},
+			},
 		},
-	})
-
-	image := state.Image
-	// "foo" line is filled from first "o" onwards
-	require.NotEqual(t, bg, image[0][0].BG)
-	require.Equal(t, bg, image[0][1].BG)
-	require.Equal(t, bg, image[0][9].BG)
-
-	// "bar" line is completely filled in
-	require.Equal(t, bg, image[1][0].BG)
-	require.Equal(t, bg, image[1][9].BG)
-
-	// "baz" line is filled to a
-	require.Equal(t, bg, image[2][1].BG)
-	require.NotEqual(t, bg, image[2][2].BG)
-
-	// "blah" line is untouched
-	require.NotEqual(t, bg, image[3][0].BG)
+		// "foo" line is filled from first "o" onwards
+		"0110",
+		// "bar" line is completely filled in
+		"1110",
+		// "baz" line is filled to a
+		"1100",
+		// "blah" line is untouched
+		"0000",
+	)
 }
 
 func TestLongHighlight(t *testing.T) {
@@ -261,29 +300,21 @@ func TestLongHighlight(t *testing.T) {
 
 	r := createFlowTest(s.Terminal(), size)
 	r.ScrollTop()
-	state := tty.New(size)
-	bg := emu.Color(1)
-	r.View(state, []Highlight{
-		{
-			From: geom.Vec2{R: 0, C: 1},
-			To:   geom.Vec2{R: 0, C: 7},
-			BG:   bg,
+
+	testHighlight(t, r, size,
+		[]Highlight{
+			{
+				From: geom.Vec2{R: 0, C: 1},
+				To:   geom.Vec2{R: 0, C: 7},
+			},
 		},
-	})
-
-	image := state.Image
-	// "foo" line is filled from first "o" onwards
-	require.NotEqual(t, bg, image[0][0].BG)
-	require.Equal(t, bg, image[0][1].BG)
-	require.Equal(t, bg, image[0][2].BG)
-
-	// "bar" line is completely filled in
-	require.Equal(t, bg, image[1][0].BG)
-	require.Equal(t, bg, image[1][2].BG)
-
-	// "baz" line is filled to a
-	require.Equal(t, bg, image[2][1].BG)
-	require.NotEqual(t, bg, image[2][2].BG)
+		// "foo" line is filled from first "o" onwards
+		"011",
+		// "bar" line is completely filled in
+		"111",
+		// "baz" line is filled to a
+		"110",
+	)
 }
 
 func TestLongScreenHighlight(t *testing.T) {
@@ -297,28 +328,20 @@ func TestLongScreenHighlight(t *testing.T) {
 
 	r := createFlowTest(s.Terminal(), size)
 	r.ScrollTop()
-	state := tty.New(size)
-	bg := emu.Color(1)
-	r.View(state, []Highlight{
-		{
-			Screen: true,
-			From:   geom.Vec2{R: 0, C: 1},
-			To:     geom.Vec2{R: 2, C: 1},
-			BG:     bg,
+
+	testHighlight(t, r, size,
+		[]Highlight{
+			{
+				Screen: true,
+				From:   geom.Vec2{R: 0, C: 1},
+				To:     geom.Vec2{R: 2, C: 1},
+			},
 		},
-	})
-
-	image := state.Image
-	// "foo" line is filled from first "o" onwards
-	require.NotEqual(t, bg, image[0][0].BG)
-	require.Equal(t, bg, image[0][1].BG)
-	require.Equal(t, bg, image[0][2].BG)
-
-	// "bar" line is completely filled in
-	require.Equal(t, bg, image[1][0].BG)
-	require.Equal(t, bg, image[1][2].BG)
-
-	// "baz" line is filled to a
-	require.Equal(t, bg, image[2][1].BG)
-	require.NotEqual(t, bg, image[2][2].BG)
+		// "foo" line is filled from first "o" onwards
+		"011",
+		// "bar" line is completely filled in
+		"111",
+		// "baz" line is filled to a
+		"110",
+	)
 }

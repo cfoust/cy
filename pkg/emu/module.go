@@ -8,7 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 )
 
-// TODO(cfoust): 05/19/23 combine this with above
+// TODO(cfoust): 05/19/23 combine this with the other declaration
 const (
 	AttrReverse = 1 << iota
 	AttrUnderline
@@ -85,6 +85,7 @@ func EmptyGlyph() Glyph {
 		Char: ' ',
 		FG:   DefaultFG,
 		BG:   DefaultBG,
+		Mode: attrBlank,
 	}
 }
 
