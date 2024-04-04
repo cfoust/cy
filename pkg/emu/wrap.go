@@ -2,6 +2,7 @@ package emu
 
 import (
 	"github.com/cfoust/cy/pkg/geom"
+
 	"github.com/mattn/go-runewidth"
 )
 

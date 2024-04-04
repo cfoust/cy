@@ -251,7 +251,7 @@ func TestCJKFlow(t *testing.T) {
 	require.Equal(t, 1, result.NumLines)
 	line := result.Lines[0]
 	// The spaces represent blank cells that are "part" of the double-width glyph
-	require.Equal(t, "fo你 好 bar", line.Chars.String())
+	require.Equal(t, "fo你好bar", line.Chars.String())
 }
 
 func TestHistoryLine(t *testing.T) {

@@ -250,7 +250,7 @@ func (s *State) GetLines(start, end int) (lines []Line) {
 	start = geom.Clamp(start, 0, numLines)
 	end = geom.Clamp(end, 0, numLines)
 
-	for i := start; i < end; i++ {
+	for i := start; i < end+1; i++ {
 		line, ok := getLine(i)
 		if !ok {
 			return

@@ -31,7 +31,7 @@ func TestViewport(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 11, C: 10}, i.offset)
 }
 
-func TestReadString(t *testing.T) {
+func TestReadStringImage(t *testing.T) {
 	s := sessions.NewSimulator().
 		Add(
 			geom.Size{R: 5, C: 10},

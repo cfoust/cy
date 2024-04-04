@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 
 	"github.com/cfoust/cy/pkg/geom"
+
+	"github.com/mattn/go-runewidth"
 )
 
 // TODO(cfoust): 05/19/23 combine this with the other declaration
@@ -93,6 +95,7 @@ type Line []Glyph
 func (l Line) String() (str string) {
 	for i := 0; i < len(l); i++ {
 		str += string(l[i].Char)
+		i += runewidth.RuneWidth(l[i].Char) - 1
 	}
 
 	return str

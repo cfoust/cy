@@ -353,6 +353,20 @@ func (i *imageMovement) highlightRange(state *tty.State, from, to geom.Vec2, fg,
 	}
 }
 
+// normalizeBoxRange normalizes box selections so that `from` is the top-left
+// coordinate and `to` is the bottom right coordinate defining the box.
+func normalizeBoxRange(from, to geom.Vec2) (newFrom, newTo geom.Vec2) {
+	newFrom = geom.Vec2{
+		R: geom.Min(from.R, to.R),
+		C: geom.Min(from.C, to.C),
+	}
+	newTo = geom.Vec2{
+		R: geom.Max(from.R, to.R),
+		C: geom.Max(from.C, to.C),
+	}
+	return
+}
+
 func (i *imageMovement) highlightRow(
 	row emu.Line,
 	start, end geom.Vec2,
@@ -362,21 +376,6 @@ func (i *imageMovement) highlightRow(
 		from = highlight.From
 		to   = highlight.To
 	)
-	from, to = normalizeRange(from, to)
-
-	// Turn all !Screen coordinates into normalized boxes
-	if !highlight.Screen {
-		newFrom := geom.Vec2{
-			R: geom.Min(from.R, to.R),
-			C: geom.Min(from.C, to.C),
-		}
-		newTo := geom.Vec2{
-			R: geom.Max(from.R, to.R),
-			C: geom.Max(from.C, to.C),
-		}
-		from = newFrom
-		to = newTo
-	}
 
 	if to.R < start.R || from.R > end.R {
 		return
@@ -430,6 +429,22 @@ func (i *imageMovement) highlightRow(
 }
 
 func (i *imageMovement) View(state *tty.State, highlights []Highlight) {
+	for i, highlight := range highlights {
+		var (
+			from = highlight.From
+			to   = highlight.To
+		)
+		from, to = normalizeRange(from, to)
+
+		if !highlight.Screen {
+			from, to = normalizeBoxRange(from, to)
+		}
+
+		highlight.From = from
+		highlight.To = to
+		highlights[i] = highlight
+	}
+
 	screen := i.Screen()
 	termSize := i.Terminal.Size()
 	var point geom.Vec2

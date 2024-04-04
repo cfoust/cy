@@ -391,3 +391,41 @@ func TestCJKHighlight(t *testing.T) {
 		"000",
 	)
 }
+
+func TestReadStringFlow(t *testing.T) {
+	size := geom.Size{R: 4, C: 3}
+	s := sessions.NewSimulator()
+	s.Add(
+		size,
+		emu.LineFeedMode,
+		"foobar\nbaz\n\ntest",
+	)
+
+	r := createFlowTest(s.Terminal(), size)
+	r.ScrollTop()
+
+	require.Equal(t, "foobar", r.ReadString(
+		geom.Vec2{R: 0, C: 0},
+		geom.Vec2{R: 0, C: 5},
+	))
+
+	require.Equal(t, "\ntest", r.ReadString(
+		geom.Vec2{R: 2, C: 0},
+		geom.Vec2{R: 3, C: 3},
+	))
+
+	require.Equal(t, "baz\n\ntest", r.ReadString(
+		geom.Vec2{R: 1, C: 0},
+		geom.Vec2{R: 3, C: 3},
+	))
+
+	require.Equal(t, "foobar\nbaz\n\ntest", r.ReadString(
+		geom.Vec2{R: 0, C: 0},
+		geom.Vec2{R: 3, C: 3},
+	))
+
+	require.Equal(t, "oobar\nbaz\n\ntest", r.ReadString(
+		geom.Vec2{R: 0, C: 1},
+		geom.Vec2{R: 3, C: 3},
+	))
+}
