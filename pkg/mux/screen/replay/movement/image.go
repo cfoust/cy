@@ -364,6 +364,20 @@ func (i *imageMovement) highlightRow(
 	)
 	from, to = normalizeRange(from, to)
 
+	// Turn all !Screen coordinates into normalized boxes
+	if !highlight.Screen {
+		newFrom := geom.Vec2{
+			R: geom.Min(from.R, to.R),
+			C: geom.Min(from.C, to.C),
+		}
+		newTo := geom.Vec2{
+			R: geom.Max(from.R, to.R),
+			C: geom.Max(from.C, to.C),
+		}
+		from = newFrom
+		to = newTo
+	}
+
 	if to.R < start.R || from.R > end.R {
 		return
 	}

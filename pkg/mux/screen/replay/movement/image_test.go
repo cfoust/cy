@@ -238,6 +238,19 @@ func TestImageHighlight(t *testing.T) {
 		"011",
 	)
 
+	// Non-screen highlights can also be inverted the other way
+	testHighlight(t, i, size,
+		[]Highlight{
+			{
+				From: geom.Vec2{R: 0, C: 2},
+				To:   geom.Vec2{R: 4, C: 1},
+			},
+		},
+		"011",
+		"011",
+		"011",
+	)
+
 	i.ScrollXDelta(2)
 	testHighlight(t, i, size,
 		[]Highlight{
