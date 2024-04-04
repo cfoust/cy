@@ -533,6 +533,17 @@ func (f *flowMovement) View(state *tty.State, highlights []Highlight) {
 		}
 	}
 
+	termCursor := flow.Cursor
+	if flow.CursorOK && f.cursor == termCursor.Vec2 {
+		state.Cursor = termCursor
+	} else {
+		state.Cursor.Vec2 = f.cursor
+
+		if flow.CursorOK {
+			image[termCursor.R][termCursor.C].BG = 8
+		}
+	}
+
 	if f.root.R >= f.Root().R {
 		return
 	}
