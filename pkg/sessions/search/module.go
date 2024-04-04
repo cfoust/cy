@@ -152,10 +152,7 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 		}
 
 		if resize, ok := event.Message.(P.SizeMessage); ok {
-			term.Resize(
-				resize.Columns,
-				resize.Rows,
-			)
+			term.Resize(resize.Vec())
 			size = geom.Vec2{C: resize.Columns, R: resize.Rows}
 
 			// TODO(cfoust): 08/24/23 clear all matches

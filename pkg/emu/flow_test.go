@@ -10,7 +10,7 @@ import (
 
 func TestFlowLines(t *testing.T) {
 	term := New()
-	term.Resize(4, 2)
+	term.Resize(geom.Vec2{C: 4, R: 2})
 	term.Write([]byte(LineFeedMode))
 
 	// Remove anything in lines that can mess with comparisons

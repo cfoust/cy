@@ -3,21 +3,25 @@
 
 package emu
 
+import (
+	"github.com/cfoust/cy/pkg/geom"
+)
+
 type terminal struct {
 	*State
 }
 
 func newTerminal(info TerminalInfo) *terminal {
 	t := &terminal{newState(info.w)}
-	t.init(info.cols, info.rows)
+	t.init(geom.Size{C: info.cols, R: info.rows})
 	t.disableHistory = info.disableHistory
 	return t
 }
 
-func (t *terminal) init(cols, rows int) {
+func (t *terminal) init(size geom.Size) {
 	t.cur.Attr.FG = DefaultFG
 	t.cur.Attr.BG = DefaultBG
-	t.Resize(cols, rows)
+	t.Resize(size)
 	t.reset()
 }
 
@@ -39,8 +43,8 @@ func (t *terminal) Write(p []byte) (int, error) {
 	return w, nil
 }
 
-func (t *terminal) Resize(cols, rows int) {
+func (t *terminal) Resize(size geom.Vec2) {
 	t.Lock()
 	defer t.Unlock()
-	t.resize(cols, rows)
+	t.resize(size)
 }

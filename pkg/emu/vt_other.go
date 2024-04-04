@@ -1,3 +1,4 @@
+//go:build plan9 || nacl || windows
 // +build plan9 nacl windows
 
 package emu
@@ -8,6 +9,8 @@ import (
 	"io"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/cfoust/cy/pkg/geom"
 )
 
 type terminal struct {
@@ -20,12 +23,12 @@ func newTerminal(info TerminalInfo) *terminal {
 	return t
 }
 
-func (t *terminal) init(cols, rows int) {
+func (t *terminal) init(size geom.Size) {
 	t.numlock = true
 	t.state = t.parse
 	t.cur.Attr.FG = DefaultFG
 	t.cur.Attr.BG = DefaultBG
-	t.Resize(cols, rows)
+	t.Resize(size)
 	t.reset()
 }
 
@@ -100,8 +103,8 @@ func fullRuneBuffered(br *bufio.Reader) bool {
 	return utf8.FullRune(buf)
 }
 
-func (t *terminal) Resize(cols, rows int) {
+func (t *terminal) Resize(size geom.Size) {
 	t.lock()
 	defer t.unlock()
-	_ = t.resize(cols, rows)
+	t.resize(size)
 }

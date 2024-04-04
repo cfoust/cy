@@ -31,7 +31,7 @@ func (r *Renderer) RenderAt(state image.Image, row, col int, value string) {
 	term.Write([]byte(emu.LineFeedMode)) // set CRLF mode
 	newCols := lipgloss.Width(value)
 	newRows := lipgloss.Height(value)
-	term.Resize(newCols, newRows)
+	term.Resize(geom.Size{C: newCols, R: newRows})
 	r.info.Fprintf(term, terminfo.ClearScreen)
 	r.info.Fprintf(term, terminfo.CursorHome)
 	term.Write([]byte(value))

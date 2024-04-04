@@ -85,7 +85,6 @@ func EmptyGlyph() Glyph {
 		Char: ' ',
 		FG:   DefaultFG,
 		BG:   DefaultBG,
-		Mode: attrBlank,
 	}
 }
 
@@ -163,7 +162,8 @@ type View interface {
 	Size() geom.Vec2
 
 	// Resize changes the size of the virtual terminal.
-	Resize(cols, rows int)
+	//Resize(cols, rows int)
+	Resize(geom.Vec2)
 
 	// Mode returns the current terminal mode.
 	Mode() ModeFlag

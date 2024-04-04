@@ -275,7 +275,9 @@ func (t *State) reset() {
 }
 
 // TODO: definitely can improve allocs
-func (t *State) resize(cols, rows int) {
+func (t *State) resize(size geom.Vec2) {
+	cols := size.C
+	rows := size.R
 	if cols == t.cols && rows == t.rows {
 		return
 	}

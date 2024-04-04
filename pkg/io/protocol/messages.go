@@ -50,6 +50,10 @@ type SizeMessage struct {
 
 func (i SizeMessage) Type() MessageType { return MessageTypeSize }
 
+func (i SizeMessage) Vec() geom.Vec2 {
+	return geom.Vec2{R: i.Rows, C: i.Columns}
+}
+
 // The initial information necessary to render to the client.
 type HandshakeMessage struct {
 	Env     map[string]string

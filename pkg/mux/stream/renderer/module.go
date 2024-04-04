@@ -37,7 +37,7 @@ func (r *Renderer) clearScreen(w io.Writer) {
 }
 
 func (r *Renderer) Resize(size geom.Size) error {
-	r.raw.Resize(size.C, size.R)
+	r.raw.Resize(size)
 	r.clearScreen(r.raw)
 	r.clearScreen(r.w)
 	return r.screen.Resize(size)

@@ -23,7 +23,7 @@ func (t *Terminal) State() *tty.State {
 }
 
 func (t *Terminal) Resize(size Size) error {
-	t.terminal.Resize(size.C, size.R)
+	t.terminal.Resize(size)
 
 	err := t.stream.Resize(size)
 	if err != nil {

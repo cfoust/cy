@@ -118,10 +118,7 @@ func (p *Player) Goto(index, offset int) {
 
 			p.Terminal.Parse(data)
 		case P.SizeMessage:
-			p.Terminal.Resize(
-				e.Columns,
-				e.Rows,
-			)
+			p.Terminal.Resize(e.Vec())
 		}
 	}
 

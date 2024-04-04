@@ -105,10 +105,7 @@ func (s *Simulator) Terminal() emu.Terminal {
 		case P.OutputMessage:
 			term.Parse(e.Data)
 		case P.SizeMessage:
-			term.Resize(
-				e.Columns,
-				e.Rows,
-			)
+			term.Resize(e.Vec())
 		}
 	}
 

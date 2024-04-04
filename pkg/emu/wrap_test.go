@@ -88,10 +88,10 @@ func TestLongLine(t *testing.T) {
 	for i := 0; i < 40; i++ {
 		term.Write([]byte("b"))
 	}
-	term.Resize(40, 24)
+	term.Resize(geom.Vec2{C: 40, R: 24})
 	require.Equal(t, "a", extractStr(term, 39, 39, 0))
 	require.Equal(t, "b", extractStr(term, 0, 0, 1))
-	term.Resize(80, 24)
+	term.Resize(geom.Vec2{C: 80, R: 24})
 	require.Equal(t, "b", extractStr(term, 40, 40, 0))
 }
 
@@ -99,11 +99,11 @@ func TestLongLine(t *testing.T) {
 // their original location.
 func TestSeveralLines(t *testing.T) {
 	term := New()
-	term.Resize(4, 24)
+	term.Resize(geom.Vec2{C: 4, R: 24})
 	term.Write([]byte(LineFeedMode))
 	term.Write([]byte("test\ntest"))
-	term.Resize(2, 24)
-	term.Resize(4, 24)
+	term.Resize(geom.Vec2{C: 2, R: 24})
+	term.Resize(geom.Vec2{C: 4, R: 24})
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
 	require.Equal(t, "test", extractStr(term, 0, 3, 1))
 }
@@ -112,12 +112,12 @@ func TestSeveralLines(t *testing.T) {
 // moved completely into history when a resize occurs.
 func TestDisappear(t *testing.T) {
 	term := New()
-	term.Resize(4, 2)
+	term.Resize(geom.Vec2{C: 4, R: 2})
 	term.Write([]byte(LineFeedMode))
 	term.Write([]byte("foobar\ntest"))
 	require.Equal(t, "ar", extractStr(term, 0, 1, 0))
 	require.Equal(t, "test", extractStr(term, 0, 3, 1))
-	term.Resize(4, 3)
+	term.Resize(geom.Vec2{C: 4, R: 3})
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
 	history := term.History()
 	require.Equal(t, len(history), 1)
@@ -127,15 +127,15 @@ func TestDisappear(t *testing.T) {
 // A more constrained version of TestSeveralLines.
 func TestExpand(t *testing.T) {
 	term := New()
-	term.Resize(4, 4)
+	term.Resize(geom.Vec2{C: 4, R: 4})
 	term.Write([]byte(LineFeedMode))
 	term.Write([]byte("test\ntest"))
-	term.Resize(2, 4)
+	term.Resize(geom.Vec2{C: 2, R: 4})
 	require.Equal(t, "te", extractStr(term, 0, 1, 0))
 	require.Equal(t, "st", extractStr(term, 0, 1, 1))
 	require.Equal(t, "te", extractStr(term, 0, 1, 2))
 	require.Equal(t, "st", extractStr(term, 0, 1, 3))
-	term.Resize(4, 4)
+	term.Resize(geom.Vec2{C: 4, R: 4})
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
 	require.Equal(t, "test", extractStr(term, 0, 3, 1))
 	require.Equal(t, "    ", extractStr(term, 0, 3, 2))
@@ -145,15 +145,15 @@ func TestExpand(t *testing.T) {
 // history.
 func TestFull(t *testing.T) {
 	term := New()
-	term.Resize(4, 2)
+	term.Resize(geom.Vec2{C: 4, R: 2})
 	term.Write([]byte(LineFeedMode))
 	term.Write([]byte("test\ntest"))
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
 	require.Equal(t, "test", extractStr(term, 0, 3, 1))
-	term.Resize(2, 2)
+	term.Resize(geom.Vec2{C: 2, R: 2})
 	require.Equal(t, "te", extractStr(term, 0, 1, 0))
 	require.Equal(t, "st", extractStr(term, 0, 1, 1))
-	term.Resize(4, 2)
+	term.Resize(geom.Vec2{C: 4, R: 2})
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
 	require.Equal(t, "    ", extractStr(term, 0, 3, 1))
 
@@ -166,14 +166,14 @@ func TestFull(t *testing.T) {
 // of the main screen.
 func TestAlt(t *testing.T) {
 	term := New()
-	term.Resize(4, 4)
+	term.Resize(geom.Vec2{C: 4, R: 4})
 	term.Write([]byte(LineFeedMode))
 	term.Write([]byte("testt"))
 	require.Equal(t, 1, term.Cursor().C)
 	require.Equal(t, 1, term.Cursor().R)
 	term.Write([]byte(EnterAltScreen))
 	term.Write([]byte("foobar foobar foobar"))
-	term.Resize(2, 4)
+	term.Resize(geom.Vec2{C: 2, R: 4})
 	term.Write([]byte(ExitAltScreen)) // leave altscreen
 	require.Equal(t, "te", extractStr(term, 0, 1, 0))
 	require.Equal(t, "st", extractStr(term, 0, 1, 1))
@@ -185,12 +185,12 @@ func TestAlt(t *testing.T) {
 // on.
 func TestCursor(t *testing.T) {
 	term := New()
-	term.Resize(6, 4)
+	term.Resize(geom.Vec2{C: 6, R: 4})
 	term.Write([]byte(LineFeedMode))
 	term.Write([]byte("foobar\ntest"))
 	require.Equal(t, 4, term.Cursor().C)
 	require.Equal(t, 1, term.Cursor().R)
-	term.Resize(5, 4)
+	term.Resize(geom.Vec2{C: 5, R: 4})
 	require.Equal(t, 4, term.Cursor().C)
 	require.Equal(t, 2, term.Cursor().R)
 
@@ -206,13 +206,13 @@ func TestCursor(t *testing.T) {
 // screen.
 func TestFullAlt(t *testing.T) {
 	term := New()
-	term.Resize(4, 3)
+	term.Resize(geom.Vec2{C: 4, R: 3})
 	term.Write([]byte(LineFeedMode))
 	term.Write([]byte("test\ntest\nte"))
 	require.Equal(t, 2, term.Cursor().C)
 	require.Equal(t, 2, term.Cursor().R)
 	term.Write([]byte(EnterAltScreen))
-	term.Resize(2, 3)
+	term.Resize(geom.Vec2{C: 2, R: 3})
 	term.Write([]byte(ExitAltScreen))
 	require.Equal(t, "te", extractStr(term, 0, 1, 0))
 	require.Equal(t, "st", extractStr(term, 0, 1, 1))
@@ -221,7 +221,7 @@ func TestFullAlt(t *testing.T) {
 	require.Equal(t, 2, term.Cursor().R)
 	require.True(t, term.Cursor().State&cursorWrapNext != 0)
 	term.Write([]byte(EnterAltScreen))
-	term.Resize(4, 3)
+	term.Resize(geom.Vec2{C: 4, R: 3})
 	term.Write([]byte(ExitAltScreen))
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
 	require.Equal(t, "te  ", extractStr(term, 0, 3, 1))
@@ -232,9 +232,9 @@ func TestFullAlt(t *testing.T) {
 	// fill up the rest
 	term.Write([]byte("st\ntest\nok"))
 	term.Write([]byte(EnterAltScreen))
-	term.Resize(2, 5)
-	term.Resize(1, 1)
-	term.Resize(6, 3)
+	term.Resize(geom.Vec2{C: 2, R: 5})
+	term.Resize(geom.Vec2{C: 1, R: 1})
+	term.Resize(geom.Vec2{C: 6, R: 3})
 	term.Write([]byte(ExitAltScreen))
 }
 
@@ -245,10 +245,10 @@ func TestHistory(t *testing.T) {
 	b := New(WithoutHistory)
 
 	for _, term := range []Terminal{a, b} {
-		term.Resize(4, 3)
+		term.Resize(geom.Vec2{C: 4, R: 3})
 		term.Write([]byte(LineFeedMode))
 		term.Write([]byte("foobar\nfoo\ntest"))
-		term.Resize(4, 2)
+		term.Resize(geom.Vec2{C: 4, R: 2})
 	}
 
 	require.Equal(t, a.String(), b.String())
@@ -326,7 +326,7 @@ func TestTranslateCursor(t *testing.T) {
 // must wrap to a new line instead of just setting cursorWrapNext.
 func TestCJKWrap(t *testing.T) {
 	term := New()
-	term.Resize(4, 2)
+	term.Resize(geom.Vec2{C: 4, R: 2})
 	term.Write([]byte(LineFeedMode))
 	// Leaves us in the last cell
 	term.Write([]byte("foo"))

@@ -69,7 +69,7 @@ func TestNewline(t *testing.T) {
 
 func TestRoot(t *testing.T) {
 	term := New()
-	term.Resize(6, 2)
+	term.Resize(geom.Vec2{C: 6, R: 2})
 	term.Write([]byte(LineFeedMode))
 	term.Write([]byte("foo\nbar"))
 	require.Equal(t, geom.Vec2{}, term.Root())
