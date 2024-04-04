@@ -194,7 +194,8 @@ type View interface {
 	// Root() will return [1, 0].
 	Root() geom.Vec2
 
-	// TODO(cfoust): 03/18/24
+	// Flow is an API for quickly rewrapping the physical (read: unwrapped)
+	// lines to fit inside of the given viewport.
 	//
 	// For example, with a history that looks like this:
 	// ```
@@ -202,19 +203,22 @@ type View interface {
 	// !abc
 	// foobarbaz
 	// ```
-	// where "!" represents `from`, a `count` of 2 with a viewport width of 3 would
+	// where "!" represents a viewport with `R==2` and `C==3` would
 	// return:
 	// ```
 	// abc
 	// foo
 	// ```
 	//
-	// A count of -2 and a viewport width of 3 would return:
+	// A viewport with `R==-2` and `C==3` would return:
 	// ```
 	// bcd
 	// efg
 	// ```
 	Flow(viewport, root geom.Vec2) FlowResult
+
+	// GetLines gets unwrapped lines from the terminal's history.
+	GetLines(start, end int) []Line
 
 	Changes() *Dirty
 }

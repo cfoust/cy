@@ -31,21 +31,17 @@ func (f *FlowResult) Coord(pos geom.Vec2) (result geom.Vec2, ok bool) {
 	return
 }
 
-func (s *State) Flow(
-	viewport, root geom.Vec2,
-) (result FlowResult) {
-	viewport.C = geom.Max(viewport.C, 1)
-
+func (s *State) accessPhysicalLines() (getLines func(int) (Line, bool), numLines int) {
 	var (
 		history     = s.history
 		numHistory  = len(history)
 		isWrapped   = false
 		screenLines = unwrapLines(s.screen)
 		screen      = resolveLines(s.screen, screenLines)
-		numLines    = numHistory + len(screen)
-		cols        = viewport.C
 		screenStart = 0
 	)
+
+	numLines = numHistory + len(screen)
 
 	if numHistory > 0 {
 		isWrapped = history[numHistory-1].IsWrapped()
@@ -58,14 +54,8 @@ func (s *State) Flow(
 		screenStart = 1
 	}
 
-	result.NumLines = numLines
-
-	if root.C < 0 || root.R < 0 || root.R >= numLines {
-		return
-	}
-
 	lastHistory := numHistory - screenStart
-	getLine := func(index int) (line Line, ok bool) {
+	getLines = func(index int) (line Line, ok bool) {
 		if index < 0 || index >= numLines {
 			return
 		}
@@ -85,6 +75,32 @@ func (s *State) Flow(
 		}
 
 		line = screen[index-lastHistory]
+		return
+	}
+	return
+}
+
+func (s *State) Flow(
+	viewport, root geom.Vec2,
+) (result FlowResult) {
+	viewport.C = geom.Max(viewport.C, 1)
+
+	var (
+		history           = s.history
+		numHistory        = len(history)
+		isWrapped         = false
+		screenLines       = unwrapLines(s.screen)
+		cols              = viewport.C
+		getLine, numLines = s.accessPhysicalLines()
+	)
+
+	if numHistory > 0 {
+		isWrapped = history[numHistory-1].IsWrapped()
+	}
+
+	result.NumLines = numLines
+
+	if root.C < 0 || root.R < 0 || root.R >= numLines {
 		return
 	}
 
@@ -221,5 +237,25 @@ func (s *State) Flow(
 		break
 	}
 
+	return
+}
+
+func (s *State) GetLines(start, end int) (lines []Line) {
+	getLine, numLines := s.accessPhysicalLines()
+
+	if end < start {
+		start, end = end, start
+	}
+
+	start = geom.Clamp(start, 0, numLines)
+	end = geom.Clamp(end, 0, numLines)
+
+	for i := start; i < end; i++ {
+		line, ok := getLine(i)
+		if !ok {
+			return
+		}
+		lines = append(lines, line)
+	}
 	return
 }

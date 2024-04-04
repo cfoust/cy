@@ -268,3 +268,14 @@ func TestHistoryLine(t *testing.T) {
 	require.Equal(t, "bar", result.Lines[1].Chars.String())
 	require.Equal(t, "baz", result.Lines[2].Chars.String())
 }
+
+func TestGetLines(t *testing.T) {
+	term := New()
+	term.Resize(geom.Size{R: 2, C: 3})
+	term.Write([]byte(LineFeedMode))
+	term.Write([]byte("foobar\nbaz"))
+
+	lines := term.GetLines(0, 2)
+	require.Equal(t, "foobar", lines[0].String())
+	require.Equal(t, "baz", lines[1].String())
+}
