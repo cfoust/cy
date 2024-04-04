@@ -47,7 +47,7 @@ func (i *imageMovement) ScrollTop() {
 
 func (i *imageMovement) ScrollBottom() {
 	i.MoveCursorY(
-		(getTerminalSize(i.Terminal).R - 1) - i.viewportToTerm(i.cursor).R,
+		(i.Terminal.Size().R - 1) - i.viewportToTerm(i.cursor).R,
 	)
 }
 
@@ -64,7 +64,7 @@ func (i *imageMovement) isInViewport(point geom.Vec2) bool {
 func (i *imageMovement) clampToTerminal(point geom.Vec2) geom.Vec2 {
 	return point.Clamp(
 		i.minOffset,
-		getTerminalSize(i.Terminal).Sub(geom.UnitVec2),
+		i.Terminal.Size().Sub(geom.UnitVec2),
 	)
 }
 
@@ -113,7 +113,7 @@ func (i *imageMovement) getLine(row int) emu.Line {
 	clamped := geom.Clamp(
 		row,
 		-len(history),
-		getTerminalSize(i.Terminal).R-1,
+		i.Terminal.Size().R-1,
 	)
 	if clamped != row {
 		return nil
@@ -176,7 +176,7 @@ func (i *imageMovement) ScrollYDelta(delta int) {
 
 // Calculate the bounds of `{min,max}Offset` and ensure `offset` falls between them.
 func (i *imageMovement) recalculateViewport() {
-	termSize := getTerminalSize(i.Terminal)
+	termSize := i.Terminal.Size()
 	i.minOffset = geom.Vec2{
 		R: -len(i.History()),
 		C: 0, // always, but for clarity
@@ -355,7 +355,7 @@ func (i *imageMovement) highlightRange(state *tty.State, from, to geom.Vec2, fg,
 
 func (i *imageMovement) View(state *tty.State, highlights []Highlight) {
 	screen := i.Screen()
-	termSize := getTerminalSize(i.Terminal)
+	termSize := i.Terminal.Size()
 	var point geom.Vec2
 	var glyph emu.Glyph
 	for row := 0; row < i.viewport.R; row++ {

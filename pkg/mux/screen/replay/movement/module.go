@@ -38,14 +38,6 @@ func getTerminalCursor(terminal emu.Terminal) geom.Vec2 {
 	}
 }
 
-func getTerminalSize(terminal emu.Terminal) geom.Vec2 {
-	cols, rows := terminal.Size()
-	return geom.Vec2{
-		R: rows,
-		C: cols,
-	}
-}
-
 func calculateJump(line emu.Line, needle string, isForward bool, isTo bool, oldPos int) int {
 	newCol := oldPos
 	if isForward {

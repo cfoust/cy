@@ -842,10 +842,13 @@ func (t *State) Root() geom.Vec2 {
 	}
 }
 
-func (t *State) Size() (cols, rows int) {
+func (t *State) Size() geom.Vec2 {
 	t.RLock()
 	defer t.RUnlock()
-	return t.cols, t.rows
+	return geom.Size{
+		C: t.cols,
+		R: t.rows,
+	}
 }
 
 func copyLine(line Line) Line {

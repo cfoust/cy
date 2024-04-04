@@ -89,14 +89,6 @@ func (r *Replay) getTerminalCursor() geom.Vec2 {
 	}
 }
 
-func (r *Replay) getTerminalSize() geom.Vec2 {
-	cols, rows := r.Size()
-	return geom.Vec2{
-		R: rows,
-		C: cols,
-	}
-}
-
 func (r *Replay) Init() tea.Cmd {
 	return textinput.Blink
 }

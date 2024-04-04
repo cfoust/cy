@@ -160,7 +160,7 @@ type View interface {
 	fmt.Stringer
 
 	// Size returns the size of the virtual terminal.
-	Size() (cols, rows int)
+	Size() geom.Vec2
 
 	// Resize changes the size of the virtual terminal.
 	Resize(cols, rows int)
