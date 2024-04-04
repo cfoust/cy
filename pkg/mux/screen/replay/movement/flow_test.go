@@ -345,3 +345,33 @@ func TestLongScreenHighlight(t *testing.T) {
 		"110",
 	)
 }
+
+func TestCJKHighlight(t *testing.T) {
+	size := geom.Size{R: 4, C: 3}
+	s := sessions.NewSimulator()
+	s.Add(
+		size,
+		emu.LineFeedMode,
+		"fo你好bar",
+	)
+
+	r := createFlowTest(s.Terminal(), size)
+	r.ScrollTop()
+
+	testHighlight(t, r, size,
+		[]Highlight{
+			{
+				From: geom.Vec2{R: 0, C: 2},
+				To:   geom.Vec2{R: 0, C: 6},
+			},
+		},
+		// "fo" is not highlighted
+		"000",
+		// "你" occupies two cells
+		"110",
+		// "好b"
+		"111",
+		// "ar" is not highlighted
+		"000",
+	)
+}

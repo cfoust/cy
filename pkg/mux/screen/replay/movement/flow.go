@@ -472,7 +472,7 @@ func (f *flowMovement) highlightRow(
 
 	// Flow does not highlight past the last non-whitespace cell in the
 	// line
-	endCol = geom.Min(endCol, row.Length()-1)
+	endCol = geom.Min(endCol, screenLine.C1-screenLine.C0-1)
 
 	// Also bound this by the end of the line as a safety measure
 	endCol = geom.Clamp(endCol, 0, len(row)-1)

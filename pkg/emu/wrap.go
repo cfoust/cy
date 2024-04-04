@@ -3,7 +3,6 @@ package emu
 import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/mattn/go-runewidth"
-	"github.com/rs/zerolog/log"
 )
 
 type ScreenLine struct {
@@ -76,8 +75,6 @@ func unwrapLines(lines []Line) (unwrapped []physicalLine) {
 			current,
 			ScreenLine{R: row, C1: line.Length()},
 		)
-
-		log.Info().Msgf("'%+v' %+v %+v", line, line.IsWrapped(), line[len(line)-1])
 
 		if line.IsWrapped() && row != len(lines)-1 {
 			continue
