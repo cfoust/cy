@@ -253,3 +253,18 @@ func TestCJKFlow(t *testing.T) {
 	// The spaces represent blank cells that are "part" of the double-width glyph
 	require.Equal(t, "fo你 好 bar", line.Chars.String())
 }
+
+func TestHistoryLine(t *testing.T) {
+	term := New()
+	term.Resize(geom.Size{R: 2, C: 3})
+	term.Write([]byte(LineFeedMode))
+	term.Write([]byte("foo\nbar\nbaz"))
+
+	result := term.Flow(geom.Vec2{C: 8, R: 0}, geom.Vec2{})
+	require.True(t, result.OK)
+	require.Equal(t, 3, len(result.Lines))
+	require.Equal(t, 3, result.NumLines)
+	require.Equal(t, "foo", result.Lines[0].Chars.String())
+	require.Equal(t, "bar", result.Lines[1].Chars.String())
+	require.Equal(t, "baz", result.Lines[2].Chars.String())
+}

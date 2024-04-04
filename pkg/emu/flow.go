@@ -64,25 +64,27 @@ func (s *State) Flow(
 		return
 	}
 
+	lastHistory := numHistory - screenStart
 	getLine := func(index int) (line Line, ok bool) {
 		if index < 0 || index >= numLines {
 			return
 		}
 
 		ok = true
-		if index < numHistory-1 {
+
+		if index < lastHistory {
 			line = history[index]
 			return
 		}
 
 		// special case: history line continues onto screen
-		if index == numHistory-1 {
+		if isWrapped && index == lastHistory {
 			line = history[len(history)-1].Clone()
 			line = append(line, screen[0]...)
 			return
 		}
 
-		line = screen[(index-numHistory)+screenStart]
+		line = screen[index-lastHistory]
 		return
 	}
 
