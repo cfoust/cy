@@ -130,8 +130,8 @@ const (
 )
 
 type Cursor struct {
+	geom.Vec2
 	Attr  Glyph
-	X, Y  int
 	State uint8
 	Style CursorStyle
 }

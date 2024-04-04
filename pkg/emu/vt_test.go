@@ -61,9 +61,9 @@ func TestNewline(t *testing.T) {
 		t.Fatal(err)
 	}
 	cur := term.Cursor()
-	attr := term.Cell(cur.X, cur.Y)
+	attr := term.Cell(cur.C, cur.R)
 	if attr.FG != DefaultFG {
-		t.Fatal(st.cur.X, st.cur.Y, attr.FG, attr.BG)
+		t.Fatal(st.cur.C, st.cur.R, attr.FG, attr.BG)
 	}
 }
 

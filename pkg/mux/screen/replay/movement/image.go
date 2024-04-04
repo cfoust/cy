@@ -86,18 +86,22 @@ func (i *imageMovement) viewportToTerm(point geom.Vec2) geom.Vec2 {
 
 func (i *imageMovement) setOffset(offset geom.Vec2) {
 	cursor := i.viewportToTerm(i.cursor)
-	i.offset = i.offset.
-		Add(offset).
-		Clamp(i.minOffset, i.maxOffset)
+	i.offset = offset.Clamp(i.minOffset, i.maxOffset)
 	i.cursor = i.termToViewport(cursor)
 }
 
 func (i *imageMovement) setOffsetY(offset int) {
-	i.setOffset(geom.Vec2{R: offset})
+	i.setOffset(geom.Vec2{
+		R: offset,
+		C: i.offset.C,
+	})
 }
 
 func (i *imageMovement) setOffsetX(offset int) {
-	i.setOffset(geom.Vec2{C: offset})
+	i.setOffset(geom.Vec2{
+		R: i.offset.R,
+		C: offset,
+	})
 }
 
 // Get the glyphs for a row in term space.
@@ -147,7 +151,9 @@ func (i *imageMovement) moveCursor(point geom.Vec2) {
 		i.setOffsetY(i.offset.R + (newCursor.R - viewport.R + 1))
 	}
 
-	i.cursor = newCursor
+	// After the viewport has moved, set the cursor based on its absolute
+	// position
+	i.cursor = i.termToViewport(point)
 }
 
 func (i *imageMovement) moveCursorDelta(delta geom.Vec2) {
@@ -198,7 +204,15 @@ func (i *imageMovement) setScrollX(offset int) {
 }
 
 func (i *imageMovement) ScrollXDelta(delta int) {
-	// TODO(cfoust): 03/25/24
+	before := i.viewportToTerm(i.cursor)
+	i.setOffsetX(i.offset.C + delta)
+	i.cursor = i.termToViewport(before).Clamp(
+		geom.Vec2{},
+		geom.Vec2{
+			R: i.viewport.R - 1,
+			C: i.viewport.C - 1,
+		},
+	)
 }
 
 func normalizeRange(start, end geom.Vec2) (newStart, newEnd geom.Vec2) {
@@ -363,8 +377,7 @@ func (i *imageMovement) View(state *tty.State, highlights []Highlight) {
 
 	termCursor := i.termToViewport(getTerminalCursor(i.Terminal))
 	if i.cursor != termCursor {
-		state.Cursor.X = i.cursor.C
-		state.Cursor.Y = i.cursor.R
+		state.Cursor.Vec2 = i.cursor
 
 		// In copy mode, leave behind a ghost cursor where the
 		// terminal's cursor is
@@ -373,7 +386,6 @@ func (i *imageMovement) View(state *tty.State, highlights []Highlight) {
 		}
 	} else {
 		state.Cursor = i.Terminal.Cursor()
-		state.Cursor.X = termCursor.C
-		state.Cursor.Y = termCursor.R
+		state.Cursor.Vec2 = termCursor
 	}
 }

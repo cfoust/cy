@@ -177,7 +177,7 @@ findOld:
 				oldLines[line.R][line.C0+col].Char,
 			)
 
-			if oldCursor.Y == row && oldCursor.X >= col && oldCursor.X < col+width {
+			if oldCursor.R == row && oldCursor.C >= col && oldCursor.C < col+width {
 				didFind = true
 				break findOld
 			}
@@ -188,7 +188,7 @@ findOld:
 
 		// a safety mechanism for when the cursor doesn't fall within a
 		// cell that contains a printable character
-		if oldCursor.Y == row && !didFind {
+		if oldCursor.R == row && !didFind {
 			break
 		}
 	}
@@ -211,12 +211,12 @@ findNew:
 	for row, line := range newLine {
 		numChars := line.C1 - line.C0
 		newCursor.location.R = line.R
-		newCursor.cursor.Y = row
+		newCursor.cursor.R = row
 		isLast := false
 
 		for col := 0; col < numChars; col++ {
 			newCursor.location.C = line.C0 + col
-			newCursor.cursor.X = col
+			newCursor.cursor.C = col
 
 			// The cursor is within the line (not at the end)
 			if newOffset == oldOffset {
@@ -238,7 +238,7 @@ findNew:
 			if isLast {
 				newCursor.cursor.State |= cursorWrapNext
 			} else if numChars > 0 {
-				newCursor.cursor.X++
+				newCursor.cursor.C++
 			}
 			break
 		}
@@ -261,11 +261,11 @@ func translateCursor(
 		}
 
 		origin := oldLine[0]
-		if oldCursor.Y < origin.R {
+		if oldCursor.R < origin.R {
 			continue
 		}
 
-		oldCursor.Y -= origin.R
+		oldCursor.R -= origin.R
 		newCursor = wrapCursor(
 			oldLines,
 			newLines,
@@ -277,7 +277,7 @@ func translateCursor(
 
 		// Make cursor row relative to new lines
 		for j := 0; j < i; j++ {
-			newCursor.cursor.Y += len(newPhysical[j])
+			newCursor.cursor.R += len(newPhysical[j])
 		}
 
 		break

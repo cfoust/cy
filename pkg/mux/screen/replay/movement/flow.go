@@ -50,10 +50,7 @@ func (f *flowMovement) centerTerminalCursor() {
 	// nothing
 	result := f.Flow(f.viewport, f.root)
 	if result.CursorOK {
-		f.cursor = geom.Vec2{
-			R: result.Cursor.Y,
-			C: result.Cursor.X,
-		}
+		f.cursor = result.Cursor.Vec2
 		f.desiredCol = f.cursor.C
 		return
 	}
@@ -61,10 +58,10 @@ func (f *flowMovement) centerTerminalCursor() {
 	// Flow the screen no matter how big it is
 	// By definition, cursor must be OK (we flow all lines)
 	result = f.Flow(geom.Vec2{C: f.viewport.C}, f.root)
-	f.cursor.C = result.Cursor.X
+	f.cursor.C = result.Cursor.C
 	f.desiredCol = f.cursor.C
 	f.scrollToLine(
-		result.Lines[result.Cursor.Y].Root(),
+		result.Lines[result.Cursor.R].Root(),
 		ScrollPositionCenter,
 	)
 }

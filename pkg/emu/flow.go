@@ -200,18 +200,18 @@ func (s *State) Flow(
 	}
 
 	for row, screenLine := range result.Lines {
-		result.Cursor.Y = row
+		result.Cursor.R = row
 
 		if cursorLoc.R != screenLine.R || cursorLoc.C < screenLine.C0 || (screenLine.C1 != screenLine.C0 && cursorLoc.C >= screenLine.C1) {
 			continue
 		}
 
 		result.CursorOK = true
-		result.Cursor.X = cursorLoc.C - screenLine.C0
+		result.Cursor.C = cursorLoc.C - screenLine.C0
 
 		if newCursor.isEnd {
-			result.Cursor.X = geom.Clamp(
-				result.Cursor.X+1,
+			result.Cursor.C = geom.Clamp(
+				result.Cursor.C+1,
 				0,
 				viewport.C-1,
 			)

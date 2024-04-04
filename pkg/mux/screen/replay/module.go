@@ -84,8 +84,8 @@ func (r *Replay) isImageMode() bool {
 func (r *Replay) getTerminalCursor() geom.Vec2 {
 	cursor := r.Cursor()
 	return geom.Vec2{
-		R: cursor.Y,
-		C: cursor.X,
+		R: cursor.R,
+		C: cursor.C,
 	}
 }
 

@@ -257,8 +257,8 @@ func (r *Replay) View(state *tty.State) {
 	image.Copy(
 		geom.Vec2{
 			// -1 for the status bar
-			R: geom.Clamp(state.Cursor.Y, 0, size.R-inputSize.R-1),
-			C: geom.Clamp(state.Cursor.X, 0, size.C-inputSize.C),
+			R: geom.Clamp(state.Cursor.R, 0, size.R-inputSize.R-1),
+			C: geom.Clamp(state.Cursor.C, 0, size.C-inputSize.C),
 		},
 		state.Image,
 		input,

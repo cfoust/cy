@@ -154,7 +154,7 @@ func (t *State) saveCursor() {
 func (t *State) restoreCursor(keepState bool) {
 	t.cur = t.curSaved
 	state := t.curSaved.State
-	t.moveTo(t.cur.X, t.cur.Y)
+	t.moveTo(t.cur.C, t.cur.R)
 	if !keepState {
 		return
 	}
@@ -162,7 +162,7 @@ func (t *State) restoreCursor(keepState bool) {
 }
 
 func (t *State) putTab(forward bool) {
-	x := t.cur.X
+	x := t.cur.C
 	if forward {
 		if x == t.cols {
 			return
@@ -176,11 +176,11 @@ func (t *State) putTab(forward bool) {
 		for x--; x > 0 && !t.tabs[x]; x-- {
 		}
 	}
-	t.moveTo(x, t.cur.Y)
+	t.moveTo(x, t.cur.R)
 }
 
 func (t *State) newline(firstCol bool) {
-	y := t.cur.Y
+	y := t.cur.R
 	if y == t.bottom {
 		cur := t.cur
 		t.cur = t.defaultCursor()
@@ -192,7 +192,7 @@ func (t *State) newline(firstCol bool) {
 	if firstCol {
 		t.moveTo(0, y)
 	} else {
-		t.moveTo(t.cur.X, y)
+		t.moveTo(t.cur.C, y)
 	}
 }
 
@@ -359,9 +359,9 @@ func (t *State) resize(cols, rows int) {
 		// Only respect the cursor position we received if there
 		// actually were lines involved
 		if cursorValid {
-			newCursor.Y -= numExtra
-			newCursor.X = clamp(newCursor.X, 0, cols-1)
-			newCursor.Y = clamp(newCursor.Y, 0, rows-1)
+			newCursor.R -= numExtra
+			newCursor.C = clamp(newCursor.C, 0, cols-1)
+			newCursor.R = clamp(newCursor.R, 0, rows-1)
 			if !IsAltMode(t.mode) {
 				t.cur = newCursor
 			} else {
@@ -387,7 +387,7 @@ func (t *State) resize(cols, rows int) {
 	}
 
 	t.setScroll(0, rows-1)
-	t.moveTo(t.cur.X, t.cur.Y)
+	t.moveTo(t.cur.C, t.cur.R)
 }
 
 func (t *State) clear(x0, y0, x1, y1 int) {
@@ -449,8 +449,8 @@ func (t *State) moveTo(x, y int) {
 	y = clamp(y, miny, maxy)
 	t.dirty.markScreen()
 	t.cur.State &^= cursorWrapNext
-	t.cur.X = x
-	t.cur.Y = y
+	t.cur.C = x
+	t.cur.R = y
 }
 
 func (t *State) swapScreen() {
@@ -771,46 +771,46 @@ func (t *State) setAttr(attr []int) {
 }
 
 func (t *State) insertBlanks(n int) {
-	src := t.cur.X
+	src := t.cur.C
 	dst := src + n
 	size := t.cols - dst
 	t.dirty.markScreen()
-	t.markDirtyLine(t.cur.Y)
+	t.markDirtyLine(t.cur.R)
 
 	if dst >= t.cols {
-		t.clear(t.cur.X, t.cur.Y, t.cols-1, t.cur.Y)
+		t.clear(t.cur.C, t.cur.R, t.cols-1, t.cur.R)
 	} else {
-		copy(t.screen[t.cur.Y][dst:dst+size], t.screen[t.cur.Y][src:src+size])
-		t.clear(src, t.cur.Y, dst-1, t.cur.Y)
+		copy(t.screen[t.cur.R][dst:dst+size], t.screen[t.cur.R][src:src+size])
+		t.clear(src, t.cur.R, dst-1, t.cur.R)
 	}
 }
 
 func (t *State) insertBlankLines(n int) {
-	if t.cur.Y < t.top || t.cur.Y > t.bottom {
+	if t.cur.R < t.top || t.cur.R > t.bottom {
 		return
 	}
-	t.scrollDown(t.cur.Y, n)
+	t.scrollDown(t.cur.R, n)
 }
 
 func (t *State) deleteLines(n int) {
-	if t.cur.Y < t.top || t.cur.Y > t.bottom {
+	if t.cur.R < t.top || t.cur.R > t.bottom {
 		return
 	}
-	t.scrollUp(t.cur.Y, n)
+	t.scrollUp(t.cur.R, n)
 }
 
 func (t *State) deleteChars(n int) {
-	src := t.cur.X + n
-	dst := t.cur.X
+	src := t.cur.C + n
+	dst := t.cur.C
 	size := t.cols - src
 	t.dirty.markScreen()
-	t.markDirtyLine(t.cur.Y)
+	t.markDirtyLine(t.cur.R)
 
 	if src >= t.cols {
-		t.clear(t.cur.X, t.cur.Y, t.cols-1, t.cur.Y)
+		t.clear(t.cur.C, t.cur.R, t.cols-1, t.cur.R)
 	} else {
-		copy(t.screen[t.cur.Y][dst:dst+size], t.screen[t.cur.Y][src:src+size])
-		t.clear(t.cols-n, t.cur.Y, t.cols-1, t.cur.Y)
+		copy(t.screen[t.cur.R][dst:dst+size], t.screen[t.cur.R][src:src+size])
+		t.clear(t.cols-n, t.cur.R, t.cols-1, t.cur.R)
 	}
 }
 

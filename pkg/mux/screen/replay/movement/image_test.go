@@ -5,7 +5,6 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/sessions"
 
 	"github.com/stretchr/testify/require"
@@ -106,13 +105,95 @@ func TestJump(t *testing.T) {
 func TestInteractions(t *testing.T) {
 	s := sim().
 		Add(
-			geom.Size{R: 10, C: 10},
+			geom.Size{R: 5, C: 5},
 			emu.LineFeedMode,
-			"foo\nbar\nbaz",
-		)
+			"f  oo\nb  ar\nb  az",
+		).
+		Term(terminfo.CursorAddress, 0, 0)
 
-	size := geom.Size{R: 5, C: 5}
+	size := geom.Size{R: 3, C: 3}
 	i := createImageTest(s.Terminal(), size)
-	state := tty.New(size)
-	i.View(state, []Highlight{})
+	require.Equal(t, geom.Vec2{}, i.Cursor())
+
+	///////////////////////////
+	// Cursor-directed movement
+	///////////////////////////
+
+	// X
+	////
+
+	// Move to edge of viewport
+	i.MoveCursorX(2)
+	require.Equal(t, geom.Vec2{R: 0, C: 2}, i.cursor)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.offset)
+
+	// should shift viewport right
+	i.MoveCursorX(1)
+	require.Equal(t, geom.Vec2{R: 0, C: 2}, i.cursor)
+	require.Equal(t, geom.Vec2{R: 0, C: 1}, i.offset)
+	i.MoveCursorX(1)
+	require.Equal(t, geom.Vec2{R: 0, C: 2}, i.cursor)
+	require.Equal(t, geom.Vec2{R: 0, C: 2}, i.offset)
+
+	// Go back to origin
+	i.MoveCursorX(-5)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.cursor)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.offset)
+
+	// Y
+	////
+
+	// Move to edge of viewport
+	i.MoveCursorY(2)
+	require.Equal(t, geom.Vec2{R: 2, C: 0}, i.cursor)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.offset)
+
+	// should shift viewport down
+	i.MoveCursorY(1)
+	require.Equal(t, geom.Vec2{R: 2, C: 0}, i.cursor)
+	require.Equal(t, geom.Vec2{R: 1, C: 0}, i.offset)
+	i.MoveCursorY(1)
+	require.Equal(t, geom.Vec2{R: 2, C: 0}, i.cursor)
+	require.Equal(t, geom.Vec2{R: 2, C: 0}, i.offset)
+
+	// Go back to origin
+	i.MoveCursorY(-5)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.cursor)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.offset)
+
+	///////////////////////////
+	// Scroll-directed movement
+	///////////////////////////
+
+	// X
+	////
+
+	i.ScrollXDelta(1)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.cursor)
+	require.Equal(t, geom.Vec2{R: 0, C: 1}, i.offset)
+
+	i.ScrollXDelta(1)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.cursor)
+	require.Equal(t, geom.Vec2{R: 0, C: 2}, i.offset)
+
+	i.ScrollXDelta(-2)
+	require.Equal(t, geom.Vec2{R: 0, C: 2}, i.cursor)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.offset)
+
+	i.MoveCursorX(-2)
+
+	// Y
+	////
+
+	i.ScrollYDelta(1)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.cursor)
+	require.Equal(t, geom.Vec2{R: 1, C: 0}, i.offset)
+
+	i.ScrollYDelta(1)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.cursor)
+	require.Equal(t, geom.Vec2{R: 2, C: 0}, i.offset)
+
+	i.ScrollYDelta(-2)
+	require.Equal(t, geom.Vec2{R: 2, C: 0}, i.cursor)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.offset)
 }

@@ -3,6 +3,8 @@ package emu
 import (
 	"testing"
 
+	"github.com/cfoust/cy/pkg/geom"
+
 	"github.com/mattn/go-runewidth"
 	"github.com/stretchr/testify/require"
 )
@@ -167,16 +169,16 @@ func TestAlt(t *testing.T) {
 	term.Resize(4, 4)
 	term.Write([]byte(LineFeedMode))
 	term.Write([]byte("testt"))
-	require.Equal(t, 1, term.Cursor().X)
-	require.Equal(t, 1, term.Cursor().Y)
+	require.Equal(t, 1, term.Cursor().C)
+	require.Equal(t, 1, term.Cursor().R)
 	term.Write([]byte(EnterAltScreen))
 	term.Write([]byte("foobar foobar foobar"))
 	term.Resize(2, 4)
 	term.Write([]byte(ExitAltScreen)) // leave altscreen
 	require.Equal(t, "te", extractStr(term, 0, 1, 0))
 	require.Equal(t, "st", extractStr(term, 0, 1, 1))
-	require.Equal(t, 1, term.Cursor().X)
-	require.Equal(t, 2, term.Cursor().Y)
+	require.Equal(t, 1, term.Cursor().C)
+	require.Equal(t, 2, term.Cursor().R)
 }
 
 // Ensure that the cursor remains stationary relative to the physical line it's
@@ -186,11 +188,11 @@ func TestCursor(t *testing.T) {
 	term.Resize(6, 4)
 	term.Write([]byte(LineFeedMode))
 	term.Write([]byte("foobar\ntest"))
-	require.Equal(t, 4, term.Cursor().X)
-	require.Equal(t, 1, term.Cursor().Y)
+	require.Equal(t, 4, term.Cursor().C)
+	require.Equal(t, 1, term.Cursor().R)
 	term.Resize(5, 4)
-	require.Equal(t, 4, term.Cursor().X)
-	require.Equal(t, 2, term.Cursor().Y)
+	require.Equal(t, 4, term.Cursor().C)
+	require.Equal(t, 2, term.Cursor().R)
 
 	// There was a bug where our cursor was being cleared incorrectly --
 	// check for it
@@ -207,16 +209,16 @@ func TestFullAlt(t *testing.T) {
 	term.Resize(4, 3)
 	term.Write([]byte(LineFeedMode))
 	term.Write([]byte("test\ntest\nte"))
-	require.Equal(t, 2, term.Cursor().X)
-	require.Equal(t, 2, term.Cursor().Y)
+	require.Equal(t, 2, term.Cursor().C)
+	require.Equal(t, 2, term.Cursor().R)
 	term.Write([]byte(EnterAltScreen))
 	term.Resize(2, 3)
 	term.Write([]byte(ExitAltScreen))
 	require.Equal(t, "te", extractStr(term, 0, 1, 0))
 	require.Equal(t, "st", extractStr(term, 0, 1, 1))
 	require.Equal(t, "te", extractStr(term, 0, 1, 2))
-	require.Equal(t, 1, term.Cursor().X)
-	require.Equal(t, 2, term.Cursor().Y)
+	require.Equal(t, 1, term.Cursor().C)
+	require.Equal(t, 2, term.Cursor().R)
 	require.True(t, term.Cursor().State&cursorWrapNext != 0)
 	term.Write([]byte(EnterAltScreen))
 	term.Resize(4, 3)
@@ -224,8 +226,8 @@ func TestFullAlt(t *testing.T) {
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
 	require.Equal(t, "te  ", extractStr(term, 0, 3, 1))
 	require.Equal(t, "    ", extractStr(term, 0, 3, 2))
-	require.Equal(t, 2, term.Cursor().X)
-	require.Equal(t, 1, term.Cursor().Y)
+	require.Equal(t, 2, term.Cursor().C)
+	require.Equal(t, 1, term.Cursor().R)
 
 	// fill up the rest
 	term.Write([]byte("st\ntest\nok"))
@@ -278,44 +280,44 @@ func translateTest(
 func TestTranslateCursor(t *testing.T) {
 	// Stays at end
 	translateTest(t, 4, 2,
-		Cursor{Y: 0, X: 3},
-		Cursor{Y: 1, X: 1},
+		Cursor{Vec2: geom.Vec2{R: 0, C: 3}},
+		Cursor{Vec2: geom.Vec2{R: 1, C: 1}},
 		"foo",
 	)
 
 	// Blank does nothing
 	translateTest(t, 4, 2,
-		Cursor{Y: 0, X: 0},
-		Cursor{Y: 0, X: 0},
+		Cursor{Vec2: geom.Vec2{R: 0, C: 0}},
+		Cursor{Vec2: geom.Vec2{R: 0, C: 0}},
 		"",
 	)
 
 	// Still nothing
 	translateTest(t, 4, 4,
-		Cursor{Y: 1, X: 0},
-		Cursor{Y: 1, X: 0},
+		Cursor{Vec2: geom.Vec2{R: 1, C: 0}},
+		Cursor{Vec2: geom.Vec2{R: 1, C: 0}},
 		"foo",
 		"",
 	)
 
 	// Stays in line
 	translateTest(t, 4, 2,
-		Cursor{Y: 0, X: 2},
-		Cursor{Y: 1, X: 0},
+		Cursor{Vec2: geom.Vec2{R: 0, C: 2}},
+		Cursor{Vec2: geom.Vec2{R: 1, C: 0}},
 		"foobar",
 	)
 
 	// Sent to end
 	translateTest(t, 8, 8,
-		Cursor{Y: 999, X: 999},
-		Cursor{Y: 0, X: 6},
+		Cursor{Vec2: geom.Vec2{R: 999, C: 999}},
+		Cursor{Vec2: geom.Vec2{R: 0, C: 6}},
 		"foobar",
 	)
 
 	// Preserves wrapped state
 	translateTest(t, 8, 2,
-		Cursor{Y: 0, X: 6},
-		Cursor{Y: 2, X: 1, State: cursorWrapNext},
+		Cursor{Vec2: geom.Vec2{R: 0, C: 6}},
+		Cursor{Vec2: geom.Vec2{R: 2, C: 1}, State: cursorWrapNext},
 		"foobar",
 	)
 }

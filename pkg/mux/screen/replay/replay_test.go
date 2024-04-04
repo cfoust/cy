@@ -154,20 +154,6 @@ func TestSearch(t *testing.T) {
 	require.Equal(t, 9, r.Location().Index)
 }
 
-func TestIndex(t *testing.T) {
-	r, _ := createTest(createTestSession())
-	r.forceIndex(2, 0)
-	require.Equal(t, "t ", r.getImageLine(0).String()[:2])
-	r.forceIndex(2, 1)
-	require.Equal(t, "te ", r.getImageLine(0).String()[:3])
-	r.forceIndex(2, 0)
-	require.Equal(t, "t ", r.getImageLine(0).String()[:2])
-	r.forceIndex(2, -1)
-	require.Equal(t, "test", r.getImageLine(0).String()[:4])
-	r.forceIndex(4, -1)
-	require.Equal(t, "take", r.getImageLine(0).String()[:4])
-}
-
 func TestEmpty(t *testing.T) {
 	s := sim().Add(geom.Size{R: 5, C: 10})
 	_, i := createTest(s.Events())

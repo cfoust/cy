@@ -107,7 +107,7 @@ func Swap(
 
 	// TODO(cfoust): 08/09/23 debug
 	//if dstCursor.X != srcCursor.X || dstCursor.Y != srcCursor.Y {
-	info.Fprintf(data, terminfo.CursorAddress, srcCursor.Y, srcCursor.X)
+	info.Fprintf(data, terminfo.CursorAddress, srcCursor.R, srcCursor.C)
 
 	if dstCursor.Style != srcCursor.Style {
 		fmt.Fprintf(data, "\x1b[%d q", int(srcCursor.Style)+1)

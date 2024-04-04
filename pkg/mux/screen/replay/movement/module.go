@@ -33,8 +33,8 @@ type Movement interface {
 func getTerminalCursor(terminal emu.Terminal) geom.Vec2 {
 	cursor := terminal.Cursor()
 	return geom.Vec2{
-		R: cursor.Y,
-		C: cursor.X,
+		R: cursor.R,
+		C: cursor.C,
 	}
 }
 

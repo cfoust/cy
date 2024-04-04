@@ -67,7 +67,7 @@ func (i *InputModule) Find(
 		fuzzy.WithResult(result),
 		fuzzy.WithPrompt(params.Prompt),
 		fuzzy.WithInline(
-			geom.Vec2{R: cursor.Y, C: cursor.X},
+			geom.Vec2{R: cursor.R, C: cursor.C},
 			state.Image.Size(),
 		),
 	}

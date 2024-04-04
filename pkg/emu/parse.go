@@ -8,12 +8,12 @@ import (
 
 func (t *State) Print(c rune) {
 	if t.mode&ModeWrap != 0 && t.cur.State&cursorWrapNext != 0 {
-		t.screen[t.cur.Y][t.cur.X].Mode |= attrWrap
+		t.screen[t.cur.R][t.cur.C].Mode |= attrWrap
 		t.newline(true)
 	}
 
 	w := runewidth.RuneWidth(c)
-	destCol := t.cur.X + w
+	destCol := t.cur.C + w
 
 	// TODO(cfoust): 04/03/24 this is a nasty problem, what is the expected
 	// behavior? For now we just avoid an infinite loop
@@ -29,9 +29,9 @@ func (t *State) Print(c rune) {
 		return
 	}
 
-	t.setChar(c, &t.cur.Attr, t.cur.X, t.cur.Y)
+	t.setChar(c, &t.cur.Attr, t.cur.C, t.cur.R)
 	if destCol < t.cols {
-		t.moveTo(destCol, t.cur.Y)
+		t.moveTo(destCol, t.cur.R)
 	} else {
 		t.cur.State |= cursorWrapNext
 	}
@@ -44,10 +44,10 @@ func (t *State) Execute(b byte) {
 		t.putTab(true)
 	// BS
 	case '\b':
-		t.moveTo(t.cur.X-1, t.cur.Y)
+		t.moveTo(t.cur.C-1, t.cur.R)
 	// CR
 	case '\r':
-		t.moveTo(0, t.cur.Y)
+		t.moveTo(0, t.cur.R)
 	// LF, VT, LF
 	case '\f', '\v', '\n':
 		// go to first col if mode is set
@@ -118,26 +118,26 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 	case '@': // ICH - insert <n> blank char
 		t.insertBlanks(c.arg(0, 1))
 	case 'A': // CUU - cursor <n> up
-		t.moveTo(t.cur.X, t.cur.Y-c.maxarg(0, 1))
+		t.moveTo(t.cur.C, t.cur.R-c.maxarg(0, 1))
 	case 'B', 'e': // CUD, VPR - cursor <n> down
-		t.moveTo(t.cur.X, t.cur.Y+c.maxarg(0, 1))
+		t.moveTo(t.cur.C, t.cur.R+c.maxarg(0, 1))
 	case 'c': // DA - device attributes
 		if c.arg(0, 0) == 0 {
 			// TODO: write vt102 id
 		}
 	case 'C', 'a': // CUF, HPR - cursor <n> forward
-		t.moveTo(t.cur.X+c.maxarg(0, 1), t.cur.Y)
+		t.moveTo(t.cur.C+c.maxarg(0, 1), t.cur.R)
 	case 'D': // CUB - cursor <n> backward
-		t.moveTo(t.cur.X-c.maxarg(0, 1), t.cur.Y)
+		t.moveTo(t.cur.C-c.maxarg(0, 1), t.cur.R)
 	case 'E': // CNL - cursor <n> down and first col
-		t.moveTo(0, t.cur.Y+c.arg(0, 1))
+		t.moveTo(0, t.cur.R+c.arg(0, 1))
 	case 'F': // CPL - cursor <n> up and first col
-		t.moveTo(0, t.cur.Y-c.arg(0, 1))
+		t.moveTo(0, t.cur.R-c.arg(0, 1))
 	case 'g': // TBC - tabulation clear
 		switch c.arg(0, 0) {
 		// clear current tab stop
 		case 0:
-			t.tabs[t.cur.X] = false
+			t.tabs[t.cur.C] = false
 		// clear all tabs
 		case 3:
 			for i := range t.tabs {
@@ -147,7 +147,7 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 			goto unknown
 		}
 	case 'G', '`': // CHA, HPA - Move to <col>
-		t.moveTo(c.arg(0, 1)-1, t.cur.Y)
+		t.moveTo(c.arg(0, 1)-1, t.cur.R)
 	case 'H', 'f': // CUP, HVP - move to <row> <col>
 		t.moveAbsTo(c.arg(1, 1)-1, c.arg(0, 1)-1)
 	case 'I': // CHT - cursor forward tabulation <n> tab stops
@@ -159,15 +159,15 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 		// TODO: sel.ob.x = -1
 		switch c.arg(0, 0) {
 		case 0: // below
-			t.clear(t.cur.X, t.cur.Y, t.cols-1, t.cur.Y)
-			if t.cur.Y < t.rows-1 {
-				t.clear(0, t.cur.Y+1, t.cols-1, t.rows-1)
+			t.clear(t.cur.C, t.cur.R, t.cols-1, t.cur.R)
+			if t.cur.R < t.rows-1 {
+				t.clear(0, t.cur.R+1, t.cols-1, t.rows-1)
 			}
 		case 1: // above
-			if t.cur.Y > 1 {
-				t.clear(0, 0, t.cols-1, t.cur.Y-1)
+			if t.cur.R > 1 {
+				t.clear(0, 0, t.cols-1, t.cur.R-1)
 			}
-			t.clear(0, t.cur.Y, t.cur.X, t.cur.Y)
+			t.clear(0, t.cur.R, t.cur.C, t.cur.R)
 		case 2: // all
 			t.clear(0, 0, t.cols-1, t.rows-1)
 		default:
@@ -176,11 +176,11 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 	case 'K': // EL - clear line
 		switch c.arg(0, 0) {
 		case 0: // right
-			t.clear(t.cur.X, t.cur.Y, t.cols-1, t.cur.Y)
+			t.clear(t.cur.C, t.cur.R, t.cols-1, t.cur.R)
 		case 1: // left
-			t.clear(0, t.cur.Y, t.cur.X, t.cur.Y)
+			t.clear(0, t.cur.R, t.cur.C, t.cur.R)
 		case 2: // all
-			t.clear(0, t.cur.Y, t.cols-1, t.cur.Y)
+			t.clear(0, t.cur.R, t.cols-1, t.cur.R)
 		}
 	case 'S': // SU - scroll <n> lines up
 		t.scrollUp(t.top, c.arg(0, 1))
@@ -193,7 +193,7 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 	case 'M': // DL - delete <n> lines
 		t.deleteLines(c.arg(0, 1))
 	case 'X': // ECH - erase <n> chars
-		t.clear(t.cur.X, t.cur.Y, t.cur.X+c.arg(0, 1)-1, t.cur.Y)
+		t.clear(t.cur.C, t.cur.R, t.cur.C+c.arg(0, 1)-1, t.cur.R)
 	case 'P': // DCH - delete <n> chars
 		t.deleteChars(c.arg(0, 1))
 	case 'Z': // CBT - cursor backward tabulation <n> tab stops
@@ -202,7 +202,7 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 			t.putTab(false)
 		}
 	case 'd': // VPA - move to <row>
-		t.moveAbsTo(t.cur.X, c.arg(0, 1)-1)
+		t.moveAbsTo(t.cur.C, c.arg(0, 1)-1)
 	case 'h': // SM - set terminal mode
 		t.setMode(c.priv, true, c.args)
 	case 'm': // SGR - terminal attribute (color)
@@ -217,7 +217,7 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 		case 5: // DSR - device status report
 			t.w.Write([]byte("\033[0n"))
 		case 6: // CPR - cursor position report
-			t.w.Write([]byte(fmt.Sprintf("\033[%d;%dR", t.cur.Y+1, t.cur.X+1)))
+			t.w.Write([]byte(fmt.Sprintf("\033[%d;%dR", t.cur.R+1, t.cur.C+1)))
 		}
 	case 'r': // DECSTBM - set scrolling region
 		if c.priv {
@@ -259,20 +259,20 @@ func (t *State) EscDispatch(intermediates []byte, ignore bool, b byte) {
 	default:
 		fmt.Printf("[EscDispatch] %c intermediates=%v, ignore=%v, byte=%02x\n", b, intermediates, ignore, b)
 	case 'D': // IND - linefeed
-		if t.cur.Y == t.bottom {
+		if t.cur.R == t.bottom {
 			t.scrollUp(t.top, 1)
 		} else {
-			t.moveTo(t.cur.X, t.cur.Y+1)
+			t.moveTo(t.cur.C, t.cur.R+1)
 		}
 	case 'E': // NEL - next line
 		t.newline(true)
 	case 'H': // HTS - horizontal tab stop
-		t.tabs[t.cur.X] = true
+		t.tabs[t.cur.C] = true
 	case 'M': // RI - reverse index
-		if t.cur.Y == t.top {
+		if t.cur.R == t.top {
 			t.scrollDown(t.top, 1)
 		} else {
-			t.moveTo(t.cur.X, t.cur.Y-1)
+			t.moveTo(t.cur.C, t.cur.R-1)
 		}
 	case 'Z': // DECID - identify terminal
 		// TODO: write to our writer our id

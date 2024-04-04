@@ -34,7 +34,7 @@ func (f *Fuzzy) getPreviewContents() (preview image.Image) {
 			// draw a ghost cursor
 			cursor := state.Cursor
 			if state.CursorVisible {
-				preview[cursor.Y][cursor.X].BG = 8
+				preview[cursor.R][cursor.C].BG = 8
 			}
 			return
 		}
@@ -62,7 +62,7 @@ func (f *Fuzzy) getPreviewContents() (preview image.Image) {
 		// draw a ghost cursor
 		cursor := state.Cursor
 		if state.CursorVisible {
-			preview[cursor.Y][cursor.X].BG = 8
+			preview[cursor.R][cursor.C].BG = 8
 		}
 		return
 	case textPreview:

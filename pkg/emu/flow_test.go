@@ -36,8 +36,8 @@ func TestFlowLines(t *testing.T) {
 		require.True(t, result.OK)
 		require.True(t, result.CursorOK)
 		require.Equal(t, 2, result.NumLines)
-		require.Equal(t, 0, result.Cursor.Y)
-		require.Equal(t, 0, result.Cursor.X)
+		require.Equal(t, 0, result.Cursor.R)
+		require.Equal(t, 0, result.Cursor.C)
 	}
 
 	term.Write([]byte("foo\nfoobar\nbaz"))
@@ -93,8 +93,8 @@ func TestFlowLines(t *testing.T) {
 		)
 
 		require.True(t, result.CursorOK)
-		require.Equal(t, 1, result.Cursor.Y)
-		require.Equal(t, 3, result.Cursor.X)
+		require.Equal(t, 1, result.Cursor.R)
+		require.Equal(t, 3, result.Cursor.C)
 	}
 
 	// Check that negative counts work correctly
@@ -213,8 +213,8 @@ func TestFlowLines(t *testing.T) {
 		)
 
 		require.True(t, result.CursorOK)
-		require.Equal(t, 6, result.Cursor.Y)
-		require.Equal(t, 1, result.Cursor.X)
+		require.Equal(t, 6, result.Cursor.R)
+		require.Equal(t, 1, result.Cursor.C)
 	}
 
 	// Handle the cursor going off the end
@@ -231,7 +231,7 @@ func TestFlowLines(t *testing.T) {
 
 		require.True(t, result.OK)
 		require.True(t, result.CursorOK)
-		require.Equal(t, 3, result.Cursor.Y)
-		require.Equal(t, 2, result.Cursor.X)
+		require.Equal(t, 3, result.Cursor.R)
+		require.Equal(t, 2, result.Cursor.C)
 	}
 }
