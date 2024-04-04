@@ -24,6 +24,7 @@ func (t *State) Print(c rune) {
 	// Specifically can only happen if a double-width character is printed
 	// to the final cell in a row
 	if destCol > t.cols {
+		t.screen[t.cur.R][t.cur.C].Mode |= attrWrap
 		t.newline(true)
 		t.Print(c)
 		return

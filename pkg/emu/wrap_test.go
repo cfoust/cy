@@ -337,3 +337,4 @@ func TestCJKWrap(t *testing.T) {
 	require.Equal(t, "foo ", lines[0].String())
 	require.Equal(t, '你', lines[1][0].Char)
 }
+

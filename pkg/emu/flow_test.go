@@ -235,3 +235,21 @@ func TestFlowLines(t *testing.T) {
 		require.Equal(t, 2, result.Cursor.C)
 	}
 }
+
+// TestCJKFlow ensures that lines that include wrapped CJK characters are still
+// treated as the same physical line, even if they're not "contiguous". This is
+// both a problem with wrapping and with flowing.
+func TestCJKFlow(t *testing.T) {
+	term := New()
+	term.Resize(geom.Size{R: 4, C: 3})
+	term.Write([]byte(LineFeedMode))
+	term.Write([]byte("fo你好bar"))
+
+	result := term.Flow(geom.Vec2{C: 10, R: 1}, geom.Vec2{})
+	require.True(t, result.OK)
+	require.Equal(t, 1, len(result.Lines))
+	require.Equal(t, 1, result.NumLines)
+	line := result.Lines[0]
+	// The spaces represent blank cells that are "part" of the double-width glyph
+	require.Equal(t, "fo你 好 bar", line.Chars.String())
+}

@@ -103,7 +103,7 @@ func (l Line) IsWrapped() bool {
 		return false
 	}
 
-	return l[len(l)-1].Mode == attrWrap
+	return (l[len(l)-1].Mode & attrWrap) != 0
 }
 
 // Length returns the physical length of the line, accounting for the width of
