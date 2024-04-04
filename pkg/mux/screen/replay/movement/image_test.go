@@ -37,7 +37,10 @@ func TestReadStringImage(t *testing.T) {
 			geom.Size{R: 5, C: 10},
 			emu.LineFeedMode,
 			"foo\n",
-			"你好 ",
+			"你好\n",
+			"bar\n",
+			"\n",
+			"baz",
 		)
 
 	r := createImageTest(s.Terminal(), geom.Size{R: 5, C: 10})
@@ -45,29 +48,20 @@ func TestReadStringImage(t *testing.T) {
 		geom.Vec2{R: 0, C: 0},
 		geom.Vec2{R: 0, C: 2},
 	))
-	require.Equal(t, `foo`, r.ReadString(
-		geom.Vec2{R: 0, C: 2},
+
+	require.Equal(t, "fo\n你", r.ReadString(
 		geom.Vec2{R: 0, C: 0},
+		geom.Vec2{R: 1, C: 1},
 	))
-	require.Equal(t, "foo\n你", r.ReadString(
+
+	require.Equal(t, "foo\n你好", r.ReadString(
 		geom.Vec2{R: 0, C: 0},
-		geom.Vec2{R: 1, C: 0},
+		geom.Vec2{R: 1, C: 2},
 	))
-	require.Equal(t, "foo\n你", r.ReadString(
-		geom.Vec2{R: 1, C: 0},
-		geom.Vec2{R: 0, C: 0},
-	))
-	require.Equal(t, "oo", r.ReadString(
-		geom.Vec2{R: 0, C: 1},
-		geom.Vec2{R: 0, C: 2},
-	))
-	require.Equal(t, "o", r.ReadString(
-		geom.Vec2{R: 0, C: 2},
-		geom.Vec2{R: 0, C: 2},
-	))
-	require.Equal(t, "你好", r.ReadString(
-		geom.Vec2{R: 1, C: 0},
-		geom.Vec2{R: 1, C: 3},
+
+	require.Equal(t, "bar\n\nbaz", r.ReadString(
+		geom.Vec2{R: 2, C: 0},
+		geom.Vec2{R: 4, C: 2},
 	))
 }
 

@@ -4,8 +4,6 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
-
-	"github.com/mattn/go-runewidth"
 )
 
 type imageMovement struct {
@@ -231,34 +229,23 @@ func (i *imageMovement) Cursor() geom.Vec2 {
 
 // Read a starting from `start` to `end`, inclusive.
 func (i *imageMovement) ReadString(start, end geom.Vec2) (result string) {
+	start = i.clampToTerminal(start)
+	end = i.clampToTerminal(end)
 	start, end = normalizeRange(start, end)
+	start, end = normalizeBoxRange(start, end)
 
-	var char rune
-	var startCol, endCol, lastChar int
+	screen := i.Screen()
 	for row := start.R; row <= end.R; row++ {
-		line := i.getLine(row)
-		startCol = 0
-		if row == start.R {
-			startCol = start.C
+		line := screen[row][start.C : end.C+1]
+
+		if line.Length() == 0 {
+			result += "\n"
+			continue
 		}
 
-		_, lastChar = getNonWhitespace(line)
-		endCol = lastChar
-		if row == end.R {
-			endCol = geom.Min(end.C, endCol)
-		}
-
-		for col := startCol; col <= endCol; col++ {
-			char = line[col].Char
-			result += string(char)
-
-			w := runewidth.RuneWidth(char)
-			for i := 1; i < w; i++ {
-				col++
-			}
-		}
-
-		if row != end.R && endCol == lastChar {
+		_, lastChar := getNonWhitespace(line)
+		result += line[:lastChar+1].String()
+		if row != end.R {
 			result += "\n"
 		}
 	}
