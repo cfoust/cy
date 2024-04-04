@@ -358,8 +358,12 @@ func (i *imageMovement) highlightRow(
 	start, end geom.Vec2,
 	highlight Highlight,
 ) {
-	from := highlight.From
-	to := highlight.To
+	var (
+		from = highlight.From
+		to   = highlight.To
+	)
+	from, to = normalizeRange(from, to)
+
 	if to.R < start.R || from.R > end.R {
 		return
 	}

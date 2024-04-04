@@ -315,6 +315,22 @@ func TestLongHighlight(t *testing.T) {
 		// "baz" line is filled to a
 		"110",
 	)
+
+	// Ensure inversion does not break things
+	testHighlight(t, r, size,
+		[]Highlight{
+			{
+				From: geom.Vec2{R: 0, C: 7},
+				To:   geom.Vec2{R: 0, C: 1},
+			},
+		},
+		// "foo" line is filled from first "o" onwards
+		"011",
+		// "bar" line is completely filled in
+		"111",
+		// "baz" line is filled to a
+		"110",
+	)
 }
 
 func TestLongScreenHighlight(t *testing.T) {

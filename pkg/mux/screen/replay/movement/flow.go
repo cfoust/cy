@@ -447,26 +447,32 @@ func (f *flowMovement) highlightRow(
 	screenLine emu.ScreenLine,
 	highlight Highlight,
 ) {
+	var (
+		from = highlight.From
+		to   = highlight.To
+	)
+	from, to = normalizeRange(from, to)
+
 	//-e |     |
 	//   |     | s-
-	if highlight.From.GTE(end) || highlight.To.LT(start) {
+	if from.GTE(end) || to.LT(start) {
 		return
 	}
 
 	var startCol, endCol int
 
 	//   |  s--|-
-	if highlight.From.LT(end) && highlight.From.GTE(start) {
-		startCol = highlight.From.C - screenLine.C0
+	if from.LT(end) && from.GTE(start) {
+		startCol = from.C - screenLine.C0
 	}
 
 	//  -|--e  |
-	if highlight.To.GTE(start) || highlight.To.LT(end) {
-		endCol = highlight.To.C - screenLine.C0
+	if to.GTE(start) || to.LT(end) {
+		endCol = to.C - screenLine.C0
 	}
 
 	//   |-----|-e
-	if highlight.To.GTE(end) {
+	if to.GTE(end) {
 		endCol = len(row) - 1
 	}
 
