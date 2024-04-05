@@ -22,6 +22,7 @@ type Replayable struct {
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 
+	size     geom.Size
 	stream   mux.Stream
 	terminal *S.Terminal
 	replay   *taro.Program
@@ -57,6 +58,10 @@ func (r *Replayable) State() *tty.State {
 }
 
 func (r *Replayable) Resize(size geom.Size) error {
+	r.Lock()
+	r.size = size
+	r.Unlock()
+
 	err := r.terminal.Resize(size)
 	if err != nil {
 		return err
@@ -119,6 +124,7 @@ func (r *Replayable) EnterReplay() {
 		r.binds,
 	)
 
+	replay.Resize(r.size)
 	r.replay = replay
 
 	go func() {
