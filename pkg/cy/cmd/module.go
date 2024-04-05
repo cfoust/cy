@@ -5,7 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/mux/screen/replay"
+	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/sessions"
 )

@@ -7,7 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
-	"github.com/cfoust/cy/pkg/mux/screen/replay/player"
+	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/stories"
 	"github.com/cfoust/cy/pkg/taro"

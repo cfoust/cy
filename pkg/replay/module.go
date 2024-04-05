@@ -7,8 +7,8 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/mux/screen/replay/movement"
-	"github.com/cfoust/cy/pkg/mux/screen/replay/player"
+	"github.com/cfoust/cy/pkg/replay/movement"
+	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions/search"
 	"github.com/cfoust/cy/pkg/taro"
 

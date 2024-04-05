@@ -7,8 +7,8 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/janet"
-	"github.com/cfoust/cy/pkg/mux/screen/replay"
-	"github.com/cfoust/cy/pkg/mux/screen/replay/player"
+	"github.com/cfoust/cy/pkg/replay"
+	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"

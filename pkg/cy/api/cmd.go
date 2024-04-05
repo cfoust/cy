@@ -8,7 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/cy/params"
 	cyParams "github.com/cfoust/cy/pkg/cy/params"
 	"github.com/cfoust/cy/pkg/janet"
-	"github.com/cfoust/cy/pkg/mux/screen/replay"
+	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/util"
