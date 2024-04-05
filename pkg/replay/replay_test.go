@@ -177,22 +177,22 @@ func TestTime(t *testing.T) {
 	require.Equal(t, e[0].Stamp, r.currentTime)
 
 	// Move into first text event
-	r.setTimeDelta(delta, true)
+	r.forceTimeDelta(delta, true)
 	require.Equal(t, 1, r.Location().Index)
 
 	// Play again, which should trigger a skip since the time is greater
 	// than IDLE_THRESHOLD
-	r.setTimeDelta(delta, true)
+	r.forceTimeDelta(delta, true)
 	require.Equal(t, 2, r.Location().Index)
 	require.Equal(t, e[2].Stamp, r.currentTime)
 
 	// Go backwards, which should bring us back to the previous event
-	r.setTimeDelta(-delta, true)
+	r.forceTimeDelta(-delta, true)
 	require.Equal(t, 1, r.Location().Index)
 	require.Equal(t, e[2].Stamp.Add(-delta), r.currentTime)
 
 	// Backwards again, which will skip inactivity back to 0
-	r.setTimeDelta(-delta, true)
+	r.forceTimeDelta(-delta, true)
 	require.Equal(t, 0, r.Location().Index)
 	require.Equal(t, e[0].Stamp, r.currentTime)
 }
@@ -211,11 +211,11 @@ func TestTimeBug(t *testing.T) {
 	r.forceIndex(0, -1)
 
 	// Simulate a jump forward
-	r.setTimeDelta(5*time.Minute, false)
+	r.forceTimeDelta(5*time.Minute, false)
 	require.Equal(t, 2, r.Location().Index)
 	require.Equal(t, r.currentTime.Sub(e[0].Stamp), 5*time.Minute)
 	// And then a play
-	r.setTimeDelta(time.Second, r.skipInactivity)
+	r.forceTimeDelta(time.Second, r.skipInactivity)
 	require.Greater(t, r.currentTime.Sub(e[0].Stamp), 5*time.Minute)
 }
 

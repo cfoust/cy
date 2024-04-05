@@ -174,3 +174,13 @@ func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) tea.Cmd 
 
 	return r.setIndex(currentIndex+1, -1, false)
 }
+
+// forceTimeDelta synchronously adjusts time by `delta`. Only used in tests.
+func (r *Replay) forceTimeDelta(delta time.Duration, skipInactivity bool) {
+	cmd := r.setTimeDelta(delta, skipInactivity)
+
+	msg := cmd()
+	if seek, ok := msg.(seekEvent); ok {
+		r.handleSeek(seek.updateTime)
+	}
+}
