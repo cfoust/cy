@@ -139,7 +139,7 @@ func TestScroll(t *testing.T) {
 	r.ScrollYDelta(1)
 	require.Equal(t, geom.Vec2{R: 6, C: 0}, r.root)
 	// Should not scroll further
-	r.ScrollYDelta(1)
+	r.ScrollYDelta(100)
 	require.Equal(t, geom.Vec2{R: 6, C: 0}, r.root)
 }
 
@@ -433,4 +433,17 @@ func TestReadStringFlow(t *testing.T) {
 		geom.Vec2{R: 0, C: 1},
 		geom.Vec2{R: 3, C: 3},
 	))
+}
+
+func TestScrollPast(t *testing.T) {
+	s := sessions.NewSimulator()
+	s.Add(
+		geom.Size{R: 5, C: 10},
+		emu.LineFeedMode,
+		"one",
+	)
+
+	r := createFlowTest(s.Terminal(), geom.Size{R: 2, C: 10})
+	r.ScrollYDelta(1)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
 }

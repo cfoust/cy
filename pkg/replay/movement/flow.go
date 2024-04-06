@@ -102,14 +102,19 @@ func (f *flowMovement) ScrollYDelta(delta int) {
 	// Find the new root
 	target := 0
 	if !isUp {
-		target = numLines - 1
+		lastLine := f.getLastLine()
+
+		// Ensure that we can't scroll past the last physical line
+		for i := numLines - 1; i >= 0; i-- {
+			target = i
+			if result.Lines[i].Root().R <= lastLine {
+				break
+			}
+		}
 	}
 
 	targetLine := result.Lines[target]
-	f.root = geom.Vec2{
-		R: targetLine.R,
-		C: targetLine.C0,
-	}
+	f.root = targetLine.Root()
 
 	newRow := f.cursor.R
 	if isUp {
