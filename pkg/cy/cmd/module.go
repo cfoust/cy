@@ -5,7 +5,6 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/sessions"
@@ -17,32 +16,35 @@ func New(
 	dataDir string,
 	replayBinds *bind.BindScope,
 ) (*replay.Replayable, error) {
-	cmd, err := stream.NewCmd(
-		ctx,
-		options,
-		geom.DEFAULT_SIZE,
-	)
+	cmd, err := stream.NewCmd(ctx, options, geom.DEFAULT_SIZE)
 	if err != nil {
 		return nil, err
 	}
 
-	var borgPath string
-	if len(dataDir) > 0 {
-		borgPath, err = sessions.GetFilename(dataDir, options.Directory)
-		if err != nil {
-			return nil, err
-		}
+	if len(dataDir) == 0 {
+		replayable := replay.NewReplayable(
+			ctx,
+			cmd,
+			cmd,
+			replayBinds,
+		)
+		return replayable, nil
 	}
 
-	var stream mux.Stream = cmd
-	if len(borgPath) > 0 {
-		recorder, err := sessions.NewFileRecorder(ctx, borgPath)
-		if err != nil {
-			return nil, err
-		}
-		stream = sessions.NewEventStream(cmd, recorder)
+	borgPath, err := sessions.GetFilename(dataDir, options.Directory)
+	if err != nil {
+		return nil, err
 	}
 
-	replayable := replay.NewReplayable(ctx, stream, replayBinds)
-	return replayable, nil
+	recorder, err := sessions.NewFileRecorder(ctx, borgPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return replay.NewReplayable(
+		ctx,
+		cmd,
+		sessions.NewEventStream(cmd, recorder),
+		replayBinds,
+	), nil
 }

@@ -22,11 +22,11 @@ type Replayable struct {
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 
-	size     geom.Size
-	stream   mux.Stream
-	terminal *S.Terminal
-	replay   *taro.Program
-	player   *player.Player
+	size        geom.Size
+	cmd, stream mux.Stream
+	terminal    *S.Terminal
+	replay      *taro.Program
+	player      *player.Player
 
 	binds *bind.BindScope
 }
@@ -35,6 +35,11 @@ var _ mux.Screen = (*Replayable)(nil)
 
 func (r *Replayable) Stream() mux.Stream {
 	return r.stream
+}
+
+// TODO(cfoust): 04/07/24 This is a dirty hack specifically for (cmd/path).
+func (r *Replayable) Cmd() mux.Stream {
+	return r.cmd
 }
 
 func (r *Replayable) Screen() mux.Screen {
@@ -150,7 +155,7 @@ func (r *Replayable) EnterReplay() {
 
 func NewReplayable(
 	ctx context.Context,
-	stream mux.Stream,
+	cmd, stream mux.Stream,
 	binds *bind.BindScope,
 ) *Replayable {
 	lifetime := util.NewLifetime(ctx)
@@ -158,6 +163,7 @@ func NewReplayable(
 		Lifetime:        lifetime,
 		UpdatePublisher: mux.NewPublisher(),
 		binds:           binds,
+		cmd:             cmd,
 		stream:          stream,
 		player:          player.New(),
 	}

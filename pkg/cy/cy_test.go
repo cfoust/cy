@@ -80,3 +80,11 @@ func TestPaneKill(t *testing.T) {
 	leaves = server.tree.Leaves()
 	require.Equal(t, leaves[1].Id(), client.Node().Id())
 }
+
+func TestShell(t *testing.T) {
+	_, create := setup(t)
+	client := create(geom.DEFAULT_SIZE)
+	require.NoError(t, client.execute(`
+(shell/new)
+`))
+}
