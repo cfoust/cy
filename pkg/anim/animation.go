@@ -20,6 +20,7 @@ func RandomAnimation() Animation {
 		&Midjo{},
 		&Cyform{},
 		&Conway{},
+		&Cos{},
 	}
 
 	return anims[rand.Int()%len(anims)]
