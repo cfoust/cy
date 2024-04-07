@@ -38,9 +38,8 @@ func TestCenter(t *testing.T) {
 
 	// the next will, though
 	r = createFlowTest(after, geom.Size{R: 3, C: 10})
-	// centers the cursor on the screen
-	require.Equal(t, geom.Vec2{R: 1, C: 3}, r.cursor)
-	require.Equal(t, geom.Vec2{R: 2, C: 0}, r.root)
+	require.Equal(t, geom.Vec2{R: 2, C: 3}, r.cursor)
+	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.root)
 }
 
 func TestPast(t *testing.T) {
@@ -168,10 +167,12 @@ func TestCursor(t *testing.T) {
 	)
 
 	r := createFlowTest(s.Terminal(), geom.Size{R: 3, C: 10})
-	require.Equal(t, geom.Vec2{R: 2, C: 0}, r.root)
-	require.Equal(t, geom.Vec2{R: 1, C: 4}, r.cursor)
+	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.root)
+	require.Equal(t, geom.Vec2{R: 2, C: 4}, r.cursor)
 	require.Equal(t, 4, r.desiredCol)
 
+	// to align with tests after we changed center logic
+	r.ScrollYDelta(1)
 	r.MoveCursorY(-1)
 	require.Equal(t, geom.Vec2{R: 2, C: 0}, r.root)
 	require.Equal(t, geom.Vec2{R: 0, C: 4}, r.cursor)
