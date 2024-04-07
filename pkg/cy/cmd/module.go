@@ -5,8 +5,9 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/replay"
+	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/sessions"
 )
 
@@ -33,16 +34,15 @@ func New(
 		}
 	}
 
-	// TODO(cfoust): 02/12/24 handle empty path
-	recorder, err := sessions.NewFileRecorder(ctx, borgPath)
-	if err != nil {
-		return nil, err
+	var stream mux.Stream = cmd
+	if len(borgPath) > 0 {
+		recorder, err := sessions.NewFileRecorder(ctx, borgPath)
+		if err != nil {
+			return nil, err
+		}
+		stream = sessions.NewEventStream(cmd, recorder)
 	}
 
-	replayable := replay.NewReplayable(
-		ctx,
-		sessions.NewEventStream(cmd, recorder),
-		replayBinds,
-	)
+	replayable := replay.NewReplayable(ctx, stream, replayBinds)
 	return replayable, nil
 }
