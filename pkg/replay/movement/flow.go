@@ -63,7 +63,11 @@ func (f *flowMovement) centerTerminalCursor() {
 	}
 
 	// Move the viewport down just enough to reveal the cursor
-	topIndex := geom.Max(0, result.Cursor.R-f.viewport.R+1)
+	topIndex := geom.Clamp(
+		result.Cursor.R-f.viewport.R+1,
+		0,
+		len(result.Lines)-1,
+	)
 	topLine := result.Lines[topIndex]
 	f.root = topLine.Root()
 	f.cursor.R = result.Cursor.R - topIndex
