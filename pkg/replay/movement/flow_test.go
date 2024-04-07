@@ -43,6 +43,19 @@ func TestCenter(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 2, C: 0}, r.root)
 }
 
+func TestPast(t *testing.T) {
+	s := sessions.NewSimulator()
+	s.Add(
+		geom.Size{R: 3, C: 10},
+		emu.LineFeedMode,
+		"foo\nbar\n",
+	)
+
+	r := createFlowTest(s.Terminal(), geom.Size{R: 2, C: 10})
+	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.root)
+	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.cursor)
+}
+
 func TestResize(t *testing.T) {
 	s := sessions.NewSimulator()
 	s.Add(

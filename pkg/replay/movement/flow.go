@@ -58,12 +58,17 @@ func (f *flowMovement) centerTerminalCursor() {
 	// Flow the screen no matter how big it is
 	// By definition, cursor must be OK (we flow all lines)
 	result = f.Flow(geom.Vec2{C: f.viewport.C}, f.root)
+	if len(result.Lines) == 0 {
+		return
+	}
+
+	// Move the viewport down just enough to reveal the cursor
+	topIndex := geom.Max(0, result.Cursor.R-f.viewport.R+1)
+	topLine := result.Lines[topIndex]
+	f.root = topLine.Root()
+	f.cursor.R = result.Cursor.R - topIndex
 	f.cursor.C = result.Cursor.C
 	f.desiredCol = f.cursor.C
-	f.scrollToLine(
-		result.Lines[result.Cursor.R].Root(),
-		ScrollPositionCenter,
-	)
 }
 
 func (f *flowMovement) ScrollTop() {
