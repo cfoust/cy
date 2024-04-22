@@ -97,7 +97,7 @@ func TestPrompt(t *testing.T) {
 	dirty := term.Changes()
 	dirty.SetHooks([]string{"cy"})
 
-	_, err := term.Write([]byte("\033Pcy\033"))
+	_, err := term.Write([]byte("\033Pcy\033\\"))
 	require.NoError(t, err)
 
 	value, ok := dirty.Hook("cy")

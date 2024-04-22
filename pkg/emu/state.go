@@ -231,7 +231,7 @@ func (t *State) setChar(c rune, attr *Glyph, x, y int) {
 		t.screen[y][i].Mode &= ^attrBlank
 		t.screen[y][i].Write = t.dirty.writeId
 		// super useful for debugging
-		//t.lines[y][i].BG = Color(t.dirty.writeId)
+		//t.screen[y][i].BG = Color(t.dirty.writeId)
 
 		if i == x {
 			t.screen[y][i].Char = c
