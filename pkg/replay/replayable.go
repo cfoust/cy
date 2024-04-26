@@ -123,11 +123,7 @@ func (r *Replayable) EnterReplay() {
 	defer r.Unlock()
 
 	r.player.Acquire()
-	replay := New(
-		r.Ctx(),
-		r.player,
-		r.binds,
-	)
+	replay := New(r.Ctx(), r.player, r.binds)
 
 	replay.Resize(r.size)
 	r.replay = replay

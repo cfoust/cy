@@ -16,11 +16,13 @@ const (
 
 type Player struct {
 	emu.Terminal
-	mu       deadlock.RWMutex
-	inUse    bool
-	buffer   []sessions.Event
-	events   []sessions.Event
-	location search.Address
+	*detector
+	mu         deadlock.RWMutex
+	inUse      bool
+	buffer     []sessions.Event
+	events     []sessions.Event
+	location   search.Address
+	nextDetect int
 }
 
 var _ sessions.EventHandler = (*Player)(nil)
@@ -34,10 +36,12 @@ func (p *Player) Acquire() {
 func (p *Player) resetTerminal() {
 	p.Terminal = emu.New()
 	p.Terminal.Changes().SetHooks([]string{CY_HOOK})
+	p.detector.Terminal = p.Terminal
 }
 
 func (p *Player) consume(event sessions.Event) {
 	p.events = append(p.events, event)
+	p.Goto(len(p.events)-1, -1)
 }
 
 func (p *Player) Release() {
@@ -47,9 +51,6 @@ func (p *Player) Release() {
 	p.inUse = false
 	buffer := p.buffer
 	p.buffer = make([]sessions.Event, 0)
-
-	// Bring us up-to-date
-	p.Goto(len(p.events)-1, -1)
 
 	for _, event := range buffer {
 		p.consume(event)
@@ -117,6 +118,11 @@ func (p *Player) Goto(index, offset int) {
 			}
 
 			p.Terminal.Parse(data)
+
+			if i >= p.nextDetect {
+				p.detector.update()
+				p.nextDetect = i + 1
+			}
 		case P.SizeMessage:
 			p.Terminal.Resize(e.Vec())
 		}
@@ -142,7 +148,7 @@ func (p *Player) Process(event sessions.Event) error {
 }
 
 func New() *Player {
-	p := &Player{}
+	p := &Player{detector: &detector{}}
 	p.resetTerminal()
 	return p
 }
