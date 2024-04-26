@@ -51,18 +51,22 @@ var recognizers = []recognizer{
 	// TODO(cfoust): 04/26/24 fish uses cursor manipulation to do this
 }
 
-func (d *detector) getCommand(
-	from, to geom.Vec2,
-	fromID, toID emu.WriteID,
-) (command Command, ok bool) {
-	lines := d.GetLines(from.R, from.R)
+func (d *detector) getLine(row int) (line emu.Line, ok bool) {
+	lines := d.GetLines(row, row)
 	if len(lines) != 1 {
 		return
 	}
 
+	return lines[0], true
+}
+
+func (d *detector) getCommand(
+	from, to geom.Vec2,
+	fromID, toID emu.WriteID,
+) (command Command, ok bool) {
 	// If there's nothing beyond the prompt, we ignore the command
-	first := lines[0]
-	if from.C+1 >= len(first) {
+	first, lineOk := d.getLine(from.R)
+	if !lineOk || from.C+1 >= len(first) {
 		return
 	}
 
@@ -87,11 +91,10 @@ func (d *detector) getCommand(
 	outputTo := to
 lastOutput:
 	for row := to.R; row > from.R; row-- {
-		lines = d.GetLines(row, row)
-		if len(lines) != 1 {
+		line, lineOk := d.getLine(row)
+		if !lineOk {
 			return
 		}
-		line := lines[0]
 		for col := len(line) - 1; col >= 0; col-- {
 			glyph := line[col]
 			outputTo.R = row
@@ -103,6 +106,65 @@ lastOutput:
 	}
 
 	command.Output.To = outputTo
+
+	outputFrom := geom.Vec2{
+		R: from.R + 1,
+		C: 0,
+	}
+
+	if outputFrom.GTE(outputTo) {
+		command.Output.From = outputTo
+		return
+	}
+
+	command.Output.From = outputFrom
+
+	first, lineOk = d.getLine(outputFrom.R)
+
+	// Check to see whether this is a multiline command
+	// The recognizer must be consistent across all lines
+	var r recognizer
+	for _, other := range recognizers {
+		if _, ok := other.Check(first); ok {
+			r = other
+			break
+		}
+	}
+
+	if r == nil {
+		return
+	}
+
+	for row := outputFrom.R; row <= outputTo.R; row++ {
+		line, lineOk := d.getLine(row)
+		if !lineOk {
+			break
+		}
+
+		outputFrom.R = row
+		outputFrom.C = 0
+
+		col, isPrompt := r.Check(line)
+		if !isPrompt {
+			break
+		}
+
+		command.Input = append(
+			command.Input,
+			search.Selection{
+				From: geom.Vec2{
+					R: row,
+					C: col,
+				},
+				To: geom.Vec2{
+					R: row,
+					C: len(line),
+				},
+			},
+		)
+	}
+
+	command.Output.From = outputFrom
 
 	return
 }

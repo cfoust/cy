@@ -50,26 +50,19 @@ func TestSimple(t *testing.T) {
 		Command{
 			Input: []search.Selection{
 				{
-					From: geom.Vec2{
-						R: 0,
-						C: 2,
-					},
-					To: geom.Vec2{
-						R: 0,
-						C: 9,
-					},
+					From: geom.Vec2{R: 0, C: 2},
+					To:   geom.Vec2{R: 0, C: 9},
 				},
 			},
 			Output: search.Selection{
-				To: geom.Vec2{
-					R: 3,
-					C: 2,
-				},
+				From: geom.Vec2{R: 1, C: 0},
+				To:   geom.Vec2{R: 3, C: 2},
 			},
 		},
-		PROMPT,
-		"command\n",
-		"foo\nbar\nbaz\n",
+		PROMPT, "command\n",
+		"foo\n",
+		"bar\n",
+		"baz\n",
 		PROMPT,
 	)
 }
@@ -82,26 +75,74 @@ func TestEndSameLine(t *testing.T) {
 		Command{
 			Input: []search.Selection{
 				{
-					From: geom.Vec2{
-						R: 0,
-						C: 2,
-					},
-					To: geom.Vec2{
-						R: 0,
-						C: 9,
-					},
+					From: geom.Vec2{R: 0, C: 2},
+					To:   geom.Vec2{R: 0, C: 9},
 				},
 			},
 			Output: search.Selection{
-				To: geom.Vec2{
-					R: 3,
-					C: 2,
-				},
+				From: geom.Vec2{R: 1, C: 0},
+				To:   geom.Vec2{R: 3, C: 2},
 			},
 		},
+		PROMPT, "command\n",
+		"foo\n",
+		"bar\n",
+		"baz", PROMPT,
+	)
+}
+
+func TestNoOutput(t *testing.T) {
+	promptSingle(
+		t,
+		Command{
+			Input: []search.Selection{
+				{
+					From: geom.Vec2{R: 0, C: 2},
+					To:   geom.Vec2{R: 0, C: 9},
+				},
+			},
+			Output: search.Selection{
+				From: geom.Vec2{R: 1, C: 0},
+				To:   geom.Vec2{R: 1, C: 0},
+			},
+		},
+		PROMPT, "command\n",
 		PROMPT,
-		"command\n",
-		"foo\nbar\nbaz",
+	)
+}
+
+func TestMulti(t *testing.T) {
+	promptSingle(
+		t,
+		Command{
+			Input: []search.Selection{
+				{
+					From: geom.Vec2{R: 0, C: 2},
+					To:   geom.Vec2{R: 0, C: 9},
+				},
+				{
+					From: geom.Vec2{R: 1, C: 2},
+					To:   geom.Vec2{R: 1, C: 5},
+				},
+				{
+					From: geom.Vec2{R: 2, C: 2},
+					To:   geom.Vec2{R: 2, C: 5},
+				},
+				{
+					From: geom.Vec2{R: 3, C: 2},
+					To:   geom.Vec2{R: 3, C: 5},
+				},
+			},
+			Output: search.Selection{
+				From: geom.Vec2{R: 4, C: 0},
+				To:   geom.Vec2{R: 4, C: 5},
+			},
+		},
+		PROMPT, "command\n",
+		"> ", "foo\n",
+		"> ", "bar\n",
+		"> ", "baz\n",
+		"output\n",
 		PROMPT,
 	)
 }
