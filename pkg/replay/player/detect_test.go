@@ -56,13 +56,50 @@ func TestSimple(t *testing.T) {
 			},
 			Output: search.Selection{
 				From: geom.Vec2{R: 1, C: 0},
-				To:   geom.Vec2{R: 3, C: 2},
+				To:   geom.Vec2{R: 3, C: 3},
 			},
 		},
 		PROMPT, "command\n",
 		"foo\n",
 		"bar\n",
 		"baz\n",
+		PROMPT,
+	)
+}
+
+func TestTwo(t *testing.T) {
+	promptTest(
+		t,
+		[]Command{
+			{
+				Input: []search.Selection{
+					{
+						From: geom.Vec2{R: 0, C: 2},
+						To:   geom.Vec2{R: 0, C: 9},
+					},
+				},
+				Output: search.Selection{
+					From: geom.Vec2{R: 1, C: 0},
+					To:   geom.Vec2{R: 1, C: 3},
+				},
+			},
+			{
+				Input: []search.Selection{
+					{
+						From: geom.Vec2{R: 2, C: 2},
+						To:   geom.Vec2{R: 2, C: 9},
+					},
+				},
+				Output: search.Selection{
+					From: geom.Vec2{R: 3, C: 0},
+					To:   geom.Vec2{R: 3, C: 3},
+				},
+			},
+		},
+		PROMPT, "command\n",
+		"foo\n",
+		PROMPT, "command\n",
+		"foo\n",
 		PROMPT,
 	)
 }
@@ -81,7 +118,7 @@ func TestEndSameLine(t *testing.T) {
 			},
 			Output: search.Selection{
 				From: geom.Vec2{R: 1, C: 0},
-				To:   geom.Vec2{R: 3, C: 2},
+				To:   geom.Vec2{R: 3, C: 3},
 			},
 		},
 		PROMPT, "command\n",
@@ -126,7 +163,7 @@ func TestMulti(t *testing.T) {
 				},
 				{
 					From: geom.Vec2{R: 2, C: 2},
-					To:   geom.Vec2{R: 2, C: 5},
+					To:   geom.Vec2{R: 2, C: 2},
 				},
 				{
 					From: geom.Vec2{R: 3, C: 2},
@@ -135,12 +172,12 @@ func TestMulti(t *testing.T) {
 			},
 			Output: search.Selection{
 				From: geom.Vec2{R: 4, C: 0},
-				To:   geom.Vec2{R: 4, C: 5},
+				To:   geom.Vec2{R: 4, C: 6},
 			},
 		},
 		PROMPT, "command\n",
 		"> ", "foo\n",
-		"> ", "bar\n",
+		"> ", "\n",
 		"> ", "baz\n",
 		"output\n",
 		PROMPT,

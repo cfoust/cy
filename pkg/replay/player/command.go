@@ -105,18 +105,21 @@ lastOutput:
 		}
 	}
 
-	command.Output.To = outputTo
-
 	outputFrom := geom.Vec2{
 		R: from.R + 1,
 		C: 0,
 	}
 
 	if outputFrom.GTE(outputTo) {
+		// These are equal, so should not result in any selection
+		command.Output.To = outputTo
 		command.Output.From = outputTo
 		return
 	}
 
+	// Selections are exclusive
+	outputTo.C++
+	command.Output.To = outputTo
 	command.Output.From = outputFrom
 
 	first, lineOk = d.getLine(outputFrom.R)
