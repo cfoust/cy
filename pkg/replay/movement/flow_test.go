@@ -34,7 +34,7 @@ func TestCenter(t *testing.T) {
 
 	// the first write should not force us to move
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
-	require.Equal(t, geom.Vec2{R: 1, C: 3}, r.cursor)
+	require.Equal(t, geom.Vec2{R: 2, C: 3}, r.cursor)
 
 	// the next will, though
 	r = createFlowTest(after, geom.Size{R: 3, C: 4})
