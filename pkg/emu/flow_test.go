@@ -269,6 +269,19 @@ func TestHistoryLine(t *testing.T) {
 	require.Equal(t, "baz", result.Lines[2].Chars.String())
 }
 
+func TestCursorBug(t *testing.T) {
+	term := New()
+	term.Resize(geom.Size{R: 3, C: 4})
+	term.Write([]byte(LineFeedMode))
+	term.Write([]byte("foo bar\nbaz"))
+
+	result := term.Flow(geom.Vec2{R: 3, C: 4}, geom.Vec2{})
+	require.True(t, result.OK)
+	require.True(t, result.CursorOK)
+	require.Equal(t, 3, len(result.Lines))
+	require.Equal(t, 2, result.NumLines)
+}
+
 func TestGetLines(t *testing.T) {
 	term := New()
 	term.Resize(geom.Size{R: 2, C: 3})

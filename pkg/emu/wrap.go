@@ -161,6 +161,7 @@ type wrappedCursor struct {
 func wrapCursor(
 	oldLines, newLines []Line,
 	oldLine, newLine physicalLine,
+	newRow int,
 	oldCursor Cursor,
 	numCols int,
 ) (newCursor wrappedCursor) {
@@ -211,7 +212,7 @@ findOld:
 findNew:
 	for row, line := range newLine {
 		numChars := line.C1 - line.C0
-		newCursor.location.R = line.R
+		newCursor.location.R = newRow
 		newCursor.cursor.R = row
 		isLast := false
 
@@ -272,6 +273,7 @@ func translateCursor(
 			newLines,
 			oldLine,
 			newPhysical[i],
+			i,
 			oldCursor,
 			cols,
 		)

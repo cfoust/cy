@@ -220,7 +220,11 @@ func (s *State) Flow(
 	for row, screenLine := range result.Lines {
 		result.Cursor.R = row
 
-		if cursorLoc.R != screenLine.R || cursorLoc.C < screenLine.C0 || (screenLine.C1 != screenLine.C0 && cursorLoc.C >= screenLine.C1) {
+		if cursorLoc.R != screenLine.R || cursorLoc.C < screenLine.C0 {
+			continue
+		}
+
+		if screenLine.C1 != screenLine.C0 && cursorLoc.C >= screenLine.C1 {
 			continue
 		}
 
