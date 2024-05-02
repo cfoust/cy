@@ -277,6 +277,10 @@ func (f *flowMovement) Resize(newSize geom.Vec2) {
 	oldSize := f.viewport
 	f.viewport = newSize
 
+	if oldSize == newSize {
+		return
+	}
+
 	// The normal terminal cursor can be anywhere, so we have to use the
 	// built-in cursor reflow when we haven't moved yet. After moving,
 	// movement is constrained to cells with printable characters.
