@@ -46,6 +46,10 @@ func (r *Replayable) Screen() mux.Screen {
 	return r.terminal
 }
 
+func (r *Replayable) Commands() []player.Command {
+	return r.player.Commands()
+}
+
 func (r *Replayable) isReplayMode() bool {
 	r.RLock()
 	showReplay := r.replay != nil

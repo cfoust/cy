@@ -217,6 +217,13 @@ For example:
          (replay/open :root _)
          (pane/attach _)))
 
+(key/action
+  action/jump-pane-command
+  "jump to command in current pane"
+  (as?-> (cmd/commands (pane/current)) _
+         (map |(tuple ($ :text) $) _)
+         (input/find _ :prompt "search: command in pane")))
+
 (key/bind-many :root
                [prefix "j"] action/new-shell
                [prefix "n"] action/new-project

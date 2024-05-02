@@ -3,10 +3,13 @@ package player
 import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+
+	"github.com/sasha-s/go-deadlock"
 )
 
 type detector struct {
 	emu.Terminal
+	deadlock.RWMutex
 	commands []Command
 
 	// If we have ever detected a prompt
@@ -81,5 +84,7 @@ func (d *detector) update() {
 
 	command.Text = text
 
+	d.Lock()
 	d.commands = append(d.commands, command)
+	d.Unlock()
 }

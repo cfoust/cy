@@ -34,7 +34,10 @@ func (p *Player) Acquire() {
 }
 
 func (p *Player) Commands() []Command {
-	return p.detector.commands
+	p.detector.Lock()
+	commands := p.detector.commands
+	p.detector.Unlock()
+	return commands
 }
 
 func (p *Player) resetTerminal() {

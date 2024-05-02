@@ -11,6 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/replay"
+	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/util"
 )
 
@@ -103,4 +104,21 @@ func (c *CmdModule) Path(id *janet.Value) (*string, error) {
 	}
 
 	return &path, nil
+}
+
+func (c *CmdModule) Commands(id *janet.Value) (*[]player.Command, error) {
+	defer id.Free()
+
+	pane, err := resolvePane(c.Tree, id)
+	if err != nil {
+		return nil, err
+	}
+
+	r, ok := pane.Screen().(*replay.Replayable)
+	if !ok {
+		return nil, fmt.Errorf("pane was not a cmd")
+	}
+
+	commands := r.Commands()
+	return &commands, nil
 }
