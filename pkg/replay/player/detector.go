@@ -64,5 +64,22 @@ func (d *detector) update() {
 		return
 	}
 
+	text := ""
+	numInput := len(command.Input)
+	for i, input := range command.Input {
+		line, ok := d.getLine(input.From.R)
+		if !ok {
+			return
+		}
+
+		text += line[input.From.C:input.To.C].String()
+
+		if i < numInput-1 {
+			text += "\n"
+		}
+	}
+
+	command.Text = text
+
 	d.commands = append(d.commands, command)
 }

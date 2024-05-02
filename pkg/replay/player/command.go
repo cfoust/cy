@@ -7,6 +7,9 @@ import (
 )
 
 type Command struct {
+	// The human-readable representation of this command as it appeared
+	// originally.
+	Text string
 	// In certain circumstances, input is not contiguous
 	Input []search.Selection
 	// But output always is

@@ -48,6 +48,7 @@ func TestSimple(t *testing.T) {
 	promptSingle(
 		t,
 		Command{
+			Text: "command",
 			Input: []search.Selection{
 				{
 					From: geom.Vec2{R: 0, C: 2},
@@ -72,6 +73,7 @@ func TestTwo(t *testing.T) {
 		t,
 		[]Command{
 			{
+				Text: "command",
 				Input: []search.Selection{
 					{
 						From: geom.Vec2{R: 0, C: 2},
@@ -84,6 +86,7 @@ func TestTwo(t *testing.T) {
 				},
 			},
 			{
+				Text: "command",
 				Input: []search.Selection{
 					{
 						From: geom.Vec2{R: 2, C: 2},
@@ -110,6 +113,7 @@ func TestEndSameLine(t *testing.T) {
 	promptSingle(
 		t,
 		Command{
+			Text: "command",
 			Input: []search.Selection{
 				{
 					From: geom.Vec2{R: 0, C: 2},
@@ -132,6 +136,7 @@ func TestNoOutput(t *testing.T) {
 	promptSingle(
 		t,
 		Command{
+			Text: "command",
 			Input: []search.Selection{
 				{
 					From: geom.Vec2{R: 0, C: 2},
@@ -152,6 +157,7 @@ func TestMulti(t *testing.T) {
 	promptSingle(
 		t,
 		Command{
+			Text: "command\nfoo\n\nbaz",
 			Input: []search.Selection{
 				{
 					From: geom.Vec2{R: 0, C: 2},
