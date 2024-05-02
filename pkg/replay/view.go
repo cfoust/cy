@@ -227,7 +227,41 @@ func (r *Replay) View(state *tty.State) {
 		)
 	}
 
-	// Draw the  terminal state
+	if !r.isImageMode() && r.showCommands {
+		for _, command := range r.Commands() {
+			highlights = append(
+				highlights,
+				movement.Highlight{
+					From: command.Output.From,
+					To:   command.Output.To,
+					FG: r.render.ConvertLipgloss(
+						lipgloss.Color("9"),
+					),
+					BG: r.render.ConvertLipgloss(
+						lipgloss.Color("113"),
+					),
+				},
+			)
+
+			for _, input := range command.Input {
+				highlights = append(
+					highlights,
+					movement.Highlight{
+						From: input.From,
+						To:   input.To,
+						FG: r.render.ConvertLipgloss(
+							lipgloss.Color("9"),
+						),
+						BG: r.render.ConvertLipgloss(
+							lipgloss.Color("160"),
+						),
+					},
+				)
+			}
+		}
+	}
+
+	// Draw the terminal state
 	///////////////////////////
 	viewport := tty.New(r.viewport)
 	r.movement.View(viewport, highlights)

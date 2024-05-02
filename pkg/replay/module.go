@@ -22,6 +22,10 @@ type Replay struct {
 	render *taro.Renderer
 	binds  *bind.Engine[bind.Action]
 
+	// Whether to show segmented command input and output. Only useful in
+	// testing (for now?)
+	showCommands bool
+
 	// whether Replay will actually quit itself
 	preventExit bool
 
