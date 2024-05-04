@@ -83,6 +83,18 @@ var TopLeftTable stories.InitFunc = func(ctx context.Context) (mux.Screen, error
 	), nil
 }
 
+var CommandTable stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
+	return NewFuzzy(
+		ctx,
+		[]Option{
+			newColumnOption("ll", "/foo/bar"),
+			newColumnOption("ll", "/foo/bar"),
+			newColumnOption("longer command", "/foo/bar"),
+		},
+		WithInline(geom.Size{}, geom.DEFAULT_SIZE),
+	), nil
+}
+
 func init() {
 	config := stories.Config{
 		Size: geom.DEFAULT_SIZE,
@@ -129,4 +141,5 @@ func init() {
 	stories.Register("input/find/table/full-top", FullTopTable, config)
 	stories.Register("input/find/table/full-bottom", FullBottomTable, config)
 	stories.Register("input/find/table/top-left", TopLeftTable, config)
+	stories.Register("input/find/table/command", CommandTable, config)
 }
