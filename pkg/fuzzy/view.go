@@ -115,7 +115,10 @@ func (f *Fuzzy) renderPreview(state *tty.State) {
 }
 
 func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) string {
+	// the prompt otherwise comes with a fixed size, which messes with the
+	// table
 	prompt = prompt.Copy().Width(0)
+
 	rowStyle := f.render.NewStyle()
 	inactive := rowStyle.Copy().
 		Background(lipgloss.Color("#968C83")).
