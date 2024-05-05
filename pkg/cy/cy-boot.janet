@@ -210,19 +210,27 @@ For example:
 
 (key/action
   action/open-log
-  "open an existing log file"
+  "open a .borg file"
   (as?-> (path/glob (path/join [(cy/get :data-dir) "*.borg"])) _
          (map |(tuple $ {:type :replay :path $} $) _)
          (input/find _ :prompt "search: log file")
          (replay/open :root _)
          (pane/attach _)))
 
+(defn- get-pane-commands [id]
+  (var [ok commands] (protect (cmd/commands id)))
+  (if (not ok) (set commands @[]))
+  (default commands @[])
+  (map |(tuple [(string/replace-all "\n" "↵" ($ :text))
+                (tree/path id)] {:type :node :id id} id) commands))
+
 (key/action
-  action/jump-pane-command
-  "jump to command in current pane"
-  (as?-> (cmd/commands (pane/current)) _
-         (map |(tuple ($ :text) $) _)
-         (input/find _ :prompt "search: command in pane")))
+  action/jump-command
+  "jump to a pane based on a command"
+  (as?-> (group/leaves :root) _
+         (mapcat get-pane-commands _)
+         (input/find _ :prompt "search: pane (command)")
+         (pane/attach _)))
 
 (key/bind-many :root
                [prefix "j"] action/new-shell
@@ -231,6 +239,7 @@ For example:
                [prefix "l"] action/jump-shell
                ["ctrl+l"] action/next-pane
                [prefix ";"] action/jump-pane
+               [prefix ":"] action/jump-command
                [prefix "ctrl+p"] action/command-palette
                [prefix "x"] action/kill-current-pane
                [prefix "g"] action/toggle-margins
@@ -238,7 +247,6 @@ For example:
                [prefix "2"] action/margins-160
                [prefix "+"] action/margins-smaller
                [prefix "-"] action/margins-bigger
-               [prefix "r" "r"] action/random-frame
                [prefix "q"] cy/kill-server
                [prefix "d"] cy/detach
                [prefix "p"] cy/replay
