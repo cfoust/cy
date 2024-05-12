@@ -111,6 +111,11 @@ func isWrappedLines(lines []Line) bool {
 }
 
 func appendWrapped(lines []Line, line Line) []Line {
+	// TODO(cfoust): 05/13/24 test this?
+	if len(lines) == 0 {
+		return append(lines, copyLine(line))
+	}
+
 	cloned := getOccupiedLine(copyLine(line))
 
 	if !isWrappedLines(lines) {
