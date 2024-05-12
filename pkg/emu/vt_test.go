@@ -86,10 +86,14 @@ func TestRoot(t *testing.T) {
 		C: 6,
 	}, term.Root())
 
-	// Alt screen always zero
+	// Root() should return result from main screen, alt screen does not
+	// have root
 	term.Write([]byte(EnterAltScreen))
 	term.Write([]byte("test\ntest\ntest"))
-	require.Equal(t, geom.Vec2{}, term.Root())
+	require.Equal(t, geom.Vec2{
+		R: 2,
+		C: 6,
+	}, term.Root())
 }
 
 func TestPrompt(t *testing.T) {

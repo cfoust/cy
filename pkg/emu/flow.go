@@ -32,16 +32,17 @@ func (f *FlowResult) Coord(pos geom.Vec2) (result geom.Vec2, ok bool) {
 }
 
 func (s *State) accessPhysicalLines() (getLines func(int) (Line, bool), numLines int) {
+	screen, history, _ := s.getFlowTarget()
+
 	var (
-		history     = s.history
-		numHistory  = len(history)
-		isWrapped   = false
-		screenLines = unwrapLines(s.screen)
-		screen      = resolveLines(s.screen, screenLines)
-		screenStart = 0
+		numHistory     = len(history)
+		isWrapped      = false
+		screenPhysical = unwrapLines(screen)
+		screenLines    = resolveLines(screen, screenPhysical)
+		screenStart    = 0
 	)
 
-	numLines = numHistory + len(screen)
+	numLines = numHistory + len(screenLines)
 
 	if numHistory > 0 {
 		isWrapped = history[numHistory-1].IsWrapped()
@@ -70,14 +71,22 @@ func (s *State) accessPhysicalLines() (getLines func(int) (Line, bool), numLines
 		// special case: history line continues onto screen
 		if isWrapped && index == lastHistory {
 			line = history[len(history)-1].Clone()
-			line = append(line, screen[0]...)
+			line = append(line, screenLines[0]...)
 			return
 		}
 
-		line = screen[index-lastHistory]
+		line = screenLines[index-lastHistory]
 		return
 	}
 	return
+}
+
+func (s *State) getFlowTarget() (screen, history []Line, cursor Cursor) {
+	if IsAltMode(s.mode) {
+		return s.altScreen, s.altHistory, s.curSaved
+	}
+
+	return s.screen, s.history, s.cur
 }
 
 func (s *State) Flow(
@@ -85,11 +94,12 @@ func (s *State) Flow(
 ) (result FlowResult) {
 	viewport.C = geom.Max(viewport.C, 1)
 
+	screen, history, cursor := s.getFlowTarget()
+
 	var (
-		history           = s.history
 		numHistory        = len(history)
 		isWrapped         = false
-		screenLines       = unwrapLines(s.screen)
+		screenLines       = unwrapLines(screen)
 		cols              = viewport.C
 		getLine, numLines = s.accessPhysicalLines()
 	)
@@ -203,7 +213,7 @@ func (s *State) Flow(
 		s.screen,
 		screenLines,
 		screenLines,
-		s.Cursor(),
+		cursor,
 		cols,
 	)
 

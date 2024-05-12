@@ -825,22 +825,20 @@ func (t *State) Root() geom.Vec2 {
 	t.RLock()
 	defer t.RUnlock()
 
-	if IsAltMode(t.mode) {
-		return geom.Vec2{}
-	}
+	_, history, _ := t.getFlowTarget()
 
-	numHistory := len(t.history)
+	numHistory := len(history)
 	root := geom.Vec2{
 		R: numHistory,
 	}
 
-	if !isWrappedLines(t.history) {
+	if !isWrappedLines(history) {
 		return root
 	}
 
 	return geom.Vec2{
 		R: numHistory - 1,
-		C: len(t.history[numHistory-1]),
+		C: len(history[numHistory-1]),
 	}
 }
 

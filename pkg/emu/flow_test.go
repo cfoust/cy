@@ -97,6 +97,49 @@ func TestFlowLines(t *testing.T) {
 		require.Equal(t, 3, result.Cursor.C)
 	}
 
+	// Just check that the screen is correct in alt mode too
+	{
+		term.Write([]byte(EnterAltScreen))
+		result := term.Flow(
+			geom.Vec2{
+				R: 2,
+				C: 4,
+			},
+			term.Root(),
+		)
+
+		cleanLines(result.Lines)
+
+		require.True(t, result.OK)
+		require.Equal(t, 3, result.NumLines)
+		require.Equal(t,
+			[]ScreenLine{
+				{
+					R:  1,
+					C0: 4,
+					C1: 6,
+					Chars: makeLine(
+						"ar",
+					),
+				},
+				{
+					R:  2,
+					C0: 0,
+					C1: 3,
+					Chars: makeLine(
+						"baz",
+					),
+				},
+			},
+			result.Lines,
+		)
+
+		require.True(t, result.CursorOK)
+		require.Equal(t, 1, result.Cursor.R)
+		require.Equal(t, 3, result.Cursor.C)
+		term.Write([]byte(ExitAltScreen))
+	}
+
 	// Check that negative counts work correctly
 	{
 		result := term.Flow(
