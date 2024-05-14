@@ -45,6 +45,42 @@ func NewFlow(terminal emu.Terminal, viewport geom.Size) Movement {
 	return f
 }
 
+// For a given location and viewport, find the first root that reveals the
+// location's cell.
+func (f *flowMovement) getRoot(viewport, location geom.Vec2) (root geom.Vec2, ok bool) {
+	if location.LT(geom.Vec2{}) {
+		location = geom.Vec2{}
+		ok = true
+		return
+	}
+
+	lastRoot := f.getLastRoot()
+	if location.GTE(lastRoot) {
+		location = lastRoot
+		ok = true
+		return
+	}
+
+	root = geom.Vec2{R: location.R}
+	for {
+		result := f.Flow(viewport, root)
+
+		if !result.OK || len(result.Lines) == 0 {
+			return
+		}
+
+		for _, line := range result.Lines {
+			if location.C >= line.C0 && location.C < line.C1 {
+				root = line.Root()
+				ok = true
+				return
+			}
+		}
+
+		root = result.Lines[len(result.Lines)-1].Root()
+	}
+}
+
 func (f *flowMovement) centerTerminalCursor() {
 	// First just flow the viewport; if the whole screen fits, do
 	// nothing
@@ -613,4 +649,20 @@ func (f *flowMovement) View(state *tty.State, highlights []Highlight) {
 			)),
 		),
 	)
+}
+
+func PreviewFlow(
+	terminal emu.Terminal,
+	size, location geom.Vec2,
+	highlights []Highlight,
+) *tty.State {
+	image := tty.New(size)
+	flow := NewFlow(terminal, size).(*flowMovement)
+
+	if root, ok := flow.getRoot(size, location); ok {
+		flow.scrollToLine(root, ScrollPositionCenter)
+	}
+
+	flow.View(image, highlights)
+	return image
 }
