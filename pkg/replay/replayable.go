@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
@@ -48,6 +49,17 @@ func (r *Replayable) Screen() mux.Screen {
 
 func (r *Replayable) Commands() []player.Command {
 	return r.player.Commands()
+}
+
+func (r *Replayable) Preview(
+	location geom.Vec2,
+	highlights []movement.Highlight,
+) *tty.State {
+	r.RLock()
+	size := r.size
+	r.RUnlock()
+
+	return r.player.Preview(size, location, highlights)
 }
 
 func (r *Replayable) isReplayMode() bool {

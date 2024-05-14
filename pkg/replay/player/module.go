@@ -3,7 +3,9 @@ package player
 import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/tty"
 	P "github.com/cfoust/cy/pkg/io/protocol"
+	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/sessions/search"
 
@@ -17,7 +19,10 @@ const (
 type Player struct {
 	emu.Terminal
 	*detector
-	mu         deadlock.RWMutex
+	// just used for inUse
+	mu deadlock.RWMutex
+	// just used for transitions
+	mv         deadlock.RWMutex
 	inUse      bool
 	buffer     []sessions.Event
 	events     []sessions.Event
@@ -71,6 +76,8 @@ func (p *Player) Events() []sessions.Event {
 }
 
 func (p *Player) Location() search.Address {
+	p.mv.RLock()
+	defer p.mv.RUnlock()
 	return p.location
 }
 
@@ -79,6 +86,9 @@ func (p *Player) IsAltMode() bool {
 }
 
 func (p *Player) Goto(index, offset int) {
+	p.mv.Lock()
+	defer p.mv.Unlock()
+
 	numEvents := len(p.events)
 	if numEvents == 0 {
 		return
@@ -152,6 +162,17 @@ func (p *Player) Process(event sessions.Event) error {
 
 	p.buffer = append(p.buffer, event)
 	return nil
+}
+
+func (p *Player) Preview(
+	viewport, location geom.Vec2,
+	highlights []movement.Highlight,
+) *tty.State {
+	// TODO(cfoust): 05/15/24 handle case when back in time
+	p.mv.Lock()
+	image := movement.PreviewFlow(p, viewport, location, highlights)
+	p.mv.Unlock()
+	return image
 }
 
 func New() *Player {
