@@ -31,9 +31,8 @@ func promptTest(
 		Events()
 
 	p := FromEvents(events)
-	d := p.detector
-	require.True(t, d.havePrompt)
-	require.Equal(t, commands, d.Commands())
+	require.True(t, p.havePrompt)
+	require.Equal(t, commands, p.Commands())
 }
 
 func promptSingle(

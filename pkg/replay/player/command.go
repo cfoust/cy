@@ -17,6 +17,10 @@ type Command struct {
 	// Whether this command is still in progress. If true, `Output` will
 	// not be valid.
 	Pending bool
+
+	promptWrite, Prompted    int
+	executeWrite, Executed   int
+	completeWrite, Completed int
 }
 
 type recognizer interface {
@@ -57,8 +61,8 @@ var recognizers = []recognizer{
 	// TODO(cfoust): 04/26/24 fish uses cursor manipulation to do this
 }
 
-func (d *detector) getLine(row int) (line emu.Line, ok bool) {
-	lines := d.GetLines(row, row)
+func (p *Player) getLine(row int) (line emu.Line, ok bool) {
+	lines := p.GetLines(row, row)
 	if len(lines) != 1 {
 		return
 	}
@@ -67,12 +71,12 @@ func (d *detector) getLine(row int) (line emu.Line, ok bool) {
 }
 
 // getCommand detects a command's prompt, input, and output.
-func (d *detector) getCommand(
+func (p *Player) getCommand(
 	from, to geom.Vec2,
 	toID emu.WriteID,
 ) (command Command, ok bool) {
 	// If there's nothing beyond the prompt, we ignore the command
-	first, lineOk := d.getLine(from.R)
+	first, lineOk := p.getLine(from.R)
 	if !lineOk || from.C+1 >= len(first) {
 		return
 	}
@@ -98,7 +102,7 @@ func (d *detector) getCommand(
 	outputTo := to
 lastOutput:
 	for row := to.R; row > from.R; row-- {
-		line, lineOk := d.getLine(row)
+		line, lineOk := p.getLine(row)
 		if !lineOk {
 			return
 		}
@@ -129,7 +133,7 @@ lastOutput:
 	command.Output.To = outputTo
 	command.Output.From = outputFrom
 
-	first, lineOk = d.getLine(outputFrom.R)
+	first, lineOk = p.getLine(outputFrom.R)
 
 	// Check to see whether this is a multiline command
 	// The recognizer must be consistent across all lines
@@ -146,7 +150,7 @@ lastOutput:
 	}
 
 	for row := outputFrom.R; row <= outputTo.R; row++ {
-		line, lineOk := d.getLine(row)
+		line, lineOk := p.getLine(row)
 		if !lineOk {
 			break
 		}
@@ -179,10 +183,10 @@ lastOutput:
 	return
 }
 
-func (d *detector) getInputText(command Command) (text string, ok bool) {
+func (p *Player) getInputText(command Command) (text string, ok bool) {
 	numInput := len(command.Input)
 	for i, input := range command.Input {
-		line, lineOk := d.getLine(input.From.R)
+		line, lineOk := p.getLine(input.From.R)
 		if !lineOk {
 			return
 		}
@@ -199,12 +203,12 @@ func (d *detector) getInputText(command Command) (text string, ok bool) {
 }
 
 // getPending detects the input for a command that has not finished executing.
-func (d *detector) getPending(from geom.Vec2) (command Command, ok bool) {
-	if !d.havePrompt {
+func (p *Player) getPending(from geom.Vec2) (command Command, ok bool) {
+	if !p.havePrompt {
 		return
 	}
 
-	flow := d.Flow(d.Size(), d.Root())
+	flow := p.Flow(p.Size(), p.Root())
 	if !flow.OK || !flow.CursorOK || len(flow.Lines) == 0 {
 		return
 	}
@@ -231,7 +235,7 @@ func (d *detector) getPending(from geom.Vec2) (command Command, ok bool) {
 
 	// toID is usually greater than the ID of the last output cell
 	toID := lastLine.Chars[len(lastLine.Chars)-1].Write
-	command, ok = d.getCommand(from, to, toID+1)
+	command, ok = p.getCommand(from, to, toID+1)
 	if !ok {
 		return
 	}
@@ -242,7 +246,7 @@ func (d *detector) getPending(from geom.Vec2) (command Command, ok bool) {
 		C: to.C + 1,
 	}
 
-	text, textOk := d.getInputText(command)
+	text, textOk := p.getInputText(command)
 	if !textOk {
 		ok = false
 		return
@@ -251,4 +255,79 @@ func (d *detector) getPending(from geom.Vec2) (command Command, ok bool) {
 	command.Text = text
 
 	return
+}
+
+func (p *Player) Commands() []Command {
+	p.mu.RLock()
+	var (
+		complete = p.commands
+		from     = p.from
+	)
+	p.mu.RUnlock()
+
+	commands := make([]Command, len(complete))
+	copy(commands, complete)
+
+	pending, ok := p.getPending(from)
+	if ok {
+		commands = append(commands, pending)
+	}
+
+	return commands
+}
+
+func (p *Player) detect() {
+	dirty := p.Changes()
+	defer dirty.Reset()
+
+	if emu.IsAltMode(p.Mode()) {
+		return
+	}
+
+	if prompted, _ := dirty.Hook(CY_HOOK); !prompted {
+		return
+	}
+
+	flow := p.Flow(p.Size(), p.Root())
+	if !flow.OK || !flow.CursorOK {
+		return
+	}
+
+	to, ok := flow.Coord(dirty.Print.Vec2)
+	if !ok {
+		return
+	}
+
+	toWrite := dirty.LastWrite()
+
+	// If the prompt didn't produce any characters, we have no way of
+	// knowing where the prompt was. This will only be the case if the most
+	// recent write, the prompt, never caused a `setChar` to occur.
+	if dirty.Print.Write != toWrite {
+		return
+	}
+
+	from := p.from
+	p.from = to
+
+	// We do nothing on the first prompt, just make a note of it
+	if !p.havePrompt {
+		p.havePrompt = true
+		return
+	}
+
+	command, ok := p.getCommand(from, to, toWrite)
+	if !ok {
+		return
+	}
+
+	text, textOk := p.getInputText(command)
+	if !textOk {
+		ok = false
+		return
+	}
+
+	command.Text = text
+
+	p.commands = append(p.commands, command)
 }
