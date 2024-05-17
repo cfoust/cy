@@ -2,6 +2,7 @@ package janet
 
 import (
 	"context"
+	"github.com/cfoust/cy/pkg/janet/test"
 	"os"
 	"path/filepath"
 	"testing"
@@ -242,6 +243,16 @@ func TestVM(t *testing.T) {
 		require.NoError(t, err)
 
 		err = vm.Execute(ctx, `(+ some-int some-int)`)
+		require.NoError(t, err)
+	})
+
+	t.Run("callback with value with hidden fields", func(t *testing.T) {
+		err = vm.Callback("test-hidden", "", func() (result test.Hidden, err error) {
+			return
+		})
+		require.NoError(t, err)
+
+		err = vm.Execute(ctx, `(pp (test-hidden))`)
 		require.NoError(t, err)
 	})
 

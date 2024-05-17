@@ -71,7 +71,12 @@ func isValidType(type_ reflect.Type) bool {
 
 		return false
 	case reflect.Struct:
+		value := reflect.New(type_).Elem()
 		for i := 0; i < type_.NumField(); i++ {
+			if !value.Field(i).CanInterface() {
+				continue
+			}
+
 			if !isValidType(type_.Field(i).Type) {
 				return false
 			}
@@ -171,6 +176,10 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 		for i := 0; i < type_.NumField(); i++ {
 			field := type_.Field(i)
 			fieldValue := value.Field(i)
+
+			if !fieldValue.CanInterface() {
+				continue
+			}
 
 			key_ := wrapKeyword(getFieldName(field))
 
@@ -375,6 +384,10 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 			for i := 1; i < type_.NumField(); i++ {
 				field := type_.Field(i)
 				fieldValue := value.Field(i)
+
+				if !fieldValue.Addr().CanInterface() {
+					continue
+				}
 
 				err := v.unmarshal(
 					C.access_argv(tuple, C.int(i-1)),
