@@ -11,12 +11,28 @@ type detector struct {
 	emu.Terminal
 	deadlock.RWMutex
 	commands []Command
-
 	// If we have ever detected a prompt
 	havePrompt bool
+	from       geom.Vec2
+}
 
-	from      geom.Vec2
-	fromWrite emu.WriteID
+func (d *detector) Commands() []Command {
+	d.RLock()
+	var (
+		complete = d.commands
+		from     = d.from
+	)
+	d.RUnlock()
+
+	commands := make([]Command, len(complete))
+	copy(commands, complete)
+
+	pending, ok := d.getPending(from)
+	if ok {
+		commands = append(commands, pending)
+	}
+
+	return commands
 }
 
 func (d *detector) update() {
@@ -53,33 +69,21 @@ func (d *detector) update() {
 	from := d.from
 	d.from = to
 
-	fromWrite := d.fromWrite
-	d.fromWrite = toWrite
-
 	// We do nothing on the first prompt, just make a note of it
 	if !d.havePrompt {
 		d.havePrompt = true
 		return
 	}
 
-	command, ok := d.getCommand(from, to, fromWrite, toWrite)
+	command, ok := d.getCommand(from, to, toWrite)
 	if !ok {
 		return
 	}
 
-	text := ""
-	numInput := len(command.Input)
-	for i, input := range command.Input {
-		line, ok := d.getLine(input.From.R)
-		if !ok {
-			return
-		}
-
-		text += line[input.From.C:input.To.C].String()
-
-		if i < numInput-1 {
-			text += "\n"
-		}
+	text, textOk := d.getInputText(command)
+	if !textOk {
+		ok = false
+		return
 	}
 
 	command.Text = text

@@ -14,6 +14,9 @@ type Command struct {
 	Input []search.Selection
 	// But output always is
 	Output search.Selection
+	// Whether this command is still in progress. If true, `Output` will
+	// not be valid.
+	Pending bool
 }
 
 type recognizer interface {
@@ -63,9 +66,10 @@ func (d *detector) getLine(row int) (line emu.Line, ok bool) {
 	return lines[0], true
 }
 
+// getCommand detects a command's prompt, input, and output.
 func (d *detector) getCommand(
 	from, to geom.Vec2,
-	fromID, toID emu.WriteID,
+	toID emu.WriteID,
 ) (command Command, ok bool) {
 	// If there's nothing beyond the prompt, we ignore the command
 	first, lineOk := d.getLine(from.R)
@@ -171,6 +175,80 @@ lastOutput:
 	}
 
 	command.Output.From = outputFrom
+
+	return
+}
+
+func (d *detector) getInputText(command Command) (text string, ok bool) {
+	numInput := len(command.Input)
+	for i, input := range command.Input {
+		line, lineOk := d.getLine(input.From.R)
+		if !lineOk {
+			return
+		}
+
+		text += line[input.From.C:input.To.C].String()
+
+		if i < numInput-1 {
+			text += "\n"
+		}
+	}
+
+	ok = true
+	return
+}
+
+// getPending detects the input for a command that has not finished executing.
+func (d *detector) getPending(from geom.Vec2) (command Command, ok bool) {
+	if !d.havePrompt {
+		return
+	}
+
+	flow := d.Flow(d.Size(), d.Root())
+	if !flow.OK || !flow.CursorOK || len(flow.Lines) == 0 {
+		return
+	}
+
+	lastIndex := -1
+	for i := len(flow.Lines) - 1; i >= 0; i-- {
+		if flow.Lines[i].Chars.Length() != 0 {
+			lastIndex = i
+			break
+		}
+	}
+
+	if lastIndex == -1 {
+		return
+	}
+
+	lastLine := flow.Lines[lastIndex]
+	to := lastLine.Root()
+	to.C = geom.Max(0, lastLine.C1-1)
+
+	if len(lastLine.Chars) == 0 {
+		return
+	}
+
+	// toID is usually greater than the ID of the last output cell
+	toID := lastLine.Chars[len(lastLine.Chars)-1].Write
+	command, ok = d.getCommand(from, to, toID+1)
+	if !ok {
+		return
+	}
+
+	command.Pending = true
+	command.Output.To = geom.Vec2{
+		R: to.R,
+		C: to.C + 1,
+	}
+
+	text, textOk := d.getInputText(command)
+	if !textOk {
+		ok = false
+		return
+	}
+
+	command.Text = text
 
 	return
 }

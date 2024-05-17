@@ -33,7 +33,7 @@ func promptTest(
 	p := FromEvents(events)
 	d := p.detector
 	require.True(t, d.havePrompt)
-	require.Equal(t, commands, d.commands)
+	require.Equal(t, commands, d.Commands())
 }
 
 func promptSingle(
@@ -187,5 +187,64 @@ func TestMulti(t *testing.T) {
 		"> ", "baz\n",
 		"output\n",
 		PROMPT,
+	)
+}
+
+func TestPending(t *testing.T) {
+	promptSingle(
+		t,
+		Command{
+			Text: "command",
+			Input: []search.Selection{
+				{
+					From: geom.Vec2{R: 0, C: 2},
+					To:   geom.Vec2{R: 0, C: 9},
+				},
+			},
+			Output: search.Selection{
+				From: geom.Vec2{R: 1, C: 0},
+				To:   geom.Vec2{R: 1, C: 3},
+			},
+			Pending: true,
+		},
+		PROMPT, "command\n",
+		"foo",
+	)
+}
+
+func TestPendingMulti(t *testing.T) {
+	promptSingle(
+		t,
+		Command{
+			Text: "command\nfoo\n\nbaz",
+			Input: []search.Selection{
+				{
+					From: geom.Vec2{R: 0, C: 2},
+					To:   geom.Vec2{R: 0, C: 9},
+				},
+				{
+					From: geom.Vec2{R: 1, C: 2},
+					To:   geom.Vec2{R: 1, C: 5},
+				},
+				{
+					From: geom.Vec2{R: 2, C: 2},
+					To:   geom.Vec2{R: 2, C: 2},
+				},
+				{
+					From: geom.Vec2{R: 3, C: 2},
+					To:   geom.Vec2{R: 3, C: 5},
+				},
+			},
+			Output: search.Selection{
+				From: geom.Vec2{R: 4, C: 0},
+				To:   geom.Vec2{R: 4, C: 6},
+			},
+			Pending: true,
+		},
+		PROMPT, "command\n",
+		"> ", "foo\n",
+		"> ", "\n",
+		"> ", "baz\n",
+		"output\n",
 	)
 }

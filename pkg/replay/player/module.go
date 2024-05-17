@@ -38,13 +38,6 @@ func (p *Player) Acquire() {
 	p.mu.Unlock()
 }
 
-func (p *Player) Commands() []Command {
-	p.detector.Lock()
-	commands := p.detector.commands
-	p.detector.Unlock()
-	return commands
-}
-
 func (p *Player) resetTerminal() {
 	p.Terminal = emu.New()
 	p.Terminal.Changes().SetHooks([]string{CY_HOOK})
