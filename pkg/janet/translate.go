@@ -413,6 +413,10 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 			field := type_.Field(i)
 			fieldValue := value.Field(i)
 
+			if !fieldValue.Addr().CanInterface() {
+				continue
+			}
+
 			key_ := wrapKeyword(getFieldName(field))
 			value_ := C.janet_struct_get(struct_, key_)
 			err := v.unmarshal(value_, fieldValue.Addr().Interface())
