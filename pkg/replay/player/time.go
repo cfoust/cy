@@ -54,7 +54,9 @@ func (p *Player) Goto(index, offset int) {
 				}
 			}
 
-			p.Terminal.Parse(data)
+			if len(data) > 0 {
+				p.Terminal.Parse(data)
+			}
 
 			if i >= p.nextDetect {
 				p.detect()

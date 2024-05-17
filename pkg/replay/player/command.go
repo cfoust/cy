@@ -3,6 +3,7 @@ package player
 import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
@@ -18,9 +19,18 @@ type Command struct {
 	// not be valid.
 	Pending bool
 
-	promptWrite, Prompted    int
-	executeWrite, Executed   int
-	completeWrite, Completed int
+	// Used only to allow us to skip some work for subsequent commands,
+	// since there is no direct association between WriteIDs and indices
+	promptedWrite emu.WriteID
+
+	// The indices of the event where each of these stages occurred.
+	// The event at which the user was prompted
+	Prompted int
+	// The event at which the command was executed (it was finished being
+	// input)
+	Executed int
+	// The event at which the command finished executing (its output ended)
+	Completed int
 }
 
 type recognizer interface {
@@ -70,10 +80,101 @@ func (p *Player) getLine(row int) (line emu.Line, ok bool) {
 	return lines[0], true
 }
 
+func (p *Player) getWrite(loc geom.Vec2) (id emu.WriteID, ok bool) {
+	var line emu.Line
+	line, ok = p.getLine(loc.R)
+	if !ok {
+		return
+	}
+
+	if loc.C < 0 || loc.C >= len(line) {
+		return
+	}
+
+	return line[loc.C].Write, true
+}
+
+func (p *Player) getIndex(id emu.WriteID) (index int, ok bool) {
+	var write emu.WriteID
+
+	// Reuse the translation from the previous command
+	if len(p.commands) > 0 {
+		command := p.commands[len(p.commands)-1]
+		write = command.promptedWrite
+		index = command.Prompted + 1
+	}
+
+	for i := index; i < len(p.events); i++ {
+		if _, ok := p.events[i].Message.(P.OutputMessage); !ok {
+			continue
+		}
+
+		write++
+
+		if id == write {
+			return i, true
+		}
+	}
+
+	return
+}
+
+// completeCommand fills in information about a command that's common to all
+// commands, regardless of whether they've finished executing.
+func (p *Player) completeCommand(command *Command) (ok bool) {
+	inputs := command.Input
+
+	var text string
+	numInput := len(inputs)
+	for i, input := range inputs {
+		line, lineOk := p.getLine(input.From.R)
+		if !lineOk {
+			return
+		}
+
+		text += line[input.From.C:input.To.C].String()
+
+		if i < numInput-1 {
+			text += "\n"
+		}
+	}
+	command.Text = text
+
+	if len(inputs) == 0 {
+		return
+	}
+
+	to := inputs[len(inputs)-1].To
+	to.C--
+
+	command.Prompted, ok = p.getIndex(command.promptedWrite)
+	if !ok {
+		return
+	}
+
+	var inputID emu.WriteID
+	inputID, ok = p.getWrite(to)
+	if !ok {
+		return
+	}
+
+	command.Executed, ok = p.getIndex(inputID)
+	if !ok {
+		return
+	}
+
+	// If there's no output, the command.Completed might not be correct, we
+	// want to bound it by command.Executed
+	command.Completed = geom.Max(command.Executed, command.Completed)
+
+	ok = true
+	return
+}
+
 // getCommand detects a command's prompt, input, and output.
 func (p *Player) getCommand(
 	from, to geom.Vec2,
-	toID emu.WriteID,
+	fromID, toID emu.WriteID,
 ) (command Command, ok bool) {
 	// If there's nothing beyond the prompt, we ignore the command
 	first, lineOk := p.getLine(from.R)
@@ -82,6 +183,8 @@ func (p *Player) getCommand(
 	}
 
 	ok = true
+
+	command.promptedWrite = fromID
 
 	// We at least consume the first line
 	command.Input = append(
@@ -183,30 +286,16 @@ lastOutput:
 	return
 }
 
-func (p *Player) getInputText(command Command) (text string, ok bool) {
-	numInput := len(command.Input)
-	for i, input := range command.Input {
-		line, lineOk := p.getLine(input.From.R)
-		if !lineOk {
-			return
-		}
-
-		text += line[input.From.C:input.To.C].String()
-
-		if i < numInput-1 {
-			text += "\n"
-		}
-	}
-
-	ok = true
-	return
-}
-
-// getPending detects the input for a command that has not finished executing.
-func (p *Player) getPending(from geom.Vec2) (command Command, ok bool) {
+// detectPending detects the input for a command that has not finished executing.
+func (p *Player) detectPending(
+	from geom.Vec2,
+	fromID emu.WriteID,
+) (command Command, ok bool) {
 	if !p.havePrompt {
 		return
 	}
+
+	command.promptedWrite = fromID
 
 	flow := p.Flow(p.Size(), p.Root())
 	if !flow.OK || !flow.CursorOK || len(flow.Lines) == 0 {
@@ -235,40 +324,35 @@ func (p *Player) getPending(from geom.Vec2) (command Command, ok bool) {
 
 	// toID is usually greater than the ID of the last output cell
 	toID := lastLine.Chars[len(lastLine.Chars)-1].Write
-	command, ok = p.getCommand(from, to, toID+1)
+	command, ok = p.getCommand(from, to, fromID, toID+1)
 	if !ok {
 		return
 	}
 
 	command.Pending = true
+	command.Completed = len(p.events) - 1
 	command.Output.To = geom.Vec2{
 		R: to.R,
 		C: to.C + 1,
 	}
 
-	text, textOk := p.getInputText(command)
-	if !textOk {
-		ok = false
-		return
-	}
-
-	command.Text = text
-
+	ok = p.completeCommand(&command)
 	return
 }
 
 func (p *Player) Commands() []Command {
 	p.mu.RLock()
 	var (
-		complete = p.commands
-		from     = p.from
+		complete  = p.commands
+		from      = p.from
+		fromWrite = p.fromID
 	)
 	p.mu.RUnlock()
 
 	commands := make([]Command, len(complete))
 	copy(commands, complete)
 
-	pending, ok := p.getPending(from)
+	pending, ok := p.detectPending(from, fromWrite)
 	if ok {
 		commands = append(commands, pending)
 	}
@@ -298,17 +382,19 @@ func (p *Player) detect() {
 		return
 	}
 
-	toWrite := dirty.LastWrite()
+	toID := dirty.LastWrite()
 
 	// If the prompt didn't produce any characters, we have no way of
 	// knowing where the prompt was. This will only be the case if the most
 	// recent write, the prompt, never caused a `setChar` to occur.
-	if dirty.Print.Write != toWrite {
+	if dirty.Print.Write != toID {
 		return
 	}
 
 	from := p.from
+	fromID := p.fromID
 	p.from = to
+	p.fromID = toID
 
 	// We do nothing on the first prompt, just make a note of it
 	if !p.havePrompt {
@@ -316,18 +402,23 @@ func (p *Player) detect() {
 		return
 	}
 
-	command, ok := p.getCommand(from, to, toWrite)
+	command, ok := p.getCommand(from, to, fromID, toID)
 	if !ok {
 		return
 	}
 
-	text, textOk := p.getInputText(command)
-	if !textOk {
-		ok = false
+	var nextPromptIndex int
+	nextPromptIndex, ok = p.getIndex(toID)
+	if !ok {
 		return
 	}
 
-	command.Text = text
+	command.Completed = nextPromptIndex - 1
+
+	ok = p.completeCommand(&command)
+	if !ok {
+		return
+	}
 
 	p.commands = append(p.commands, command)
 }

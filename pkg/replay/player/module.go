@@ -29,7 +29,9 @@ type Player struct {
 	commands []Command
 	// If we have ever detected a prompt
 	havePrompt bool
-	from       geom.Vec2
+
+	from   geom.Vec2
+	fromID emu.WriteID
 }
 
 var _ sessions.EventHandler = (*Player)(nil)
