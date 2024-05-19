@@ -221,8 +221,12 @@ For example:
   (var [ok commands] (protect (cmd/commands id)))
   (if (not ok) (set commands @[]))
   (default commands @[])
-  (map |(tuple [(string/replace-all "\n" "↵" ($ :text))
-                (tree/path id)] {:type :node :id id} id) commands))
+  (map |(tuple [(string/replace-all "\n" "↵" ($ :text)) (tree/path id)]
+               {:type :scrollback
+                :focus ((($ :input) 0) :from)
+                :highlights @[(($ :input) 0)]
+                :id id}
+               id) commands))
 
 (key/action
   action/jump-command

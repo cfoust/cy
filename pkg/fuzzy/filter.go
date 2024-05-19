@@ -6,8 +6,10 @@ import (
 
 	"github.com/cfoust/cy/pkg/fuzzy/fzf"
 	"github.com/cfoust/cy/pkg/fuzzy/fzf/util"
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
 type Match struct {
@@ -52,9 +54,10 @@ type tripleInput struct {
 }
 
 var (
-	KEYWORD_TEXT   = janet.Keyword("text")
-	KEYWORD_NODE   = janet.Keyword("node")
-	KEYWORD_REPLAY = janet.Keyword("replay")
+	KEYWORD_TEXT       = janet.Keyword("text")
+	KEYWORD_NODE       = janet.Keyword("node")
+	KEYWORD_REPLAY     = janet.Keyword("replay")
+	KEYWORD_SCROLLBACK = janet.Keyword("scrollback")
 )
 
 type previewInput struct {
@@ -71,6 +74,12 @@ type nodePreview struct {
 
 type replayPreview struct {
 	Path string
+}
+
+type scrollbackPreview struct {
+	Id         tree.NodeID
+	Focus      geom.Vec2
+	Highlights []search.Selection
 }
 
 func NewOption(text string, result interface{}) Option {
@@ -165,6 +174,13 @@ func unmarshalOption(input *janet.Value) (result Option, err error) {
 			return
 		}
 		result.Preview = replay
+	case KEYWORD_SCROLLBACK:
+		scrollback := scrollbackPreview{}
+		err = triple.Preview.Unmarshal(&scrollback)
+		if err != nil {
+			return
+		}
+		result.Preview = scrollback
 	default:
 		err = fmt.Errorf("invalid preview type %s", preview.Type)
 		return

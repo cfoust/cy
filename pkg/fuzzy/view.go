@@ -7,6 +7,8 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/replay"
+	"github.com/cfoust/cy/pkg/replay/movement"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
@@ -76,6 +78,33 @@ func (f *Fuzzy) getPreviewContents() (preview image.Image) {
 				Render(data.Text),
 		)
 		return
+	case scrollbackPreview:
+		pane, ok := f.tree.PaneById(data.Id)
+		if !ok {
+			return nil
+		}
+
+		r, ok := pane.Screen().(*replay.Replayable)
+		if !ok {
+			return nil
+		}
+
+		fgColor := f.render.ConvertLipgloss(lipgloss.Color("1"))
+		bgColor := f.render.ConvertLipgloss(lipgloss.Color("14"))
+		var highlights []movement.Highlight
+		for _, highlight := range data.Highlights {
+			highlights = append(
+				highlights,
+				movement.Highlight{
+					From: highlight.From,
+					To:   highlight.To,
+					FG:   fgColor,
+					BG:   bgColor,
+				},
+			)
+		}
+
+		return r.Preview(data.Focus, highlights).Image
 	}
 
 	return nil
