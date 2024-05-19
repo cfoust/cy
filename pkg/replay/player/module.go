@@ -78,10 +78,6 @@ func (p *Player) Location() search.Address {
 	return p.location
 }
 
-func (p *Player) IsAltMode() bool {
-	return emu.IsAltMode(p.Terminal.Mode())
-}
-
 func (p *Player) Process(event sessions.Event) error {
 	p.mu.RLock()
 	inUse := p.inUse

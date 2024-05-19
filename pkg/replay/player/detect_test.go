@@ -3,7 +3,6 @@ package player
 import (
 	"testing"
 
-	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/sessions/search"
@@ -20,14 +19,9 @@ func promptTest(
 	commands []Command,
 	setup ...interface{},
 ) {
-	writes := []interface{}{
-		geom.DEFAULT_SIZE,
-		emu.LineFeedMode,
-	}
-	writes = append(writes, setup...)
-
 	events := sessions.NewSimulator().
-		Add(writes...).
+		Defaults().
+		Add(setup...).
 		Events()
 
 	p := FromEvents(events)

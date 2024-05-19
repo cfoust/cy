@@ -92,6 +92,18 @@ func (s *Simulator) Add(events ...interface{}) *Simulator {
 	return s
 }
 
+// Defaults adds events to reset the terminal's size to DEFAULT_SIZE and
+// changes it to LineFeedMode.
+func (s *Simulator) Defaults() *Simulator {
+	for _, event := range []interface{}{
+		geom.DEFAULT_SIZE,
+		emu.LineFeedMode,
+	} {
+		s.Add(event)
+	}
+	return s
+}
+
 func (s *Simulator) Events() []Event {
 	return s.events
 }
