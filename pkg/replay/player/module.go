@@ -56,11 +56,10 @@ func (p *Player) consume(event sessions.Event) {
 
 func (p *Player) Release() {
 	p.mu.Lock()
-	defer p.mu.Unlock()
-
 	p.inUse = false
 	buffer := p.buffer
 	p.buffer = make([]sessions.Event, 0)
+	p.mu.Unlock()
 
 	for _, event := range buffer {
 		p.consume(event)
