@@ -78,12 +78,14 @@ func (p *Player) Location() search.Address {
 	return p.location
 }
 
-func (p *Player) Process(event sessions.Event) error {
+func (p *Player) getInUse() bool {
 	p.mu.RLock()
-	inUse := p.inUse
-	p.mu.RUnlock()
+	defer p.mu.RUnlock()
+	return p.inUse
+}
 
-	if !inUse {
+func (p *Player) Process(event sessions.Event) error {
+	if !p.getInUse() {
 		p.consume(event)
 		return nil
 	}
@@ -94,15 +96,21 @@ func (p *Player) Process(event sessions.Event) error {
 	return nil
 }
 
+// Preview captures a preview with the size `viewport` at `location` in the
+// scrollback of the terminal. You may also provide `highlights` that will be
+// passed to the Flow renderer. Returns nil if the player is "in use", which is
+// only used by replay mode to jump back in time.
 func (p *Player) Preview(
 	viewport, location geom.Vec2,
 	highlights []movement.Highlight,
 ) *tty.State {
-	// TODO(cfoust): 05/15/24 handle case when back in time
+	if p.getInUse() {
+		return nil
+	}
+
 	p.mu.Lock()
-	image := movement.PreviewFlow(p, viewport, location, highlights)
-	p.mu.Unlock()
-	return image
+	defer p.mu.Unlock()
+	return movement.PreviewFlow(p, viewport, location, highlights)
 }
 
 func New() *Player {

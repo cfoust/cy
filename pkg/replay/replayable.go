@@ -58,7 +58,6 @@ func (r *Replayable) Preview(
 	r.RLock()
 	size := r.size
 	r.RUnlock()
-
 	return r.player.Preview(size, location, highlights)
 }
 

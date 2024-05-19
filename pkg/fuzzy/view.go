@@ -104,7 +104,23 @@ func (f *Fuzzy) getPreviewContents() (preview image.Image) {
 			)
 		}
 
-		return r.Preview(data.Focus, highlights).Image
+		preview := r.Preview(data.Focus, highlights)
+		if preview != nil {
+			return preview.Image
+		}
+
+		warning := image.New(geom.DEFAULT_SIZE)
+		f.render.RenderAt(
+			warning,
+			0, 0,
+			lipgloss.Place(
+				geom.DEFAULT_SIZE.C,
+				geom.DEFAULT_SIZE.R,
+				lipgloss.Center, lipgloss.Center,
+				"cannot preview when pane is in replay mode",
+			),
+		)
+		return warning
 	}
 
 	return nil
