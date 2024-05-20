@@ -650,8 +650,8 @@ func (f *flowMovement) View(state *tty.State, highlights []Highlight) {
 			lipgloss.Right,
 			offsetStyle.Render(fmt.Sprintf(
 				"[%d/%d]",
-				f.root.R,
-				flow.NumLines,
+				f.Root().R-f.root.R,
+				f.Root().R,
 			)),
 		),
 	)
