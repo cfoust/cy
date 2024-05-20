@@ -7,7 +7,6 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
@@ -20,13 +19,6 @@ import (
 )
 
 var sim = sessions.NewSimulator
-
-func arg(_type ActionType, arg string) ActionEvent {
-	return ActionEvent{
-		Type: _type,
-		Arg:  arg,
-	}
-}
 
 func createTestSession() []sessions.Event {
 	return sim().
@@ -53,50 +45,18 @@ func createTest(events []sessions.Event) (*Replay, func(msgs ...interface{})) {
 
 	var m taro.Model = r
 
+	test := taro.Test(m)
+
 	return r, func(msgs ...interface{}) {
-		var cmd, subCmd tea.Cmd
 		var realMsg tea.Msg
-
-		var handleCmd func(tea.Cmd)
-		handleCmd = func(cmd tea.Cmd) {
-			for cmd != nil {
-				msg := cmd()
-
-				switch msg := msg.(type) {
-				case cursor.BlinkMsg:
-				case tea.BatchMsg:
-					for _, cmd := range msg {
-						m, subCmd = m.Update(cmd())
-						handleCmd(subCmd)
-					}
-					cmd = nil
-				default:
-					m, cmd = m.Update(msg)
-				}
-				m.View(tty.New(geom.DEFAULT_SIZE))
-			}
-		}
-
 		for _, msg := range msgs {
 			realMsg = msg
 			switch msg := msg.(type) {
 			case ActionType:
 				realMsg = ActionEvent{Type: msg}
-			case geom.Size:
-				realMsg = tea.WindowSizeMsg{
-					Width:  msg.C,
-					Height: msg.R,
-				}
-			case string:
-				keyMsgs := taro.KeysToMsg(msg)
-				if len(keyMsgs) == 1 {
-					realMsg = keyMsgs[0]
-				}
 			}
 
-			m, cmd = m.Update(realMsg)
-			handleCmd(cmd)
-			m.View(tty.New(geom.DEFAULT_SIZE))
+			test(realMsg)
 		}
 	}
 }
