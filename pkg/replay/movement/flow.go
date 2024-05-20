@@ -70,6 +70,10 @@ func (f *flowMovement) getRoot(viewport, location geom.Vec2) (root geom.Vec2, ok
 		}
 
 		for _, line := range result.Lines {
+			if line.R != location.R {
+				return
+			}
+
 			if location.C >= line.C0 && location.C < line.C1 {
 				root = line.Root()
 				ok = true

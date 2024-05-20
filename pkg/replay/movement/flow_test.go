@@ -461,3 +461,33 @@ func TestScrollPast(t *testing.T) {
 	r.ScrollYDelta(1)
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
 }
+
+func TestGetRoot(t *testing.T) {
+	size := geom.Size{R: 2, C: 10}
+	s := sessions.NewSimulator()
+	s.Add(
+		size,
+		emu.LineFeedMode,
+		"foo\n",
+		"bar\n",
+		"baz\n",
+		"\n",
+		"foo\n",
+		"bar\n",
+		"baz\n",
+	)
+
+	r := createFlowTest(s.Terminal(), size)
+
+	root, ok := r.getRoot(size, geom.Size{C: 1})
+	require.True(t, ok)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, root)
+
+	root, ok = r.getRoot(size, geom.Size{R: 2, C: 2})
+	require.True(t, ok)
+	require.Equal(t, geom.Vec2{R: 2, C: 0}, root)
+
+	// Should break early
+	root, ok = r.getRoot(size, geom.Size{C: 3})
+	require.False(t, ok)
+}
