@@ -276,7 +276,9 @@ func (f *flowMovement) scrollToLine(dest geom.Vec2, position ScrollPosition) {
 
 	rows = geom.Max(rows, 0)
 
-	if rows == 0 {
+	// Skip the relative calculation if we don't need to (or cannot) set
+	// the root any higher
+	if rows == 0 || (rows > 0 && dest == geom.Vec2{}) {
 		f.root = dest
 		f.cursor.R = 0
 		return

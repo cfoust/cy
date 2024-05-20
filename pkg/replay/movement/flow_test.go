@@ -462,6 +462,35 @@ func TestScrollPast(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
 }
 
+func TestScrollTo(t *testing.T) {
+	size := geom.Size{R: 2, C: 10}
+	s := sessions.NewSimulator()
+	s.Add(
+		size,
+		emu.LineFeedMode,
+		"foo\n",
+		"bar\n",
+		"baz",
+	)
+
+	r := createFlowTest(s.Terminal(), size)
+
+	r.scrollToLine(geom.Vec2{R: 0, C: 0}, ScrollPositionCenter)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
+
+	r.scrollToLine(geom.Vec2{R: 0, C: 0}, ScrollPositionTop)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
+
+	r.scrollToLine(geom.Vec2{R: 1, C: 0}, ScrollPositionCenter)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
+
+	r.scrollToLine(geom.Vec2{R: 2, C: 0}, ScrollPositionCenter)
+	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.root)
+
+	r.scrollToLine(geom.Vec2{R: 2, C: 0}, ScrollPositionTop)
+	require.Equal(t, geom.Vec2{R: 2, C: 0}, r.root)
+}
+
 func TestGetRoot(t *testing.T) {
 	size := geom.Size{R: 2, C: 10}
 	s := sessions.NewSimulator()
