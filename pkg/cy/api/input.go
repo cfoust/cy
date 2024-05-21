@@ -83,7 +83,7 @@ func (i *InputModule) Find(
 		)
 	}
 
-	fuzzy := fuzzy.NewFuzzy(
+	fuzzy := fuzzy.New(
 		ctx,
 		options,
 		settings...,

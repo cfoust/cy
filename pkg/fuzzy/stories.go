@@ -12,7 +12,7 @@ var BottomRight stories.InitFunc = func(ctx context.Context) (mux.Screen, error)
 	location := geom.DEFAULT_SIZE
 	location.C -= 1
 	location.R -= 1
-	return NewFuzzy(
+	return New(
 		ctx,
 		pokemonText,
 		WithInline(location, geom.DEFAULT_SIZE),
@@ -20,7 +20,7 @@ var BottomRight stories.InitFunc = func(ctx context.Context) (mux.Screen, error)
 }
 
 var TopLeft stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	return NewFuzzy(
+	return New(
 		ctx,
 		pokemonText,
 		WithInline(geom.Size{}, geom.DEFAULT_SIZE),
@@ -28,7 +28,7 @@ var TopLeft stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 }
 
 var Search stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	f := NewFuzzy(
+	f := New(
 		ctx,
 		pokemonText,
 		WithInline(geom.Size{}, geom.DEFAULT_SIZE),
@@ -39,7 +39,7 @@ var Search stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 }
 
 var FullTop stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	f := NewFuzzy(
+	f := New(
 		ctx,
 		pokemonText,
 		WithReverse,
@@ -48,7 +48,7 @@ var FullTop stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 }
 
 var FullBottom stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	f := NewFuzzy(
+	f := New(
 		ctx,
 		pokemonText,
 	)
@@ -56,7 +56,7 @@ var FullBottom stories.InitFunc = func(ctx context.Context) (mux.Screen, error) 
 }
 
 var FullTopTable stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	f := NewFuzzy(
+	f := New(
 		ctx,
 		pokemonTable,
 		WithReverse,
@@ -66,7 +66,7 @@ var FullTopTable stories.InitFunc = func(ctx context.Context) (mux.Screen, error
 }
 
 var FullBottomTable stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	f := NewFuzzy(
+	f := New(
 		ctx,
 		pokemonTable,
 		WithHeaders("Name", "#", "Type"),
@@ -75,7 +75,7 @@ var FullBottomTable stories.InitFunc = func(ctx context.Context) (mux.Screen, er
 }
 
 var TopLeftTable stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	return NewFuzzy(
+	return New(
 		ctx,
 		pokemonTable,
 		WithHeaders("Name", "#", "Type"),
@@ -84,7 +84,7 @@ var TopLeftTable stories.InitFunc = func(ctx context.Context) (mux.Screen, error
 }
 
 var CommandTable stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	return NewFuzzy(
+	return New(
 		ctx,
 		[]Option{
 			newColumnOption("ll", "/foo/bar"),

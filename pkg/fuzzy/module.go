@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/anim"
+	"github.com/cfoust/cy/pkg/fuzzy/preview"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
-	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -51,10 +51,9 @@ type Fuzzy struct {
 	// headers for the table
 	headers []string
 
-	tree       *tree.Tree
-	client     *server.Client
-	isAttached bool
-	replay     *taro.Program
+	tree    *tree.Tree
+	client  *server.Client
+	preview preview.Preview
 }
 
 var _ taro.Model = (*Fuzzy)(nil)
@@ -70,60 +69,6 @@ func (f *Fuzzy) quit() (taro.Model, tea.Cmd) {
 		},
 		tea.Quit,
 	)
-}
-
-type AttachEvent struct {
-	pane *tree.Pane
-}
-
-type DetachEvent struct {
-}
-
-func (f *Fuzzy) Attach(id tree.NodeID) taro.Cmd {
-	f.isAttached = false
-
-	return func() tea.Msg {
-		pane, ok := f.tree.PaneById(id)
-		if !ok {
-			return nil
-		}
-
-		f.client.Attach(f.Ctx(), pane.Screen())
-		return AttachEvent{
-			pane: pane,
-		}
-	}
-}
-
-func (f *Fuzzy) handlePreview() taro.Cmd {
-	options := f.getOptions()
-	if len(options) == 0 {
-		return nil
-	}
-
-	option := options[f.selected]
-	if option.Preview == nil {
-		return nil
-	}
-
-	switch preview := option.Preview.(type) {
-	case nodePreview:
-		if f.tree == nil {
-			return nil
-		}
-		return f.Attach(preview.Id)
-	case replayPreview:
-		if f.replay != nil {
-			f.replay.Cancel()
-		}
-		f.replay = replay.NewPreview(
-			f.Ctx(),
-			preview.Path,
-		)
-		f.replay.Resize(f.size)
-	}
-
-	return nil
 }
 
 func (f *Fuzzy) Init() taro.Cmd {
@@ -170,24 +115,32 @@ func (f *Fuzzy) emitOption() taro.Cmd {
 	}
 }
 
+// Previews are just screens. Background is transparent by default.
+
+func (f *Fuzzy) handlePreview() taro.Cmd {
+	options := f.getOptions()
+	if len(options) == 0 {
+		return nil
+	}
+
+	option := options[f.selected]
+	if option.Preview == nil {
+		return nil
+	}
+
+	p := preview.New(option.Preview, f.tree, f.client)
+	if p == nil {
+		return nil
+	}
+
+	return p.Init(f.Ctx())
+}
+
 func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case AttachEvent:
-		f.isAttached = true
-		return f, func() tea.Msg {
-			select {
-			case <-f.client.Attachment().Ctx().Done():
-				return nil
-			case <-msg.pane.Ctx().Done():
-				return DetachEvent{}
-			}
-		}
-	case DetachEvent:
-		f.isAttached = false
-		return f, nil
 	case taro.ScreenUpdate:
 		return f, taro.WaitScreens(f.Ctx(), f.anim)
 	case matchResult:
@@ -248,6 +201,13 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			}
 			return f.quit()
 		}
+	default:
+		if f.preview == nil {
+			break
+		}
+
+		f.preview, cmd = f.preview.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	inputMsg := msg
@@ -324,11 +284,11 @@ func WithHeaders(headers ...string) Setting {
 	}
 }
 
-func NewFuzzy(
+func newFuzzy(
 	ctx context.Context,
 	options []Option,
 	settings ...Setting,
-) *taro.Program {
+) *Fuzzy {
 	ti := textinput.New()
 	ti.Focus()
 	ti.CharLimit = 20
@@ -347,7 +307,15 @@ func NewFuzzy(
 	for _, setting := range settings {
 		setting(f.Ctx(), f)
 	}
+	return f
+}
 
+func New(
+	ctx context.Context,
+	options []Option,
+	settings ...Setting,
+) *taro.Program {
+	f := newFuzzy(ctx, options, settings...)
 	return taro.New(f.Ctx(), f)
 }
 

@@ -28,44 +28,8 @@ func (f *Fuzzy) getPreviewContents() (preview image.Image) {
 
 	switch data := option.Preview.(type) {
 	case nodePreview:
-		if f.isAttached {
-			state := f.client.State()
-			preview = image.New(state.Image.Size())
-			image.Copy(geom.Vec2{}, preview, state.Image)
-
-			// draw a ghost cursor
-			cursor := state.Cursor
-			if state.CursorVisible {
-				preview[cursor.R][cursor.C].BG = 8
-			}
-			return
-		}
-
-		preview = image.New(geom.DEFAULT_SIZE)
-		f.render.RenderAt(
-			preview,
-			0, 0,
-			lipgloss.Place(
-				geom.DEFAULT_SIZE.C,
-				geom.DEFAULT_SIZE.R,
-				lipgloss.Center, lipgloss.Center,
-				"attaching to pane",
-			),
-		)
 		return
 	case replayPreview:
-		if f.replay == nil {
-			return nil
-		}
-		state := f.replay.State()
-		preview = image.New(state.Image.Size())
-		image.Copy(geom.Vec2{}, preview, state.Image)
-
-		// draw a ghost cursor
-		cursor := state.Cursor
-		if state.CursorVisible {
-			preview[cursor.R][cursor.C].BG = 8
-		}
 		return
 	case textPreview:
 		preview = image.New(geom.DEFAULT_SIZE)

@@ -136,7 +136,7 @@ func NewBrowser(
 		)
 	}
 
-	fuzzy := fuzzy.NewFuzzy(
+	fuzzy := fuzzy.New(
 		ctx,
 		options,
 		fuzzy.WithSticky,

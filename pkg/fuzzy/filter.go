@@ -6,10 +6,8 @@ import (
 
 	"github.com/cfoust/cy/pkg/fuzzy/fzf"
 	"github.com/cfoust/cy/pkg/fuzzy/fzf/util"
-	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/fuzzy/preview"
 	"github.com/cfoust/cy/pkg/janet"
-	"github.com/cfoust/cy/pkg/mux/screen/tree"
-	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
 type Match struct {
@@ -20,9 +18,6 @@ type Match struct {
 type Option struct {
 	Text    string
 	Columns []string
-	// Supported types:
-	// - string: will be passed to a blank terminal
-	// - NodeID: will show in the background
 	Preview interface{}
 	Chars   *util.Chars
 	Match   *Match
@@ -51,35 +46,6 @@ type tripleInput struct {
 	Preview *janet.Value
 	// the value returned if the user chooses this option
 	Value *janet.Value
-}
-
-var (
-	KEYWORD_TEXT       = janet.Keyword("text")
-	KEYWORD_NODE       = janet.Keyword("node")
-	KEYWORD_REPLAY     = janet.Keyword("replay")
-	KEYWORD_SCROLLBACK = janet.Keyword("scrollback")
-)
-
-type previewInput struct {
-	Type janet.Keyword
-}
-
-type textPreview struct {
-	Text string
-}
-
-type nodePreview struct {
-	Id tree.NodeID
-}
-
-type replayPreview struct {
-	Path string
-}
-
-type scrollbackPreview struct {
-	Id         tree.NodeID
-	Focus      geom.Vec2
-	Highlights []search.Selection
 }
 
 func NewOption(text string, result interface{}) Option {
@@ -144,48 +110,7 @@ func unmarshalOption(input *janet.Value) (result Option, err error) {
 		return
 	}
 	result.Result = triple.Value
-
-	preview := previewInput{}
-	err = triple.Preview.Unmarshal(&preview)
-	if err != nil {
-		return
-	}
-
-	switch preview.Type {
-	case KEYWORD_TEXT:
-		text := textPreview{}
-		err = triple.Preview.Unmarshal(&text)
-		if err != nil {
-			return
-		}
-		result.Preview = text
-	case KEYWORD_NODE:
-		node := nodePreview{}
-		err = triple.Preview.Unmarshal(&node)
-		if err != nil {
-			return
-		}
-		result.Preview = node
-		return
-	case KEYWORD_REPLAY:
-		replay := replayPreview{}
-		err = triple.Preview.Unmarshal(&replay)
-		if err != nil {
-			return
-		}
-		result.Preview = replay
-	case KEYWORD_SCROLLBACK:
-		scrollback := scrollbackPreview{}
-		err = triple.Preview.Unmarshal(&scrollback)
-		if err != nil {
-			return
-		}
-		result.Preview = scrollback
-	default:
-		err = fmt.Errorf("invalid preview type %s", preview.Type)
-		return
-	}
-
+	result.Preview, err = preview.Unmarshal(triple.Preview)
 	return
 }
 

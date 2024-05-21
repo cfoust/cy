@@ -1,13 +1,13 @@
-package replay
+package preview
 
 import (
-	"context"
 	"fmt"
 	"io"
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
@@ -17,26 +17,30 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type ReplayPreview struct {
-	util.Lifetime
-	render   *taro.Renderer
-	replay   *taro.Program
-	err      error
-	filename string
-	size     geom.Vec2
+type ReplayType struct {
+	Path string
 }
 
-var _ taro.Model = (*ReplayPreview)(nil)
+type Replay struct {
+	util.Lifetime
+	ReplayType
+	render *taro.Renderer
+	replay *taro.Program
+	err    error
+	size   geom.Vec2
+}
+
+var _ taro.Model = (*Replay)(nil)
 
 type loadedEvent struct {
 	replay *taro.Program
 	err    error
 }
 
-func (r *ReplayPreview) Init() tea.Cmd {
+func (r *Replay) Init() tea.Cmd {
 	size := r.size
 	return func() tea.Msg {
-		reader, err := sessions.Open(r.filename)
+		reader, err := sessions.Open(r.Path)
 		if err != nil {
 			return loadedEvent{
 				err: err,
@@ -58,7 +62,7 @@ func (r *ReplayPreview) Init() tea.Cmd {
 		}
 
 		ctx := r.Lifetime.Ctx()
-		replay := New(
+		replay := replay.New(
 			ctx,
 			player.FromEvents(events),
 			bind.NewBindScope(nil),
@@ -71,7 +75,7 @@ func (r *ReplayPreview) Init() tea.Cmd {
 	}
 }
 
-func (r *ReplayPreview) View(state *tty.State) {
+func (r *Replay) View(state *tty.State) {
 	if r.err != nil {
 		r.render.RenderAt(
 			state.Image,
@@ -94,7 +98,7 @@ func (r *ReplayPreview) View(state *tty.State) {
 				geom.DEFAULT_SIZE.C,
 				geom.DEFAULT_SIZE.R,
 				lipgloss.Center, lipgloss.Center,
-				fmt.Sprintf("loading %s...", r.filename),
+				fmt.Sprintf("loading %s...", r.Path),
 			),
 		)
 		return
@@ -103,7 +107,7 @@ func (r *ReplayPreview) View(state *tty.State) {
 	tty.Copy(geom.Vec2{}, state, r.replay.State())
 }
 
-func (r *ReplayPreview) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
+func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		r.size = geom.Size{
@@ -125,16 +129,4 @@ func (r *ReplayPreview) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	}
 
 	return r, nil
-}
-
-func NewPreview(
-	ctx context.Context,
-	filename string,
-) *taro.Program {
-	program := taro.New(ctx, &ReplayPreview{
-		Lifetime: util.NewLifetime(ctx),
-		render:   taro.NewRenderer(),
-		filename: filename,
-	})
-	return program
 }
