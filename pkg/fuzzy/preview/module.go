@@ -21,6 +21,8 @@ func New(
 		return NewReplay(ctx, args)
 	case TextType:
 		return NewText(ctx, args)
+	case ScrollbackType:
+		return NewScrollback(ctx, tree, args)
 	}
 
 	return nil
