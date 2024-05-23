@@ -24,6 +24,7 @@ type Fuzzy struct {
 	result chan<- interface{}
 	size   geom.Vec2
 
+	watcher   *taro.ScreenWatcher
 	render    *taro.Renderer
 	textInput textinput.Model
 
@@ -78,7 +79,7 @@ func (f *Fuzzy) Init() taro.Cmd {
 	}
 
 	if f.anim != nil {
-		cmds = append(cmds, taro.WaitScreens(f.Ctx(), f.anim))
+		cmds = append(cmds, f.watcher.Wait(f.anim))
 	}
 
 	return tea.Batch(cmds...)
@@ -143,7 +144,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case taro.ScreenUpdate:
-		return f, taro.WaitScreens(f.Ctx(), f.anim, f.preview)
+		return f, f.watcher.Wait(f.anim, f.preview)
 	case matchResult:
 		f.filtered = msg.Filtered
 		f.setSelected(f.selected)
@@ -293,6 +294,7 @@ func newFuzzy(
 	f := &Fuzzy{
 		Lifetime:  util.NewLifetime(ctx),
 		render:    taro.NewRenderer(),
+		watcher:   taro.NewWatcher(ctx),
 		options:   options,
 		selected:  0,
 		textInput: ti,

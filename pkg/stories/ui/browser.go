@@ -27,7 +27,7 @@ type Browser struct {
 var _ taro.Model = (*Browser)(nil)
 
 func (s *Browser) Init() tea.Cmd {
-	return s.watcher.Wait()
+	return taro.WaitScreens(s.Ctx(), s.fuzzy)
 }
 
 func (s *Browser) View(state *tty.State) {
@@ -81,15 +81,16 @@ func (s *Browser) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 		return s, nil
 	case taro.ScreenUpdate:
-		cmds := []taro.Cmd{
-			s.watcher.Wait(),
-		}
+		cmds := []taro.Cmd{}
 
+		// TODO(cfoust): 05/24/24 curious issue with passing s.viewer regardless of nil?
 		if s.viewer != nil {
-			cmds = append(cmds, taro.WaitScreens(
-				s.Ctx(),
+			cmds = append(cmds, s.watcher.Wait(
+				s.fuzzy,
 				s.viewer,
 			))
+		} else {
+			cmds = append(cmds, s.watcher.Wait(s.fuzzy))
 		}
 
 		switch msg := msg.Msg.(type) {
@@ -147,7 +148,7 @@ func NewBrowser(
 		Lifetime: util.NewLifetime(ctx),
 		render:   taro.NewRenderer(),
 		fuzzy:    fuzzy,
-		watcher:  taro.NewWatcher(ctx, fuzzy),
+		watcher:  taro.NewWatcher(ctx),
 	}
 
 	program := taro.New(ctx, browser)
