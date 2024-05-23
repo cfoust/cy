@@ -7,8 +7,6 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/replay"
-	"github.com/cfoust/cy/pkg/replay/movement"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
@@ -26,68 +24,11 @@ func (f *Fuzzy) getPreviewContents() (preview image.Image) {
 		return
 	}
 
-	switch data := option.Preview.(type) {
-	case nodePreview:
+	if f.preview == nil {
 		return
-	case replayPreview:
-		return
-	case textPreview:
-		preview = image.New(geom.DEFAULT_SIZE)
-		f.render.RenderAt(
-			preview,
-			0, 0,
-			f.render.NewStyle().
-				MaxWidth(geom.DEFAULT_SIZE.C).
-				MaxHeight(geom.DEFAULT_SIZE.R).
-				Render(data.Text),
-		)
-		return
-	case scrollbackPreview:
-		pane, ok := f.tree.PaneById(data.Id)
-		if !ok {
-			return nil
-		}
-
-		r, ok := pane.Screen().(*replay.Replayable)
-		if !ok {
-			return nil
-		}
-
-		fgColor := f.render.ConvertLipgloss(lipgloss.Color("1"))
-		bgColor := f.render.ConvertLipgloss(lipgloss.Color("14"))
-		var highlights []movement.Highlight
-		for _, highlight := range data.Highlights {
-			highlights = append(
-				highlights,
-				movement.Highlight{
-					From: highlight.From,
-					To:   highlight.To,
-					FG:   fgColor,
-					BG:   bgColor,
-				},
-			)
-		}
-
-		preview := r.Preview(data.Focus, highlights)
-		if preview != nil {
-			return preview.Image
-		}
-
-		warning := image.New(geom.DEFAULT_SIZE)
-		f.render.RenderAt(
-			warning,
-			0, 0,
-			lipgloss.Place(
-				geom.DEFAULT_SIZE.C,
-				geom.DEFAULT_SIZE.R,
-				lipgloss.Center, lipgloss.Center,
-				"cannot preview when pane is in replay mode",
-			),
-		)
-		return warning
 	}
 
-	return nil
+	return f.preview.State().Image
 }
 
 func (f *Fuzzy) renderPreview(state *tty.State) {

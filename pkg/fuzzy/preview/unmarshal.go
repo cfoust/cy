@@ -3,10 +3,7 @@ package preview
 import (
 	"fmt"
 
-	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
-	"github.com/cfoust/cy/pkg/mux/screen/tree"
-	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
 var (
@@ -18,16 +15,6 @@ var (
 
 type previewInput struct {
 	Type janet.Keyword
-}
-
-type TextType struct {
-	Text string
-}
-
-type ScrollbackType struct {
-	Id         tree.NodeID
-	Focus      geom.Vec2
-	Highlights []search.Selection
 }
 
 func Unmarshal(input *janet.Value) (result interface{}, err error) {

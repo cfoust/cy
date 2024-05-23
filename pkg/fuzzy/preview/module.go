@@ -6,8 +6,6 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
-	"github.com/cfoust/cy/pkg/taro"
-	"github.com/cfoust/cy/pkg/util"
 )
 
 func New(
@@ -16,22 +14,13 @@ func New(
 	client *server.Client,
 	args interface{},
 ) mux.Screen {
-	l := util.NewLifetime(ctx)
 	switch args := args.(type) {
 	case NodeType:
-		return taro.New(l.Ctx(), &Node{
-			Lifetime: l,
-			render:   taro.NewRenderer(),
-			NodeType: args,
-			tree:     tree,
-			client:   client,
-		})
+		return NewNode(ctx, tree, client, args)
 	case ReplayType:
-		return taro.New(l.Ctx(), &Replay{
-			Lifetime:   l,
-			render:     taro.NewRenderer(),
-			ReplayType: args,
-		})
+		return NewReplay(ctx, args)
+	case TextType:
+		return NewText(ctx, args)
 	}
 
 	return nil

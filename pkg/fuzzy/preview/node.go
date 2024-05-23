@@ -1,9 +1,12 @@
 package preview
 
 import (
+	"context"
+
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/taro"
@@ -99,4 +102,20 @@ func (f *Node) View(out *tty.State) {
 
 	out.Image = preview
 	return
+}
+
+func NewNode(
+	ctx context.Context,
+	tree *tree.Tree,
+	client *server.Client,
+	args NodeType,
+) mux.Screen {
+	l := util.NewLifetime(ctx)
+	return taro.New(l.Ctx(), &Node{
+		Lifetime: l,
+		render:   taro.NewRenderer(),
+		NodeType: args,
+		tree:     tree,
+		client:   client,
+	})
 }

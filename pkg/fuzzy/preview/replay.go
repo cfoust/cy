@@ -1,12 +1,14 @@
 package preview
 
 import (
+	"context"
 	"fmt"
 	"io"
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
@@ -129,4 +131,16 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	}
 
 	return r, nil
+}
+
+func NewReplay(
+	ctx context.Context,
+	args ReplayType,
+) mux.Screen {
+	l := util.NewLifetime(ctx)
+	return taro.New(l.Ctx(), &Replay{
+		Lifetime:   l,
+		render:     taro.NewRenderer(),
+		ReplayType: args,
+	})
 }

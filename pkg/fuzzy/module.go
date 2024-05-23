@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/fuzzy/preview"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
+	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/taro"
@@ -53,7 +54,7 @@ type Fuzzy struct {
 
 	tree    *tree.Tree
 	client  *server.Client
-	preview preview.Preview
+	preview mux.Screen
 }
 
 var _ taro.Model = (*Fuzzy)(nil)
@@ -115,9 +116,7 @@ func (f *Fuzzy) emitOption() taro.Cmd {
 	}
 }
 
-// Previews are just screens. Background is transparent by default.
-
-func (f *Fuzzy) handlePreview() taro.Cmd {
+func (f *Fuzzy) getPreview() mux.Screen {
 	options := f.getOptions()
 	if len(options) == 0 {
 		return nil
@@ -125,15 +124,17 @@ func (f *Fuzzy) handlePreview() taro.Cmd {
 
 	option := options[f.selected]
 	if option.Preview == nil {
+		f.preview = nil
 		return nil
 	}
 
-	p := preview.New(option.Preview, f.tree, f.client)
+	p := preview.New(f.Ctx(), f.tree, f.client, option.Preview)
 	if p == nil {
 		return nil
 	}
 
-	return p.Init(f.Ctx())
+	p.Resize(geom.DEFAULT_SIZE)
+	return p
 }
 
 func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
@@ -142,7 +143,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case taro.ScreenUpdate:
-		return f, taro.WaitScreens(f.Ctx(), f.anim)
+		return f, taro.WaitScreens(f.Ctx(), f.anim, f.preview)
 	case matchResult:
 		f.filtered = msg.Filtered
 		f.setSelected(f.selected)
@@ -184,8 +185,9 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			}
 
 			f.setSelected(f.selected + delta)
+			f.preview = f.getPreview()
+
 			return f, tea.Batch(
-				f.handlePreview(),
 				f.emitOption(),
 			)
 		case taro.KeyEnter:
@@ -201,13 +203,6 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			}
 			return f.quit()
 		}
-	default:
-		if f.preview == nil {
-			break
-		}
-
-		f.preview, cmd = f.preview.Update(msg)
-		cmds = append(cmds, cmd)
 	}
 
 	inputMsg := msg
