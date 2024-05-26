@@ -12,12 +12,12 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen"
-	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/params"
+	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/rs/zerolog"
@@ -28,7 +28,8 @@ import (
 type Options struct {
 	// The initial Janet script, typically ~/.cyrc.janet.
 	Config string
-	// The default directory in which to store data (e.g. recorded sessions).
+	// The default directory in which to store data (e.g. recorded
+	// sessions).
 	DataDir string
 	// The default shell
 	Shell string
@@ -79,13 +80,39 @@ type Cy struct {
 	writes, visits       chan historyEvent
 }
 
-func (c *Cy) loadUserConfig(ctx context.Context) {
-	err := c.ExecuteFile(ctx, c.configPath)
+func (c *Cy) ExecuteJanet(path string) error {
+	return c.ExecuteFile(c.Ctx(), path)
+}
+
+func (c *Cy) loadConfig() error {
+	err := c.ExecuteFile(c.Ctx(), c.configPath)
+
+	// We want to make a lot of noise if this fails for some reason, even
+	// if this is being called in user code
 	if err != nil {
 		c.log.Error().Err(err).Msg("failed to execute config")
-		message := fmt.Sprintf("an error occurred while loading %s: %s", c.configPath, err.Error())
+		message := fmt.Sprintf(
+			"an error occurred while loading %s: %s",
+			c.configPath,
+			err.Error(),
+		)
 		c.toast.Error(message)
 	}
+
+	return err
+}
+
+func (c *Cy) reloadConfig() error {
+	path := FindConfig()
+	if len(path) == 0 {
+		return nil
+	}
+
+	c.Lock()
+	c.configPath = path
+	c.Unlock()
+
+	return c.loadConfig()
 }
 
 // Get the first pane that another client is attached to or return nil if there
@@ -246,7 +273,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 
 	if len(options.Config) != 0 {
 		cy.configPath = options.Config
-		cy.loadUserConfig(ctx)
+		cy.loadConfig()
 	}
 
 	return &cy, nil

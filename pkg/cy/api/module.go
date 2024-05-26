@@ -17,3 +17,7 @@ type Client interface {
 	Frame() *frames.Framer
 	Binds() []Binding
 }
+
+type Server interface {
+	ExecuteJanet(path string) error
+}

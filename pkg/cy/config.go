@@ -1,4 +1,4 @@
-package main
+package cy
 
 import (
 	"os"
@@ -14,7 +14,7 @@ func fileExists(path string) bool {
 
 // TODO(cfoust): 09/17/23 support XDG_CONFIG_DIRS and XDG_DATA_DIRS
 
-func findConfig() string {
+func FindConfig() string {
 	roots := make([]string, 0)
 
 	if xdgConfig, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
@@ -46,7 +46,7 @@ func findConfig() string {
 	return ""
 }
 
-func findDataDir() string {
+func FindDataDir() string {
 	if xdgData, ok := os.LookupEnv("XDG_DATA_HOME"); ok {
 		return filepath.Join(xdgData, "cy")
 	}

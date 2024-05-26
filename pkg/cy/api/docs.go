@@ -86,3 +86,12 @@ var _ janet.Documented = (*CmdModule)(nil)
 func (i *CmdModule) Documentation() string {
 	return DOCS_CMD
 }
+
+//go:embed docs-exec.md
+var DOCS_EXEC string
+
+var _ janet.Documented = (*ExecModule)(nil)
+
+func (i *ExecModule) Documentation() string {
+	return DOCS_EXEC
+}

@@ -190,6 +190,11 @@ For example:
          (viewport/set-frame _)))
 
 (key/action
+  action/reload-config
+  "reload the cy configuration"
+  (cy/reload-config))
+
+(key/action
   action/random-frame
   "switch to a random frame"
   (def frames (viewport/get-frames))
@@ -254,6 +259,7 @@ For example:
                [prefix "q"] cy/kill-server
                [prefix "d"] cy/detach
                [prefix "p"] cy/replay
+               [prefix "r"] action/reload-config
                [prefix "P"] cy/paste)
 
 (key/bind-many :replay

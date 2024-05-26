@@ -6,9 +6,9 @@ import (
 
 	"github.com/cfoust/cy/pkg/cy/api"
 	"github.com/cfoust/cy/pkg/janet"
-	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/rs/zerolog"
@@ -68,6 +68,10 @@ func (c *CyModule) Detach(user interface{}) {
 	}
 
 	client.Detach("detached")
+}
+
+func (c *CyModule) ReloadConfig() error {
+	return c.cy.reloadConfig()
 }
 
 func (c *CyModule) Get(user interface{}, key *janet.Value) (interface{}, error) {
@@ -237,15 +241,16 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 			Tree:        c.tree,
 			ReplayBinds: c.replayBinds,
 		},
-		"cy": &CyModule{cy: c},
+		"cy":    &CyModule{cy: c},
+		"exec":  &api.ExecModule{Server: c},
+		"group": &api.GroupModule{Tree: c.tree},
+		"input": &api.InputModule{Tree: c.tree, Server: c.muxServer},
 		"key": &api.KeyModule{
 			Tree:        c.tree,
 			ReplayBinds: c.replayBinds,
 		},
-		"group": &api.GroupModule{Tree: c.tree},
-		"input": &api.InputModule{Tree: c.tree, Server: c.muxServer},
-		"pane":  &api.PaneModule{Tree: c.tree},
-		"path":  &api.PathModule{},
+		"pane": &api.PaneModule{Tree: c.tree},
+		"path": &api.PathModule{},
 		"replay": &api.ReplayModule{
 			Lifetime: util.NewLifetime(c.Ctx()),
 			Tree:     c.tree,

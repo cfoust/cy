@@ -37,3 +37,7 @@ Send a toast with `message` to all attached clients. `level` must be one of `:in
 (cy/log level message)
 
 Log `message` to the `/logs` pane. `level` must be one of `:info`, `:warn`, `:error`.
+
+# doc: ReloadConfig
+
+Detect and (re)evaluate cy's configuration. This uses the same configuration detection scheme described in [the Configuration chapter](./configuration.md#configuration-files).
