@@ -869,6 +869,10 @@ func (t *State) History() []Line {
 	return t.history
 }
 
+func (t *State) IsAltMode() bool {
+	return IsAltMode(t.mode)
+}
+
 func (t *State) String() string {
 	t.Lock()
 	defer t.Unlock()

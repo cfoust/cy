@@ -301,6 +301,7 @@ For example:
                ["n"] replay/search-again
                ["N"] replay/search-reverse
                [" "] replay/time-play
+               ["s"] replay/swap-mode
                ["1"] (fn [&] (replay/time-playback-rate 1))
                ["2"] (fn [&] (replay/time-playback-rate 2))
                ["3"] (fn [&] (replay/time-playback-rate 5))

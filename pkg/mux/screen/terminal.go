@@ -35,7 +35,7 @@ func (t *Terminal) Resize(size Size) error {
 }
 
 func (t *Terminal) IsAltMode() bool {
-	return emu.IsAltMode(t.terminal.Mode())
+	return t.terminal.IsAltMode()
 }
 
 func (t *Terminal) Send(msg mux.Msg) {

@@ -66,6 +66,10 @@ const (
 	ActionTimeStepBack
 	ActionTimeStepForward
 
+	// cy-specific actions
+	//////////////////////
+	ActionSwapScreen
+
 	// All tmux copy-mode commands, only some of which are implemented
 	//////////////////////////////////////////////////////////////////
 	// append-selection

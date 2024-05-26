@@ -7,9 +7,9 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/replay/player"
-	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
@@ -111,6 +111,10 @@ func (m *ReplayModule) Beginning(context interface{}) error {
 
 func (m *ReplayModule) End(context interface{}) error {
 	return m.sendAction(context, replay.ActionEnd)
+}
+
+func (m *ReplayModule) SwapScreen(context interface{}) error {
+	return m.sendAction(context, replay.ActionSwapScreen)
 }
 
 func (m *ReplayModule) CursorDown(context interface{}) error {

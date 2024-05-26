@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
-	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/player"
@@ -37,6 +36,15 @@ type Replay struct {
 	viewport geom.Size
 
 	mode Mode
+
+	// Replay allows you to browse the contents of the terminal screen in
+	// two different ways:
+	//   - By treating the screen as an image with arbitrary content that
+	//   may not take the form of lines, such as when a full-screen
+	//   application is open
+	//   - By treating the screen as a text file with human-readable text,
+	//   such as when a shell is running
+	isSwapped bool
 
 	isPlaying    bool
 	playbackRate int
@@ -73,16 +81,6 @@ var _ taro.Model = (*Replay)(nil)
 
 func (r *Replay) isCopyMode() bool {
 	return r.mode == ModeCopy
-}
-
-// Replay allows you to browse the contents of the terminal screen in two
-// different ways:
-//   - By treating the screen as an image with arbitrary content that may not
-//     take the form of lines, such as when a full-screen application is open
-//   - By treating the screen as a text file with human-readable text, such as
-//     when a shell is running
-func (r *Replay) isImageMode() bool {
-	return emu.IsAltMode(r.Mode())
 }
 
 func (r *Replay) getTerminalCursor() geom.Vec2 {

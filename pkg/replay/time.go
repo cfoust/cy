@@ -16,6 +16,7 @@ type seekEvent struct {
 
 func (r *Replay) handleSeek(updateTime bool) {
 	r.isSeeking = false
+	r.isSwapped = false
 
 	events := r.Events()
 	location := r.Location()

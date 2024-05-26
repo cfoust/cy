@@ -190,6 +190,8 @@ type View interface {
 	// History returns the scrollback buffer.
 	History() []Line
 
+	IsAltMode() bool
+
 	// The location in history of the top-left cell of the screen. The `R`
 	// field refers to the line in history and the `C` refers to a column
 	// in that line that the cell contains. For example, when only one line

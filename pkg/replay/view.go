@@ -227,7 +227,7 @@ func (r *Replay) View(state *tty.State) {
 		)
 	}
 
-	if !r.isImageMode() && r.showCommands {
+	if !r.isAlt && r.showCommands {
 		for _, command := range r.Commands() {
 			highlights = append(
 				highlights,

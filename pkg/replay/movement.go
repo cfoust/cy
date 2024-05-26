@@ -75,7 +75,7 @@ func (r *Replay) handleCopy() (taro.Model, tea.Cmd) {
 
 func (r *Replay) initializeMovement() {
 	r.movement = movement.NewImage(r.Terminal, r.viewport)
-	if !r.isImageMode() {
+	if !r.IsAltMode() || (r.IsAltMode() && r.isSwapped) {
 		r.movement = movement.NewFlow(r.Terminal, r.viewport)
 	}
 	r.movement.Resize(r.viewport)
@@ -84,5 +84,6 @@ func (r *Replay) initializeMovement() {
 func (r *Replay) exitCopyMode() {
 	r.mode = ModeTime
 	r.isSelecting = false
+	r.isSwapped = false
 	r.initializeMovement()
 }

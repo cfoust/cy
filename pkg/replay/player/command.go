@@ -364,7 +364,7 @@ func (p *Player) detect() {
 	dirty := p.Changes()
 	defer dirty.Reset()
 
-	if emu.IsAltMode(p.Mode()) {
+	if p.IsAltMode() {
 		return
 	}
 
