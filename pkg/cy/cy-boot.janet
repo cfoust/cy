@@ -160,6 +160,21 @@ For example:
          (pane/attach _)))
 
 (key/action
+  action/jump-screen-lines
+  "jump to a pane based on screen lines"
+  (as?-> (group/leaves :root) _
+         (mapcat
+           (fn [id]
+             (->> id
+                  (pane/screen)
+                  (filter (complement |(string/check-set " " $)))
+                  (map
+                    |(tuple [$ (tree/path id)] {:type :node :id id} id))))
+           _)
+         (input/find _ :prompt "search: screen")
+         (pane/attach _)))
+
+(key/action
   action/kill-current-pane
   "kill the current pane"
   (tree/kill (pane/current)))
@@ -248,7 +263,8 @@ For example:
                [prefix "l"] action/jump-shell
                ["ctrl+l"] action/next-pane
                [prefix ";"] action/jump-pane
-               [prefix ":"] action/jump-command
+               [prefix "c"] action/jump-command
+               [prefix ":"] action/jump-screen-lines
                [prefix "ctrl+p"] action/command-palette
                [prefix "x"] action/kill-current-pane
                [prefix "g"] action/toggle-margins

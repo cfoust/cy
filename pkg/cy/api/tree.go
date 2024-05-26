@@ -101,6 +101,23 @@ func (p *PaneModule) Current(context interface{}) *tree.NodeID {
 	return &id
 }
 
+func (p *PaneModule) Screen(id *janet.Value) ([]string, error) {
+	defer id.Free()
+
+	pane, err := resolvePane(p.Tree, id)
+	if err != nil {
+		return nil, err
+	}
+
+	state := pane.Screen().State()
+	lines := make([]string, len(state.Image))
+	for _, line := range state.Image {
+		lines = append(lines, line.String())
+	}
+
+	return lines, nil
+}
+
 type TreeModule struct {
 	Tree *tree.Tree
 }
