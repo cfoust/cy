@@ -129,3 +129,7 @@ For example:
 ```janet
 (replay/open (tree/root) "some_borg.borg")
 ```
+
+# doc: SwapScreen
+
+Swap between the alt screen and the main screen. This allows you to return to the pane's scrollback without quitting a program that is using the alternate screen, such as vim or htop.

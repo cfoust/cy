@@ -202,3 +202,27 @@ func TestPrompt(t *testing.T) {
 	i(ActionSearchForward, "blah", ActionQuit)
 	require.Equal(t, r.mode, ModeTime)
 }
+
+func TestSwap(t *testing.T) {
+	s := sessions.NewSimulator().
+		Add(
+			geom.Size{R: 10, C: 10},
+			"foo\nbar\nbaz",
+			emu.EnterAltScreen,
+		)
+
+	r, i := createTest(s.Events())
+	require.True(t, r.IsAltMode())
+	require.False(t, r.isSwapped)
+
+	i(ActionSwapScreen)
+	require.Equal(t, r.mode, ModeCopy)
+	require.True(t, r.isSwapped)
+
+	i(ActionSwapScreen)
+	require.False(t, r.isSwapped)
+
+	i(ActionSwapScreen, ActionQuit)
+	require.Equal(t, r.mode, ModeTime)
+	require.False(t, r.isSwapped)
+}
