@@ -45,25 +45,23 @@ func NewFlow(terminal emu.Terminal, viewport geom.Size) Movement {
 	return f
 }
 
-// For a given location and viewport, find the first root that reveals the
-// location's cell.
-func (f *flowMovement) getRoot(viewport, location geom.Vec2) (root geom.Vec2, ok bool) {
-	if location.LT(geom.Vec2{}) {
-		location = geom.Vec2{}
-		ok = true
+// getRoot finds the root that contains the cell specified by `location`. Note
+// that `location.C` must be the index of a cell _within_ a line.
+func (f *flowMovement) getRoot(location geom.Vec2) (root geom.Vec2, ok bool) {
+	// Ensure the location is valid
+	lines := f.GetLines(location.R, location.R)
+	if len(lines) != 1 {
 		return
 	}
 
-	lastRoot := f.getLastRoot()
-	if location.GTE(lastRoot) {
-		location = lastRoot
-		ok = true
+	line := lines[0]
+	if location.C < 0 || location.C > len(line) {
 		return
 	}
 
 	root = geom.Vec2{R: location.R}
 	for {
-		result := f.Flow(viewport, root)
+		result := f.Flow(f.viewport, root)
 
 		if !result.OK || len(result.Lines) == 0 {
 			return
@@ -83,6 +81,19 @@ func (f *flowMovement) getRoot(viewport, location geom.Vec2) (root geom.Vec2, ok
 
 		root = result.Lines[len(result.Lines)-1].Root()
 	}
+}
+
+func (f *flowMovement) Goto(location geom.Vec2) {
+	root, ok := f.getRoot(location)
+	if !ok {
+		return
+	}
+
+	// TODO(cfoust): 06/05/24 if it's on the screen, don't recenter it
+	f.haveMoved = true
+	f.scrollToLine(root, ScrollPositionCenter)
+	f.cursor.C = location.C - root.C
+	f.desiredCol = f.cursor.C
 }
 
 func (f *flowMovement) centerTerminalCursor() {
@@ -664,11 +675,7 @@ func PreviewFlow(
 ) *tty.State {
 	image := tty.New(size)
 	flow := NewFlow(terminal, size).(*flowMovement)
-
-	if root, ok := flow.getRoot(size, location); ok {
-		flow.scrollToLine(root, ScrollPositionCenter)
-	}
-
+	flow.Goto(location)
 	flow.View(image, highlights)
 	return image
 }

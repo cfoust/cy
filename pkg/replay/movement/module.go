@@ -27,6 +27,7 @@ type Movement interface {
 	ScrollTop()
 	ScrollXDelta(delta int)
 	ScrollYDelta(delta int)
+	Goto(location geom.Vec2)
 	View(state *tty.State, highlights []Highlight)
 }
 

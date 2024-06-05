@@ -49,6 +49,10 @@ func (i *imageMovement) ScrollBottom() {
 	)
 }
 
+func (i *imageMovement) Goto(location geom.Vec2) {
+	// TODO(cfoust): 06/05/24 This is unused
+}
+
 // Check whether the given point in viewport space actually falls within it.
 func (i *imageMovement) isInViewport(point geom.Vec2) bool {
 	if point.R < 0 || point.C < 0 || point.R >= i.viewport.R || point.C >= i.viewport.C {

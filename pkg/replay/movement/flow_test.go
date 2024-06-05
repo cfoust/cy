@@ -508,15 +508,49 @@ func TestGetRoot(t *testing.T) {
 
 	r := createFlowTest(s.Terminal(), size)
 
-	root, ok := r.getRoot(size, geom.Size{C: 1})
+	// Before beginning
+	root, ok := r.getRoot(geom.Vec2{R: -1, C: 0})
+	require.False(t, ok)
+
+	// After end
+	root, ok = r.getRoot(geom.Vec2{R: 6, C: 3})
+	require.False(t, ok)
+
+	root, ok = r.getRoot(geom.Vec2{C: 1})
 	require.True(t, ok)
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, root)
 
-	root, ok = r.getRoot(size, geom.Size{R: 2, C: 2})
+	root, ok = r.getRoot(geom.Vec2{R: 2, C: 2})
 	require.True(t, ok)
 	require.Equal(t, geom.Vec2{R: 2, C: 0}, root)
 
 	// Should break early
-	root, ok = r.getRoot(size, geom.Size{C: 3})
+	root, ok = r.getRoot(geom.Vec2{C: 3})
 	require.False(t, ok)
+}
+
+func TestGoto(t *testing.T) {
+	size := geom.Size{R: 2, C: 10}
+	s := sessions.NewSimulator()
+	s.Add(
+		size,
+		emu.LineFeedMode,
+		"foo\n",
+		"bar\n",
+		"baz\n",
+		"\n", // 3
+		"foo\n",
+		"bar\n",
+		"baz\n", // 6
+	)
+
+	r := createFlowTest(s.Terminal(), size)
+
+	r.Goto(geom.Vec2{R: 0, C: 2}) // fo[o]
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
+	require.Equal(t, geom.Vec2{R: 0, C: 2}, r.cursor)
+
+	r.Goto(geom.Vec2{R: 6, C: 0}) // [b]az
+	require.Equal(t, geom.Vec2{R: 5, C: 0}, r.root)
+	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.cursor)
 }
