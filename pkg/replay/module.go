@@ -91,6 +91,17 @@ func (r *Replay) getTerminalCursor() geom.Vec2 {
 	}
 }
 
+func (r *Replay) swapScreen() {
+	if !r.IsAltMode() {
+		return
+	}
+
+	r.mode = ModeCopy
+	r.isSwapped = !r.isSwapped
+	r.isSelecting = false
+	r.initializeMovement()
+}
+
 func (r *Replay) Init() tea.Cmd {
 	return textinput.Blink
 }
@@ -121,6 +132,28 @@ type ReplayOption func(r *Replay)
 
 func WithNoQuit(r *Replay) {
 	r.preventExit = true
+}
+
+// WithCopyMode puts Replay immediately into copy mode.
+func WithCopyMode(r *Replay) {
+	r.mode = ModeCopy
+}
+
+// WithFlow swaps to flow mode, if possible.
+func WithFlow(r *Replay) {
+	if !r.IsAltMode() {
+		return
+	}
+
+	r.swapScreen()
+}
+
+// WithLocation attempts to move the cursor to `location`, which is a point in
+// the coordinate space of the terminal's current mode.
+func WithLocation(location geom.Vec2) ReplayOption {
+	return func(r *Replay) {
+		r.movement.Goto(location)
+	}
 }
 
 func New(

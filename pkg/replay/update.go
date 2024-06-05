@@ -141,13 +141,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			}
 			return r, r.gotoIndex(-1, -1)
 		case ActionSwapScreen:
-			if !r.IsAltMode() {
-				return r, nil
-			}
-
-			r.mode = ModeCopy
-			r.isSwapped = !r.isSwapped
-			r.initializeMovement()
+			r.swapScreen()
 			return r, nil
 		case ActionSearchAgain, ActionSearchReverse:
 			return r, r.searchAgain(

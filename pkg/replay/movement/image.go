@@ -50,7 +50,7 @@ func (i *imageMovement) ScrollBottom() {
 }
 
 func (i *imageMovement) Goto(location geom.Vec2) {
-	// TODO(cfoust): 06/05/24 This is unused
+	i.moveCursor(i.clampToTerminal(location))
 }
 
 // Check whether the given point in viewport space actually falls within it.
