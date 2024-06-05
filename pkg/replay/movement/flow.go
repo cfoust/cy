@@ -83,6 +83,11 @@ func (f *flowMovement) getRoot(location geom.Vec2) (root geom.Vec2, ok bool) {
 	}
 }
 
+func (f *flowMovement) Snap() {
+	f.haveMoved = true
+	f.cursor.C = f.resolveScreenColumn(f.cursor.R)
+}
+
 func (f *flowMovement) Goto(location geom.Vec2) {
 	root, ok := f.getRoot(location)
 	if !ok {

@@ -128,7 +128,7 @@ func newReplay(
 	return m
 }
 
-type ReplayOption func(r *Replay)
+type Option func(r *Replay)
 
 func WithNoQuit(r *Replay) {
 	r.preventExit = true
@@ -137,6 +137,7 @@ func WithNoQuit(r *Replay) {
 // WithCopyMode puts Replay immediately into copy mode.
 func WithCopyMode(r *Replay) {
 	r.mode = ModeCopy
+	r.movement.Snap()
 }
 
 // WithFlow swaps to flow mode, if possible.
@@ -150,8 +151,9 @@ func WithFlow(r *Replay) {
 
 // WithLocation attempts to move the cursor to `location`, which is a point in
 // the coordinate space of the terminal's current mode.
-func WithLocation(location geom.Vec2) ReplayOption {
+func WithLocation(location geom.Vec2) Option {
 	return func(r *Replay) {
+		// TODO(cfoust): 06/05/24 also need to enter copy mode
 		r.movement.Goto(location)
 	}
 }
@@ -160,7 +162,7 @@ func New(
 	ctx context.Context,
 	player *player.Player,
 	replayBinds *bind.BindScope,
-	options ...ReplayOption,
+	options ...Option,
 ) *taro.Program {
 	engine := bind.NewEngine[bind.Action]()
 	engine.SetScopes(replayBinds)

@@ -129,7 +129,7 @@ func (r *Replayable) Send(msg mux.Msg) {
 	r.terminal.Send(msg)
 }
 
-func (r *Replayable) EnterReplay() {
+func (r *Replayable) EnterReplay(options ...Option) {
 	if r.isReplayMode() {
 		return
 	}
@@ -138,7 +138,7 @@ func (r *Replayable) EnterReplay() {
 	defer r.Unlock()
 
 	r.player.Acquire()
-	replay := New(r.Ctx(), r.player, r.binds)
+	replay := New(r.Ctx(), r.player, r.binds, options...)
 
 	replay.Resize(r.size)
 	r.replay = replay

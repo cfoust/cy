@@ -49,6 +49,10 @@ func (i *imageMovement) ScrollBottom() {
 	)
 }
 
+func (i *imageMovement) Snap() {
+	// no-op in imageMovement
+}
+
 func (i *imageMovement) Goto(location geom.Vec2) {
 	i.moveCursor(i.clampToTerminal(location))
 }
