@@ -146,7 +146,7 @@ func WithCopyMode(r *Replay) {
 
 // WithFlow swaps to flow mode, if possible.
 func WithFlow(r *Replay) {
-	if !r.IsAltMode() {
+	if r.isFlowMode() {
 		return
 	}
 
