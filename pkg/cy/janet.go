@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/cy/api"
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -147,7 +148,16 @@ func (c *CyModule) Set(user interface{}, key *janet.Value, value *janet.Value) e
 	return fmt.Errorf("parameter type not supported")
 }
 
-func (c *CyModule) Replay(user interface{}) {
+type ReplayParams struct {
+	Main     bool
+	Copy     bool
+	Location *geom.Vec2
+}
+
+func (c *CyModule) Replay(
+	user interface{},
+	named *janet.Named[ReplayParams],
+) {
 	client, ok := user.(*Client)
 	if !ok {
 		return
@@ -163,12 +173,29 @@ func (c *CyModule) Replay(user interface{}) {
 		return
 	}
 
+	var options []replay.Option
+
+	params := named.Values()
+	if params.Main {
+		options = append(options, replay.WithFlow)
+	}
+
+	if params.Copy {
+		options = append(options, replay.WithCopyMode)
+	}
+
+	if params.Location != nil {
+		options = append(options, replay.WithLocation(
+			*params.Location,
+		))
+	}
+
 	r, ok := pane.Screen().(*replay.Replayable)
 	if !ok {
 		return
 	}
 
-	r.EnterReplay()
+	r.EnterReplay(options...)
 	// TODO(cfoust): 10/08/23 reattach all clients
 	client.Attach(node)
 }
