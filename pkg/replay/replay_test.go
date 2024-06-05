@@ -226,3 +226,42 @@ func TestSwap(t *testing.T) {
 	require.Equal(t, r.mode, ModeTime)
 	require.False(t, r.isSwapped)
 }
+
+func TestOptions(t *testing.T) {
+	s := sessions.NewSimulator().
+		Add(
+			geom.Size{R: 10, C: 10},
+			"foo\nbar\nbaz",
+			emu.EnterAltScreen,
+		)
+
+	// WithCopyMode
+	{
+		r, _ := createTest(s.Events())
+		WithCopyMode(r)
+		require.Equal(t, ModeCopy, r.mode)
+	}
+
+	// WithFlow
+	{
+		r, _ := createTest(s.Events())
+		WithFlow(r)
+		require.Equal(t, ModeCopy, r.mode)
+		require.True(t, r.isFlowMode())
+	}
+
+	// WithLocation
+	{
+		// No alt mode
+		s := sessions.NewSimulator().
+			Add(
+				geom.Size{R: 10, C: 10},
+				"foo\nbar\nbaz",
+			)
+
+		r, _ := createTest(s.Events())
+		WithLocation(geom.Vec2{R: 1, C: 0})(r) // [b]ar
+		require.Equal(t, ModeCopy, r.mode)
+		require.Equal(t, geom.Vec2{R: 1, C: 0}, r.movement.Cursor())
+	}
+}

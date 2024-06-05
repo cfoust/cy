@@ -135,6 +135,7 @@ func newReplay(
 
 type Option func(r *Replay)
 
+// WithNoQuit makes it so Replay will never exit.
 func WithNoQuit(r *Replay) {
 	r.preventExit = true
 }
