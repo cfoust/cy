@@ -17,10 +17,19 @@ func (r *Replay) quit() (taro.Model, tea.Cmd) {
 	return r, tea.Quit
 }
 
+type applyOptions struct {
+	options []Option
+}
+
 func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	viewport := r.viewport
 
 	switch msg := msg.(type) {
+	case applyOptions:
+		for _, option := range msg.options {
+			option(r)
+		}
+		return r, nil
 	case seekEvent:
 		r.handleSeek(msg.updateTime)
 		return r, nil

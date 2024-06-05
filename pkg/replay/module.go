@@ -83,6 +83,11 @@ func (r *Replay) isCopyMode() bool {
 	return r.mode == ModeCopy
 }
 
+func (r *Replay) enterCopyMode() {
+	r.mode = ModeCopy
+	r.movement.Snap()
+}
+
 func (r *Replay) getTerminalCursor() geom.Vec2 {
 	cursor := r.Cursor()
 	return geom.Vec2{
@@ -136,8 +141,7 @@ func WithNoQuit(r *Replay) {
 
 // WithCopyMode puts Replay immediately into copy mode.
 func WithCopyMode(r *Replay) {
-	r.mode = ModeCopy
-	r.movement.Snap()
+	r.enterCopyMode()
 }
 
 // WithFlow swaps to flow mode, if possible.
@@ -153,7 +157,7 @@ func WithFlow(r *Replay) {
 // the coordinate space of the terminal's current mode.
 func WithLocation(location geom.Vec2) Option {
 	return func(r *Replay) {
-		// TODO(cfoust): 06/05/24 also need to enter copy mode
+		r.enterCopyMode()
 		r.movement.Goto(location)
 	}
 }

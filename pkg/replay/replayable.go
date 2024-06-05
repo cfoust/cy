@@ -80,14 +80,14 @@ func (r *Replayable) State() *tty.State {
 func (r *Replayable) Resize(size geom.Size) error {
 	r.Lock()
 	r.size = size
-	r.Unlock()
+	defer r.Unlock()
 
 	err := r.terminal.Resize(size)
 	if err != nil {
 		return err
 	}
 
-	if !r.isReplayMode() {
+	if r.replay == nil {
 		return nil
 	}
 
@@ -130,12 +130,15 @@ func (r *Replayable) Send(msg mux.Msg) {
 }
 
 func (r *Replayable) EnterReplay(options ...Option) {
-	if r.isReplayMode() {
-		return
-	}
-
 	r.Lock()
 	defer r.Unlock()
+
+	if r.replay != nil {
+		// Invoking replay again with different options still applies
+		// them
+		r.replay.Send(applyOptions{options: options})
+		return
+	}
 
 	r.player.Acquire()
 	replay := New(r.Ctx(), r.player, r.binds, options...)
