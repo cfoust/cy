@@ -154,7 +154,7 @@ func WithFlow(r *Replay) {
 }
 
 // WithLocation attempts to move the cursor to `location`, which is a point in
-// the coordinate space of the terminal's current mode.
+// the reference frame of the Movement.
 func WithLocation(location geom.Vec2) Option {
 	return func(r *Replay) {
 		r.enterCopyMode()

@@ -80,18 +80,21 @@ func (r *Replayable) State() *tty.State {
 func (r *Replayable) Resize(size geom.Size) error {
 	r.Lock()
 	r.size = size
-	defer r.Unlock()
+	r.Unlock()
 
 	err := r.terminal.Resize(size)
 	if err != nil {
 		return err
 	}
 
-	if r.replay == nil {
+	r.Lock()
+	replay := r.replay
+	r.Unlock()
+	if replay == nil {
 		return nil
 	}
 
-	return r.replay.Resize(size)
+	return replay.Resize(size)
 }
 
 func (r *Replayable) poll(ctx context.Context) {

@@ -237,7 +237,7 @@ For example:
          (replay/open :root _)
          (pane/attach _)))
 
-(defn- get-pane-commands [id]
+(defn- get-pane-commands [id result-func]
   (var [ok commands] (protect (cmd/commands id)))
   (if (not ok) (set commands @[]))
   (default commands @[])
@@ -246,15 +246,27 @@ For example:
                 :focus ((($ :input) 0) :from)
                 :highlights @[(($ :input) 0)]
                 :id id}
-               id) commands))
+               (result-func $)) commands))
+
+(key/action
+  action/jump-pane-command
+  "jump to a pane based on a command"
+  (as?-> (group/leaves :root) _
+         (mapcat |(get-pane-commands $ (fn [cmd] $)) _)
+         (input/find _ :prompt "search: pane (command)")
+         (pane/attach _)))
 
 (key/action
   action/jump-command
-  "jump to a pane based on a command"
+  "jump to a command"
   (as?-> (group/leaves :root) _
-         (mapcat get-pane-commands _)
-         (input/find _ :prompt "search: pane (command)")
-         (pane/attach _)))
+         (mapcat |(get-pane-commands $ (fn [cmd] [$ cmd])) _)
+         (input/find _ :prompt "search: command")
+         (let [[id cmd] _]
+           (pane/attach id)
+           (cy/replay
+             :main true
+             :location (((cmd :input) 0) :from)))))
 
 (key/bind-many :root
                [prefix "j"] action/new-shell
@@ -263,7 +275,7 @@ For example:
                [prefix "l"] action/jump-shell
                ["ctrl+l"] action/next-pane
                [prefix ";"] action/jump-pane
-               [prefix "c"] action/jump-command
+               [prefix "c"] action/jump-pane-command
                [prefix ":"] action/jump-screen-lines
                [prefix "ctrl+p"] action/command-palette
                [prefix "x"] action/kill-current-pane
