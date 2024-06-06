@@ -259,9 +259,10 @@ func TestOptions(t *testing.T) {
 				"foo\nbar\nbaz",
 			)
 
-		r, _ := createTest(s.Events())
-		WithLocation(geom.Vec2{R: 1, C: 0})(r) // [b]ar
+		r, i := createTest(s.Events())
+		WithLocation(geom.Vec2{R: 1, C: 2})(r) // ba[r]
+		i(geom.DEFAULT_SIZE)
 		require.Equal(t, ModeCopy, r.mode)
-		require.Equal(t, geom.Vec2{R: 1, C: 0}, r.movement.Cursor())
+		require.Equal(t, geom.Vec2{R: 1, C: 2}, r.movement.Cursor())
 	}
 }

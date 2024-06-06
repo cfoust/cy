@@ -78,11 +78,19 @@ func (r *Replay) isFlowMode() bool {
 }
 
 func (r *Replay) initializeMovement() {
-	r.movement = movement.NewImage(r.Terminal, r.viewport)
-	if r.isFlowMode() {
-		r.movement = movement.NewFlow(r.Terminal, r.viewport)
+	size := r.viewport
+
+	// When replay is initialized, it does not have a size, which can cause
+	// issues with Movement
+	if size.R == 0 && size.C == 0 {
+		size = geom.DEFAULT_SIZE
 	}
-	r.movement.Resize(r.viewport)
+
+	r.movement = movement.NewImage(r.Terminal, size)
+	if r.isFlowMode() {
+		r.movement = movement.NewFlow(r.Terminal, size)
+	}
+	r.movement.Resize(size)
 }
 
 func (r *Replay) exitCopyMode() {
