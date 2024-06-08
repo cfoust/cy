@@ -65,7 +65,7 @@ func getNonWhitespace(line emu.Line) (first, last int) {
 func resolveDesiredColumn(line emu.Line, col int) int {
 	occupancy := getOccupancy(line)
 	if col >= len(occupancy) {
-		return len(occupancy) - 1
+		return geom.Max(len(occupancy)-1, 0)
 	}
 
 	// desiredCol occupied -> return that col

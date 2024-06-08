@@ -554,3 +554,21 @@ func TestGoto(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 5, C: 0}, r.root)
 	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.cursor)
 }
+
+func TestBlank(t *testing.T) {
+	size := geom.Size{R: 10, C: 10}
+	s := sessions.NewSimulator()
+	s.Add(
+		size,
+		emu.LineFeedMode,
+		"foo\n",
+		"\n",
+		"bar\n",
+	)
+
+	r := createFlowTest(s.Terminal(), size)
+	r.Snap()
+	require.Equal(t, geom.Vec2{R: 3, C: 0}, r.cursor)
+	r.MoveCursorY(-2)
+	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.cursor)
+}
