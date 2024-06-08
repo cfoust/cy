@@ -9,9 +9,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/events"
-	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
-	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -257,8 +255,13 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	go cy.pollInteractions(cy.Ctx(), cy.lastVisit, cy.visits)
 
 	logs := stream.NewReader()
-	terminal := screen.NewTerminal(cy.Ctx(), logs, geom.DEFAULT_SIZE)
-	logPane := t.Root().NewPane(cy.Ctx(), terminal)
+	logScreen := replay.NewReplayable(
+		cy.Ctx(),
+		logs,
+		logs,
+		replayBinds,
+	)
+	logPane := t.Root().NewPane(cy.Ctx(), logScreen)
 	logPane.SetName("logs")
 
 	consoleWriter := zerolog.ConsoleWriter{Out: logs.Writer(), TimeFormat: time.RFC3339}
