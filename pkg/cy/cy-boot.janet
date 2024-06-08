@@ -276,6 +276,7 @@ For example:
                ["ctrl+l"] action/next-pane
                [prefix ";"] action/jump-pane
                [prefix "c"] action/jump-pane-command
+               [prefix "C"] action/jump-command
                [prefix ":"] action/jump-screen-lines
                [prefix "ctrl+p"] action/command-palette
                [prefix "x"] action/kill-current-pane
