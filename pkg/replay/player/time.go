@@ -59,7 +59,7 @@ func (p *Player) Goto(index, offset int) {
 			}
 
 			if i >= p.nextDetect {
-				p.detect()
+				p.detector.Detect(p.Terminal, p.events)
 				p.nextDetect = i + 1
 			}
 		case P.SizeMessage:

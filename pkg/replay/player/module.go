@@ -4,6 +4,7 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/sessions/search"
@@ -11,13 +12,11 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
-const (
-	CY_HOOK = "cy"
-)
-
 type Player struct {
 	emu.Terminal
-	mu deadlock.RWMutex
+
+	detector *detect.Detector
+	mu       deadlock.RWMutex
 
 	inUse bool
 
@@ -25,13 +24,6 @@ type Player struct {
 	buffer     []sessions.Event
 	events     []sessions.Event
 	nextDetect int
-
-	commands []Command
-	// If we have ever detected a prompt
-	havePrompt bool
-
-	from   geom.Vec2
-	fromID emu.WriteID
 }
 
 var _ sessions.EventHandler = (*Player)(nil)
@@ -44,7 +36,7 @@ func (p *Player) Acquire() {
 
 func (p *Player) resetTerminal() {
 	p.Terminal = emu.New()
-	p.Terminal.Changes().SetHooks([]string{CY_HOOK})
+	p.Terminal.Changes().SetHooks([]string{detect.CY_HOOK})
 }
 
 func (p *Player) consume(event sessions.Event) {
@@ -96,6 +88,12 @@ func (p *Player) Process(event sessions.Event) error {
 	return nil
 }
 
+func (p *Player) Commands() []detect.Command {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.detector.Commands(p.Terminal, p.events)
+}
+
 // Preview captures a preview with the size `viewport` at `location` in the
 // scrollback of the terminal. You may also provide `highlights` that will be
 // passed to the Flow renderer. Returns nil if the player is "in use", which is
@@ -114,7 +112,7 @@ func (p *Player) Preview(
 }
 
 func New() *Player {
-	p := &Player{}
+	p := &Player{detector: detect.New()}
 	p.resetTerminal()
 	return p
 }
