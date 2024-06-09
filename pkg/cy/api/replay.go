@@ -171,6 +171,14 @@ func (m *ReplayModule) JumpToBackward(context interface{}, char string) error {
 	return m.sendArg(context, replay.ActionJumpToBackward, char)
 }
 
+func (m *ReplayModule) CommandForward(context interface{}) error {
+	return m.sendAction(context, replay.ActionCommandForward)
+}
+
+func (m *ReplayModule) CommandBackward(context interface{}) error {
+	return m.sendAction(context, replay.ActionCommandBackward)
+}
+
 func (m *ReplayModule) Open(
 	groupId *janet.Value,
 	path string,

@@ -133,3 +133,11 @@ For example:
 # doc: SwapScreen
 
 Swap between the alt screen and the main screen. This allows you to return to the pane's scrollback without quitting a program that is using the alternate screen, such as vim or htop.
+
+# doc: CommandForward
+
+In time mode, jump to the moment in time just before the next command was executed. In copy mode, move the cursor to the first character of the next command.
+
+# doc: CommandBackward
+
+In time mode, jump to the moment in time just before the last command was executed. In copy mode, move the cursor to the first character of the last command that was executed.

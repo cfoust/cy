@@ -315,6 +315,8 @@ For example:
                ["N"] replay/search-reverse
                [" "] replay/time-play
                ["s"] replay/swap-screen
+               ["]" "c"] replay/command-forward
+               ["[" "c"] replay/command-backward
                ["1"] (fn [&] (replay/time-playback-rate 1))
                ["2"] (fn [&] (replay/time-playback-rate 2))
                ["3"] (fn [&] (replay/time-playback-rate 5))
