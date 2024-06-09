@@ -227,8 +227,11 @@ func (r *Replay) View(state *tty.State) {
 		)
 	}
 
+	commands := r.Commands()
+
+	// Only used for development (for now)
 	if r.isFlowMode() && r.showCommands {
-		for _, command := range r.Commands() {
+		for _, command := range commands {
 			highlights = append(
 				highlights,
 				movement.Highlight{
@@ -264,7 +267,7 @@ func (r *Replay) View(state *tty.State) {
 	// Draw the terminal state
 	///////////////////////////
 	viewport := tty.New(r.viewport)
-	r.movement.View(viewport, highlights)
+	r.movement.View(viewport, highlights, commands)
 	tty.Copy(geom.Vec2{}, state, viewport)
 	state.CursorVisible = true
 

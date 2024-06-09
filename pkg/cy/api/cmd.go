@@ -11,7 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/replay"
-	"github.com/cfoust/cy/pkg/replay/player"
+	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/util"
 )
 
@@ -106,7 +106,7 @@ func (c *CmdModule) Path(id *janet.Value) (*string, error) {
 	return &path, nil
 }
 
-func (c *CmdModule) Commands(id *janet.Value) (*[]player.Command, error) {
+func (c *CmdModule) Commands(id *janet.Value) (*[]detect.Command, error) {
 	defer id.Free()
 
 	pane, err := resolvePane(c.Tree, id)

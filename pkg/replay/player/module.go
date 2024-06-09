@@ -108,7 +108,12 @@ func (p *Player) Preview(
 
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	return movement.PreviewFlow(p, viewport, location, highlights)
+	return movement.PreviewFlow(
+		p,
+		viewport,
+		location,
+		highlights,
+	)
 }
 
 func New() *Player {

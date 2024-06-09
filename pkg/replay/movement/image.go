@@ -4,6 +4,7 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/replay/detect"
 )
 
 type imageMovement struct {
@@ -423,7 +424,11 @@ func (i *imageMovement) highlightRow(
 	}
 }
 
-func (i *imageMovement) View(state *tty.State, highlights []Highlight) {
+func (i *imageMovement) View(
+	state *tty.State,
+	highlights []Highlight,
+	commands []detect.Command,
+) {
 	for i, highlight := range highlights {
 		var (
 			from = highlight.From

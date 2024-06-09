@@ -4,6 +4,7 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/replay/detect"
 
 	"github.com/mattn/go-runewidth"
 )
@@ -65,7 +66,11 @@ type Movement interface {
 
 	// View renders the Movement to a tty.State with the provided
 	// `highlights` given in the reference frame of the movement.
-	View(state *tty.State, highlights []Highlight)
+	View(
+		state *tty.State,
+		highlights []Highlight,
+		commands []detect.Command,
+	)
 }
 
 func getTerminalCursor(terminal emu.Terminal) geom.Vec2 {

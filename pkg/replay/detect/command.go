@@ -2,6 +2,7 @@ package detect
 
 import (
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
@@ -29,4 +30,12 @@ type Command struct {
 	Executed int
 	// The event at which the command finished executing (its output ended)
 	Completed int
+}
+
+func (c Command) InputStart() geom.Vec2 {
+	if len(c.Input) == 0 {
+		return geom.Vec2{}
+	}
+
+	return c.Input[0].From
 }

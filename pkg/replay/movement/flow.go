@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/charmbracelet/lipgloss"
@@ -589,7 +590,11 @@ func (f *flowMovement) highlightRow(
 	}
 }
 
-func (f *flowMovement) View(state *tty.State, highlights []Highlight) {
+func (f *flowMovement) View(
+	state *tty.State,
+	highlights []Highlight,
+	commands []detect.Command,
+) {
 	r := f.render
 
 	flow := f.Flow(f.viewport, f.root)
@@ -618,6 +623,23 @@ func (f *flowMovement) View(state *tty.State, highlights []Highlight) {
 	}
 
 	image := state.Image
+	size := state.Image.Size()
+	termCursor := flow.Cursor
+	if flow.CursorOK && f.cursor == termCursor.Vec2 {
+		state.Cursor = termCursor
+	} else {
+		state.Cursor.Vec2 = f.cursor
+
+		if flow.CursorOK {
+			image[termCursor.R][termCursor.C].BG = 8
+		}
+	}
+
+	commandIndicator := f.render.NewStyle().
+		Foreground(lipgloss.Color("15")).
+		Background(lipgloss.Color("#4D9DE0")).
+		Render("<")
+
 	var start, end geom.Vec2
 	for row, line := range flow.Lines {
 		copy(image[row], line.Chars)
@@ -633,16 +655,29 @@ func (f *flowMovement) View(state *tty.State, highlights []Highlight) {
 				highlight,
 			)
 		}
-	}
 
-	termCursor := flow.Cursor
-	if flow.CursorOK && f.cursor == termCursor.Vec2 {
-		state.Cursor = termCursor
-	} else {
-		state.Cursor.Vec2 = f.cursor
+		// Don't draw command indicators if cursor is on that row
+		if row == state.Cursor.R {
+			continue
+		}
 
-		if flow.CursorOK {
-			image[termCursor.R][termCursor.C].BG = 8
+		// Draw indicators for commands
+		for _, command := range commands {
+			if command.Pending {
+				continue
+			}
+
+			inputStart := command.InputStart()
+			if inputStart.R != start.R {
+				continue
+			}
+
+			if inputStart.C < start.C || inputStart.C >= end.C {
+				continue
+			}
+
+			image[row][size.C-1].BG = 8
+			r.RenderAt(image, row, size.C-1, commandIndicator)
 		}
 	}
 
@@ -652,7 +687,6 @@ func (f *flowMovement) View(state *tty.State, highlights []Highlight) {
 
 	// Renders "[1/N]" text in the top-right corner that looks just like
 	// tmux's copy mode, but works on physical lines instead.
-	size := state.Image.Size()
 	offsetStyle := f.render.NewStyle().
 		Foreground(lipgloss.Color("9")).
 		Background(lipgloss.Color("240"))
@@ -681,6 +715,6 @@ func PreviewFlow(
 	image := tty.New(size)
 	flow := NewFlow(terminal, size).(*flowMovement)
 	flow.Goto(location)
-	flow.View(image, highlights)
+	flow.View(image, highlights, []detect.Command{})
 	return image
 }
