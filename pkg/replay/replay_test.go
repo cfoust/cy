@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
@@ -265,4 +266,40 @@ func TestOptions(t *testing.T) {
 		require.Equal(t, ModeCopy, r.mode)
 		require.Equal(t, geom.Vec2{R: 1, C: 2}, r.movement.Cursor())
 	}
+}
+
+func TestJumpCommand(t *testing.T) {
+	s := sessions.NewSimulator().
+		Add(
+			emu.LineFeedMode,
+			geom.Size{R: 10, C: 10},
+			detect.TEST_PROMPT, "command\n",
+			"foo\n",
+			detect.TEST_PROMPT, "command\n",
+			"foo\n",
+			detect.TEST_PROMPT,
+		)
+
+	r, i := createTest(s.Events())
+	i(geom.DEFAULT_SIZE)
+	r.forceIndex(0, -1)
+
+	// Time mode
+	i(ActionCommandForward)
+	require.Equal(t, 3, r.Location().Index)
+	i(ActionCommandForward)
+	require.Equal(t, 6, r.Location().Index)
+	i(ActionCommandBackward)
+	require.Equal(t, 3, r.Location().Index)
+	r.forceIndex(8, -1)
+
+	WithCopyMode(r)
+
+	// Copy mode
+	i(ActionCommandBackward)
+	require.Equal(t, geom.Vec2{R: 2, C: 2}, r.movement.Cursor())
+	i(ActionCommandBackward)
+	require.Equal(t, geom.Vec2{R: 0, C: 2}, r.movement.Cursor())
+	i(ActionCommandForward)
+	require.Equal(t, geom.Vec2{R: 2, C: 2}, r.movement.Cursor())
 }

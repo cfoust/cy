@@ -69,6 +69,8 @@ const (
 	// cy-specific actions
 	//////////////////////
 	ActionSwapScreen
+	ActionCommandForward
+	ActionCommandBackward
 
 	// All tmux copy-mode commands, only some of which are implemented
 	//////////////////////////////////////////////////////////////////

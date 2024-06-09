@@ -12,10 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	PROMPT = "\033Pcy\033\\$ "
-)
-
 func promptTest(
 	t *testing.T,
 	commands []Command,
@@ -72,11 +68,11 @@ func TestSimple(t *testing.T) {
 			Executed:      3,
 			Completed:     6,
 		},
-		PROMPT, "command\n",
+		TEST_PROMPT, "command\n",
 		"foo\n",
 		"bar\n",
 		"baz\n",
-		PROMPT,
+		TEST_PROMPT,
 	)
 }
 
@@ -119,11 +115,11 @@ func TestTwo(t *testing.T) {
 				Completed:     7,
 			},
 		},
-		PROMPT, "command\n",
+		TEST_PROMPT, "command\n",
 		"foo\n",
-		PROMPT, "command\n",
+		TEST_PROMPT, "command\n",
 		"foo\n",
-		PROMPT,
+		TEST_PROMPT,
 	)
 }
 
@@ -149,10 +145,10 @@ func TestEndSameLine(t *testing.T) {
 			Executed:      3,
 			Completed:     6,
 		},
-		PROMPT, "command\n",
+		TEST_PROMPT, "command\n",
 		"foo\n",
 		"bar\n",
-		"baz", PROMPT,
+		"baz", TEST_PROMPT,
 	)
 }
 
@@ -176,8 +172,8 @@ func TestNoOutput(t *testing.T) {
 			Executed:      3,
 			Completed:     3,
 		},
-		PROMPT, "command\n",
-		PROMPT,
+		TEST_PROMPT, "command\n",
+		TEST_PROMPT,
 	)
 }
 
@@ -213,12 +209,12 @@ func TestMulti(t *testing.T) {
 			Executed:      9,
 			Completed:     10,
 		},
-		PROMPT, "command\n",
+		TEST_PROMPT, "command\n",
 		"> ", "foo\n",
 		"> ", "\n",
 		"> ", "baz\n",
 		"output\n",
-		PROMPT,
+		TEST_PROMPT,
 	)
 }
 
@@ -243,7 +239,7 @@ func TestPending(t *testing.T) {
 			Executed:      3,
 			Completed:     4,
 		},
-		PROMPT, "command\n",
+		TEST_PROMPT, "command\n",
 		"foo",
 	)
 }
@@ -281,7 +277,7 @@ func TestPendingMulti(t *testing.T) {
 			Executed:      9,
 			Completed:     10,
 		},
-		PROMPT, "command\n",
+		TEST_PROMPT, "command\n",
 		"> ", "foo\n",
 		"> ", "\n",
 		"> ", "baz\n",

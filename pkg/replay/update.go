@@ -223,6 +223,13 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				isTo,
 			)
 			return r, nil
+		case ActionCommandForward, ActionCommandBackward:
+			isForward := msg.Type == ActionCommandForward
+			if !r.isCopyMode() {
+				return r.jumpCommandTime(isForward)
+			}
+
+			return r.jumpCommand(isForward)
 		}
 	}
 

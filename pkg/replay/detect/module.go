@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	CY_HOOK = "cy"
+	CY_HOOK     = "cy"
+	TEST_PROMPT = "\033Pcy\033\\$ "
 )
 
 type Detector struct {
