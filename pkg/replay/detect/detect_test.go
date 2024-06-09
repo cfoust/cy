@@ -1,9 +1,11 @@
-package player
+package detect
 
 import (
 	"testing"
 
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/sessions/search"
 
@@ -24,9 +26,22 @@ func promptTest(
 		Add(setup...).
 		Events()
 
-	p := FromEvents(events)
-	require.True(t, p.havePrompt)
-	require.Equal(t, commands, p.Commands())
+	d := New()
+	term := emu.New()
+	term.Changes().SetHooks([]string{CY_HOOK})
+	for i := 0; i < len(events); i++ {
+		event := events[i]
+		switch e := event.Message.(type) {
+		case P.OutputMessage:
+			term.Parse(e.Data)
+			d.Detect(term, events[0:i+1])
+		case P.SizeMessage:
+			term.Resize(e.Vec())
+		}
+	}
+
+	require.True(t, d.havePrompt)
+	require.Equal(t, commands, d.Commands(term, events))
 }
 
 func promptSingle(

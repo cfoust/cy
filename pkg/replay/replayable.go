@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
@@ -47,7 +48,7 @@ func (r *Replayable) Screen() mux.Screen {
 	return r.terminal
 }
 
-func (r *Replayable) Commands() []player.Command {
+func (r *Replayable) Commands() []detect.Command {
 	return r.player.Commands()
 }
 
