@@ -1,4 +1,4 @@
-package movement
+package image
 
 import (
 	"testing"

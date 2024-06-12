@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/replay/detect"
+	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/charmbracelet/lipgloss"
@@ -33,9 +34,9 @@ type flowMovement struct {
 	desiredCol int
 }
 
-var _ Movement = (*flowMovement)(nil)
+var _ movement.Movement = (*flowMovement)(nil)
 
-func NewFlow(terminal emu.Terminal, viewport geom.Size) Movement {
+func NewFlow(terminal emu.Terminal, viewport geom.Size) movement.Movement {
 	f := &flowMovement{
 		Terminal: terminal,
 		render:   taro.NewRenderer(),
@@ -399,7 +400,7 @@ func (f *flowMovement) Cursor() geom.Vec2 {
 }
 
 func (f *flowMovement) ReadString(start, end geom.Vec2) (result string) {
-	start, end = normalizeRange(start, end)
+	start, end = geom.NormalizeRange(start, end)
 
 	numLines := end.R - start.R + 1
 	lines := f.GetLines(start.R, end.R)
@@ -542,13 +543,13 @@ func (f *flowMovement) highlightRow(
 	row emu.Line,
 	start, end geom.Vec2,
 	screenLine emu.ScreenLine,
-	highlight Highlight,
+	highlight movement.Highlight,
 ) {
 	var (
 		from = highlight.From
 		to   = highlight.To
 	)
-	from, to = normalizeRange(from, to)
+	from, to = geom.NormalizeRange(from, to)
 
 	//-e |     |
 	//   |     | s-
@@ -592,7 +593,7 @@ func (f *flowMovement) highlightRow(
 
 func (f *flowMovement) View(
 	state *tty.State,
-	highlights []Highlight,
+	highlights []movement.Highlight,
 	commands []detect.Command,
 ) {
 	r := f.render
@@ -615,7 +616,7 @@ func (f *flowMovement) View(
 			continue
 		}
 
-		from, to = normalizeRange(from, to)
+		from, to = geom.NormalizeRange(from, to)
 		highlight.From = from
 		highlight.To = to
 		highlight.Screen = false
@@ -710,7 +711,7 @@ func (f *flowMovement) View(
 func PreviewFlow(
 	terminal emu.Terminal,
 	size, location geom.Vec2,
-	highlights []Highlight,
+	highlights []movement.Highlight,
 ) *tty.State {
 	image := tty.New(size)
 	flow := NewFlow(terminal, size).(*flowMovement)

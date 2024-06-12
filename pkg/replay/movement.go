@@ -3,6 +3,8 @@ package replay
 import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/replay/movement"
+	"github.com/cfoust/cy/pkg/replay/movement/flow"
+	"github.com/cfoust/cy/pkg/replay/movement/image"
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -86,7 +88,7 @@ func (r *Replay) initializeMovement() {
 		size = geom.DEFAULT_SIZE
 	}
 
-	r.movement = movement.NewImage(r.Terminal, size)
+	r.movement = image.New(r.Terminal, size)
 	if r.isFlowMode() {
 		r.movement = movement.NewFlow(r.Terminal, size)
 	}

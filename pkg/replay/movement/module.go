@@ -27,9 +27,6 @@ type Movement interface {
 	// of the Movement.
 	Cursor() geom.Vec2
 
-	// Jump performs a jump that works identically to vim's fF/tT motions.
-	Jump(needle string, isForward bool, isTo bool)
-
 	// MoveCursorX moves the cursor horizontally by `delta` (positive
 	// numbers to the right).
 	MoveCursorX(delta int)
@@ -81,52 +78,3 @@ func getTerminalCursor(terminal emu.Terminal) geom.Vec2 {
 	}
 }
 
-func calculateJump(line emu.Line, needle string, isForward bool, isTo bool, oldPos int) int {
-	newCol := oldPos
-	if isForward {
-		for i := oldPos + 1; i < len(line); i++ {
-			char := line[i].Char
-
-			if string(char) == needle {
-				newCol = i
-				break
-			}
-
-			w := runewidth.RuneWidth(char)
-			for i := 1; i < w; i++ {
-				i++
-			}
-		}
-	} else {
-		// Because of how rune width works, we can't iterate starting
-		// from the current column
-		lastCol := -1
-		for i := 0; i < oldPos; i++ {
-			char := line[i].Char
-
-			if string(char) == needle {
-				lastCol = i
-				continue
-			}
-
-			w := runewidth.RuneWidth(char)
-			for i := 1; i < w; i++ {
-				i++
-			}
-		}
-
-		if lastCol != -1 {
-			newCol = lastCol
-		}
-	}
-
-	if isTo {
-		if isForward {
-			newCol--
-		} else {
-			newCol++
-		}
-	}
-
-	return newCol
-}

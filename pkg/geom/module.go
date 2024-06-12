@@ -78,6 +78,16 @@ func (v Vec2) LTE(other Vec2) bool {
 	return v.LT(other) || v == other
 }
 
+func NormalizeRange(start, end Vec2) (newStart, newEnd Vec2) {
+	if end.LT(start) {
+		intermediate := start
+		start = end
+		end = intermediate
+	}
+
+	return start, end
+}
+
 var UnitVec2 = Vec2{R: 1, C: 1}
 
 type Size = Vec2

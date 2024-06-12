@@ -1,4 +1,4 @@
-package movement
+package image
 
 import (
 	"github.com/cfoust/cy/pkg/emu"
@@ -222,16 +222,6 @@ func (i *imageMovement) ScrollXDelta(delta int) {
 	)
 }
 
-func normalizeRange(start, end geom.Vec2) (newStart, newEnd geom.Vec2) {
-	if end.LT(start) {
-		intermediate := start
-		start = end
-		end = intermediate
-	}
-
-	return start, end
-}
-
 func (i *imageMovement) Cursor() geom.Vec2 {
 	return i.viewportToTerm(i.cursor)
 }
@@ -240,7 +230,7 @@ func (i *imageMovement) Cursor() geom.Vec2 {
 func (i *imageMovement) ReadString(start, end geom.Vec2) (result string) {
 	start = i.clampToTerminal(start)
 	end = i.clampToTerminal(end)
-	start, end = normalizeRange(start, end)
+	start, end = geom.NormalizeRange(start, end)
 	start, end = normalizeBoxRange(start, end)
 
 	screen := i.Screen()

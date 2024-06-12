@@ -1,4 +1,4 @@
-(def prefix "ctrl+a")
+(def- prefix "ctrl+a")
 
 (def projects (group/new :root :name "projects"))
 (def shells (group/new :root :name "shells"))
@@ -295,8 +295,8 @@ For example:
                ["q"] replay/quit
                ["ctrl+c"] replay/quit
                ["esc"] replay/quit
-               ["right"] replay/time-step-forward
-               ["left"] replay/time-step-back
+               ["]" "t"] replay/time-step-forward
+               ["[" "t"] replay/time-step-back
                ["up"] replay/scroll-up
                ["down"] replay/scroll-down
                ["ctrl+u"] replay/half-page-up
@@ -306,7 +306,14 @@ For example:
                ["g" "g"] replay/beginning
                ["G"] replay/end
                ["l"] replay/cursor-right
+               ["right"] replay/cursor-right
+               # ??? <BS> in vim actually goes across lines
+               # TODO(cfoust): 06/10/24 this is broken
+               ["space"] replay/cursor-right
                ["h"] replay/cursor-left
+               ["ctrl+h"] replay/cursor-left
+               # ??? <BS> in vim actually goes across lines
+               ["backspace"] replay/cursor-left
                ["j"] replay/cursor-down
                ["k"] replay/cursor-up
                ["v"] replay/select
