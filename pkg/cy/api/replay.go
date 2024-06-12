@@ -179,6 +179,22 @@ func (m *ReplayModule) CommandBackward(context interface{}) error {
 	return m.sendAction(context, replay.ActionCommandBackward)
 }
 
+func (m *ReplayModule) StartOfLine(context interface{}) error {
+	return m.sendAction(context, replay.ActionStartOfLine)
+}
+
+func (m *ReplayModule) FirstNonBlank(context interface{}) error {
+	return m.sendAction(context, replay.ActionFirstNonBlank)
+}
+
+func (m *ReplayModule) EndOfLine(context interface{}) error {
+	return m.sendAction(context, replay.ActionEndOfLine)
+}
+
+func (m *ReplayModule) LastNonBlank(context interface{}) error {
+	return m.sendAction(context, replay.ActionLastNonBlank)
+}
+
 func (m *ReplayModule) Open(
 	groupId *janet.Value,
 	path string,

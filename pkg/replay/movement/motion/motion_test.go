@@ -58,3 +58,52 @@ func TestJump(t *testing.T) {
 	Jump(m, "e", false, true)
 	require.Equal(t, geom.Vec2{C: 8}, m.Cursor())
 }
+
+func TestStartOfLine(t *testing.T) {
+	m := fromLine("foobarbaz")
+	m.Goto(geom.Vec2{C: 5})
+	StartOfLine(m)
+	require.Equal(t, geom.Vec2{}, m.Cursor())
+}
+
+func TestFirstNonBlank(t *testing.T) {
+	m := fromLine("  foo")
+	m.Goto(geom.Vec2{C: 4})
+	FirstNonBlank(m)
+	require.Equal(t, geom.Vec2{C: 2}, m.Cursor())
+}
+
+func TestEndOfLine(t *testing.T) {
+	{
+		m := fromLine("foo")
+		EndOfLine(m)
+		require.Equal(t, geom.Vec2{C: 2}, m.Cursor())
+	}
+
+	// this is valid in image mode
+	{
+		m := fromLine("foo ")
+		EndOfLine(m)
+		require.Equal(t, geom.Vec2{C: 3}, m.Cursor())
+	}
+
+	{
+		m := fromLine("你好吗")
+		EndOfLine(m)
+		require.Equal(t, geom.Vec2{C: 4}, m.Cursor())
+	}
+}
+
+func TestLastNonBlank(t *testing.T) {
+	{
+		m := fromLine("foo   ")
+		LastNonBlank(m)
+		require.Equal(t, geom.Vec2{C: 2}, m.Cursor())
+	}
+
+	{
+		m := fromLine("你好吗   ")
+		LastNonBlank(m)
+		require.Equal(t, geom.Vec2{C: 4}, m.Cursor())
+	}
+}

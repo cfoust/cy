@@ -72,6 +72,11 @@ const (
 	ActionCommandForward
 	ActionCommandBackward
 
+	//////////////////////////////////////////////////////////////////
+	// ╺┳╸┏┳┓╻ ╻╻ ╻   ┏━╸┏━┓┏━┓╻ ╻   ┏┳┓┏━┓╺┳┓┏━╸
+	//  ┃ ┃┃┃┃ ┃┏╋┛   ┃  ┃ ┃┣━┛┗┳┛   ┃┃┃┃ ┃ ┃┃┣╸
+	//  ╹ ╹ ╹┗━┛╹ ╹   ┗━╸┗━┛╹   ╹    ╹ ╹┗━┛╺┻┛┗━╸
+	//////////////////////////////////////////////////////////////////
 	// All tmux copy-mode commands, only some of which are implemented
 	//////////////////////////////////////////////////////////////////
 	// append-selection
@@ -170,4 +175,27 @@ const (
 	// stop-selection
 	// toggle-position                              P               P
 	// top-line                                     H               M-R
+
+	//////////////////////////////////////////////////////////////////
+	// ╻ ╻╻┏┳┓   ┏┳┓┏━┓╺┳╸╻┏━┓┏┓╻┏━┓
+	// ┃┏┛┃┃┃┃   ┃┃┃┃ ┃ ┃ ┃┃ ┃┃┗┫┗━┓
+	// ┗┛ ╹╹ ╹   ╹ ╹┗━┛ ╹ ╹┗━┛╹ ╹┗━┛
+	//////////////////////////////////////////////////////////////////
+	// All of the basic vim motions. This section preserves the order found
+	// in vim's motions.txt.
+	//////////////////////////////////////////////////////////////////
+
+	// Left-right motions
+	/////////////////////
+	// h, left, ctrl+h, backspace -> ActionCursorLeft
+	// l, right, space -> ActionCursorRight
+	// 0
+	ActionStartOfLine
+	// home -> TODO
+	// ^
+	ActionFirstNonBlank
+	// $, end
+	ActionEndOfLine
+	// g_
+	ActionLastNonBlank
 )

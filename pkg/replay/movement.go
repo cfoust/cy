@@ -4,6 +4,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/replay/movement/flow"
 	"github.com/cfoust/cy/pkg/replay/movement/image"
+	"github.com/cfoust/cy/pkg/replay/movement/motion"
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -55,7 +56,7 @@ func (r *Replay) handleJump(needle string, isForward bool, isTo bool) {
 	r.wasJumpForward = isForward
 	r.wasJumpTo = isTo
 	r.mode = ModeCopy
-	//r.movement.Jump(needle, isForward, isTo)
+	motion.Jump(r.movement, needle, isForward, isTo)
 }
 
 func (r *Replay) handleCopy() (taro.Model, tea.Cmd) {

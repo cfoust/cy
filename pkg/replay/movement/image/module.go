@@ -63,10 +63,6 @@ func (i *imageMovement) Snap() {
 	// no-op in imageMovement
 }
 
-func (i *imageMovement) Goto(location geom.Vec2) {
-	i.moveCursor(i.clampToTerminal(location))
-}
-
 // Check whether the given point in viewport space actually falls within it.
 func (i *imageMovement) isInViewport(point geom.Vec2) bool {
 	if point.R < 0 || point.C < 0 || point.R >= i.viewport.R || point.C >= i.viewport.C {
@@ -118,31 +114,6 @@ func (i *imageMovement) setOffsetX(offset int) {
 		R: i.offset.R,
 		C: offset,
 	})
-}
-
-// Get the glyphs for a row in term space.
-func (i *imageMovement) getLine(row int) emu.Line {
-	screen := i.Screen()
-	history := i.History()
-
-	// Handle out-of-bounds lines
-	clamped := geom.Clamp(
-		row,
-		-len(history),
-		i.Terminal.Size().R-1,
-	)
-	if clamped != row {
-		return nil
-	}
-
-	var line emu.Line
-	if row < 0 {
-		line = history[len(history)+row]
-	} else {
-		line = screen[row]
-	}
-
-	return line
 }
 
 // Move the cursor to a point in term space, adjusting the viewport the minimum
@@ -229,10 +200,6 @@ func (i *imageMovement) ScrollXDelta(delta int) {
 			C: i.viewport.C - 1,
 		},
 	)
-}
-
-func (i *imageMovement) Cursor() geom.Vec2 {
-	return i.viewportToTerm(i.cursor)
 }
 
 // Read a starting from `start` to `end`, inclusive.

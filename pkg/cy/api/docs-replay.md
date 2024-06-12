@@ -141,3 +141,7 @@ In time mode, jump to the moment in time just before the next command was execut
 # doc: CommandBackward
 
 In time mode, jump to the moment in time just before the last command was executed. In copy mode, move the cursor to the first character of the last command that was executed.
+
+# doc: StartOfLine
+
+Move to the first character of the physical line. Equivalent to vim's `0`.

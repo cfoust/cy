@@ -5,6 +5,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/replay/detect"
+	"github.com/cfoust/cy/pkg/replay/movement/motion"
 )
 
 type Highlight struct {
@@ -16,6 +17,8 @@ type Highlight struct {
 }
 
 type Movement interface {
+	motion.Movable
+
 	// Snap repositions the cursor to be in a valid cell in the coordinate
 	// system of the Movement. This is only useful for flowMovement and
 	// does nothing in image mode.
@@ -67,4 +70,3 @@ type Movement interface {
 		commands []detect.Command,
 	)
 }
-

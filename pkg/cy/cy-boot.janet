@@ -324,6 +324,10 @@ For example:
                ["s"] replay/swap-screen
                ["]" "c"] replay/command-forward
                ["[" "c"] replay/command-backward
+               ["0"] replay/start-of-line
+               ["^"] replay/first-non-blank
+               ["$"] replay/end-of-line
+               ["g" "_"] replay/last-non-blank
                ["1"] (fn [&] (replay/time-playback-rate 1))
                ["2"] (fn [&] (replay/time-playback-rate 2))
                ["3"] (fn [&] (replay/time-playback-rate 5))
