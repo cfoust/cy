@@ -5,8 +5,6 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/replay/detect"
-
-	"github.com/mattn/go-runewidth"
 )
 
 type Highlight struct {
@@ -68,13 +66,5 @@ type Movement interface {
 		highlights []Highlight,
 		commands []detect.Command,
 	)
-}
-
-func getTerminalCursor(terminal emu.Terminal) geom.Vec2 {
-	cursor := terminal.Cursor()
-	return geom.Vec2{
-		R: cursor.R,
-		C: cursor.C,
-	}
 }
 

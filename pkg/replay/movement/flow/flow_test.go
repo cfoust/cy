@@ -1,19 +1,18 @@
-package movement
+package flow
 
 import (
 	"testing"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/replay/detect"
+	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/sessions"
 
 	"github.com/stretchr/testify/require"
 )
 
 func createFlowTest(terminal emu.Terminal, size geom.Size) *flowMovement {
-	movement := NewFlow(terminal, size)
+	movement := New(terminal, size)
 	i := movement.(*flowMovement)
 	return i
 }
@@ -231,54 +230,6 @@ func TestCursor(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 2, C: 0}, r.cursor)
 }
 
-func testHighlight(
-	t *testing.T,
-	m Movement,
-	size geom.Size,
-	highlights []Highlight,
-	lines ...string,
-) {
-	bg := emu.Color(1)
-	for i := range highlights {
-		highlights[i].BG = bg
-	}
-
-	state := tty.New(size)
-	m.View(state, highlights, []detect.Command{})
-	image := state.Image
-
-	for row := range lines {
-		for col, char := range lines[row] {
-			switch char {
-			case '0':
-				require.NotEqual(
-					t,
-					bg,
-					image[row][col].BG,
-					"cell [%d, %d] should not be highlighted",
-					row,
-					col,
-				)
-			case '1':
-				require.Equal(
-					t,
-					bg,
-					image[row][col].BG,
-					"cell [%d, %d] should be highlighted",
-					row,
-					col,
-				)
-			default:
-				t.Logf(
-					"invalid char %+v, must be 1 or 0",
-					char,
-				)
-				t.FailNow()
-			}
-		}
-	}
-}
-
 func TestNormalHighlight(t *testing.T) {
 	size := geom.Size{R: 4, C: 10}
 	s := sessions.NewSimulator()
@@ -291,8 +242,8 @@ func TestNormalHighlight(t *testing.T) {
 	r := createFlowTest(s.Terminal(), size)
 	r.ScrollTop()
 
-	testHighlight(t, r, size,
-		[]Highlight{
+	movement.TestHighlight(t, r, size,
+		[]movement.Highlight{
 			{
 				From: geom.Vec2{R: 0, C: 1},
 				To:   geom.Vec2{R: 2, C: 1},
@@ -321,8 +272,8 @@ func TestLongHighlight(t *testing.T) {
 	r := createFlowTest(s.Terminal(), size)
 	r.ScrollTop()
 
-	testHighlight(t, r, size,
-		[]Highlight{
+	movement.TestHighlight(t, r, size,
+		[]movement.Highlight{
 			{
 				From: geom.Vec2{R: 0, C: 1},
 				To:   geom.Vec2{R: 0, C: 7},
@@ -337,8 +288,8 @@ func TestLongHighlight(t *testing.T) {
 	)
 
 	// Ensure inversion does not break things
-	testHighlight(t, r, size,
-		[]Highlight{
+	movement.TestHighlight(t, r, size,
+		[]movement.Highlight{
 			{
 				From: geom.Vec2{R: 0, C: 7},
 				To:   geom.Vec2{R: 0, C: 1},
@@ -365,8 +316,8 @@ func TestLongScreenHighlight(t *testing.T) {
 	r := createFlowTest(s.Terminal(), size)
 	r.ScrollTop()
 
-	testHighlight(t, r, size,
-		[]Highlight{
+	movement.TestHighlight(t, r, size,
+		[]movement.Highlight{
 			{
 				Screen: true,
 				From:   geom.Vec2{R: 0, C: 1},
@@ -394,8 +345,8 @@ func TestCJKHighlight(t *testing.T) {
 	r := createFlowTest(s.Terminal(), size)
 	r.ScrollTop()
 
-	testHighlight(t, r, size,
-		[]Highlight{
+	movement.TestHighlight(t, r, size,
+		[]movement.Highlight{
 			{
 				From: geom.Vec2{R: 0, C: 2},
 				To:   geom.Vec2{R: 0, C: 6},

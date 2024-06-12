@@ -2,7 +2,6 @@ package replay
 
 import (
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/movement/flow"
 	"github.com/cfoust/cy/pkg/replay/movement/image"
 	"github.com/cfoust/cy/pkg/taro"
@@ -56,7 +55,7 @@ func (r *Replay) handleJump(needle string, isForward bool, isTo bool) {
 	r.wasJumpForward = isForward
 	r.wasJumpTo = isTo
 	r.mode = ModeCopy
-	r.movement.Jump(needle, isForward, isTo)
+	//r.movement.Jump(needle, isForward, isTo)
 }
 
 func (r *Replay) handleCopy() (taro.Model, tea.Cmd) {
@@ -90,7 +89,7 @@ func (r *Replay) initializeMovement() {
 
 	r.movement = image.New(r.Terminal, size)
 	if r.isFlowMode() {
-		r.movement = movement.NewFlow(r.Terminal, size)
+		r.movement = flow.New(r.Terminal, size)
 	}
 	r.movement.Resize(size)
 }

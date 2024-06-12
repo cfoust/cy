@@ -121,6 +121,62 @@ func (l Line) Clone() Line {
 	return copyLine(l)
 }
 
+// Get the occupancy state of the given line.
+func (l Line) Occupancy() []bool {
+	occupancy := make([]bool, len(l))
+	for i := 0; i < len(l); i++ {
+		if l[i].IsEmpty() {
+			continue
+		}
+
+		// handle wide runes
+		r := l[i].Char
+		w := runewidth.RuneWidth(r)
+		for j := 0; j < w; j++ {
+			occupancy[i+j] = true
+		}
+		i += geom.Max(w-1, 0)
+	}
+
+	return occupancy
+}
+
+func (l Line) IsEmpty() bool {
+	occupancy := l.Occupancy()
+
+	for _, occupied := range occupancy {
+		if occupied {
+			return false
+		}
+	}
+
+	return true
+}
+
+// Whitespace returns the indices of the first and last non-empty cells for
+// the given line.
+func (l Line) Whitespace() (first, last int) {
+	for i := 0; i < len(l); i++ {
+		if l[i].IsEmpty() {
+			continue
+		}
+
+		first = i
+		break
+	}
+
+	for i := len(l) - 1; i >= 0; i-- {
+		if l[i].IsEmpty() {
+			continue
+		}
+
+		last = i
+		break
+	}
+
+	return
+}
+
 type CursorStyle int
 
 const (

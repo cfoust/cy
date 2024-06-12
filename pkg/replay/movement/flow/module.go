@@ -1,4 +1,4 @@
-package movement
+package flow
 
 import (
 	"fmt"
@@ -36,7 +36,7 @@ type flowMovement struct {
 
 var _ movement.Movement = (*flowMovement)(nil)
 
-func NewFlow(terminal emu.Terminal, viewport geom.Size) movement.Movement {
+func New(terminal emu.Terminal, viewport geom.Size) movement.Movement {
 	f := &flowMovement{
 		Terminal: terminal,
 		render:   taro.NewRenderer(),
@@ -244,7 +244,7 @@ func (f *flowMovement) getLastRoot() (lastRoot geom.Vec2) {
 
 	// Return the row of the last non-empty physical line
 	for row := len(screen.Lines) - 1; row >= 0; row-- {
-		if !isLineEmpty(screen.Lines[row].Chars) {
+		if !screen.Lines[row].Chars.IsEmpty() {
 			return screen.Lines[row].Root()
 		}
 	}
@@ -389,7 +389,7 @@ func (f *flowMovement) Cursor() geom.Vec2 {
 
 		// We need to return the address of a real cell
 		if f.cursor.C >= numChars {
-			_, lastCell := getNonWhitespace(line.Chars)
+			_, lastCell := line.Chars.Whitespace()
 			cursor.C = lastCell
 		}
 
@@ -431,7 +431,7 @@ func (f *flowMovement) MoveCursorX(delta int) {
 		return
 	}
 
-	_, lastCell := getNonWhitespace(current.Chars)
+	_, lastCell := current.Chars.Whitespace()
 	oldCol := f.cursor.C
 	newCol := geom.Clamp(
 		f.cursor.C+delta,
@@ -522,22 +522,22 @@ func (f *flowMovement) MoveCursorY(delta int) {
 	f.scrollToLine(destLine.Root(), position)
 }
 
-func (f *flowMovement) Jump(needle string, isForward bool, isTo bool) {
-	line, ok := f.getLine(f.cursor.R)
-	if !ok {
-		return
-	}
+//func (f *flowMovement) Jump(needle string, isForward bool, isTo bool) {
+//line, ok := f.getLine(f.cursor.R)
+//if !ok {
+//return
+//}
 
-	oldCol := f.cursor.C
-	newCol := calculateJump(
-		line.Chars,
-		needle,
-		isForward,
-		isTo,
-		oldCol,
-	)
-	f.MoveCursorX(newCol - oldCol)
-}
+//oldCol := f.cursor.C
+//newCol := calculateJump(
+//line.Chars,
+//needle,
+//isForward,
+//isTo,
+//oldCol,
+//)
+//f.MoveCursorX(newCol - oldCol)
+//}
 
 func (f *flowMovement) highlightRow(
 	row emu.Line,
@@ -714,7 +714,7 @@ func PreviewFlow(
 	highlights []movement.Highlight,
 ) *tty.State {
 	image := tty.New(size)
-	flow := NewFlow(terminal, size).(*flowMovement)
+	flow := New(terminal, size).(*flowMovement)
 	flow.Goto(location)
 	flow.View(image, highlights, []detect.Command{})
 	return image

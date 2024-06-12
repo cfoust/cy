@@ -5,6 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/sessions"
 
 	"github.com/stretchr/testify/require"
@@ -14,7 +15,7 @@ import (
 var sim = sessions.NewSimulator
 
 func createImageTest(terminal emu.Terminal, size geom.Size) *imageMovement {
-	movement := NewImage(terminal, size)
+	movement := New(terminal, size)
 	i := movement.(*imageMovement)
 	return i
 }
@@ -63,37 +64,6 @@ func TestReadStringImage(t *testing.T) {
 		geom.Vec2{R: 2, C: 0},
 		geom.Vec2{R: 4, C: 2},
 	))
-}
-
-func TestJump(t *testing.T) {
-	s := sessions.NewSimulator()
-	size := geom.Size{R: 5, C: 50}
-	s.Add(
-		size,
-		emu.LineFeedMode,
-		"The five boxing wizards jump quickly. a",
-	)
-
-	i := createImageTest(s.Terminal(), size)
-	f := createFlowTest(s.Terminal(), size)
-	for _, m := range []Movement{f, i} {
-		m.Jump("T", false, false)
-		require.Equal(t, geom.Vec2{}, m.Cursor())
-		m.MoveCursorX(1)
-		m.MoveCursorX(1)
-		m.Jump("T", false, false)
-		require.Equal(t, geom.Vec2{}, m.Cursor())
-		m.Jump("a", true, false)
-		require.Equal(t, geom.Vec2{C: 19}, m.Cursor())
-		m.Jump("a", true, false)
-		require.Equal(t, geom.Vec2{C: 38}, m.Cursor())
-		m.Jump("T", false, false)
-		require.Equal(t, geom.Vec2{}, m.Cursor())
-		m.Jump("x", true, true)
-		require.Equal(t, geom.Vec2{C: 10}, m.Cursor())
-		m.Jump("e", false, true)
-		require.Equal(t, geom.Vec2{C: 8}, m.Cursor())
-	}
 }
 
 func TestInteractions(t *testing.T) {
@@ -207,8 +177,8 @@ func TestImageHighlight(t *testing.T) {
 	i.ScrollXDelta(-10)
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, i.offset)
 
-	testHighlight(t, i, size,
-		[]Highlight{
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
 			{
 				From: geom.Vec2{R: 0, C: 1},
 				To:   geom.Vec2{R: 4, C: 2},
@@ -220,8 +190,8 @@ func TestImageHighlight(t *testing.T) {
 	)
 
 	// Invert
-	testHighlight(t, i, size,
-		[]Highlight{
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
 			{
 				From: geom.Vec2{R: 4, C: 2},
 				To:   geom.Vec2{R: 0, C: 1},
@@ -233,8 +203,8 @@ func TestImageHighlight(t *testing.T) {
 	)
 
 	// Non-screen highlights can also be inverted the other way
-	testHighlight(t, i, size,
-		[]Highlight{
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
 			{
 				From: geom.Vec2{R: 0, C: 2},
 				To:   geom.Vec2{R: 4, C: 1},
@@ -246,8 +216,8 @@ func TestImageHighlight(t *testing.T) {
 	)
 
 	i.ScrollXDelta(2)
-	testHighlight(t, i, size,
-		[]Highlight{
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
 			{
 				From: geom.Vec2{R: 0, C: 1},
 				To:   geom.Vec2{R: 4, C: 2},
@@ -259,8 +229,8 @@ func TestImageHighlight(t *testing.T) {
 	)
 
 	i.ScrollXDelta(-2)
-	testHighlight(t, i, size,
-		[]Highlight{
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
 			{
 				From: geom.Vec2{R: 0, C: 1},
 				To:   geom.Vec2{R: 0, C: 2},
@@ -271,8 +241,8 @@ func TestImageHighlight(t *testing.T) {
 		"000",
 	)
 
-	testHighlight(t, i, size,
-		[]Highlight{
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
 			{
 				From: geom.Vec2{R: 0, C: 1},
 				To:   geom.Vec2{R: 1, C: 2},
@@ -283,8 +253,8 @@ func TestImageHighlight(t *testing.T) {
 		"000",
 	)
 
-	testHighlight(t, i, size,
-		[]Highlight{
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
 			{
 				Screen: true,
 				From:   geom.Vec2{R: 0, C: 1},
@@ -296,8 +266,8 @@ func TestImageHighlight(t *testing.T) {
 		"110",
 	)
 
-	testHighlight(t, i, size,
-		[]Highlight{
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
 			{
 				Screen: true,
 				From:   geom.Vec2{R: 0, C: 1},
@@ -309,8 +279,8 @@ func TestImageHighlight(t *testing.T) {
 		"000",
 	)
 
-	testHighlight(t, i, size,
-		[]Highlight{
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
 			{
 				From: geom.Vec2{R: 3, C: 0},
 				To:   geom.Vec2{R: 3, C: 4},
@@ -321,8 +291,8 @@ func TestImageHighlight(t *testing.T) {
 		"000",
 	)
 
-	testHighlight(t, i, size,
-		[]Highlight{
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
 			{
 				Screen: true,
 				From:   geom.Vec2{R: 3, C: 0},

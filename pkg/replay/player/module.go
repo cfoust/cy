@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
+	"github.com/cfoust/cy/pkg/replay/movement/flow"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/sessions/search"
 
@@ -108,7 +109,7 @@ func (p *Player) Preview(
 
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	return movement.PreviewFlow(
+	return flow.PreviewFlow(
 		p,
 		viewport,
 		location,
