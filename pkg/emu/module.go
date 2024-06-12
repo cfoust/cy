@@ -177,6 +177,26 @@ func (l Line) Whitespace() (first, last int) {
 	return
 }
 
+func LineFromString(text string) Line {
+	line := make(Line, 0)
+
+	for _, r := range text {
+		glyph := EmptyGlyph()
+		glyph.Char = r
+		line = append(line, glyph)
+
+		// Handle wider characters
+		w := runewidth.RuneWidth(r)
+		if w > 1 {
+			for i := 0; i < w-1; i++ {
+				line = append(line, EmptyGlyph())
+			}
+		}
+	}
+
+	return line
+}
+
 type CursorStyle int
 
 const (

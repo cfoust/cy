@@ -5,34 +5,13 @@ import (
 
 	"github.com/cfoust/cy/pkg/geom"
 
-	"github.com/mattn/go-runewidth"
 	"github.com/stretchr/testify/require"
 )
-
-func makeLine(text string) Line {
-	line := make(Line, 0)
-
-	for _, r := range text {
-		glyph := EmptyGlyph()
-		glyph.Char = r
-		line = append(line, glyph)
-
-		// Handle wider characters
-		w := runewidth.RuneWidth(r)
-		if w > 1 {
-			for i := 0; i < w-1; i++ {
-				line = append(line, EmptyGlyph())
-			}
-		}
-	}
-
-	return line
-}
 
 func makeWrapped(lines ...string) []Line {
 	result := make([]Line, 0)
 	for i, str := range lines {
-		line := makeLine(str)
+		line := LineFromString(str)
 		if i != len(lines)-1 {
 			line[len(line)-1].Mode |= attrWrap
 		}
@@ -42,7 +21,7 @@ func makeWrapped(lines ...string) []Line {
 }
 
 func ensureWrap(t *testing.T, input string, cols int, expected []Line) {
-	line := makeLine(input)
+	line := LineFromString(input)
 	lines := []Line{}
 	for _, r := range wrapLine(line, cols) {
 		lines = append(
@@ -262,7 +241,7 @@ func translateTest(
 ) {
 	lines := make([]Line, 0)
 	for _, line := range screen {
-		lines = append(lines, makeLine(line))
+		lines = append(lines, LineFromString(line))
 	}
 	oldPhysical := wrapLines(lines, oldCols)
 	newPhysical := wrapLines(lines, newCols)

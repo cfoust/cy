@@ -58,23 +58,22 @@ func calculateJump(line emu.Line, needle string, isForward bool, isTo bool, oldP
 }
 
 // Jump performs a jump that works identically to vim's fF/tT motions.
-func Jump(s ScreenLike, needle string, isForward bool, isTo bool) {
-	cursor := s.Cursor()
-	line, ok := s.Line(cursor.R)
+func Jump(m Movable, needle string, isForward bool, isTo bool) {
+	cursor := m.Cursor()
+	line, ok := m.Line(cursor.R)
 	if !ok {
 		return
 	}
 
-	oldCol := cursor.C
 	newCol := calculateJump(
 		line,
 		needle,
 		isForward,
 		isTo,
-		oldCol,
+		cursor.C,
 	)
-	s.Goto(geom.Vec2{
-		C: newCol - oldCol,
+	m.Goto(geom.Vec2{
+		C: newCol,
 		R: cursor.R,
 	})
 }
