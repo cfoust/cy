@@ -145,3 +145,15 @@ In time mode, jump to the moment in time just before the last command was execut
 # doc: StartOfLine
 
 Move to the first character of the physical line. Equivalent to vim's `0`.
+
+# doc: FirstNonBlank
+
+Move to the first non-blank character of the physical line. Equivalent to vim's `^`.
+
+# doc: EndOfLine
+
+Move to the last character of the physical line. Equivalent to vim's `$`.
+
+# doc: LastNonBlank
+
+Move to the last non-blank character of the physical line. Equivalent to vim's `g_`.
