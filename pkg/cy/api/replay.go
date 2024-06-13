@@ -195,6 +195,14 @@ func (m *ReplayModule) LastNonBlank(context interface{}) error {
 	return m.sendAction(context, replay.ActionLastNonBlank)
 }
 
+func (m *ReplayModule) LastNonBlankScreen(context interface{}) error {
+	return m.sendAction(context, replay.ActionLastNonBlankScreen)
+}
+
+func (m *ReplayModule) FirstNonBlankScreen(context interface{}) error {
+	return m.sendAction(context, replay.ActionFirstNonBlankScreen)
+}
+
 func (m *ReplayModule) StartOfScreenLine(context interface{}) error {
 	return m.sendAction(context, replay.ActionStartOfScreenLine)
 }
@@ -205,6 +213,10 @@ func (m *ReplayModule) MiddleOfScreenLine(context interface{}) error {
 
 func (m *ReplayModule) MiddleOfLine(context interface{}) error {
 	return m.sendAction(context, replay.ActionMiddleOfLine)
+}
+
+func (m *ReplayModule) EndOfScreenLine(context interface{}) error {
+	return m.sendAction(context, replay.ActionEndOfScreenLine)
 }
 
 func (m *ReplayModule) Open(

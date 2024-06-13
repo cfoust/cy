@@ -162,3 +162,36 @@ func TestMiddleOfScreenLine(t *testing.T) {
 	MiddleOfScreenLine(m)
 	require.Equal(t, geom.Vec2{C: 5}, m.Cursor())
 }
+
+func TestMiddleOfLine(t *testing.T) {
+	m := fromLines("foobar")
+	MiddleOfLine(m)
+	require.Equal(t, geom.Vec2{C: 3}, m.Cursor())
+}
+
+func TestEndOfScreenLine(t *testing.T) {
+	m := fromLines("foobar")
+	EndOfScreenLine(m)
+	require.Equal(t, geom.Vec2{C: 5}, m.Cursor())
+}
+
+func TestFirstNonBlankScreen(t *testing.T) {
+	m := fromLines("  foo")
+	m.Goto(geom.Vec2{C: 4})
+	FirstNonBlankScreen(m)
+	require.Equal(t, geom.Vec2{C: 2}, m.Cursor())
+}
+
+func TestLastNonBlankScreen(t *testing.T) {
+	{
+		m := fromLines("foo   ")
+		LastNonBlankScreen(m)
+		require.Equal(t, geom.Vec2{C: 2}, m.Cursor())
+	}
+
+	{
+		m := fromLines("你好吗   ")
+		LastNonBlankScreen(m)
+		require.Equal(t, geom.Vec2{C: 4}, m.Cursor())
+	}
+}

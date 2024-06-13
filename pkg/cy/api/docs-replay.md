@@ -169,3 +169,15 @@ Move to the middle of the screen line. Equivalent to vim's `gm`.
 # doc: MiddleOfLine
 
 Move to the middle of the physical line. Equivalent to vim's `gM`.
+
+# doc: EndOfScreenLine
+
+Move to the end of the screen line. Equivalent to vim's `g$`.
+
+# doc: FirstNonBlankScreen
+
+Move to the first non-blank character of the screen line. Equivalent to vim's `g^`.
+
+# doc: LastNonBlankScreen
+
+Move to the last non-blank character of the screen line. Equivalent to vim's `g<end>`.
