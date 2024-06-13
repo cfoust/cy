@@ -53,7 +53,11 @@ func (f *flowMovement) Goto(location geom.Vec2) {
 	f.desiredCol = f.cursor.C
 }
 
-func (f *flowMovement) Viewport() ([]emu.ScreenLine, geom.Vec2) {
+func (f *flowMovement) Viewport() (
+	lines []emu.ScreenLine,
+	size geom.Vec2,
+	cursor geom.Vec2,
+) {
 	result := f.Flow(f.viewport, f.root)
-	return result.Lines, result.Cursor.Vec2
+	return result.Lines, f.viewport, f.cursor
 }

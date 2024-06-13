@@ -22,8 +22,13 @@ func (i *imageMovement) Line(row int) (line emu.Line, ok bool) {
 	return screen[row], true
 }
 
-func (i *imageMovement) Viewport() (lines []emu.ScreenLine, cursor geom.Vec2) {
+func (i *imageMovement) Viewport() (
+	lines []emu.ScreenLine,
+	size geom.Vec2,
+	cursor geom.Vec2,
+) {
 	cursor = i.cursor
+	size = i.viewport
 
 	var (
 		screen   = i.Screen()

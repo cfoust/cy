@@ -11,12 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createFlowTest(terminal emu.Terminal, size geom.Size) *flowMovement {
-	movement := New(terminal, size)
-	i := movement.(*flowMovement)
-	return i
-}
-
 func TestCenter(t *testing.T) {
 	s := sessions.NewSimulator()
 	s.Add(

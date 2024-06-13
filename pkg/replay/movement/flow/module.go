@@ -360,7 +360,6 @@ func (f *flowMovement) Resize(newSize geom.Vec2) {
 	f.scrollToLine(dest.Root(), ScrollPositionCenter)
 }
 
-
 func (f *flowMovement) ReadString(start, end geom.Vec2) (result string) {
 	start, end = geom.NormalizeRange(start, end)
 

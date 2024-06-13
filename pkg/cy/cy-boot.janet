@@ -331,6 +331,7 @@ For example:
                ["g" "_"] replay/last-non-blank
                ["g" "0"] replay/start-of-screen-line
                ["g" "home"] replay/start-of-screen-line
+               ["g" "m"] replay/middle-of-screen-line
                ["1"] (fn [&] (replay/time-playback-rate 1))
                ["2"] (fn [&] (replay/time-playback-rate 2))
                ["3"] (fn [&] (replay/time-playback-rate 5))

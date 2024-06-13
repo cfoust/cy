@@ -35,9 +35,10 @@ func (m *TestMovable) Line(row int) (line emu.Line, ok bool) {
 
 func (m *TestMovable) Viewport() (
 	screen []emu.ScreenLine,
+	size geom.Vec2,
 	cursor geom.Vec2,
 ) {
-	return m.lines, m.cursor
+	return m.lines, m.size, m.cursor
 }
 
 func fromLines(lines ...string) *TestMovable {
@@ -153,4 +154,11 @@ func TestStartOfScreenLine(t *testing.T) {
 		R: 0,
 		C: 3,
 	}, m.Cursor())
+}
+
+func TestMiddleOfScreenLine(t *testing.T) {
+	m := fromLines("foobar")
+	m.size.C = 10
+	MiddleOfScreenLine(m)
+	require.Equal(t, geom.Vec2{C: 5}, m.Cursor())
 }

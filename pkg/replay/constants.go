@@ -201,12 +201,15 @@ const (
 	ActionLastNonBlank
 	// g0, g<home>
 	ActionStartOfScreenLine
+	// gm
+	ActionMiddleOfScreenLine
 )
 
 var MOTIONS = map[ActionType]motion.Motion{
-	ActionStartOfLine:       motion.StartOfLine,
-	ActionFirstNonBlank:     motion.FirstNonBlank,
-	ActionEndOfLine:         motion.EndOfLine,
-	ActionLastNonBlank:      motion.LastNonBlank,
-	ActionStartOfScreenLine: motion.StartOfScreenLine,
+	ActionStartOfLine:        motion.StartOfLine,
+	ActionFirstNonBlank:      motion.FirstNonBlank,
+	ActionEndOfLine:          motion.EndOfLine,
+	ActionLastNonBlank:       motion.LastNonBlank,
+	ActionStartOfScreenLine:  motion.StartOfScreenLine,
+	ActionMiddleOfScreenLine: motion.MiddleOfScreenLine,
 }
