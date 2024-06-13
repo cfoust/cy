@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/replay/movement/motion"
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -224,22 +223,6 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				isTo,
 			)
 			return r, nil
-		case ActionStartOfLine:
-			r.mode = ModeCopy
-			motion.StartOfLine(r.movement)
-			return r, nil
-		case ActionFirstNonBlank:
-			r.mode = ModeCopy
-			motion.FirstNonBlank(r.movement)
-			return r, nil
-		case ActionEndOfLine:
-			r.mode = ModeCopy
-			motion.EndOfLine(r.movement)
-			return r, nil
-		case ActionLastNonBlank:
-			r.mode = ModeCopy
-			motion.LastNonBlank(r.movement)
-			return r, nil
 		case ActionCommandForward, ActionCommandBackward:
 			isForward := msg.Type == ActionCommandForward
 			if !r.isCopyMode() {
@@ -247,6 +230,12 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			}
 
 			return r.jumpCommand(isForward)
+		}
+
+		if motion, ok := MOTIONS[msg.Type]; ok {
+			r.mode = ModeCopy
+			motion(r.movement)
+			return r, nil
 		}
 	}
 

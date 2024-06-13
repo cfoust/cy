@@ -157,3 +157,7 @@ Move to the last character of the physical line. Equivalent to vim's `$`.
 # doc: LastNonBlank
 
 Move to the last non-blank character of the physical line. Equivalent to vim's `g_`.
+
+# doc: StartOfScreenLine
+
+Move to the first character of the screen line. Equivalent to vim's `g0`.

@@ -9,7 +9,7 @@ type Movable interface {
 	Cursor() geom.Vec2
 	Line(row int) (line emu.Line, ok bool)
 	Goto(location geom.Vec2)
-
-	//ScreenCursor() geom.Vec2
-	//Screen(row int) (line emu.ScreenLine, ok bool)
+	Viewport() (screen []emu.ScreenLine, cursor geom.Vec2)
 }
+
+type Motion func(m Movable)

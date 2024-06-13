@@ -195,6 +195,10 @@ func (m *ReplayModule) LastNonBlank(context interface{}) error {
 	return m.sendAction(context, replay.ActionLastNonBlank)
 }
 
+func (m *ReplayModule) StartOfScreenLine(context interface{}) error {
+	return m.sendAction(context, replay.ActionStartOfScreenLine)
+}
+
 func (m *ReplayModule) Open(
 	groupId *janet.Value,
 	path string,

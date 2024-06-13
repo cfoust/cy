@@ -3,6 +3,7 @@ package replay
 import (
 	"time"
 
+	"github.com/cfoust/cy/pkg/replay/movement/motion"
 	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
@@ -198,4 +199,14 @@ const (
 	ActionEndOfLine
 	// g_
 	ActionLastNonBlank
+	// g0, g<home>
+	ActionStartOfScreenLine
 )
+
+var MOTIONS = map[ActionType]motion.Motion{
+	ActionStartOfLine:       motion.StartOfLine,
+	ActionFirstNonBlank:     motion.FirstNonBlank,
+	ActionEndOfLine:         motion.EndOfLine,
+	ActionLastNonBlank:      motion.LastNonBlank,
+	ActionStartOfScreenLine: motion.StartOfScreenLine,
+}

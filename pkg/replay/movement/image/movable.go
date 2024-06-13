@@ -21,3 +21,33 @@ func (i *imageMovement) Line(row int) (line emu.Line, ok bool) {
 
 	return screen[row], true
 }
+
+func (i *imageMovement) Viewport() (lines []emu.ScreenLine, cursor geom.Vec2) {
+	cursor = i.cursor
+
+	var (
+		screen   = i.Screen()
+		offset   = i.offset
+		viewport = i.viewport
+	)
+
+	lastRow := geom.Min(
+		offset.R+viewport.R,
+		len(screen),
+	)
+	for row := offset.R; row < lastRow; row++ {
+		line := screen[row]
+		lineEnd := geom.Min(len(line), offset.C+viewport.C)
+		chars := line[offset.C:lineEnd]
+		lines = append(
+			lines,
+			emu.ScreenLine{
+				R:     row,
+				C0:    offset.C,
+				C1:    lineEnd,
+				Chars: chars,
+			},
+		)
+	}
+	return
+}
