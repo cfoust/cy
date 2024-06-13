@@ -203,6 +203,8 @@ const (
 	ActionStartOfScreenLine
 	// gm
 	ActionMiddleOfScreenLine
+	// gM
+	ActionMiddleOfLine
 )
 
 var MOTIONS = map[ActionType]motion.Motion{
@@ -212,4 +214,5 @@ var MOTIONS = map[ActionType]motion.Motion{
 	ActionLastNonBlank:       motion.LastNonBlank,
 	ActionStartOfScreenLine:  motion.StartOfScreenLine,
 	ActionMiddleOfScreenLine: motion.MiddleOfScreenLine,
+	ActionMiddleOfLine:       motion.MiddleOfLine,
 }

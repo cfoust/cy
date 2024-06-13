@@ -1,53 +1,61 @@
 package motion
 
 import (
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 
 	"github.com/mattn/go-runewidth"
 )
 
-// StartOfLine corresponds to vim's "0".
-func StartOfLine(m Movable) {
-	cursor := m.Cursor()
-	m.Goto(geom.Vec2{R: cursor.R, C: 0})
+func lineMotion(getIndex func(line emu.Line) int) Motion {
+	return func(m Movable) {
+		cursor := m.Cursor()
+		line, ok := m.Line(cursor.R)
+		if !ok {
+			return
+		}
+
+		index := geom.Clamp(
+			getIndex(line),
+			0,
+			geom.Max(len(line)-1, 0),
+		)
+
+		// Need to check for CJK
+		if index > 0 && runewidth.RuneWidth(line[index-1].Char) == 2 {
+			index--
+		}
+
+		m.Goto(geom.Vec2{
+			R: cursor.R,
+			C: index,
+		})
+	}
 }
 
-// FirstNonBlank corresponds to vim's "^".
-func FirstNonBlank(m Movable) {
-	cursor := m.Cursor()
-	line, ok := m.Line(cursor.R)
-	if !ok {
-		return
-	}
-	first, _ := line.Whitespace()
-	m.Goto(geom.Vec2{R: cursor.R, C: first})
-}
+// StartOfLine corresponds to vim's "0".
+var StartOfLine = lineMotion(func(line emu.Line) int {
+	return 0
+})
+
+// MiddleOfLine corresponds to vim's "gM".
+var MiddleOfLine = lineMotion(func(line emu.Line) int {
+	return len(line) / 2
+})
 
 // EndOfLine corresponds to vim's "$".
-func EndOfLine(m Movable) {
-	cursor := m.Cursor()
-	line, ok := m.Line(cursor.R)
-	if !ok {
-		return
-	}
+var EndOfLine = lineMotion(func(line emu.Line) int {
+	return len(line) - 1
+})
 
-	index := len(line) - 1
-
-	// Need to check for CJK
-	if len(line) > 1 && runewidth.RuneWidth(line[index-1].Char) == 2 {
-		index--
-	}
-
-	m.Goto(geom.Vec2{R: cursor.R, C: index})
-}
+// FirstNonBlank corresponds to vim's "^".
+var FirstNonBlank = lineMotion(func(line emu.Line) int {
+	first, _ := line.Whitespace()
+	return first
+})
 
 // LastNonBlank corresponds to vim's "g_".
-func LastNonBlank(m Movable) {
-	cursor := m.Cursor()
-	line, ok := m.Line(cursor.R)
-	if !ok {
-		return
-	}
+var LastNonBlank = lineMotion(func(line emu.Line) int {
 	_, last := line.Whitespace()
-	m.Goto(geom.Vec2{R: cursor.R, C: last})
-}
+	return last
+})

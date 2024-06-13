@@ -203,6 +203,10 @@ func (m *ReplayModule) MiddleOfScreenLine(context interface{}) error {
 	return m.sendAction(context, replay.ActionMiddleOfScreenLine)
 }
 
+func (m *ReplayModule) MiddleOfLine(context interface{}) error {
+	return m.sendAction(context, replay.ActionMiddleOfLine)
+}
+
 func (m *ReplayModule) Open(
 	groupId *janet.Value,
 	path string,

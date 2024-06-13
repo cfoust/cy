@@ -165,3 +165,7 @@ Move to the first character of the screen line. Equivalent to vim's `g0`.
 # doc: MiddleOfScreenLine
 
 Move to the middle of the screen line. Equivalent to vim's `gm`.
+
+# doc: MiddleOfLine
+
+Move to the middle of the physical line. Equivalent to vim's `gM`.
