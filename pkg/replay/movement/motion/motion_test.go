@@ -243,6 +243,26 @@ func TestFindNext(t *testing.T) {
 		)
 	}
 
+	// edge case: going backwards should still let pattern pass origin
+	{
+		to, ok := FindNext(
+			m,
+			makePattern("foo"),
+			geom.Vec2{R: 0, C: 2},
+			false,
+		)
+		require.True(t, ok)
+		require.Equal(t,
+			emu.ScreenLine{
+				R:     0,
+				C0:    0,
+				C1:    3,
+				Chars: emu.LineFromString("foo"),
+			},
+			to,
+		)
+	}
+
 	{
 		to, ok := FindNext(
 			m,

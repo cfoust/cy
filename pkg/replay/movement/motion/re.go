@@ -89,6 +89,38 @@ func findAllLine(re *regexp.Regexp, line emu.Line) (loc [][]int) {
 	return
 }
 
+// getBackwardsMatch finds the closest match on `line` behind `from`.
+func getBackwardsMatch(
+	from geom.Vec2,
+	line emu.Line,
+	row int,
+	matches [][]int,
+) (to emu.ScreenLine, ok bool) {
+	if matches == nil || len(matches) == 0 {
+		return
+	}
+
+	for i := len(matches) - 1; i >= 0; i-- {
+		match := matches[i]
+
+		if from.LTE(geom.Vec2{
+			R: row,
+			C: match[0],
+		}) {
+			continue
+		}
+
+		to.R = row
+		to.C0 = match[0]
+		to.C1 = match[1]
+		to.Chars = line[match[0]:match[1]]
+		ok = true
+		return
+	}
+
+	return
+}
+
 // FindNext gets the next match of a regex pattern in the given direction.
 func FindNext(
 	m Movable,
@@ -115,9 +147,6 @@ func FindNext(
 		}
 
 		line = line[origin:]
-	} else {
-		// TODO(cfoust): 06/14/24 it's ok for match to start before origin but continue past
-		line = line[:from.C]
 	}
 
 	row := from.R
@@ -134,14 +163,13 @@ func FindNext(
 			}
 			row++
 		} else {
-			matches := findAllLine(re, line)
-			if len(matches) != 0 {
-				match := matches[len(matches)-1]
-				to.R = row
-				to.C0 = match[0]
-				to.C1 = match[1]
-				to.Chars = line[match[0]:match[1]]
-				ok = true
+			to, ok = getBackwardsMatch(
+				from,
+				line,
+				row,
+				findAllLine(re, line),
+			)
+			if ok {
 				return
 			}
 			row--
