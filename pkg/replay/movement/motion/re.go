@@ -28,6 +28,8 @@ func (s *LineReader) ReadRune() (r rune, size int, err error) {
 	return
 }
 
+// translateMatch turns the result from FindReaderIndex into one that matches
+// the indices of the emu.Line, since FindReaderIndex returns byte indices.
 func translateMatch(src []int, line emu.Line) {
 	var index, j int
 	for i := 0; i < len(line) && j < 2; i++ {
@@ -46,6 +48,7 @@ func translateMatch(src []int, line emu.Line) {
 	}
 }
 
+// findLine looks for a single match of `re` in `line`.
 func findLine(re *regexp.Regexp, line emu.Line) (loc []int) {
 	l := &LineReader{line: line}
 	loc = re.FindReaderIndex(l)
@@ -54,5 +57,25 @@ func findLine(re *regexp.Regexp, line emu.Line) (loc []int) {
 	}
 
 	translateMatch(loc, line)
+	return
+}
+
+// findAllLine returns all matches of `re` in `line`.
+func findAllLine(re *regexp.Regexp, line emu.Line) (loc [][]int) {
+	var i int
+	for i < len(line) {
+		match := findLine(re, line[i:])
+		if match == nil {
+			return
+		}
+
+		// Make match relative to full line
+		for j := 0; j < len(match); j++ {
+			match[j] += i
+		}
+
+		loc = append(loc, match)
+		i = match[1]
+	}
 	return
 }
