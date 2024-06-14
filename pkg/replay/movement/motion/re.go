@@ -95,9 +95,9 @@ func FindNext(
 	re *regexp.Regexp,
 	from geom.Vec2,
 	isForward bool,
-) (to geom.Vec2, ok bool) {
-	line, ok := m.Line(from.R)
-	if !ok {
+) (to emu.ScreenLine, ok bool) {
+	line, lineOk := m.Line(from.R)
+	if !lineOk {
 		return
 	}
 
@@ -120,14 +120,15 @@ func FindNext(
 		line = line[:from.C]
 	}
 
-	var lineOk bool
 	row := from.R
 	for {
 		if isForward {
 			match := findLine(re, line)
 			if match != nil {
 				to.R = row
-				to.C = match[0] + origin
+				to.C0 = match[0] + origin
+				to.C1 = match[1] + origin
+				to.Chars = line[match[0]:match[1]]
 				ok = true
 				return
 			}
@@ -135,8 +136,11 @@ func FindNext(
 		} else {
 			matches := findAllLine(re, line)
 			if len(matches) != 0 {
+				match := matches[len(matches)-1]
 				to.R = row
-				to.C = matches[len(matches)-1][0]
+				to.C0 = match[0]
+				to.C1 = match[1]
+				to.Chars = line[match[0]:match[1]]
 				ok = true
 				return
 			}

@@ -212,7 +212,15 @@ func TestFindNext(t *testing.T) {
 			true,
 		)
 		require.True(t, ok)
-		require.Equal(t, geom.Vec2{R: 0, C: 3}, to)
+		require.Equal(t,
+			emu.ScreenLine{
+				R:     0,
+				C0:    3,
+				C1:    6,
+				Chars: emu.LineFromString("foo"),
+			},
+			to,
+		)
 	}
 
 	// basic backwards
@@ -220,11 +228,19 @@ func TestFindNext(t *testing.T) {
 		to, ok := FindNext(
 			m,
 			makePattern("foo"),
-			geom.Vec2{R: 0, C: 2},
+			geom.Vec2{R: 0, C: 3},
 			false,
 		)
 		require.True(t, ok)
-		require.Equal(t, geom.Vec2{R: 0, C: 0}, to)
+		require.Equal(t,
+			emu.ScreenLine{
+				R:     0,
+				C0:    0,
+				C1:    3,
+				Chars: emu.LineFromString("foo"),
+			},
+			to,
+		)
 	}
 
 	{
@@ -235,6 +251,14 @@ func TestFindNext(t *testing.T) {
 			true,
 		)
 		require.True(t, ok)
-		require.Equal(t, geom.Vec2{R: 1, C: 0}, to)
+		require.Equal(t,
+			emu.ScreenLine{
+				R:     1,
+				C0:    0,
+				C1:    3,
+				Chars: emu.LineFromString("bar"),
+			},
+			to,
+		)
 	}
 }
