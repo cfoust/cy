@@ -5,7 +5,16 @@ import (
 	"regexp"
 
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/geom"
 )
+
+func makePattern(pattern string) *regexp.Regexp {
+	compiled, err := regexp.Compile(pattern)
+	if err != nil {
+		panic(err)
+	}
+	return compiled
+}
 
 // An io.RuneReader that provides a sequence of runes corresponding to the
 // cells in an emu.Line.
@@ -78,4 +87,66 @@ func findAllLine(re *regexp.Regexp, line emu.Line) (loc [][]int) {
 		i = match[1]
 	}
 	return
+}
+
+// FindNext gets the next match of a regex pattern in the given direction.
+func FindNext(
+	m Movable,
+	re *regexp.Regexp,
+	from geom.Vec2,
+	isForward bool,
+) (to geom.Vec2, ok bool) {
+	line, ok := m.Line(from.R)
+	if !ok {
+		return
+	}
+
+	if from.C < 0 || from.C >= len(line) {
+		return
+	}
+
+	// Need to adjust the initial match based on the absolute position of
+	// the cut line
+	var origin int
+	if isForward {
+		origin = from.C + 1
+		if origin >= len(line) {
+			return
+		}
+
+		line = line[origin:]
+	} else {
+		// TODO(cfoust): 06/14/24 it's ok for match to start before origin but continue past
+		line = line[:from.C]
+	}
+
+	var lineOk bool
+	row := from.R
+	for {
+		if isForward {
+			match := findLine(re, line)
+			if match != nil {
+				to.R = row
+				to.C = match[0] + origin
+				ok = true
+				return
+			}
+			row++
+		} else {
+			matches := findAllLine(re, line)
+			if len(matches) != 0 {
+				to.R = row
+				to.C = matches[len(matches)-1][0]
+				ok = true
+				return
+			}
+			row--
+		}
+
+		line, lineOk = m.Line(row)
+		if !lineOk {
+			return
+		}
+		origin = 0
+	}
 }

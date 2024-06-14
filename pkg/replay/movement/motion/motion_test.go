@@ -195,3 +195,46 @@ func TestLastNonBlankScreen(t *testing.T) {
 		require.Equal(t, geom.Vec2{C: 4}, m.Cursor())
 	}
 }
+
+func TestFindNext(t *testing.T) {
+	m := fromLines(
+		"foofoofoo",
+		"barbarbar",
+		"bazbazbaz",
+	)
+
+	// basic forwards
+	{
+		to, ok := FindNext(
+			m,
+			makePattern("foo"),
+			geom.Vec2{},
+			true,
+		)
+		require.True(t, ok)
+		require.Equal(t, geom.Vec2{R: 0, C: 3}, to)
+	}
+
+	// basic backwards
+	{
+		to, ok := FindNext(
+			m,
+			makePattern("foo"),
+			geom.Vec2{R: 0, C: 2},
+			false,
+		)
+		require.True(t, ok)
+		require.Equal(t, geom.Vec2{R: 0, C: 0}, to)
+	}
+
+	{
+		to, ok := FindNext(
+			m,
+			makePattern("bar"),
+			geom.Vec2{},
+			true,
+		)
+		require.True(t, ok)
+		require.Equal(t, geom.Vec2{R: 1, C: 0}, to)
+	}
+}
