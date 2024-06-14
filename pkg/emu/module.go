@@ -82,6 +82,10 @@ func (g Glyph) IsDefault() bool {
 	return g.Mode&attrBlank != 0
 }
 
+func (g Glyph) Width() int {
+	return runewidth.RuneWidth(g.Char)
+}
+
 func EmptyGlyph() Glyph {
 	return Glyph{
 		Char: ' ',
