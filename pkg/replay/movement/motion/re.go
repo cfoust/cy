@@ -9,11 +9,7 @@ import (
 )
 
 func makePattern(pattern string) *regexp.Regexp {
-	compiled, err := regexp.Compile(pattern)
-	if err != nil {
-		panic(err)
-	}
-	return compiled
+	return regexp.MustCompile(pattern)
 }
 
 // An io.RuneReader that provides a sequence of runes corresponding to the
