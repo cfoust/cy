@@ -9,63 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type TestMovable struct {
-	cursor geom.Vec2
-	size   geom.Vec2
-	lines  []emu.ScreenLine
-}
-
-var _ Movable = (*TestMovable)(nil)
-
-func (m *TestMovable) Cursor() geom.Vec2 {
-	return m.cursor
-}
-
-func (m *TestMovable) Goto(location geom.Vec2) {
-	m.cursor = location
-}
-
-func (m *TestMovable) Line(row int) (line emu.Line, ok bool) {
-	if row < 0 || row >= len(m.lines) {
-		return
-	}
-
-	return m.lines[row].Chars, true
-}
-
-func (m *TestMovable) Viewport() (
-	screen []emu.ScreenLine,
-	size geom.Vec2,
-	cursor geom.Vec2,
-) {
-	return m.lines, m.size, m.cursor
-}
-
-func fromLines(lines ...string) *TestMovable {
-	var screenLines []emu.ScreenLine
-	width := 0
-	for i, line := range lines {
-		chars := emu.LineFromString(line)
-		width = geom.Max(width, len(chars))
-		screenLines = append(
-			screenLines,
-			emu.ScreenLine{
-				R:     i,
-				C1:    len(chars),
-				Chars: chars,
-			},
-		)
-	}
-
-	return &TestMovable{
-		size: geom.Vec2{
-			R: len(screenLines),
-			C: width,
-		},
-		lines: screenLines,
-	}
-}
-
 func TestJump(t *testing.T) {
 	m := fromLines("The five boxing wizards jump quickly. a")
 	m.Goto(geom.Vec2{C: 38})

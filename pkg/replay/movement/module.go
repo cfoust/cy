@@ -5,7 +5,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/replay/detect"
-	"github.com/cfoust/cy/pkg/replay/movement/motion"
+	"github.com/cfoust/cy/pkg/replay/motion"
 )
 
 type Highlight struct {

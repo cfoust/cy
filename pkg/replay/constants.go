@@ -3,7 +3,7 @@ package replay
 import (
 	"time"
 
-	"github.com/cfoust/cy/pkg/replay/movement/motion"
+	"github.com/cfoust/cy/pkg/replay/motion"
 	"github.com/cfoust/cy/pkg/sessions/search"
 )
 

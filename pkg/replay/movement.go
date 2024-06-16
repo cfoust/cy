@@ -2,9 +2,9 @@ package replay
 
 import (
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/replay/motion"
 	"github.com/cfoust/cy/pkg/replay/movement/flow"
 	"github.com/cfoust/cy/pkg/replay/movement/image"
-	"github.com/cfoust/cy/pkg/replay/movement/motion"
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"

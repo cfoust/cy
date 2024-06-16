@@ -6,6 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/replay/motion"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions/search"
@@ -69,7 +70,7 @@ type Replay struct {
 	searchInput     textinput.Model
 	matches         []search.SearchResult
 
-	incr *incrementalSearch
+	incr *motion.Incremental
 
 	// The last character the user jumped to
 	jumpChar string
@@ -130,7 +131,7 @@ func newReplay(
 		binds:          binds,
 		searchProgress: make(chan int),
 		skipInactivity: true,
-		incr:           newIncremental(),
+		incr:           motion.NewIncremental(),
 	}
 	m.Update(m.gotoIndex(-1, -1)())
 	return m
