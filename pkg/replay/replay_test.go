@@ -43,6 +43,7 @@ func createTest(events []sessions.Event) (*Replay, func(msgs ...interface{})) {
 
 	// If we don't do this, the cursor blink causes tests to hang forever
 	r.searchInput.Cursor.SetMode(cursor.CursorHide)
+	r.incrInput.Cursor.SetMode(cursor.CursorHide)
 
 	var m taro.Model = r
 
@@ -302,4 +303,36 @@ func TestJumpCommand(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 0, C: 2}, r.movement.Cursor())
 	i(ActionCommandForward)
 	require.Equal(t, geom.Vec2{R: 2, C: 2}, r.movement.Cursor())
+}
+
+func TestIncremental(t *testing.T) {
+	s := sessions.NewSimulator().
+		Add(
+			geom.Size{R: 10, C: 10},
+			emu.LineFeedMode,
+			"foo\nbar\nbaz",
+		)
+
+	r, i := createTest(s.Events())
+	i(geom.DEFAULT_SIZE)
+	WithCopyMode(r)
+
+	// Go forwards
+	i(ActionSearchForward, "ba")
+	require.True(t, r.incr.IsActive())
+	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.movement.Cursor())
+
+	// Accept it
+	i("enter")
+	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.movement.Cursor())
+	require.False(t, r.incr.IsActive())
+
+	// Next
+	i(ActionSearchAgain)
+	require.Equal(t, geom.Vec2{R: 2, C: 0}, r.movement.Cursor())
+
+	// Go backwards
+	i(ActionSearchBackward, "foo")
+	require.True(t, r.incr.IsActive())
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.movement.Cursor())
 }

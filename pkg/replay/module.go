@@ -64,11 +64,11 @@ type Replay struct {
 	isForward bool
 	isWaiting bool
 	// Whether no matches came back
-	isEmpty         bool
-	searchProgress  chan int
-	progressPercent int
-	searchInput     textinput.Model
-	matches         []search.SearchResult
+	isEmpty                bool
+	searchProgress         chan int
+	progressPercent        int
+	searchInput, incrInput textinput.Model
+	matches                []search.SearchResult
 
 	incr *motion.Incremental
 
@@ -118,20 +118,29 @@ func newReplay(
 	player *player.Player,
 	binds *bind.Engine[bind.Action],
 ) *Replay {
-	ti := textinput.New()
-	ti.Focus()
-	ti.CharLimit = 20
-	ti.Width = 20
-	ti.Prompt = ""
+	searchInput := textinput.New()
+	searchInput.Focus()
+	searchInput.CharLimit = 20
+	searchInput.Width = 20
+	searchInput.Prompt = ""
+
+	incrInput := textinput.New()
+	incrInput.Focus()
+	incrInput.CharLimit = 0
+	// TODO(cfoust): 06/16/24 need to update this to match bar
+	incrInput.Width = 20
+	incrInput.Prompt = ""
+
 	m := &Replay{
+		incr:           motion.NewIncremental(),
 		Player:         player,
 		render:         taro.NewRenderer(),
-		searchInput:    ti,
+		searchInput:    searchInput,
+		incrInput:      incrInput,
 		playbackRate:   1,
 		binds:          binds,
 		searchProgress: make(chan int),
 		skipInactivity: true,
-		incr:           motion.NewIncremental(),
 	}
 	m.Update(m.gotoIndex(-1, -1)())
 	return m

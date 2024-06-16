@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/rs/zerolog/log"
 )
 
 func (r *Replay) quit() (taro.Model, tea.Cmd) {
@@ -23,6 +24,7 @@ type applyOptions struct {
 
 func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	viewport := r.viewport
+	log.Info().Msgf("msg: %+v", msg)
 
 	switch msg := msg.(type) {
 	case applyOptions:
@@ -78,20 +80,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	}
 
 	if r.mode == ModeCopy && r.incr.IsActive() {
-		switch msg := msg.(type) {
-		case taro.KeyMsg:
-			switch msg.Type {
-			case taro.KeyEsc, taro.KeyCtrlC:
-				r.incr.Cancel(r.movement)
-				return r, nil
-			case taro.KeyEnter:
-				r.incr.Accept()
-				return r, nil
-			}
-		}
-
-		r.incr.Update(r.movement, msg)
-		return r, nil
+		return r.handleIncrementalInput(msg)
 	}
 
 	// These events do not stop playback
@@ -183,6 +172,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			)
 		case ActionSearchForward, ActionSearchBackward:
 			if r.isCopyMode() {
+				r.incrInput.Reset()
 				r.incr.Start(
 					r.movement,
 					msg.Type == ActionSearchForward,

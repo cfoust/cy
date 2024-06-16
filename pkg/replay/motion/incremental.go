@@ -76,41 +76,41 @@ func (i *Incremental) next(
 	didLoop bool,
 ) {
 	to, ok := FindNext(m, pattern, origin, isForward)
-	if !ok {
-		if didLoop {
-			return
-		}
-
-		// Loop around from beginning (or end)
-		origin = geom.Vec2{
-			R: 0,
-			C: -1,
-		}
-		if !isForward {
-			lastRow := m.NumLines() - 1
-			lastLine, lineOk := m.Line(lastRow)
-			if !lineOk {
-				return
-			}
-
-			origin = geom.Vec2{
-				R: lastRow,
-				C: len(lastLine),
-			}
-		}
-
-		i.next(
-			m,
-			pattern,
-			origin,
-			isForward,
-			true,
-		)
+	if ok {
+		m.Goto(to.Root())
+		i.result = to
 		return
 	}
 
-	m.Goto(to.Root())
-	i.result = to
+	if didLoop {
+		return
+	}
+
+	// Loop around from beginning (or end)
+	origin = geom.Vec2{
+		R: 0,
+		C: -1,
+	}
+	if !isForward {
+		lastRow := m.NumLines() - 1
+		lastLine, lineOk := m.Line(lastRow)
+		if !lineOk {
+			return
+		}
+
+		origin = geom.Vec2{
+			R: lastRow,
+			C: len(lastLine),
+		}
+	}
+
+	i.next(
+		m,
+		pattern,
+		origin,
+		isForward,
+		true,
+	)
 }
 
 // Next jumps to the next instance of the accepted pattern in the direction of
