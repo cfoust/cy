@@ -91,6 +91,8 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	if r.incr.IsActive() {
 		r.incrInput.Cursor.Style = r.render.NewStyle().
 			Background(lipgloss.Color("15"))
+		r.incrInput.TextStyle = statusBarStyle
+		r.incrInput.Cursor.TextStyle = statusBarStyle
 
 		prefix := "/"
 		if !r.incr.IsForward() {
@@ -99,10 +101,13 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 
 		prefix = statusStyle.Render(prefix)
 
+		input := r.incrInput.View()
+
 		statusBar := lipgloss.JoinHorizontal(lipgloss.Left,
 			prefix,
-			statusBarStyle.Render(r.incrInput.View()),
+			input,
 		)
+
 		r.render.RenderAt(
 			state.Image,
 			size.R-1, 0,
