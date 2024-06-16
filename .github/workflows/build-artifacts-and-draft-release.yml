@@ -102,7 +102,7 @@ jobs:
       - name: Create tap PR
         run: |
           # Remove last line from darwin formula
-          sed '$d' ./cy-build/darwin/cy.rb > cy.rb
+          sed '$d' ./cy-build/darwin/cy.rb | grep -v 'depends_on' > cy.rb
           # Include all other lines from linux
           sed -n '/on_linux/,$p' ./cy-build/linux/cy.rb >> cy.rb
 
