@@ -50,14 +50,34 @@ func (f *flowMovement) Cursor() geom.Vec2 {
 }
 
 func (f *flowMovement) Goto(location geom.Vec2) {
+	// First check whether the location is on the screen already
+	flow := f.Flow(f.viewport, f.root)
+	for row, line := range flow.Lines {
+		if location.R != line.R || location.C < line.C0 || location.C >= line.C1 {
+			continue
+		}
+
+		f.haveMoved = true
+		f.cursor.R = row
+		f.cursor.C = location.C - line.C0
+		f.desiredCol = f.cursor.C
+		return
+	}
+
 	root, ok := f.getRoot(location)
 	if !ok {
 		return
 	}
 
-	// TODO(cfoust): 06/05/24 if it's on the screen, don't recenter it
 	f.haveMoved = true
-	f.scrollToLine(root, ScrollPositionCenter)
+
+	// Move the screen as little as possible
+	position := ScrollPositionTop
+	if root.GT(f.root) {
+		position = ScrollPositionBottom
+	}
+	f.scrollToLine(root, position)
+
 	f.cursor.C = location.C - root.C
 	f.desiredCol = f.cursor.C
 }
