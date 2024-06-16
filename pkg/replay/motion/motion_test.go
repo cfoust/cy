@@ -265,4 +265,14 @@ func TestFindNext(t *testing.T) {
 			to,
 		)
 	}
+
+	{
+		_, ok := FindNext(
+			m,
+			makePattern(""),
+			geom.Vec2{R: 2, C: 9},
+			false,
+		)
+		require.False(t, ok)
+	}
 }

@@ -81,7 +81,6 @@ func TestSearch(t *testing.T) {
 		)
 
 	r, i := createTest(s.Events())
-	r.searchInput.Cursor.Blink = false
 	r.searchProgress = nil
 	i(
 		ActionBeginning,
@@ -334,5 +333,9 @@ func TestIncremental(t *testing.T) {
 	// Go backwards
 	i(ActionSearchBackward, "foo")
 	require.True(t, r.incr.IsActive())
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.movement.Cursor())
+
+	// Next
+	i(ActionSearchAgain)
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.movement.Cursor())
 }

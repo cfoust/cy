@@ -140,6 +140,10 @@ func FindNext(
 	from geom.Vec2,
 	isForward bool,
 ) (to emu.ScreenLine, ok bool) {
+	if len(re.String()) == 0 {
+		return
+	}
+
 	line, lineOk := m.Line(from.R)
 	if !lineOk {
 		return

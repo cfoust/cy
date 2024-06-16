@@ -7,7 +7,6 @@ import (
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/rs/zerolog/log"
 )
 
 func (r *Replay) quit() (taro.Model, tea.Cmd) {
@@ -24,7 +23,6 @@ type applyOptions struct {
 
 func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	viewport := r.viewport
-	log.Info().Msgf("msg: %+v", msg)
 
 	switch msg := msg.(type) {
 	case applyOptions:

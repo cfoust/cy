@@ -37,4 +37,12 @@ func TestFind(t *testing.T) {
 			emu.LineFromString("foo foo foo"),
 		),
 	)
+	require.Equal(
+		t,
+		([]int)(nil),
+		findLine(
+			makePattern("bar"),
+			emu.LineFromString("foo"),
+		),
+	)
 }

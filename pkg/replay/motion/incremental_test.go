@@ -145,4 +145,12 @@ func TestIncremental(t *testing.T) {
 		i.Next(m, false)
 		require.Equal(t, geom.Vec2{R: 0, C: 4}, m.Cursor())
 	}
+
+	// Next missing
+	{
+		m.Goto(geom.Vec2{R: 0, C: 0})
+		i.Start(m, true)
+		i.Pattern(m, "asd")
+		require.Equal(t, geom.Vec2{R: 0, C: 0}, m.Cursor())
+	}
 }
