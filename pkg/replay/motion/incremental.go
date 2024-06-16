@@ -41,6 +41,13 @@ func (i *Incremental) getPattern() (re *regexp.Regexp, err error) {
 	return createSafeRegex(i.input)
 }
 
+func (i *Incremental) Highlight() (line emu.ScreenLine, ok bool) {
+	if !i.isActive {
+		return
+	}
+	return i.result, true
+}
+
 // Accept confirms the motion and stores the pattern. This is equivalent to
 // pressing enter when searching incrementally in vim.
 func (i *Incremental) Accept() {
@@ -102,11 +109,12 @@ func (i *Incremental) Next(m Movable, isForward bool) {
 // Pattern takes a new pattern and jumps to the closest instance of it after
 // the origin in the direction of the search.
 func (i *Incremental) Pattern(m Movable, input string) {
-	pattern, err := i.getPattern()
+	pattern, err := createSafeRegex(input)
 	if err != nil {
 		return
 	}
 
+	i.input = input
 	i.next(m, pattern, i.origin, i.isForward)
 }
 
