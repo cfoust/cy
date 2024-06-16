@@ -124,5 +124,25 @@ func TestIncremental(t *testing.T) {
 		// wrap around
 		i.Next(m, true)
 		require.Equal(t, geom.Vec2{R: 0, C: 4}, m.Cursor())
+		// wrap around backwards
+		i.Next(m, false)
+		require.Equal(t, geom.Vec2{R: 0, C: 8}, m.Cursor())
+	}
+
+	// Next backwards
+	{
+		m.Goto(geom.Vec2{R: 0, C: 0})
+		i.Start(m, false)
+		i.Pattern(m, "ba")
+		i.Accept()
+		require.Equal(t, geom.Vec2{R: 0, C: 8}, m.Cursor())
+		i.Next(m, true)
+		require.Equal(t, geom.Vec2{R: 0, C: 4}, m.Cursor())
+		// wrap around
+		i.Next(m, true)
+		require.Equal(t, geom.Vec2{R: 0, C: 8}, m.Cursor())
+		// wrap around backwards
+		i.Next(m, false)
+		require.Equal(t, geom.Vec2{R: 0, C: 4}, m.Cursor())
 	}
 }

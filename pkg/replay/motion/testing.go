@@ -29,6 +29,10 @@ func (m *testMovable) Line(row int) (line emu.Line, ok bool) {
 	return m.lines[row].Chars, true
 }
 
+func (m *testMovable) NumLines() int {
+	return len(m.lines)
+}
+
 func (m *testMovable) Viewport() (
 	screen []emu.ScreenLine,
 	size geom.Vec2,

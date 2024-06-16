@@ -8,6 +8,7 @@ import (
 type Movable interface {
 	Cursor() geom.Vec2
 	Line(row int) (line emu.Line, ok bool)
+	NumLines() int
 	Goto(location geom.Vec2)
 	Viewport() (
 		screen []emu.ScreenLine,

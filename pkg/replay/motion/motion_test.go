@@ -206,6 +206,7 @@ func TestFindNext(t *testing.T) {
 		)
 	}
 
+	// find on the next line
 	{
 		to, ok := FindNext(
 			m,
@@ -220,6 +221,46 @@ func TestFindNext(t *testing.T) {
 				C0:    0,
 				C1:    3,
 				Chars: emu.LineFromString("bar"),
+			},
+			to,
+		)
+	}
+
+	// from.C = -1 should allow matching beginning of line
+	{
+		to, ok := FindNext(
+			m,
+			makePattern("foo"),
+			geom.Vec2{C: -1},
+			true,
+		)
+		require.True(t, ok)
+		require.Equal(t,
+			emu.ScreenLine{
+				R:     0,
+				C0:    0,
+				C1:    3,
+				Chars: emu.LineFromString("foo"),
+			},
+			to,
+		)
+	}
+
+	// from.C = len(line) should allow matching end of line
+	{
+		to, ok := FindNext(
+			m,
+			makePattern("baz"),
+			geom.Vec2{R: 2, C: 9},
+			false,
+		)
+		require.True(t, ok)
+		require.Equal(t,
+			emu.ScreenLine{
+				R:     2,
+				C0:    6,
+				C1:    9,
+				Chars: emu.LineFromString("baz"),
 			},
 			to,
 		)

@@ -118,6 +118,22 @@ func getBackwardsMatch(
 }
 
 // FindNext gets the next match of a regex pattern in the given direction.
+//
+// The origin of the search, `from`, is a coordinate in the reference frame of
+// the Movable and determines where the search will start from. `from.C`, or
+// the initial column of the search, has some special behavior in order to
+// mimic the way vim's incremental search works.
+//
+// When searching forwards, the cell specified by `from.C` will be _excluded_
+// from the search. This is to prevent the pattern from matching the current
+// location. In addition, specifically when searching forwards, `from.C = -1`
+// is considered to be valid; this means that no cell will be excluded from the
+// search, which will start from the beginning of the line.
+//
+// When searching backwards, matches must begin before the cell specified by
+// `from`, but can end after or including `from`. Observe that vim works this
+// way. Similarly, if `from.C` is equal to the length of the line, no cell will
+// be excluded in the search.
 func FindNext(
 	m Movable,
 	re *regexp.Regexp,
@@ -129,8 +145,14 @@ func FindNext(
 		return
 	}
 
-	if from.C < 0 || from.C >= len(line) {
-		return
+	if isForward {
+		if (from.C < 0 && from.C != -1) || from.C >= len(line) {
+			return
+		}
+	} else {
+		if from.C < 0 || from.C > len(line) {
+			return
+		}
 	}
 
 	// Need to adjust the initial match based on the absolute position of

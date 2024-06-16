@@ -14,6 +14,11 @@ func (f *flowMovement) Line(row int) (line emu.Line, ok bool) {
 	return lines[0], true
 }
 
+func (f *flowMovement) NumLines() int {
+	lastRoot := f.getLastRoot()
+	return lastRoot.R + 1
+}
+
 func (f *flowMovement) Cursor() geom.Vec2 {
 	result := f.Flow(f.viewport, f.root)
 

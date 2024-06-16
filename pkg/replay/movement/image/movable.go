@@ -22,6 +22,10 @@ func (i *imageMovement) Line(row int) (line emu.Line, ok bool) {
 	return screen[row], true
 }
 
+func (i *imageMovement) NumLines() int {
+	return len(i.Screen())
+}
+
 func (i *imageMovement) Viewport() (
 	lines []emu.ScreenLine,
 	size geom.Vec2,

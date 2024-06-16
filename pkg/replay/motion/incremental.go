@@ -73,10 +73,39 @@ func (i *Incremental) next(
 	pattern *regexp.Regexp,
 	origin geom.Vec2,
 	isForward bool,
+	didLoop bool,
 ) {
-	// TODO(cfoust): 06/16/24 wrap around
 	to, ok := FindNext(m, pattern, origin, isForward)
 	if !ok {
+		if didLoop {
+			return
+		}
+
+		// Loop around from beginning (or end)
+		origin = geom.Vec2{
+			R: 0,
+			C: -1,
+		}
+		if !isForward {
+			lastRow := m.NumLines() - 1
+			lastLine, lineOk := m.Line(lastRow)
+			if !lineOk {
+				return
+			}
+
+			origin = geom.Vec2{
+				R: lastRow,
+				C: len(lastLine),
+			}
+		}
+
+		i.next(
+			m,
+			pattern,
+			origin,
+			isForward,
+			true,
+		)
 		return
 	}
 
@@ -103,6 +132,7 @@ func (i *Incremental) Next(m Movable, isForward bool) {
 		// T T = T
 		// T F = F
 		i.isForward == isForward,
+		false,
 	)
 }
 
@@ -115,7 +145,7 @@ func (i *Incremental) Pattern(m Movable, input string) {
 	}
 
 	i.input = input
-	i.next(m, pattern, i.origin, i.isForward)
+	i.next(m, pattern, i.origin, i.isForward, false)
 }
 
 func NewIncremental() *Incremental {
