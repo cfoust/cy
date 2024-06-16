@@ -76,7 +76,7 @@ func TestFlowLines(t *testing.T) {
 					R:  1,
 					C0: 4,
 					C1: 6,
-					Chars: makeLine(
+					Chars: LineFromString(
 						"ar",
 					),
 				},
@@ -84,7 +84,7 @@ func TestFlowLines(t *testing.T) {
 					R:  2,
 					C0: 0,
 					C1: 3,
-					Chars: makeLine(
+					Chars: LineFromString(
 						"baz",
 					),
 				},
@@ -118,7 +118,7 @@ func TestFlowLines(t *testing.T) {
 					R:  1,
 					C0: 4,
 					C1: 6,
-					Chars: makeLine(
+					Chars: LineFromString(
 						"ar",
 					),
 				},
@@ -126,7 +126,7 @@ func TestFlowLines(t *testing.T) {
 					R:  2,
 					C0: 0,
 					C1: 3,
-					Chars: makeLine(
+					Chars: LineFromString(
 						"baz",
 					),
 				},
@@ -160,7 +160,7 @@ func TestFlowLines(t *testing.T) {
 					R:  0,
 					C0: 0,
 					C1: 3,
-					Chars: makeLine(
+					Chars: LineFromString(
 						"foo",
 					),
 				},
@@ -168,7 +168,7 @@ func TestFlowLines(t *testing.T) {
 					R:  1,
 					C0: 0,
 					C1: 4,
-					Chars: makeLine(
+					Chars: LineFromString(
 						"foob",
 					),
 				},
@@ -199,7 +199,7 @@ func TestFlowLines(t *testing.T) {
 					R:  0,
 					C0: 0,
 					C1: 2,
-					Chars: makeLine(
+					Chars: LineFromString(
 						"fo",
 					),
 				},
@@ -207,7 +207,7 @@ func TestFlowLines(t *testing.T) {
 					R:  0,
 					C0: 2,
 					C1: 3,
-					Chars: makeLine(
+					Chars: LineFromString(
 						"o",
 					),
 				},
@@ -215,7 +215,7 @@ func TestFlowLines(t *testing.T) {
 					R:  1,
 					C0: 0,
 					C1: 2,
-					Chars: makeLine(
+					Chars: LineFromString(
 						"fo",
 					),
 				},
@@ -223,7 +223,7 @@ func TestFlowLines(t *testing.T) {
 					R:  1,
 					C0: 2,
 					C1: 4,
-					Chars: makeLine(
+					Chars: LineFromString(
 						"ob",
 					),
 				},
@@ -231,7 +231,7 @@ func TestFlowLines(t *testing.T) {
 					R:  1,
 					C0: 4,
 					C1: 6,
-					Chars: makeLine(
+					Chars: LineFromString(
 						"ar",
 					),
 				},
@@ -239,7 +239,7 @@ func TestFlowLines(t *testing.T) {
 					R:  2,
 					C0: 0,
 					C1: 2,
-					Chars: makeLine(
+					Chars: LineFromString(
 						"ba",
 					),
 				},
@@ -247,7 +247,7 @@ func TestFlowLines(t *testing.T) {
 					R:  2,
 					C0: 2,
 					C1: 3,
-					Chars: makeLine(
+					Chars: LineFromString(
 						"z",
 					),
 				},
