@@ -173,7 +173,7 @@ func (c *Cmd) Read(p []byte) (n int, err error) {
 		c.Lock()
 		c.ptmx = nil
 		c.Unlock()
-		return 0, nil
+		return 0, io.EOF
 	}
 
 	return n, err
