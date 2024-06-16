@@ -47,11 +47,16 @@ func (i *incrementalSearch) Accept() {
 	}
 }
 
+func (i *incrementalSearch) Cancel(m motion.Movable) {
+	i.isActive = false
+	m.Goto(i.origin)
+}
+
 func (i *incrementalSearch) IsActive() bool {
 	return i.isActive
 }
 
-func (i *incrementalSearch) next(m motion.Movable, isForward bool) {
+func (i *incrementalSearch) Next(m motion.Movable, isForward bool) {
 	if i.pattern == nil {
 		return
 	}
@@ -67,14 +72,6 @@ func (i *incrementalSearch) next(m motion.Movable, isForward bool) {
 	}
 
 	m.Goto(to.Root())
-}
-
-func (i *incrementalSearch) SearchAgain(m motion.Movable) {
-	i.next(m, i.isForward)
-}
-
-func (i *incrementalSearch) SearchReverse(m motion.Movable) {
-	i.next(m, !i.isForward)
 }
 
 func (i *incrementalSearch) Update(m motion.Movable, msg tea.Msg) {

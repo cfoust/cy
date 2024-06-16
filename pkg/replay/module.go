@@ -69,6 +69,8 @@ type Replay struct {
 	searchInput     textinput.Model
 	matches         []search.SearchResult
 
+	incr *incrementalSearch
+
 	// The last character the user jumped to
 	jumpChar string
 	// Whether that jump was forward
@@ -128,6 +130,7 @@ func newReplay(
 		binds:          binds,
 		searchProgress: make(chan int),
 		skipInactivity: true,
+		incr:           newIncremental(),
 	}
 	m.Update(m.gotoIndex(-1, -1)())
 	return m

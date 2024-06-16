@@ -77,6 +77,23 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return r.handleSearchInput(msg)
 	}
 
+	if r.mode == ModeCopy && r.incr.IsActive() {
+		switch msg := msg.(type) {
+		case taro.KeyMsg:
+			switch msg.Type {
+			case taro.KeyEsc, taro.KeyCtrlC:
+				r.incr.Cancel(r.movement)
+				return r, nil
+			case taro.KeyEnter:
+				r.incr.Accept()
+				return r, nil
+			}
+		}
+
+		r.incr.Update(r.movement, msg)
+		return r, nil
+	}
+
 	// These events do not stop playback
 	switch msg := msg.(type) {
 	case ActionEvent:
@@ -153,10 +170,26 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.swapScreen()
 			return r, nil
 		case ActionSearchAgain, ActionSearchReverse:
+			if r.isCopyMode() {
+				r.incr.Next(
+					r.movement,
+					msg.Type == ActionSearchAgain,
+				)
+				return r, nil
+			}
+
 			return r, r.searchAgain(
 				msg.Type != ActionSearchReverse,
 			)
 		case ActionSearchForward, ActionSearchBackward:
+			if r.isCopyMode() {
+				r.incr.Start(
+					r.movement,
+					msg.Type == ActionSearchForward,
+				)
+				return r, nil
+			}
+
 			if r.isWaiting {
 				return r, nil
 			}
@@ -208,11 +241,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				direction = !direction
 			}
 
-			r.handleJump(
-				r.jumpChar,
-				direction,
-				r.wasJumpTo,
-			)
+			r.handleJump(r.jumpChar, direction, r.wasJumpTo)
 			return r, nil
 		case ActionJumpForward, ActionJumpBackward, ActionJumpToForward, ActionJumpToBackward:
 			isForward := msg.Type == ActionJumpForward || msg.Type == ActionJumpToForward
