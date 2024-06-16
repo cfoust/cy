@@ -57,6 +57,8 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			update,
 		)
 	case tea.WindowSizeMsg:
+		// -3 for the " / " or " ? "
+		r.incrInput.Width = geom.Max(msg.Width-3, 0)
 		r.resize(geom.Size{
 			R: msg.Height,
 			C: msg.Width,

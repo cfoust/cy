@@ -6,6 +6,10 @@ import (
 )
 
 func (f *flowMovement) Line(row int) (line emu.Line, ok bool) {
+	if row < 0 {
+		return
+	}
+
 	lines := f.GetLines(row, row)
 	if len(lines) == 0 {
 		return

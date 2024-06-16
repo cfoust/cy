@@ -42,7 +42,7 @@ func (i *Incremental) getPattern() (re *regexp.Regexp, err error) {
 }
 
 func (i *Incremental) Highlight() (line emu.ScreenLine, ok bool) {
-	if !i.isActive {
+	if !i.isActive || len(i.input) == 0 {
 		return
 	}
 	return i.result, true
@@ -66,6 +66,11 @@ func (i *Incremental) Cancel(m Movable) {
 // IsActive returns true if the user is currently entering a search pattern.
 func (i *Incremental) IsActive() bool {
 	return i.isActive
+}
+
+// IsForward returns true if the user is currently searching forward.
+func (i *Incremental) IsForward() bool {
+	return i.isForward
 }
 
 func (i *Incremental) next(

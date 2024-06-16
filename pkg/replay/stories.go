@@ -133,10 +133,23 @@ var SearchEmpty stories.InitFunc = func(ctx context.Context) (mux.Screen, error)
 	return replay, nil
 }
 
+var IncrementalForward stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
+	replay := createStory(
+		ctx,
+		createStorySession(),
+		ActionCursorUp,
+		ActionSearchForward,
+		"str",
+	)
+
+	return replay, nil
+}
+
 func init() {
 	config := stories.Config{
 		Size: geom.DEFAULT_SIZE,
 	}
+	stories.Register("replay/incremental/forward", IncrementalForward, config)
 	stories.Register("replay/time/search-forward", SearchTimeForward, config)
 	stories.Register("replay/time/searching", Searching, stories.Config{
 		Size:       geom.DEFAULT_SIZE,

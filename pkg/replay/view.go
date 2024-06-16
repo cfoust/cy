@@ -88,6 +88,29 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		Background(statusBG).
 		Padding(0, 1)
 
+	if r.incr.IsActive() {
+		r.incrInput.Cursor.Style = r.render.NewStyle().
+			Background(lipgloss.Color("15"))
+
+		prefix := "/"
+		if !r.incr.IsForward() {
+			prefix = "?"
+		}
+
+		prefix = statusStyle.Render(prefix)
+
+		statusBar := lipgloss.JoinHorizontal(lipgloss.Left,
+			prefix,
+			statusBarStyle.Render(r.incrInput.View()),
+		)
+		r.render.RenderAt(
+			state.Image,
+			size.R-1, 0,
+			statusBar,
+		)
+		return
+	}
+
 	index := r.Location().Index
 	events := r.Events()
 	if index < 0 || index >= len(events) || len(events) == 0 {
@@ -217,6 +240,25 @@ func (r *Replay) View(state *tty.State) {
 			movement.Highlight{
 				From: r.selectStart,
 				To:   r.movement.Cursor(),
+				FG: r.render.ConvertLipgloss(
+					lipgloss.Color("9"),
+				),
+				BG: r.render.ConvertLipgloss(
+					lipgloss.Color("240"),
+				),
+			},
+		)
+	}
+
+	if highlight, ok := r.incr.Highlight(); ok {
+		highlights = append(
+			highlights,
+			movement.Highlight{
+				From: highlight.Root(),
+				To: geom.Vec2{
+					R: highlight.R,
+					C: highlight.C1,
+				},
 				FG: r.render.ConvertLipgloss(
 					lipgloss.Color("9"),
 				),
