@@ -58,7 +58,7 @@ func swapImage(
 			dstCell := dst.Cell(col, row)
 			srcCell := src.Cell(col, row)
 
-			if dstCell == srcCell {
+			if dstCell.Equal(srcCell) {
 				continue
 			}
 

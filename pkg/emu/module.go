@@ -86,6 +86,10 @@ func (g Glyph) Width() int {
 	return runewidth.RuneWidth(g.Char)
 }
 
+func (g Glyph) Equal(other Glyph) bool {
+	return g.Char == other.Char && g.Mode == other.Mode && g.FG == other.FG && g.BG == other.BG
+}
+
 func EmptyGlyph() Glyph {
 	return Glyph{
 		Char: ' ',

@@ -11,7 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-STORY_REGEX = re.compile("{{story ((\w+).)?(png|gif|cast) (.+)}}")
+STORY_REGEX = re.compile(r"{{story ((\w+).)?(png|gif|cast) (.+)}}")
 
 COMMON = """
 Set FontSize 18
@@ -133,7 +133,7 @@ Screenshot {filename}
                 env={
                     "TERM": "xterm-256color",
                     "EDITOR": "/usr/bin/vim",
-                    "PS1": " \[\e[0;31m\]▸▸▹\[\e[0m\] \[\e[0;31m\]\[\e[0m\]\[\033[00m\]",
+                    "PS1": r" \[\e[0;31m\]▸▸▹\[\e[0m\] \[\e[0;31m\]\[\e[0m\]\[\033[00m\]",
                 },
             )
             continue
