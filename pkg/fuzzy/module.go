@@ -24,7 +24,6 @@ type Fuzzy struct {
 	result chan<- interface{}
 	size   geom.Vec2
 
-	watcher   *taro.ScreenWatcher
 	render    *taro.Renderer
 	textInput textinput.Model
 
@@ -53,9 +52,10 @@ type Fuzzy struct {
 	// headers for the table
 	headers []string
 
-	tree    *tree.Tree
-	client  *server.Client
-	preview mux.Screen
+	tree            *tree.Tree
+	client          *server.Client
+	preview         mux.Screen
+	previewLifetime util.Lifetime
 }
 
 var _ taro.Model = (*Fuzzy)(nil)
@@ -79,7 +79,8 @@ func (f *Fuzzy) Init() taro.Cmd {
 	}
 
 	if f.anim != nil {
-		cmds = append(cmds, f.watcher.Wait(f.anim))
+		w := taro.NewWatcher(f.Ctx(), f.anim)
+		cmds = append(cmds, w.Wait())
 	}
 
 	return tea.Batch(cmds...)
@@ -96,11 +97,24 @@ type SelectedEvent struct {
 	Option Option
 }
 
-func (f *Fuzzy) setSelected(index int) {
+func (f *Fuzzy) setSelected(index int) taro.Cmd {
 	f.selected = geom.Max(
 		0,
 		geom.Clamp(index, 0, len(f.getOptions())-1),
 	)
+
+	f.preview = f.getPreview()
+
+	var cmds []taro.Cmd
+	if f.preview != nil {
+		w := taro.NewWatcher(f.Ctx(), f.preview)
+		cmds = append(
+			cmds,
+			w.Wait(),
+		)
+	}
+
+	return tea.Batch(cmds...)
 }
 
 func (f *Fuzzy) emitOption() taro.Cmd {
@@ -123,14 +137,24 @@ func (f *Fuzzy) getPreview() mux.Screen {
 		return nil
 	}
 
+	if f.preview != nil {
+		f.previewLifetime.Cancel()
+	}
+
 	option := options[f.selected]
 	if option.Preview == nil {
-		f.preview = nil
 		return nil
 	}
 
-	p := preview.New(f.Ctx(), f.tree, f.client, option.Preview)
+	f.previewLifetime = util.NewLifetime(f.Ctx())
+	p := preview.New(
+		f.previewLifetime.Ctx(),
+		f.tree,
+		f.client,
+		option.Preview,
+	)
 	if p == nil {
+		f.previewLifetime.Cancel()
 		return nil
 	}
 
@@ -209,7 +233,6 @@ func newFuzzy(
 	f := &Fuzzy{
 		Lifetime:  util.NewLifetime(ctx),
 		render:    taro.NewRenderer(),
-		watcher:   taro.NewWatcher(ctx),
 		options:   options,
 		selected:  0,
 		textInput: ti,

@@ -21,13 +21,13 @@ type Browser struct {
 	fuzzy          *taro.Program
 	viewer         *taro.Program
 	viewerLifetime util.Lifetime
-	watcher        *taro.ScreenWatcher
 }
 
 var _ taro.Model = (*Browser)(nil)
 
 func (s *Browser) Init() tea.Cmd {
-	return taro.WaitScreens(s.Ctx(), s.fuzzy)
+	watcher := taro.NewWatcher(s.Ctx(), s.fuzzy)
+	return watcher.Wait()
 }
 
 func (s *Browser) View(state *tty.State) {
@@ -44,6 +44,7 @@ func (s *Browser) View(state *tty.State) {
 type loadedViewer struct {
 	viewer   *taro.Program
 	lifetime util.Lifetime
+	watcher  *taro.ScreenWatcher
 }
 
 func (s *Browser) loadViewer(story S.Story) tea.Cmd {
@@ -52,8 +53,13 @@ func (s *Browser) loadViewer(story S.Story) tea.Cmd {
 	return func() tea.Msg {
 		lifetime := util.NewLifetime(s.Ctx())
 		viewer := NewViewer(lifetime.Ctx(), story, true)
+		watcher := taro.NewWatcher(lifetime.Ctx(), viewer)
 		viewer.Resize(size)
-		return loadedViewer{viewer: viewer, lifetime: lifetime}
+		return loadedViewer{
+			viewer:   viewer,
+			lifetime: lifetime,
+			watcher:  watcher,
+		}
 	}
 }
 
@@ -62,6 +68,7 @@ func (s *Browser) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case loadedViewer:
 		s.viewer = msg.viewer
 		s.viewerLifetime = msg.lifetime
+		return s, msg.watcher.Wait()
 	case tea.WindowSizeMsg:
 		size := geom.Size{
 			R: msg.Height,
@@ -81,16 +88,8 @@ func (s *Browser) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 		return s, nil
 	case taro.ScreenUpdate:
-		cmds := []taro.Cmd{}
-
-		// TODO(cfoust): 05/24/24 curious issue with passing s.viewer regardless of nil?
-		if s.viewer != nil {
-			cmds = append(cmds, s.watcher.Wait(
-				s.fuzzy,
-				s.viewer,
-			))
-		} else {
-			cmds = append(cmds, s.watcher.Wait(s.fuzzy))
+		cmds := []taro.Cmd{
+			msg.Wait(),
 		}
 
 		switch msg := msg.Msg.(type) {
@@ -148,7 +147,6 @@ func NewBrowser(
 		Lifetime: util.NewLifetime(ctx),
 		render:   taro.NewRenderer(),
 		fuzzy:    fuzzy,
-		watcher:  taro.NewWatcher(ctx),
 	}
 
 	program := taro.New(ctx, browser)

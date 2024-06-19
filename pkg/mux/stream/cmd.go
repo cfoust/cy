@@ -27,6 +27,7 @@ const (
 	CmdStatusStarting CmdStatus = iota
 	CmdStatusHealthy
 	CmdStatusFailed
+	CmdStatusComplete
 )
 
 type Cmd struct {
@@ -161,8 +162,15 @@ func (c *Cmd) run(ctx context.Context) error {
 
 func (c *Cmd) Read(p []byte) (n int, err error) {
 	c.RLock()
-	ptmx := c.ptmx
+	var (
+		ptmx   = c.ptmx
+		status = c.status
+	)
 	c.RUnlock()
+
+	if status == CmdStatusComplete {
+		return 0, io.EOF
+	}
 
 	if ptmx == nil {
 		return 0, nil
@@ -173,7 +181,7 @@ func (c *Cmd) Read(p []byte) (n int, err error) {
 		c.Lock()
 		c.ptmx = nil
 		c.Unlock()
-		return 0, io.EOF
+		return 0, nil
 	}
 
 	return n, err
@@ -212,6 +220,7 @@ func (c *Cmd) spin(ctx context.Context) {
 
 		select {
 		case <-ctx.Done():
+			c.setStatus(CmdStatusComplete)
 			return
 		case err := <-errChan:
 			if err == nil {

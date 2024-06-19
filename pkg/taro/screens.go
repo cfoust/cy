@@ -5,15 +5,71 @@ import (
 
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/util"
-
-	"github.com/sasha-s/go-deadlock"
 )
 
 type ScreenUpdate struct {
-	Msg Msg
+	w      *ScreenWatcher
+	Screen mux.Screen
+	Msg    Msg
 }
 
-func waitScreen(ctx context.Context, screen mux.Screen, done chan<- Msg) {
+func (s ScreenUpdate) Wait() Cmd {
+	if s.w == nil {
+		return nil
+	}
+
+	return s.w.Wait()
+}
+
+type ScreenWatcher struct {
+	util.Lifetime
+	wait  *util.Lifetime
+	queue chan ScreenUpdate
+}
+
+func (s *ScreenWatcher) Wait() Cmd {
+	return func() Msg {
+		select {
+		case <-s.Ctx().Done():
+			return nil
+		case msg := <-s.queue:
+			return msg
+		}
+	}
+}
+
+func NewWatcher(ctx context.Context, screen mux.Screen) *ScreenWatcher {
+	w := &ScreenWatcher{
+		Lifetime: util.NewLifetime(ctx),
+		queue:    make(chan ScreenUpdate, 1000),
+	}
+
+	u := screen.Subscribe(ctx)
+
+	go func() {
+		defer u.Done()
+		for {
+			select {
+			case msg := <-u.Recv():
+				select {
+				case w.queue <- ScreenUpdate{
+					w:      w,
+					Screen: screen,
+					Msg:    msg,
+				}:
+				case <-w.Ctx().Done():
+					return
+				}
+			case <-w.Ctx().Done():
+				return
+			}
+		}
+	}()
+
+	return w
+}
+
+func waitScreen(ctx context.Context, screen mux.Screen, done chan<- ScreenUpdate) {
 	u := screen.Subscribe(ctx)
 	defer u.Done()
 
@@ -21,7 +77,10 @@ func waitScreen(ctx context.Context, screen mux.Screen, done chan<- Msg) {
 		select {
 		case msg := <-u.Recv():
 			select {
-			case done <- msg:
+			case done <- ScreenUpdate{
+				Screen: screen,
+				Msg:    msg,
+			}:
 			case <-ctx.Done():
 				return
 			}
@@ -31,59 +90,10 @@ func waitScreen(ctx context.Context, screen mux.Screen, done chan<- Msg) {
 	}
 }
 
-type ScreenWatcher struct {
-	util.Lifetime
-	mu    deadlock.RWMutex
-	wait  *util.Lifetime
-	queue chan Msg
-}
-
-func (s *ScreenWatcher) Wait(screens ...mux.Screen) Cmd {
-	wait := util.NewLifetime(s.Ctx())
-
-	s.mu.Lock()
-	if s.wait != nil {
-		s.wait.Cancel()
-	}
-	s.wait = &wait
-	s.mu.Unlock()
-
-	for _, screen := range screens {
-		// For convenience
-		if screen == nil {
-			continue
-		}
-
-		go waitScreen(wait.Ctx(), screen, s.queue)
-	}
-
-	return func() Msg {
-		select {
-		case <-wait.Ctx().Done():
-			return nil
-		case msg := <-s.queue:
-			wait.Cancel()
-
-			s.mu.Lock()
-			s.wait = nil
-			s.mu.Unlock()
-
-			return ScreenUpdate{Msg: msg}
-		}
-	}
-}
-
-func NewWatcher(ctx context.Context) *ScreenWatcher {
-	return &ScreenWatcher{
-		Lifetime: util.NewLifetime(ctx),
-		queue:    make(chan Msg, 1000),
-	}
-}
-
 func WaitScreens(ctx context.Context, screens ...mux.Screen) Cmd {
 	ctx, cancel := context.WithCancel(ctx)
 
-	done := make(chan Msg)
+	done := make(chan ScreenUpdate)
 	for _, screen := range screens {
 		// For convenience
 		if screen == nil {
@@ -97,7 +107,7 @@ func WaitScreens(ctx context.Context, screens ...mux.Screen) Cmd {
 		defer cancel()
 		select {
 		case msg := <-done:
-			return ScreenUpdate{Msg: msg}
+			return msg
 		case <-ctx.Done():
 			return nil
 		}

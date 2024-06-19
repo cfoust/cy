@@ -13,12 +13,13 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case taro.ScreenUpdate:
-		return f, f.watcher.Wait(f.anim, f.preview)
+		return f, msg.Wait()
 	case matchResult:
 		f.filtered = msg.Filtered
-		f.setSelected(f.selected)
-		f.preview = f.getPreview()
-		return f, f.emitOption()
+		return f, tea.Batch(
+			f.setSelected(f.selected),
+			f.emitOption(),
+		)
 	case tea.WindowSizeMsg:
 		size := geom.Size{
 			R: msg.Height,
@@ -55,10 +56,8 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				delta = 1
 			}
 
-			f.setSelected(f.selected + delta)
-			f.preview = f.getPreview()
-
 			return f, tea.Batch(
+				f.setSelected(f.selected+delta),
 				f.emitOption(),
 			)
 		case taro.KeyEnter:

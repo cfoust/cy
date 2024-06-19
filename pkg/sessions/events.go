@@ -2,7 +2,6 @@ package sessions
 
 import (
 	"context"
-	"io"
 	"time"
 
 	P "github.com/cfoust/cy/pkg/io/protocol"
@@ -44,10 +43,6 @@ func (s *EventStream) Write(data []byte) (n int, err error) {
 
 func (s *EventStream) Read(p []byte) (n int, err error) {
 	n, err = s.stream.Read(p)
-
-	if n == 0 || err == io.EOF {
-		return n, nil
-	}
 
 	if err != nil {
 		return n, err
