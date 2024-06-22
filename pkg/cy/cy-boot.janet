@@ -300,6 +300,9 @@ For example:
                ["/"] replay/search-forward
                ["?"] replay/search-backward
                ["g" "g"] replay/beginning
+               ["n"] replay/search-again
+               ["N"] replay/search-reverse
+               [" "] replay/time-play
                ["G"] replay/end)
 
 (key/bind-many :copy
@@ -316,7 +319,7 @@ For example:
                ["backspace"] replay/cursor-left
                ["right"] replay/cursor-right
                # ??? <space> in vim actually goes across lines
-               ["space"] replay/cursor-right
+               [" "] replay/cursor-right
                ["h"] replay/cursor-left
                ["ctrl+h"] replay/cursor-left
                ["ctrl+u"] replay/half-page-up
@@ -329,7 +332,6 @@ For example:
                ["y"] replay/copy
                ["n"] replay/search-again
                ["N"] replay/search-reverse
-               [" "] replay/time-play
                ["s"] replay/swap-screen
                ["]" "c"] replay/command-forward
                ["[" "c"] replay/command-backward
