@@ -262,7 +262,7 @@ func (r *Replay) View(state *tty.State) {
 				From: highlight.Root(),
 				To: geom.Vec2{
 					R: highlight.R,
-					C: highlight.C1-1,
+					C: highlight.C1 - 1,
 				},
 				FG: r.render.ConvertLipgloss(
 					lipgloss.Color("0"),

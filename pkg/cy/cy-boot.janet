@@ -291,7 +291,7 @@ For example:
                [prefix "r"] action/reload-config
                [prefix "P"] cy/paste)
 
-(key/bind-many :replay
+(key/bind-many :time
                ["q"] replay/quit
                ["ctrl+c"] replay/quit
                ["esc"] replay/quit
@@ -303,6 +303,10 @@ For example:
                ["G"] replay/end)
 
 (key/bind-many :copy
+               ["g" "g"] replay/beginning
+               ["G"] replay/end
+               ["/"] replay/search-forward
+               ["?"] replay/search-backward
                ["q"] replay/quit
                ["ctrl+c"] replay/quit
                ["esc"] replay/quit

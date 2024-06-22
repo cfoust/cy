@@ -16,9 +16,9 @@ import (
 )
 
 type ReplayModule struct {
-	Lifetime               util.Lifetime
-	Tree                   *tree.Tree
-	ReplayBinds, CopyBinds *bind.BindScope
+	Lifetime             util.Lifetime
+	Tree                 *tree.Tree
+	TimeBinds, CopyBinds *bind.BindScope
 }
 
 func (m *ReplayModule) send(context interface{}, msg taro.Msg) error {
@@ -252,7 +252,7 @@ func (m *ReplayModule) Open(
 	replay := replay.New(
 		ctx,
 		player.FromEvents(events),
-		m.ReplayBinds,
+		m.TimeBinds,
 		m.CopyBinds,
 		replay.WithNoQuit,
 	)

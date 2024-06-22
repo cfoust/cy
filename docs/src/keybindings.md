@@ -12,7 +12,7 @@ This tells `cy` that whenever you type `ctrl+l` it should show a toast with the 
 
 The [`(key/bind)`](api.md#keybind) function takes three parameters:
 
-1. **A scope**: The circumstances in which this binding should apply, such as a [group](./groups-and-panes.md) or mode (e.g. `:replay`). In this case we use the `:root` [keyword](https://janet-lang.org/docs/strings.html), which is a handy way of saying this binding should apply everywhere.
+1. **A scope**: The circumstances in which this binding should apply, such as a [group](./groups-and-panes.md) or mode (e.g. `:time`). In this case we use the `:root` [keyword](https://janet-lang.org/docs/strings.html), which is a handy way of saying this binding should apply everywhere.
 1. **A key sequence**: A Janet [tuple](https://janet-lang.org/docs/data_structures/tuples.html) that indicates the keys that must be typed for the callback to execute.
 1. **A function**: The callback that should be executed when this key sequence matches.
 
@@ -70,8 +70,8 @@ This allows you to build more sophisticated functionality without defining a bin
 A practical application of this can be found in `cy`'s source code, where we use this functionality to support `vim`-like character movements in [replay mode](./replay-mode.md):
 
 ```janet
-(key/bind :replay ["f" [:re "."]] replay/jump-forward)
-(key/bind :replay ["F" [:re "."]] replay/jump-backward)
+(key/bind :copy ["f" [:re "."]] replay/jump-forward)
+(key/bind :copy ["F" [:re "."]] replay/jump-backward)
 ```
 
 [Key specifiers](./preset-keys.md) are matched as though their names were typed by the user; this means that providing the pattern `"ctrl\+[a-c]"` will match `ctrl+a`, `ctrl+b`, and `ctrl+c`.

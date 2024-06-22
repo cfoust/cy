@@ -2,7 +2,7 @@
 
 (key/bind target sequence callback)
 
-Bind the key sequence `sequence` to `callback` for node `target`, which is a [NodeID](api.md#nodeid) or `:replay`. `target` can refer to any group or pane.
+Bind the key sequence `sequence` to `callback` for node `target`, which is a [NodeID](api.md#nodeid), `:time` (for [time mode](./replay-mode.md#time-mode)), or `:copy` (for [copy mode](./replay-mode.md#copy-mode)). `target` can refer to any group or pane.
 
 `sequence` is a [key sequence](./keybindings.md#key-sequences), which consists of a tuple with string elements that are either key literals (`"h"`), preset key specifiers (`"ctrl+a"`), or regex patterns (`[:re "^[a-z]$"]`).
 

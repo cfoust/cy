@@ -8,8 +8,8 @@ package dir
 import "C"
 
 import (
-	"unsafe"
 	"fmt"
+	"unsafe"
 )
 
 const PROC_PIDVNODEPATHINFO = 9

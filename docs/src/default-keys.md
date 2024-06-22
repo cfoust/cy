@@ -65,10 +65,10 @@ All of the bindings in this table are prefixed by `ctrl+a` by default. This curr
 
 ## Replay mode
 
-The actions found in the tables below are only valid in a pane that is in replay mode. Replay mode uses an isolated binding scope that can be accessed by providing `:replay` to a [`(key/bind)`](api.md#keybind) call:
+The actions found in the tables below are only valid in a pane that is in replay mode. Replay mode uses two isolated binding scopes that can be accessed by providing `:time` (for time mode) or `:copy` (for copy mode) to a [`(key/bind)`](api.md#keybind) call:
 
 ```janet
-(key/bind :replay ["ctrl+b"] (fn [&] (do-something)))
+(key/bind :time ["ctrl+b"] (fn [&] (do-something)))
 ```
 
 ### General

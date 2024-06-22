@@ -112,7 +112,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 		isTime := r.mode == ModeTime
 		return r, func() tea.Msg {
-			if isTime && r.replayBinds.InputMessage(msg) {
+			if isTime && r.timeBinds.InputMessage(msg) {
 				return nil
 			}
 			r.copyBinds.InputMessage(msg)
@@ -120,7 +120,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 	case bind.BindEvent:
 		switch msg.Engine {
-		case r.replayBinds:
+		case r.timeBinds:
 			if r.mode == ModeCopy {
 				return r, nil
 			}

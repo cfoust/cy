@@ -8,11 +8,11 @@ import (
 // CSI (Control Sequence Introducer)
 // ESC+[
 type csiEscape struct {
-	buf  []byte
-	args []int
+	buf           []byte
+	args          []int
 	intermediates []byte
-	mode byte
-	priv bool
+	mode          byte
+	priv          bool
 }
 
 func (c *csiEscape) reset() {

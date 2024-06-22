@@ -59,7 +59,7 @@ type Cy struct {
 	tree *tree.Tree
 
 	// Replay mode has its own isolated binding scope
-	replayBinds *bind.BindScope
+	timeBinds *bind.BindScope
 	// So does copy mode
 	copyBinds *bind.BindScope
 
@@ -229,23 +229,23 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 }
 
 func Start(ctx context.Context, options Options) (*Cy, error) {
-	replayBinds := bind.NewBindScope(nil)
+	timeBinds := bind.NewBindScope(nil)
 	copyBinds := bind.NewBindScope(nil)
 
 	defaults := params.New()
 	t := tree.NewTree(tree.WithParams(defaults.NewChild()))
 	cy := Cy{
-		Lifetime:    util.NewLifetime(ctx),
-		tree:        t,
-		muxServer:   server.New(),
-		replayBinds: replayBinds,
-		copyBinds:   copyBinds,
-		defaults:    defaults,
-		showSplash:  !options.HideSplash,
-		lastVisit:   make(map[tree.NodeID]historyEvent),
-		lastWrite:   make(map[tree.NodeID]historyEvent),
-		writes:      make(chan historyEvent),
-		visits:      make(chan historyEvent),
+		Lifetime:   util.NewLifetime(ctx),
+		tree:       t,
+		muxServer:  server.New(),
+		timeBinds:  timeBinds,
+		copyBinds:  copyBinds,
+		defaults:   defaults,
+		showSplash: !options.HideSplash,
+		lastVisit:  make(map[tree.NodeID]historyEvent),
+		lastWrite:  make(map[tree.NodeID]historyEvent),
+		writes:     make(chan historyEvent),
+		visits:     make(chan historyEvent),
 	}
 	cy.toast = NewToastLogger(cy.sendToast)
 	err := cy.setDefaults(options)
@@ -263,7 +263,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 		cy.Ctx(),
 		logs,
 		logs,
-		replayBinds,
+		timeBinds,
 		copyBinds,
 	)
 	logPane := t.Root().NewPane(cy.Ctx(), logScreen)

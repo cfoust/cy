@@ -19,8 +19,8 @@ import (
 type Replay struct {
 	*player.Player
 
-	render                 *taro.Renderer
-	replayBinds, copyBinds *bind.Engine[bind.Action]
+	render               *taro.Renderer
+	timeBinds, copyBinds *bind.Engine[bind.Action]
 
 	// Whether to show segmented command input and output. Only useful in
 	// testing (for now?)
@@ -116,7 +116,7 @@ func (r *Replay) Init() tea.Cmd {
 
 func newReplay(
 	player *player.Player,
-	replayBinds, copyBinds *bind.Engine[bind.Action],
+	timeBinds, copyBinds *bind.Engine[bind.Action],
 ) *Replay {
 	searchInput := textinput.New()
 	searchInput.Focus()
@@ -138,7 +138,7 @@ func newReplay(
 		searchInput:    searchInput,
 		incrInput:      incrInput,
 		playbackRate:   1,
-		replayBinds:    replayBinds,
+		timeBinds:      timeBinds,
 		copyBinds:      copyBinds,
 		searchProgress: make(chan int),
 		skipInactivity: true,
@@ -200,10 +200,10 @@ func pollBinds(
 func New(
 	ctx context.Context,
 	player *player.Player,
-	replayBinds, copyBinds *bind.BindScope,
+	timeBinds, copyBinds *bind.BindScope,
 	options ...Option,
 ) *taro.Program {
-	replayEngine := bind.Run(ctx, replayBinds)
+	replayEngine := bind.Run(ctx, timeBinds)
 	copyEngine := bind.Run(ctx, copyBinds)
 	r := newReplay(
 		player,

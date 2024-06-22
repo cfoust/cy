@@ -51,7 +51,7 @@ func TestScopes(t *testing.T) {
 			Command: "/bin/bash",
 		},
 		"",
-		server.replayBinds,
+		server.timeBinds,
 	)
 	require.NoError(t, err)
 	pane := group.NewPane(
