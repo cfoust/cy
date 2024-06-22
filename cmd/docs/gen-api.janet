@@ -22,8 +22,13 @@
 (each env envs
   (array/concat symbols env))
 
+(var lookup @{})
 # Format and send all the symbols upwards
-(each [name {:macro macro :doc doc :source-map [file line]}] symbols
+(each [name {:macro macro
+             :doc doc
+             :source-map [file line]
+             :value value}] symbols
+  (put lookup value name)
   (default macro false)
   (cy/doc
     (string name)
@@ -34,3 +39,13 @@
         line)
       "")
     macro))
+
+(defn handle-binding [source binding]
+  (def {:sequence sequence :function function} binding)
+  (def func (get lookup function))
+  (default func "")
+  (cy/bind source sequence (string func)))
+
+(each binding (key/get :root) (handle-binding "root" binding))
+(each binding (key/get :time) (handle-binding "time" binding))
+(each binding (key/get :copy) (handle-binding "copy" binding))

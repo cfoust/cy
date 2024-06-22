@@ -303,6 +303,12 @@ For example:
                ["n"] replay/search-again
                ["N"] replay/search-reverse
                [" "] replay/time-play
+               ["1"] (fn [&] (replay/time-playback-rate 1))
+               ["2"] (fn [&] (replay/time-playback-rate 2))
+               ["3"] (fn [&] (replay/time-playback-rate 5))
+               ["!"] (fn [&] (replay/time-playback-rate -1))
+               ["@"] (fn [&] (replay/time-playback-rate -2))
+               ["#"] (fn [&] (replay/time-playback-rate -5))
                ["G"] replay/end)
 
 (key/bind-many :copy
@@ -347,12 +353,6 @@ For example:
                ["g" "$"] replay/end-of-screen-line
                ["g" "^"] replay/first-non-blank-screen
                ["g" "end"] replay/last-non-blank-screen
-               ["1"] (fn [&] (replay/time-playback-rate 1))
-               ["2"] (fn [&] (replay/time-playback-rate 2))
-               ["3"] (fn [&] (replay/time-playback-rate 5))
-               ["!"] (fn [&] (replay/time-playback-rate -1))
-               ["@"] (fn [&] (replay/time-playback-rate -2))
-               ["#"] (fn [&] (replay/time-playback-rate -5))
                [";"] replay/jump-again
                [","] replay/jump-reverse
                ["f" [:re "."]] replay/jump-forward
