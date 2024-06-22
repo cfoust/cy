@@ -60,6 +60,8 @@ type Cy struct {
 
 	// Replay mode has its own isolated binding scope
 	replayBinds *bind.BindScope
+	// So does copy mode
+	copyBinds *bind.BindScope
 
 	clients []*Client
 
@@ -228,6 +230,7 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 
 func Start(ctx context.Context, options Options) (*Cy, error) {
 	replayBinds := bind.NewBindScope(nil)
+	copyBinds := bind.NewBindScope(nil)
 
 	defaults := params.New()
 	t := tree.NewTree(tree.WithParams(defaults.NewChild()))
@@ -236,6 +239,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 		tree:        t,
 		muxServer:   server.New(),
 		replayBinds: replayBinds,
+		copyBinds:   copyBinds,
 		defaults:    defaults,
 		showSplash:  !options.HideSplash,
 		lastVisit:   make(map[tree.NodeID]historyEvent),
@@ -260,6 +264,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 		logs,
 		logs,
 		replayBinds,
+		copyBinds,
 	)
 	logPane := t.Root().NewPane(cy.Ctx(), logScreen)
 	logPane.SetName("logs")

@@ -3,6 +3,7 @@ package replay
 import (
 	"time"
 
+	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/taro"
 
@@ -19,6 +20,14 @@ func (r *Replay) quit() (taro.Model, tea.Cmd) {
 
 type applyOptions struct {
 	options []Option
+}
+
+func (r *Replay) emit(event bind.BindEvent) tea.Cmd {
+	return func() taro.Msg {
+		return taro.PublishMsg{
+			Msg: event,
+		}
+	}
 }
 
 func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
@@ -101,13 +110,27 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		// Clear out the "no matches" dialog
 		r.isEmpty = false
 
-		// Pass unmatched keys into the binding engine; because of how
-		// text input works, :replay bindings have to be activated
-		// selectively
+		isTime := r.mode == ModeTime
 		return r, func() tea.Msg {
-			r.binds.InputMessage(msg)
+			if isTime && r.replayBinds.InputMessage(msg) {
+				return nil
+			}
+			r.copyBinds.InputMessage(msg)
 			return nil
 		}
+	case bind.BindEvent:
+		switch msg.Engine {
+		case r.replayBinds:
+			if r.mode == ModeCopy {
+				return r, nil
+			}
+
+			return r, r.emit(msg)
+		case r.copyBinds:
+			r.mode = ModeCopy
+			return r, r.emit(msg)
+		}
+		return r, nil
 	}
 
 	switch msg := msg.(type) {

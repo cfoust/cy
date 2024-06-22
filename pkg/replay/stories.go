@@ -31,7 +31,12 @@ func createStorySession() []sessions.Event {
 }
 
 func createStory(ctx context.Context, events []sessions.Event, msgs ...interface{}) mux.Screen {
-	replay := New(ctx, player.FromEvents(events), bind.NewBindScope(nil))
+	replay := New(
+		ctx,
+		player.FromEvents(events),
+		bind.NewBindScope(nil),
+		bind.NewBindScope(nil),
+	)
 
 	var realMsg tea.Msg
 	for _, msg := range msgs {

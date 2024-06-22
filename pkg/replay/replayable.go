@@ -30,7 +30,7 @@ type Replayable struct {
 	replay      *taro.Program
 	player      *player.Player
 
-	binds *bind.BindScope
+	replayBinds, copyBinds *bind.BindScope
 }
 
 var _ mux.Screen = (*Replayable)(nil)
@@ -145,7 +145,13 @@ func (r *Replayable) EnterReplay(options ...Option) {
 	}
 
 	r.player.Acquire()
-	replay := New(r.Ctx(), r.player, r.binds, options...)
+	replay := New(
+		r.Ctx(),
+		r.player,
+		r.replayBinds,
+		r.copyBinds,
+		options...,
+	)
 
 	replay.Resize(r.size)
 	r.replay = replay
@@ -174,13 +180,14 @@ func (r *Replayable) EnterReplay(options ...Option) {
 func NewReplayable(
 	ctx context.Context,
 	cmd, stream mux.Stream,
-	binds *bind.BindScope,
+	replayBinds, copyBinds *bind.BindScope,
 ) *Replayable {
 	lifetime := util.NewLifetime(ctx)
 	r := &Replayable{
 		Lifetime:        lifetime,
 		UpdatePublisher: mux.NewPublisher(),
-		binds:           binds,
+		replayBinds:     replayBinds,
+		copyBinds:       copyBinds,
 		cmd:             cmd,
 		stream:          stream,
 		player:          player.New(),

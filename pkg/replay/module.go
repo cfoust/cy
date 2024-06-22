@@ -19,8 +19,8 @@ import (
 type Replay struct {
 	*player.Player
 
-	render *taro.Renderer
-	binds  *bind.Engine[bind.Action]
+	render                 *taro.Renderer
+	replayBinds, copyBinds *bind.Engine[bind.Action]
 
 	// Whether to show segmented command input and output. Only useful in
 	// testing (for now?)
@@ -116,7 +116,7 @@ func (r *Replay) Init() tea.Cmd {
 
 func newReplay(
 	player *player.Player,
-	binds *bind.Engine[bind.Action],
+	replayBinds, copyBinds *bind.Engine[bind.Action],
 ) *Replay {
 	searchInput := textinput.New()
 	searchInput.Focus()
@@ -138,7 +138,8 @@ func newReplay(
 		searchInput:    searchInput,
 		incrInput:      incrInput,
 		playbackRate:   1,
-		binds:          binds,
+		replayBinds:    replayBinds,
+		copyBinds:      copyBinds,
 		searchProgress: make(chan int),
 		skipInactivity: true,
 	}
@@ -176,33 +177,46 @@ func WithLocation(location geom.Vec2) Option {
 	}
 }
 
+// pollBinds subscribes to BindEvents from a binding engine and forwards them
+// to the Replay program so that it can decide whether to emit them (after
+// which they will be executed by cy).
+func pollBinds(
+	ctx context.Context,
+	program *taro.Program,
+	engine *bind.Engine[bind.Action],
+) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case event := <-engine.Recv():
+			if bindEvent, ok := event.(bind.BindEvent); ok {
+				program.Send(bindEvent)
+			}
+		}
+	}
+}
+
 func New(
 	ctx context.Context,
 	player *player.Player,
-	replayBinds *bind.BindScope,
+	replayBinds, copyBinds *bind.BindScope,
 	options ...Option,
 ) *taro.Program {
-	engine := bind.NewEngine[bind.Action]()
-	engine.SetScopes(replayBinds)
-	go engine.Poll(ctx)
-	r := newReplay(player, engine)
+	replayEngine := bind.Run(ctx, replayBinds)
+	copyEngine := bind.Run(ctx, copyBinds)
+	r := newReplay(
+		player,
+		replayEngine,
+		copyEngine,
+	)
 	for _, option := range options {
 		option(r)
 	}
 	program := taro.New(ctx, r)
 
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event := <-engine.Recv():
-				if bindEvent, ok := event.(bind.BindEvent); ok {
-					program.Publish(bindEvent)
-				}
-			}
-		}
-	}()
+	go pollBinds(ctx, program, replayEngine)
+	go pollBinds(ctx, program, copyEngine)
 
 	return program
 }

@@ -39,6 +39,7 @@ func createTest(events []sessions.Event) (*Replay, func(msgs ...interface{})) {
 	var r = newReplay(
 		player.FromEvents(events),
 		bind.NewEngine[bind.Action](),
+		bind.NewEngine[bind.Action](),
 	)
 
 	// If we don't do this, the cursor blink causes tests to hang forever

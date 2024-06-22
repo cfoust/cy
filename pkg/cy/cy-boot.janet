@@ -295,25 +295,30 @@ For example:
                ["q"] replay/quit
                ["ctrl+c"] replay/quit
                ["esc"] replay/quit
-               ["]" "t"] replay/time-step-forward
-               ["[" "t"] replay/time-step-back
-               ["up"] replay/scroll-up
-               ["down"] replay/scroll-down
-               ["ctrl+u"] replay/half-page-up
-               ["ctrl+d"] replay/half-page-down
+               ["right"] replay/time-step-forward
+               ["left"] replay/time-step-back
                ["/"] replay/search-forward
                ["?"] replay/search-backward
                ["g" "g"] replay/beginning
-               ["G"] replay/end
+               ["G"] replay/end)
+
+(key/bind-many :copy
+               ["q"] replay/quit
+               ["ctrl+c"] replay/quit
+               ["esc"] replay/quit
+               ["left"] replay/cursor-left
                ["l"] replay/cursor-right
-               ["right"] replay/cursor-right
                # ??? <BS> in vim actually goes across lines
-               # TODO(cfoust): 06/10/24 this is broken
+               ["backspace"] replay/cursor-left
+               ["right"] replay/cursor-right
+               # ??? <space> in vim actually goes across lines
                ["space"] replay/cursor-right
                ["h"] replay/cursor-left
                ["ctrl+h"] replay/cursor-left
-               # ??? <BS> in vim actually goes across lines
-               ["backspace"] replay/cursor-left
+               ["ctrl+u"] replay/half-page-up
+               ["ctrl+d"] replay/half-page-down
+               ["up"] replay/scroll-up
+               ["down"] replay/scroll-down
                ["j"] replay/cursor-down
                ["k"] replay/cursor-up
                ["v"] replay/select

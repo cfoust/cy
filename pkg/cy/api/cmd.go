@@ -23,9 +23,9 @@ type CmdParams struct {
 }
 
 type CmdModule struct {
-	Lifetime    util.Lifetime
-	Tree        *tree.Tree
-	ReplayBinds *bind.BindScope
+	Lifetime               util.Lifetime
+	Tree                   *tree.Tree
+	ReplayBinds, CopyBinds *bind.BindScope
 }
 
 func (c *CmdModule) New(
@@ -67,6 +67,7 @@ func (c *CmdModule) New(
 		},
 		dataDir,
 		c.ReplayBinds,
+		c.CopyBinds,
 	)
 	if err != nil {
 		return 0, err

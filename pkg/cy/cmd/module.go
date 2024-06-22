@@ -14,7 +14,7 @@ func New(
 	ctx context.Context,
 	options stream.CmdOptions,
 	dataDir string,
-	replayBinds *bind.BindScope,
+	replayBinds, copyBinds *bind.BindScope,
 ) (*replay.Replayable, error) {
 	cmd, err := stream.NewCmd(ctx, options, geom.DEFAULT_SIZE)
 	if err != nil {
@@ -27,6 +27,7 @@ func New(
 			cmd,
 			cmd,
 			replayBinds,
+			copyBinds,
 		)
 		return replayable, nil
 	}
@@ -46,5 +47,6 @@ func New(
 		cmd,
 		sessions.NewEventStream(cmd, recorder),
 		replayBinds,
+		copyBinds,
 	), nil
 }

@@ -10,8 +10,8 @@ import (
 )
 
 type KeyModule struct {
-	Tree        *tree.Tree
-	ReplayBinds *bind.BindScope
+	Tree                   *tree.Tree
+	ReplayBinds, CopyBinds *bind.BindScope
 }
 
 type regexKey struct {
@@ -57,20 +57,22 @@ func getKeySequence(value *janet.Value) (result []interface{}, err error) {
 }
 
 func (k *KeyModule) getScope(target *janet.Value) (*bind.BindScope, error) {
-	var scope *bind.BindScope
 	node, err := resolveNode(k.Tree, target)
 	if err == nil {
-		scope = node.Binds()
-	} else {
-		replayErr := target.Unmarshal(&KEYWORD_REPLAY)
-		if replayErr != nil {
-			return nil, fmt.Errorf("target must be one of :root, :replay, or node ID")
-		}
-
-		scope = k.ReplayBinds
+		return node.Binds(), nil
 	}
 
-	return scope, nil
+	err = target.Unmarshal(&KEYWORD_REPLAY)
+	if err == nil {
+		return k.ReplayBinds, nil
+	}
+
+	err = target.Unmarshal(&KEYWORD_COPY)
+	if err == nil {
+		return k.CopyBinds, nil
+	}
+
+	return nil, fmt.Errorf("target must be one of :root, :replay, :copy, or node ID")
 }
 
 func (k *KeyModule) Bind(target *janet.Value, sequence *janet.Value, callback *janet.Function) error {

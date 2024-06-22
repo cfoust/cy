@@ -20,6 +20,7 @@ type Event interface{}
 // An action was triggered
 type ActionEvent[T any] struct {
 	Action   T
+	Engine   *Engine[T]
 	Source   *trie.Trie[T]
 	Sequence []string
 	// Any regex traversals that matched
@@ -39,6 +40,11 @@ type PartialEvent[T any] struct {
 
 // Contains data for a single input event
 type input taro.Msg
+
+type trackedInput struct {
+	input  taro.Msg
+	result chan<- bool
+}
 
 type Engine[T any] struct {
 	deadlock.RWMutex
@@ -61,6 +67,13 @@ func NewEngine[T any]() *Engine[T] {
 		out:        make(chan Event, 100),
 		keyTimeout: util.NewLifetime(context.Background()),
 	}
+}
+
+func Run[T any](ctx context.Context, binds *trie.Trie[T]) *Engine[T] {
+	engine := NewEngine[T]()
+	engine.SetScopes(binds)
+	go engine.Poll(ctx)
+	return engine
 }
 
 func (e *Engine[T]) Recv() <-chan Event {
@@ -108,7 +121,7 @@ func (e *Engine[T]) getState() []string {
 	return e.state
 }
 
-func (e *Engine[T]) processKey(ctx context.Context, in input) {
+func (e *Engine[T]) processKey(ctx context.Context, in input) (consumed bool) {
 	// Mouse messages have to be translated to match the pane, so we just
 	// pass them on
 	if _, ok := in.(taro.MouseMsg); ok {
@@ -137,9 +150,11 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) {
 		}
 
 		// Exact match, let's stop
+		consumed = true
 		e.clearState()
 		e.out <- ActionEvent[T]{
 			Action:   value,
+			Engine:   e,
 			Source:   scope,
 			Sequence: sequence,
 			Args:     re,
@@ -161,6 +176,7 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) {
 	}
 
 	if len(matches) > 0 {
+		consumed = true
 		e.out <- PartialEvent[T]{
 			Prefix:  sequence,
 			Matches: matches,
@@ -171,6 +187,7 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) {
 
 	e.clearState()
 	e.out <- in
+	return
 }
 
 func (e *Engine[T]) SetScopes(scopes ...*trie.Trie[T]) {
@@ -192,6 +209,13 @@ func (e *Engine[T]) Poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case in := <-e.in:
+			if tracked, ok := in.(trackedInput); ok {
+				tracked.result <- e.processKey(
+					ctx,
+					tracked.input,
+				)
+				continue
+			}
 			e.processKey(ctx, in)
 		}
 	}
@@ -206,6 +230,15 @@ func (e *Engine[T]) Input(data []byte) {
 	}
 }
 
-func (e *Engine[T]) InputMessage(msg taro.Msg) {
-	e.in <- msg
+// InputMessage directly passes a taro.Msg (which is typically a taro.KeyMsg)
+// into the binding engine. If the key was "consumed", or produced either a
+// partial or full match, InputMessage returns true.
+func (e *Engine[T]) InputMessage(msg taro.Msg) (consumed bool) {
+	out := make(chan bool)
+	e.in <- trackedInput{
+		input:  msg,
+		result: out,
+	}
+
+	return <-out
 }
