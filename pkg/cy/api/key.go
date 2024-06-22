@@ -144,31 +144,25 @@ func (k *KeyModule) Remap(target *janet.Value, from, to *janet.Value) error {
 }
 
 type Binding struct {
-	Node     tree.NodeID
 	Sequence []string
 	Function *janet.Value
 }
 
-func NewBinding(node tree.Node, leaf trie.Leaf[bind.Action]) Binding {
-	return Binding{
-		Node:     node.Id(),
-		Sequence: leaf.Path,
-		Function: leaf.Value.Callback.Value,
-	}
-}
-
 func (k *KeyModule) Get(target *janet.Value) ([]Binding, error) {
 	defer target.Free()
-	node, err := resolveNode(k.Tree, target)
+	scope, err := k.getScope(target)
 	if err != nil {
 		return nil, err
 	}
 
 	binds := []Binding{}
-	for _, leaf := range node.Binds().Leaves() {
+	for _, leaf := range scope.Leaves() {
 		binds = append(
 			binds,
-			NewBinding(node, leaf),
+			Binding{
+				Sequence: leaf.Path,
+				Function: leaf.Value.Callback.Value,
+			},
 		)
 	}
 

@@ -393,15 +393,13 @@ func (c *Client) Frame() *frames.Framer {
 
 func (c *Client) Binds() (binds []api.Binding) {
 	for _, scope := range c.binds.Scopes() {
-		node, ok := scope.Source().(tree.Node)
-		if !ok {
-			continue
-		}
-
 		for _, leaf := range scope.Leaves() {
 			binds = append(
 				binds,
-				api.NewBinding(node, leaf),
+				api.Binding{
+					Sequence: leaf.Path,
+					Function: leaf.Value.Callback.Value,
+				},
 			)
 		}
 	}
