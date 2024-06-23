@@ -59,7 +59,7 @@ For example:
 
 (key/action
   action/command-palette
-  "open command palette"
+  "Open the command palette."
   (def binds (key/current))
   (as?-> actions _
          (map
@@ -96,14 +96,14 @@ For example:
 
 (key/action
   action/new-shell
-  "create a new shell"
+  "Create a new shell."
   (def path (cmd/path (pane/current)))
   (def shell (cmd/new shells :path path :name (path/base path)))
   (pane/attach shell))
 
 (key/action
   action/new-project
-  "create a new project"
+  "Create a new project."
   (def path (cmd/path (pane/current)))
   (def project (group/new projects :name (path/base path)))
   (def editor
@@ -116,7 +116,7 @@ For example:
 
 (key/action
   action/jump-project
-  "jump to a project"
+  "Jump to a project."
   (as?-> projects _
          (group/children _)
          (map
@@ -133,7 +133,7 @@ For example:
 
 (key/action
   action/jump-shell
-  "jump to a shell"
+  "Jump to a shell."
   (as?-> (group/children shells) _
          (map |(tuple
                  (cmd/path $)
@@ -145,7 +145,7 @@ For example:
 
 (key/action
   action/next-pane
-  "move to the next pane"
+  "Move to the next pane."
   (def children
     (-?>>
       (pane/current)
@@ -169,7 +169,7 @@ For example:
 
 (key/action
   action/jump-pane
-  "jump to a pane"
+  "Jump to a pane."
   (as?-> (group/leaves :root) _
          (map |(tuple (tree/path $) {:type :node :id $} $) _)
          (input/find _ :prompt "search: pane")
@@ -177,7 +177,7 @@ For example:
 
 (key/action
   action/jump-screen-lines
-  "jump to a pane based on screen lines"
+  "Jump to a pane based on screen lines."
   (as?-> (group/leaves :root) _
          (mapcat
            (fn [id]
@@ -192,12 +192,12 @@ For example:
 
 (key/action
   action/kill-current-pane
-  "kill the current pane"
+  "Kill the current pane."
   (tree/kill (pane/current)))
 
 (key/action
   action/toggle-margins
-  "toggle margins"
+  "Toggle the screen's margins."
   (def size (viewport/size))
   (case (+ (size 0) (size 1))
     0 (viewport/set-size [0 80])
@@ -205,48 +205,48 @@ For example:
 
 (key/action
   action/margins-80
-  "set size to 80 columns"
+  "Set size to 80 columns."
   (viewport/set-size [0 80]))
 
 (key/action
   action/margins-160
-  "set size to 160 columns"
+  "Set size to 160 columns."
   (viewport/set-size [0 160]))
 
 (key/action
   action/choose-frame
-  "choose a frame"
+  "Choose a frame."
   (as?-> (viewport/get-frames) _
          (input/find _ :prompt "search: frame")
          (viewport/set-frame _)))
 
 (key/action
   action/reload-config
-  "reload the cy configuration"
+  "Reload the cy configuration."
   (cy/reload-config))
 
 (key/action
   action/random-frame
-  "switch to a random frame"
+  "Switch to a random frame."
   (def frames (viewport/get-frames))
   (def rng (math/rng))
   (viewport/set-frame (get frames (math/rng-int rng (length frames)))))
 
 (key/action
   action/margins-smaller
-  "decrease margins by 5 columns"
+  "Decrease margins by 5 columns."
   (def [lines cols] (viewport/size))
   (viewport/set-size [lines (+ cols 10)]))
 
 (key/action
   action/margins-bigger
-  "increase margins by 5 columns"
+  "Increase margins by 5 columns."
   (def [lines cols] (viewport/size))
   (viewport/set-size [lines (- cols 10)]))
 
 (key/action
   action/open-log
-  "open a .borg file"
+  "Open a .borg file."
   (as?-> (path/glob (path/join [(cy/get :data-dir) "*.borg"])) _
          (map |(tuple $ {:type :replay :path $} $) _)
          (input/find _ :prompt "search: log file")
@@ -266,7 +266,7 @@ For example:
 
 (key/action
   action/jump-pane-command
-  "jump to a pane based on a command"
+  "Jump to a pane based on a command."
   (as?-> (group/leaves :root) _
          (mapcat |(get-pane-commands $ (fn [cmd] $)) _)
          (input/find _ :prompt "search: pane (command)")
@@ -274,7 +274,7 @@ For example:
 
 (key/action
   action/jump-command
-  "jump to a command"
+  "Jump to the output of a command."
   (as?-> (group/leaves :root) _
          (mapcat |(get-pane-commands $ (fn [cmd] [$ cmd])) _)
          (input/find _ :prompt "search: command")
@@ -317,6 +317,8 @@ For example:
                    ["q"] replay/quit
                    ["ctrl+c"] replay/quit
                    ["esc"] replay/quit
+                   ["]" "c"] replay/command-forward
+                   ["[" "c"] replay/command-backward
                    ["right"] replay/time-step-forward
                    ["left"] replay/time-step-back
                    ["/"] replay/search-forward
