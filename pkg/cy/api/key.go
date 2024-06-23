@@ -75,10 +75,20 @@ func (k *KeyModule) getScope(target *janet.Value) (*bind.BindScope, error) {
 	return nil, fmt.Errorf("target must be one of :root, :time, :copy, or node ID")
 }
 
-func (k *KeyModule) Bind(target *janet.Value, sequence *janet.Value, callback *janet.Function) error {
+type BindParams struct {
+	Tag string
+}
+
+func (k *KeyModule) Bind(
+	target *janet.Value,
+	sequence *janet.Value,
+	callback *janet.Function,
+	bindParams *janet.Named[BindParams],
+) error {
 	defer target.Free()
 	defer sequence.Free()
 
+	params := bindParams.Values()
 	scope, err := k.getScope(target)
 	if err != nil {
 		return err
@@ -92,6 +102,7 @@ func (k *KeyModule) Bind(target *janet.Value, sequence *janet.Value, callback *j
 	scope.Set(
 		translated,
 		bind.Action{
+			Tag:      params.Tag,
 			Callback: callback,
 		},
 	)
@@ -144,6 +155,7 @@ func (k *KeyModule) Remap(target *janet.Value, from, to *janet.Value) error {
 }
 
 type Binding struct {
+	Tag      string
 	Sequence []string
 	Function *janet.Value
 }
@@ -161,6 +173,7 @@ func (k *KeyModule) Get(target *janet.Value) ([]Binding, error) {
 			binds,
 			Binding{
 				Sequence: leaf.Path,
+				Tag:      leaf.Value.Tag,
 				Function: leaf.Value.Callback.Value,
 			},
 		)

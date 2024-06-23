@@ -22,8 +22,8 @@ type Symbol struct {
 }
 
 type Binding struct {
-	Source, Function string
-	Sequence         []string
+	Tag, Source, Function string
+	Sequence              []string
 }
 
 func main() {
@@ -51,8 +51,9 @@ func main() {
 	})
 
 	binds := make([]Binding, 0)
-	cy.Callback("cy/bind", "", func(source string, sequence []string, function string) {
+	cy.Callback("cy/bind", "", func(source string, tag string, sequence []string, function string) {
 		binds = append(binds, Binding{
+			Tag:      tag,
 			Source:   source,
 			Sequence: sequence,
 			Function: function,

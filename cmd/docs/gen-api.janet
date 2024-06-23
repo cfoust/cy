@@ -41,10 +41,12 @@
     macro))
 
 (defn handle-binding [source binding]
-  (def {:sequence sequence :function function} binding)
+  (def {:sequence sequence
+        :tag tag
+        :function function} binding)
   (def func (get lookup function))
   (default func "")
-  (cy/bind source sequence (string func)))
+  (cy/bind source tag sequence (string func)))
 
 (each binding (key/get :root) (handle-binding "root" binding))
 (each binding (key/get :time) (handle-binding "time" binding))

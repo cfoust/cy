@@ -41,6 +41,22 @@ For example:
                  (def [binding func] $)
                  (tuple 'key/bind scope binding func)) _)))
 
+(defmacro key/bind-many-tag
+  ````Bind many bindings at once in the same scope, adding the provided tag.
+````
+  [scope tag & body]
+
+  (when (not (= (% (length body) 2) 0))
+    (error "key/bind-many-tag requires an even number of arguments"))
+
+  (as?-> body _
+         (length _)
+         (range 0 _ 2)
+         (map |(tuple ;(array/slice body $ (+ $ 2))) _)
+         (map |(do
+                 (def [binding func] $)
+                 (tuple 'key/bind scope binding func :tag tag)) _)))
+
 (key/action
   action/command-palette
   "open command palette"
@@ -268,28 +284,28 @@ For example:
              :main true
              :location (((cmd :input) 0) :from)))))
 
-(key/bind-many :root
-               [prefix "j"] action/new-shell
-               [prefix "n"] action/new-project
-               [prefix "k"] action/jump-project
-               [prefix "l"] action/jump-shell
-               ["ctrl+l"] action/next-pane
-               [prefix ";"] action/jump-pane
-               [prefix "c"] action/jump-pane-command
-               [prefix "C"] action/jump-command
-               [prefix ":"] action/jump-screen-lines
-               [prefix "ctrl+p"] action/command-palette
-               [prefix "x"] action/kill-current-pane
-               [prefix "g"] action/toggle-margins
-               [prefix "1"] action/margins-80
-               [prefix "2"] action/margins-160
-               [prefix "+"] action/margins-smaller
-               [prefix "-"] action/margins-bigger
-               [prefix "q"] cy/kill-server
-               [prefix "d"] cy/detach
-               [prefix "p"] cy/replay
-               [prefix "r"] action/reload-config
-               [prefix "P"] cy/paste)
+(key/bind-many-tag :root "general"
+                   [prefix "j"] action/new-shell
+                   [prefix "n"] action/new-project
+                   [prefix "k"] action/jump-project
+                   [prefix "l"] action/jump-shell
+                   ["ctrl+l"] action/next-pane
+                   [prefix ";"] action/jump-pane
+                   [prefix "c"] action/jump-pane-command
+                   [prefix "C"] action/jump-command
+                   [prefix ":"] action/jump-screen-lines
+                   [prefix "ctrl+p"] action/command-palette
+                   [prefix "x"] action/kill-current-pane
+                   [prefix "g"] action/toggle-margins
+                   [prefix "1"] action/margins-80
+                   [prefix "2"] action/margins-160
+                   [prefix "+"] action/margins-smaller
+                   [prefix "-"] action/margins-bigger
+                   [prefix "q"] cy/kill-server
+                   [prefix "d"] cy/detach
+                   [prefix "p"] cy/replay
+                   [prefix "r"] action/reload-config
+                   [prefix "P"] cy/paste)
 
 (key/bind-many :time
                ["q"] replay/quit

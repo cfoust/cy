@@ -8,8 +8,16 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import NamedTuple, Optional, Tuple, List, Any, Set
 
 GENDOC_REGEX = re.compile("{{gendoc (.+)}}")
+KEYS_REGEX = re.compile(r"{{keys (\w+) (\w+)}}")
+
+class Symbol(NamedTuple):
+    Name: str
+    Docstring: str
+    Link: str
+    Macro: bool
 
 if __name__ == '__main__':
     args = sys.argv
@@ -32,6 +40,8 @@ if __name__ == '__main__':
     data.check_returncode()
 
     api = json.loads(data.stdout.decode('utf-8'))
+
+    symbol_lookup = {x['Name']: x for x in api['Symbols']}
 
     def transform_chapter(chapter):
         replace = []
@@ -114,6 +124,36 @@ if __name__ == '__main__':
 {source}
 
 """
+
+            replace.append(
+                (
+                    ref.start(0),
+                    ref.end(0),
+                    output,
+                )
+            )
+
+        for ref in KEYS_REGEX.finditer(content):
+            group = ref.group(1)
+            if len(group) == 0:
+                continue
+
+            output = """
+| Sequence    | Action  | Description |
+| ----------- | ------- | ----------- |
+"""
+
+            binds = filter(
+                lambda a: a['Source'] == group,
+                api['Binds'],
+            )
+
+            for bind in binds:
+                func = bind['Function']
+                if not func in symbol_lookup: continue
+                symbol = symbols[func]
+
+                output += f"""| {", ".join(bind['Sequence'])} | {symbol['Name']} | test |\n"""
 
             replace.append(
                 (

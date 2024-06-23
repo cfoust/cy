@@ -398,6 +398,7 @@ func (c *Client) Binds() (binds []api.Binding) {
 				binds,
 				api.Binding{
 					Sequence: leaf.Path,
+					Tag:      leaf.Value.Tag,
 					Function: leaf.Value.Callback.Value,
 				},
 			)
