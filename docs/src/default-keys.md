@@ -12,7 +12,7 @@ These bindings apply everywhere and can always be invoked.
 
 ### Prefixed
 
-All of the bindings in this table are prefixed by `ctrl+a` by default. This currently cannot be changed without rebinding all of the keys individually.
+All of the bindings in this table are prefixed by <kbd>ctrl+a</kbd> by default. You can change the prefix for cy's bindings using [`(key/remap)`](api.md#keyremap).
 
 #### General
 
@@ -28,7 +28,7 @@ All of the bindings in this table are prefixed by `ctrl+a` by default. This curr
 
 ### Unprefixed
 
-These bindings are not prefixed by `ctrl+a`.
+These bindings are not prefixed by <kbd>ctrl+a</kbd>.
 
 {{keys root unprefixed}}
 

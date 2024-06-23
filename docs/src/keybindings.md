@@ -58,7 +58,6 @@ The most powerful aspect of `cy`'s keybinding engine is the ability to define ke
 To illustrate:
 
 ```janet
-
 (defn toast-me [key] (cy/toast :info key))
 (key/bind :root ["ctrl+b" [:re "[abc]"]] toast-me)
 ```
@@ -117,3 +116,15 @@ You can also just use actions to avoid memorizing a key binding you rarely use:
   "this is something I do once a year"
   (pp "hi"))
 ```
+
+## Changing and deleting existing keybindings
+
+`cy` provides two API functions for manipulating existing keybindings, [`(key/remap)`](api.md#keyremap) and [`(key/unbind)`](api.md#keyunbind).
+
+It is sometimes convenient to change the activation sequence for many bindings at once. For example, you may want to change the prefix used for most of cy's bindings, <kbd>ctrl+a</kbd>, into <kbd>ctrl+v</kbd>:
+
+```janet
+(key/remap :root ["ctrl+a"] ["ctrl+v"])
+```
+
+Similarly, you may also delete keybindings with [`(key/unbind)`](api.md#keyunbind).

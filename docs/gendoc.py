@@ -111,9 +111,15 @@ def render_api(symbols: List[Symbol]) -> str:
     return output
 
 
+def render_key(key: str) -> str:
+    if key == " ":
+        return "space"
+    return key
+
+
 def render_key_sequence(sequence: List[str]) -> str:
     return " ".join(map(
-        lambda a: f"<kbd>{a}</kbd>",
+        lambda a: f"<kbd>{render_key(a)}</kbd>",
         sequence,
     ))
 
