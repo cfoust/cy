@@ -52,6 +52,7 @@ func TestScopes(t *testing.T) {
 		},
 		"",
 		server.timeBinds,
+		server.copyBinds,
 	)
 	require.NoError(t, err)
 	pane := group.NewPane(

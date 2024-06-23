@@ -54,6 +54,7 @@ func TestAction(t *testing.T) {
 	<-engine.Recv()
 	event := <-engine.Recv()
 	assert.Equal(t, ActionEvent[int]{
+		Engine:   engine,
 		Action:   2,
 		Source:   scope,
 		Sequence: []string{"ctrl+a"},
