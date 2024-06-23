@@ -6,12 +6,14 @@ import json
 import os
 import re
 import subprocess
+import argparse
 import sys
 from pathlib import Path
 from typing import NamedTuple, Optional, Tuple, List, Any, Set
 
 GENDOC_REGEX = re.compile("{{gendoc (.+)}}")
-KEYS_REGEX = re.compile(r"{{keys (\w+) (\w+)}}")
+KEYS_REGEX = re.compile(r"{{keys (.+)}}")
+
 
 class Symbol(NamedTuple):
     Name: str
@@ -19,45 +21,18 @@ class Symbol(NamedTuple):
     Link: str
     Macro: bool
 
-if __name__ == '__main__':
-    args = sys.argv
-    if len(args) > 1 and args[1] == "supports":
-        sys.exit(0)
 
-    context, book = json.load(sys.stdin)
+class Binding(NamedTuple):
+    Tag: str
+    Source: str
+    Function: Optional[Symbol]
+    Sequence: List[str]
 
-    if subprocess.call(
-        "go build -o gendoc ../cmd/docs/main.go",
-        shell=True
-    ) != 0:
-        raise Exception("failed to build gendoc")
 
-    data = subprocess.run(
-        "go run ../cmd/docs/main.go",
-        shell=True,
-        capture_output=True,
-    )
-    data.check_returncode()
-
-    api = json.loads(data.stdout.decode('utf-8'))
-
-    symbol_lookup = {x['Name']: x for x in api['Symbols']}
-
-    def transform_chapter(chapter):
-        replace = []
-
-        content = chapter['content']
-        for ref in GENDOC_REGEX.finditer(content):
-            command = ref.group(1)
-            if len(command) == 0:
-                continue
-
-            output = ""
-
-            if command == "frames":
-                output = "\n---\n"
-                for frame in api['Frames']:
-                    output += f"""
+def render_frames(frames: List[str]) -> str:
+    output = "\n---\n"
+    for frame in frames:
+        output += f"""
 #### {frame}
 
 ```janet
@@ -68,52 +43,61 @@ if __name__ == '__main__':
 
 ---
 """
-            elif command == "animations":
-                output = "\n---\n"
-                for animation in api['Animations']:
-                    output += f"""
+    return output
+
+
+def render_symbol_link(symbol: Symbol) -> str:
+    link = (
+        symbol.Name
+        .replace("?", "")
+        .replace("/", "")
+    )
+    return f"[{symbol.Name}](./api.html#{link})"
+
+
+def render_animations(animations: List[str]) -> str:
+    output = "\n---\n"
+    for animation in api['Animations']:
+        output += f"""
 #### {animation}
 
 {{{{story gif animation/{animation}}}}}
 
 ---
-                    """
-            elif command == "api":
-                output += "## Symbols\n\n"
+        """
+    return output
 
-                # Generate the table of contents
-                for symbol in api['Symbols']:
-                    name = symbol['Name']
-                    link = (
-                        name
-                        .replace("?", "")
-                        .replace("/", "")
-                    )
-                    output += f"[{name}](#{link}) "
 
-                output += "\n\n---\n"
+def render_api(symbols: List[Symbol]) -> str:
+    output = "## Symbols\n\n"
 
-                for symbol in api['Symbols']:
-                    _type = "function"
+    # Generate the table of contents
+    for symbol in symbols:
+        output += render_symbol_link(symbol) + " "
 
-                    if symbol['Macro']:
-                        _type = "macro"
+    output += "\n\n---\n"
 
-                    source = ""
-                    if symbol['Link']:
-                        source = f"[source]({symbol['Link']})"
+    for symbol in symbols:
+        _type = "function"
 
-                    lines = symbol['Docstring'].split("\n")
-                    if not lines:
-                        continue
+        if symbol.Macro:
+            _type = "macro"
 
-                    rest = ""
+        source = ""
+        if symbol.Link:
+            source = f"[source]({symbol.Link})"
 
-                    if len(lines) > 1:
-                        rest = "\n" + "\n".join(lines[1:])
+        lines = symbol.Docstring.split("\n")
+        if not lines:
+            continue
 
-                    output += f"""
-### {symbol['Name']}
+        rest = ""
+
+        if len(lines) > 1:
+            rest = "\n" + "\n".join(lines[1:])
+
+        output += f"""
+### {symbol.Name}
 
 {_type}
 
@@ -124,6 +108,94 @@ if __name__ == '__main__':
 {source}
 
 """
+    return output
+
+
+def render_key_sequence(sequence: List[str]) -> str:
+    return " ".join(map(
+        lambda a: f"<kbd>{a}</kbd>",
+        sequence,
+    ))
+
+
+def render_keys(bindings: List[Binding], args: List[str]) -> str:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('source')
+    parser.add_argument('group')
+    parser.add_argument('--skip', type=int, default=0)
+    params = parser.parse_args(args)
+
+    output = """
+| Sequence    | Action  | Description |
+| ----------- | ------- | ----------- |
+    """
+
+    bindings = list(filter(
+        lambda a: a.Source == params.source,
+        bindings,
+    ))
+
+    bindings = sorted(
+        bindings,
+        key=lambda a: a.Function.Name if a.Function else "",
+    )
+
+    for bind in bindings:
+        symbol = bind.Function
+        if not symbol: continue
+        link = render_symbol_link(symbol)
+        sequence = render_key_sequence(bind.Sequence[params.skip:])
+        description = symbol.Docstring.split("\n")[2]
+        output += f"""| {sequence} | {link} | {description} |\n"""
+
+    return output
+
+
+if __name__ == '__main__':
+    args = sys.argv
+    if len(args) > 1 and args[1] == "supports":
+        sys.exit(0)
+
+    context, book = json.load(sys.stdin)
+
+    data = subprocess.run(
+        "go run ../cmd/docs/main.go",
+        shell=True,
+        capture_output=True,
+    )
+    data.check_returncode()
+
+    api = json.loads(data.stdout.decode('utf-8'))
+
+    symbols: List[Symbol] = []
+    for symbol in api['Symbols']:
+        symbols.append(Symbol(**symbol))
+
+    symbol_lookup = {x.Name: x for x in symbols}
+
+    bindings: List[Binding] = []
+    for binding in api['Binds']:
+        func = binding['Function']
+        if not func in symbol_lookup: continue
+        binding['Function'] = symbol_lookup[func]
+        bindings.append(Binding(**binding))
+
+    def transform_chapter(chapter) -> None:
+        replace = []
+
+        content = chapter['content']
+        for ref in GENDOC_REGEX.finditer(content):
+            command = ref.group(1)
+            if len(command) == 0:
+                continue
+
+            output = ""
+            if command == "frames":
+                output = render_frames(api['Frames'])
+            elif command == "animations":
+                output = render_animations(api['Animations'])
+            elif command == "api":
+                output = render_api(symbols)
 
             replace.append(
                 (
@@ -134,32 +206,18 @@ if __name__ == '__main__':
             )
 
         for ref in KEYS_REGEX.finditer(content):
-            group = ref.group(1)
-            if len(group) == 0:
+            args = ref.group(1)
+            if len(args) == 0:
                 continue
-
-            output = """
-| Sequence    | Action  | Description |
-| ----------- | ------- | ----------- |
-"""
-
-            binds = filter(
-                lambda a: a['Source'] == group,
-                api['Binds'],
-            )
-
-            for bind in binds:
-                func = bind['Function']
-                if not func in symbol_lookup: continue
-                symbol = symbols[func]
-
-                output += f"""| {", ".join(bind['Sequence'])} | {symbol['Name']} | test |\n"""
 
             replace.append(
                 (
                     ref.start(0),
                     ref.end(0),
-                    output,
+                    render_keys(
+                        bindings,
+                        args.split(" "),
+                    ),
                 )
             )
 
