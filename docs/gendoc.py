@@ -131,7 +131,7 @@ def render_keys(bindings: List[Binding], args: List[str]) -> str:
     """
 
     bindings = list(filter(
-        lambda a: a.Source == params.source,
+        lambda a: a.Source == params.source and a.Tag == params.group,
         bindings,
     ))
 

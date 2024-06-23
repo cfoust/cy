@@ -20,11 +20,11 @@ Scroll the viewport half a page (half the viewport height) down.
 
 # doc: SearchForward
 
-Search for a string forwards in time.
+Search for a string forwards in time (in time mode) or in the scrollback buffer (in copy mode).
 
 # doc: SearchBackward
 
-Search for a string backwards in time.
+Search for a string backwards in time (in time mode) or in the scrollback buffer (in copy mode).
 
 # doc: TimePlay
 
