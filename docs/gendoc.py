@@ -13,7 +13,7 @@ from typing import NamedTuple, Optional, Tuple, List, Any, Set
 
 GENDOC_REGEX = re.compile("{{gendoc (.+)}}")
 KEYS_REGEX = re.compile(r"{{keys (.+)}}")
-API_REGEX = re.compile(r"{{api ([a-z0-9/]+)}}")
+API_REGEX = re.compile(r"{{api ([a-z0-9/-]+)}}")
 
 
 class Symbol(NamedTuple):
@@ -219,22 +219,6 @@ if __name__ == '__main__':
                 )
             )
 
-        for ref in KEYS_REGEX.finditer(content):
-            args = ref.group(1)
-            if len(args) == 0:
-                continue
-
-            replace.append(
-                (
-                    ref.start(0),
-                    ref.end(0),
-                    render_keys(
-                        bindings,
-                        args.split(" "),
-                    ),
-                )
-            )
-
         for ref in API_REGEX.finditer(content):
             name = ref.group(1)
             if len(name) == 0:
@@ -259,6 +243,23 @@ if __name__ == '__main__':
                 )
             )
 
+        for ref in KEYS_REGEX.finditer(content):
+            args = ref.group(1)
+            if len(args) == 0:
+                continue
+
+            replace.append(
+                (
+                    ref.start(0),
+                    ref.end(0),
+                    render_keys(
+                        bindings,
+                        args.split(" "),
+                    ),
+                )
+            )
+
+        replace = sorted(replace, key=lambda a: a[1])
         for start, end, text in reversed(replace):
             content = content[:start] + text + content[end:]
 

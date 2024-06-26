@@ -24,7 +24,7 @@ On startup, `cy` will search for and execute the first file containing Janet sou
 1. `$HOME/.config/cyrc.janet`
 1. `$HOME/.config/.cy.janet`
 
-For now, there is no way to reload your configuration; if you make changes to your configuration file, you'll need to restart cy.
+You can reload your configuration at runtime using {{api action/reload-config}}, which by default is bound to <kbd>ctrl+a</kbd><kbd>r</kbd>.
 
 Your `cy` configuration can contain any valid Janet statement, but `cy` also provides additions to the standard library in the form of [an API](./api.md) for controlling every aspect of how `cy` works.
 
