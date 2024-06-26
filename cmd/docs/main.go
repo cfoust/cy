@@ -4,8 +4,10 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/cy"
@@ -63,6 +65,26 @@ func main() {
 	err = cy.Execute(ctx, GEN_API)
 	if err != nil {
 		panic(err)
+	}
+
+	for i, symbol := range symbols {
+		if len(symbol.Link) > 0 {
+			continue
+		}
+		callback, ok := cy.Lookup(symbol.Name)
+		if !ok {
+			continue
+		}
+		file, line := callback.Source()
+		index := strings.Index(file, "pkg")
+		if index == -1 {
+			continue
+		}
+		symbols[i].Link = fmt.Sprintf(
+			"https://github.com/cfoust/cy/blob/main/%s#L%d",
+			file[index:],
+			line,
+		)
 	}
 
 	sort.SliceStable(symbols, func(i, j int) bool {

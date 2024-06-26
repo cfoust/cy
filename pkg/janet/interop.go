@@ -14,6 +14,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"runtime"
 	"strings"
 	"unsafe"
 
@@ -364,6 +365,12 @@ type Callback struct {
 	function reflect.Value
 }
 
+func (c *Callback) Source() (file string, line int) {
+	ptr := c.function.Pointer()
+	f := runtime.FuncForPC(ptr)
+	return f.FileLine(ptr)
+}
+
 func validateFunction(in, out []reflect.Type) error {
 	numArgs := len(in)
 	for i := 0; i < numArgs; i++ {
@@ -569,6 +576,15 @@ func (v *VM) Callback(name string, docstring string, callback interface{}) error
 		nil,
 		reflect.ValueOf(callback),
 	)
+}
+
+// Lookup finds a previously registered callback by its Janet name and returns
+// it.
+func (v *VM) Lookup(name string) (callback *Callback, ok bool) {
+	v.RLock()
+	callback, ok = v.callbacks[name]
+	v.RUnlock()
+	return
 }
 
 func (v *VM) Module(name string, module interface{}) error {
