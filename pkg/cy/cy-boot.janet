@@ -367,6 +367,8 @@ For example:
                    ["s"] replay/swap-screen
                    ["]" "c"] replay/command-forward
                    ["[" "c"] replay/command-backward
+                   ["]" "C"] replay/command-select-forward
+                   ["[" "C"] replay/command-select-backward
                    ["0"] replay/start-of-line
                    ["home"] replay/start-of-line
                    ["g" "M"] replay/middle-of-line

@@ -1,6 +1,7 @@
 package replay
 
 import (
+	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -40,36 +41,54 @@ func (r *Replay) jumpCommandTime(isForward bool) (taro.Model, tea.Cmd) {
 	return r, r.gotoIndex(commands[index].Executed, -1)
 }
 
-func (r *Replay) jumpCommand(isForward bool) (taro.Model, tea.Cmd) {
+func (r *Replay) nextCommand(isForward bool) (command detect.Command, ok bool) {
 	commands := r.Commands()
-	if !r.isFlowMode() || len(commands) == 0 {
-		return r, nil
+	if len(commands) == 0 {
+		return
 	}
 
 	cursor := r.movement.Cursor()
-	index := -1
 
 	if isForward {
-		for i, command := range commands {
+		for _, command := range commands {
 			if command.InputStart().GT(cursor) {
-				index = i
-				break
+				return command, true
 			}
 		}
 	} else {
 		for i := len(commands) - 1; i >= 0; i-- {
 			command := commands[i]
 			if command.InputStart().LT(cursor) {
-				index = i
-				break
+				return command, true
 			}
 		}
 	}
 
-	if index == -1 {
+	return
+}
+
+func (r *Replay) jumpCommand(isForward bool) (taro.Model, tea.Cmd) {
+	if !r.isFlowMode() {
 		return r, nil
 	}
+	command, ok := r.nextCommand(isForward)
+	if !ok {
+		return r, nil
+	}
+	r.movement.Goto(command.InputStart())
+	return r, nil
+}
 
-	r.movement.Goto(commands[index].InputStart())
+func (r *Replay) jumpSelectCommand(isForward bool) (taro.Model, tea.Cmd) {
+	if !r.isFlowMode() {
+		return r, nil
+	}
+	command, ok := r.nextCommand(isForward)
+	if !ok {
+		return r, nil
+	}
+	r.isSelecting = true
+	r.selectStart = command.Output.To
+	r.movement.Goto(command.Output.From)
 	return r, nil
 }

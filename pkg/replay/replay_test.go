@@ -303,6 +303,17 @@ func TestJumpCommand(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 0, C: 2}, r.movement.Cursor())
 	i(ActionCommandForward)
 	require.Equal(t, geom.Vec2{R: 2, C: 2}, r.movement.Cursor())
+
+	// Selection
+	i(ActionCommandSelectBackward)
+	require.True(t, r.isSelecting)
+	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.movement.Cursor())
+	require.Equal(t, geom.Vec2{R: 1, C: 3}, r.selectStart)
+
+	i(ActionCommandSelectForward)
+	require.True(t, r.isSelecting)
+	require.Equal(t, geom.Vec2{R: 3, C: 0}, r.movement.Cursor())
+	require.Equal(t, geom.Vec2{R: 3, C: 3}, r.selectStart)
 }
 
 func TestIncremental(t *testing.T) {

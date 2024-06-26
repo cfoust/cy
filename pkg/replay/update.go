@@ -272,6 +272,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			}
 
 			return r.jumpCommand(isForward)
+		case ActionCommandSelectForward, ActionCommandSelectBackward:
+			isForward := msg.Type == ActionCommandSelectForward
+			return r.jumpSelectCommand(isForward)
 		}
 
 		if motion, ok := MOTIONS[msg.Type]; ok {

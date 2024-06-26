@@ -72,6 +72,8 @@ const (
 	ActionSwapScreen
 	ActionCommandForward
 	ActionCommandBackward
+	ActionCommandSelectForward
+	ActionCommandSelectBackward
 
 	//////////////////////////////////////////////////////////////////
 	// ╺┳╸┏┳┓╻ ╻╻ ╻   ┏━╸┏━┓┏━┓╻ ╻   ┏┳┓┏━┓╺┳┓┏━╸

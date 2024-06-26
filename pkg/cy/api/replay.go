@@ -179,6 +179,14 @@ func (m *ReplayModule) CommandBackward(context interface{}) error {
 	return m.sendAction(context, replay.ActionCommandBackward)
 }
 
+func (m *ReplayModule) CommandSelectForward(context interface{}) error {
+	return m.sendAction(context, replay.ActionCommandSelectForward)
+}
+
+func (m *ReplayModule) CommandSelectBackward(context interface{}) error {
+	return m.sendAction(context, replay.ActionCommandSelectBackward)
+}
+
 func (m *ReplayModule) StartOfLine(context interface{}) error {
 	return m.sendAction(context, replay.ActionStartOfLine)
 }

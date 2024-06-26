@@ -140,7 +140,15 @@ In time mode, jump to the moment in time just before the next command was execut
 
 # doc: CommandBackward
 
-In time mode, jump to the moment in time just before the last command was executed. In copy mode, move the cursor to the first character of the last command that was executed.
+In time mode, jump to the moment in time just before the previous command was executed. In copy mode, move the cursor to the first character of the previous command that was executed.
+
+# doc: CommandSelectForward
+
+Move the cursor to the first character of the output of the next command and select its output.
+
+# doc: CommandSelectBackward
+
+Move the cursor to the first character of the output of the previous command and select its output.
 
 # doc: StartOfLine
 
