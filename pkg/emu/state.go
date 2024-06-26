@@ -276,6 +276,7 @@ func (t *State) reset() {
 
 // TODO: definitely can improve allocs
 func (t *State) resize(size geom.Vec2) {
+	oldCols := t.cols
 	cols := size.C
 	rows := size.R
 	if cols == t.cols && rows == t.rows {
@@ -378,13 +379,13 @@ func (t *State) resize(size geom.Vec2) {
 	}
 
 	copy(t.tabs, tabs)
-	if cols > t.cols {
-		i := t.cols - 1
+	if cols > oldCols && oldCols > 0 {
+		i := oldCols - 1
 		for i > 0 && !tabs[i] {
 			i--
 		}
-		for i += tabspaces; i < len(tabs); i += tabspaces {
-			tabs[i] = true
+		for i += tabspaces; i < len(t.tabs); i += tabspaces {
+			t.tabs[i] = true
 		}
 	}
 

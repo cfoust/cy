@@ -108,3 +108,14 @@ func TestPrompt(t *testing.T) {
 	require.True(t, value)
 	require.True(t, ok)
 }
+
+func TestTabs(t *testing.T) {
+	term := New()
+	// This is the simplest example of a bug that I encountered with tabs.
+	term.Resize(geom.Vec2{C: 172, R: 3})
+	term.Write([]byte(LineFeedMode))
+	term.Write([]byte("LICENSE\t\tcmd\t\tdaemon.log\terr.log\t\tgo.sum\t\tmain\t\tscreenshot.gif\tstories.log\ttrace.prof\r\n"))
+	first := term.Screen()[0].String()
+	index := strings.Index(first, "trace.prof")
+	require.NotEqual(t, -1, index)
+}
