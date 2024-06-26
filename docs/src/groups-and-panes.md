@@ -13,7 +13,7 @@ Every pane `cy` belongs to a **group**. A group has a name and children, which c
 Groups also have two unique features:
 
 - **Key bindings:** You may define key bindings that will only activate when you type that sequence while attached to any descendant of that group.
-- **Parameters:** A key-value store that can be interacted with using `(cy/get)` and `(cy/set)`. Parameters are used both [to configure aspects of `cy`](./parameters.md) and also to create any functionality you desire by storing state in `cy`'s tree.
+- **Parameters:** A key-value store that can be interacted with using {{api cy/get}} and {{api cy/set}}. Parameters are used both [to configure aspects of `cy`](./parameters.md) and also to create any functionality you desire by storing state in `cy`'s tree.
 
 ## The node tree
 
@@ -38,7 +38,7 @@ Instead, each node is permanently assigned a unique identifier (which is just an
 `cy`'s flexibility comes from the way key bindings and parameters interact:
 
 - **Key bindings** are inherited down the tree, but can be overridden by descendant groups.
-- **Parameters** work the same way: [`(cy/get)`](api.md#cyget) will get the value of a parameter from the closest parent group that defines it.
+- **Parameters** work the same way: {{api cy/get}} will get the value of a parameter from the closest parent group that defines it.
 
 Imagine that you are attached to `/my-project/group-2/pane-3` in the example above:
 

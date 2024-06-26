@@ -13,6 +13,7 @@ from typing import NamedTuple, Optional, Tuple, List, Any, Set
 
 GENDOC_REGEX = re.compile("{{gendoc (.+)}}")
 KEYS_REGEX = re.compile(r"{{keys (.+)}}")
+API_REGEX = re.compile(r"{{api ([a-z0-9/]+)}}")
 
 
 class Symbol(NamedTuple):
@@ -186,10 +187,17 @@ if __name__ == '__main__':
         binding['Function'] = symbol_lookup[func]
         bindings.append(Binding(**binding))
 
+    errors: int = 0
+    def report_error(chapter, start, end, msg):
+        global errors
+        errors += 1
+        print(f"{chapter['name']}:{start}{end}: {msg}", file=sys.stderr)
+
     def transform_chapter(chapter) -> None:
         replace = []
 
         content = chapter['content']
+
         for ref in GENDOC_REGEX.finditer(content):
             command = ref.group(1)
             if len(command) == 0:
@@ -227,6 +235,30 @@ if __name__ == '__main__':
                 )
             )
 
+        for ref in API_REGEX.finditer(content):
+            name = ref.group(1)
+            if len(name) == 0:
+                continue
+
+            if not name in symbol_lookup:
+                report_error(
+                    chapter,
+                    ref.start(0),
+                    ref.end(0),
+                    f"missing symbol: {name}",
+                )
+                continue
+
+            symbol = symbol_lookup[name]
+
+            replace.append(
+                (
+                    ref.start(0),
+                    ref.end(0),
+                    render_symbol_link(symbol),
+                )
+            )
+
         for start, end, text in reversed(replace):
             content = content[:start] + text + content[end:]
 
@@ -243,5 +275,9 @@ if __name__ == '__main__':
             continue
 
         transform_chapter(section['Chapter'])
+
+    if errors > 0:
+        print(f"{errors} error(s) while preprocessing")
+        exit(1)
 
     print(json.dumps(book))

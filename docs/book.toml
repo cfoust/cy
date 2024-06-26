@@ -7,8 +7,8 @@ description = "A next-generation terminal multiplexer that records everything yo
 authors = ["Caleb Foust"]
 
 [output.html]
-default-theme = "light"
-preferred-dark-theme = "ayu"
+default-theme = "navy"
+preferred-dark-theme = "navy"
 site-url = "/cy/"
 git-repository-url = "https://github.com/cfoust/cy"
 additional-css = ["./theme/asciinema-player.css"]

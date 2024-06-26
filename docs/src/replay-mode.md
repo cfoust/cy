@@ -62,4 +62,4 @@ The directory will be created if it does not exist.
 
 You can access previous sessions through the `cy/open-log` action, which by default can be invoked by searching for `open an existing log file` in the command palette (`ctrl+a` `ctrl+p`).
 
-You are also free to use the API call [`(replay/open)`](api.md#replayopen) to open `.borg` files anywhere on your filesystem.
+You are also free to use the API call {{api replay/open}} to open `.borg` files anywhere on your filesystem.

@@ -11,7 +11,7 @@ Janet code executed with `cy` can also access everything from [Janet's standard 
 Several API functions related to binding keys return a `Binding`. A `Binding` table represents a single key sequence and its associated function. Each table has the following properties:
 
 - `:node`: the [NodeID](api.md#nodeid) where the binding is defined.
-- `:sequence`: a list of strings representing the key sequence that will execute this action. If the original call to [`(key/bind)`](api.md#keybind) used a [regex](keybindings.md#regexes), it will be returned as a string with a `re:` prefix.
+- `:sequence`: a list of strings representing the key sequence that will execute this action. If the original call to {{api key/bind}} used a [regex](keybindings.md#regexes), it will be returned as a string with a `re:` prefix.
 - `:function`: the Janet function that will be called when this sequence is executed.
 
 For example:
@@ -29,6 +29,6 @@ For example:
 Many API functions have a parameter of type `NodeID`, which can be one of two values:
 
 - `:root` which is a short way of referring to `cy`'s top-level group.
-- An integer that refers to a node in `cy`'s [node tree](groups-and-panes.md#the-node-tree). You cannot infer these yourself, but they are returned from API functions like [`(pane/current)`](api.md#panecurrent) and [`(group/children)`](api.md#groupchildren).
+- An integer that refers to a node in `cy`'s [node tree](groups-and-panes.md#the-node-tree). You cannot infer these yourself, but they are returned from API functions like {{api pane/current}} and {{api group/children}}.
 
 {{gendoc api}}
