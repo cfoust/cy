@@ -357,7 +357,7 @@ func TestCJKHighlight(t *testing.T) {
 	)
 }
 
-func TestReadStringFlow(t *testing.T) {
+func TestReadString(t *testing.T) {
 	size := geom.Size{R: 4, C: 3}
 	s := sessions.NewSimulator()
 	s.Add(
@@ -392,6 +392,10 @@ func TestReadStringFlow(t *testing.T) {
 	require.Equal(t, "oobar\nbaz\n\ntest", r.ReadString(
 		geom.Vec2{R: 0, C: 1},
 		geom.Vec2{R: 3, C: 3},
+	))
+	require.Equal(t, "test", r.ReadString(
+		geom.Vec2{R: 3, C: 0},
+		geom.Vec2{R: 3, C: 4},
 	))
 }
 

@@ -90,3 +90,36 @@ func (f *flowMovement) Viewport() (
 	result := f.Flow(f.viewport, f.root)
 	return result.Lines, f.viewport, f.cursor
 }
+
+func (f *flowMovement) ReadString(start, end geom.Vec2) (result string) {
+	start, end = geom.NormalizeRange(start, end)
+
+	numLines := end.R - start.R + 1
+	lines := f.GetLines(start.R, end.R)
+	if len(lines) != numLines {
+		return
+	}
+
+	if start.R == end.R {
+		line := lines[0]
+		if end.C+1 >= len(line) {
+			return line[start.C:].String()
+		}
+		return line[start.C : end.C+1].String()
+	}
+
+	result += lines[0][start.C:].String() + "\n"
+
+	for i := 1; i < len(lines)-1; i++ {
+		result += lines[i].String() + "\n"
+	}
+
+	last := lines[len(lines)-1]
+	if end.C+1 >= len(last) {
+		result += last.String()
+	} else {
+		result += last[:end.C+1].String()
+	}
+
+	return result
+}

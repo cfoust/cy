@@ -360,30 +360,6 @@ func (f *flowMovement) Resize(newSize geom.Vec2) {
 	f.scrollToLine(dest.Root(), ScrollPositionCenter)
 }
 
-func (f *flowMovement) ReadString(start, end geom.Vec2) (result string) {
-	start, end = geom.NormalizeRange(start, end)
-
-	numLines := end.R - start.R + 1
-	lines := f.GetLines(start.R, end.R)
-	if len(lines) != numLines {
-		return
-	}
-
-	if start.R == end.R {
-		return lines[0][start.C : end.C+1].String()
-	}
-
-	result += lines[0][start.C:].String() + "\n"
-
-	for i := 1; i < len(lines)-1; i++ {
-		result += lines[i].String() + "\n"
-	}
-
-	result += lines[len(lines)-1][:end.C+1].String()
-
-	return result
-}
-
 func (f *flowMovement) MoveCursorX(delta int) {
 	f.haveMoved = true
 
