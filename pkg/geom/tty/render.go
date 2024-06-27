@@ -69,6 +69,10 @@ func swapImage(
 				info.Fprintf(data, terminfo.EnterReverseMode)
 			}
 
+			if mode&emu.AttrBold != 0 {
+				info.Fprintf(data, terminfo.EnterBoldMode)
+			}
+
 			if mode&emu.AttrUnderline != 0 {
 				info.Fprintf(data, terminfo.EnterUnderlineMode)
 			}
