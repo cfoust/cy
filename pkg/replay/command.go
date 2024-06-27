@@ -1,6 +1,7 @@
 package replay
 
 import (
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/taro"
 
@@ -41,7 +42,10 @@ func (r *Replay) jumpCommandTime(isForward bool) (taro.Model, tea.Cmd) {
 	return r, r.gotoIndex(commands[index].Executed, -1)
 }
 
-func (r *Replay) nextCommand(isForward bool) (command detect.Command, ok bool) {
+func (r *Replay) nextCommand(
+	isForward bool,
+	target func(detect.Command) geom.Vec2,
+) (command detect.Command, ok bool) {
 	commands := r.Commands()
 	if len(commands) == 0 {
 		return
@@ -51,14 +55,14 @@ func (r *Replay) nextCommand(isForward bool) (command detect.Command, ok bool) {
 
 	if isForward {
 		for _, command := range commands {
-			if command.InputStart().GT(cursor) {
+			if target(command).GT(cursor) {
 				return command, true
 			}
 		}
 	} else {
 		for i := len(commands) - 1; i >= 0; i-- {
 			command := commands[i]
-			if command.InputStart().LT(cursor) {
+			if target(command).LT(cursor) {
 				return command, true
 			}
 		}
@@ -71,7 +75,13 @@ func (r *Replay) jumpCommand(isForward bool) (taro.Model, tea.Cmd) {
 	if !r.isFlowMode() {
 		return r, nil
 	}
-	command, ok := r.nextCommand(isForward)
+
+	command, ok := r.nextCommand(
+		isForward,
+		func(command detect.Command) geom.Vec2 {
+			return command.InputStart()
+		},
+	)
 	if !ok {
 		return r, nil
 	}
@@ -83,7 +93,13 @@ func (r *Replay) jumpSelectCommand(isForward bool) (taro.Model, tea.Cmd) {
 	if !r.isFlowMode() {
 		return r, nil
 	}
-	command, ok := r.nextCommand(isForward)
+
+	command, ok := r.nextCommand(
+		isForward,
+		func(command detect.Command) geom.Vec2 {
+			return command.Output.From
+		},
+	)
 	if !ok {
 		return r, nil
 	}
