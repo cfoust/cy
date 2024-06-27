@@ -20,6 +20,15 @@ func setColor(info *terminfo.Terminfo, color emu.Color, isBg bool) []byte {
 		return make([]byte, 0)
 	}
 
+	// Special case for reversed text when still set to default
+	if isBg && color == emu.DefaultFG {
+		num = 15
+		color = 15
+	} else if !isBg && color == emu.DefaultBG {
+		num = 0
+		color = 0
+	}
+
 	if num > maxColors {
 		r := color >> 16
 		g := (color >> 8) & 0xff
@@ -65,9 +74,9 @@ func swapImage(
 			info.Fprintf(data, terminfo.CursorAddress, row, col)
 
 			mode := srcCell.Mode
-			if mode&emu.AttrReverse != 0 {
-				info.Fprintf(data, terminfo.EnterReverseMode)
-			}
+
+			// note: emu.AttrReverse is handled virtually, since
+			// it's just a color change
 
 			if mode&emu.AttrBold != 0 {
 				info.Fprintf(data, terminfo.EnterBoldMode)
