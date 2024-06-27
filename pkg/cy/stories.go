@@ -169,7 +169,7 @@ func init() {
 			stories.Wait(stories.Some),
 			stories.Type("ctrl+a", "ctrl+p"),
 			stories.Wait(stories.More),
-			stories.Type("choose"),
+			stories.Type("Choose"),
 			stories.Wait(stories.Some),
 			stories.Type("enter"),
 			stories.Wait(stories.Some),
