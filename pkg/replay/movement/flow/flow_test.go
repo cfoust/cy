@@ -69,10 +69,9 @@ func TestResize(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 2, C: 1}, r.cursor)
 
 	r.Resize(geom.Size{R: 10, C: 1})
-	// The centering should push us down a bit
-	require.Equal(t, geom.Vec2{R: 0, C: 2}, r.root)
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
 	// Cursor is on the "a" in "baz"
-	require.Equal(t, geom.Vec2{R: 5, C: 0}, r.cursor)
+	require.Equal(t, geom.Vec2{R: 7, C: 0}, r.cursor)
 }
 
 func TestScroll(t *testing.T) {
