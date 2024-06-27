@@ -1,16 +1,10 @@
 package flow
 
 import (
-	"fmt"
-
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/taro"
-
-	"github.com/charmbracelet/lipgloss"
 )
 
 type flowMovement struct {
@@ -43,7 +37,7 @@ func New(terminal emu.Terminal, viewport geom.Size) movement.Movement {
 	}
 	f.root = f.Root()
 	f.viewport = viewport
-	f.centerTerminalCursor()
+	f.revealCursor()
 	return f
 }
 
@@ -90,7 +84,9 @@ func (f *flowMovement) Snap() {
 	f.cursor.C = f.resolveScreenColumn(f.cursor.R)
 }
 
-func (f *flowMovement) centerTerminalCursor() {
+// revealCursor adjusts the root the minimum amount necessary to show the
+// cursor before the user has moved.
+func (f *flowMovement) revealCursor() {
 	// First just flow the viewport; if the whole screen fits, do
 	// nothing
 	result := f.Flow(f.viewport, f.root)
@@ -118,75 +114,6 @@ func (f *flowMovement) centerTerminalCursor() {
 	f.cursor.R = result.Cursor.R - topIndex
 	f.cursor.C = result.Cursor.C
 	f.desiredCol = f.cursor.C
-}
-
-func (f *flowMovement) ScrollTop() {
-	f.haveMoved = true
-	f.scrollToLine(geom.Vec2{R: 0, C: 0}, ScrollPositionTop)
-	f.cursor.C = f.resolveScreenColumn(f.cursor.R)
-}
-
-func (f *flowMovement) ScrollBottom() {
-	f.haveMoved = true
-	f.scrollToLine(f.getLastRoot(), ScrollPositionBottom)
-	f.cursor.C = f.resolveScreenColumn(f.cursor.R)
-}
-
-func (f *flowMovement) ScrollYDelta(delta int) {
-	f.haveMoved = true
-
-	isUp := delta < 0
-
-	// Account for the fact that Flow() returns the root line as well
-	if !isUp {
-		delta++
-	}
-
-	result := f.Flow(geom.Vec2{
-		C: f.viewport.C,
-		R: delta,
-	}, f.root)
-
-	numLines := len(result.Lines)
-
-	if numLines == 0 {
-		return
-	}
-
-	// Find the new root
-	target := 0
-	if !isUp {
-		lastLine := f.getLastLine()
-
-		// Ensure that we can't scroll past the last physical line
-		for i := numLines - 1; i >= 0; i-- {
-			target = i
-			if result.Lines[i].Root().R <= lastLine {
-				break
-			}
-		}
-	}
-
-	targetLine := result.Lines[target]
-	f.root = targetLine.Root()
-
-	newRow := f.cursor.R
-	if isUp {
-		newRow += numLines
-	} else {
-		// -1 because we're skipping the root line
-		newRow -= numLines - 1
-	}
-
-	newRow = geom.Clamp(newRow, 0, f.viewport.R-1)
-	f.cursor = geom.Vec2{
-		R: newRow,
-		C: f.resolveScreenColumn(newRow),
-	}
-}
-
-func (f *flowMovement) ScrollXDelta(delta int) {
-	// no-op in this mode
 }
 
 // getLine gets a line on the screen in flow mode. Providing a negative
@@ -243,65 +170,6 @@ func (f *flowMovement) getLastLine() int {
 	return f.getLastRoot().R
 }
 
-type ScrollPosition int
-
-const (
-	ScrollPositionTop ScrollPosition = iota
-	ScrollPositionCenter
-	ScrollPositionBottom
-)
-
-func (f *flowMovement) scrollToLine(dest geom.Vec2, position ScrollPosition) {
-	if dest.R < 0 || dest.C < 0 {
-		return
-	}
-
-	if dest.R > f.getLastLine() {
-		return
-	}
-
-	// If the line is on the screen, we don't need to scroll
-	viewport := f.Flow(f.viewport, f.root)
-	for row, line := range viewport.Lines {
-		if line.Root() != dest {
-			continue
-		}
-
-		f.cursor.R = row
-		break
-	}
-
-	var rows int
-	switch position {
-	case ScrollPositionCenter:
-		rows = f.viewport.R / 2
-	case ScrollPositionBottom:
-		rows = f.viewport.R - 1
-	}
-
-	rows = geom.Max(rows, 0)
-
-	// Skip the relative calculation if we don't need to (or cannot) set
-	// the root any higher
-	if rows == 0 || (rows > 0 && dest == geom.Vec2{}) {
-		f.root = dest
-		f.cursor.R = 0
-		return
-	}
-
-	flow := f.Flow(geom.Vec2{
-		C: f.viewport.C,
-		R: -1 * rows,
-	}, dest)
-	if !flow.OK {
-		return
-	}
-
-	lines := flow.Lines
-	f.root = lines[0].Root()
-	f.cursor.R = len(lines)
-}
-
 // Given a point in term space representing a desired cursor position, return
 // the best available cursor position. This enables behavior akin to moving up
 // and down in a text editor.
@@ -332,7 +200,7 @@ func (f *flowMovement) Resize(newSize geom.Vec2) {
 	// built-in cursor reflow when we haven't moved yet. After moving,
 	// movement is constrained to cells with printable characters.
 	if !f.haveMoved {
-		f.centerTerminalCursor()
+		f.revealCursor()
 		return
 	}
 
@@ -357,7 +225,8 @@ func (f *flowMovement) Resize(newSize geom.Vec2) {
 		break
 	}
 
-	f.scrollToLine(dest.Root(), ScrollPositionCenter)
+	// TODO(cfoust): 06/28/24 test this
+	f.scrollToLine(dest.Root(), ScrollPositionBottom)
 }
 
 func (f *flowMovement) MoveCursorX(delta int) {
@@ -457,202 +326,4 @@ func (f *flowMovement) MoveCursorY(delta int) {
 	}
 
 	f.scrollToLine(destLine.Root(), position)
-}
-
-//func (f *flowMovement) Jump(needle string, isForward bool, isTo bool) {
-//line, ok := f.getLine(f.cursor.R)
-//if !ok {
-//return
-//}
-
-//oldCol := f.cursor.C
-//newCol := calculateJump(
-//line.Chars,
-//needle,
-//isForward,
-//isTo,
-//oldCol,
-//)
-//f.MoveCursorX(newCol - oldCol)
-//}
-
-func (f *flowMovement) highlightRow(
-	row emu.Line,
-	start, end geom.Vec2,
-	screenLine emu.ScreenLine,
-	highlight movement.Highlight,
-) {
-	var (
-		from = highlight.From
-		to   = highlight.To
-	)
-	from, to = geom.NormalizeRange(from, to)
-
-	//-e |     |
-	//   |     | s-
-	if from.GTE(end) || to.LT(start) {
-		return
-	}
-
-	var startCol, endCol int
-
-	//   |  s--|-
-	if from.LT(end) && from.GTE(start) {
-		startCol = from.C - screenLine.C0
-	}
-
-	//  -|--e  |
-	if to.GTE(start) || to.LT(end) {
-		endCol = to.C - screenLine.C0
-	}
-
-	//   |-----|-e
-	if to.GTE(end) {
-		endCol = len(row) - 1
-	}
-
-	// Flow does not highlight past the last non-whitespace cell in the
-	// line
-	endCol = geom.Min(endCol, screenLine.C1-screenLine.C0-1)
-
-	// Also bound this by the end of the line as a safety measure
-	endCol = geom.Clamp(endCol, 0, len(row)-1)
-
-	if startCol > endCol {
-		return
-	}
-
-	for col := startCol; col <= endCol; col++ {
-		row[col].FG = highlight.FG
-		row[col].BG = highlight.BG
-	}
-}
-
-func (f *flowMovement) View(
-	state *tty.State,
-	highlights []movement.Highlight,
-	commands []detect.Command,
-) {
-	r := f.render
-
-	flow := f.Flow(f.viewport, f.root)
-	screen := f.Flow(f.Terminal.Size(), f.Root())
-	if !flow.OK || !screen.OK {
-		return
-	}
-
-	// Transform all highlights into physical line coordinates
-	for i, highlight := range highlights {
-		if !highlight.Screen {
-			continue
-		}
-
-		from, fromOK := screen.Coord(highlight.From)
-		to, toOK := screen.Coord(highlight.To)
-		if !fromOK || !toOK {
-			continue
-		}
-
-		from, to = geom.NormalizeRange(from, to)
-		highlight.From = from
-		highlight.To = to
-		highlight.Screen = false
-		highlights[i] = highlight
-	}
-
-	image := state.Image
-	size := state.Image.Size()
-	termCursor := flow.Cursor
-	if flow.CursorOK && f.cursor == termCursor.Vec2 {
-		state.Cursor = termCursor
-	} else {
-		state.Cursor.Vec2 = f.cursor
-
-		if flow.CursorOK {
-			image[termCursor.R][termCursor.C].BG = 8
-		}
-	}
-
-	commandIndicator := f.render.NewStyle().
-		Foreground(lipgloss.Color("15")).
-		Background(lipgloss.Color("#4D9DE0")).
-		Render("<")
-
-	var start, end geom.Vec2
-	for row, line := range flow.Lines {
-		copy(image[row], line.Chars)
-
-		start = line.Root()
-		end = geom.Vec2{R: line.R, C: line.C1}
-
-		for _, highlight := range highlights {
-			f.highlightRow(
-				image[row],
-				start, end,
-				line,
-				highlight,
-			)
-		}
-
-		// Don't draw command indicators if cursor is on that row
-		if row == state.Cursor.R {
-			continue
-		}
-
-		// Draw indicators for commands
-		for _, command := range commands {
-			if command.Pending {
-				continue
-			}
-
-			inputStart := command.InputStart()
-			if inputStart.R != start.R {
-				continue
-			}
-
-			if inputStart.C < start.C || inputStart.C >= end.C {
-				continue
-			}
-
-			image[row][size.C-1].BG = 8
-			r.RenderAt(image, row, size.C-1, commandIndicator)
-		}
-	}
-
-	if f.root.R >= f.Root().R {
-		return
-	}
-
-	// Renders "[1/N]" text in the top-right corner that looks just like
-	// tmux's copy mode, but works on physical lines instead.
-	offsetStyle := f.render.NewStyle().
-		Foreground(lipgloss.Color("9")).
-		Background(lipgloss.Color("240"))
-
-	r.RenderAt(
-		state.Image,
-		0,
-		0,
-		r.PlaceHorizontal(
-			size.C,
-			lipgloss.Right,
-			offsetStyle.Render(fmt.Sprintf(
-				"[%d/%d]",
-				f.Root().R-f.root.R,
-				f.Root().R,
-			)),
-		),
-	)
-}
-
-func PreviewFlow(
-	terminal emu.Terminal,
-	size, location geom.Vec2,
-	highlights []movement.Highlight,
-) *tty.State {
-	image := tty.New(size)
-	flow := New(terminal, size).(*flowMovement)
-	flow.Goto(location)
-	flow.View(image, highlights, []detect.Command{})
-	return image
 }
