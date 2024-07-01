@@ -276,6 +276,16 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				isEnd,
 			)
 			return r, nil
+		case ActionBigWordForward, ActionBigWordBackward, ActionBigWordEndForward, ActionBigWordEndBackward:
+			isForward := msg.Type == ActionBigWordForward || msg.Type == ActionBigWordEndForward
+			isEnd := msg.Type == ActionBigWordEndForward || msg.Type == ActionBigWordEndBackward
+			r.mode = ModeCopy
+			motion.WORD(
+				r.movement,
+				isForward,
+				isEnd,
+			)
+			return r, nil
 		case ActionCommandForward, ActionCommandBackward:
 			isForward := msg.Type == ActionCommandForward
 			if !r.isCopyMode() {

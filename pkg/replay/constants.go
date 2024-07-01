@@ -224,6 +224,14 @@ const (
 	ActionWordEndForward
 	// ge
 	ActionWordEndBackward
+	// W
+	ActionBigWordForward
+	// B
+	ActionBigWordBackward
+	// E
+	ActionBigWordEndForward
+	// gE
+	ActionBigWordEndBackward
 )
 
 var MOTIONS = map[ActionType]motion.Motion{

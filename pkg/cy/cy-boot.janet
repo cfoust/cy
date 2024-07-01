@@ -369,6 +369,10 @@ For example:
                    ["b"] replay/word-backward
                    ["e"] replay/word-end-forward
                    ["g" "e"] replay/word-end-backward
+                   ["W"] replay/big-word-forward
+                   ["B"] replay/big-word-backward
+                   ["E"] replay/big-word-end-forward
+                   ["g" "E"] replay/big-word-end-backward
                    ["]" "c"] replay/command-forward
                    ["[" "c"] replay/command-backward
                    ["]" "C"] replay/command-select-forward

@@ -205,3 +205,19 @@ Move to the end of the next word. Equivalent to vim's `e`.
 # doc: WordEndBackward
 
 Move to the end of the previous word. Equivalent to vim's `ge`.
+
+# doc: BigWordForward
+
+Move to the beginning of the next WORD. Equivalent to vim's `W`.
+
+# doc: BigWordBackward
+
+Move to the beginning of the previous WORD. Equivalent to vim's `B`.
+
+# doc: BigWordEndForward
+
+Move to the end of the next WORD. Equivalent to vim's `E`.
+
+# doc: BigWordEndBackward
+
+Move to the end of the previous WORD. Equivalent to vim's `gE`.

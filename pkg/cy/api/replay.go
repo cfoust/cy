@@ -243,6 +243,22 @@ func (m *ReplayModule) WordEndBackward(context interface{}) error {
 	return m.sendAction(context, replay.ActionWordEndBackward)
 }
 
+func (m *ReplayModule) BigWordForward(context interface{}) error {
+	return m.sendAction(context, replay.ActionBigWordForward)
+}
+
+func (m *ReplayModule) BigWordBackward(context interface{}) error {
+	return m.sendAction(context, replay.ActionBigWordBackward)
+}
+
+func (m *ReplayModule) BigWordEndForward(context interface{}) error {
+	return m.sendAction(context, replay.ActionBigWordEndForward)
+}
+
+func (m *ReplayModule) BigWordEndBackward(context interface{}) error {
+	return m.sendAction(context, replay.ActionBigWordEndBackward)
+}
+
 func (m *ReplayModule) Open(
 	groupId *janet.Value,
 	path string,
