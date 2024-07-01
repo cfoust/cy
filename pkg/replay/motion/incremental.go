@@ -80,7 +80,7 @@ func (i *Incremental) next(
 	isForward bool,
 	didLoop bool,
 ) {
-	to, ok := FindNext(m, pattern, origin, isForward)
+	to, ok := findNext(m, pattern, origin, isForward)
 	if ok {
 		m.Goto(to.Root())
 		i.result = to

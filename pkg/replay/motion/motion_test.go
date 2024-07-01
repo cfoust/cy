@@ -148,7 +148,7 @@ func TestFindNext(t *testing.T) {
 
 	// basic forwards
 	{
-		to, ok := FindNext(
+		to, ok := findNext(
 			m,
 			makePattern("foo"),
 			geom.Vec2{},
@@ -168,7 +168,7 @@ func TestFindNext(t *testing.T) {
 
 	// basic backwards
 	{
-		to, ok := FindNext(
+		to, ok := findNext(
 			m,
 			makePattern("foo"),
 			geom.Vec2{R: 0, C: 3},
@@ -188,7 +188,7 @@ func TestFindNext(t *testing.T) {
 
 	// edge case: going backwards should still let pattern pass origin
 	{
-		to, ok := FindNext(
+		to, ok := findNext(
 			m,
 			makePattern("foo"),
 			geom.Vec2{R: 0, C: 2},
@@ -208,7 +208,7 @@ func TestFindNext(t *testing.T) {
 
 	// find on the next line
 	{
-		to, ok := FindNext(
+		to, ok := findNext(
 			m,
 			makePattern("bar"),
 			geom.Vec2{},
@@ -228,7 +228,7 @@ func TestFindNext(t *testing.T) {
 
 	// from.C = -1 should allow matching beginning of line
 	{
-		to, ok := FindNext(
+		to, ok := findNext(
 			m,
 			makePattern("foo"),
 			geom.Vec2{C: -1},
@@ -248,7 +248,7 @@ func TestFindNext(t *testing.T) {
 
 	// from.C = len(line) should allow matching end of line
 	{
-		to, ok := FindNext(
+		to, ok := findNext(
 			m,
 			makePattern("baz"),
 			geom.Vec2{R: 2, C: 9},
@@ -268,7 +268,7 @@ func TestFindNext(t *testing.T) {
 
 	// Empty
 	{
-		_, ok := FindNext(
+		_, ok := findNext(
 			m,
 			makePattern(""),
 			geom.Vec2{R: 2, C: 9},
@@ -279,7 +279,7 @@ func TestFindNext(t *testing.T) {
 
 	// Missing
 	{
-		_, ok := FindNext(
+		_, ok := findNext(
 			m,
 			makePattern("asdasdasd"),
 			geom.Vec2{R: 0, C: 0},

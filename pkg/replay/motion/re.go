@@ -117,7 +117,7 @@ func getBackwardsMatch(
 	return
 }
 
-// FindNext gets the next match of a regex pattern in the given direction.
+// findNext gets the next match of a regex pattern in the given direction.
 //
 // The origin of the search, `from`, is a coordinate in the reference frame of
 // the Movable and determines where the search will start from. `from.C`, or
@@ -134,7 +134,7 @@ func getBackwardsMatch(
 // `from`, but can end after or including `from`. Observe that vim works this
 // way. Similarly, if `from.C` is equal to the length of the line, no cell will
 // be excluded in the search.
-func FindNext(
+func findNext(
 	m Movable,
 	re *regexp.Regexp,
 	from geom.Vec2,
