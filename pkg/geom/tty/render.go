@@ -100,6 +100,9 @@ func swapImage(
 			data.Write([]byte(string(srcCell.Char)))
 
 			info.Fprintf(data, terminfo.ExitAttributeMode)
+
+			// CJK characters
+			col += srcCell.Width() - 1
 		}
 	}
 
