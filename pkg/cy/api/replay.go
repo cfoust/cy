@@ -227,6 +227,22 @@ func (m *ReplayModule) EndOfScreenLine(context interface{}) error {
 	return m.sendAction(context, replay.ActionEndOfScreenLine)
 }
 
+func (m *ReplayModule) WordForward(context interface{}) error {
+	return m.sendAction(context, replay.ActionWordForward)
+}
+
+func (m *ReplayModule) WordBackward(context interface{}) error {
+	return m.sendAction(context, replay.ActionWordBackward)
+}
+
+func (m *ReplayModule) WordEndForward(context interface{}) error {
+	return m.sendAction(context, replay.ActionWordEndForward)
+}
+
+func (m *ReplayModule) WordEndBackward(context interface{}) error {
+	return m.sendAction(context, replay.ActionWordEndBackward)
+}
+
 func (m *ReplayModule) Open(
 	groupId *janet.Value,
 	path string,

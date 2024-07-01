@@ -213,6 +213,17 @@ const (
 	ActionEndOfScreenLine
 	// g<end>
 	ActionLastNonBlankScreen
+
+	// Word motions
+	///////////////
+	// w
+	ActionWordForward
+	// b
+	ActionWordBackward
+	// e
+	ActionWordEndForward
+	// ge
+	ActionWordEndBackward
 )
 
 var MOTIONS = map[ActionType]motion.Motion{

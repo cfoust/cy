@@ -4,7 +4,6 @@ import (
 	"regexp"
 
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -69,7 +68,6 @@ func nextWord(
 	} else {
 		for i := len(matches) - 1; i >= 0; i-- {
 			match := matches[i]
-			log.Info().Msgf("i %+v %+v <= %+v", i, index(match), cursor.C)
 			if index(match) >= cursor.C {
 				continue
 			}

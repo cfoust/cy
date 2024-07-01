@@ -189,3 +189,19 @@ Move to the first non-blank character of the screen line. Equivalent to vim's `g
 # doc: LastNonBlankScreen
 
 Move to the last non-blank character of the screen line. Equivalent to vim's `g<end>`.
+
+# doc: WordForward
+
+Move to the beginning of the next word. Equivalent to vim's `w`.
+
+# doc: WordBackward
+
+Move to the beginning of the previous word. Equivalent to vim's `b`.
+
+# doc: WordEndForward
+
+Move to the end of the next word. Equivalent to vim's `e`.
+
+# doc: WordEndBackward
+
+Move to the end of the previous word. Equivalent to vim's `ge`.

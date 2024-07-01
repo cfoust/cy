@@ -5,6 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/replay/motion"
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -263,6 +264,16 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				msg.Arg,
 				isForward,
 				isTo,
+			)
+			return r, nil
+		case ActionWordForward, ActionWordBackward, ActionWordEndForward, ActionWordEndBackward:
+			isForward := msg.Type == ActionWordForward || msg.Type == ActionWordEndForward
+			isEnd := msg.Type == ActionWordEndForward || msg.Type == ActionWordEndBackward
+			r.mode = ModeCopy
+			motion.Word(
+				r.movement,
+				isForward,
+				isEnd,
 			)
 			return r, nil
 		case ActionCommandForward, ActionCommandBackward:

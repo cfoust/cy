@@ -365,6 +365,10 @@ For example:
                    ["n"] replay/search-again
                    ["N"] replay/search-reverse
                    ["s"] replay/swap-screen
+                   ["w"] replay/word-forward
+                   ["b"] replay/word-backward
+                   ["e"] replay/word-end-forward
+                   ["g" "e"] replay/word-end-backward
                    ["]" "c"] replay/command-forward
                    ["[" "c"] replay/command-backward
                    ["]" "C"] replay/command-select-forward
