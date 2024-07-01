@@ -4,11 +4,13 @@ import (
 	"regexp"
 
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/rs/zerolog/log"
 )
 
 var (
 	// vim word
-	WORD_REGEX = regexp.MustCompile(`(?![*|"])[!-~\w]+`)
+	// warning: not accurate
+	WORD_REGEX = regexp.MustCompile(`[!-~\w]+`)
 	// vim WORD
 	NON_WHITESPACE_REGEX = regexp.MustCompile(`[^\s]+`)
 )
@@ -20,7 +22,7 @@ var (
 		return match[0]
 	}
 	getEnd indexFunc = func(match []int) int {
-		return match[1]
+		return match[1] - 1
 	}
 )
 
@@ -55,7 +57,7 @@ func nextWord(
 
 	if isForward {
 		for _, match := range matches {
-			if index(match) < cursor.C {
+			if index(match) <= cursor.C {
 				continue
 			}
 
@@ -67,7 +69,8 @@ func nextWord(
 	} else {
 		for i := len(matches) - 1; i >= 0; i-- {
 			match := matches[i]
-			if index(match) < cursor.C {
+			log.Info().Msgf("i %+v %+v <= %+v", i, index(match), cursor.C)
+			if index(match) >= cursor.C {
 				continue
 			}
 
@@ -119,18 +122,27 @@ func nextWord(
 	}
 }
 
-func Word(m Movable, isForward, isEnd, isWORD bool) {
-	re := WORD_REGEX
-	if isWORD {
-		re = NON_WHITESPACE_REGEX
-	}
-
+func Word(m Movable, isForward, isEnd bool) {
 	index := getBeginning
 	if isEnd {
 		index = getEnd
 	}
 
-	dest, ok := nextWord(m, re, index, isForward)
+	dest, ok := nextWord(m, WORD_REGEX, index, isForward)
+	if !ok {
+		return
+	}
+
+	m.Goto(dest)
+}
+
+func WORD(m Movable, isForward, isEnd bool) {
+	index := getBeginning
+	if isEnd {
+		index = getEnd
+	}
+
+	dest, ok := nextWord(m, NON_WHITESPACE_REGEX, index, isForward)
 	if !ok {
 		return
 	}
