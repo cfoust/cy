@@ -3,8 +3,6 @@ package motion
 import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
-
-	"github.com/mattn/go-runewidth"
 )
 
 func getCurrentLine(m Movable) (line emu.ScreenLine, ok bool) {
@@ -36,9 +34,7 @@ func screenLineMotion(getIndex func(
 		)
 
 		// Need to check for CJK
-		if index > 0 && runewidth.RuneWidth(
-			line.Chars[index-1].Char,
-		) == 2 {
+		if index > 0 && line.Chars[index-1].Width() == 2 {
 			index--
 		}
 

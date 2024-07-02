@@ -3,8 +3,6 @@ package motion
 import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
-
-	"github.com/mattn/go-runewidth"
 )
 
 func lineMotion(getIndex func(line emu.Line) int) Motion {
@@ -22,7 +20,7 @@ func lineMotion(getIndex func(line emu.Line) int) Motion {
 		)
 
 		// Need to check for CJK
-		if index > 0 && runewidth.RuneWidth(line[index-1].Char) == 2 {
+		if index > 0 && line[index-1].Width() == 2 {
 			index--
 		}
 

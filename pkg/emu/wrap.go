@@ -2,8 +2,6 @@ package emu
 
 import (
 	"github.com/cfoust/cy/pkg/geom"
-
-	"github.com/mattn/go-runewidth"
 )
 
 type ScreenLine struct {
@@ -143,7 +141,7 @@ func getLineLength(line Line) int {
 			continue
 		}
 
-		length = i + runewidth.RuneWidth(glyph.Char)
+		length = i + glyph.Width()
 		break
 	}
 	return length
@@ -180,9 +178,7 @@ findOld:
 	for row, line := range oldLine {
 		numChars := line.C1 - line.C0
 		for col := 0; col < numChars; col++ {
-			width := runewidth.RuneWidth(
-				oldLines[line.R][line.C0+col].Char,
-			)
+			width := oldLines[line.R][line.C0+col].Width()
 
 			if oldCursor.R == row && oldCursor.C >= col && oldCursor.C < col+width {
 				didFind = true
@@ -230,9 +226,7 @@ findNew:
 				break findNew
 			}
 
-			width := runewidth.RuneWidth(
-				newLines[line.R][line.C0+col].Char,
-			)
+			width := newLines[line.R][line.C0+col].Width()
 			isLast = (col + width) == numCols
 			newOffset++
 			col += width - 1

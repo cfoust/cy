@@ -3,8 +3,6 @@ package motion
 import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
-
-	"github.com/mattn/go-runewidth"
 )
 
 func calculateJump(line emu.Line, needle string, isForward bool, isTo bool, oldPos int) int {
@@ -18,8 +16,7 @@ func calculateJump(line emu.Line, needle string, isForward bool, isTo bool, oldP
 				break
 			}
 
-			w := runewidth.RuneWidth(char)
-			for i := 1; i < w; i++ {
+			for i := 1; i < line[i].Width(); i++ {
 				i++
 			}
 		}
@@ -35,8 +32,7 @@ func calculateJump(line emu.Line, needle string, isForward bool, isTo bool, oldP
 				continue
 			}
 
-			w := runewidth.RuneWidth(char)
-			for i := 1; i < w; i++ {
+			for i := 1; i < line[i].Width(); i++ {
 				i++
 			}
 		}

@@ -102,7 +102,7 @@ func swapImage(
 			info.Fprintf(data, terminfo.ExitAttributeMode)
 
 			// CJK characters
-			col += geom.Max(srcCell.Width(), 1) - 1
+			col += srcCell.Width() - 1
 		}
 	}
 

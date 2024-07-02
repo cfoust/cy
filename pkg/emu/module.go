@@ -83,7 +83,9 @@ func (g Glyph) IsDefault() bool {
 }
 
 func (g Glyph) Width() int {
-	return runewidth.RuneWidth(g.Char)
+	// runewidth can be 0, but we strictly want visible glyphs to be at
+	// least one cell wide.
+	return geom.Max(runewidth.RuneWidth(g.Char), 1)
 }
 
 func (g Glyph) Equal(other Glyph) bool {
@@ -103,7 +105,7 @@ type Line []Glyph
 func (l Line) String() (str string) {
 	for i := 0; i < len(l); i++ {
 		str += string(l[i].Char)
-		i += runewidth.RuneWidth(l[i].Char) - 1
+		i += l[i].Width() - 1
 	}
 
 	return str
@@ -138,8 +140,7 @@ func (l Line) Occupancy() []bool {
 		}
 
 		// handle wide runes
-		r := l[i].Char
-		w := runewidth.RuneWidth(r)
+		w := l[i].Width()
 		for j := 0; j < w; j++ {
 			occupancy[i+j] = true
 		}
