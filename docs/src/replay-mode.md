@@ -60,6 +60,6 @@ By default, `cy` records all of the activity that occurs in a terminal session t
 
 The directory will be created if it does not exist.
 
-You can access previous sessions through the `cy/open-log` action, which by default can be invoked by searching for `open an existing log file` in the command palette (`ctrl+a` `ctrl+p`).
+You can access previous sessions through the {{api action/open-log}} action, which by default can be invoked by searching for `Open a .borg file.` in the command palette (`ctrl+a` `ctrl+p`).
 
 You are also free to use the API call {{api replay/open}} to open `.borg` files anywhere on your filesystem.
