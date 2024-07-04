@@ -29,10 +29,21 @@ Multiplexing, of course, is where things get interesting. `cy`'s codebase has a 
 
 `cy`'s code is divided into three directories found at the repository root:
 
-* `cmd`: Contains the code for all executables (in this case, programs with `main.go` files.)
-    * `cy`: The main `cy` executable and the code necessary to connect to and create sockets.
-    * `stories`: 
-* `pkg` 
+- `cmd`: Contains the code for all executables (in this case, programs with `main.go` files.)
+  - `cy`: The main `cy` executable and the code necessary to connect to and create sockets.
+  - `stories`: A system for quickly iterating on `cy`'s visual design. Covered in more detail in [a dedicated chapter](./stories.md).
+  - `perf`: A (seldom-used) program for testing the performance of `cy`'s history search feature.
+  - `docs`: A simple executable that dumps various information about `cy` to standard out as JSON, such as all of its API functions, built in key bindings, et cetera. This is used in an [mdbook preprocessor](https://rust-lang.github.io/mdBook/format/configuration/preprocessors.html) called [gendoc](https://github.com/cfoust/cy/blob/main/docs/gendoc.py) that generates Markdown content for `cy` on demand.
+- `pkg`: Contains a range of different Go packages, all of which might be charitably called libraries. The list below is not intended to be exhaustive, but just highlight several important ones.
+  - `cy`: The `cy` server, API, default configuration, et cetera.
+  - `geom`: Simple, high-level geometric primitives (think `Vec2`) used everywhere in the codebase.
+  - `mux`: A few useful abstractions for multiplexing.
+  - `janet`: A library for Janet/Go interoperation.
+  - `emu`: A vt100 terminal emulator.
+  - `fuzzy`: A [fuzzy finder](./fuzzy-finding.md).
+  - `replay`: A terminal session player, otherwise known as [replay mode](./replay-mode.md).
+  - `taro`: A fork of [charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea) adapted for use in `cy`'s windowing abstraction (described [below](./architecture.md#screens-and-streams).)
+- `docs`: Contains all of `cy`'s documentation. `cy` uses [mdbook](https://github.com/rust-lang/mdBook) to build the documentation site.
 
 ## Screens and streams
 

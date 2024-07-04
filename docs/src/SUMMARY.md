@@ -40,6 +40,8 @@
 
 - [Architecture](./architecture.md)
 
+- [Stories](./stories.md)
+
 ---
 
 [Acknowledgments](./acknowledgments.md)
