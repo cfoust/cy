@@ -48,3 +48,15 @@ Multiplexing, of course, is where things get interesting. `cy`'s codebase has a 
 ## Screens and streams
 
 The two most important abstractions in `cy`'s codebase are [`Screens`](https://github.com/cfoust/cy/blob/main/pkg/mux/module.go?plain=1#L42) and [`Streams`](https://github.com/cfoust/cy/blob/main/pkg/mux/module.go#L36), which are defined in the [mux](https://github.com/cfoust/cy/tree/main/pkg/mux) package.
+
+A `Stream` is just a resizable (this is important!) stream of bytes that can be read from and written to. As of writing, it looks like this:
+
+```go
+// Note: this was changed from the actual implementation for simplicity.
+type Stream interface {
+    io.ReadWriter
+    Resize(size Vec2) error
+}
+```
+
+From the perspective of the process you're running, this interface concisely describes the functionality of your terminal emulator (e.g. xterm, kitty.) Typing into your terminal writes to the process; any output it produces is read and interpreted in a predictable, standard way (the VT100 quasi-standard.) Resizing your terminal sends a resize event, `SIGWINCH`, which the process can react to.
