@@ -1,10 +1,10 @@
 # Architecture
 
-This document is intended to be a brief introduction to `cy`'s code structure and its commonly used abstractions. It is useful for anyone interested in contributing to `cy` or any of its constituent libraries, some of which may (eventually) be broken out into separate projects.
+This document is intended to be a brief introduction to `cy`'s code structure and its commonly used abstractions. The intended audience is anyone interested in contributing to `cy` or any of its constituent libraries, some of which may (eventually) be broken out into separate projects.
 
 It is safe to assume that the high-level description in this document will remain reliable despite changes in the actual implementation, but if you are ever in doubt:
 
-1. Read the README for the package you are modifying (typically in `pkg/*`.)
+1. Read the README for the package you are modifying. Most packages in `pkg` have their own READMEs (along with some sub-packages.)
 2. Ask for help [in Discord](https://discord.gg/NRQG3wbWGM).
 3. Consult the code itself.
 
@@ -12,19 +12,28 @@ It is safe to assume that the high-level description in this document will remai
 
 ## Introduction
 
-`cy` is a terminal multiplexer. Just like `tmux`, it uses a server-client model and daemonizes itself on server startup. In simple terms this means that irrespective of where, when, or how you start `cy`, if a `cy` server is running you can connect to it and resume your work exactly as you left it. Clients connect to the `cy` server using a WebSocket connection via [Unix domain sockets](https://en.wikipedia.org/wiki/Unix_domain_socket).
+`cy` is a [**terminal multiplexer**](https://en.wikipedia.org/wiki/Terminal_multiplexer). Just like `tmux`, it uses a server-client model and daemonizes itself on server startup. In simple terms this means that irrespective of where, when, or how you start `cy`, if a `cy` server is running you can connect to it and resume your work exactly as you left it. Clients connect to the `cy` server using a WebSocket connection via a [Unix domain socket](https://en.wikipedia.org/wiki/Unix_domain_socket).
 
 As the name "terminal multiplexer" implies, most of the complexity comes from doing two things:
 
 1. **Emulating a terminal**: Just like in `tmux` et al, `cy` works by pretending to be a valid VT100 terminal and attaching to the programs that you run (typically shells).
 2. **Multiplexing**: Users expect to be able to switch between the terminals `cy` emulates in order to fulfill the basic requirement of being a terminal multiplexer.
 
-Terminal emulation, though tedious and error-prone to write yourself, is critical for any terminal multiplexer. Because of the paucity of Go libraries that accomplish this, I had to implement this mostly from scratch in [the emu package](https://github.com/cfoust/cy/tree/main/pkg/emu).
+Terminal emulation, though tedious and error-prone to write yourself, is critical for any terminal multiplexer. Because of the paucity of Go libraries that accomplish this, this was implemented mostly from scratch in [the emu package](https://github.com/cfoust/cy/tree/main/pkg/emu).
 
 Multiplexing, of course, is where things get interesting. `cy`'s codebase has a range of different tools for compositing and rendering terminal windows, all of which it does to be able to support an arbitrary number of clients, all of whom may have different screen sizes and need to use `cy` for different things.
 
-Given that `cy`'s killer feature is being able to replay your terminal sessions, you would think that it would be a source of significant complexity, but it really isn't: once you have the above, making this functionality is just a matter of recording the timestamps and all data associated with every write to a virtual terminal, then replaying it on demand. Of course, the devil is in the details.
+`cy`'s main feature is being able to replay terminal sessions. You would think that it would be a source of significant complexity. But it really isn't: once you have the above, making this functionality is just a matter of recording every write to a virtual terminal, then replaying it on demand. Of course, the devil is in the details.
+
+## Codebase organization
+
+`cy`'s code is divided into three directories found at the repository root:
+
+* `cmd`: Contains the code for all executables (in this case, programs with `main.go` files.)
+    * `cy`: The main `cy` executable and the code necessary to connect to and create sockets.
+    * `stories`: 
+* `pkg` 
 
 ## Screens and streams
 
-`cy`'s most important abstraction is a [`Screen`](https://github.com/cfoust/cy/blob/main/pkg/mux/module.go?plain=1#L42).
+The two most important abstractions in `cy`'s codebase are [`Screens`](https://github.com/cfoust/cy/blob/main/pkg/mux/module.go?plain=1#L42) and [`Streams`](https://github.com/cfoust/cy/blob/main/pkg/mux/module.go#L36), which are defined in the [mux](https://github.com/cfoust/cy/tree/main/pkg/mux) package.
