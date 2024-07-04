@@ -12,16 +12,18 @@ It is safe to assume that the high-level description in this document will remai
 
 ## Introduction
 
-`cy` is a terminal multiplexer, so (as the name implies) most of the complexity comes from doing two things:
+`cy` is a terminal multiplexer. Just like `tmux`, it uses a server-client model and daemonizes itself on server startup. In simple terms this means that irrespective of where, when, or how you start `cy`, if a `cy` server is running you can connect to it and resume your work exactly as you left it. Clients connect to the `cy` server using a WebSocket connection via [Unix domain sockets](https://en.wikipedia.org/wiki/Unix_domain_socket).
+
+As the name "terminal multiplexer" implies, most of the complexity comes from doing two things:
 
 1. **Emulating a terminal**: Just like in `tmux` et al, `cy` works by pretending to be a valid VT100 terminal and attaching to the programs that you run (typically shells).
 2. **Multiplexing**: Users expect to be able to switch between the terminals `cy` emulates in order to fulfill the basic requirement of being a terminal multiplexer.
 
-Terminal emulation, though tedious and error-prone to write yourself, is critical for any terminal multiplexer. Because of the paucity of Go libraries to accomplish this, I had to implement this mostly from scratch in [the emu package](https://github.com/cfoust/cy/tree/main/pkg/emu).
+Terminal emulation, though tedious and error-prone to write yourself, is critical for any terminal multiplexer. Because of the paucity of Go libraries that accomplish this, I had to implement this mostly from scratch in [the emu package](https://github.com/cfoust/cy/tree/main/pkg/emu).
 
 Multiplexing, of course, is where things get interesting. `cy`'s codebase has a range of different tools for compositing and rendering terminal windows, all of which it does to be able to support an arbitrary number of clients, all of whom may have different screen sizes and need to use `cy` for different things.
 
-Speaking of clients, just like `tmux`, `cy` uses a server-client model and daemonizes itself on server startup. In simple terms this means that irrespective of where, when, or how you start `cy`, if a `cy` server is running you can connect to it and resume your work exactly as you left it. This is advantageous for those of us who do most of our work on remote machines via `ssh` and is one of the traditional use cases for `tmux`.
+Given that `cy`'s killer feature is being able to replay your terminal sessions, you would think that it would be a source of significant complexity, but it really isn't: once you have the above, making this functionality is just a matter of recording the timestamps and all data associated with every write to a virtual terminal, then replaying it on demand. Of course, the devil is in the details.
 
 ## Screens and streams
 
