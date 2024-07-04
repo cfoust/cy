@@ -1,0 +1,28 @@
+# Architecture
+
+This document is intended to be a brief introduction to `cy`'s code structure and its commonly used abstractions. It is useful for anyone interested in contributing to `cy` or any of its constituent libraries, some of which may (eventually) be broken out into separate projects.
+
+It is safe to assume that the high-level description in this document will remain reliable despite changes in the actual implementation, but if you are ever in doubt:
+
+1. Read the README for the package you are modifying (typically in `pkg/*`.)
+2. Ask for help [in Discord](https://discord.gg/NRQG3wbWGM).
+3. Consult the code itself.
+
+`cy` is written in Go and Janet. I chose Go because I had written other projects with strong concurrency needs and it seemed like a natural fit. Janet is a Lisp-like scripting language that I chose because it sounded like fun.
+
+## Introduction
+
+`cy` is a terminal multiplexer, so (as the name implies) most of the complexity comes from doing two things:
+
+1. **Emulating a terminal**: Just like in `tmux` et al, `cy` works by pretending to be a valid VT100 terminal and attaching to the programs that you run (typically shells).
+2. **Multiplexing**: Users expect to be able to switch between the terminals `cy` emulates in order to fulfill the basic requirement of being a terminal multiplexer.
+
+Terminal emulation, though tedious and error-prone to write yourself, is critical for any terminal multiplexer. Because of the paucity of Go libraries to accomplish this, I had to implement this mostly from scratch in [the emu package](https://github.com/cfoust/cy/tree/main/pkg/emu).
+
+Multiplexing, of course, is where things get interesting. `cy`'s codebase has a range of different tools for compositing and rendering terminal windows, all of which it does to be able to support an arbitrary number of clients, all of whom may have different screen sizes and need to use `cy` for different things.
+
+Speaking of clients, just like `tmux`, `cy` uses a server-client model and daemonizes itself on server startup. In simple terms this means that irrespective of where, when, or how you start `cy`, if a `cy` server is running you can connect to it and resume your work exactly as you left it. This is advantageous for those of us who do most of our work on remote machines via `ssh` and is one of the traditional use cases for `tmux`.
+
+## Screens and streams
+
+`cy`'s most important abstraction is a [`Screen`](https://github.com/cfoust/cy/blob/main/pkg/mux/module.go?plain=1#L42).
