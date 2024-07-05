@@ -137,3 +137,10 @@ The flow for client input works like this:
 2. All of the events are sent using the WebSocket protocol via a Unix socket to the `cy` server, which is a separate process.
 3. The `cy` server writes the incoming bytes it received from the client to the corresponding [`Client`](https://github.com/cfoust/cy/blob/main/pkg/cy/client.go?plain=1#L34) on the server. A `Client` is just a `Stream`.
 4. The `Client` translates the bytes into key and mouse events that are then sent (via `Send`) to the `Screen` the `Client` is attached to. These events usually travel through several different `Screen`s before reaching their destination, but ultimately they are passed into whatever `Screen` the client is currently attached to--whether that be a pane, the fuzzy finder, or replay mode.
+
+The flow for client output is somewhat simpler:
+
+1. Whenever the `Screen` the `Client` is attached to changes in some way (in other words, it produces an event that is published to its subscribers via `Subscribe`).
+2. The client's [`Renderer`](https://github.com/cfoust/cy/blob/main/pkg/mux/stream/renderer/module.go?plain=1#L24) receives this event and calls `State()` on the client's `Screen`, which produces a `tty.State`. The `Renderer` then calculates the sequence of bytes necessary to transform the actual client's terminal screen to match the `cy` server's state.
+3. This byte string is sent via the aforementioned WebSocket connection.
+4. It is ultimately `Read` by the user's terminal and written to standard output, thus triggering the visual changes the user expects.
