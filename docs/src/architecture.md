@@ -53,10 +53,9 @@ The two most important abstractions in `cy`'s codebase are [`Screen`s](https://g
 
 ### Stream
 
-A `Stream` is just a resizable (this is important!) stream of bytes that can be read from and written to. As of writing, it looks like this:
+A `Stream` is just a resizable (this is important!) bidirectional stream of bytes that can be read from and written to. As of writing, it looks like this:
 
 ```go
-// Note: this was changed from the actual implementation for simplicity.
 type Stream interface {
     Read(p []byte) (n int, err error)
     Write(p []byte) (n int, err error)
@@ -77,7 +76,7 @@ This is useful because you can represent lots of things as a `Stream`:
    - `Read`: Reads consist of the shortest sequence of bytes necessary to update the client's terminal to match `cy`'s understanding of that client's screen.
    - `Resize`: Resizing a client indicates to `cy` that it should resize everything on that client's screen and redraw accordingly.
 
-Streams compose naturally and can form pipes of arbitrary complexity. For example, `cy` records terminal sessions by proxying a `Stream` (sort of like `tee`.)
+Streams can be composed and form pipes of arbitrary complexity. For example, `cy` records terminal sessions by proxying a `Stream` (sort of like `tee`.)
 
 However, for a terminal multiplexer this is clearly not enough. A `Stream` is stateless. In other words, there is no way to know what the state of the terminal that is attached to that `Stream`. That's where `Screen`s come in.
 
@@ -85,9 +84,9 @@ However, for a terminal multiplexer this is clearly not enough. A `Stream` is st
 
 A [`Screen`](https://github.com/cfoust/cy/blob/main/pkg/mux/module.go?plain=1#L42) can be thought of, conceptually, as an application to which you can send events (such as user input) and receive any updates it produces (such as changes to the screen's contents).
 
-The state of a screen (otherwise known as [`tty.State`](https://github.com/cfoust/cy/blob/main/pkg/geom/tty/module.go?plain=1#L9)) is identical to that of a terminal emulator:
+The state of a screen (represented in the `cy` codebase as a [`tty.State`](https://github.com/cfoust/cy/blob/main/pkg/geom/tty/module.go?plain=1#L9)) is identical to that of a terminal emulator:
 
-- A fixed, two-dimensional buffer of glyphs
+- A two-dimensional buffer of Unicode characters
 - The state of the cursor including its position and style
 
 A [**pane**](./groups-and-panes.md#panes), described elsewhere, is a good example of a `Screen`.
@@ -111,10 +110,30 @@ type Screen interface {
 }
 ```
 
-`Send` looks scary, but it's used in `cy` mostly for key and mouse events on user input.
+`Send` looks scary, but it's used in `cy` mostly for key and mouse events.
 
 The easiest way to understand this is to think of a `Screen` as something that can render a `Stream` and turn it into something that can be composed with other `Screen`s. In fact, there is a `Screen` that [does just that](https://github.com/cfoust/cy/blob/main/pkg/mux/screen/terminal.go?plain=1#L13).
 
 `cy`'s [fuzzy finder](./fuzzy-finding.md) and [replay mode](./replay-mode.md) are both just `Screen`s, albeit complicated ones.
 
-Some `Screen`s just exist to compose other screens in some way, which is the bread and butter of any terminal multiplexer. The simplest example of this is `cy`'s [`Layers`](https://github.com/cfoust/cy/blob/main/pkg/mux/screen/layers.go?plain=1#L22), a `Screen` that lets you render one or more `Screen`s on top of one another, letting the screens underneath show through if any cells of the layer above are transparent.
+Some `Screen`s just exist to compose other screens in some way, which is the bread and butter of any terminal multiplexer.
+
+The simplest example of this is `cy`'s [`Layers`](https://github.com/cfoust/cy/blob/main/pkg/mux/screen/layers.go?plain=1#L22), a `Screen` that lets you render one or more `Screen`s on top of one another, letting the screens underneath show through if any cells of the layer above are transparent.
+
+`Layers` is used to place the pane the user is currently interacting with on top of a [frame](./frames.md), such as in the default viewport:
+
+{{story png placeholder}}
+
+It is also used for `cy`'s toast messages ({{api cy/toast}}), which are implemented using a noninteractive `Screen` that is layered over the rest of the content on the client's screen.
+
+### Tying it all together
+
+To illustrate the difference between `Screen`s and `Streams`, consider the following description of how data flows back and forth from a client to its `Screen`s and back again.
+
+The flow for client input works like this:
+
+1. The client presses a key in the terminal where they originally connected to `cy`. The terminal emulator writes the byte sequence for that key to the standard input of the process controlling the terminal, which in this case is `cy` running as a client.
+   - When `cy` is running in client mode, it represents its connection to the server with a `Stream` ([`ClientIO`](https://github.com/cfoust/cy/blob/main/cmd/cy/client.go?plain=1#L49)), the `Read`, `Write`, and `Resize` methods of which are [connected](https://github.com/cfoust/cy/blob/main/pkg/mux/stream/cli/module.go?plain=1#L20) directly to the standard output, standard input, and `SIGWINCH` events of the controlling terminal.
+2. All of the events are sent using the WebSocket protocol via a Unix socket to the `cy` server, which is a separate process.
+3. The `cy` server writes the incoming bytes it received from the client to the corresponding [`Client`](https://github.com/cfoust/cy/blob/main/pkg/cy/client.go?plain=1#L34) on the server. A `Client` is just a `Stream`.
+4. The `Client` translates the bytes into key and mouse events that are then sent (via `Send`) to the `Screen` the `Client` is attached to. These events usually travel through several different `Screen`s before reaching their destination, but ultimately they are passed into whatever `Screen` the client is currently attached to--whether that be a pane, the fuzzy finder, or replay mode.
