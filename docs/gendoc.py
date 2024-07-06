@@ -9,7 +9,16 @@ import subprocess
 import argparse
 import sys
 from pathlib import Path
-from typing import NamedTuple, Optional, Tuple, List, Any, Set
+from typing import (
+    NamedTuple,
+    Optional,
+    Tuple,
+    Dict,
+    List,
+    Any,
+    Set,
+    Callable,
+)
 
 GENDOC_REGEX = re.compile("{{gendoc (.+)}}")
 KEYS_REGEX = re.compile(r"{{keys (.+)}}")
@@ -157,6 +166,111 @@ def render_keys(bindings: List[Binding], args: List[str]) -> str:
 
     return output
 
+Transformer = Callable[[str],str]
+Replacement = Tuple[int, int, str]
+
+
+def handle_pattern(
+    pattern: re.Pattern,
+    handler: Callable[[re.Match], Optional[Replacement]],
+) -> Transformer:
+    """
+    Given a regex pattern `pattern` and a function `handler` that turns matches
+    into in-text replacements, return a Transformer.
+    """
+
+    def transform(content: str) -> str:
+        replace: List[Replacement] = []
+
+        for match in pattern.finditer(content):
+            replacement = handler(match)
+            if not replacement: continue
+            replace.append(replacement)
+
+        replace = sorted(replace, key=lambda a: a[1])
+
+        for start, end, text in reversed(replace):
+            content = content[:start] + text + content[end:]
+
+        return content
+
+    return transform
+
+
+def transform_gendoc(
+    frames: List[str],
+    animations: List[str],
+    symbols: List[Symbol],
+) -> Transformer:
+    def handler(match: re.Match) -> Optional[Replacement]:
+        command = match.group(1)
+        if len(command) == 0:
+            return None
+
+        output = ""
+        if command == "frames":
+            output = render_frames(frames)
+        elif command == "animations":
+            output = render_animations(animations)
+        elif command == "api":
+            output = render_api(symbols)
+
+        return (
+            match.start(0),
+            match.end(0),
+            output,
+        )
+
+    return handle_pattern(GENDOC_REGEX, handler)
+
+
+def transform_keys(
+    bindings: List[Binding],
+) -> Transformer:
+    def handler(match: re.Match) -> Optional[Replacement]:
+        args = match.group(1)
+        if len(args) == 0:
+            return None
+
+        return (
+            match.start(0),
+            match.end(0),
+            render_keys(
+                bindings,
+                args.split(" "),
+            ),
+        )
+
+    return handle_pattern(KEYS_REGEX, handler)
+
+
+def transform_api(
+    symbol_lookup: Dict[str, Symbol],
+) -> Transformer:
+    def handler(match: re.Match) -> Optional[Replacement]:
+        name = match.group(1)
+        if len(name) == 0:
+            return None
+
+        if not name in symbol_lookup:
+            # report_error(
+                # chapter,
+                # match.start(0),
+                # match.end(0),
+                # f"missing symbol: {name}",
+            # )
+            return None
+
+        symbol = symbol_lookup[name]
+
+        return (
+            match.start(0),
+            match.end(0),
+            render_symbol_link(symbol),
+        )
+
+    return handle_pattern(API_REGEX, handler)
+
 
 if __name__ == '__main__':
     args = sys.argv
@@ -187,6 +301,16 @@ if __name__ == '__main__':
         binding['Function'] = symbol_lookup[func]
         bindings.append(Binding(**binding))
 
+    transformers: List[Transformer] = [
+        transform_gendoc(
+            api['Frames'],
+            api['Animations'],
+            symbols,
+        ),
+        transform_keys(bindings),
+        transform_api(symbol_lookup),
+    ]
+
     errors: int = 0
     def report_error(chapter, start, end, msg):
         global errors
@@ -194,74 +318,10 @@ if __name__ == '__main__':
         print(f"{chapter['name']}:{start}{end}: {msg}", file=sys.stderr)
 
     def transform_chapter(chapter) -> None:
-        replace = []
-
         content = chapter['content']
 
-        for ref in GENDOC_REGEX.finditer(content):
-            command = ref.group(1)
-            if len(command) == 0:
-                continue
-
-            output = ""
-            if command == "frames":
-                output = render_frames(api['Frames'])
-            elif command == "animations":
-                output = render_animations(api['Animations'])
-            elif command == "api":
-                output = render_api(symbols)
-
-            replace.append(
-                (
-                    ref.start(0),
-                    ref.end(0),
-                    output,
-                )
-            )
-
-        for ref in API_REGEX.finditer(content):
-            name = ref.group(1)
-            if len(name) == 0:
-                continue
-
-            if not name in symbol_lookup:
-                report_error(
-                    chapter,
-                    ref.start(0),
-                    ref.end(0),
-                    f"missing symbol: {name}",
-                )
-                continue
-
-            symbol = symbol_lookup[name]
-
-            replace.append(
-                (
-                    ref.start(0),
-                    ref.end(0),
-                    render_symbol_link(symbol),
-                )
-            )
-
-        for ref in KEYS_REGEX.finditer(content):
-            args = ref.group(1)
-            if len(args) == 0:
-                continue
-
-            replace.append(
-                (
-                    ref.start(0),
-                    ref.end(0),
-                    render_keys(
-                        bindings,
-                        args.split(" "),
-                    ),
-                )
-            )
-
-        replace = sorted(replace, key=lambda a: a[1])
-        for start, end, text in reversed(replace):
-            content = content[:start] + text + content[end:]
+        for transform in transformers:
+            content = transform(content)
 
         chapter['content'] = content
 
