@@ -40,7 +40,11 @@
 
 - [Architecture](./architecture.md)
 
+- [Packages](./packages.md)
+
 - [Stories](./stories.md)
+
+- [Documentation site](./documentation.md)
 
 ---
 

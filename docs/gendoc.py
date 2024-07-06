@@ -20,10 +20,6 @@ from typing import (
     Callable,
 )
 
-GENDOC_REGEX = re.compile("{{gendoc (.+)}}")
-KEYS_REGEX = re.compile(r"{{keys (.+)}}")
-API_REGEX = re.compile(r"{{api ([a-z0-9/-]+)}}")
-
 
 class Symbol(NamedTuple):
     Name: str
@@ -232,7 +228,7 @@ def transform_gendoc(
             output,
         ), None
 
-    return handle_pattern(GENDOC_REGEX, handler)
+    return handle_pattern(re.compile("{{gendoc (.+)}}"), handler)
 
 
 def transform_keys(
@@ -255,7 +251,7 @@ def transform_keys(
             ),
         ), None
 
-    return handle_pattern(KEYS_REGEX, handler)
+    return handle_pattern(re.compile(r"{{keys (.+)}}"), handler)
 
 
 def transform_api(
@@ -283,7 +279,48 @@ def transform_api(
             render_symbol_link(symbol),
         ), None
 
-    return handle_pattern(API_REGEX, handler)
+    return handle_pattern(re.compile(r"{{api ([a-z0-9/-]+)}}"), handler)
+
+
+def transform_packages() -> Transformer:
+    pkg_dir = os.path.join(os.path.dirname(__file__), "..", "pkg")
+
+    packages: List[Tuple[str, str]] = []
+
+    for dir, _, _ in os.walk(pkg_dir):
+        relative = os.path.relpath(dir, start=pkg_dir)
+        readme = os.path.join(dir, "README.md")
+        if not os.path.exists(readme): continue
+
+        with open(readme, 'r') as f:
+            packages.append((
+                relative,
+                f.read(),
+            ))
+
+    packages = sorted(
+        packages,
+        key=lambda a: a[0],
+    )
+
+    docs = ""
+
+    for name, readme in packages:
+        # Skip the first line, usually #
+        readme = "\n".join(readme.split("\n")[1:])
+        docs += f"""## {name}
+
+[source](https://github.com/cfoust/cy/tree/main/pkg/{name})
+
+{readme}"""
+
+    def handler(match: re.Match) -> Tuple[
+            Optional[Replacement],
+            Optional[Error],
+    ]:
+        return (match.start(0), match.end(0), docs,), None
+
+    return handle_pattern(re.compile(r"{{packages}}"), handler)
 
 
 if __name__ == '__main__':
@@ -316,12 +353,13 @@ if __name__ == '__main__':
         bindings.append(Binding(**binding))
 
     transformers: List[Transformer] = [
+        transform_packages(),
+        transform_keys(bindings),
         transform_gendoc(
             api['Frames'],
             api['Animations'],
             symbols,
         ),
-        transform_keys(bindings),
         transform_api(symbol_lookup),
     ]
 
