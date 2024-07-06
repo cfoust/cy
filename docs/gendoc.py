@@ -166,25 +166,33 @@ def render_keys(bindings: List[Binding], args: List[str]) -> str:
 
     return output
 
-Transformer = Callable[[str],str]
+Error = Tuple[int, str]
+Transformer = Callable[[str],Tuple[str, List[Error]]]
 Replacement = Tuple[int, int, str]
 
 
 def handle_pattern(
     pattern: re.Pattern,
-    handler: Callable[[re.Match], Optional[Replacement]],
+    handler: Callable[
+        [re.Match],
+        Tuple[Optional[Replacement], Optional[Error]],
+    ],
 ) -> Transformer:
     """
     Given a regex pattern `pattern` and a function `handler` that turns matches
     into in-text replacements, return a Transformer.
     """
 
-    def transform(content: str) -> str:
+    def transform(content: str) -> Tuple[str, List[Error]]:
         replace: List[Replacement] = []
+        errors: List[Error] = []
 
         for match in pattern.finditer(content):
-            replacement = handler(match)
-            if not replacement: continue
+            replacement, error = handler(match)
+            if not replacement:
+                if error: errors.append(error)
+                continue
+
             replace.append(replacement)
 
         replace = sorted(replace, key=lambda a: a[1])
@@ -192,7 +200,7 @@ def handle_pattern(
         for start, end, text in reversed(replace):
             content = content[:start] + text + content[end:]
 
-        return content
+        return content, errors
 
     return transform
 
@@ -202,10 +210,13 @@ def transform_gendoc(
     animations: List[str],
     symbols: List[Symbol],
 ) -> Transformer:
-    def handler(match: re.Match) -> Optional[Replacement]:
+    def handler(match: re.Match) -> Tuple[
+            Optional[Replacement],
+            Optional[Error],
+    ]:
         command = match.group(1)
         if len(command) == 0:
-            return None
+            return None, None
 
         output = ""
         if command == "frames":
@@ -219,7 +230,7 @@ def transform_gendoc(
             match.start(0),
             match.end(0),
             output,
-        )
+        ), None
 
     return handle_pattern(GENDOC_REGEX, handler)
 
@@ -227,10 +238,13 @@ def transform_gendoc(
 def transform_keys(
     bindings: List[Binding],
 ) -> Transformer:
-    def handler(match: re.Match) -> Optional[Replacement]:
+    def handler(match: re.Match) -> Tuple[
+            Optional[Replacement],
+            Optional[Error],
+    ]:
         args = match.group(1)
         if len(args) == 0:
-            return None
+            return None, None
 
         return (
             match.start(0),
@@ -239,7 +253,7 @@ def transform_keys(
                 bindings,
                 args.split(" "),
             ),
-        )
+        ), None
 
     return handle_pattern(KEYS_REGEX, handler)
 
@@ -247,19 +261,19 @@ def transform_keys(
 def transform_api(
     symbol_lookup: Dict[str, Symbol],
 ) -> Transformer:
-    def handler(match: re.Match) -> Optional[Replacement]:
+    def handler(match: re.Match) -> Tuple[
+            Optional[Replacement],
+            Optional[Error],
+    ]:
         name = match.group(1)
         if len(name) == 0:
-            return None
+            return None, None
 
         if not name in symbol_lookup:
-            # report_error(
-                # chapter,
-                # match.start(0),
-                # match.end(0),
-                # f"missing symbol: {name}",
-            # )
-            return None
+            return None, (
+                match.start(0),
+                f"missing symbol: {name}",
+            )
 
         symbol = symbol_lookup[name]
 
@@ -267,7 +281,7 @@ def transform_api(
             match.start(0),
             match.end(0),
             render_symbol_link(symbol),
-        )
+        ), None
 
     return handle_pattern(API_REGEX, handler)
 
@@ -311,17 +325,25 @@ if __name__ == '__main__':
         transform_api(symbol_lookup),
     ]
 
-    errors: int = 0
-    def report_error(chapter, start, end, msg):
-        global errors
-        errors += 1
-        print(f"{chapter['name']}:{start}{end}: {msg}", file=sys.stderr)
+    num_errors: int = 0
 
     def transform_chapter(chapter) -> None:
-        content = chapter['content']
+        global num_errors
+        content: str = chapter['content']
 
         for transform in transformers:
-            content = transform(content)
+            content, errors = transform(content)
+
+            for index, message in errors:
+                num_errors += 1
+                # not accurate since other transformers may have changed this,
+                # but whatever
+                line = len(content[:index].split("\n"))
+
+                print(
+                    f"{chapter['name']}:{line}: {message}",
+                    file=sys.stderr,
+                )
 
         chapter['content'] = content
 
@@ -337,8 +359,8 @@ if __name__ == '__main__':
 
         transform_chapter(section['Chapter'])
 
-    if errors > 0:
-        print(f"{errors} error(s) while preprocessing")
+    if num_errors > 0:
+        print(f"{num_errors} error(s) while preprocessing", file=sys.stderr)
         exit(1)
 
     print(json.dumps(book))
