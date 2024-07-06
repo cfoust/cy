@@ -96,6 +96,10 @@ if __name__ == '__main__':
 
     Path("./src/images").mkdir(parents=True, exist_ok=True)
 
+    if 'CY_SKIP_ASSETS' in os.environ:
+        print(f"CY_SKIP_ASSETS enabled, not building assets", file=sys.stderr)
+        jobs = {}
+
     for filename, command in jobs.items():
         if os.path.exists(filename): continue
 

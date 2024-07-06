@@ -22,3 +22,19 @@ jobs:
 
       - name: Test
         run: go test -v ./pkg/... ./cmd/...
+
+      - name: Install latest mdbook
+        run: |
+          tag=$(curl 'https://api.github.com/repos/rust-lang/mdbook/releases/latest' | jq -r '.tag_name')
+          url="https://github.com/rust-lang/mdbook/releases/download/${tag}/mdbook-${tag}-x86_64-unknown-linux-gnu.tar.gz"
+          mkdir mdbook
+          curl -sSL $url | tar -xz --directory=./mdbook
+          echo `pwd`/mdbook >> $GITHUB_PATH
+
+      - name: Build book
+        run: |
+          cd docs
+          # Building all of the assets for the docs site takes a while; we only
+          # build it on release. This is just to verify that this PR/commit did
+          # not break any documentation.
+          CY_SKIP_ASSETS=1 mdbook build
