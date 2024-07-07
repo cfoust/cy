@@ -4,7 +4,7 @@ This document is intended to be a brief introduction to `cy`'s code structure an
 
 It is safe to assume that the high-level description in this document will remain reliable despite changes in the actual implementation, but if you are ever in doubt:
 
-1. Read the README for the package you are modifying. Most packages in `pkg` have their own READMEs (along with some sub-packages.)
+1. Read the README for the package you are modifying. Most [packages](./packages.md) in `pkg` have their own READMEs (along with some sub-packages.)
 2. Ask for help [in Discord](https://discord.gg/NRQG3wbWGM).
 3. Consult the code itself.
 

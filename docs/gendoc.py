@@ -306,8 +306,15 @@ def transform_packages() -> Transformer:
     docs = ""
 
     for name, readme in packages:
+        lines = readme.split("\n")
         # Skip the first line, usually #
-        readme = "\n".join(readme.split("\n")[1:])
+        lines = lines[1:]
+        # Increase header level
+        lines = list(map(
+            lambda line: "#" + line if line.startswith("#") else line,
+            lines,
+        ))
+        readme = "\n".join(lines)
         docs += f"""## {name}
 
 [source](https://github.com/cfoust/cy/tree/main/pkg/{name})
