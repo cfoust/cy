@@ -1,9 +1,5 @@
 package fluid
 
-import (
-	"math/rand"
-)
-
 type number = float64
 
 type Simulator struct {
@@ -42,7 +38,7 @@ func (s *Simulator) Particles() []Particle {
 	return s.particles
 }
 
-func New(width, height number, numParticles int) *Simulator {
+func New(width, height number, particles []Particle) *Simulator {
 	s := &Simulator{
 		width:          width,
 		height:         height,
@@ -54,14 +50,7 @@ func New(width, height number, numParticles int) *Simulator {
 	s.mousePrevX = s.mouseX
 	s.mousePrevY = s.mouseY
 
-	s.particles = make([]Particle, numParticles)
-	for i := 0; i < numParticles; i++ {
-		posX := rand.Float64() * width
-		posY := rand.Float64() * height
-		velX := rand.Float64()*2 - 1
-		velY := rand.Float64()*2 - 1
-		s.particles[i] = NewParticle(posX, posY, velX, velY)
-	}
+	s.particles = particles
 
 	s.particleListHeads = make([]int, s.numHashBuckets)
 	s.activeBuckets = make([]int, s.numHashBuckets)
@@ -70,7 +59,7 @@ func New(width, height number, numParticles int) *Simulator {
 		s.activeBuckets[i] = 0
 	}
 
-	s.particleListNextIdx = make([]int, numParticles)
+	s.particleListNextIdx = make([]int, len(particles))
 
 	s.material = NewMaterial("water", 4, 0.5, 0.5, 40)
 	return s
