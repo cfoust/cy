@@ -53,20 +53,25 @@ func (f *Fluid) Update(delta time.Duration) image.Image {
 
 	size := f.start.Size()
 	f.current = image.New(size)
-	f.sim.Update(1.)
+	f.sim.Update(0.001)
 
 	i := f.current
 	particles := f.sim.Particles()
 
 	var particle fluid.Particle
-	var destRow, destCol int
+	var index, destRow, destCol int
 	for row := 0; row < size.R; row++ {
 		for col := 0; col < size.C; col++ {
 			if f.start[row][col].IsEmpty() {
 				continue
 			}
 
-			particle = particles[row*size.R+col]
+			index = row*size.R + col
+			if index >= len(particles) {
+				continue
+			}
+
+			particle = particles[index]
 			destRow = size.R - 1 - safeClamp(particle.Y, size.R)
 			destCol = safeClamp(particle.X, size.C)
 			i[destRow][destCol] = f.start[row][col]
