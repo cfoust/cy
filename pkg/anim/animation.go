@@ -16,7 +16,7 @@ type Creator func() Animation
 
 func RandomAnimation() Animation {
 	anims := []Animation{
-		&Collapse{},
+		&Fluid{},
 		&Midjo{},
 		&Cyform{},
 		&Conway{},

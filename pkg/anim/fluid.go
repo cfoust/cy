@@ -53,7 +53,7 @@ func safeClamp(value, bound float64, max int) int {
 }
 
 func (f *Fluid) Update(delta time.Duration) image.Image {
-	if (delta - f.last) < (time.Second / TICKS_PER_SECOND) {
+	if (delta - f.last) < (time.Second / 40) {
 		return f.current
 	}
 
