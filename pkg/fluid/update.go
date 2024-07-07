@@ -48,7 +48,7 @@ func (s *Simulator) applyViscosity(dt number) {
 	}
 
 	numActiveBuckets := s.numActiveBuckets
-	visitedBuckets := make([]int, len(s.particles))
+	visitedBuckets := make([]int, s.numHashBuckets)
 
 	kernelRadius := s.material.kernelRadius // h
 	kernelRadiusSq := kernelRadius * kernelRadius
@@ -229,7 +229,7 @@ func (s *Simulator) doubleDensityRelaxation(dt number) {
 	neighborUnitX := make([]number, len(s.particles))
 	neighborUnitY := make([]number, len(s.particles))
 	neighborCloseness := make([]number, len(s.particles))
-	visitedBuckets := make([]int, len(s.particles))
+	visitedBuckets := make([]int, s.numHashBuckets)
 
 	numActiveBuckets := s.numActiveBuckets
 
@@ -318,7 +318,7 @@ func (s *Simulator) doubleDensityRelaxation(dt number) {
 							// Add spring if not already present
 							// TODO: this JS hash thing is absolutely crazy but curious how it performs
 							if addSprings && selfIdx < neighborIdx && r > minDist && p0.springs[neighborIdx] == 0. {
-								p0.springs[neighborIdx] = r
+								s.particles[selfIdx].springs[neighborIdx] = r
 							}
 						}
 
@@ -377,12 +377,16 @@ func (s *Simulator) doubleDensityRelaxation(dt number) {
 	}
 }
 
+const (
+	FLUID_PADDING = 1.5
+)
+
 func (s *Simulator) resolveCollisions(dt number) {
 	boundaryMul := 0.5 * dt * dt
-	boundaryMinX := 5.
-	boundaryMaxX := s.width - 5
-	boundaryMinY := 5.
-	boundaryMaxY := s.height - 5
+	boundaryMinX := FLUID_PADDING
+	boundaryMaxX := s.width - FLUID_PADDING
+	boundaryMinY := FLUID_PADDING
+	boundaryMaxY := s.height - FLUID_PADDING
 
 	for i, p := range s.particles {
 		if p.X < boundaryMinX {
@@ -472,7 +476,7 @@ func (s *Simulator) Update(dt float64) {
 		//s.particles[i].posY -= screenMoveY
 	}
 
-	s.applyViscosity(dt)
+	//s.applyViscosity(dt)
 
 	for i := 0; i < len(s.particles); i++ {
 		// save previous position

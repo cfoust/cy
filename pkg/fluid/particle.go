@@ -20,13 +20,3 @@ func NewParticle(posX, posY, velX, velY number) Particle {
 		velY:  velY,
 	}
 }
-
-func moveParticleData(dst, src *Particle) {
-	dst.X = src.X
-	dst.Y = src.Y
-	dst.prevX = src.prevX
-	dst.prevY = src.prevY
-	dst.velX = src.velX
-	dst.velY = src.velY
-	dst.springs = src.springs
-}
