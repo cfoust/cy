@@ -7,7 +7,7 @@ type Particle struct {
 	prevY   number
 	velX    number
 	velY    number
-	springs []number
+	springs map[int]number
 }
 
 func NewParticle(posX, posY, velX, velY number) Particle {

@@ -153,19 +153,253 @@ func (s *Simulator) applyViscosity(dt number) {
 	}
 }
 
-func (s *Simulator) adjustSprings(dt number) {
-}
-
 func (s *Simulator) applySpringDisplacements(dt number) {
+	if s.material.springStiffness == 0 {
+		return
+	}
+
+	kernelRadius := s.material.kernelRadius // h
+	kernelRadiusInv := 1.0 / kernelRadius
+
+	springStiffness := s.material.springStiffness * dt * dt
+	plasticity := s.material.plasticity * dt // alpha
+	yieldRatio := s.material.yieldRatio      // gamma
+	minDistRatio := s.material.minDistRatio
+	minDist := minDistRatio * kernelRadius
+
+	for i := 0; i < len(s.particles); i++ {
+		// TODO: maybe optimize this by using a list of springs instead of a hash
+		for springIdx := 0; springIdx < len(s.particles[i].springs); springIdx++ {
+			restLength := s.particles[i].springs[springIdx]
+
+			springParticle := s.particles[springIdx]
+
+			dx := s.particles[i].posX - springParticle.posX
+			dy := s.particles[i].posY - springParticle.posY
+			dist := math.Sqrt(dx*dx + dy*dy)
+
+			tolerableDeformation := yieldRatio * restLength
+
+			if dist > restLength+tolerableDeformation {
+				restLength = restLength + plasticity*(dist-restLength-tolerableDeformation)
+				s.particles[i].springs[springIdx] = restLength
+			} else if dist < restLength-tolerableDeformation && dist > minDist {
+				restLength = restLength - plasticity*(restLength-tolerableDeformation-dist)
+				s.particles[i].springs[springIdx] = restLength
+			}
+
+			if restLength < minDist {
+				restLength = minDist
+				s.particles[i].springs[springIdx] = restLength
+			}
+
+			if restLength > kernelRadius {
+				delete(s.particles[i].springs, springIdx)
+				continue
+			}
+
+			D := springStiffness * (1 - restLength*kernelRadiusInv) * (dist - restLength) / dist
+			dx *= D
+			dy *= D
+
+			s.particles[i].posX -= dx
+			s.particles[i].posY -= dy
+
+			s.particles[springIdx].posX += dx
+			s.particles[springIdx].posY += dy
+		}
+	}
 }
 
 func (s *Simulator) doubleDensityRelaxation(dt number) {
+	kernelRadius := s.material.kernelRadius // h
+	kernelRadiusSq := kernelRadius * kernelRadius
+	kernelRadiusInv := 1.0 / kernelRadius
+
+	restDensity := s.material.restDensity
+	stiffness := s.material.stiffness * dt * dt
+	nearStiffness := s.material.nearStiffness * dt * dt
+
+	minDistRatio := s.material.minDistRatio
+	minDist := minDistRatio * kernelRadius
+
+	// TODO(cfoust): 07/07/24 this is very wasteful
+	// Neighbor cache
+	neighbors := make([]int, len(s.particles))
+	neighborUnitX := make([]number, len(s.particles))
+	neighborUnitY := make([]number, len(s.particles))
+	neighborCloseness := make([]number, len(s.particles))
+	visitedBuckets := make([]int, len(s.particles))
+
+	numActiveBuckets := s.numActiveBuckets
+
+	addSprings := s.material.springStiffness > 0
+
+	for abIdx := 0; abIdx < numActiveBuckets; abIdx++ {
+		selfIdx := s.particleListHeads[s.activeBuckets[abIdx]]
+
+		for selfIdx != -1 {
+			p0 := s.particles[selfIdx]
+
+			density := 0.
+			nearDensity := 0.
+
+			numNeighbors := 0
+			numVisitedBuckets := 0
+
+			// Compute density and near-density
+			bucketX := math.Floor(p0.posX * kernelRadiusInv)
+			bucketY := math.Floor(p0.posY * kernelRadiusInv)
+
+			for bucketDX := -1; bucketDX <= 1; bucketDX++ {
+				for bucketDY := -1; bucketDY <= 1; bucketDY++ {
+					bucketIdx := s.getHashBucketIdx(
+						int(math.Floor(bucketX+float64(bucketDX))),
+						int(math.Floor(bucketY+float64(bucketDY))),
+					)
+
+					// Check hash collision
+					found := false
+					for k := 0; k < numVisitedBuckets; k++ {
+						if visitedBuckets[k] == bucketIdx {
+							found = true
+							break
+						}
+					}
+
+					if found {
+						continue
+					}
+
+					visitedBuckets[numVisitedBuckets] = bucketIdx
+					numVisitedBuckets++
+
+					neighborIdx := s.particleListHeads[bucketIdx]
+
+					for neighborIdx != -1 {
+						if neighborIdx == selfIdx {
+							neighborIdx = s.particleListNextIdx[neighborIdx]
+							continue
+						}
+
+						p1 := s.particles[neighborIdx]
+
+						diffX := p1.posX - p0.posX
+
+						if diffX > kernelRadius || diffX < -kernelRadius {
+							neighborIdx = s.particleListNextIdx[neighborIdx]
+							continue
+						}
+
+						diffY := p1.posY - p0.posY
+
+						if diffY > kernelRadius || diffY < -kernelRadius {
+							neighborIdx = s.particleListNextIdx[neighborIdx]
+							continue
+						}
+
+						rSq := diffX*diffX + diffY*diffY
+
+						if rSq < kernelRadiusSq {
+							r := math.Sqrt(rSq)
+							q := r * kernelRadiusInv
+							closeness := 1 - q
+							closenessSq := closeness * closeness
+
+							density += closeness * closeness
+							nearDensity += closeness * closenessSq
+
+							neighbors[numNeighbors] = neighborIdx
+							neighborUnitX[numNeighbors] = diffX / r
+							neighborUnitY[numNeighbors] = diffY / r
+							neighborCloseness[numNeighbors] = closeness
+							numNeighbors++
+
+							// Add spring if not already present
+							// TODO: this JS hash thing is absolutely crazy but curious how it performs
+							if addSprings && selfIdx < neighborIdx && r > minDist && p0.springs[neighborIdx] == 0. {
+								p0.springs[neighborIdx] = r
+							}
+						}
+
+						neighborIdx = s.particleListNextIdx[neighborIdx]
+					}
+				}
+			}
+
+			// Compute pressure and near-pressure
+			pressure := stiffness * (density - restDensity)
+			nearPressure := nearStiffness * nearDensity
+
+			// Optional: Clamp pressure for stability
+			// const pressureSum = pressure + nearPressure;
+
+			// if (pressureSum > 1) {
+			//   const pressureMul = 1 / pressureSum;
+			//   pressure *= pressureMul;
+			//   nearPressure *= pressureMul;
+			// }
+
+			if pressure > 1 {
+				pressure = 1
+			}
+
+			if nearPressure > 1 {
+				nearPressure = 1
+			}
+
+			dispX := 0.
+			dispY := 0.
+
+			for j := 0; j < numNeighbors; j++ {
+				p1 := neighbors[j]
+
+				closeness := neighborCloseness[j]
+				D := (pressure*closeness + nearPressure*closeness*closeness) / 2
+				DX := D * neighborUnitX[j]
+				DY := D * neighborUnitY[j]
+
+				s.particles[p1].posX += DX
+				s.particles[p1].posY += DY
+
+				dispX -= DX
+				dispY -= DY
+
+				// p0.posX -= DX;
+				// p0.posY -= DY;
+			}
+
+			s.particles[selfIdx].posX += dispX
+			s.particles[selfIdx].posY += dispY
+
+			selfIdx = s.particleListNextIdx[selfIdx]
+		}
+	}
 }
 
 func (s *Simulator) resolveCollisions(dt number) {
+	boundaryMul := 0.5 * dt * dt
+	boundaryMinX := 5.
+	boundaryMaxX := s.width - 5
+	boundaryMinY := 5.
+	boundaryMaxY := s.height - 5
+
+	for i, p := range s.particles {
+		if p.posX < boundaryMinX {
+			s.particles[i].posX += boundaryMul * (boundaryMinX - p.posX)
+		} else if p.posX > boundaryMaxX {
+			s.particles[i].posX += boundaryMul * (boundaryMaxX - p.posX)
+		}
+
+		if p.posY < boundaryMinY {
+			s.particles[i].posY += boundaryMul * (boundaryMinY - p.posY)
+		} else if p.posY > boundaryMaxY {
+			s.particles[i].posY += boundaryMul * (boundaryMaxY - p.posY)
+		}
+	}
 }
 
-func (s *Simulator) Update() {
+func (s *Simulator) Update(dt float64) {
 	// TODO(cfoust): 07/07/24
 	//this.screenMoveSmootherX += window.screenX - this.screenX;
 	//this.screenMoveSmootherY += window.screenY - this.screenY;
@@ -185,8 +419,6 @@ func (s *Simulator) Update() {
 	//this.mousePrevY = this.mouseY;
 
 	s.populateHashGrid()
-
-	dt := s.material.dt
 
 	gravX := 0.02 * s.material.kernelRadius * s.material.gravX * dt
 	gravY := 0.02 * s.material.kernelRadius * s.material.gravY * dt
@@ -252,7 +484,6 @@ func (s *Simulator) Update() {
 		s.particles[i].posY += s.particles[i].velY * dt
 	}
 
-	s.adjustSprings(dt)
 	s.applySpringDisplacements(dt)
 	s.doubleDensityRelaxation(dt)
 	s.resolveCollisions(dt)
