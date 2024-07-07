@@ -27,8 +27,8 @@ func (s *Simulator) populateHashGrid() {
 	bucketSizeInv := 1.0 / bucketSize
 
 	for i := 0; i < numParticles; i++ {
-		bucketX := int(math.Floor(s.particles[i].posX * bucketSizeInv))
-		bucketY := int(math.Floor(s.particles[i].posY * bucketSizeInv))
+		bucketX := int(math.Floor(s.particles[i].X * bucketSizeInv))
+		bucketY := int(math.Floor(s.particles[i].Y * bucketSizeInv))
 		bucketIdx := s.getHashBucketIdx(bucketX, bucketY)
 		headIdx := s.particleListHeads[bucketIdx]
 
@@ -48,7 +48,7 @@ func (s *Simulator) applyViscosity(dt number) {
 	}
 
 	numActiveBuckets := s.numActiveBuckets
-	var visitedBuckets []int
+	visitedBuckets := make([]int, len(s.particles))
 
 	kernelRadius := s.material.kernelRadius // h
 	kernelRadiusSq := kernelRadius * kernelRadius
@@ -65,8 +65,8 @@ func (s *Simulator) applyViscosity(dt number) {
 			numVisitedBuckets := 0
 
 			// Compute density and near-density
-			bucketX := math.Floor(p0.posX * kernelRadiusInv)
-			bucketY := math.Floor(p0.posY * kernelRadiusInv)
+			bucketX := math.Floor(p0.X * kernelRadiusInv)
+			bucketY := math.Floor(p0.Y * kernelRadiusInv)
 
 			for bucketDX := -1; bucketDX <= 1; bucketDX++ {
 				for bucketDY := -1; bucketDY <= 1; bucketDY++ {
@@ -101,14 +101,14 @@ func (s *Simulator) applyViscosity(dt number) {
 
 						p1 := s.particles[neighborIdx]
 
-						diffX := p1.posX - p0.posX
+						diffX := p1.X - p0.X
 
 						if diffX > kernelRadius || diffX < -kernelRadius {
 							neighborIdx = s.particleListNextIdx[neighborIdx]
 							continue
 						}
 
-						diffY := p1.posY - p0.posY
+						diffY := p1.Y - p0.Y
 
 						if diffY > kernelRadius || diffY < -kernelRadius {
 							neighborIdx = s.particleListNextIdx[neighborIdx]
@@ -174,8 +174,8 @@ func (s *Simulator) applySpringDisplacements(dt number) {
 
 			springParticle := s.particles[springIdx]
 
-			dx := s.particles[i].posX - springParticle.posX
-			dy := s.particles[i].posY - springParticle.posY
+			dx := s.particles[i].X - springParticle.X
+			dy := s.particles[i].Y - springParticle.Y
 			dist := math.Sqrt(dx*dx + dy*dy)
 
 			tolerableDeformation := yieldRatio * restLength
@@ -202,11 +202,11 @@ func (s *Simulator) applySpringDisplacements(dt number) {
 			dx *= D
 			dy *= D
 
-			s.particles[i].posX -= dx
-			s.particles[i].posY -= dy
+			s.particles[i].X -= dx
+			s.particles[i].Y -= dy
 
-			s.particles[springIdx].posX += dx
-			s.particles[springIdx].posY += dy
+			s.particles[springIdx].X += dx
+			s.particles[springIdx].Y += dy
 		}
 	}
 }
@@ -248,8 +248,8 @@ func (s *Simulator) doubleDensityRelaxation(dt number) {
 			numVisitedBuckets := 0
 
 			// Compute density and near-density
-			bucketX := math.Floor(p0.posX * kernelRadiusInv)
-			bucketY := math.Floor(p0.posY * kernelRadiusInv)
+			bucketX := math.Floor(p0.X * kernelRadiusInv)
+			bucketY := math.Floor(p0.Y * kernelRadiusInv)
 
 			for bucketDX := -1; bucketDX <= 1; bucketDX++ {
 				for bucketDY := -1; bucketDY <= 1; bucketDY++ {
@@ -284,14 +284,14 @@ func (s *Simulator) doubleDensityRelaxation(dt number) {
 
 						p1 := s.particles[neighborIdx]
 
-						diffX := p1.posX - p0.posX
+						diffX := p1.X - p0.X
 
 						if diffX > kernelRadius || diffX < -kernelRadius {
 							neighborIdx = s.particleListNextIdx[neighborIdx]
 							continue
 						}
 
-						diffY := p1.posY - p0.posY
+						diffY := p1.Y - p0.Y
 
 						if diffY > kernelRadius || diffY < -kernelRadius {
 							neighborIdx = s.particleListNextIdx[neighborIdx]
@@ -359,8 +359,8 @@ func (s *Simulator) doubleDensityRelaxation(dt number) {
 				DX := D * neighborUnitX[j]
 				DY := D * neighborUnitY[j]
 
-				s.particles[p1].posX += DX
-				s.particles[p1].posY += DY
+				s.particles[p1].X += DX
+				s.particles[p1].Y += DY
 
 				dispX -= DX
 				dispY -= DY
@@ -369,8 +369,8 @@ func (s *Simulator) doubleDensityRelaxation(dt number) {
 				// p0.posY -= DY;
 			}
 
-			s.particles[selfIdx].posX += dispX
-			s.particles[selfIdx].posY += dispY
+			s.particles[selfIdx].X += dispX
+			s.particles[selfIdx].Y += dispY
 
 			selfIdx = s.particleListNextIdx[selfIdx]
 		}
@@ -385,16 +385,16 @@ func (s *Simulator) resolveCollisions(dt number) {
 	boundaryMaxY := s.height - 5
 
 	for i, p := range s.particles {
-		if p.posX < boundaryMinX {
-			s.particles[i].posX += boundaryMul * (boundaryMinX - p.posX)
-		} else if p.posX > boundaryMaxX {
-			s.particles[i].posX += boundaryMul * (boundaryMaxX - p.posX)
+		if p.X < boundaryMinX {
+			s.particles[i].X += boundaryMul * (boundaryMinX - p.X)
+		} else if p.X > boundaryMaxX {
+			s.particles[i].X += boundaryMul * (boundaryMaxX - p.X)
 		}
 
-		if p.posY < boundaryMinY {
-			s.particles[i].posY += boundaryMul * (boundaryMinY - p.posY)
-		} else if p.posY > boundaryMaxY {
-			s.particles[i].posY += boundaryMul * (boundaryMaxY - p.posY)
+		if p.Y < boundaryMinY {
+			s.particles[i].Y += boundaryMul * (boundaryMinY - p.Y)
+		} else if p.Y > boundaryMaxY {
+			s.particles[i].Y += boundaryMul * (boundaryMaxY - p.Y)
 		}
 	}
 }
@@ -437,8 +437,8 @@ func (s *Simulator) Update(dt float64) {
 		s.particles[i].velY += gravY
 
 		if arNonZero {
-			dx := s.particles[i].posX - s.mouseX
-			dy := s.particles[i].posY - s.mouseY
+			dx := s.particles[i].X - s.mouseX
+			dy := s.particles[i].Y - s.mouseY
 			distSq := dx*dx + dy*dy
 
 			if distSq < 100000 && distSq > 0.1 {
@@ -454,8 +454,8 @@ func (s *Simulator) Update(dt float64) {
 		}
 
 		if s.drag {
-			dx := s.particles[i].posX - s.mouseX
-			dy := s.particles[i].posY - s.mouseY
+			dx := s.particles[i].X - s.mouseX
+			dy := s.particles[i].Y - s.mouseY
 			distSq := dx*dx + dy*dy
 
 			if distSq < 10000 && distSq > 0.1 {
@@ -476,12 +476,12 @@ func (s *Simulator) Update(dt float64) {
 
 	for i := 0; i < len(s.particles); i++ {
 		// save previous position
-		s.particles[i].prevX = s.particles[i].posX
-		s.particles[i].prevY = s.particles[i].posY
+		s.particles[i].prevX = s.particles[i].X
+		s.particles[i].prevY = s.particles[i].Y
 
 		// advance to predicted position
-		s.particles[i].posX += s.particles[i].velX * dt
-		s.particles[i].posY += s.particles[i].velY * dt
+		s.particles[i].X += s.particles[i].velX * dt
+		s.particles[i].Y += s.particles[i].velY * dt
 	}
 
 	s.applySpringDisplacements(dt)
@@ -492,7 +492,7 @@ func (s *Simulator) Update(dt float64) {
 
 	for i := 0; i < len(s.particles); i++ {
 		// use previous position to calculate new velocity
-		s.particles[i].velX = (s.particles[i].posX - s.particles[i].prevX) * dtInv
-		s.particles[i].velY = (s.particles[i].posY - s.particles[i].prevY) * dtInv
+		s.particles[i].velX = (s.particles[i].X - s.particles[i].prevX) * dtInv
+		s.particles[i].velY = (s.particles[i].Y - s.particles[i].prevY) * dtInv
 	}
 }

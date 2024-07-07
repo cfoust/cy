@@ -1,8 +1,8 @@
 package fluid
 
 type Particle struct {
-	posX    number
-	posY    number
+	X       number
+	Y       number
 	prevX   number
 	prevY   number
 	velX    number
@@ -12,8 +12,8 @@ type Particle struct {
 
 func NewParticle(posX, posY, velX, velY number) Particle {
 	return Particle{
-		posX:  posX,
-		posY:  posY,
+		X:     posX,
+		Y:     posY,
 		prevX: posX,
 		prevY: posY,
 		velX:  velX,
@@ -22,8 +22,8 @@ func NewParticle(posX, posY, velX, velY number) Particle {
 }
 
 func moveParticleData(dst, src *Particle) {
-	dst.posX = src.posX
-	dst.posY = src.posY
+	dst.X = src.X
+	dst.Y = src.Y
 	dst.prevX = src.prevX
 	dst.prevY = src.prevY
 	dst.velX = src.velX

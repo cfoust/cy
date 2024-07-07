@@ -38,6 +38,10 @@ type Simulator struct {
 	material Material
 }
 
+func (s *Simulator) Particles() []Particle {
+	return s.particles
+}
+
 func New(width, height number, numParticles int) *Simulator {
 	s := &Simulator{
 		width:          width,
