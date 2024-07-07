@@ -17,6 +17,10 @@ type Fluid struct {
 
 var _ Animation = (*Fluid)(nil)
 
+const (
+	POSITION_FACTOR = 10
+)
+
 func (f *Fluid) Init(start image.Image) {
 	f.start = start
 
@@ -29,19 +33,23 @@ func (f *Fluid) Init(start image.Image) {
 				continue
 			}
 			particles = append(particles, fluid.NewParticle(
-				float64(col),
-				float64(row),
+				float64(col)*POSITION_FACTOR,
+				float64(size.R-1-row)*POSITION_FACTOR,
 				0,
 				0,
 			))
 		}
 	}
 
-	f.sim = fluid.New(float64(size.C), float64(size.R), particles)
+	f.sim = fluid.New(
+		float64(size.C)*POSITION_FACTOR,
+		float64(size.R)*POSITION_FACTOR,
+		particles,
+	)
 }
 
-func safeClamp(value float64, max int) int {
-	return geom.Clamp(int((value/100)*float64(max)), 0, max-1)
+func safeClamp(value, bound float64, max int) int {
+	return geom.Clamp(int((value/bound)*float64(max)), 0, max-1)
 }
 
 func (f *Fluid) Update(delta time.Duration) image.Image {
@@ -53,7 +61,7 @@ func (f *Fluid) Update(delta time.Duration) image.Image {
 
 	size := f.start.Size()
 	f.current = image.New(size)
-	f.sim.Update(0.001)
+	f.sim.Update(1)
 
 	i := f.current
 	particles := f.sim.Particles()
@@ -66,15 +74,23 @@ func (f *Fluid) Update(delta time.Duration) image.Image {
 				continue
 			}
 
-			index = row*size.R + col
 			if index >= len(particles) {
 				continue
 			}
 
 			particle = particles[index]
-			destRow = size.R - 1 - safeClamp(particle.Y, size.R)
-			destCol = safeClamp(particle.X, size.C)
+			destRow = safeClamp(
+				particle.Y/POSITION_FACTOR,
+				float64(size.R),
+				size.R,
+			)
+			destCol = safeClamp(
+				particle.X/POSITION_FACTOR,
+				float64(size.C),
+				size.C,
+			)
 			i[destRow][destCol] = f.start[row][col]
+			index++
 		}
 	}
 
