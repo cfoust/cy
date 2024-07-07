@@ -16,11 +16,12 @@ type Creator func() Animation
 
 func RandomAnimation() Animation {
 	anims := []Animation{
-		&Fluid{},
-		&Midjo{},
-		&Cyform{},
+		&Collapse{},
 		&Conway{},
 		&Cos{},
+		&Cyform{},
+		&Fluid{},
+		&Midjo{},
 	}
 
 	return anims[rand.Int()%len(anims)]

@@ -34,7 +34,7 @@ func (f *Fluid) Init(start image.Image) {
 			}
 			particles = append(particles, fluid.NewParticle(
 				float64(col)*POSITION_FACTOR,
-				float64(size.R-1-row)*POSITION_FACTOR,
+				float64(row)*POSITION_FACTOR,
 				0,
 				0,
 			))
