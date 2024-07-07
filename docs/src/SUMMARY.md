@@ -36,6 +36,16 @@
 
 - [API](./api.md)
 
+# Developer guide
+
+- [Architecture](./architecture.md)
+
+- [Packages](./packages.md)
+
+- [Stories](./stories.md)
+
+- [Documentation site](./documentation.md)
+
 ---
 
 [Acknowledgments](./acknowledgments.md)

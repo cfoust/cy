@@ -81,6 +81,35 @@ func main() {
 		}(animation)
 	}
 
+	// A stories story
+	stories.Register(
+		"stories",
+		func(ctx context.Context) (mux.Screen, error) {
+			return ui.New(ctx, CLI.Prefix)
+		},
+		stories.Config{
+			Input: []interface{}{
+				stories.Type("ctrl+j"),
+				stories.Wait(stories.Some),
+				stories.Type("ctrl+j"),
+				stories.Wait(stories.Some),
+				stories.Type("ctrl+k"),
+				stories.Wait(stories.Some),
+				stories.Type("ctrl+k"),
+				stories.Wait(stories.Some),
+				stories.Type("input"),
+				stories.Type("ctrl+j"),
+				stories.Wait(stories.Some),
+				stories.Type("ctrl+j"),
+				stories.Wait(stories.Some),
+				stories.Type("ctrl+k"),
+				stories.Wait(stories.Some),
+				stories.Type("ctrl+k"),
+				stories.Wait(stories.Some),
+			},
+		},
+	)
+
 	haveCast := len(CLI.Cast) > 0
 	if len(CLI.Single) == 0 && haveCast {
 		panic(fmt.Errorf("to use --cast, you must provide a single story"))

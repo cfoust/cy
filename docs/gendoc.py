@@ -9,11 +9,16 @@ import subprocess
 import argparse
 import sys
 from pathlib import Path
-from typing import NamedTuple, Optional, Tuple, List, Any, Set
-
-GENDOC_REGEX = re.compile("{{gendoc (.+)}}")
-KEYS_REGEX = re.compile(r"{{keys (.+)}}")
-API_REGEX = re.compile(r"{{api ([a-z0-9/-]+)}}")
+from typing import (
+    NamedTuple,
+    Optional,
+    Tuple,
+    Dict,
+    List,
+    Any,
+    Set,
+    Callable,
+)
 
 
 class Symbol(NamedTuple):
@@ -157,6 +162,173 @@ def render_keys(bindings: List[Binding], args: List[str]) -> str:
 
     return output
 
+Error = Tuple[int, str]
+Transformer = Callable[[str],Tuple[str, List[Error]]]
+Replacement = Tuple[int, int, str]
+
+
+def handle_pattern(
+    pattern: re.Pattern,
+    handler: Callable[
+        [re.Match],
+        Tuple[Optional[Replacement], Optional[Error]],
+    ],
+) -> Transformer:
+    """
+    Given a regex pattern `pattern` and a function `handler` that turns matches
+    into in-text replacements, return a Transformer.
+    """
+
+    def transform(content: str) -> Tuple[str, List[Error]]:
+        replace: List[Replacement] = []
+        errors: List[Error] = []
+
+        for match in pattern.finditer(content):
+            replacement, error = handler(match)
+            if not replacement:
+                if error: errors.append(error)
+                continue
+
+            replace.append(replacement)
+
+        replace = sorted(replace, key=lambda a: a[1])
+
+        for start, end, text in reversed(replace):
+            content = content[:start] + text + content[end:]
+
+        return content, errors
+
+    return transform
+
+
+def transform_gendoc(
+    frames: List[str],
+    animations: List[str],
+    symbols: List[Symbol],
+) -> Transformer:
+    def handler(match: re.Match) -> Tuple[
+            Optional[Replacement],
+            Optional[Error],
+    ]:
+        command = match.group(1)
+        if len(command) == 0:
+            return None, None
+
+        output = ""
+        if command == "frames":
+            output = render_frames(frames)
+        elif command == "animations":
+            output = render_animations(animations)
+        elif command == "api":
+            output = render_api(symbols)
+
+        return (
+            match.start(0),
+            match.end(0),
+            output,
+        ), None
+
+    return handle_pattern(re.compile("{{gendoc (.+)}}"), handler)
+
+
+def transform_keys(
+    bindings: List[Binding],
+) -> Transformer:
+    def handler(match: re.Match) -> Tuple[
+            Optional[Replacement],
+            Optional[Error],
+    ]:
+        args = match.group(1)
+        if len(args) == 0:
+            return None, None
+
+        return (
+            match.start(0),
+            match.end(0),
+            render_keys(
+                bindings,
+                args.split(" "),
+            ),
+        ), None
+
+    return handle_pattern(re.compile(r"{{keys (.+)}}"), handler)
+
+
+def transform_api(
+    symbol_lookup: Dict[str, Symbol],
+) -> Transformer:
+    def handler(match: re.Match) -> Tuple[
+            Optional[Replacement],
+            Optional[Error],
+    ]:
+        name = match.group(1)
+        if len(name) == 0:
+            return None, None
+
+        if not name in symbol_lookup:
+            return None, (
+                match.start(0),
+                f"missing symbol: {name}",
+            )
+
+        symbol = symbol_lookup[name]
+
+        return (
+            match.start(0),
+            match.end(0),
+            render_symbol_link(symbol),
+        ), None
+
+    return handle_pattern(re.compile(r"{{api ([a-z0-9/-]+)}}"), handler)
+
+
+def transform_packages() -> Transformer:
+    pkg_dir = os.path.join(os.path.dirname(__file__), "..", "pkg")
+
+    packages: List[Tuple[str, str]] = []
+
+    for dir, _, _ in os.walk(pkg_dir):
+        relative = os.path.relpath(dir, start=pkg_dir)
+        readme = os.path.join(dir, "README.md")
+        if not os.path.exists(readme): continue
+
+        with open(readme, 'r') as f:
+            packages.append((
+                relative,
+                f.read(),
+            ))
+
+    packages = sorted(
+        packages,
+        key=lambda a: a[0],
+    )
+
+    docs = ""
+
+    for name, readme in packages:
+        lines = readme.split("\n")
+        # Skip the first line, usually #
+        lines = lines[1:]
+        # Increase header level
+        lines = list(map(
+            lambda line: "#" + line if line.startswith("#") else line,
+            lines,
+        ))
+        readme = "\n".join(lines)
+        docs += f"""## {name}
+
+[source](https://github.com/cfoust/cy/tree/main/pkg/{name})
+
+{readme}"""
+
+    def handler(match: re.Match) -> Tuple[
+            Optional[Replacement],
+            Optional[Error],
+    ]:
+        return (match.start(0), match.end(0), docs,), None
+
+    return handle_pattern(re.compile(r"{{packages}}"), handler)
+
 
 if __name__ == '__main__':
     args = sys.argv
@@ -187,81 +359,36 @@ if __name__ == '__main__':
         binding['Function'] = symbol_lookup[func]
         bindings.append(Binding(**binding))
 
-    errors: int = 0
-    def report_error(chapter, start, end, msg):
-        global errors
-        errors += 1
-        print(f"{chapter['name']}:{start}{end}: {msg}", file=sys.stderr)
+    transformers: List[Transformer] = [
+        transform_packages(),
+        transform_keys(bindings),
+        transform_gendoc(
+            api['Frames'],
+            api['Animations'],
+            symbols,
+        ),
+        transform_api(symbol_lookup),
+    ]
+
+    num_errors: int = 0
 
     def transform_chapter(chapter) -> None:
-        replace = []
+        global num_errors
+        content: str = chapter['content']
 
-        content = chapter['content']
+        for transform in transformers:
+            content, errors = transform(content)
 
-        for ref in GENDOC_REGEX.finditer(content):
-            command = ref.group(1)
-            if len(command) == 0:
-                continue
+            for index, message in errors:
+                num_errors += 1
+                # not accurate since other transformers may have changed this,
+                # but whatever
+                line = len(content[:index].split("\n"))
 
-            output = ""
-            if command == "frames":
-                output = render_frames(api['Frames'])
-            elif command == "animations":
-                output = render_animations(api['Animations'])
-            elif command == "api":
-                output = render_api(symbols)
-
-            replace.append(
-                (
-                    ref.start(0),
-                    ref.end(0),
-                    output,
+                print(
+                    f"{chapter['name']}:{line}: {message}",
+                    file=sys.stderr,
                 )
-            )
-
-        for ref in API_REGEX.finditer(content):
-            name = ref.group(1)
-            if len(name) == 0:
-                continue
-
-            if not name in symbol_lookup:
-                report_error(
-                    chapter,
-                    ref.start(0),
-                    ref.end(0),
-                    f"missing symbol: {name}",
-                )
-                continue
-
-            symbol = symbol_lookup[name]
-
-            replace.append(
-                (
-                    ref.start(0),
-                    ref.end(0),
-                    render_symbol_link(symbol),
-                )
-            )
-
-        for ref in KEYS_REGEX.finditer(content):
-            args = ref.group(1)
-            if len(args) == 0:
-                continue
-
-            replace.append(
-                (
-                    ref.start(0),
-                    ref.end(0),
-                    render_keys(
-                        bindings,
-                        args.split(" "),
-                    ),
-                )
-            )
-
-        replace = sorted(replace, key=lambda a: a[1])
-        for start, end, text in reversed(replace):
-            content = content[:start] + text + content[end:]
 
         chapter['content'] = content
 
@@ -277,8 +404,8 @@ if __name__ == '__main__':
 
         transform_chapter(section['Chapter'])
 
-    if errors > 0:
-        print(f"{errors} error(s) while preprocessing")
+    if num_errors > 0:
+        print(f"{num_errors} error(s) while preprocessing", file=sys.stderr)
         exit(1)
 
     print(json.dumps(book))
