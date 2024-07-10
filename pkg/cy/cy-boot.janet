@@ -250,7 +250,7 @@ For example:
   (as?-> (path/glob (path/join [(cy/get :data-dir) "*.borg"])) _
          (map |(tuple $ {:type :replay :path $} $) _)
          (input/find _ :prompt "search: log file")
-         (replay/open :root _)
+         (replay/open-file :root _)
          (pane/attach _)))
 
 (defn- get-pane-commands [id result-func]
@@ -280,15 +280,21 @@ For example:
          (input/find _ :prompt "search: command")
          (let [[id cmd] _]
            (pane/attach id)
-           (cy/replay
+           (replay/open
+             id
              :main true
              :location (((cmd :input) 0) :from)))))
+
+(key/action
+  action/open-replay
+  "Enter replay mode for the current pane."
+  (replay/open (pane/current)))
 
 (key/bind-many-tag :root "general"
                    [prefix "ctrl+p"] action/command-palette
                    [prefix "q"] cy/kill-server
                    [prefix "d"] cy/detach
-                   [prefix "p"] cy/replay
+                   [prefix "p"] action/open-replay
                    [prefix "r"] action/reload-config
                    [prefix "P"] cy/paste)
 

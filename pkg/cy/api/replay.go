@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/replay"
@@ -259,7 +260,7 @@ func (m *ReplayModule) BigWordEndBackward(context interface{}) error {
 	return m.sendAction(context, replay.ActionBigWordEndBackward)
 }
 
-func (m *ReplayModule) Open(
+func (m *ReplayModule) OpenFile(
 	groupId *janet.Value,
 	path string,
 ) (tree.NodeID, error) {
@@ -299,4 +300,47 @@ func (m *ReplayModule) Open(
 
 	pane := group.NewPane(ctx, replay)
 	return pane.Id(), nil
+}
+
+type ReplayParams struct {
+	Main     bool
+	Copy     bool
+	Location *geom.Vec2
+}
+
+func (m *ReplayModule) Open(
+	id *janet.Value,
+	named *janet.Named[ReplayParams],
+) error {
+	defer id.Free()
+
+	pane, err := resolvePane(m.Tree, id)
+	if err != nil {
+		return err
+	}
+
+	var options []replay.Option
+
+	params := named.Values()
+	if params.Main {
+		options = append(options, replay.WithFlow)
+	}
+
+	if params.Copy {
+		options = append(options, replay.WithCopyMode)
+	}
+
+	if params.Location != nil {
+		options = append(options, replay.WithLocation(
+			*params.Location,
+		))
+	}
+
+	r, ok := pane.Screen().(*replay.Replayable)
+	if !ok {
+		return fmt.Errorf("node not replayable")
+	}
+
+	r.EnterReplay(options...)
+	return nil
 }
