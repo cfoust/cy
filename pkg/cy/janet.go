@@ -36,8 +36,9 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 			TimeBinds: c.timeBinds,
 			CopyBinds: c.copyBinds,
 		},
-		"pane": &api.PaneModule{Tree: c.tree},
-		"path": &api.PathModule{},
+		"pane":  &api.PaneModule{Tree: c.tree},
+		"param": &api.ParamModule{Tree: c.tree},
+		"path":  &api.PathModule{},
 		"replay": &api.ReplayModule{
 			Lifetime:  util.NewLifetime(c.Ctx()),
 			Tree:      c.tree,

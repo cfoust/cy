@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	cyParams "github.com/cfoust/cy/pkg/cy/params"
 	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
@@ -48,12 +47,7 @@ func (i *InputModule) Find(
 		return nil, err
 	}
 
-	shouldAnimate := true
-	animated, ok := client.Params().Get(cyParams.ParamAnimate)
-	if value, ok := animated.(bool); ok {
-		shouldAnimate = value
-	}
-
+	shouldAnimate := client.Params().Animate()
 	outerLayers := client.OuterLayers()
 	state := outerLayers.State()
 	cursor := state.Cursor

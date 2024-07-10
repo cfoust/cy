@@ -5,8 +5,6 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/cy/cmd"
-	"github.com/cfoust/cy/pkg/cy/params"
-	cyParams "github.com/cfoust/cy/pkg/cy/params"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
@@ -42,21 +40,12 @@ func (c *CmdModule) New(
 
 	command := "/bin/bash"
 	if client, ok := user.(Client); ok {
-		defaultShell, _ := client.Get(cyParams.ParamDefaultShell)
-		if value, ok := defaultShell.(string); ok {
-			command = value
-		}
+		command = client.Params().DefaultShell()
 	}
 
 	values := cmdParams.WithDefault(CmdParams{
 		Command: command,
 	})
-
-	param, _ := group.Params().Get(params.ParamDataDirectory)
-	dataDir, ok := param.(string)
-	if !ok {
-		return 0, fmt.Errorf("param %s was not a string", params.ParamDataDirectory)
-	}
 
 	replayable, err := cmd.New(
 		c.Lifetime.Ctx(),
@@ -65,7 +54,7 @@ func (c *CmdModule) New(
 			Args:      values.Args,
 			Directory: values.Path,
 		},
-		dataDir,
+		group.Params().DataDirectory(),
 		c.TimeBinds,
 		c.CopyBinds,
 	)

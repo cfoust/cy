@@ -247,7 +247,7 @@ For example:
 (key/action
   action/open-log
   "Open a .borg file."
-  (as?-> (path/glob (path/join [(cy/get :data-dir) "*.borg"])) _
+  (as?-> (path/glob (path/join [(param/get :data-dir) "*.borg"])) _
          (map |(tuple $ {:type :replay :path $} $) _)
          (input/find _ :prompt "search: log file")
          (replay/open-file :root _)

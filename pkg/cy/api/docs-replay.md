@@ -120,7 +120,13 @@ Jump to the cell before `char` after the cursor on the current line.
 
 # doc: Open
 
-(replay/open group path)
+(replay/open id)
+
+Enter replay mode for pane `id` (which is a [NodeID](api.md#nodeid)).
+
+# doc: OpenFile
+
+(replay/open-file group path)
 
 Open the `.borg` file found at `path` in a new replay window in `group`.
 

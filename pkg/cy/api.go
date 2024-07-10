@@ -5,7 +5,6 @@ import (
 
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
-	"github.com/cfoust/cy/pkg/mux/screen/tree"
 
 	"github.com/rs/zerolog"
 )
@@ -65,79 +64,6 @@ func (c *CyModule) Detach(user interface{}) {
 
 func (c *CyModule) ReloadConfig() error {
 	return c.cy.reloadConfig()
-}
-
-func (c *CyModule) Get(user interface{}, key *janet.Value) (interface{}, error) {
-	defer key.Free()
-
-	var keyword janet.Keyword
-	err := key.Unmarshal(&keyword)
-	if err != nil {
-		return nil, err
-	}
-
-	client, ok := user.(*Client)
-	if !ok {
-		return nil, fmt.Errorf("missing client context")
-	}
-
-	// First check the client's parameters
-	value, ok := client.params.Get(string(keyword))
-	if ok {
-		return value, nil
-	}
-
-	// Then those found in the tree
-	node := client.Node()
-	if node == nil {
-		return nil, fmt.Errorf("client was not attached")
-	}
-
-	value, ok = node.Params().Get(string(keyword))
-	return value, nil
-}
-
-func (c *CyModule) Set(user interface{}, key *janet.Value, value *janet.Value) error {
-	defer key.Free()
-
-	// If there is no client, this probably means a parameter is being set
-	// in cy's startup script.
-	var node tree.Node = c.cy.tree.Root()
-	if client, ok := user.(*Client); ok {
-		node = client.Node()
-		if node == nil {
-			return fmt.Errorf("client was not attached")
-		}
-	}
-
-	var keyword janet.Keyword
-	err := key.Unmarshal(&keyword)
-	if err != nil {
-		return err
-	}
-
-	var str string
-	err = value.Unmarshal(&str)
-	if err == nil {
-		node.Params().Set(string(keyword), str)
-		return nil
-	}
-
-	var _int int
-	err = value.Unmarshal(&_int)
-	if err == nil {
-		node.Params().Set(string(keyword), _int)
-		return nil
-	}
-
-	var _bool bool
-	err = value.Unmarshal(&_bool)
-	if err == nil {
-		node.Params().Set(string(keyword), _bool)
-		return nil
-	}
-
-	return fmt.Errorf("parameter type not supported")
 }
 
 func (c *CyModule) Paste(user interface{}) {

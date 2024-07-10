@@ -1,13 +1,12 @@
 package cy
 
 import (
-	"github.com/cfoust/cy/pkg/cy/params"
+	"github.com/cfoust/cy/pkg/params"
 )
 
 func (c *Cy) setDefaults(options Options) error {
 	defaults := map[string]interface{}{
 		params.ParamDataDirectory: options.DataDir,
-		params.ParamAnimate:       true,
 		params.ParamDefaultShell:  options.Shell,
 	}
 

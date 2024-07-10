@@ -7,7 +7,6 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/cy/api"
-	cyParams "github.com/cfoust/cy/pkg/cy/params"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
@@ -290,7 +289,7 @@ func (c *Client) initialize(options ClientOptions) error {
 	)
 
 	if isClientSSH {
-		c.params.Set(cyParams.ParamAnimate, false)
+		c.params.SetAnimate(false)
 		c.toast.Send(toasts.Toast{
 			Message: "you joined via SSH; disabling animation",
 		})

@@ -6,22 +6,6 @@ Kill the `cy` server, disconnecting all clients.
 
 Detach from the `cy` server.
 
-# doc: Get
-
-(cy/get key)
-
-Get the value of the [parameter](./parameters.md) with key `key`.
-
-# doc: Set
-
-(cy/set key value)
-
-Set the value of the [parameter](./parameters.md) with key `key` to value `value`. For the time being, parameter values can only be strings, booleans, and integers. This is expected to change in the future.
-
-# doc: Replay
-
-Enter replay mode for the current pane.
-
 # doc: Paste
 
 Paste the text in the copy buffer to the current pane.
