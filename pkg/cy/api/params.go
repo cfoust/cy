@@ -36,6 +36,12 @@ func (p *ParamModule) Get(
 	}
 
 	params := named.Values()
+
+	// Need to be careful to always free params.Target
+	if params.Target != nil {
+		defer params.Target.Free()
+	}
+
 	if params.Target == nil || isClientTarget(params.Target) {
 		client, ok := context.(Client)
 		if !ok {
@@ -45,8 +51,6 @@ func (p *ParamModule) Get(
 		value, _ := client.Get(string(keyword))
 		return value, nil
 	}
-
-	defer params.Target.Free()
 
 	node, err := resolveNode(p.Tree, params.Target)
 	if err != nil {

@@ -24,16 +24,26 @@ var API_TEST_FILE []byte
 
 func runTestFile(t *testing.T, file string) (failures []testFailure) {
 	server, create := setup(t)
+	client := create(geom.DEFAULT_SIZE)
 
 	server.Callback("run-test", "", func(
 		name string,
+		// whether a client should be included
+		context bool,
 		callback *janet.Function,
 	) {
-		client := create(geom.DEFAULT_SIZE)
-		err := callback.CallContext(
-			server.Ctx(),
-			client,
-		)
+		var err error
+		if context {
+			err = callback.CallContext(
+				server.Ctx(),
+				client,
+			)
+		} else {
+			err = callback.CallContext(
+				server.Ctx(),
+				nil,
+			)
+		}
 		if err == nil {
 			return
 		}
@@ -75,7 +85,7 @@ func TestAPI(t *testing.T) {
 	}
 
 	for _, failure := range failures {
-		t.Logf("%s:%s failed: %+v", failure.File, failure.Name, failure.Error)
+		t.Logf("%s: '%s' failed: %+v", failure.File, failure.Name, failure.Error)
 	}
 
 	t.Errorf("%d API test(s) failed", len(failures))
