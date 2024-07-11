@@ -30,3 +30,5 @@ For example:
 (group/mkdir :root "/foo/bar/baz")
 # Returns the NodeID of "baz"
 ```
+
+This function throws an error if any node in the path already exists and is not a group.
