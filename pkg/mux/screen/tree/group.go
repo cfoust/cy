@@ -24,6 +24,21 @@ func (g *Group) Children() []Node {
 	return g.children
 }
 
+func (g *Group) ChildByName(name string) (node Node, ok bool) {
+	g.RLock()
+	children := g.children
+	g.RUnlock()
+
+	for _, child := range children {
+		if child.Name() != name {
+			continue
+		}
+		return child, true
+	}
+
+	return
+}
+
 func (g *Group) addNode(node Node) {
 	g.tree.storeNode(node)
 	g.Lock()

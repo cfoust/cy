@@ -24,7 +24,6 @@ var API_TEST_FILE []byte
 
 func runTestFile(t *testing.T, file string) (failures []testFailure) {
 	server, create := setup(t)
-	client := create(geom.DEFAULT_SIZE)
 
 	server.Callback("run-test", "", func(
 		name string,
@@ -34,10 +33,12 @@ func runTestFile(t *testing.T, file string) (failures []testFailure) {
 	) {
 		var err error
 		if context {
+			client := create(geom.DEFAULT_SIZE)
 			err = callback.CallContext(
 				server.Ctx(),
 				client,
 			)
+			client.Cancel()
 		} else {
 			err = callback.CallContext(
 				server.Ctx(),

@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 )
@@ -31,6 +33,45 @@ func (g *GroupModule) New(
 	}
 
 	return newGroup.Id(), nil
+}
+
+func (g *GroupModule) Mkdir(
+	parentId *janet.Value,
+	path string,
+) (tree.NodeID, error) {
+	defer parentId.Free()
+
+	group, err := resolveGroup(g.Tree, parentId)
+	if err != nil {
+		return 0, err
+	}
+
+	parts, err := validatePath(path)
+	if err != nil {
+		return 0, err
+	}
+
+	var parent = group
+	var pathSoFar string
+	for _, part := range parts {
+		pathSoFar += "/" + part
+		node, nodeOk := parent.ChildByName(part)
+		if !nodeOk {
+			parent = parent.NewGroup()
+			parent.SetName(part)
+			continue
+		}
+
+		parent, nodeOk = node.(*tree.Group)
+		if !nodeOk {
+			return 0, fmt.Errorf(
+				"cannot create %s: is a node",
+				pathSoFar,
+			)
+		}
+	}
+
+	return parent.Id(), nil
 }
 
 func (g *GroupModule) Children(parentId *janet.Value) ([]tree.NodeID, error) {

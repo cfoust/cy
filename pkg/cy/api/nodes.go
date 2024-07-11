@@ -2,13 +2,39 @@ package api
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/cfoust/cy/pkg/janet"
 	T "github.com/cfoust/cy/pkg/mux/screen/tree"
 )
 
-// Resolve a Janet value to a node in `tree`. Allows use of either the :root
-// keyword or integer NodeIDs.
+// validatePath ensures the provided path adheres to the API's path standard
+// and splits it into parts.
+func validatePath(path string) (parts []string, err error) {
+	path = filepath.Clean(path)
+
+	if path[0] != '/' {
+		err = fmt.Errorf("path must start with /")
+		return
+	}
+
+	parts = strings.Split(
+		path,
+		string('/'),
+	)
+
+	// Just the leading slash
+	if len(parts) == 1 {
+		err = fmt.Errorf("invalid path")
+		return
+	}
+
+	return parts[1:], nil
+}
+
+// resolveNode resolves a Janet value to a node in `tree`. Allows use of either
+// the :root keyword or integer NodeIDs.
 func resolveNode(tree *T.Tree, target *janet.Value) (T.Node, error) {
 	// first try keyword
 	err := target.Unmarshal(&KEYWORD_ROOT)
