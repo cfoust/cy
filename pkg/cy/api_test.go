@@ -11,11 +11,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+import _ "embed"
+
 type testFailure struct {
 	File  string
 	Name  string
 	Error error
 }
+
+//go:embed api_test.janet
+var API_TEST_FILE []byte
 
 func runTestFile(t *testing.T, file string) (failures []testFailure) {
 	server, create := setup(t)
@@ -39,7 +44,14 @@ func runTestFile(t *testing.T, file string) (failures []testFailure) {
 		})
 	})
 
-	err := server.ExecuteFile(server.Ctx(), file)
+	err := server.ExecuteCall(server.Ctx(), nil, janet.Call{
+		Code:       API_TEST_FILE,
+		SourcePath: "api_test.janet",
+		Options:    janet.DEFAULT_CALL_OPTIONS,
+	})
+	require.NoError(t, err)
+
+	err = server.ExecuteFile(server.Ctx(), file)
 	require.NoError(t, err)
 	return
 }
