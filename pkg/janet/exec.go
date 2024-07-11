@@ -118,6 +118,11 @@ func (v *VM) runCode(params Params, call Call) {
 		env = v.env.table
 	}
 
+	if len(call.Code) == 0 {
+		params.Error(fmt.Errorf("empty code"))
+		return
+	}
+
 	args := []C.Janet{
 		C.janet_wrap_string(
 			C.janet_string(
