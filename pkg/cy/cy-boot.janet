@@ -5,6 +5,12 @@
 
 (def- actions @[])
 
+(defn
+  param/rset
+  ```Set the value of a parameter at `:root`.```
+  [key value]
+  (param/set :root key value))
+
 (defmacro key/action
   ````Register an action. Equivalent to the Janet built-in `(defn`), but requires a docstring.
 

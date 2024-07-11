@@ -370,12 +370,7 @@ func (c *Client) Attach(node tree.Node) error {
 }
 
 func (c *Client) Get(key string) (value interface{}, ok bool) {
-	value, ok = c.params.Get(key)
-	if ok {
-		return
-	}
-
-	return c.cy.defaults.Get(key)
+	return c.params.Get(key)
 }
 
 func (c *Client) Params() *params.Parameters {

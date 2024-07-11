@@ -11,9 +11,20 @@ type ParamModule struct {
 	Tree *tree.Tree
 }
 
+// haha
+type ParamParams struct {
+	Target *janet.Value
+}
+
+// isClientTarget reports whether value is the :client keyword.
+func isClientTarget(value *janet.Value) bool {
+	return value.Unmarshal(&KEYWORD_CLIENT) == nil
+}
+
 func (p *ParamModule) Get(
 	context interface{},
 	key *janet.Value,
+	named *janet.Named[ParamParams],
 ) (interface{}, error) {
 	defer key.Free()
 
@@ -23,33 +34,36 @@ func (p *ParamModule) Get(
 		return nil, err
 	}
 
-	client, ok := context.(Client)
-	if !ok {
-		return nil, fmt.Errorf("missing client context")
-	}
+	params := named.Values()
+	if params.Target == nil || isClientTarget(params.Target) {
+		client, ok := context.(Client)
+		if !ok {
+			return nil, fmt.Errorf("missing client context")
+		}
 
-	// First check the client's parameters
-	value, ok := client.Get(string(keyword))
-	if ok {
+		value, _ := client.Get(string(keyword))
 		return value, nil
 	}
 
-	// Then those found in the tree
-	node := client.Node()
-	if node == nil {
-		return nil, fmt.Errorf("client was not attached")
+	defer params.Target.Free()
+
+	node, err := resolveNode(p.Tree, params.Target)
+	if err != nil {
+		return nil, err
 	}
 
-	value, ok = node.Params().Get(string(keyword))
+	value, _ := node.Params().Get(string(keyword))
 	return value, nil
 }
 
 func (p *ParamModule) Set(
 	context interface{},
+	target *janet.Value,
 	key *janet.Value,
 	value *janet.Value,
 ) error {
 	defer key.Free()
+	defer target.Free()
 
 	// If there is no client, this probably means a parameter is being set
 	// in cy's startup script.
@@ -67,26 +81,7 @@ func (p *ParamModule) Set(
 		return err
 	}
 
-	var str string
-	err = value.Unmarshal(&str)
-	if err == nil {
-		node.Params().Set(string(keyword), str)
-		return nil
-	}
-
-	var _int int
-	err = value.Unmarshal(&_int)
-	if err == nil {
-		node.Params().Set(string(keyword), _int)
-		return nil
-	}
-
-	var _bool bool
-	err = value.Unmarshal(&_bool)
-	if err == nil {
-		node.Params().Set(string(keyword), _bool)
-		return nil
-	}
+	node.Params().Set(string(keyword), value)
 
 	return fmt.Errorf("parameter type not supported")
 }

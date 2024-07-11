@@ -1,19 +1,21 @@
 # Parameters
 
-`cy` contains a primitive key-value store it refers to as parameters. In addition to being available for use from Janet for arbitrary purposes, parameters are also the primary means of configuring `cy`'s behavior.
+`cy` contains a key-value referred to as **parameters**. In addition to being available for use from Janet for arbitrary purposes, parameters are also the primary means of configuring `cy`'s behavior.
 
 Parameters are set with {{api param/set}} and retrieved with {{api param/get}}:
 
 ```janet
-(param/set :some-parameter true)
+(param/set :root :some-parameter true)
 
 (param/get :some-parameter)
 # returns true
 ```
 
+Parameters work just like bindings do in the [node tree](./groups-and-panes.md#the-node-tree) in that the parameter values in descendant nodes overrite those in their ancestors when a client is attached to them. This allows `cy`'s functionality to be configured on a per-group (or even per-pane) basis using **default parameters**, which are described below.
+
 ## Default parameters
 
-Some parameters are used by `cy` to change how it performs certain operations.
+Some parameters are used by `cy` to change how it behaves.
 
 | Parameter        | Default                                                                   | Description                                                                             |
 | ---------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |

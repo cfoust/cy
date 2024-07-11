@@ -232,15 +232,13 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	timeBinds := bind.NewBindScope(nil)
 	copyBinds := bind.NewBindScope(nil)
 
-	defaults := params.New()
-	t := tree.NewTree(tree.WithParams(defaults.NewChild()))
+	t := tree.NewTree(tree.WithParams(params.New()))
 	cy := Cy{
 		Lifetime:   util.NewLifetime(ctx),
 		tree:       t,
 		muxServer:  server.New(),
 		timeBinds:  timeBinds,
 		copyBinds:  copyBinds,
-		defaults:   defaults,
 		showSplash: !options.HideSplash,
 		lastVisit:  make(map[tree.NodeID]historyEvent),
 		lastWrite:  make(map[tree.NodeID]historyEvent),
