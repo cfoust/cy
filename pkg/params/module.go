@@ -1,6 +1,8 @@
 package params
 
 import (
+	"github.com/cfoust/cy/pkg/janet"
+
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -12,8 +14,18 @@ type Parameters struct {
 
 func (p *Parameters) set(key string, value interface{}) error {
 	p.Lock()
+	existing, ok := p.table[key]
 	p.table[key] = value
 	p.Unlock()
+
+	if !ok {
+		return nil
+	}
+
+	if janetValue, ok := existing.(*janet.Value); ok {
+		janetValue.Free()
+	}
+
 	return nil
 }
 
