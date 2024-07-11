@@ -3,7 +3,6 @@ package params
 //go:generate python3 defaults.py
 type defaultParams struct {
 	// Whether to enable animation.
-	// boolean, default: true
 	Animate bool
 	// The directory in which .borg files will be saved.
 	// string, default: inferred from $XDG_DATA_HOME
@@ -11,6 +10,9 @@ type defaultParams struct {
 	// The default shell with which to start panes.
 	// string, default: /bin/bash, but also $SHELL
 	DefaultShell string
+	// The frame used for all new clients. A blank string means a random
+	// frame will be chosen from all frames.
+	DefaultFrame string
 }
 
 var (
@@ -18,5 +20,6 @@ var (
 		Animate:       true,
 		DataDirectory: "",
 		DefaultShell:  "/bin/bash",
+		DefaultFrame:  "",
 	}
 )

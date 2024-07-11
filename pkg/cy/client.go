@@ -247,7 +247,16 @@ func (c *Client) initialize(options ClientOptions) error {
 	c.margins = screen.NewMargins(c.Ctx(), c.innerLayers)
 
 	c.outerLayers = screen.NewLayers()
-	c.frame = frames.NewFramer(c.Ctx(), frames.RandomFrame())
+
+	frame := frames.RandomFrame()
+	defaultFrame := c.cy.tree.Root().Params().DefaultFrame()
+	if len(defaultFrame) != 0 {
+		if newFrame, ok := frames.Frames[defaultFrame]; ok {
+			frame = newFrame
+		}
+	}
+	c.frame = frames.NewFramer(c.Ctx(), frame)
+
 	c.outerLayers.NewLayer(
 		c.Ctx(),
 		c.frame,
