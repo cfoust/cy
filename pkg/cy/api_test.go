@@ -45,6 +45,7 @@ func runTestFile(t *testing.T, file string) (failures []testFailure) {
 				nil,
 			)
 		}
+
 		if err == nil {
 			return
 		}
