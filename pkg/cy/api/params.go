@@ -5,6 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/params"
 )
 
 type ParamModule struct {
@@ -65,23 +66,26 @@ func (p *ParamModule) Set(
 	defer key.Free()
 	defer target.Free()
 
-	// If there is no client, this probably means a parameter is being set
-	// in cy's startup script.
-	var node tree.Node = p.Tree.Root()
-	if client, ok := context.(Client); ok {
-		node = client.Node()
-		if node == nil {
-			return fmt.Errorf("client was not attached")
-		}
-	}
-
 	var keyword janet.Keyword
 	err := key.Unmarshal(&keyword)
 	if err != nil {
 		return err
 	}
 
-	node.Params().Set(string(keyword), value)
+	var params *params.Parameters
+	if isClientTarget(target) {
+		if client, ok := context.(Client); ok {
+			params = client.Params()
+		} else {
+			return fmt.Errorf("missing client context")
+		}
+	} else {
+		node, err := resolveNode(p.Tree, target)
+		if err != nil {
+			return err
+		}
+		params = node.Params()
+	}
 
-	return fmt.Errorf("parameter type not supported")
+	return params.Set(string(keyword), value)
 }
