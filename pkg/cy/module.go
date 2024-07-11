@@ -232,11 +232,13 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	timeBinds := bind.NewBindScope(nil)
 	copyBinds := bind.NewBindScope(nil)
 
-	t := tree.NewTree(tree.WithParams(params.New()))
+	defaults := params.New()
+	t := tree.NewTree(tree.WithParams(defaults.NewChild()))
 	cy := Cy{
 		Lifetime:   util.NewLifetime(ctx),
 		tree:       t,
 		muxServer:  server.New(),
+		defaults:   defaults,
 		timeBinds:  timeBinds,
 		copyBinds:  copyBinds,
 		showSplash: !options.HideSplash,
@@ -246,9 +248,16 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 		visits:     make(chan historyEvent),
 	}
 	cy.toast = NewToastLogger(cy.sendToast)
-	err := cy.setDefaults(options)
-	if err != nil {
-		return nil, err
+
+	// Some parameter defaults are set at runtime
+	for key, value := range map[string]interface{}{
+		params.ParamDataDirectory: options.DataDir,
+		params.ParamDefaultShell:  options.Shell,
+	} {
+		err := defaults.Set(key, value)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	subscriber := t.Subscribe(cy.Ctx())

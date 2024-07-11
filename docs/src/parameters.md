@@ -19,6 +19,6 @@ Some parameters are used by `cy` to change how it behaves.
 
 | Parameter        | Default                                                                   | Description                                                                             |
 | ---------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `:data-dir`      | [inferred on startup](replay-mode.md#recording-terminal-sessions-to-disk) | the directory in which `.borg` files are saved; if empty, recording to file is disabled |
+| `:data-directory`      | [inferred on startup](replay-mode.md#recording-terminal-sessions-to-disk) | the directory in which `.borg` files are saved; if empty, recording to file is disabled |
 | `:animate`       | `true`                                                                    | whether animations are enabled (disabled over SSH connections by default)               |
 | `:default-shell` | inferred from `$SHELL` on startup                                         | the default command used for {{api cmd/new}}                                            |
