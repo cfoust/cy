@@ -13,13 +13,17 @@ type defaultParams struct {
 	// The frame used for all new clients. A blank string means a random
 	// frame will be chosen from all frames.
 	DefaultFrame string
+	// @hide
+	// Whether to avoid blocking on (input/*) calls. Just for testing.
+	SkipInput bool
 }
 
 var (
 	defaults = defaultParams{
 		Animate:       true,
 		DataDirectory: "",
-		DefaultShell:  "/bin/bash",
 		DefaultFrame:  "",
+		DefaultShell:  "/bin/bash",
+		SkipInput:     false,
 	}
 )

@@ -363,10 +363,6 @@ def transform_examples() -> Transformer:
             hidden = line == HIDDEN_CODE_START
 
         example_code = '\n'.join(lines)
-        print(
-            f"running code: {example_code}",
-            file=sys.stderr,
-        )
         example = subprocess.run(
             "go run ../cmd/example/main.go",
             shell=True,

@@ -77,6 +77,14 @@ func (i *InputModule) Find(
 		)
 	}
 
+	if client.Params().SkipInput() {
+		if len(options) == 0 {
+			return nil, nil
+		}
+
+		return options[0].Result, nil
+	}
+
 	fuzzy := fuzzy.New(
 		ctx,
 		options,

@@ -11,6 +11,7 @@ const (
 	ParamDataDirectory = "data-directory"
 	ParamDefaultShell = "default-shell"
 	ParamDefaultFrame = "default-frame"
+	ParamSkipInput = "skip-input"
 )
 
 func (p *Parameters) Animate() bool {
@@ -85,6 +86,24 @@ func (p *Parameters) SetDefaultFrame(value string) {
     p.set(ParamDefaultFrame, value)
 }
 
+func (p *Parameters) SkipInput() bool {
+    value, ok := p.Get(ParamSkipInput)
+    if !ok {
+        return defaults.SkipInput
+    }
+
+    realValue, ok := value.(bool)
+    if !ok {
+        return defaults.SkipInput
+    }
+
+    return realValue
+}
+
+func (p *Parameters) SetSkipInput(value bool) {
+    p.set(ParamSkipInput, value)
+}
+
 func (p *Parameters) isDefault(key string) bool {
     switch key {
         case ParamAnimate:
@@ -94,6 +113,8 @@ func (p *Parameters) isDefault(key string) bool {
         case ParamDefaultShell:
             return true
         case ParamDefaultFrame:
+            return true
+        case ParamSkipInput:
             return true
     }
     return false
@@ -174,6 +195,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
             if err != nil {
                 janetValue.Free()
                 return fmt.Errorf("invalid value for :default-frame: %s", err)
+            }
+            p.set(key, translated)
+            return nil
+        case ParamSkipInput:
+            janetValue, ok := value.(*janet.Value)
+            if !ok {
+                realValue, ok := value.(bool)
+                if !ok {
+                    return fmt.Errorf("invalid value for ParamSkipInput, should be bool")
+                }
+                p.set(key, realValue)
+                return nil
+            }
+
+            var translated bool
+            err := janetValue.Unmarshal(&translated)
+            if err != nil {
+                janetValue.Free()
+                return fmt.Errorf("invalid value for :skip-input: %s", err)
             }
             p.set(key, translated)
             return nil

@@ -33,6 +33,8 @@ type Options struct {
 	Shell string
 	// Whether to show the splash screen on client join
 	HideSplash bool
+	// Whether to skip blocking (input/*) API calls. Just for testing.
+	SkipInput bool
 }
 
 type historyEvent struct {
@@ -253,6 +255,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	for key, value := range map[string]interface{}{
 		params.ParamDataDirectory: options.DataDir,
 		params.ParamDefaultShell:  options.Shell,
+		params.ParamSkipInput:     options.SkipInput,
 	} {
 		err := defaults.Set(key, value)
 		if err != nil {

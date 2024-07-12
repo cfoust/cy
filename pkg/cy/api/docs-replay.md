@@ -133,7 +133,8 @@ Open the `.borg` file found at `path` in a new replay window in `group`.
 For example:
 
 ```janet
-(replay/open (tree/root) "some_borg.borg")
+# ignore
+(replay/open-file :root "some_borg.borg")
 ```
 
 # doc: SwapScreen

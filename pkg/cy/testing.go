@@ -9,7 +9,8 @@ import (
 func NewTestServer() (*Cy, func(geom.Size) (*Client, error), error) {
 	ctx := context.Background()
 	cy, err := Start(ctx, Options{
-		Shell: "/bin/bash",
+		Shell:     "/bin/bash",
+		SkipInput: true,
 	})
 	if err != nil {
 		return nil, nil, err
