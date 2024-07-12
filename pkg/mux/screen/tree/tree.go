@@ -70,6 +70,27 @@ func (t *Tree) NodeById(id NodeID) (Node, bool) {
 	return node, ok
 }
 
+// Reset safely clears the state of the tree. Only useful in testing.
+func (t *Tree) Reset() {
+	t.RLock()
+	group := t.root
+	t.RUnlock()
+
+	for _, child := range group.Children() {
+		t.RemoveNode(child.Id())
+	}
+
+	// Reset the root node too
+	root := &Group{tree: t}
+	root.metaData = t.newMetadata(root)
+	// TODO(cfoust): 07/12/24 probably also want to reset params
+	root.params = group.params
+	t.Lock()
+	t.root = root
+	t.Unlock()
+	t.storeNode(t.root)
+}
+
 func (t *Tree) RemoveNode(id NodeID) error {
 	if t.root.Id() == id {
 		return fmt.Errorf("cannot remove root node")

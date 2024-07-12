@@ -1,7 +1,5 @@
 (def- prefix "ctrl+a")
 
-(def projects (group/new :root :name "projects"))
-(def shells (group/new :root :name "shells"))
 
 (def- actions @[])
 
@@ -91,6 +89,7 @@ For example:
   ```Create a new shell initialized in the working directory `path`.```
   [&opt path]
   (default path "")
+  (def shells (group/mkdir :root "/shells"))
   (cmd/new shells :path path))
 
 (defn
@@ -98,12 +97,14 @@ For example:
   ```Create a new shell initialized in the working directory `path` and attach to it.```
   [&opt path]
   (default path "")
+  (def shells (group/mkdir :root "/shells"))
   (pane/attach (cmd/new shells :path path)))
 
 (key/action
   action/new-shell
   "Create a new shell."
   (def path (cmd/path (pane/current)))
+  (def shells (group/mkdir :root "/shells"))
   (def shell (cmd/new shells :path path :name (path/base path)))
   (pane/attach shell))
 
@@ -111,6 +112,7 @@ For example:
   action/new-project
   "Create a new project."
   (def path (cmd/path (pane/current)))
+  (def projects (group/mkdir :root "/projects"))
   (def project (group/new projects :name (path/base path)))
   (def editor
     (cmd/new project
@@ -123,6 +125,7 @@ For example:
 (key/action
   action/jump-project
   "Jump to a project."
+  (def projects (group/mkdir :root "/projects"))
   (as?-> projects _
          (group/children _)
          (map
@@ -140,6 +143,7 @@ For example:
 (key/action
   action/jump-shell
   "Jump to a shell."
+  (def shells (group/mkdir :root "/shells"))
   (as?-> (group/children shells) _
          (map |(tuple
                  (cmd/path $)

@@ -31,24 +31,21 @@ func runTestFile(t *testing.T, file string) (failures []testFailure) {
 		context bool,
 		callback *janet.Function,
 	) {
-		var err error
+		var callContext interface{}
 		if context {
 			client := create(geom.DEFAULT_SIZE)
-			err = callback.CallContext(
-				server.Ctx(),
-				client,
-			)
-			client.Cancel()
-		} else {
-			err = callback.CallContext(
-				server.Ctx(),
-				nil,
-			)
+			callContext = client
+			defer client.Cancel()
 		}
 
+		// Clears out and resets the node tree on every run
+		defer server.tree.Reset()
+
+		err := callback.CallContext(server.Ctx(), callContext)
 		if err == nil {
 			return
 		}
+
 		failures = append(failures, testFailure{
 			Name:  name,
 			File:  file,
