@@ -14,30 +14,42 @@ import (
 )
 
 func main() {
-	data, err := io.ReadAll(os.Stdin)
-	if err != nil {
-		panic(err)
-	}
-
 	server, create, err := cy.NewTestServer()
 	if err != nil {
 		panic(err)
 	}
 
-	client, err := create(geom.DEFAULT_SIZE)
-	if err != nil {
-		panic(err)
-	}
+	buffer := make([]byte, 8192)
 
-	err = server.ExecuteCall(
-		context.Background(),
-		client,
-		janet.CallBytes(
-			data,
-		),
-	)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+	fmt.Fprintln(os.Stdout, "ready")
+
+	for {
+		client, err := create(geom.DEFAULT_SIZE)
+		if err != nil {
+			panic(err)
+		}
+
+		n, err := os.Stdin.Read(buffer)
+		if err == io.EOF {
+			os.Exit(0)
+			return
+		}
+		if err != nil {
+			panic(err)
+		}
+
+		err = server.ExecuteCall(
+			context.Background(),
+			client,
+			janet.CallBytes(buffer[:n]),
+		)
+		client.Cancel()
+		if err != nil {
+			fmt.Fprintf(os.Stdout, "%+v\n", err)
+			fmt.Fprintf(os.Stdout, "error\n")
+			continue
+		}
+
+		fmt.Fprintf(os.Stdout, "ok\n")
 	}
 }

@@ -332,10 +332,12 @@ def transform_packages() -> Transformer:
     return handle_pattern(re.compile(r"{{packages}}"), handler)
 
 
+IGNORE_CODE = "# ignore"
 HIDDEN_CODE_START = "# {"
 HIDDEN_CODE_END = "# }"
 
-def transform_examples() -> Transformer:
+
+def transform_examples(runner: subprocess.Popen) -> Transformer:
     """
     Ensure all example Janet code runs correctly.
     """
@@ -344,14 +346,17 @@ def transform_examples() -> Transformer:
             Optional[Error],
     ]:
         lines = match.group(1).strip().split("\n")
-        if lines[0] == "# ignore":
-            return None, None
 
         # Support directives to hide code from the reader
         filtered: List[str] = []
         hiding: bool = False
+        ignored: bool = False
         for line in lines:
             if hiding: continue
+
+            if line == IGNORE_CODE:
+                ignored = True
+                continue
 
             if (
                 line != HIDDEN_CODE_START and
@@ -362,27 +367,45 @@ def transform_examples() -> Transformer:
 
             hidden = line == HIDDEN_CODE_START
 
-        example_code = '\n'.join(lines)
-        example = subprocess.run(
-            "go run ../cmd/example/main.go",
-            shell=True,
-            capture_output=True,
-            input=example_code.encode('utf-8'),
-        )
+        code = '\n'.join(filtered)
+        code = f"```janet\n{code}\n```" 
 
-        if example.returncode != 0:
-            output = example.stderr.decode('utf-8')
+        if ignored:
+            return (
+                match.start(0),
+                match.end(0),
+                code,
+            ), None
+
+        example_code = '\n'.join(lines)
+
+        if not runner.stdout or not runner.stdin:
             return None, (
                 match.start(0),
-                f"failed executing Janet code: {output}",
+                "runner not initialized",
             )
 
-        output_code = '\n'.join(filtered)
+        runner.stdin.write(example_code)
+        runner.stdin.flush()
+
+        output_lines = []
+        while True:
+            output = runner.stdout.readline().strip()
+            if output == 'ok': break
+            if output == 'error': break
+            output_lines.append(output)
+
+        if output_lines:
+            error_msg = '\n'.join(output_lines)
+            return None, (
+                match.start(0),
+                f"failed executing Janet code: {error_msg}",
+            )
 
         return (
             match.start(0),
             match.end(0),
-            f"```janet\n{output_code}\n```",
+            code,
         ), None
 
     return handle_pattern(
@@ -420,6 +443,18 @@ if __name__ == '__main__':
         binding['Function'] = symbol_lookup[func]
         bindings.append(Binding(**binding))
 
+    runner = subprocess.Popen(
+        ["/usr/local/go/bin/go", "run", "../cmd/example/main.go"],
+        text=True,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=sys.stderr,
+        encoding="utf-8",
+    )
+
+    if runner.stdout:
+        runner.stdout.readline()
+
     transformers: List[Transformer] = [
         transform_packages(),
         transform_keys(bindings),
@@ -429,7 +464,7 @@ if __name__ == '__main__':
             symbols,
         ),
         transform_api(symbol_lookup),
-        transform_examples(),
+        transform_examples(runner),
     ]
 
     num_errors: int = 0
@@ -470,4 +505,5 @@ if __name__ == '__main__':
         print(f"{num_errors} error(s) while preprocessing", file=sys.stderr)
         exit(1)
 
+    runner.kill()
     print(json.dumps(book))

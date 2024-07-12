@@ -17,6 +17,7 @@ Several API functions related to binding keys return a `Binding`. A `Binding` ta
 For example:
 
 ```janet
+# ignore
 {
   :node 1
   :sequence ["ctrl+a" "t"]

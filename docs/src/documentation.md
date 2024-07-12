@@ -49,3 +49,41 @@ For example:
 ```bash
 api input/find
 ```
+
+### Janet code
+
+All multiline Janet code blocks (e.g. those that begin with \`\`\`janet) are compiled and executed in a `cy` testing environment. An example that fails to compile or triggers an error while executing will cause documentation generation to fail. In other words, CI will not pass.
+
+### Ignoring code blocks
+
+You can tell the preprocessor to ignore a code block by putting `# ignore` in the first line. This line will be stripped.
+
+```bash
+# ignore
+```
+
+### Executing, but hiding parts of code blocks
+
+You may also include some lines when the code block is being executed, but exclude them from what's displayed on the documentation site. This is useful for running any necessary setup.
+
+You do this using `# {` (to start hiding lines) and `# }` (to stop hiding them).
+
+Here's an example taken from the keybindings documentation:
+
+```lisp
+# {
+(defn do-something [] )
+(defn do-something-else [] )
+# }
+(key/bind-many :root
+               ["ctrl+b" "1"] do-something
+               ["ctrl+b" "2"] do-something-else)
+```
+
+The resulting code block would only have the following contents on the actual site:
+
+```lisp
+(key/bind-many :root
+               ["ctrl+b" "1"] do-something
+               ["ctrl+b" "2"] do-something-else)
+```
