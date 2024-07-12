@@ -42,6 +42,7 @@ def render_frames(frames: List[str]) -> str:
 #### {frame}
 
 ```janet
+# ignore
 (viewport/set-frame "{frame}")
 ```
 
@@ -108,6 +109,7 @@ def render_api(symbols: List[Symbol]) -> str:
 {_type}
 
 ```janet
+# ignore
 {lines[0]}
 ```{rest}
 
@@ -330,6 +332,69 @@ def transform_packages() -> Transformer:
     return handle_pattern(re.compile(r"{{packages}}"), handler)
 
 
+HIDDEN_CODE_START = "# {"
+HIDDEN_CODE_END = "# }"
+
+def transform_examples() -> Transformer:
+    """
+    Ensure all example Janet code runs correctly.
+    """
+    def handler(match: re.Match) -> Tuple[
+            Optional[Replacement],
+            Optional[Error],
+    ]:
+        lines = match.group(1).strip().split("\n")
+        if lines[0] == "# ignore":
+            return None, None
+
+        # Support directives to hide code from the reader
+        filtered: List[str] = []
+        hiding: bool = False
+        for line in lines:
+            if hiding: continue
+
+            if (
+                line != HIDDEN_CODE_START and
+                line != HIDDEN_CODE_END
+            ):
+                filtered.append(line)
+                continue
+
+            hidden = line == HIDDEN_CODE_START
+
+        example_code = '\n'.join(lines)
+        print(
+            f"running code: {example_code}",
+            file=sys.stderr,
+        )
+        example = subprocess.run(
+            "go run ../cmd/example/main.go",
+            shell=True,
+            capture_output=True,
+            input=example_code.encode('utf-8'),
+        )
+
+        if example.returncode != 0:
+            output = example.stderr.decode('utf-8')
+            return None, (
+                match.start(0),
+                f"failed executing Janet code: {output}",
+            )
+
+        output_code = '\n'.join(filtered)
+
+        return (
+            match.start(0),
+            match.end(0),
+            f"```janet\n{output_code}\n```",
+        ), None
+
+    return handle_pattern(
+        re.compile(r"```janet([^`]+)```", re.MULTILINE),
+        handler,
+    )
+
+
 if __name__ == '__main__':
     args = sys.argv
     if len(args) > 1 and args[1] == "supports":
@@ -368,6 +433,7 @@ if __name__ == '__main__':
             symbols,
         ),
         transform_api(symbol_lookup),
+        transform_examples(),
     ]
 
     num_errors: int = 0

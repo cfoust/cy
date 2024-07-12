@@ -23,7 +23,8 @@ type testFailure struct {
 var API_TEST_FILE []byte
 
 func runTestFile(t *testing.T, file string) (failures []testFailure) {
-	server, create := setup(t)
+	server, create, err := NewTestServer()
+	require.NoError(t, err)
 
 	server.Callback("run-test", "", func(
 		name string,
@@ -33,7 +34,8 @@ func runTestFile(t *testing.T, file string) (failures []testFailure) {
 	) {
 		var callContext interface{}
 		if context {
-			client := create(geom.DEFAULT_SIZE)
+			client, err := create(geom.DEFAULT_SIZE)
+			require.NoError(t, err)
 			callContext = client
 			defer client.Cancel()
 		}
@@ -53,7 +55,7 @@ func runTestFile(t *testing.T, file string) (failures []testFailure) {
 		})
 	})
 
-	err := server.ExecuteCall(server.Ctx(), nil, janet.Call{
+	err = server.ExecuteCall(server.Ctx(), nil, janet.Call{
 		Code:       API_TEST_FILE,
 		SourcePath: "api_test.janet",
 		Options:    janet.DEFAULT_CALL_OPTIONS,

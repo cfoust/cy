@@ -21,6 +21,10 @@ Scopes will be covered in a later chapter: here we will cover key sequences and 
 You can avoid calling {{api key/bind}} over and over by using the {{api key/bind-many}} macro. Here is an example:
 
 ```janet
+# {
+(defn do-something [] )
+(defn do-something-else [] )
+# }
 (key/bind-many :root
                ["ctrl+b" "1"] do-something
                ["ctrl+b" "2"] do-something-else)

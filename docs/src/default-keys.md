@@ -48,7 +48,10 @@ These bindings are not prefixed by <kbd>ctrl+a</kbd>.
 The actions found in the tables below are only valid in a pane that is in replay mode. Replay mode uses two isolated binding scopes that can be accessed by providing `:time` (for time mode) or `:copy` (for copy mode) to a {{api key/bind}} call:
 
 ```janet
-(key/bind :time ["ctrl+b"] (fn [&] (do-something)))
+# {
+(defn do-something [] )
+# }
+(key/bind :time ["ctrl+b"] do-something)
 ```
 
 ### Time mode

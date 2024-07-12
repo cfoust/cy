@@ -37,6 +37,7 @@ The search bar also supports time expressions, which you can use to jump by a fi
 Some examples:
 
 ```janet
+# ignore
 1h30s # one hour 30 seconds
 3d # three days
 ```
