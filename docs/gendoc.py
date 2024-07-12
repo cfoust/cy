@@ -444,7 +444,7 @@ if __name__ == '__main__':
         bindings.append(Binding(**binding))
 
     runner = subprocess.Popen(
-        ["/usr/local/go/bin/go", "run", "../cmd/example/main.go"],
+        ["go", "run", "../cmd/example/main.go"],
         text=True,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
