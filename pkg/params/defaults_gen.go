@@ -2,221 +2,222 @@
 package params
 
 import (
-    "fmt"
+	"fmt"
 
-    "github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/janet"
 )
+
 const (
-	ParamAnimate = "animate"
+	ParamAnimate       = "animate"
 	ParamDataDirectory = "data-directory"
-	ParamDefaultShell = "default-shell"
-	ParamDefaultFrame = "default-frame"
-	ParamSkipInput = "skip-input"
+	ParamDefaultShell  = "default-shell"
+	ParamDefaultFrame  = "default-frame"
+	ParamSkipInput     = "skip-input"
 )
 
 func (p *Parameters) Animate() bool {
-    value, ok := p.Get(ParamAnimate)
-    if !ok {
-        return defaults.Animate
-    }
+	value, ok := p.Get(ParamAnimate)
+	if !ok {
+		return defaults.Animate
+	}
 
-    realValue, ok := value.(bool)
-    if !ok {
-        return defaults.Animate
-    }
+	realValue, ok := value.(bool)
+	if !ok {
+		return defaults.Animate
+	}
 
-    return realValue
+	return realValue
 }
 
 func (p *Parameters) SetAnimate(value bool) {
-    p.set(ParamAnimate, value)
+	p.set(ParamAnimate, value)
 }
 
 func (p *Parameters) DataDirectory() string {
-    value, ok := p.Get(ParamDataDirectory)
-    if !ok {
-        return defaults.DataDirectory
-    }
+	value, ok := p.Get(ParamDataDirectory)
+	if !ok {
+		return defaults.DataDirectory
+	}
 
-    realValue, ok := value.(string)
-    if !ok {
-        return defaults.DataDirectory
-    }
+	realValue, ok := value.(string)
+	if !ok {
+		return defaults.DataDirectory
+	}
 
-    return realValue
+	return realValue
 }
 
 func (p *Parameters) SetDataDirectory(value string) {
-    p.set(ParamDataDirectory, value)
+	p.set(ParamDataDirectory, value)
 }
 
 func (p *Parameters) DefaultShell() string {
-    value, ok := p.Get(ParamDefaultShell)
-    if !ok {
-        return defaults.DefaultShell
-    }
+	value, ok := p.Get(ParamDefaultShell)
+	if !ok {
+		return defaults.DefaultShell
+	}
 
-    realValue, ok := value.(string)
-    if !ok {
-        return defaults.DefaultShell
-    }
+	realValue, ok := value.(string)
+	if !ok {
+		return defaults.DefaultShell
+	}
 
-    return realValue
+	return realValue
 }
 
 func (p *Parameters) SetDefaultShell(value string) {
-    p.set(ParamDefaultShell, value)
+	p.set(ParamDefaultShell, value)
 }
 
 func (p *Parameters) DefaultFrame() string {
-    value, ok := p.Get(ParamDefaultFrame)
-    if !ok {
-        return defaults.DefaultFrame
-    }
+	value, ok := p.Get(ParamDefaultFrame)
+	if !ok {
+		return defaults.DefaultFrame
+	}
 
-    realValue, ok := value.(string)
-    if !ok {
-        return defaults.DefaultFrame
-    }
+	realValue, ok := value.(string)
+	if !ok {
+		return defaults.DefaultFrame
+	}
 
-    return realValue
+	return realValue
 }
 
 func (p *Parameters) SetDefaultFrame(value string) {
-    p.set(ParamDefaultFrame, value)
+	p.set(ParamDefaultFrame, value)
 }
 
 func (p *Parameters) SkipInput() bool {
-    value, ok := p.Get(ParamSkipInput)
-    if !ok {
-        return defaults.SkipInput
-    }
+	value, ok := p.Get(ParamSkipInput)
+	if !ok {
+		return defaults.SkipInput
+	}
 
-    realValue, ok := value.(bool)
-    if !ok {
-        return defaults.SkipInput
-    }
+	realValue, ok := value.(bool)
+	if !ok {
+		return defaults.SkipInput
+	}
 
-    return realValue
+	return realValue
 }
 
 func (p *Parameters) SetSkipInput(value bool) {
-    p.set(ParamSkipInput, value)
+	p.set(ParamSkipInput, value)
 }
 
 func (p *Parameters) isDefault(key string) bool {
-    switch key {
-        case ParamAnimate:
-            return true
-        case ParamDataDirectory:
-            return true
-        case ParamDefaultShell:
-            return true
-        case ParamDefaultFrame:
-            return true
-        case ParamSkipInput:
-            return true
-    }
-    return false
+	switch key {
+	case ParamAnimate:
+		return true
+	case ParamDataDirectory:
+		return true
+	case ParamDefaultShell:
+		return true
+	case ParamDefaultFrame:
+		return true
+	case ParamSkipInput:
+		return true
+	}
+	return false
 }
 
 func (p *Parameters) setDefault(key string, value interface{}) error {
-    switch key {
-        case ParamAnimate:
-            janetValue, ok := value.(*janet.Value)
-            if !ok {
-                realValue, ok := value.(bool)
-                if !ok {
-                    return fmt.Errorf("invalid value for ParamAnimate, should be bool")
-                }
-                p.set(key, realValue)
-                return nil
-            }
+	switch key {
+	case ParamAnimate:
+		janetValue, ok := value.(*janet.Value)
+		if !ok {
+			realValue, ok := value.(bool)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamAnimate, should be bool")
+			}
+			p.set(key, realValue)
+			return nil
+		}
 
-            var translated bool
-            err := janetValue.Unmarshal(&translated)
-            if err != nil {
-                janetValue.Free()
-                return fmt.Errorf("invalid value for :animate: %s", err)
-            }
-            p.set(key, translated)
-            return nil
-        case ParamDataDirectory:
-            janetValue, ok := value.(*janet.Value)
-            if !ok {
-                realValue, ok := value.(string)
-                if !ok {
-                    return fmt.Errorf("invalid value for ParamDataDirectory, should be string")
-                }
-                p.set(key, realValue)
-                return nil
-            }
+		var translated bool
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :animate: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+	case ParamDataDirectory:
+		janetValue, ok := value.(*janet.Value)
+		if !ok {
+			realValue, ok := value.(string)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamDataDirectory, should be string")
+			}
+			p.set(key, realValue)
+			return nil
+		}
 
-            var translated string
-            err := janetValue.Unmarshal(&translated)
-            if err != nil {
-                janetValue.Free()
-                return fmt.Errorf("invalid value for :data-directory: %s", err)
-            }
-            p.set(key, translated)
-            return nil
-        case ParamDefaultShell:
-            janetValue, ok := value.(*janet.Value)
-            if !ok {
-                realValue, ok := value.(string)
-                if !ok {
-                    return fmt.Errorf("invalid value for ParamDefaultShell, should be string")
-                }
-                p.set(key, realValue)
-                return nil
-            }
+		var translated string
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :data-directory: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+	case ParamDefaultShell:
+		janetValue, ok := value.(*janet.Value)
+		if !ok {
+			realValue, ok := value.(string)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamDefaultShell, should be string")
+			}
+			p.set(key, realValue)
+			return nil
+		}
 
-            var translated string
-            err := janetValue.Unmarshal(&translated)
-            if err != nil {
-                janetValue.Free()
-                return fmt.Errorf("invalid value for :default-shell: %s", err)
-            }
-            p.set(key, translated)
-            return nil
-        case ParamDefaultFrame:
-            janetValue, ok := value.(*janet.Value)
-            if !ok {
-                realValue, ok := value.(string)
-                if !ok {
-                    return fmt.Errorf("invalid value for ParamDefaultFrame, should be string")
-                }
-                p.set(key, realValue)
-                return nil
-            }
+		var translated string
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :default-shell: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+	case ParamDefaultFrame:
+		janetValue, ok := value.(*janet.Value)
+		if !ok {
+			realValue, ok := value.(string)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamDefaultFrame, should be string")
+			}
+			p.set(key, realValue)
+			return nil
+		}
 
-            var translated string
-            err := janetValue.Unmarshal(&translated)
-            if err != nil {
-                janetValue.Free()
-                return fmt.Errorf("invalid value for :default-frame: %s", err)
-            }
-            p.set(key, translated)
-            return nil
-        case ParamSkipInput:
-            janetValue, ok := value.(*janet.Value)
-            if !ok {
-                realValue, ok := value.(bool)
-                if !ok {
-                    return fmt.Errorf("invalid value for ParamSkipInput, should be bool")
-                }
-                p.set(key, realValue)
-                return nil
-            }
+		var translated string
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :default-frame: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+	case ParamSkipInput:
+		janetValue, ok := value.(*janet.Value)
+		if !ok {
+			realValue, ok := value.(bool)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamSkipInput, should be bool")
+			}
+			p.set(key, realValue)
+			return nil
+		}
 
-            var translated bool
-            err := janetValue.Unmarshal(&translated)
-            if err != nil {
-                janetValue.Free()
-                return fmt.Errorf("invalid value for :skip-input: %s", err)
-            }
-            p.set(key, translated)
-            return nil
-    }
-    return nil
+		var translated bool
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :skip-input: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+	}
+	return nil
 }
