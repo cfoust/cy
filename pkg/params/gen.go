@@ -141,7 +141,7 @@ func init() {
 	_defaultParams = []DefaultParam{
 {{range .}}{{if not .Hidden}}		{
 	Name: "{{.Kebab}}",
-	Docstring: $BACK{{.Docstring}}$BACK,
+	Docstring: "{{.Docstring}}",
 	Default: defaults.{{.Field}},
 },
 {{end}}{{end}}
@@ -205,6 +205,13 @@ func main() {
 					kebab = "---" + kebab
 				}
 
+				docstring := strings.Join(docs, "\\n")
+				docstring = strings.ReplaceAll(
+					docstring,
+					`"`,
+					`\"`,
+				)
+
 				params = append(params, Param{
 					Name:      name,
 					Field:     original,
@@ -212,7 +219,7 @@ func main() {
 					Kebab:     kebab,
 					Type:      ident.Name,
 					Constant:  "Param" + name,
-					Docstring: strings.Join(docs, "\n"),
+					Docstring: docstring,
 				})
 			}
 		}
@@ -224,11 +231,7 @@ func main() {
 
 	tmpl, err := template.
 		New("defaults").
-		Parse(strings.ReplaceAll(
-			DEFAULTS_TEMPLATE,
-			"$BACK",
-			"`",
-		))
+		Parse(DEFAULTS_TEMPLATE)
 	if err != nil {
 		panic(err)
 	}
@@ -238,6 +241,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	os.Stdout.Write(output.Bytes())
 
 	formatted, err := format.Source(output.Bytes())
 	if err != nil {

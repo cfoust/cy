@@ -29,7 +29,8 @@ type defaultParams struct {
 	// on startup](replay-mode.md#recording-terminal-sessions-to-disk). If
 	// set to an empty string, recording is disabled.
 	DataDirectory string
-	// The default shell with which to start panes.
+	// The default shell with which to start panes. Defaults to the value
+	// of `$SHELL` on startup.
 	DefaultShell string
 	// The frame used for all new clients. A blank string means a random
 	// frame will be chosen from all frames.

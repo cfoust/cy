@@ -221,25 +221,22 @@ func init() {
 	_defaultParams = []DefaultParam{
 		{
 			Name:      "animate",
-			Docstring: `Whether to enable animation.`,
+			Docstring: "Whether to enable animation.",
 			Default:   defaults.Animate,
 		},
 		{
-			Name: "data-directory",
-			Docstring: `The directory in which .borg files will be saved. This is [inferred
-on startup](replay-mode.md#recording-terminal-sessions-to-disk). If
-set to an empty string, recording is disabled.`,
-			Default: defaults.DataDirectory,
+			Name:      "data-directory",
+			Docstring: "The directory in which .borg files will be saved. This is [inferred\non startup](replay-mode.md#recording-terminal-sessions-to-disk). If\nset to an empty string, recording is disabled.",
+			Default:   defaults.DataDirectory,
 		},
 		{
-			Name: "default-frame",
-			Docstring: `The frame used for all new clients. A blank string means a random
-frame will be chosen from all frames.`,
-			Default: defaults.DefaultFrame,
+			Name:      "default-frame",
+			Docstring: "The frame used for all new clients. A blank string means a random\nframe will be chosen from all frames.",
+			Default:   defaults.DefaultFrame,
 		},
 		{
 			Name:      "default-shell",
-			Docstring: `The default shell with which to start panes.`,
+			Docstring: "The default shell with which to start panes. Defaults to the value\nof `$SHELL` on startup.",
 			Default:   defaults.DefaultShell,
 		},
 	}
