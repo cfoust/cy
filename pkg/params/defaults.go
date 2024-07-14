@@ -1,6 +1,6 @@
 package params
 
-//go:generate python3 defaults.py
+//go:generate go run gen.go
 type defaultParams struct {
 	// Whether to enable animation.
 	Animate bool
@@ -13,7 +13,7 @@ type defaultParams struct {
 	// The frame used for all new clients. A blank string means a random
 	// frame will be chosen from all frames.
 	DefaultFrame string
-	// @hide
+	// @ignore
 	// Whether to avoid blocking on (input/*) calls. Just for testing.
 	SkipInput bool
 }
