@@ -24,8 +24,17 @@
       (assert (= (pane/current) cmd1))
 
       (pane/history-forward)
-      (assert (= (pane/current) cmd2)))
+      (assert (= (pane/current) cmd2))
 
+      (pane/history-forward)
+      (assert (= (pane/current) cmd3))
+
+      (tree/kill cmd2)
+      (pane/history-backward)
+      (assert (= (pane/current) cmd1))
+
+      (pane/history-forward)
+      (assert (= (pane/current) cmd3)))
 
 # TODO(cfoust): 07/11/24 screen test is more complicated
 
