@@ -1,0 +1,31 @@
+package utf8
+
+// THIS FILE WAS AUTO-GENERATED. DO NOT MODIFY.
+
+const (
+  <% state_names.each.with_index(0) do |name, i| -%>
+    <%= name %>State State = <%= i %>
+  <% end -%>
+
+  <% action_names.each.with_index(0) do |name, i| -%>
+    <%= name %>Action Action = <%= i %>
+  <% end -%>
+)
+
+var (
+  stateNames = []string{
+    <% state_names.each do |name| -%>
+      "<%= name %>State",
+    <% end -%>
+  }
+
+  stateTable = [][]byte{
+    <% table.each.with_index do |actions, i| -%>
+      { //State <%= state_names[i] %>State = <%= i %>
+        <% actions.each.with_index do |act, j| -%>
+          <%= act[0]%>State | (<%= act[1]%>Action << 4), // <%= "%02x" % j %>
+        <% end -%>
+      },
+    <% end -%>
+  }
+)
