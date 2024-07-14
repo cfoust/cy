@@ -12,7 +12,7 @@ const (
 	ParamDataDirectory = "data-directory"
 	ParamDefaultFrame  = "default-frame"
 	ParamDefaultShell  = "default-shell"
-	ParamSkipInput     = "skip-input"
+	ParamSkipInput     = "---skip-input"
 )
 
 func (p *Parameters) Animate() bool {
@@ -90,12 +90,12 @@ func (p *Parameters) SetDefaultShell(value string) {
 func (p *Parameters) SkipInput() bool {
 	value, ok := p.Get(ParamSkipInput)
 	if !ok {
-		return defaults.SkipInput
+		return defaults.skipInput
 	}
 
 	realValue, ok := value.(bool)
 	if !ok {
-		return defaults.SkipInput
+		return defaults.skipInput
 	}
 
 	return realValue
@@ -143,6 +143,7 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		}
 		p.set(key, translated)
 		return nil
+
 	case ParamDataDirectory:
 		if !janetOk {
 			realValue, ok := value.(string)
@@ -161,6 +162,7 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		}
 		p.set(key, translated)
 		return nil
+
 	case ParamDefaultFrame:
 		if !janetOk {
 			realValue, ok := value.(string)
@@ -179,6 +181,7 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		}
 		p.set(key, translated)
 		return nil
+
 	case ParamDefaultShell:
 		if !janetOk {
 			realValue, ok := value.(string)
@@ -197,6 +200,7 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		}
 		p.set(key, translated)
 		return nil
+
 	case ParamSkipInput:
 		if !janetOk {
 			realValue, ok := value.(bool)
@@ -207,15 +211,36 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 			return nil
 		}
 
-		var translated bool
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :skip-input: %s", err)
-		}
-		p.set(key, translated)
-		return nil
+		return fmt.Errorf(":---skip-input is a protected parameter")
 
 	}
 	return nil
+}
+
+func init() {
+	_defaultParams = []DefaultParam{
+		{
+			Name:      "animate",
+			Docstring: `Whether to enable animation.`,
+			Default:   defaults.Animate,
+		},
+		{
+			Name: "data-directory",
+			Docstring: `The directory in which .borg files will be saved.
+string, default: inferred from $XDG_DATA_HOME`,
+			Default: defaults.DataDirectory,
+		},
+		{
+			Name: "default-frame",
+			Docstring: `The frame used for all new clients. A blank string means a random
+frame will be chosen from all frames.`,
+			Default: defaults.DefaultFrame,
+		},
+		{
+			Name: "default-shell",
+			Docstring: `The default shell with which to start panes.
+string, default: /bin/bash, but also $SHELL`,
+			Default: defaults.DefaultShell,
+		},
+	}
 }

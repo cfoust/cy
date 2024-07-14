@@ -22,6 +22,8 @@ import (
 
 type Param struct {
 	Name      string
+	Field     string
+	Hidden    bool
 	Type      string
 	Constant  string
 	Kebab     string
@@ -78,57 +80,72 @@ const (
 
 {{range .}}
 func (p *Parameters) {{.Name}}() {{.Type}} {
-		value, ok := p.Get({{.Constant}})
-		if !ok {
-				return defaults.{{.Name}}
-		}
+	value, ok := p.Get({{.Constant}})
+	if !ok {
+		return defaults.{{.Field}}
+	}
 
-		realValue, ok := value.({{.Type}})
-		if !ok {
-				return defaults.{{.Name}}
-		}
+	realValue, ok := value.({{.Type}})
+	if !ok {
+		return defaults.{{.Field}}
+	}
 
-		return realValue
+	return realValue
 }
 
 func (p *Parameters) Set{{.Name}}(value {{.Type}}) {
-		p.set({{.Constant}}, value)
+	p.set({{.Constant}}, value)
 }
 {{end}}
 
 func (p *Parameters) isDefault(key string) bool {
-    switch key {
+	switch key {
 {{range .}}case {{.Constant}}:
-				return true
+		return true
 {{end}}
-    }
-    return false
+	}
+	return false
 }
 
 func (p *Parameters) setDefault(key string, value interface{}) error {
 		janetValue, janetOk := value.(*janet.Value)
-    switch key {
+	switch key {
 {{range .}}case {{.Constant}}:
-            if !janetOk {
-                realValue, ok := value.({{.Type}})
-                if !ok {
-                    return fmt.Errorf("invalid value for {{.Constant}}, should be {{.Type}}")
-                }
-                p.set(key, realValue)
-                return nil
-            }
+		if !janetOk {
+			realValue, ok := value.({{.Type}})
+			if !ok {
+			    return fmt.Errorf("invalid value for {{.Constant}}, should be {{.Type}}")
+			}
+			p.set(key, realValue)
+			return nil
+		}
 
-            var translated {{.Type}}
-            err := janetValue.Unmarshal(&translated)
-            if err != nil {
-                janetValue.Free()
-                return fmt.Errorf("invalid value for :{{.Kebab}}: %s", err)
-            }
-            p.set(key, translated)
-            return nil
+{{if .Hidden}}
+		return fmt.Errorf(":{{.Kebab}} is a protected parameter")
+{{else}}
+		var translated {{.Type}}
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+				janetValue.Free()
+				return fmt.Errorf("invalid value for :{{.Kebab}}: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+{{end}}
 {{end}}
     }
     return nil
+}
+
+func init() {
+	_defaultParams = []DefaultParam{
+{{range .}}{{if not .Hidden}}		{
+	Name: "{{.Kebab}}",
+	Docstring: $BACK{{.Docstring}}$BACK,
+	Default: defaults.{{.Field}},
+},
+{{end}}{{end}}
+	}
 }
 
 `
@@ -152,6 +169,10 @@ func main() {
 
 	docPkg := doc.New(pkgs["params"], pkg.ImportPath, doc.AllDecls)
 	for _, typ := range docPkg.Types {
+		if typ.Name != "defaultParams" {
+			continue
+		}
+
 		for _, spec := range typ.Decl.Specs {
 			typeSpec, ok := spec.(*ast.TypeSpec)
 			if !ok {
@@ -164,17 +185,31 @@ func main() {
 			}
 
 			for _, field := range structType.Fields.List {
+				name := field.Names[0].Name
+				ident, _ := field.Type.(*ast.Ident)
+
 				var docs []string
 				for _, comment := range field.Doc.List {
 					docs = append(docs, normalizeComment(comment)...)
 				}
 
-				ident, _ := field.Type.(*ast.Ident)
+				firstChar := rune(name[0])
+				original := name
+				hidden := unicode.IsLower(firstChar)
+				if hidden {
+					name = string(unicode.ToUpper(firstChar)) + name[1:]
+				}
 
-				name := field.Names[0].Name
+				kebab := strcase.ToKebab(name)
+				if hidden {
+					kebab = "---" + kebab
+				}
+
 				params = append(params, Param{
 					Name:      name,
-					Kebab:     strcase.ToKebab(name),
+					Field:     original,
+					Hidden:    hidden,
+					Kebab:     kebab,
 					Type:      ident.Name,
 					Constant:  "Param" + name,
 					Docstring: strings.Join(docs, "\n"),
@@ -189,7 +224,11 @@ func main() {
 
 	tmpl, err := template.
 		New("defaults").
-		Parse(DEFAULTS_TEMPLATE)
+		Parse(strings.ReplaceAll(
+			DEFAULTS_TEMPLATE,
+			"$BACK",
+			"`",
+		))
 	if err != nil {
 		panic(err)
 	}
