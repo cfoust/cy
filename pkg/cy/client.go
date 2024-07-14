@@ -65,8 +65,10 @@ type Client struct {
 	outerLayers *screen.Layers
 	renderer    *renderer.Renderer
 
-	// history is an array of all of the panes this client has attached to
+	// An array of all of the panes this client has attached to.
 	history []tree.NodeID
+	// The client's current location in history.
+	historyIndex int
 }
 
 var _ api.Client = (*Client)(nil)
@@ -157,10 +159,7 @@ func (c *Client) runAction(event bind.BindEvent) {
 	c.toast.Error(msg)
 }
 
-func (c *Client) interact(out chan historyEvent) {
-	c.RLock()
-	node := c.node.Id()
-	c.RUnlock()
+func (c *Client) interact(out chan historyEvent, node tree.NodeID) {
 	out <- historyEvent{
 		Client: c.id,
 		Node:   node,
@@ -182,7 +181,10 @@ func (c *Client) pollEvents() {
 			// We only consider key presses to be an interaction
 			// We don't want mouse motion to trigger this
 			if _, ok := event.(taro.KeyMsg); ok {
-				c.interact(c.cy.writes)
+				c.RLock()
+				node := c.node.Id()
+				c.RUnlock()
+				c.interact(c.cy.writes, node)
 			}
 
 			c.renderer.Send(event)
@@ -333,7 +335,7 @@ func (c *Client) findNewPane() error {
 	return c.execute(`(shell/attach)`)
 }
 
-func (c *Client) Attach(node tree.Node) error {
+func (c *Client) attach(node tree.Node) error {
 	pane, ok := node.(*tree.Pane)
 	if !ok {
 		return fmt.Errorf("node was not a pane")
@@ -359,12 +361,7 @@ func (c *Client) Attach(node tree.Node) error {
 		}
 	}()
 
-	c.Lock()
 	c.node = node
-	c.history = append(c.history, node.Id())
-	c.Unlock()
-
-	c.interact(c.cy.visits)
 
 	// Update bindings
 	scopes := make([]*bind.BindScope, 0)
@@ -374,7 +371,25 @@ func (c *Client) Attach(node tree.Node) error {
 
 	c.binds.SetScopes(scopes...)
 	c.params.SetParent(node.Params())
+	c.interact(c.cy.visits, node.Id())
+	return nil
+}
 
+func (c *Client) Attach(node tree.Node) error {
+	c.Lock()
+	defer c.Unlock()
+
+	err := c.attach(node)
+	if err != nil {
+		return err
+	}
+
+	// If we're back in time, start the history index anew
+	if c.historyIndex < len(c.history)-1 {
+		c.history = c.history[:c.historyIndex+1]
+	}
+
+	c.history = append(c.history, node.Id())
 	return nil
 }
 
