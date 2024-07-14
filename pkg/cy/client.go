@@ -391,7 +391,7 @@ func (c *Client) Attach(node tree.Node) error {
 	return nil
 }
 
-func (c *Client) HistoryNext() error {
+func (c *Client) HistoryForward() error {
 	c.Lock()
 	defer c.Unlock()
 
@@ -411,12 +411,13 @@ func (c *Client) HistoryNext() error {
 		}
 
 		c.historyIndex = i
+		break
 	}
 
 	return nil
 }
 
-func (c *Client) HistoryLast() error {
+func (c *Client) HistoryBackward() error {
 	c.Lock()
 	defer c.Unlock()
 

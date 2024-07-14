@@ -11,19 +11,21 @@
 
 (test "history"
       (def cmd1 (cmd/new :root))
-      (pane/attach cmd1)
       (def cmd2 (cmd/new :root))
-      (pane/attach cmd2)
-      (pane/history-last)
-      (assert (= (pane/current) cmd1))
-      (pane/history-next)
-      (assert (= (pane/current) cmd2))
       (def cmd3 (cmd/new :root))
-      (pane/history-last)
+
+      (pane/attach cmd1)
+      (pane/attach cmd2)
       (pane/attach cmd3)
-      (pane/history-last)
-      (pane/history-next)
-      (assert (= (pane/current) cmd3)))
+
+      (pane/history-backward)
+      (assert (= (pane/current) cmd2))
+      (pane/history-backward)
+      (assert (= (pane/current) cmd1))
+
+      (pane/history-forward)
+      (assert (= (pane/current) cmd2)))
+
 
 # TODO(cfoust): 07/11/24 screen test is more complicated
 

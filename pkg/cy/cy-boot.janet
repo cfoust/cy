@@ -309,6 +309,8 @@ For example:
                    [prefix "P"] cy/paste)
 
 (key/bind-many-tag :root "panes"
+                   [prefix "ctrl+i"] pane/history-forward
+                   [prefix "ctrl+o"] pane/history-backward
                    [prefix "x"] action/kill-current-pane
                    [prefix "C"] action/jump-command
                    [prefix ":"] action/jump-screen-lines

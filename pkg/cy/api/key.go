@@ -34,6 +34,11 @@ func getKeySequence(value *janet.Value) (result []interface{}, err error) {
 	for i, item := range array {
 		strErr := item.Unmarshal(&str)
 		if strErr == nil {
+			// TODO(cfoust): 07/14/24 this is probably not the best place to do this
+			if str == "ctrl+i" {
+				str = "tab"
+			}
+
 			result = append(result, str)
 			continue
 		}
