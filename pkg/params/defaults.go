@@ -25,11 +25,11 @@ func DefaultParams() []DefaultParam {
 type defaultParams struct {
 	// Whether to enable animation.
 	Animate bool
-	// The directory in which .borg files will be saved.
-	// string, default: inferred from $XDG_DATA_HOME
+	// The directory in which .borg files will be saved. This is [inferred
+	// on startup](replay-mode.md#recording-terminal-sessions-to-disk). If
+	// set to an empty string, recording is disabled.
 	DataDirectory string
 	// The default shell with which to start panes.
-	// string, default: /bin/bash, but also $SHELL
 	DefaultShell string
 	// The frame used for all new clients. A blank string means a random
 	// frame will be chosen from all frames.

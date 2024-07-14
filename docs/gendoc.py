@@ -28,6 +28,13 @@ class Symbol(NamedTuple):
     Macro: bool
 
 
+class Param(NamedTuple):
+    Name: str
+    Docstring: str
+    Default: str
+    Type: str
+
+
 class Binding(NamedTuple):
     Tag: str
     Source: str
@@ -114,6 +121,29 @@ def render_api(symbols: List[Symbol]) -> str:
 ```{rest}
 
 {source}
+
+"""
+    return output
+
+
+def render_params(params: List[Param]) -> str:
+    output = ""
+
+    # Generate the table of contents
+    for param in params:
+        output += f"[{param.Name}](./parameters.md#{param.Name}) "
+
+    output += "\n\n---\n"
+
+    for param in params:
+        output += f"""
+### {param.Name}
+
+**Type:** `:{param.Type}`
+
+**Default:** `{param.Default}`
+
+{param.Docstring}
 
 """
     return output
@@ -207,6 +237,7 @@ def transform_gendoc(
     frames: List[str],
     animations: List[str],
     symbols: List[Symbol],
+    params: List[Param],
 ) -> Transformer:
     def handler(match: re.Match) -> Tuple[
             Optional[Replacement],
@@ -223,6 +254,8 @@ def transform_gendoc(
             output = render_animations(animations)
         elif command == "api":
             output = render_api(symbols)
+        elif command == "params":
+            output = render_params(params)
 
         return (
             match.start(0),
@@ -368,7 +401,7 @@ def transform_examples(runner: subprocess.Popen) -> Transformer:
             hidden = line == HIDDEN_CODE_START
 
         code = '\n'.join(filtered)
-        code = f"```janet\n{code}\n```" 
+        code = f"```janet\n{code}\n```"
 
         if ignored:
             return (
@@ -434,6 +467,10 @@ if __name__ == '__main__':
     for symbol in api['Symbols']:
         symbols.append(Symbol(**symbol))
 
+    params: List[Param] = []
+    for param in api['Parameters']:
+        params.append(Param(**param))
+
     symbol_lookup = {x.Name: x for x in symbols}
 
     bindings: List[Binding] = []
@@ -462,6 +499,7 @@ if __name__ == '__main__':
             api['Frames'],
             api['Animations'],
             symbols,
+            params,
         ),
         transform_api(symbol_lookup),
         transform_examples(runner),

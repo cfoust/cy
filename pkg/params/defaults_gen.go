@@ -226,8 +226,9 @@ func init() {
 		},
 		{
 			Name: "data-directory",
-			Docstring: `The directory in which .borg files will be saved.
-string, default: inferred from $XDG_DATA_HOME`,
+			Docstring: `The directory in which .borg files will be saved. This is [inferred
+on startup](replay-mode.md#recording-terminal-sessions-to-disk). If
+set to an empty string, recording is disabled.`,
 			Default: defaults.DataDirectory,
 		},
 		{
@@ -237,10 +238,9 @@ frame will be chosen from all frames.`,
 			Default: defaults.DefaultFrame,
 		},
 		{
-			Name: "default-shell",
-			Docstring: `The default shell with which to start panes.
-string, default: /bin/bash, but also $SHELL`,
-			Default: defaults.DefaultShell,
+			Name:      "default-shell",
+			Docstring: `The default shell with which to start panes.`,
+			Default:   defaults.DefaultShell,
 		},
 	}
 }
