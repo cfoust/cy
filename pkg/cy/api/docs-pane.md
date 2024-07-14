@@ -13,3 +13,11 @@ Get the [NodeID](api.md#nodeid) of the current pane.
 (pane/screen pane)
 
 Get the visible screen lines of the pane referred to by [NodeID](api.md#nodeid). Returns an array of strings.
+
+# doc: HistoryForward
+
+Move forward in the attachment history. Works in a similar way to vim's <kbd>ctrl+i</kbd>.
+
+# doc: HistoryBackward
+
+Move backward in the attachment history. Works in a similar way to vim's <kbd>ctrl+o</kbd>.
