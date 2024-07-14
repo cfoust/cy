@@ -8,7 +8,7 @@ import (
 type Action struct {
 	// An arbitrary string tag stored alongside the binding.
 	// Used just for docs, for now.
-	Tag      string
+	Tag string
 	// The Janet callback invoked when this binding is fired.
 	Callback *janet.Function
 }
