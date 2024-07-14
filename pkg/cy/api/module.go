@@ -9,6 +9,8 @@ import (
 
 type Client interface {
 	Attach(tree.Node) error
+	HistoryNext() error
+	HistoryLast() error
 	Node() tree.Node
 	Get(key string) (value interface{}, ok bool)
 	Params() *params.Parameters

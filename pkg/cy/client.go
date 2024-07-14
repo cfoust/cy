@@ -233,10 +233,7 @@ func (c *Client) initialize(options ClientOptions) error {
 
 	isClientSSH := isSSH(c.env)
 
-	c.muxClient = c.cy.muxServer.AddClient(
-		c.Ctx(),
-		options.Size,
-	)
+	c.muxClient = c.cy.muxServer.AddClient(c.Ctx(), options.Size)
 
 	c.innerLayers = screen.NewLayers()
 	c.innerLayers.NewLayer(
@@ -390,6 +387,59 @@ func (c *Client) Attach(node tree.Node) error {
 	}
 
 	c.history = append(c.history, node.Id())
+	c.historyIndex = len(c.history) - 1
+	return nil
+}
+
+func (c *Client) HistoryNext() error {
+	c.Lock()
+	defer c.Unlock()
+
+	var (
+		history      = c.history
+		historyIndex = c.historyIndex
+	)
+
+	for i := historyIndex + 1; i < len(history); i++ {
+		node, ok := c.cy.tree.NodeById(history[i])
+		if !ok {
+			continue
+		}
+		err := c.attach(node)
+		if err != nil {
+			return err
+		}
+
+		c.historyIndex = i
+	}
+
+	return nil
+}
+
+func (c *Client) HistoryLast() error {
+	c.Lock()
+	defer c.Unlock()
+
+	var (
+		history      = c.history
+		historyIndex = c.historyIndex
+	)
+
+	for i := historyIndex - 1; i >= 0; i-- {
+		node, ok := c.cy.tree.NodeById(history[i])
+		if !ok {
+			continue
+		}
+
+		err := c.attach(node)
+		if err != nil {
+			return err
+		}
+
+		c.historyIndex = i
+		break
+	}
+
 	return nil
 }
 

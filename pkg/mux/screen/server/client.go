@@ -110,7 +110,8 @@ func (c *Client) Attach(ctx context.Context, screen mux.Screen) {
 
 	go c.pollScreen(attachment.Ctx(), screen)
 
-	c.Notify()
+	// Blocking on this causes all sorts of trouble
+	go c.Notify()
 }
 
 func (c *Client) Screen() mux.Screen {

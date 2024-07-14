@@ -27,6 +27,24 @@ func (p *PaneModule) Attach(context interface{}, id *janet.Value) error {
 	return client.Attach(pane)
 }
 
+func (p *PaneModule) HistoryNext(context interface{}) error {
+	client, ok := context.(Client)
+	if !ok {
+		return fmt.Errorf("missing client context")
+	}
+
+	return client.HistoryNext()
+}
+
+func (p *PaneModule) HistoryLast(context interface{}) error {
+	client, ok := context.(Client)
+	if !ok {
+		return fmt.Errorf("missing client context")
+	}
+
+	return client.HistoryLast()
+}
+
 func (p *PaneModule) Current(context interface{}) *tree.NodeID {
 	client, ok := context.(Client)
 	if !ok {
