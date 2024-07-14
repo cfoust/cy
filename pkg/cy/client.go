@@ -76,20 +76,21 @@ var _ api.Client = (*Client)(nil)
 var _ mux.Stream = (*Client)(nil)
 
 func (c *Cy) NewClient(ctx context.Context, options ClientOptions) (*Client, error) {
-	c.Lock()
 	client := &Client{
 		Lifetime: util.NewLifetime(ctx),
 		cy:       c,
 		params:   params.New(),
 		binds:    bind.NewEngine[bind.Action](),
 	}
-	c.clients = append(c.clients, client)
-	c.Unlock()
 
 	err := client.initialize(options)
 	if err != nil {
 		return nil, err
 	}
+
+	c.Lock()
+	c.clients = append(c.clients, client)
+	c.Unlock()
 
 	client.id = c.nextClientID.Add(1)
 
@@ -101,12 +102,6 @@ func (c *Cy) NewClient(ctx context.Context, options ClientOptions) (*Client, err
 		return nil, err
 	}
 
-	c.sendQueuedToasts()
-
-	c.broadcastToast(client, toasts.Toast{
-		Message: "a client joined the server",
-	})
-
 	go func() {
 		select {
 		case <-c.Ctx().Done():
@@ -114,6 +109,13 @@ func (c *Cy) NewClient(ctx context.Context, options ClientOptions) (*Client, err
 		}
 
 		c.removeClient(client)
+	}()
+
+	go func() {
+		c.sendQueuedToasts()
+		c.broadcastToast(client, toasts.Toast{
+			Message: "a client joined the server",
+		})
 	}()
 
 	return client, nil
@@ -322,6 +324,7 @@ func (c *Client) findNewPane() error {
 		return c.Attach(node)
 	}
 
+
 	// Then see if there are any other client panes
 	clientNode := c.cy.getFirstClientPane(c)
 	if clientNode != nil {
@@ -333,6 +336,7 @@ func (c *Client) findNewPane() error {
 }
 
 func (c *Client) attach(node tree.Node) error {
+
 	pane, ok := node.(*tree.Pane)
 	if !ok {
 		return fmt.Errorf("node was not a pane")

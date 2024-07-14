@@ -25,8 +25,10 @@ func (c *Cy) sendQueuedToasts() {
 // Sends a toast to every client but the provided one.
 func (c *Cy) broadcastToast(except *Client, toast toasts.Toast) {
 	c.RLock()
-	defer c.RUnlock()
-	for _, client := range c.clients {
+	clients := c.clients
+	c.RUnlock()
+
+	for _, client := range clients {
 		if client == except {
 			continue
 		}
@@ -34,7 +36,7 @@ func (c *Cy) broadcastToast(except *Client, toast toasts.Toast) {
 	}
 }
 
-// Sends a toast to all clients.
+// sendToast sends a toast to this client.
 func (c *Client) sendToast(toast toasts.Toast) {
 	c.toaster.Send(toast)
 }

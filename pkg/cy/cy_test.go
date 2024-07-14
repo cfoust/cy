@@ -89,3 +89,17 @@ func TestShell(t *testing.T) {
 (shell/new)
 `))
 }
+
+func TestClients(t *testing.T) {
+	_, create := setup(t)
+
+	numClients := 6
+	var clients []*Client
+	for i := 0; i < numClients; i++ {
+		clients = append(clients, create(geom.DEFAULT_SIZE))
+	}
+
+	for i := 0; i < numClients; i++ {
+		clients[i].Cancel()
+	}
+}
