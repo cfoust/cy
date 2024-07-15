@@ -2,7 +2,7 @@
 
 {{story cast cy/shell}}
 
-To create a new shell, type `ctrl+a` `j`. This creates a new pane running your default shell in your current working directory. You can return to the old one with `ctrl+l`; this cycles between all of the panes in the current **group**. In `cy`, a group is just a container for panes or other groups.
+To create a new shell, type {{bind :root ctrl+a j}}. This creates a new pane running your default shell in your current working directory. You can return to the old one with {{bind :root ctrl+l}}; this cycles between all of the panes in the current **group**. In `cy`, a group is just a container for panes or other groups.
 
 Every **group** and **pane** in `cy` has a path, just like a file in a filesystem. The new shell you created has a path like `/shells/3`.
 
@@ -15,7 +15,7 @@ The collection of all **groups** and **panes** is referred to as [**the node tre
 └── /logs (pane)
 ```
 
-And here's how it looks after you create a new shell with `ctrl+a` `j`:
+And here's how it looks after you create a new shell with {{bind :root ctrl+a j}}:
 
 ```
 / (group)
@@ -25,4 +25,4 @@ And here's how it looks after you create a new shell with `ctrl+a` `j`:
 └── /logs (pane)
 ```
 
-When you are attached to a pane in the `/shells` group, `ctrl+l` cycles to the next sibling pane.
+When you are attached to a pane in the `/shells` group, {{bind :root ctrl+l}} cycles to the next sibling pane.

@@ -66,7 +66,7 @@ def symbol_to_url(symbol: Symbol) -> str:
         .replace("?", "")
         .replace("/", "")
     )
-    return f"./api.md#{url}"
+    return f"/api.md#{url}"
 
 
 def render_symbol_link(symbol: Symbol) -> str:
@@ -160,6 +160,10 @@ def render_key(key: str) -> str:
 
 
 def render_key_sequence(sequence: List[str]) -> str:
+    sequence = list(map(
+        lambda key: 'space' if key == ' ' else key,
+        sequence,
+    ))
     return " ".join(map(
         lambda a: f"<kbd>{render_key(a)}</kbd>",
         sequence,
@@ -334,6 +338,10 @@ def transform_bind(
     ]:
         source = match.group(1)
         sequence = match.group(2).split(' ')
+        sequence = list(map(
+            lambda a: ' ' if a == 'space' else a,
+            sequence,
+        ))
 
         binding: Optional[Binding] = None
         for bind in bindings:
@@ -365,7 +373,7 @@ def transform_bind(
         ), None
 
     return handle_pattern(
-        re.compile(r"{{bind :(\w+) (([0-9a-z+-]+\s*)+)}}"),
+        re.compile(r"{{bind :(\w+) (([0-9a-zA-Z+-]+\s*)+)}}"),
         handler,
     )
 

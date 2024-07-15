@@ -1,6 +1,10 @@
 # Using the viewport
 
-When you first connect, `cy` creates a new **pane** and attaches to it. By default, it runs your default shell. `cy` centers the pane and fills the rest of the horizontal space with a patterned background. `cy` refers to the state of your screen as the **viewport**.
+When you first connect, `cy` creates a new **pane** and attaches to it.
+
+`cy` centers the pane and fills the rest of the horizontal space with a patterned background.
+
+`cy` refers to the state of your screen as the **viewport**.
 
 {{story png placeholder}}
 

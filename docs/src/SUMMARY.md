@@ -6,21 +6,19 @@
 
 [Installation](./installation.md)
 
-# Quick start
+- [Quick start](./quick-start/starting-cy.md)
 
-- [Starting and stopping cy](./quick-start/starting-cy.md)
+  - [Using the viewport](./quick-start/the-viewport.md)
 
-- [Using the viewport](./quick-start/the-viewport.md)
+  - [Entering replay mode](./quick-start/replay-mode.md)
 
-- [Entering replay mode](./quick-start/replay-mode.md)
+  - [Creating a new shell](./quick-start/new-shells.md)
 
-- [Creating a new shell](./quick-start/new-shells.md)
+  - [Creating a new project](./quick-start/new-projects.md)
 
-- [Creating a new project](./quick-start/new-projects.md)
+  - [Switching between panes](./quick-start/switching.md)
 
-- [Switching between panes](./quick-start/switching.md)
-
-- [Using the command palette](./quick-start/command-palette.md)
+  - [Using the command palette](./quick-start/command-palette.md)
 
 # User guide
 
