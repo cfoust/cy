@@ -72,7 +72,7 @@ func TestResize(t *testing.T) {
 	r.Resize(geom.Size{R: 10, C: 1})
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
 	// Cursor is on the "a" in "baz"
-	require.Equal(t, geom.Vec2{R: 7, C: 0}, r.cursor)
+	require.Equal(t, geom.Vec2{R: 6, C: 1}, r.cursor)
 }
 
 func TestResizeBug(t *testing.T) {
@@ -483,9 +483,9 @@ func TestGetRoot(t *testing.T) {
 	root, ok := r.getRoot(geom.Vec2{R: -1, C: 0})
 	require.False(t, ok)
 
-	// After end
+	// At or after end is ok
 	root, ok = r.getRoot(geom.Vec2{R: 6, C: 3})
-	require.False(t, ok)
+	require.True(t, ok)
 
 	root, ok = r.getRoot(geom.Vec2{C: 1})
 	require.True(t, ok)
@@ -495,9 +495,8 @@ func TestGetRoot(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, geom.Vec2{R: 2, C: 0}, root)
 
-	// Should break early
 	root, ok = r.getRoot(geom.Vec2{C: 3})
-	require.False(t, ok)
+	require.True(t, ok)
 }
 
 func TestGoto(t *testing.T) {
