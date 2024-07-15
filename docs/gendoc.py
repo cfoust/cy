@@ -60,13 +60,17 @@ def render_frames(frames: List[str]) -> str:
     return output
 
 
-def render_symbol_link(symbol: Symbol) -> str:
-    link = (
+def symbol_to_url(symbol: Symbol) -> str:
+    url = (
         symbol.Name
         .replace("?", "")
         .replace("/", "")
     )
-    return f"[{symbol.Name}](./api.html#{link})"
+    return f"./api.md#{url}"
+
+
+def render_symbol_link(symbol: Symbol) -> str:
+    return f"[{symbol.Name}]({symbol_to_url(symbol)})"
 
 
 def render_animations(animations: List[str]) -> str:
@@ -317,6 +321,55 @@ def transform_api(
     return handle_pattern(re.compile(r"{{api ([a-z0-9/-]+)}}"), handler)
 
 
+def transform_bind(
+    bindings: List[Binding],
+) -> Transformer:
+    """
+    This Transformer turns key references into <kbd> elements with a link to
+    the action that will be executed when the key sequence is typed.
+    """
+    def handler(match: re.Match) -> Tuple[
+            Optional[Replacement],
+            Optional[Error],
+    ]:
+        source = match.group(1)
+        sequence = match.group(2).split(' ')
+
+        binding: Optional[Binding] = None
+        for bind in bindings:
+            if (
+                bind.Sequence == sequence and
+                bind.Source == source
+            ):
+                binding = bind
+                break
+
+        if not binding:
+            return None, (
+                match.start(0),
+                f"missing binding: :{source} {' '.join(sequence)}",
+            )
+
+        symbol = binding.Function
+        if not symbol:
+            return None, (
+                match.start(0),
+                f"binding is missing symbol: :{source} {' '.join(sequence)}",
+            )
+
+        key_sequence = render_key_sequence(binding.Sequence)
+        return (
+            match.start(0),
+            match.end(0),
+            f"{key_sequence} [[?]]({symbol_to_url(symbol)})",
+        ), None
+
+    return handle_pattern(
+        re.compile(r"{{bind :(\w+) (([a-z+]+\s*)+)}}"),
+        handler,
+    )
+
+
 def transform_packages() -> Transformer:
     pkg_dir = os.path.join(os.path.dirname(__file__), "..", "pkg")
 
@@ -502,6 +555,7 @@ if __name__ == '__main__':
             params,
         ),
         transform_api(symbol_lookup),
+        transform_bind(bindings),
         transform_examples(runner),
     ]
 
