@@ -30,8 +30,7 @@ func (t *Terminal) Resize(size Size) error {
 		return err
 	}
 
-	// Also need to be careful about this?
-	go t.Notify()
+	t.Notify()
 	return nil
 }
 

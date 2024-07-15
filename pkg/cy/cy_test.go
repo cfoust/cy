@@ -93,7 +93,7 @@ func TestShell(t *testing.T) {
 func TestClients(t *testing.T) {
 	_, create := setup(t)
 
-	numClients := 6
+	numClients := 20
 	var clients []*Client
 	for i := 0; i < numClients; i++ {
 		clients = append(clients, create(geom.DEFAULT_SIZE))

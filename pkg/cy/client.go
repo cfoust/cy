@@ -111,12 +111,10 @@ func (c *Cy) NewClient(ctx context.Context, options ClientOptions) (*Client, err
 		c.removeClient(client)
 	}()
 
-	go func() {
-		c.sendQueuedToasts()
-		c.broadcastToast(client, toasts.Toast{
-			Message: "a client joined the server",
-		})
-	}()
+	c.sendQueuedToasts()
+	c.broadcastToast(client, toasts.Toast{
+		Message: "a client joined the server",
+	})
 
 	return client, nil
 }
@@ -323,7 +321,6 @@ func (c *Client) findNewPane() error {
 		}
 		return c.Attach(node)
 	}
-
 
 	// Then see if there are any other client panes
 	clientNode := c.cy.getFirstClientPane(c)

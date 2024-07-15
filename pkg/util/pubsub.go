@@ -33,11 +33,16 @@ func (p *Publisher[T]) Publish(value T) {
 			continue
 		}
 
-		select {
-		case <-subscriber.Ctx().Done():
-			subscriber.Done()
-		case subscriber.channel <- value:
-		}
+		// Blocking when publishing can cause all kinds of trouble. We
+		// don't want one bad subscriber to bring entire Screens to a
+		// halt.
+		go func(subscriber *Subscriber[T], value T) {
+			select {
+			case <-subscriber.Ctx().Done():
+				subscriber.Done()
+			case subscriber.channel <- value:
+			}
+		}(subscriber, value)
 	}
 }
 
