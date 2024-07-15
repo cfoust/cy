@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/cfoust/cy/pkg/emu"
@@ -72,6 +73,27 @@ func TestResize(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.root)
 	// Cursor is on the "a" in "baz"
 	require.Equal(t, geom.Vec2{R: 7, C: 0}, r.cursor)
+}
+
+func TestResizeBug(t *testing.T) {
+	s := sessions.NewSimulator()
+	s.Add(
+		geom.Size{R: 26, C: 80},
+		emu.LineFeedMode,
+	)
+
+	for i := 0; i < 50; i++ {
+		s.Add(fmt.Sprintf("%d\n", i))
+	}
+
+	r := createFlowTest(s.Terminal(), geom.Size{R: 26, C: 80})
+	r.Snap()
+	require.Equal(t, geom.Vec2{R: 25, C: 0}, r.cursor)
+	require.Equal(t, geom.Vec2{R: 25, C: 0}, r.root)
+
+	r.Resize(geom.Size{R: 44, C: 99})
+	require.Equal(t, geom.Vec2{R: 25, C: 0}, r.root)
+	require.Equal(t, geom.Vec2{R: 25, C: 0}, r.cursor)
 }
 
 func TestScroll(t *testing.T) {

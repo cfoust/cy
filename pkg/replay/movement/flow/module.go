@@ -68,7 +68,7 @@ func (f *flowMovement) getRoot(location geom.Vec2) (root geom.Vec2, ok bool) {
 				return
 			}
 
-			if location.C >= line.C0 && location.C < line.C1 {
+			if location.C >= line.C0 && location.C <= line.C1 {
 				root = line.Root()
 				ok = true
 				return
@@ -204,29 +204,14 @@ func (f *flowMovement) Resize(newSize geom.Vec2) {
 		return
 	}
 
-	flow := f.Flow(
-		geom.Vec2{
-			C: newSize.C,
-			R: (oldSize.C*oldSize.R)/newSize.C + 1,
-		},
-		f.root,
-	)
-
-	// By definition the cursor must be on the new screen
-	var dest emu.ScreenLine
-	for _, line := range flow.Lines {
-		if cursor.R != line.R || cursor.C < line.C0 || cursor.C >= line.C1 {
-			continue
-		}
-
-		dest = line
-		f.cursor.C = cursor.C - line.C0
-		f.desiredCol = f.cursor.C
-		break
+	root, ok := f.getRoot(cursor)
+	if !ok {
+		return
 	}
 
-	// TODO(cfoust): 06/28/24 test this
-	f.scrollToLine(dest.Root(), ScrollPositionBottom)
+	f.cursor.C = cursor.C - root.C
+	f.desiredCol = f.cursor.C
+	f.scrollToLine(root, ScrollPositionBottom)
 }
 
 func (f *flowMovement) MoveCursorX(delta int) {
