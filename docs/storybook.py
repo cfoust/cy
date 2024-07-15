@@ -60,7 +60,7 @@ if __name__ == '__main__':
             original = filename
 
             filename += "." + type_
-            filename = "images/" + filename
+            filename = "/images/" + filename
 
             replacement = f"![{command}]({filename})"
             if filename.endswith("cast"):
