@@ -6,7 +6,6 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/replay/detect"
 
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +23,7 @@ func TestHighlight(
 	}
 
 	state := tty.New(size)
-	m.View(state, highlights, []detect.Command{})
+	m.View(state, highlights)
 	image := state.Image
 
 	for row := range lines {

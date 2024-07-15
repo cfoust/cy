@@ -4,7 +4,6 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
 )
 
@@ -393,7 +392,6 @@ func (i *imageMovement) highlightRow(
 func (i *imageMovement) View(
 	state *tty.State,
 	highlights []movement.Highlight,
-	commands []detect.Command,
 ) {
 	for i, highlight := range highlights {
 		var (

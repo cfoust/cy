@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -51,6 +52,23 @@ func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 				},
 			)
 			break
+		}
+	}
+	return
+}
+
+// getCommand gets the command at the current location of the cursor, if any.
+func (r *Replay) getCommand() (command detect.Command, ok bool) {
+	cursor := r.movement.Cursor()
+	for _, otherCommand := range r.Commands() {
+		for _, input := range otherCommand.Input {
+			if cursor.GTE(input.From) && cursor.LT(input.To) {
+				return otherCommand, true
+			}
+		}
+
+		if cursor.GTE(otherCommand.Output.From) && cursor.LT(otherCommand.Output.To) {
+			return otherCommand, true
 		}
 	}
 	return
@@ -112,6 +130,39 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 			state.Image,
 			size.R-1, 0,
 			statusBar,
+		)
+		return
+	}
+
+	if r.isFlowMode() && r.isCopyMode() {
+		prefix := statusStyle.Render(statusText)
+		rightStyle := statusBarStyle.
+			Copy().
+			Width(size.C-lipgloss.Width(prefix)).
+			Padding(0, 1)
+
+		command, ok := r.getCommand()
+		if ok {
+			statusBar := lipgloss.JoinHorizontal(lipgloss.Left,
+				prefix,
+				rightStyle.Render(command.Text),
+			)
+
+			r.render.RenderAt(
+				state.Image,
+				size.R-1, 0,
+				statusBar,
+			)
+			return
+		}
+
+		r.render.RenderAt(
+			state.Image,
+			size.R-1, 0,
+			lipgloss.JoinHorizontal(lipgloss.Left,
+				prefix,
+				rightStyle.Render(""),
+			),
 		)
 		return
 	}
@@ -314,7 +365,7 @@ func (r *Replay) View(state *tty.State) {
 	// Draw the terminal state
 	///////////////////////////
 	viewport := tty.New(r.viewport)
-	r.movement.View(viewport, highlights, commands)
+	r.movement.View(viewport, highlights)
 	tty.Copy(geom.Vec2{}, state, viewport)
 	state.CursorVisible = true
 

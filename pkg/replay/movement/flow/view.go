@@ -6,7 +6,6 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
 
 	"github.com/charmbracelet/lipgloss"
@@ -67,7 +66,6 @@ func (f *flowMovement) highlightRow(
 func (f *flowMovement) View(
 	state *tty.State,
 	highlights []movement.Highlight,
-	commands []detect.Command,
 ) {
 	r := f.render
 
@@ -109,11 +107,6 @@ func (f *flowMovement) View(
 		}
 	}
 
-	commandIndicator := f.render.NewStyle().
-		Foreground(lipgloss.Color("15")).
-		Background(lipgloss.Color("#4D9DE0")).
-		Render("<")
-
 	var start, end geom.Vec2
 	for row, line := range flow.Lines {
 		copy(image[row], line.Chars)
@@ -128,30 +121,6 @@ func (f *flowMovement) View(
 				line,
 				highlight,
 			)
-		}
-
-		// Don't draw command indicators if cursor is on that row
-		if row == state.Cursor.R {
-			continue
-		}
-
-		// Draw indicators for commands
-		for _, command := range commands {
-			if command.Pending {
-				continue
-			}
-
-			inputStart := command.InputStart()
-			if inputStart.R != start.R {
-				continue
-			}
-
-			if inputStart.C < start.C || inputStart.C >= end.C {
-				continue
-			}
-
-			image[row][size.C-1].BG = 8
-			r.RenderAt(image, row, size.C-1, commandIndicator)
 		}
 	}
 
@@ -189,6 +158,6 @@ func PreviewFlow(
 	image := tty.New(size)
 	flow := New(terminal, size).(*flowMovement)
 	flow.Goto(location)
-	flow.View(image, highlights, []detect.Command{})
+	flow.View(image, highlights)
 	return image
 }
