@@ -103,7 +103,22 @@ func (p *Player) Preview(
 	viewport, location geom.Vec2,
 	highlights []movement.Highlight,
 ) *tty.State {
-	if p.getInUse() {
+	// Get the last line referenced in this preview request
+	lastLine := location.R
+	for _, highlight := range highlights {
+		lastLine = geom.Max(highlight.From.R, lastLine)
+		lastLine = geom.Max(highlight.To.R, lastLine)
+	}
+
+	p.mu.RLock()
+	numLines := p.Flow(p.Size(), p.Root()).NumLines
+	p.mu.RUnlock()
+
+	// If the player is back in time, we can't preview lines we don't have
+	// yet. This is not perfect, because lines that are on the screen can
+	// still change, but it's easier than forcing the user to provide an
+	// event index. Might want to revisit this someday.
+	if lastLine >= numLines {
 		return nil
 	}
 
