@@ -55,6 +55,9 @@ func (p *Player) Goto(index, offset int) {
 			}
 
 			if len(data) > 0 {
+				// Need to clear dirty state before every write
+				// so that the detector works
+				p.Terminal.Changes().Reset()
 				p.Terminal.Parse(data)
 			}
 
