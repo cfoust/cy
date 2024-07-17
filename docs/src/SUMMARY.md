@@ -26,25 +26,27 @@
 
 - [Viewport](./viewport.md)
 
-  - [Frames](./frames.md)
-
-  - [Animations](./animations.md)
-
 - [Keybindings](./keybindings.md)
-
-  - [Key specifiers](./preset-keys.md)
-
-  - [Default key bindings](./default-keys.md)
 
 - [Groups and panes](./groups-and-panes.md)
 
-  - [Parameters](./parameters.md)
+- [Parameters](./parameters.md)
 
 - [Replay mode](./replay-mode.md)
 
 - [Fuzzy finding](./fuzzy-finding.md)
 
 # Reference
+
+- [Default keybindings](./default-keys.md)
+
+- [Default parameters](./default-parameters.md)
+
+- [Key specifiers](./preset-keys.md)
+
+- [Frames](./frames.md)
+
+- [Animations](./animations.md)
 
 - [API](./api.md)
 

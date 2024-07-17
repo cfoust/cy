@@ -304,6 +304,7 @@ For example:
                    [prefix "ctrl+p"] action/command-palette
                    [prefix "q"] cy/kill-server
                    [prefix "d"] cy/detach
+                   [prefix "F"] action/choose-frame
                    [prefix "p"] action/open-replay
                    [prefix "r"] action/reload-config
                    [prefix "P"] cy/paste)
@@ -331,6 +332,36 @@ For example:
 (key/bind-many-tag :root "unprefixed"
                    ["ctrl+l"] action/next-pane)
 
+(key/action
+  action/replay-playback-1x
+  "Set the playback rate to 1x real time."
+  (replay/time-playback-rate 1))
+
+(key/action
+  action/replay-playback-2x
+  "Set the playback rate to 2x real time."
+  (replay/time-playback-rate 2))
+
+(key/action
+  action/replay-playback-5x
+  "Set the playback rate to 5x real time."
+  (replay/time-playback-rate 5))
+
+(key/action
+  action/replay-playback-reverse-1x
+  "Set the playback rate to -1x real time (backwards)."
+  (replay/time-playback-rate -1))
+
+(key/action
+  action/replay-playback-reverse-2x
+  "Set the playback rate to -2x real time (backwards)."
+  (replay/time-playback-rate -2))
+
+(key/action
+  action/replay-playback-reverse-5x
+  "Set the playback rate to -5x real time (backwards)."
+  (replay/time-playback-rate -5))
+
 (key/bind-many-tag :time "general"
                    ["q"] replay/quit
                    ["ctrl+c"] replay/quit
@@ -345,12 +376,12 @@ For example:
                    ["n"] replay/search-again
                    ["N"] replay/search-reverse
                    [" "] replay/time-play
-                   ["1"] (fn [&] (replay/time-playback-rate 1))
-                   ["2"] (fn [&] (replay/time-playback-rate 2))
-                   ["3"] (fn [&] (replay/time-playback-rate 5))
-                   ["!"] (fn [&] (replay/time-playback-rate -1))
-                   ["@"] (fn [&] (replay/time-playback-rate -2))
-                   ["#"] (fn [&] (replay/time-playback-rate -5))
+                   ["1"] action/replay-playback-1x
+                   ["2"] action/replay-playback-2x
+                   ["3"] action/replay-playback-5x
+                   ["!"] action/replay-playback-reverse-1x
+                   ["@"] action/replay-playback-reverse-2x
+                   ["#"] action/replay-playback-reverse-5x
                    ["G"] replay/end)
 
 (key/bind-many-tag :copy "general"

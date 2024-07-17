@@ -16,8 +16,8 @@ Get the visible screen lines of the pane referred to by [NodeID](api.md#nodeid).
 
 # doc: HistoryForward
 
-Move forward in the attachment history. Works in a similar way to vim's <kbd>ctrl+i</kbd>.
+Move forward in the pane history. Works in a similar way to vim's <kbd>ctrl+i</kbd>.
 
 # doc: HistoryBackward
 
-Move backward in the attachment history. Works in a similar way to vim's <kbd>ctrl+o</kbd>.
+Move backward in the pane history. Works in a similar way to vim's <kbd>ctrl+o</kbd>.

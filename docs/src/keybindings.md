@@ -1,6 +1,6 @@
 # Keybindings
 
-In `cy`, keybindings consist of a sequence of one or more keys that execute Janet code when you type them. You define new key sequences with the {{api key/bind}} function.
+In `cy`, a keybinding consists of a sequence of one or more keys that executes Janet code after completion. You define new key sequences with the {{api key/bind}} function.
 
 For example:
 

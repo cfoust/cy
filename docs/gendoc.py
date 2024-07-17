@@ -135,7 +135,7 @@ def render_params(params: List[Param]) -> str:
 
     # Generate the table of contents
     for param in params:
-        output += f"[{param.Name}](./parameters.md#{param.Name}) "
+        output += f"[{param.Name}](/default-parameters.md#{param.Name}) "
 
     output += "\n\n---\n"
 
