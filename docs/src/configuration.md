@@ -1,6 +1,6 @@
 # Configuration
 
-`cy` was designed to be configurable. Users of `cy` provide a configuration written in [Janet](https://janet-lang.org/) that uses `cy`'s [API](/api.md) to define key bindings, set parameters, and set up `cy` in any way they like.
+`cy` was designed to be as configurable as possible. Users of `cy` provide a configuration written in [Janet](https://janet-lang.org/) that uses `cy`'s [API](/api.md) to define key bindings, set parameters, and set up `cy` in any way they like.
 
 Janet is a fun, embeddable [Lisp-like](<https://en.wikipedia.org/wiki/Lisp_(programming_language)>) language that is easy to learn. If you are new to Janet, I recommend starting out with its [documentation](https://janet-lang.org/docs/syntax.html) and Ian Henry's fantastic [_Janet for Mortals_](https://janet.guide/).
 
@@ -24,7 +24,7 @@ On startup, `cy` will search for and execute the first file containing Janet sou
 1. `$HOME/.config/cyrc.janet`
 1. `$HOME/.config/.cy.janet`
 
-You can reload your configuration at runtime using {{api action/reload-config}}, which by default is bound to {{bind :root ctrl+a r}}.
+You can reload your configuration at any time using {{api action/reload-config}}, which by default is bound to {{bind :root ctrl+a r}}.
 
 ### Example configuration
 
@@ -44,8 +44,7 @@ An example configuration that uses functionality from this API is shown below. Y
   # (pane/current): gets the ID of the current pane
   # (cmd/path): gets the path of the pane with the given ID
   # (msg/toast): shows a toast popup in the top-right corner of the screen
-  (msg/toast :info (cmd/path (pane/current)))
-  )
+  (msg/toast :info (cmd/path (pane/current))))
 
 # Bind a key sequence to this function
 (key/bind :root ["ctrl+a" "g"] toast-pane-path)
