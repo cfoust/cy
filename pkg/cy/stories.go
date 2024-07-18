@@ -231,4 +231,52 @@ func init() {
 
 		return split, err
 	}, stories.Config{})
+
+	stories.Register("replay/command/time-jump", initReplay, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("[c"),
+			stories.Wait(stories.Some),
+			stories.Type("[c"),
+			stories.Wait(stories.Some),
+			stories.Type("[c"),
+			stories.Wait(stories.Some),
+			stories.Type("]c"),
+			stories.Wait(stories.ALot),
+			stories.Type("space"),
+			stories.Wait(stories.ALot),
+		},
+	})
+
+	stories.Register("replay/command/copy-jump", initReplay, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("k"),
+			stories.Wait(stories.More),
+			stories.Type("[c"),
+			stories.Wait(stories.Some),
+			stories.Type("[c"),
+			stories.Wait(stories.Some),
+			stories.Type("[c"),
+			stories.Wait(stories.Some),
+			stories.Type("]c"),
+			stories.Wait(stories.ALot),
+		},
+	})
+
+	stories.Register("replay/command/copy-jump-and-copy", initReplay, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("k"),
+			stories.Wait(stories.More),
+			stories.Type("[C"),
+			stories.Wait(stories.Some),
+			stories.Type("[C"),
+			stories.Wait(stories.Some),
+			stories.Type("[C"),
+			stories.Wait(stories.Some),
+			stories.Type("]C"),
+			stories.Wait(stories.ALot),
+		},
+	})
 }

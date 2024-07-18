@@ -1,4 +1,4 @@
-# Switching between panes
+# Switching panes
 
 {{story cast cy/switch-shells}}
 

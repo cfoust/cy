@@ -6,7 +6,7 @@
 
 [Installation](./installation.md)
 
-[About this documentation](./about-docs.md)
+[About this site](./about-docs.md)
 
 # Quick start
 
@@ -16,11 +16,11 @@
 
 - [Entering replay mode](./quick-start/replay-mode.md)
 
-- [Creating a new shell](./quick-start/new-shells.md)
+- [Creating a shell](./quick-start/new-shells.md)
 
-- [Creating a new project](./quick-start/new-projects.md)
+- [Creating a project](./quick-start/new-projects.md)
 
-- [Switching between panes](./quick-start/switching.md)
+- [Switching panes](./quick-start/switching.md)
 
 - [Using the command palette](./quick-start/command-palette.md)
 

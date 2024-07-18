@@ -1,4 +1,4 @@
-# About this documentation
+# About this site
 
 This documentation is divided into three sections:
 

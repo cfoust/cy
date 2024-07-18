@@ -2,7 +2,7 @@
 
 `cy` can detect the commands you run and the output they produce. It does this by ~using magic~ having you put a special string in your shell's prompt that lets it determine where the commands you enter begin and end.
 
-By enabling this feature, you gain access to a bunch of cool functionality for jumping between panes, copying command output, and much more.
+By enabling this feature, you gain access to a range of functionality for jumping between panes, copying command output, and much more.
 
 ## Enabling command detection
 
@@ -40,6 +40,33 @@ Put this somewhere in your `fish_prompt` or just add `\033Pcy\033\\` to any exis
 printf '\033Pcy\033\\'
 ```
 
-## Command functionality
+## Usage
 
+## Replay mode
 
+Enabling command detection adds additional features to replay mode both in time mode and copy mode.
+
+#### Time mode
+
+You can quickly jump back to the instant in time _just before a command began executing_ using the {{bind :time [ c}} and {{bind :time ] c}} bindings.
+
+{{story cast replay/command/time-jump}}
+
+#### Copy mode
+
+When the cursor is on the output of a command in copy mode, the command itself is shown in replay mode's status bar at the bottom of the screen.
+
+Just like in time mode, you can also jump between commands using {{bind :copy [ c}} and {{bind :copy ] c}}.
+
+{{story cast replay/command/copy-jump}}
+
+You can also quickly select the complete output of a command using {{bind :copy [ C}} and {{bind :copy ] C}}.
+
+{{story cast replay/command/copy-jump-and-copy}}
+
+## Switching panes
+
+`cy`'s default configuration also defines two actions that use the newly-detected commands to do interesting things:
+
+* {{api action/jump-pane-command}} ({{bind :root ctrl+a c}}): Choose from a list of all of the commands run since the `cy` server started and jump to the pane where that command was run.
+* {{api action/jump-command}} ({{bind :root ctrl+a C}}): Choose from a list of all commands and jump to the location of that command in its pane's scrollback history.

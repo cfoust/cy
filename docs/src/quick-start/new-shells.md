@@ -1,4 +1,4 @@
-# Creating a new shell
+# Creating a shell
 
 {{story cast cy/shell}}
 

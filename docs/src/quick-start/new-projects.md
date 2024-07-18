@@ -1,4 +1,4 @@
-# Creating a new project
+# Creating a project
 
 {{story cast cy/project}}
 
