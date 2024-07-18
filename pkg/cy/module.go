@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/events"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
@@ -278,6 +279,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	)
 	logPane := t.Root().NewPane(cy.Ctx(), logScreen)
 	logPane.SetName("logs")
+	logs.Write([]byte(emu.LineFeedMode))
 
 	consoleWriter := zerolog.ConsoleWriter{Out: logs.Writer(), TimeFormat: time.RFC3339}
 	cy.log = log.Output(zerolog.MultiLevelWriter(consoleWriter, os.Stdout))
