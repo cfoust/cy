@@ -25,6 +25,10 @@ func DefaultParams() []DefaultParam {
 type defaultParams struct {
 	// Whether to enable animation.
 	Animate bool
+	// A list of all of the enabled animations that will be used by
+	// (input/find). If this is an empty array, all built-in animations
+	// will be enabled.
+	Animations []string
 	// The directory in which .borg files will be saved. This is [inferred
 	// on startup](replay-mode.md#recording-terminal-sessions-to-disk). If
 	// set to an empty string, recording to disk is disabled.

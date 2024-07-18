@@ -1,7 +1,6 @@
 package anim
 
 import (
-	"math/rand"
 	"time"
 
 	"github.com/cfoust/cy/pkg/geom/image"
@@ -13,19 +12,6 @@ type Animation interface {
 }
 
 type Creator func() Animation
-
-func RandomAnimation() Animation {
-	anims := []Animation{
-		&Collapse{},
-		&Conway{},
-		&Cos{},
-		&Cyform{},
-		&Fluid{},
-		&Midjo{},
-	}
-
-	return anims[rand.Int()%len(anims)]
-}
 
 var Animations = map[string]Creator{}
 

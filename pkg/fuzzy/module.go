@@ -164,11 +164,11 @@ func (f *Fuzzy) getPreview() mux.Screen {
 
 type Setting func(context.Context, *Fuzzy)
 
-func WithAnimation(image image.Image) Setting {
+func WithAnimation(image image.Image, creator anim.Creator) Setting {
 	return func(ctx context.Context, f *Fuzzy) {
 		f.anim = anim.NewAnimator(
 			ctx,
-			anim.RandomAnimation(),
+			creator(),
 			image,
 			23,
 		)

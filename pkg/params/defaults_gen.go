@@ -9,6 +9,7 @@ import (
 
 const (
 	ParamAnimate       = "animate"
+	ParamAnimations    = "animations"
 	ParamDataDirectory = "data-directory"
 	ParamDefaultFrame  = "default-frame"
 	ParamDefaultShell  = "default-shell"
@@ -31,6 +32,24 @@ func (p *Parameters) Animate() bool {
 
 func (p *Parameters) SetAnimate(value bool) {
 	p.set(ParamAnimate, value)
+}
+
+func (p *Parameters) Animations() []string {
+	value, ok := p.Get(ParamAnimations)
+	if !ok {
+		return defaults.Animations
+	}
+
+	realValue, ok := value.([]string)
+	if !ok {
+		return defaults.Animations
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetAnimations(value []string) {
+	p.set(ParamAnimations, value)
 }
 
 func (p *Parameters) DataDirectory() string {
@@ -109,6 +128,8 @@ func (p *Parameters) isDefault(key string) bool {
 	switch key {
 	case ParamAnimate:
 		return true
+	case ParamAnimations:
+		return true
 	case ParamDataDirectory:
 		return true
 	case ParamDefaultFrame:
@@ -140,6 +161,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		if err != nil {
 			janetValue.Free()
 			return fmt.Errorf("invalid value for :animate: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamAnimations:
+		if !janetOk {
+			realValue, ok := value.([]string)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamAnimations, should be []string")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated []string
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :animations: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -223,6 +263,11 @@ func init() {
 			Name:      "animate",
 			Docstring: "Whether to enable animation.",
 			Default:   defaults.Animate,
+		},
+		{
+			Name:      "animations",
+			Docstring: "A list of all of the enabled animations that will be used by\n(input/find). If this is an empty array, all built-in animations\nwill be enabled.",
+			Default:   defaults.Animations,
 		},
 		{
 			Name:      "data-directory",

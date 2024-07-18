@@ -186,7 +186,14 @@ func main() {
 
 			for _, field := range structType.Fields.List {
 				name := field.Names[0].Name
-				ident, _ := field.Type.(*ast.Ident)
+
+				var type_ string
+				switch typeNode := field.Type.(type) {
+				case *ast.Ident:
+					type_ = typeNode.Name
+				case *ast.ArrayType:
+					type_ = "[]" + typeNode.Elt.(*ast.Ident).Name
+				}
 
 				var docs []string
 				for _, comment := range field.Doc.List {
@@ -217,7 +224,7 @@ func main() {
 					Field:     original,
 					Hidden:    hidden,
 					Kebab:     kebab,
-					Type:      ident.Name,
+					Type:      type_,
 					Constant:  "Param" + name,
 					Docstring: docstring,
 				})
