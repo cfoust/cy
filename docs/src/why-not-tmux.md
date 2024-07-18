@@ -1,6 +1,12 @@
 # Why not tmux?
 
-`cy` shares some basic similarities with `tmux`. For example, it runs as a daemon, so its state is preserved across sessions. But for `cy` to be a compelling alternative, it has to do more than just mimic `tmux`'s functionality and be written in a fashionable systems programming language.
+{{story cast fluid-fuzzy}}
+
+> _`tmux` is just not weird enough._
+
+`cy` shares some basic similarities with `tmux`. For example, it runs as a daemon, so its state is preserved even if you disconnect. But for `cy` to be a compelling alternative, it has to do more than just mimic `tmux`'s functionality and be written in a fashionable systems programming language.
+
+I started writing `cy` because I felt like terminal multiplexers had stagnated. There have been some recent attempts to modernize the concept, but I didn't feel like they went far enough.
 
 `cy` improves on `tmux` in three main ways:
 
@@ -15,6 +21,8 @@ If you use `tmux`, you might be familiar with `copy-mode`, which allows you to v
 But by definition, `copy-mode` ceases to be useful when you use a program with any interactivity, such as `vim`: you only see the last lines it left on the screen, and certainly cannot see what the screen used to look like.
 
 `cy` solves this problem by recording all of your terminal sessions. In [replay mode](./replay-mode.md) you can seek, play back, and search through the history of a pane--regardless of the application that was running in it. `cy` [saves these recordings to disk](replay-mode.md#recording-terminal-sessions-to-disk) and allows you to open them later at your leisure.
+
+> _This sounds like it would be a lot, but it isn't: after six months and hundreds of hours of work in the terminal, all of my recordings occupy a total of 100MB (!) on disk._
 
 Without trying it for yourself, it's hard to appreciate just how useful it is to be able to go back in time to replay everything you've seen or done in a terminal session. `cy` aims to augment your memory in a way that other programs cannot.
 

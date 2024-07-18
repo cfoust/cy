@@ -350,4 +350,21 @@ func init() {
 	}, stories.Config{
 		Size: geom.Size{R: 30, C: 60},
 	})
+
+	stories.Register("fluid-fuzzy", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(param/set :root :animations @["fluid"])
+		`)
+		return screen, err
+	}, stories.Config{
+		Size: geom.DEFAULT_SIZE,
+		Input: []interface{}{
+			stories.Type("ctrl+a", ";"),
+			stories.Wait(stories.ALot),
+		},
+	})
 }
