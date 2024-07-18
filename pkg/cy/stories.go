@@ -279,4 +279,44 @@ func init() {
 			stories.Wait(stories.ALot),
 		},
 	})
+
+	stories.Register("replay/time-demo", initReplay, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("gg"),
+			stories.Wait(stories.Some),
+			stories.Type("space"),
+			stories.Wait(stories.Some),
+			stories.Type("!"),
+			stories.Wait(stories.Some),
+			stories.Type("space"),
+			stories.Wait(stories.ALot),
+			stories.Wait(stories.ALot),
+		},
+	})
+
+	stories.Register("replay/time-demo-search", initReplay, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("?"),
+			stories.Wait(stories.Some),
+			stories.Type("tolstoy"),
+			stories.Wait(stories.Some),
+			stories.Type("enter"),
+			stories.Wait(stories.ALot),
+		},
+	})
+
+	stories.Register("replay/time-demo-search-time", initReplay, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("?"),
+			stories.Wait(stories.Some),
+			stories.Type("1s"),
+			stories.Wait(stories.Some),
+			stories.Type("enter"),
+			stories.Wait(stories.ALot),
+		},
+	})
+
 }

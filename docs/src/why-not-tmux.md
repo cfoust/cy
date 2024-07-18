@@ -16,7 +16,7 @@ But by definition, `copy-mode` ceases to be useful when you use a program with a
 
 `cy` solves this problem by recording all of your terminal sessions. In [replay mode](./replay-mode.md) you can seek, play back, and search through the history of a pane--regardless of the application that was running in it. `cy` [saves these recordings to disk](replay-mode.md#recording-terminal-sessions-to-disk) and allows you to open them later at your leisure.
 
-Without trying it for yourself, it's hard to appreciate just how useful it is to be able to go back in time to replay everything you've ever seen or done in the terminal. `cy` aims to augment your memory in a way that other programs cannot.
+Without trying it for yourself, it's hard to appreciate just how useful it is to be able to go back in time to replay everything you've seen or done in a terminal session. `cy` aims to augment your memory in a way that other programs cannot.
 
 ## Interface
 

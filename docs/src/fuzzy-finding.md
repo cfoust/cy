@@ -55,7 +55,8 @@ Where {{api input/find}} really shines, however, is in its ability to show a pre
 
 - **Panes:** Show the current state of a pane in `cy`'s [node tree](./groups-and-panes.md#the-node-tree). This is the live view of a pane, regardless of how many other clients are interacting with it or what is happening on the screen.
 - **`.borg` files:** Show a moment in time in a `.borg` file.
-- **Text** Render some text.
+- **Scrollback buffer:** Show the output of a particular command in a pane's scrollback buffer.
+- **Text:** Render some text.
 
 Options with previews are passed to {{api input/find}} as Janet tuples with three elements:
 
@@ -73,6 +74,12 @@ Here are some examples:
         ["this is a borg file" {:type :replay :path "some-file.borg"} 2]
         # A pane preview
         ["this is some other pane" {:type :node :id (pane/current)} 3]
+        # A scrollback preview
+        ["this is a moment in a pane's history" {
+            :type :scrollback
+            :focus [0 0]
+            :highlights @[]
+            :id (pane/current)} 2]
     ])
 ```
 

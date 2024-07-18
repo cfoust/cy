@@ -6,7 +6,7 @@ By enabling this feature, you gain access to a range of functionality for jumpin
 
 ## Enabling command detection
 
-All you need to do for `cy` to be able to detect your commands is add a special escape sequence to your prompt, depending on the shell you use. Note that you can mix and match, even within a single terminal session, and `cy` will not get confused.
+All you need to do for `cy` to be able to detect your commands is add a special escape sequence to your prompt, depending on the shell you use. You can mix and match shells, even within a single terminal session, and `cy` will not get confused.
 
 ### bash
 
