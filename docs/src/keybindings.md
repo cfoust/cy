@@ -66,7 +66,7 @@ To illustrate:
 (key/bind :root ["ctrl+b" [:re "[abc]"]] toast-me)
 ```
 
-Now if you type `ctrl+b` followed by `a`, the `toast-me` function will be invoked with one argument, the Janet value `"a"`. The same applies if you follow the `ctrl+b` with `b` or `c`.
+Now if you type <kbd>ctrl+b</kbd> followed by <kbd>a</kbd>, the `toast-me` function will be invoked with one argument, the Janet value `"a"`. The same applies if you follow the <kbd>ctrl+b</kbd> with <kbd>b</kbd> or <kbd>c</kbd>.
 
 This allows you to build more sophisticated functionality without defining a binding for every possible character.
 
@@ -77,7 +77,7 @@ A practical application of this can be found in `cy`'s source code, where we use
 (key/bind :copy ["F" [:re "."]] replay/jump-backward)
 ```
 
-[Key specifiers](./preset-keys.md) are matched as though their names were typed by the user; this means that providing the pattern `"ctrl\+[a-c]"` will match `ctrl+a`, `ctrl+b`, and `ctrl+c`.
+[Key specifiers](./preset-keys.md) are matched as though their names were typed by the user; this means that providing the pattern `"ctrl\+[a-c]"` will match <kbd>ctrl+a</kbd>, <kbd>ctrl+b</kbd>, and <kbd>ctrl+c</kbd>.
 
 Accessing individual match groups is not supported; functions always receive the full string that matched the pattern.
 

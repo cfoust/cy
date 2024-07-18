@@ -40,4 +40,4 @@ Copy mode also allows you to swap between the terminal's main and alt screens us
 
 #### Visual mode
 
-Visual mode is initiated when you press `v` (by default). It works almost exactly like `vim`'s visual mode does; after you have some selected some text, you can yank it into your buffer with `y` and paste it elsewhere with `ctrl+a` `P`.
+Visual mode is initiated when you press {{bind :copy v}} (by default). It works almost exactly like `vim`'s visual mode does; after you have some selected some text, you can yank it into your buffer with {{bind :copy y}} and paste it elsewhere with {{bind :root ctrl+a P}}.

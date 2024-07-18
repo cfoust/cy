@@ -52,7 +52,7 @@ Instead, each node is permanently assigned a unique identifier (which is just an
 
 Imagine that you are attached to `/my-project/group-2/pane-3` in the example above:
 
-- If `/my-project` defines a binding with the sequence `ctrl+a` `b` and `/my-project/group-2` also defines one that begins with `ctrl+a`, the latter will take precedence.
+- If `/my-project` defines a binding with the sequence <kbd>ctrl+a</kbd><kbd>b</kbd> and `/my-project/group-2` also defines one that begins with <kbd>ctrl+a</kbd>, the latter will take precedence.
 - If `/my-project` defines a value for a parameter `:some-parameter` and `/my-project/group-2` does not, `(param/get :some-parameter)` will retrieve the value from `/my-project`.
 
 One of `cy`'s goals is for everything to be configured solely with key bindings and parameters; in this way `cy` can have completely different behavior depending on the environment and project.
