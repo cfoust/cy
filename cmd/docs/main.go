@@ -102,6 +102,10 @@ func main() {
 
 	symbols := make([]Symbol, 0)
 	cy.Callback("cy/doc", "", func(name string, docstring string, link string, macro bool) {
+		if name == "cy/env" {
+			return
+		}
+
 		symbols = append(symbols, Symbol{
 			Name:      name,
 			Docstring: docstring,

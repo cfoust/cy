@@ -27,7 +27,7 @@ type defaultParams struct {
 	Animate bool
 	// The directory in which .borg files will be saved. This is [inferred
 	// on startup](replay-mode.md#recording-terminal-sessions-to-disk). If
-	// set to an empty string, recording is disabled.
+	// set to an empty string, recording to disk is disabled.
 	DataDirectory string
 	// The default shell with which to start panes. Defaults to the value
 	// of `$SHELL` on startup.

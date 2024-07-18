@@ -242,8 +242,6 @@ func main() {
 		panic(err)
 	}
 
-	os.Stdout.Write(output.Bytes())
-
 	formatted, err := format.Source(output.Bytes())
 	if err != nil {
 		panic(err)

@@ -6,19 +6,23 @@
 
 [Installation](./installation.md)
 
-- [Quick start](./quick-start/starting-cy.md)
+[About this documentation](./about-docs.md)
 
-  - [Using the viewport](./quick-start/the-viewport.md)
+# Quick start
 
-  - [Entering replay mode](./quick-start/replay-mode.md)
+- [Starting cy](./quick-start/starting-cy.md)
 
-  - [Creating a new shell](./quick-start/new-shells.md)
+- [Using the viewport](./quick-start/the-viewport.md)
 
-  - [Creating a new project](./quick-start/new-projects.md)
+- [Entering replay mode](./quick-start/replay-mode.md)
 
-  - [Switching between panes](./quick-start/switching.md)
+- [Creating a new shell](./quick-start/new-shells.md)
 
-  - [Using the command palette](./quick-start/command-palette.md)
+- [Creating a new project](./quick-start/new-projects.md)
+
+- [Switching between panes](./quick-start/switching.md)
+
+- [Using the command palette](./quick-start/command-palette.md)
 
 # User guide
 
@@ -33,6 +37,10 @@
 - [Parameters](./parameters.md)
 
 - [Replay mode](./replay-mode.md)
+
+  - [Modes](./replay-mode/modes.md)
+
+  - [Command detection](./replay-mode/command-detection.md)
 
 - [Fuzzy finding](./fuzzy-finding.md)
 

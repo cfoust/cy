@@ -91,7 +91,7 @@ Like `tmux`, many users at once can connect to the same `cy` server. The functio
 
 In some cases it is inconvenient to have to provide functions directly to {{api key/bind}}. For example, if you are writing a plugin, you might want to be able to provide new actions that a user can take without forcing them to use your key bindings. The user also may not want to assign all of your plugin's functionality to arcane bindings they won't remember.
 
-To assist with this, `cy` has a system for **actions**, which are similar in nature to commands [in VSCode](https://code.visualstudio.com/api/extension-guides/command) or [in Sublime Text](https://docs.sublimetext.io/reference/commands.html). An action consists of a short description and a function. When the user opens the command palette (which is bound by default to `"ctrl+a" "ctrl+p"`), they can search for and execute an action based on that description.
+To assist with this, `cy` has a system for **actions**, which are similar in nature to commands [in VSCode](https://code.visualstudio.com/api/extension-guides/command) or [in Sublime Text](https://docs.sublimetext.io/reference/commands.html). An action consists of a short description and a function. When the user opens the command palette (which is bound by default to {{bind :root ctrl+a ctrl+p}}), they can search for and execute an action based on that description.
 
 You define new actions using the {{api key/action}} macro. Here is an example from `cy`'s source code:
 

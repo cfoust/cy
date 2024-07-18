@@ -15,6 +15,16 @@ Groups also have two unique features:
 - **Key bindings:** You may define key bindings that will only activate when you type that sequence while attached to any descendant of that group.
 - **Parameters:** A key-value store that can be interacted with using {{api param/get}} and {{api param/set}}. Parameters are used both [to configure aspects of `cy`](./parameters.md) and also to create any functionality you desire by storing state in `cy`'s tree.
 
+The preferred method of creating new groups is using the {{api group/mkdir}} function, which allows you to create many groups at once just like the real `mkdir` command.
+
+For example:
+
+```janet
+(group/mkdir :root "/some/other/group")
+```
+
+The {{api group/mkdir}} function creates a group at the provided path (if it does not already exist) and returns its [NodeID](/api.md#nodeid).
+
 ## The node tree
 
 The combination of groups and panes in cy form a tree that is similar to a filesystem. For example, a `cy` session may end up with a structure that looks like this:
