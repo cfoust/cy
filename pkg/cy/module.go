@@ -279,6 +279,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	)
 	logPane := t.Root().NewPane(cy.Ctx(), logScreen)
 	logPane.SetName("logs")
+	logPane.SetProtected(true)
 	logs.Write([]byte(emu.LineFeedMode))
 
 	consoleWriter := zerolog.ConsoleWriter{Out: logs.Writer(), TimeFormat: time.RFC3339}

@@ -92,13 +92,13 @@ func (t *Tree) Reset() {
 }
 
 func (t *Tree) RemoveNode(id NodeID) error {
-	if t.root.Id() == id {
-		return fmt.Errorf("cannot remove root node")
-	}
-
 	node, ok := t.NodeById(id)
 	if !ok {
 		return fmt.Errorf("node %d does not exist", id)
+	}
+
+	if node.Protected() {
+		return fmt.Errorf("node %d cannot be removed", id)
 	}
 
 	path := t.PathTo(node)
@@ -178,6 +178,7 @@ func NewTree(options ...TreeOption) *Tree {
 
 	root := &Group{tree: tree}
 	root.metaData = tree.newMetadata(root)
+	root.metaData.SetProtected(true)
 	tree.root = root
 	tree.storeNode(tree.root)
 

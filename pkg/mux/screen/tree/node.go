@@ -14,10 +14,12 @@ type NodeID = int32
 
 type metaData struct {
 	deadlock.RWMutex
-	id     NodeID
-	name   string
-	binds  *bind.BindScope
-	params *params.Parameters
+	id   NodeID
+	name string
+	// Whether this node can be removed.
+	protected bool
+	binds     *bind.BindScope
+	params    *params.Parameters
 }
 
 func (m *metaData) Id() int32 {
@@ -46,6 +48,21 @@ func (m *metaData) SetName(name string) {
 	}, name)
 }
 
+// SetProtected sets whether or not this node can be removed.
+func (m *metaData) SetProtected(value bool) {
+	m.Lock()
+	defer m.Unlock()
+	m.protected = value
+}
+
+// Protected reports whether or not this node is protected (or cannot be
+// removed.)
+func (m *metaData) Protected() bool {
+	m.RLock()
+	defer m.RUnlock()
+	return m.protected
+}
+
 func (m *metaData) Binds() *bind.BindScope {
 	return m.binds
 }
@@ -55,5 +72,6 @@ type Node interface {
 	Name() string
 	Params() *params.Parameters
 	SetName(string)
+	Protected() bool
 	Binds() *bind.BindScope
 }
