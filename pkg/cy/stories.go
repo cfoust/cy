@@ -333,4 +333,21 @@ func init() {
 	}, stories.Config{
 		Size: geom.Size{R: 30, C: 60},
 	})
+
+	stories.Register("logs", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		server, client, screen, err := createStory(ctx)
+		logs, _ := server.tree.Root().ChildByName("logs")
+		client.Attach(logs)
+		client.execute(`
+(msg/log :info "this shows up in blue")
+(msg/log :warn "this shows up in yellow")
+(msg/log :error "this shows up in red")
+		`)
+		return screen, err
+	}, stories.Config{
+		Size: geom.Size{R: 30, C: 60},
+	})
 }
