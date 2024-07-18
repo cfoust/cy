@@ -27,3 +27,7 @@ git clone git@github.com:cfoust/cy.git
 cd cy
 go install ./cmd/cy/.
 ```
+
+## Terminal emulators
+
+It is recommended that you use [alacritty](https://alacritty.org/index.html) to run `cy`. alacritty is the fastest terminal emulator around and it will make `cy` that much more pleasant to use. However, `cy` has been tested extensively in [iTerm](https://iterm2.com/index.html) and [kitty](https://sw.kovidgoyal.net/kitty/); your mileage may vary.

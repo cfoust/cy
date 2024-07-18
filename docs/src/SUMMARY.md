@@ -44,6 +44,8 @@
 
 - [Fuzzy finding](./fuzzy-finding.md)
 
+- [Messages](./messages.md)
+
 # Reference
 
 - [Default keybindings](./default-keys.md)

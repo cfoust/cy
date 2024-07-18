@@ -319,4 +319,18 @@ func init() {
 		},
 	})
 
+	stories.Register("toasts", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(msg/toast :info "this shows up in blue")
+(msg/toast :warn "this shows up in yellow")
+(msg/toast :error "this shows up in red")
+		`)
+		return screen, err
+	}, stories.Config{
+		Size: geom.Size{R: 30, C: 60},
+	})
 }

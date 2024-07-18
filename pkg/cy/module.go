@@ -87,6 +87,10 @@ func (c *Cy) ExecuteJanet(path string) error {
 	return c.ExecuteFile(c.Ctx(), path)
 }
 
+func (c *Cy) Log(level zerolog.Level, message string) {
+	c.log.WithLevel(level).Msgf(message)
+}
+
 func (c *Cy) loadConfig() error {
 	err := c.ExecuteFile(c.Ctx(), c.configPath)
 

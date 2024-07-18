@@ -5,7 +5,7 @@ In `cy`, a keybinding consists of a sequence of one or more keys that executes J
 For example:
 
 ```janet
-(key/bind :root ["ctrl+l"] (fn [&] (cy/toast :info "you hit ctrl+l")))
+(key/bind :root ["ctrl+l"] (fn [&] (msg/toast :info "you hit ctrl+l")))
 ```
 
 This tells `cy` that whenever you type `ctrl+l` it should show a toast with the text "you hit ctrl+l".
@@ -62,7 +62,7 @@ The most powerful aspect of `cy`'s keybinding engine is the ability to define ke
 To illustrate:
 
 ```janet
-(defn toast-me [key] (cy/toast :info key))
+(defn toast-me [key] (msg/toast :info key))
 (key/bind :root ["ctrl+b" [:re "[abc]"]] toast-me)
 ```
 

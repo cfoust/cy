@@ -104,3 +104,12 @@ var _ janet.Documented = (*ParamModule)(nil)
 func (p *ParamModule) Documentation() string {
 	return DOCS_PARAM
 }
+
+//go:embed docs-msg.md
+var DOCS_MSG string
+
+var _ janet.Documented = (*MsgModule)(nil)
+
+func (m *MsgModule) Documentation() string {
+	return DOCS_MSG
+}

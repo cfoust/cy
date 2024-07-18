@@ -31,6 +31,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 		"exec":  &api.ExecModule{Server: c},
 		"group": &api.GroupModule{Tree: c.tree},
 		"input": &api.InputModule{Tree: c.tree, Server: c.muxServer},
+		"msg":   &api.MsgModule{Server: c},
 		"key": &api.KeyModule{
 			Tree:      c.tree,
 			TimeBinds: c.timeBinds,

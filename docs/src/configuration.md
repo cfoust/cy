@@ -43,8 +43,8 @@ An example configuration that uses functionality from this API is shown below. Y
   #
   # (pane/current): gets the ID of the current pane
   # (cmd/path): gets the path of the pane with the given ID
-  # (cy/toast): shows a toast popup in the top-right corner of the screen
-  (cy/toast :info (cmd/path (pane/current)))
+  # (msg/toast): shows a toast popup in the top-right corner of the screen
+  (msg/toast :info (cmd/path (pane/current)))
   )
 
 # Bind a key sequence to this function

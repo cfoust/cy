@@ -124,7 +124,7 @@ The simplest example of this is `cy`'s [`Layers`](https://github.com/cfoust/cy/b
 
 {{story png placeholder}}
 
-It is also used for `cy`'s toast messages ({{api cy/toast}}), which are implemented using a noninteractive `Screen` that is layered over the rest of the content on the client's screen.
+It is also used for `cy`'s toast messages ({{api msg/toast}}), which are implemented using a noninteractive `Screen` that is layered over the rest of the content on the client's screen.
 
 ### Tying it all together
 

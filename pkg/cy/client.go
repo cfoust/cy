@@ -497,3 +497,7 @@ func (c *Client) execute(code string) error {
 		Options: janet.DEFAULT_CALL_OPTIONS,
 	})
 }
+
+func (c *Client) Toast(toast toasts.Toast) {
+	c.toaster.Send(toast)
+}
