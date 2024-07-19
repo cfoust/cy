@@ -140,6 +140,7 @@ Screenshot {filename}
             subprocess.check_call(
                 f"./storybook --cast {filename} -s {command}",
                 shell=True,
+                stdout=subprocess.DEVNULL,
                 env={
                     "TERM": "xterm-256color",
                     "EDITOR": "/usr/bin/vim",
@@ -162,6 +163,7 @@ Screenshot {filename}
         while not os.path.exists(filename):
             subprocess.check_call(
                 f"{vhs} -q {tape}",
+                stdout=subprocess.DEVNULL,
                 shell=True
             )
 
