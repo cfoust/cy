@@ -1,6 +1,6 @@
 # Why not tmux?
 
-{{story cast fluid-fuzzy}}
+{{story cast fluid-fuzzy --height 20 --width 120}}
 
 > _`tmux` is just not weird enough._
 
