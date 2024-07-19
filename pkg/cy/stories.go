@@ -357,12 +357,17 @@ func init() {
 	) {
 		_, client, screen, err := createStory(ctx)
 		client.execute(`
+(viewport/set-frame "puzzle")
 (param/set :root :animations @["fluid"])
 		`)
 		return screen, err
 	}, stories.Config{
-		Size: geom.DEFAULT_SIZE,
+		Size: geom.Size{
+			R: 20,
+			C: 120,
+		},
 		Input: []interface{}{
+			stories.Wait(stories.Some),
 			stories.Type("ctrl+a", ";"),
 			stories.Wait(stories.ALot),
 		},
