@@ -29,6 +29,10 @@ type EventStream struct {
 
 var _ stream.Stream = (*EventStream)(nil)
 
+func (s *EventStream) Kill() {
+	s.stream.Kill()
+}
+
 func (s *EventStream) process(data P.Message) error {
 	event := Event{
 		Stamp:   time.Now(),

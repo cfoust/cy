@@ -36,6 +36,18 @@ type Split struct {
 
 var _ Screen = (*Split)(nil)
 
+func (s *Split) Kill() {
+	s.RLock()
+	var (
+		screenA = s.screenA
+		screenB = s.screenB
+	)
+	s.RUnlock()
+
+	screenA.Kill()
+	screenB.Kill()
+}
+
 func (s *Split) getPositionB() Size {
 	positionB := geom.Size{C: s.splitCells}
 	if s.isVertical {

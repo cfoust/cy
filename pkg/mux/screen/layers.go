@@ -33,6 +33,16 @@ type RenderLayer struct {
 	layer *Layer
 }
 
+func (l *Layers) Kill() {
+	l.RLock()
+	layers := l.layers
+	l.RUnlock()
+
+	for _, layer := range layers {
+		layer.Kill()
+	}
+}
+
 func (l *Layers) State() *tty.State {
 	l.RLock()
 	defer l.RUnlock()

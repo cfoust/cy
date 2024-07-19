@@ -53,6 +53,14 @@ func getSize(outer, desired int) int {
 	return desired
 }
 
+func (l *Margins) Kill() {
+	l.RLock()
+	screen := l.screen
+	l.RUnlock()
+
+	screen.Kill()
+}
+
 func (l *Margins) State() *tty.State {
 	l.RLock()
 	inner := l.inner

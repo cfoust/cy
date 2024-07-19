@@ -35,6 +35,10 @@ type Replayable struct {
 
 var _ mux.Screen = (*Replayable)(nil)
 
+func (r *Replayable) Kill() {
+	r.Cancel()
+}
+
 func (r *Replayable) Stream() mux.Stream {
 	return r.stream
 }

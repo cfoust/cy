@@ -119,6 +119,10 @@ func (c *Cy) NewClient(ctx context.Context, options ClientOptions) (*Client, err
 	return client, nil
 }
 
+func (c *Client) Kill() {
+	c.renderer.Kill()
+}
+
 func (c *Client) Read(p []byte) (n int, err error) {
 	return c.renderer.Read(p)
 }

@@ -94,11 +94,17 @@ func (t *Tree) Reset() {
 func (t *Tree) RemoveNode(id NodeID) error {
 	node, ok := t.NodeById(id)
 	if !ok {
-		return fmt.Errorf("node %d does not exist", id)
+		return fmt.Errorf(
+			"node with id %d does not exist",
+			id,
+		)
 	}
 
 	if node.Protected() {
-		return fmt.Errorf("node %d cannot be removed", id)
+		return fmt.Errorf(
+			"node %s cannot be killed",
+			node.Name(),
+		)
 	}
 
 	path := t.PathTo(node)
@@ -109,17 +115,15 @@ func (t *Tree) RemoveNode(id NodeID) error {
 	parent := path[len(path)-2]
 	parent.(*Group).removeNode(node)
 
+	t.Lock()
+	delete(t.nodes, id)
+	t.Unlock()
+
 	switch node := node.(type) {
 	case *Pane:
-		t.Lock()
+		node.Screen().Kill()
 		node.Cancel()
-		delete(t.nodes, id)
-		t.Unlock()
 	case *Group:
-		t.Lock()
-		delete(t.nodes, id)
-		t.Unlock()
-
 		for _, child := range node.children {
 			t.RemoveNode(child.Id())
 		}

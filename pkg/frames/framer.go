@@ -25,6 +25,9 @@ var _ mux.Screen = (*Framer)(nil)
 func (f *Framer) Send(msg mux.Msg) {
 }
 
+func (f *Framer) Kill() {
+}
+
 func (f *Framer) State() *tty.State {
 	// TODO(cfoust): 11/17/23 double alloc
 	state := tty.New(f.size)

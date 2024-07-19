@@ -46,6 +46,10 @@ func (c *ClientIO) Resize(size geom.Vec2) error {
 	})
 }
 
+func (c *ClientIO) Kill() {
+	// unused
+}
+
 var _ mux.Stream = (*ClientIO)(nil)
 
 // Do some sanity checks on a shell string.

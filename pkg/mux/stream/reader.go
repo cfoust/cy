@@ -13,6 +13,9 @@ type Reader struct {
 
 var _ Stream = (*Reader)(nil)
 
+func (s *Reader) Kill() {
+}
+
 // Return the handle that allows you to write to this stream.
 func (s *Reader) Writer() io.Writer {
 	return s.w

@@ -31,6 +31,7 @@ const (
 )
 
 type Cmd struct {
+	util.Lifetime
 	deadlock.RWMutex
 
 	status  CmdStatus
@@ -45,6 +46,10 @@ type Cmd struct {
 }
 
 var _ Stream = (*Cmd)(nil)
+
+func (c *Cmd) Kill() {
+	c.Cancel()
+}
 
 func (c *Cmd) getSize() Size {
 	c.RLock()
@@ -285,16 +290,18 @@ func (c *Cmd) waitHealthy(ctx context.Context) error {
 }
 
 func NewCmd(ctx context.Context, options CmdOptions, size Size) (*Cmd, error) {
+	lifetime := util.NewLifetime(ctx)
 	cmd := Cmd{
+		Lifetime:      lifetime,
 		status:        CmdStatusStarting,
 		options:       options,
 		size:          size,
 		statusUpdates: util.NewPublisher[CmdStatus](),
 	}
 
-	go cmd.spin(ctx)
+	go cmd.spin(lifetime.Ctx())
 
-	err := cmd.waitHealthy(ctx)
+	err := cmd.waitHealthy(lifetime.Ctx())
 	if err != nil {
 		return nil, err
 	}

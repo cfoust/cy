@@ -18,6 +18,10 @@ type Terminal struct {
 
 var _ Screen = (*Terminal)(nil)
 
+func (t *Terminal) Kill() {
+	t.stream.Kill()
+}
+
 func (t *Terminal) State() *tty.State {
 	return tty.Capture(t.terminal)
 }

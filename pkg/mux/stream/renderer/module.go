@@ -31,6 +31,10 @@ type Renderer struct {
 
 var _ mux.Stream = (*Renderer)(nil)
 
+func (r *Renderer) Kill() {
+	r.screen.Kill()
+}
+
 func (r *Renderer) clearScreen(w io.Writer) {
 	r.info.Fprintf(w, terminfo.ClearScreen)
 	r.info.Fprintf(w, terminfo.CursorHome)

@@ -63,6 +63,16 @@ func (c *Client) Send(msg mux.Msg) {
 	c.screen.Send(msg)
 }
 
+func (c *Client) Kill() {
+	c.Lock()
+	if c.attachment != nil {
+		c.attachment.Cancel()
+	}
+	c.attachment = nil
+	c.screen = nil
+	c.Unlock()
+}
+
 func (c *Client) Resize(size mux.Size) error {
 	c.Lock()
 	c.size = size
