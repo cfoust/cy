@@ -17,7 +17,7 @@ For example:
 
 This code would show toasts that look like this:
 
-{{story png toasts}}
+{{story cast toasts --width 60 --height 15}}
 
 And for log messages:
 
@@ -28,4 +28,4 @@ And for log messages:
 (msg/log :error "this shows up in red")
 ```
 
-{{story png logs}}
+{{story cast logs --width 80 --height 5}}

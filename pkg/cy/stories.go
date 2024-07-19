@@ -331,7 +331,7 @@ func init() {
 		`)
 		return screen, err
 	}, stories.Config{
-		Size: geom.Size{R: 30, C: 60},
+		Size: geom.Size{R: 15, C: 60},
 	})
 
 	stories.Register("logs", func(ctx context.Context) (
@@ -342,13 +342,13 @@ func init() {
 		logs, _ := server.tree.Root().ChildByName("logs")
 		client.Attach(logs)
 		client.execute(`
-(msg/log :info "this shows up in blue")
-(msg/log :warn "this shows up in yellow")
+(msg/log :info "this shows up in green")
+(msg/log :warn "this shows up in red(ish?)")
 (msg/log :error "this shows up in red")
 		`)
 		return screen, err
 	}, stories.Config{
-		Size: geom.Size{R: 30, C: 60},
+		Size: geom.Size{R: 5, C: 80},
 	})
 
 	stories.Register("fluid-fuzzy", func(ctx context.Context) (

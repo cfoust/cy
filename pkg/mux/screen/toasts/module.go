@@ -64,9 +64,11 @@ const TOAST_WIDTH = 45
 func (t *Toaster) View(state *tty.State) {
 	size := state.Image.Size()
 
+	width := geom.Min(TOAST_WIDTH, size.C-3)
+
 	pos := geom.Vec2{
 		R: 0,
-		C: size.C - TOAST_WIDTH - 3,
+		C: geom.Max(size.C-TOAST_WIDTH-3, 0),
 	}
 
 	border := t.render.NewStyle().
@@ -77,24 +79,26 @@ func (t *Toaster) View(state *tty.State) {
 		BorderBottom(true).
 		Background(lipgloss.Color("0")).
 		BorderBackground(lipgloss.Color("0")).
-		Width(TOAST_WIDTH)
+		Width(width)
 
 	var blocks []string
 	var style lipgloss.Style
 	for _, toast := range t.toasts {
+		style = border.Copy()
+		// asciinema can't handle high-intensity colors? (8-15)
 		switch toast.Level {
 		case ToastLevelError:
 			style = border.
-				BorderForeground(lipgloss.Color("9")).
-				Foreground(lipgloss.Color("9"))
+				BorderForeground(lipgloss.Color("1")).
+				Foreground(lipgloss.Color("1"))
 		case ToastLevelWarn:
 			style = border.
 				BorderForeground(lipgloss.Color("3")).
 				Foreground(lipgloss.Color("3"))
 		case ToastLevelInfo:
 			style = border.
-				BorderForeground(lipgloss.Color("14")).
-				Foreground(lipgloss.Color("14"))
+				BorderForeground(lipgloss.Color("6")).
+				Foreground(lipgloss.Color("6"))
 		}
 
 		blocks = append(blocks, style.Render(toast.Message))
