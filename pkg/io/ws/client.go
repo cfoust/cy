@@ -95,6 +95,7 @@ func (c *WSClient[T]) Receive() <-chan P.Packet[T] {
 }
 
 func (c *WSClient[T]) Close() error {
+	c.Cancel()
 	return c.Conn.Close(websocket.StatusNormalClosure, "")
 }
 

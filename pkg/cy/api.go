@@ -29,7 +29,7 @@ func (c *CyModule) Detach(user interface{}) {
 		return
 	}
 
-	client.Detach("detached")
+	client.Detach()
 }
 
 func (c *CyModule) ReloadConfig() error {

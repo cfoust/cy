@@ -333,7 +333,6 @@ func (c *Client) findNewPane() error {
 }
 
 func (c *Client) attach(node tree.Node) error {
-
 	pane, ok := node.(*tree.Pane)
 	if !ok {
 		return fmt.Errorf("node was not a pane")
@@ -477,17 +476,8 @@ func (c *Client) Binds() (binds []api.Binding) {
 	return
 }
 
-func (c *Client) Detach(reason string) error {
-	//err := c.conn.Send(P.CloseMessage{
-	//Reason: reason,
-	//})
-	//if err != nil {
-	//return err
-	//}
-
-	//return c.conn.Close()
-	// TODO(cfoust): 12/25/23
-	return nil
+func (c *Client) Detach() {
+	c.Cancel()
 }
 
 // execute runs some Janet code on behalf of the client.

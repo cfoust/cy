@@ -152,10 +152,7 @@ func (c *Cy) Shutdown() error {
 	c.RLock()
 	defer c.RUnlock()
 	for _, client := range c.clients {
-		err := client.Detach("server went away")
-		if err != nil {
-			return err
-		}
+		client.Detach()
 	}
 
 	c.Cancel()

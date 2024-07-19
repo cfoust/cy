@@ -60,6 +60,15 @@ func (c *Client) closeError(reason error) error {
 	return c.conn.Close()
 }
 
+func (c *Client) close() error {
+	err := c.conn.Send(P.CloseMessage{})
+	if err != nil {
+		return err
+	}
+
+	return c.conn.Close()
+}
+
 func (c *Client) Write(data []byte) (n int, err error) {
 	return len(data), c.conn.Send(P.OutputMessage{
 		Data: data,
@@ -102,6 +111,9 @@ func (s *Server) HandleWSClient(conn ws.Client[P.Message]) {
 	for {
 		select {
 		case <-conn.Ctx().Done():
+			return
+		case <-client.Ctx().Done():
+			wsClient.close()
 			return
 		case packet := <-events:
 			if packet.Error != nil {

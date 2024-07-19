@@ -148,14 +148,19 @@ func poll(conn Connection) error {
 				case *P.OutputMessage:
 					w.Write(msg.Data)
 				case *P.CloseMessage:
-					// TODO(cfoust): 12/25/23
+					conn.Close()
 					return
 				}
 			}
 		}
 	}()
 
-	return cli.Attach(conn.Ctx(), writer, os.Stdin, os.Stdout)
+	return cli.Attach(
+		conn.Ctx(),
+		writer,
+		os.Stdin,
+		os.Stdout,
+	)
 }
 
 func connect(socketPath string) (Connection, error) {
