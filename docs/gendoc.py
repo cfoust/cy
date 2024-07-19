@@ -21,6 +21,9 @@ from typing import (
 )
 
 
+SITE_URL=""
+
+
 class Symbol(NamedTuple):
     Name: str
     Docstring: str
@@ -66,7 +69,7 @@ def symbol_to_url(symbol: Symbol) -> str:
         .replace("?", "")
         .replace("/", "")
     )
-    return f"/api.md#{url}"
+    return f"{SITE_URL}/api.md#{url}"
 
 
 def render_symbol_link(symbol: Symbol) -> str:
@@ -135,7 +138,7 @@ def render_params(params: List[Param]) -> str:
 
     # Generate the table of contents
     for param in params:
-        output += f"[{param.Name}](/default-parameters.md#{param.Name}) "
+        output += f"[{param.Name}]({SITE_URL}/default-parameters.md#{param.Name}) "
 
     output += "\n\n---\n"
 
@@ -512,6 +515,9 @@ if __name__ == '__main__':
     args = sys.argv
     if len(args) > 1 and args[1] == "supports":
         sys.exit(0)
+
+    if 'CI' in os.environ:
+        SITE_URL="/cy"
 
     context, book = json.load(sys.stdin)
 
