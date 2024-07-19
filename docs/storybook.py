@@ -63,10 +63,12 @@ if __name__ == '__main__':
 
             filename = "/images/" + filename
 
-            if 'CI' in os.environ:
-                filename = "/cy/" + filename[1:]
-
             replacement = f"![{command}]({filename})"
+
+            # Make image file relative to site
+            if 'CI' in os.environ:
+                replacement = f"![{command}](/cy/{filename[1:]})"
+
             if filename.endswith("cast"):
                 replacement = f"<div data-cast=\"{original}\"></div>"
 
