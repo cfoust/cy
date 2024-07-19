@@ -60,7 +60,11 @@ if __name__ == '__main__':
             original = filename
 
             filename += "." + type_
+
             filename = "/images/" + filename
+
+            if 'CI' in os.environ:
+                filename = "/cy/" + filename[1:]
 
             replacement = f"![{command}]({filename})"
             if filename.endswith("cast"):
