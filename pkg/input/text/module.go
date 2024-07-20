@@ -90,6 +90,10 @@ func WithResult(result chan<- interface{}) Setting {
 	}
 }
 
+func WithReverse(ctx context.Context, t *Text) {
+	t.isUp = false
+}
+
 // WithInline displays Text as a small window at the provided location on the
 // screen.
 func WithInline(location, size geom.Vec2) Setting {

@@ -52,9 +52,7 @@ func (i *InputModule) Find(
 
 	outerLayers := client.OuterLayers()
 	state := outerLayers.State()
-	cursor := state.Cursor
 	result := make(chan interface{})
-
 	settings := []fuzzy.Setting{
 		fuzzy.WithNodes(
 			i.Tree,
@@ -62,10 +60,21 @@ func (i *InputModule) Find(
 		),
 		fuzzy.WithResult(result),
 		fuzzy.WithPrompt(params.Prompt),
-		fuzzy.WithInline(
-			geom.Vec2{R: cursor.R, C: cursor.C},
-			state.Image.Size(),
-		),
+	}
+
+	if !params.Full {
+		cursor := state.Cursor
+		settings = append(
+			settings,
+			fuzzy.WithInline(
+				geom.Vec2{R: cursor.R, C: cursor.C},
+				state.Image.Size(),
+			),
+		)
+	}
+
+	if params.Reverse {
+		settings = append(settings, fuzzy.WithReverse)
 	}
 
 	if (params.Animated == nil || (*params.Animated) == true) && client.Params().Animate() {
@@ -166,6 +175,21 @@ func (i *InputModule) Text(
 			geom.Vec2{R: cursor.R, C: cursor.C},
 			state.Image.Size(),
 		),
+	}
+
+	if !params.Full {
+		cursor := state.Cursor
+		settings = append(
+			settings,
+			text.WithInline(
+				geom.Vec2{R: cursor.R, C: cursor.C},
+				state.Image.Size(),
+			),
+		)
+	}
+
+	if params.Reverse {
+		settings = append(settings, text.WithReverse)
 	}
 
 	if (params.Animated == nil || (*params.Animated) == true) && client.Params().Animate() {
