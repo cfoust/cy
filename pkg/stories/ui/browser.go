@@ -3,9 +3,9 @@ package ui
 import (
 	"context"
 
-	"github.com/cfoust/cy/pkg/input/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/input/fuzzy"
 	S "github.com/cfoust/cy/pkg/stories"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"

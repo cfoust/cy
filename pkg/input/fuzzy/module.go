@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/anim"
-	"github.com/cfoust/cy/pkg/input/fuzzy/preview"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
+	"github.com/cfoust/cy/pkg/input/fuzzy/preview"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
