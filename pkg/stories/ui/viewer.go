@@ -85,7 +85,10 @@ func (v *Viewer) loadStory() tea.Cmd {
 
 	return func() tea.Msg {
 		lifetime := util.NewLifetime(v.Ctx())
-		screen, _ := story.Init(lifetime.Ctx())
+		screen, err := story.Init(lifetime.Ctx())
+		if err != nil {
+			panic(err)
+		}
 
 		if !config.Size.IsZero() {
 			screen.Resize(config.Size)

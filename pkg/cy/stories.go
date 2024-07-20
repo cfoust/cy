@@ -186,6 +186,9 @@ func init() {
 
 	stories.Register("cy/palette-static", func(ctx context.Context) (mux.Screen, error) {
 		_, client, screen, err := createStory(ctx)
+		if err != nil {
+		    return nil, err
+		}
 		go client.execute(`(action/command-palette)`)
 		return screen, err
 	}, stories.Config{})

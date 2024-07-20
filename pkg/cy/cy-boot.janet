@@ -65,23 +65,23 @@ For example:
   action/command-palette
   "Open the command palette."
   (def binds (key/current))
-  (as?-> actions _
-         (map
-           |(do
-              (def [desc func] $)
-              (def sequence (as?-> binds x
-                                   (find |(= func ($ :function)) x)
-                                   (get x :sequence)
-                                   (string/join x " ")
-                                   (string " " x " ")))
-              (tuple [desc
-                      (string
-                        # Padding on the left prevents the table library from
-                        # shrinking the key sequence string
-                        (string/repeat " " (max (- 15 (length (string sequence))) 0))
-                        sequence)] func))
-           _)
-         (input/find _ :prompt "search: actions")
+  (def bound-actions
+    (map
+      |(do
+         (def [desc func] $)
+         (def sequence (as?-> binds x
+                              (find |(= func ($ :function)) x)
+                              (get x :sequence)
+                              (string/join x " ")
+                              (string " " x " ")))
+         (tuple [desc (string sequence)] func))
+      actions))
+
+  (as?-> bound-actions _
+         (input/find _
+                     :full true
+                     :reverse true
+                     :prompt "search: actions")
          (apply _)))
 
 (defn
@@ -217,6 +217,16 @@ For example:
   (tree/kill (pane/current)))
 
 (key/action
+  action/kill-server
+  "Kill the cy server."
+  (cy/kill-server))
+
+(key/action
+  action/detach
+  "Detach from the cy server."
+  (cy/detach))
+
+(key/action
   action/toggle-margins
   "Toggle the screen's margins."
   (def size (viewport/size))
@@ -313,8 +323,8 @@ For example:
 
 (key/bind-many-tag :root "general"
                    [prefix "ctrl+p"] action/command-palette
-                   [prefix "q"] cy/kill-server
-                   [prefix "d"] cy/detach
+                   [prefix "q"] action/kill-server
+                   [prefix "d"] action/detach
                    [prefix "F"] action/choose-frame
                    [prefix "p"] action/open-replay
                    [prefix "r"] action/reload-config
