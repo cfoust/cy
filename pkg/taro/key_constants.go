@@ -514,6 +514,64 @@ var sequences = map[string]Key{
 	"\x1bOD": {Type: KeyLeft, Alt: false},
 }
 
+// xtermSequences is an authoritative list of the byte sequences for keys to
+// be interpreted by xterm, because sequences above contains conflicting keys.
+// We probably need a better approach to this.
+var xtermSequences = map[string]Key{
+	"\x1b[A":    {Type: KeyUp},
+	"\x1b[B":    {Type: KeyDown},
+	"\x1b[C":    {Type: KeyRight},
+	"\x1b[D":    {Type: KeyLeft},
+	"\x1b[1;2A": {Type: KeyShiftUp},
+	"\x1b[1;2B": {Type: KeyShiftDown},
+	"\x1b[1;2C": {Type: KeyShiftRight},
+	"\x1b[1;2D": {Type: KeyShiftLeft},
+
+	"\x1b[OA": {Type: KeyShiftUp},    // DECCKM
+	"\x1b[OB": {Type: KeyShiftDown},  // DECCKM
+	"\x1b[OC": {Type: KeyShiftRight}, // DECCKM
+	"\x1b[OD": {Type: KeyShiftLeft},  // DECCKM
+
+	"\x1b[1;5A": {Type: KeyCtrlUp},
+	"\x1b[1;5B": {Type: KeyCtrlDown},
+	"\x1b[1;5C": {Type: KeyCtrlRight},
+	"\x1b[1;5D": {Type: KeyCtrlLeft},
+
+	"\x1b[5;5~": {Type: KeyCtrlPgUp},
+	"\x1b[6;5~": {Type: KeyCtrlPgDown},
+
+	"\x1b[H":    {Type: KeyHome},                     // xterm, lxterm
+	"\x1b[1;3H": {Type: KeyHome, Alt: true},          // xterm, lxterm
+	"\x1b[1;5H": {Type: KeyCtrlHome},                 // xterm, lxterm
+	"\x1b[1;7H": {Type: KeyCtrlHome, Alt: true},      // xterm, lxterm
+	"\x1b[1;2H": {Type: KeyShiftHome},                // xterm, lxterm
+	"\x1b[1;4H": {Type: KeyShiftHome, Alt: true},     // xterm, lxterm
+	"\x1b[1;6H": {Type: KeyCtrlShiftHome},            // xterm, lxterm
+	"\x1b[1;8H": {Type: KeyCtrlShiftHome, Alt: true}, // xterm, lxterm
+
+	"\x1b[F":    {Type: KeyEnd},                     // xterm, lxterm
+	"\x1b[1;3F": {Type: KeyEnd, Alt: true},          // xterm, lxterm
+	"\x1b[1;5F": {Type: KeyCtrlEnd},                 // xterm, lxterm
+	"\x1b[1;7F": {Type: KeyCtrlEnd, Alt: true},      // xterm, lxterm
+	"\x1b[1;2F": {Type: KeyShiftEnd},                // xterm, lxterm
+	"\x1b[1;4F": {Type: KeyShiftEnd, Alt: true},     // xterm, lxterm
+	"\x1b[1;6F": {Type: KeyCtrlShiftEnd},            // xterm, lxterm
+	"\x1b[1;8F": {Type: KeyCtrlShiftEnd, Alt: true}, // xterm, lxterm
+
+	"\x1bOP": {Type: KeyF1}, // vt100, xterm
+	"\x1bOQ": {Type: KeyF2}, // vt100, xterm
+	"\x1bOR": {Type: KeyF3}, // vt100, xterm
+	"\x1bOS": {Type: KeyF4}, // vt100, xterm
+
+	"\x1b[1;3P": {Type: KeyF1, Alt: true}, // vt100, xterm
+	"\x1b[1;3Q": {Type: KeyF2, Alt: true}, // vt100, xterm
+	"\x1b[1;3R": {Type: KeyF3, Alt: true}, // vt100, xterm
+	"\x1b[1;3S": {Type: KeyF4, Alt: true}, // vt100, xterm
+
+	"\x1b[28~": {Type: KeyF15}, // vt100, xterm, also urxvt
+	"\x1b[29~": {Type: KeyF16}, // vt100, xterm, also urxvt
+}
+
 type keyLookup struct {
 	Type KeyType
 	Alt  bool
@@ -523,6 +581,13 @@ type keyLookup struct {
 var inverseSequences = func() map[keyLookup][]byte {
 	s := map[keyLookup][]byte{}
 	for str, key := range extSequences {
+		s[keyLookup{
+			Type: key.Type,
+			Alt:  key.Alt,
+		}] = []byte(str)
+	}
+
+	for str, key := range xtermSequences {
 		s[keyLookup{
 			Type: key.Type,
 			Alt:  key.Alt,
