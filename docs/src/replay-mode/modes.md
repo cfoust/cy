@@ -34,7 +34,7 @@ Some examples:
 
 ### Copy mode
 
-To enter copy mode, all you need to do is invoke any action that would cause the cursor or the viewport to move. Like `tmux`'s copy mode, you can explore the state of the screen and copy text to be pasted elsewhere. Copy mode supports a wide range of cursor and viewport movements that should feel familiar to users of CLI text editors such as `vim`. For a full list of supported motions, refer to the [reference page for key bindings](/default-keys.md#movements).
+To enter copy mode, all you need to do is invoke any action that would cause the cursor or the viewport to move. Like `tmux`'s copy mode, you can explore the state of the screen and copy text to be pasted elsewhere. Copy mode supports a wide range of cursor and viewport movements that should feel familiar to users of CLI text editors such as `vim`. For a full list of supported motions, refer to the [reference page for key bindings](../default-keys.md#movements).
 
 Copy mode also allows you to swap between the terminal's main and alt screens using {{bind :copy s}}. In other words, even if you run a full-screen application such as `htop`, you can still swap back to the scrollback buffer and see the output of commands you ran before running `htop`.
 

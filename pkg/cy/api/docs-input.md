@@ -4,7 +4,7 @@
 
 `(input/find)` is a general-purpose fuzzy finder that is similar to `fzf`. When invoked, it prompts the user to choose from one of the items provided in `inputs`. `(input/find)` does not return until the user makes a choice; if they choose nothing (such as by hitting <kbd>ctrl+c</kbd>), it returns `nil`.
 
-`inputs` is an array with elements that can take different forms depending on the desired behavior. See more on the [page about fuzzy finding](./fuzzy-finding.md).
+`inputs` is an array with elements that can take different forms depending on the desired behavior. See more on the [page about fuzzy finding](./user-input/fuzzy-finding.md).
 
 This function supports a range of named parameters that adjust its functionality:
 

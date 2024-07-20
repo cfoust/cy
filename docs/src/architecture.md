@@ -42,7 +42,7 @@ Multiplexing, of course, is where things get interesting. `cy`'s codebase has a 
   - `mux`: A few useful abstractions for multiplexing.
   - `janet`: A library for Janet/Go interoperation.
   - `emu`: A vt100 terminal emulator.
-  - `fuzzy`: A [fuzzy finder](./fuzzy-finding.md).
+  - `fuzzy`: A [fuzzy finder](./user-input/fuzzy-finding.md).
   - `replay`: A terminal session player, otherwise known as [replay mode](./replay-mode.md).
   - `taro`: A fork of [charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea) adapted for use in `cy`'s windowing abstraction (described [below](./architecture.md#screens-and-streams).)
 - `docs`: Contains all of `cy`'s documentation. `cy` uses [mdbook](https://github.com/rust-lang/mdBook) to build the documentation site.
@@ -114,7 +114,7 @@ type Screen interface {
 
 The easiest way to understand this is to think of a `Screen` as something that can render a `Stream` and turn it into something that can be composed with other `Screen`s. In fact, there is a `Screen` that [does just that](https://github.com/cfoust/cy/blob/main/pkg/mux/screen/terminal.go?plain=1#L13).
 
-`cy`'s [fuzzy finder](./fuzzy-finding.md) and [replay mode](./replay-mode.md) are both just `Screen`s, albeit complicated ones.
+`cy`'s [fuzzy finder](./user-input/fuzzy-finding.md) and [replay mode](./replay-mode.md) are both just `Screen`s, albeit complicated ones.
 
 Some `Screen`s just exist to compose other screens in some way, which is the bread and butter of any terminal multiplexer.
 
