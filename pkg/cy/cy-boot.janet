@@ -178,6 +178,17 @@ For example:
   (pane/attach next))
 
 (key/action
+  action/rename-pane
+  "Rename the current pane."
+  (def pane (pane/current))
+  (def old-path (tree/path pane))
+  (as?-> pane _
+         (input/text (string "rename: " (tree/path pane))
+                     :preset (tree/name pane))
+         (do (tree/set-name pane _) _)
+         (msg/toast :info (string "renamed " old-path " to " (tree/path pane)))))
+
+(key/action
   action/jump-pane
   "Jump to a pane."
   (as?-> (group/leaves :root) _
