@@ -13,4 +13,4 @@ Parameters are set with {{api param/set}} and retrieved with {{api param/get}}:
 
 Parameters work just like bindings do in the [node tree](./groups-and-panes.md#the-node-tree) in that the parameter values in descendant nodes overrite those in their ancestors when a client is attached to them. This allows `cy`'s functionality to be configured on a per-group (or even per-pane) basis using **default parameters**, which are described below.
 
-`cy`'s settings are known as **default parameters**. They are set and retrieved in the same way normal parameters are, but influence `cy`'s behavior in ways not directly controllable using the API. A complete list can be found in [the default parameters chapter](/default-parameters.md).
+`cy`'s settings are known as **default parameters**. They are set and retrieved in the same way normal parameters are, but influence `cy`'s behavior in ways not directly controllable using the API. A complete list can be found in [the default parameters chapter](./default-parameters.md).
