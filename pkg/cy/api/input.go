@@ -6,8 +6,9 @@ import (
 	"math/rand"
 
 	"github.com/cfoust/cy/pkg/anim"
-	"github.com/cfoust/cy/pkg/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/input/fuzzy"
+	"github.com/cfoust/cy/pkg/input/text"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
@@ -119,6 +120,108 @@ func (i *InputModule) Find(
 	outerLayers.NewLayer(
 		fuzzy.Ctx(),
 		fuzzy,
+		screen.PositionTop,
+		screen.WithInteractive,
+		screen.WithOpaque,
+	)
+
+	select {
+	case match := <-result:
+		return match, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+type TextParams struct {
+	Placeholder *string
+	Preset      *string
+	Full        bool
+	Reverse     bool
+	Animated    *bool
+}
+
+func (i *InputModule) Text(
+	ctx context.Context,
+	user interface{},
+	prompt string,
+	named *janet.Named[TextParams],
+) (interface{}, error) {
+	params := named.Values()
+
+	client, ok := user.(Client)
+	if !ok {
+		return nil, fmt.Errorf("missing client context")
+	}
+
+	outerLayers := client.OuterLayers()
+	state := outerLayers.State()
+	cursor := state.Cursor
+	result := make(chan interface{})
+
+	settings := []text.Setting{
+		text.WithResult(result),
+		text.WithPrompt(prompt),
+		text.WithInline(
+			geom.Vec2{R: cursor.R, C: cursor.C},
+			state.Image.Size(),
+		),
+	}
+
+	if (params.Animated == nil || (*params.Animated) == true) && client.Params().Animate() {
+		var animations []anim.Creator
+		for _, a := range client.Params().Animations() {
+			if creator, ok := anim.Animations[a]; ok {
+				animations = append(
+					animations,
+					creator,
+				)
+			}
+		}
+
+		// Add all of the defaults if the setting was empty
+		if len(animations) == 0 {
+			for _, creator := range anim.Animations {
+				animations = append(
+					animations,
+					creator,
+				)
+			}
+		}
+
+		creator := animations[rand.Int()%len(animations)]
+		settings = append(
+			settings,
+			text.WithAnimation(state.Image, creator),
+		)
+	}
+
+	if params.Preset != nil {
+		settings = append(
+			settings,
+			text.WithPreset(*params.Preset),
+		)
+	}
+
+	if params.Placeholder != nil {
+		settings = append(
+			settings,
+			text.WithPlaceholder(*params.Placeholder),
+		)
+	}
+
+	if client.Params().SkipInput() {
+		return "test", nil
+	}
+
+	text := text.New(
+		ctx,
+		settings...,
+	)
+
+	outerLayers.NewLayer(
+		text.Ctx(),
+		text,
 		screen.PositionTop,
 		screen.WithInteractive,
 		screen.WithOpaque,

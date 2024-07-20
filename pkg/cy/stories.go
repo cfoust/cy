@@ -372,4 +372,22 @@ func init() {
 			stories.Wait(stories.ALot),
 		},
 	})
+
+	stories.Register("input", initWithFrame, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "ctrl+p"),
+			stories.Wait(stories.Some),
+			stories.Type("Rename"),
+			stories.Wait(stories.Some),
+			stories.Type("enter"),
+			stories.Wait(stories.Some),
+			stories.Type("backspace"),
+			stories.Wait(stories.Some),
+			stories.Type("new-shell-name"),
+			stories.Wait(stories.Some),
+			stories.Type("enter"),
+			stories.Wait(stories.ALot),
+		},
+	})
 }

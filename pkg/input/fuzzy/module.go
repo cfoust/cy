@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/anim"
-	"github.com/cfoust/cy/pkg/fuzzy/preview"
+	"github.com/cfoust/cy/pkg/input/fuzzy/preview"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/mux"
@@ -226,7 +226,6 @@ func newFuzzy(
 ) *Fuzzy {
 	ti := textinput.New()
 	ti.Focus()
-	ti.CharLimit = 20
 	ti.Width = 20
 	ti.Prompt = ""
 

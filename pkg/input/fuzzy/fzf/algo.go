@@ -85,7 +85,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/cfoust/cy/pkg/fuzzy/fzf/util"
+	"github.com/cfoust/cy/pkg/input/fuzzy/fzf/util"
 	"github.com/cfoust/cy/pkg/geom"
 )
 

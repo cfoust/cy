@@ -127,7 +127,6 @@ func newReplay(
 	incrInput := textinput.New()
 	incrInput.Focus()
 	incrInput.CharLimit = 0
-	// TODO(cfoust): 06/16/24 need to update this to match bar
 	incrInput.Width = 20
 	incrInput.Prompt = ""
 
