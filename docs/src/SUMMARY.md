@@ -42,7 +42,10 @@
 
   - [Command detection](./replay-mode/command-detection.md)
 
-- [Fuzzy finding](./fuzzy-finding.md)
+- [User input](./user-input.md)
+
+  - [Fuzzy finding](./user-input/fuzzy-finding.md)
+  - [Text](./user-input/text.md)
 
 - [Messages](./messages.md)
 

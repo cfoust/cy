@@ -61,7 +61,7 @@ func init() {
 		Size: geom.DEFAULT_SIZE,
 		Input: []interface{}{
 			stories.Wait(stories.Some),
-			stories.Type("this is a test"),
+			stories.Type("foo bar baz"),
 			stories.Wait(stories.ALot),
 		},
 	}
@@ -69,6 +69,18 @@ func init() {
 	stories.Register("input/text/top-left", TopLeft, config)
 	stories.Register("input/text/full-top", FullTop, config)
 	stories.Register("input/text/full-bottom", FullBottom, config)
-	stories.Register("input/text/placeholder", Placeholder, config)
-	stories.Register("input/text/preset", Preset, config)
+
+	smallConfig := stories.Config{
+		Size: geom.Size{
+			R: 10,
+			C: 40,
+		},
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("foo bar baz"),
+			stories.Wait(stories.ALot),
+		},
+	}
+	stories.Register("input/text/placeholder", Placeholder, smallConfig)
+	stories.Register("input/text/preset", Preset, smallConfig)
 }
