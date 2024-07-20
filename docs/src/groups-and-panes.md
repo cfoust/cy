@@ -23,7 +23,7 @@ For example:
 (group/mkdir :root "/some/other/group")
 ```
 
-The {{api group/mkdir}} function creates a group at the provided path (if it does not already exist) and returns its [NodeID](/api.md#nodeid).
+The {{api group/mkdir}} function creates a group at the provided path (if it does not already exist) and returns its [NodeID](./api.md#nodeid).
 
 ## The node tree
 
