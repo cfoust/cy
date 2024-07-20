@@ -36,7 +36,7 @@ To some, this may seem like a surprising decision. The predominant abstraction f
 
 Yet I found that I have spent more time fighting with this (or writing [plugins to remove it](https://github.com/cfoust/tmux-oakthree)) than benefiting from it. Rarely do I feel like I need to see more than one pane at a time.
 
-This is practical because `cy` makes it easy to switch between panes. It emphasizes using [fuzzy finding](./fuzzy-finding.md) (with previews!) so you can quickly find what you're looking for. It also contains a minimal, [filesystem-like abstraction](./groups-and-panes.md) for grouping panes together.
+This is practical because `cy` makes it easy to switch between panes. It emphasizes using [fuzzy finding](./user-input/fuzzy-finding.md) (with previews!) so you can quickly find what you're looking for. It also contains a minimal, [filesystem-like abstraction](./groups-and-panes.md) for grouping panes together.
 
 As of writing, `cy` also lacks `tmux`'s status line. Because there is no notion of windows, there is nothing akin to the tab-like behavior that `tmux` encourages (and thus little immediate need to display it.)
 
