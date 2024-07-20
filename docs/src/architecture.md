@@ -42,7 +42,9 @@ Multiplexing, of course, is where things get interesting. `cy`'s codebase has a 
   - `mux`: A few useful abstractions for multiplexing.
   - `janet`: A library for Janet/Go interoperation.
   - `emu`: A vt100 terminal emulator.
-  - `fuzzy`: A [fuzzy finder](./user-input/fuzzy-finding.md).
+  - `input`: A collection of user input mechanisms.
+      - `fuzzy`: A [fuzzy finder](./user-input/fuzzy-finding.md).
+      - `text`: A simple text input field.
   - `replay`: A terminal session player, otherwise known as [replay mode](./replay-mode.md).
   - `taro`: A fork of [charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea) adapted for use in `cy`'s windowing abstraction (described [below](./architecture.md#screens-and-streams).)
 - `docs`: Contains all of `cy`'s documentation. `cy` uses [mdbook](https://github.com/rust-lang/mdBook) to build the documentation site.
