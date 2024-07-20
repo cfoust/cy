@@ -47,7 +47,7 @@
   - [Fuzzy finding](./user-input/fuzzy-finding.md)
   - [Text](./user-input/text.md)
 
-- [Messages](./messages.md)
+- [Notifications](./notifications.md)
 
 # Reference
 
