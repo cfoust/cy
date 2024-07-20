@@ -19,7 +19,7 @@ func (t *Text) renderPrompt(prompt lipgloss.Style) string {
 	)
 }
 
-func (t *Text) renderMatchWindow(size geom.Size) image.Image {
+func (t *Text) renderInputWindow(size geom.Size) image.Image {
 	commonStyle := t.render.NewStyle().Width(size.C)
 	promptStyle := commonStyle.Copy().
 		Background(lipgloss.Color("#EAA549")).
@@ -30,10 +30,19 @@ func (t *Text) renderMatchWindow(size geom.Size) image.Image {
 		Background(promptStyle.GetForeground()).
 		Foreground(promptStyle.GetBackground()).
 		Render("~>")
-	textInput := arrow + commonStyle.Copy().
+
+	inputStyle := t.render.NewStyle().
 		Background(lipgloss.Color("#20111B")).
-		Foreground(lipgloss.Color("#D5CCBA")).
-		Render(t.textInput.View())
+		Foreground(lipgloss.Color("#D5CCBA"))
+	t.textInput.Cursor.Style = t.render.NewStyle().
+		Background(lipgloss.Color("#E8E3DF"))
+	t.textInput.TextStyle = inputStyle
+	t.textInput.Cursor.TextStyle = inputStyle
+
+	textInput := lipgloss.JoinHorizontal(lipgloss.Left,
+		arrow,
+		t.textInput.View(),
+	)
 
 	prompt := t.renderPrompt(promptStyle)
 
@@ -67,9 +76,6 @@ func (t *Text) View(state *tty.State) {
 	// the text input provides its own cursor
 	state.CursorVisible = false
 
-	t.textInput.Cursor.Style = t.render.NewStyle().
-		Background(lipgloss.Color("#E8E3DF"))
-
 	screenSize := state.Image.Size()
 
 	windowBounds := geom.Rect{
@@ -102,7 +108,9 @@ func (t *Text) View(state *tty.State) {
 		windowBounds.Position = geom.Vec2{}
 	}
 
-	matchWindow := t.renderMatchWindow(windowBounds.Size)
+	t.textInput.Width = windowBounds.Size.C - 2
+
+	matchWindow := t.renderInputWindow(windowBounds.Size)
 
 	emptyRows := windowBounds.Size.R - matchWindow.Size().R
 	if t.isUp {

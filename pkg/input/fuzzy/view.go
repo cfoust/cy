@@ -209,10 +209,19 @@ func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
 		Background(promptStyle.GetForeground()).
 		Foreground(promptStyle.GetBackground()).
 		Render("~>")
-	textInput := arrow + commonStyle.Copy().
+
+	inputStyle := f.render.NewStyle().
 		Background(lipgloss.Color("#20111B")).
-		Foreground(lipgloss.Color("#D5CCBA")).
-		Render(f.textInput.View())
+		Foreground(lipgloss.Color("#D5CCBA"))
+	f.textInput.Cursor.Style = f.render.NewStyle().
+		Background(lipgloss.Color("#E8E3DF"))
+	f.textInput.TextStyle = inputStyle
+	f.textInput.Cursor.TextStyle = inputStyle
+
+	textInput := lipgloss.JoinHorizontal(lipgloss.Left,
+		arrow,
+		f.textInput.View(),
+	)
 
 	prompt := f.renderPrompt(promptStyle)
 
@@ -252,9 +261,6 @@ func (f *Fuzzy) View(state *tty.State) {
 	// the text input provides its own cursor
 	state.CursorVisible = false
 
-	f.textInput.Cursor.Style = f.render.NewStyle().
-		Background(lipgloss.Color("#E8E3DF"))
-
 	screenSize := state.Image.Size()
 
 	windowBounds := geom.Rect{
@@ -286,6 +292,8 @@ func (f *Fuzzy) View(state *tty.State) {
 		windowBounds.Size = screenSize
 		windowBounds.Position = geom.Vec2{}
 	}
+
+	f.textInput.Width = windowBounds.Size.C - 2
 
 	matchWindow := f.renderMatchWindow(windowBounds.Size)
 

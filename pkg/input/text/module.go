@@ -127,7 +127,6 @@ func newText(
 ) *Text {
 	ti := textinput.New()
 	ti.Focus()
-	ti.CharLimit = 20
 	ti.Width = 20
 	ti.Prompt = ""
 

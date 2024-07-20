@@ -43,7 +43,7 @@ var Placeholder stories.InitFunc = func(ctx context.Context) (mux.Screen, error)
 	f := New(
 		ctx,
 		WithPlaceholder("placeholder"),
-		WithPrompt("placeholder test"),
+		WithPrompt("placeholder example"),
 	)
 	return f, nil
 }
@@ -52,6 +52,7 @@ var Preset stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	f := New(
 		ctx,
 		WithPreset("preset text"),
+		WithPrompt("preset example"),
 	)
 	return f, nil
 }
