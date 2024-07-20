@@ -316,9 +316,9 @@ type View interface {
 type TerminalOption func(*TerminalInfo)
 
 type TerminalInfo struct {
-	w                           io.Writer
-	cols, rows                  int
-	disableHistory, disableWrap bool
+	w              io.Writer
+	cols, rows     int
+	disableHistory bool
 }
 
 func WithWriter(w io.Writer) TerminalOption {
@@ -338,10 +338,6 @@ func WithSize(size geom.Vec2) TerminalOption {
 // reduces the amount of memory a Terminal uses.
 var WithoutHistory TerminalOption = func(info *TerminalInfo) {
 	info.disableHistory = true
-}
-
-var WithoutWrap TerminalOption = func(info *TerminalInfo) {
-	info.disableWrap = true
 }
 
 // New returns a new virtual terminal emulator.

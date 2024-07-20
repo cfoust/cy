@@ -96,11 +96,7 @@ func NewRenderer(
 	screen mux.Screen,
 ) *Renderer {
 	r, w := io.Pipe()
-	target := emu.New(
-		emu.WithSize(initialSize),
-		emu.WithoutHistory,
-		emu.WithoutWrap,
-	)
+	target := emu.New(emu.WithSize(initialSize))
 	screen.Resize(initialSize)
 	renderer := &Renderer{
 		raw:    target,

@@ -15,7 +15,6 @@ func newTerminal(info TerminalInfo) *terminal {
 	t := &terminal{newState(info.w)}
 	t.init(geom.Size{C: info.cols, R: info.rows})
 	t.disableHistory = info.disableHistory
-	t.disableWrap = info.disableWrap
 	return t
 }
 
