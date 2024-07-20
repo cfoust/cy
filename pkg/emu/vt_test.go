@@ -109,7 +109,7 @@ func TestPrompt(t *testing.T) {
 	require.True(t, ok)
 }
 
-func TestTabs(t *testing.T) {
+func TestTabsBug(t *testing.T) {
 	term := New()
 	// This is the simplest example of a bug that I encountered with tabs.
 	term.Resize(geom.Vec2{C: 172, R: 3})
@@ -118,4 +118,12 @@ func TestTabs(t *testing.T) {
 	first := term.Screen()[0].String()
 	index := strings.Index(first, "trace.prof")
 	require.NotEqual(t, -1, index)
+}
+
+func TestResizeBug(t *testing.T) {
+	term := New(WithoutHistory)
+	term.Resize(geom.Vec2{C: 6, R: 2})
+	term.Write([]byte("foobarbaz"))
+	term.Resize(geom.Vec2{C: 6, R: 1})
+	term.Resize(geom.Vec2{C: 6, R: 2})
 }

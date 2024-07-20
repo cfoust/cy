@@ -536,7 +536,7 @@ func (t *State) scrollDown(orig, n int) {
 func (t *State) scrollUp(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
 
-	if orig == 0 && !IsAltMode(t.mode) && !t.disableHistory {
+	if orig == 0 && !IsAltMode(t.mode) {
 		for i := 0; i < n; i++ {
 			t.wrapped = t.screen[i].IsWrapped()
 			if t.disableHistory {
