@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cfoust/cy/pkg/fuzzy/fzf"
-	"github.com/cfoust/cy/pkg/fuzzy/fzf/util"
-	"github.com/cfoust/cy/pkg/fuzzy/preview"
+	"github.com/cfoust/cy/pkg/input/fuzzy/fzf"
+	"github.com/cfoust/cy/pkg/input/fuzzy/fzf/util"
+	"github.com/cfoust/cy/pkg/input/fuzzy/preview"
 	"github.com/cfoust/cy/pkg/janet"
 )
 

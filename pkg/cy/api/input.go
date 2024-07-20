@@ -6,7 +6,7 @@ import (
 	"math/rand"
 
 	"github.com/cfoust/cy/pkg/anim"
-	"github.com/cfoust/cy/pkg/fuzzy"
+	"github.com/cfoust/cy/pkg/input/fuzzy"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen"
