@@ -37,10 +37,13 @@ func Test(m Model) func(msgs ...interface{}) {
 			}
 		}
 
+		size := geom.DEFAULT_SIZE
+
 		for _, msg := range msgs {
 			realMsg = msg
 			switch msg := msg.(type) {
 			case geom.Size:
+				size = msg
 				realMsg = tea.WindowSizeMsg{
 					Width:  msg.C,
 					Height: msg.R,
@@ -54,7 +57,7 @@ func Test(m Model) func(msgs ...interface{}) {
 
 			m, cmd = m.Update(realMsg)
 			handleCmd(cmd)
-			m.View(tty.New(geom.DEFAULT_SIZE))
+			m.View(tty.New(size))
 		}
 	}
 }

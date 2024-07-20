@@ -202,6 +202,11 @@ func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
 		Background(lipgloss.Color("#EAA549")).
 		Foreground(lipgloss.Color("#20111B"))
 
+	// TODO(cfoust): 07/20/24 handle this more gracefully
+	if size.R < 2 {
+		return image.New(geom.Size{})
+	}
+
 	options := f.renderOptions(commonStyle, promptStyle, size.R-2)
 
 	promptStyle.GetBackground()
