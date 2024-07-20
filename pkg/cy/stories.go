@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
@@ -37,6 +38,7 @@ func createStoryClient(ctx context.Context, cy *Cy) (client *Client, screen mux.
 		ctx,
 		client,
 		geom.DEFAULT_SIZE,
+		emu.WithoutHistory,
 	)
 
 	return
