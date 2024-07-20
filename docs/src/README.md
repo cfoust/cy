@@ -6,4 +6,4 @@ Features:
 
 - [Replay and search through](./replay-mode.md) any terminal session
 - [Flexible configuration](./configuration.md) with [Janet](https://janet-lang.org/), a simple imperative programming language
-- Built-in [fuzzy finding](./fuzzy-finding.md) using concepts from [fzf](https://github.com/junegunn/fzf)
+- Built-in [fuzzy finding](./user-input/fuzzy-finding.md) using concepts from [fzf](https://github.com/junegunn/fzf)
