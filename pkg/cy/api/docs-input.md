@@ -13,3 +13,19 @@ This function supports a range of named parameters that adjust its functionality
 - `:reverse` (boolean): Display from the top of the screen (rather than the bottom.)
 - `:animated` (boolean): Enable and disable background animation.
 - `:headers` ([]string): Provide a title for each column. This mostly used for filtering tabular data.
+
+# doc: Text
+
+(input/text prompt &named preset placeholder full reverse animated)
+
+`(input/text)` prompts the user with a freeform text input. If the input is non-empty when the user presses enter, `(input/text)` returns the value of the text input; otherwise it returns `nil`.
+
+The only required parameter, `prompt`, is a string that determines the prompt text that is shown below the text input.
+
+This function supports a range of named parameters that adjust its functionality:
+
+- `:preset` (string): Pre-fill the value of the text input.
+- `:placeholder` (string): This string will be shown when the text input is empty.
+- `:full` (boolean): If true, occupy the entire screen.
+- `:reverse` (boolean): Display from the top of the screen (rather than the bottom.)
+- `:animated` (boolean): Enable and disable background animation.

@@ -133,10 +133,22 @@ func (i *InputModule) Find(
 	}
 }
 
+type TextParams struct {
+	Placeholder *string
+	Preset      *string
+	Full        bool
+	Reverse     bool
+	Animated    *bool
+}
+
 func (i *InputModule) Text(
 	ctx context.Context,
 	user interface{},
+	prompt string,
+	named *janet.Named[TextParams],
 ) (interface{}, error) {
+	params := named.Values()
+
 	client, ok := user.(Client)
 	if !ok {
 		return nil, fmt.Errorf("missing client context")
@@ -149,14 +161,14 @@ func (i *InputModule) Text(
 
 	settings := []text.Setting{
 		text.WithResult(result),
-		text.WithPrompt(""),
+		text.WithPrompt(prompt),
 		text.WithInline(
 			geom.Vec2{R: cursor.R, C: cursor.C},
 			state.Image.Size(),
 		),
 	}
 
-	if client.Params().Animate() {
+	if (params.Animated == nil || (*params.Animated) == true) && client.Params().Animate() {
 		var animations []anim.Creator
 		for _, a := range client.Params().Animations() {
 			if creator, ok := anim.Animations[a]; ok {
@@ -181,6 +193,20 @@ func (i *InputModule) Text(
 		settings = append(
 			settings,
 			text.WithAnimation(state.Image, creator),
+		)
+	}
+
+	if params.Preset != nil {
+		settings = append(
+			settings,
+			text.WithPreset(*params.Preset),
+		)
+	}
+
+	if params.Placeholder != nil {
+		settings = append(
+			settings,
+			text.WithPlaceholder(*params.Placeholder),
 		)
 	}
 
