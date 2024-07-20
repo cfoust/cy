@@ -55,6 +55,7 @@ type State struct {
 
 	// whether scrolling up should send lines to the scrollback buffer
 	disableHistory bool
+	disableWrap    bool
 
 	parser *vtparser.Parser
 }
@@ -288,7 +289,7 @@ func (t *State) resize(size geom.Vec2) {
 
 	// Get rid of any wrapped lines (kitty does this too)
 	// TODO(cfoust): 02/28/24 what about in the alt screen?
-	for isWrappedLines(t.history) || (t.disableHistory && t.wrapped) {
+	for isWrappedLines(t.history) || (t.disableHistory && !t.disableWrap && t.wrapped) {
 		t.scrollUp(0, 1)
 	}
 
