@@ -154,7 +154,7 @@ func (f *Fuzzy) getPreview() mux.Screen {
 		f.previewLifetime.Ctx(),
 		f.tree,
 		f.client,
-		f.initial,
+		f.initial.Clone(),
 		option.Preview,
 	)
 	if p == nil {
@@ -174,8 +174,18 @@ func (f *Fuzzy) getPreview() mux.Screen {
 
 type Setting func(context.Context, *Fuzzy)
 
+// WithInitial provides the initial background image. Used independently of
+// WithAnimation to still support animation previews even if animation is
+// turned off.
+func WithInitial(initial image.Image) Setting {
+	return func(ctx context.Context, f *Fuzzy) {
+		f.initial = initial
+	}
+}
+
 func WithAnimation(initial image.Image, creator anim.Creator) Setting {
 	return func(ctx context.Context, f *Fuzzy) {
+		f.initial = initial
 		f.anim = anim.NewAnimator(
 			ctx,
 			creator(),

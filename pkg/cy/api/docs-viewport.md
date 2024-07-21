@@ -19,3 +19,7 @@ You can get all of the available frames with [`(viewport/get-frames)`](api.md#vi
 # doc: GetFrames
 
 Get a list of all of the available [frames](./frames.md).
+
+# doc: GetAnimations
+
+Get a list of all of the available [animations](./animations.md).

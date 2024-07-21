@@ -253,6 +253,16 @@ For example:
          (viewport/set-frame _)))
 
 (key/action
+  action/browse-animations
+  "Browse animations."
+  (as?-> (viewport/get-animations) _
+         (map |(tuple $ {:type :animation :name $} $) _)
+         (input/find _
+                     # so we don't confuse the user
+                     :animated false
+                     :prompt "search: animation")))
+
+(key/action
   action/reload-config
   "Reload the cy configuration."
   (cy/reload-config))

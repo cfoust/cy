@@ -52,6 +52,7 @@ func (i *InputModule) Find(
 
 	outerLayers := client.OuterLayers()
 	state := outerLayers.State()
+	initial := state.Image
 	result := make(chan interface{})
 	settings := []fuzzy.Setting{
 		fuzzy.WithNodes(
@@ -60,6 +61,7 @@ func (i *InputModule) Find(
 		),
 		fuzzy.WithResult(result),
 		fuzzy.WithPrompt(params.Prompt),
+		fuzzy.WithInitial(initial),
 	}
 
 	if !params.Full {
@@ -101,7 +103,7 @@ func (i *InputModule) Find(
 		creator := animations[rand.Int()%len(animations)]
 		settings = append(
 			settings,
-			fuzzy.WithAnimation(state.Image, creator),
+			fuzzy.WithAnimation(initial, creator),
 		)
 	}
 
