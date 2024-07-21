@@ -545,6 +545,9 @@ def transform_links() -> Transformer:
                 f"must use absolute link: {target}",
             )
 
+        if target.startswith(SITE_URL):
+            target = target[len(SITE_URL):]
+
         parsed = urlparse(target)
         md_file = os.path.join(src_dir, parsed.path[1:])
         if not os.path.exists(md_file):
