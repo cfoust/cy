@@ -21,6 +21,9 @@ type Fuzzy struct {
 	util.Lifetime
 	anim *taro.Program
 
+	// The initial state of the screen before fuzzy was started.
+	initial image.Image
+
 	result chan<- interface{}
 	size   geom.Vec2
 
@@ -151,6 +154,7 @@ func (f *Fuzzy) getPreview() mux.Screen {
 		f.previewLifetime.Ctx(),
 		f.tree,
 		f.client,
+		f.initial,
 		option.Preview,
 	)
 	if p == nil {
@@ -164,12 +168,12 @@ func (f *Fuzzy) getPreview() mux.Screen {
 
 type Setting func(context.Context, *Fuzzy)
 
-func WithAnimation(image image.Image, creator anim.Creator) Setting {
+func WithAnimation(initial image.Image, creator anim.Creator) Setting {
 	return func(ctx context.Context, f *Fuzzy) {
 		f.anim = anim.NewAnimator(
 			ctx,
 			creator(),
-			image,
+			initial,
 			23,
 		)
 	}

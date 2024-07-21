@@ -7,10 +7,12 @@ import (
 )
 
 var (
-	KEYWORD_TEXT       = janet.Keyword("text")
+	KEYWORD_ANIMATION  = janet.Keyword("animation")
+	KEYWORD_FRAME      = janet.Keyword("frame")
 	KEYWORD_NODE       = janet.Keyword("node")
 	KEYWORD_REPLAY     = janet.Keyword("replay")
 	KEYWORD_SCROLLBACK = janet.Keyword("scrollback")
+	KEYWORD_TEXT       = janet.Keyword("text")
 )
 
 type previewInput struct {
@@ -54,6 +56,20 @@ func Unmarshal(input *janet.Value) (result interface{}, err error) {
 			return
 		}
 		result = scrollback
+	case KEYWORD_FRAME:
+		frame := FrameType{}
+		err = input.Unmarshal(&frame)
+		if err != nil {
+			return
+		}
+		result = frame
+	case KEYWORD_ANIMATION:
+		animation := AnimationType{}
+		err = input.Unmarshal(&animation)
+		if err != nil {
+			return
+		}
+		result = animation
 	default:
 		err = fmt.Errorf("invalid preview type %s", preview.Type)
 		return

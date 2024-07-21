@@ -6,6 +6,8 @@ import (
 	"github.com/cfoust/cy/pkg/geom/image"
 )
 
+const DEFAULT_FPS = 30
+
 type Animation interface {
 	Init(image.Image)
 	Update(delta time.Duration) image.Image
