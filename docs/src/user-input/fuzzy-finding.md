@@ -57,6 +57,8 @@ Where {{api input/find}} really shines, however, is in its ability to show a pre
 - **`.borg` files:** Show a moment in time in a `.borg` file.
 - **Scrollback buffer:** Show the output of a particular command in a pane's scrollback buffer.
 - **Text:** Render some text.
+- **Animations:** Show one of `cy`'s [animations](./animations.md).
+- **Frames:** Show one of `cy`'s [frames](./frames.md).
 
 Options with previews are passed to {{api input/find}} as Janet tuples with three elements:
 
@@ -80,6 +82,12 @@ Here are some examples:
             :focus [0 0]
             :highlights @[]
             :id (pane/current)} 2]
+        # An animation preview
+        ["this is an animation" {
+            :type :animation
+            :name "midjo"} 2]
+        # A frame preview
+        ["this is a frame" {:type :frame :name "puzzle"} 2]
     ])
 ```
 
