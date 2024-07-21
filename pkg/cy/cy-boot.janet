@@ -248,6 +248,7 @@ For example:
   action/choose-frame
   "Choose a frame."
   (as?-> (viewport/get-frames) _
+         (map |(tuple $ {:type :frame :name $} $) _)
          (input/find _ :prompt "search: frame")
          (viewport/set-frame _)))
 

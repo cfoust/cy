@@ -162,7 +162,13 @@ func (f *Fuzzy) getPreview() mux.Screen {
 		return nil
 	}
 
-	p.Resize(geom.DEFAULT_SIZE)
+	switch option.Preview.(type) {
+	case preview.FrameType, preview.AnimationType:
+		p.Resize(f.size)
+	default:
+		p.Resize(geom.DEFAULT_SIZE)
+	}
+
 	return p
 }
 
