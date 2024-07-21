@@ -6,7 +6,7 @@ To create a new shell, type {{bind :root ctrl+a j}}. This creates a new pane run
 
 Every **group** and **pane** in `cy` has a path, just like a file in a filesystem. The new shell you created has a path like `/shells/3`.
 
-The collection of all **groups** and **panes** is referred to as [**the node tree**](../groups-and-panes.md). When you first start `cy`, the node tree looks like this:
+The collection of all **groups** and **panes** is referred to as [**the node tree**](/groups-and-panes.md). When you first start `cy`, the node tree looks like this:
 
 ```
 / (group)

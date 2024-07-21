@@ -1,6 +1,6 @@
 # Default keybindings
 
-All of `cy`'s default key bindings use [actions](./keybindings.md#actions) defined in the global scope and therefore are easy to rebind should you so desire. For example, to assign {{api action/command-palette}} to another key sequence:
+All of `cy`'s default key bindings use [actions](/keybindings.md#actions) defined in the global scope and therefore are easy to rebind should you so desire. For example, to assign {{api action/command-palette}} to another key sequence:
 
 ```janet
 (key/bind :root ["ctrl+b" "p"] action/command-palette)

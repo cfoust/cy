@@ -8,6 +8,7 @@ import re
 import subprocess
 import argparse
 import sys
+from urllib.parse import urlparse
 from pathlib import Path
 from typing import (
     NamedTuple,
@@ -511,6 +512,52 @@ def transform_examples(runner: subprocess.Popen) -> Transformer:
     )
 
 
+def transform_links() -> Transformer:
+    """
+    Check all links to ensure there are no 404s.
+    """
+    src_dir = os.path.join(os.path.dirname(__file__), "src")
+
+    def handler(match: re.Match) -> Tuple[
+            Optional[Replacement],
+            Optional[Error],
+    ]:
+        target = match.group(1)
+
+        if target.startswith("http"):
+            return None, None
+
+        if 'html' in target:
+            return None, (
+                match.start(0),
+                f"link target must be .md: {target}",
+            )
+
+        if '..' in target:
+            return None, (
+                match.start(0),
+                f"relative links not allowed: {target}",
+            )
+
+        if not target.startswith('/'):
+            return None, (
+                match.start(0),
+                f"must use absolute link: {target}",
+            )
+
+        parsed = urlparse(target)
+        md_file = os.path.join(src_dir, parsed.path[1:])
+        if not os.path.exists(md_file):
+            return None, (
+                match.start(0),
+                f"broken link: {target} -> {md_file}",
+            )
+
+        return None, None
+
+    return handle_pattern(re.compile(r"\[[^]]+\]\(([^)]+)\)"), handler)
+
+
 if __name__ == '__main__':
     args = sys.argv
     if len(args) > 1 and args[1] == "supports":
@@ -571,6 +618,7 @@ if __name__ == '__main__':
         transform_api(symbol_lookup),
         transform_bind(bindings),
         transform_examples(runner),
+        transform_links(),
     ]
 
     num_errors: int = 0

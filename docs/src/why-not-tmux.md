@@ -20,7 +20,7 @@ If you use `tmux`, you might be familiar with `copy-mode`, which allows you to v
 
 But by definition, `copy-mode` ceases to be useful when you use a program with any interactivity, such as `vim`: you only see the last lines it left on the screen, and certainly cannot see what the screen used to look like.
 
-`cy` solves this problem by recording all of your terminal sessions. In [replay mode](./replay-mode.md) you can seek, play back, and search through the history of a pane--regardless of the application that was running in it. `cy` [saves these recordings to disk](replay-mode.md#recording-terminal-sessions-to-disk) and allows you to open them later at your leisure.
+`cy` solves this problem by recording all of your terminal sessions. In [replay mode](/replay-mode.md) you can seek, play back, and search through the history of a pane--regardless of the application that was running in it. `cy` [saves these recordings to disk](/replay-mode.md#recording-terminal-sessions-to-disk) and allows you to open them later at your leisure.
 
 > _This sounds like it would be a lot, but it isn't: after six months and hundreds of hours of work in the terminal, all of my recordings occupy a total of 100MB (!) on disk._
 
@@ -36,7 +36,7 @@ To some, this may seem like a surprising decision. The predominant abstraction f
 
 Yet I found that I have spent more time fighting with this (or writing [plugins to remove it](https://github.com/cfoust/tmux-oakthree)) than benefiting from it. Rarely do I feel like I need to see more than one pane at a time.
 
-This is practical because `cy` makes it easy to switch between panes. It emphasizes using [fuzzy finding](./user-input/fuzzy-finding.md) (with previews!) so you can quickly find what you're looking for. It also contains a minimal, [filesystem-like abstraction](./groups-and-panes.md) for grouping panes together.
+This is practical because `cy` makes it easy to switch between panes. It emphasizes using [fuzzy finding](/user-input/fuzzy-finding.md) (with previews!) so you can quickly find what you're looking for. It also contains a minimal, [filesystem-like abstraction](/groups-and-panes.md) for grouping panes together.
 
 As of writing, `cy` also lacks `tmux`'s status line. Because there is no notion of windows, there is nothing akin to the tab-like behavior that `tmux` encourages (and thus little immediate need to display it.)
 
@@ -49,6 +49,6 @@ Anyone who has tried to do anything sophisticated with `tmux` runs into a famili
 1. `tmux`'s configuration language is hacky and primitive, which makes it hard to do anything interesting without running an external command.
 2. Its key binding system is limited.
 
-`cy` allows you to bind arbitrary sequences of keys to [Janet](https://janet-lang.org/) functions. It even supports binding [regexes](./keybindings.md#regexes), matches for which will be passed to the function you bound.
+`cy` allows you to bind arbitrary sequences of keys to [Janet](https://janet-lang.org/) functions. It even supports binding [regexes](/keybindings.md#regexes), matches for which will be passed to the function you bound.
 
-You can also create bindings that apply only in a [specific pane or group of panes](./groups-and-panes.md#groups).
+You can also create bindings that apply only in a [specific pane or group of panes](/groups-and-panes.md#groups).

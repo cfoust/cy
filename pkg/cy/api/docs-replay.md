@@ -122,7 +122,7 @@ Jump to the cell before `char` after the cursor on the current line.
 
 (replay/open id)
 
-Enter replay mode for pane `id` (which is a [NodeID](api.md#nodeid)).
+Enter replay mode for pane `id` (which is a [NodeID](/api.md#nodeid)).
 
 # doc: OpenFile
 

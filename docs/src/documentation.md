@@ -16,7 +16,7 @@ All of these markup tags are enclosed in double curly brackets (e.g. `{{some-tag
 
 ### Stories
 
-The `story` tag allows you to render [stories](./stories.md) as static PNGs, animated GIFs, or an interactive [asciinema](https://docs.asciinema.org/) player.
+The `story` tag allows you to render [stories](/stories.md) as static PNGs, animated GIFs, or an interactive [asciinema](https://docs.asciinema.org/) player.
 
 The default filename for generated assets is the hash of the tag's arguments.
 

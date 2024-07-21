@@ -6,7 +6,7 @@
 
 `cy`'s user interface is complex and some UI states are tedious to navigate to when you're trying to iterate quickly. To remedy this, the `cy` repository contains a mechanism (uncreatively) called **stories**.
 
-A **story** is a preconfigured [`Screen`](architecture.html#screen) along with an (optional) sequence of user inputs that will be played back on that screen. Every story also has a unique string name that looks like a path, e.g. `input/find/search`. After defining a story in Go code, you can open a special interface that lets you quickly view that story.
+A **story** is a preconfigured [`Screen`](/architecture.md#screen) along with an (optional) sequence of user inputs that will be played back on that screen. Every story also has a unique string name that looks like a path, e.g. `input/find/search`. After defining a story in Go code, you can open a special interface that lets you quickly view that story.
 
 Stories can be registered by any package in `cy` and can be browsed in a central interface. 
 
@@ -40,4 +40,4 @@ Any stories with names that do not begin with `input` will be filtered out.
 
 ## Registering a new story
 
-Stories are registered using the [`Register`](https://github.com/cfoust/cy/blob/main/pkg/stories/module.go?plain=1#L74) function in the [stories package](./packages.md#stories). Search the codebase for usage examples.
+Stories are registered using the [`Register`](https://github.com/cfoust/cy/blob/main/pkg/stories/module.go?plain=1#L74) function in the [stories package](/packages.md#stories). Search the codebase for usage examples.

@@ -4,7 +4,7 @@ This document is intended to be a brief introduction to `cy`'s code structure an
 
 It is safe to assume that the high-level description in this document will remain reliable despite changes in the actual implementation, but if you are ever in doubt:
 
-1. Read the README for the package you are modifying. Most [packages](./packages.md) in `pkg` have their own READMEs (along with some sub-packages.)
+1. Read the README for the package you are modifying. Most [packages](/packages.md) in `pkg` have their own READMEs (along with some sub-packages.)
 2. Ask for help [in Discord](https://discord.gg/NRQG3wbWGM).
 3. Consult the code itself.
 
@@ -33,7 +33,7 @@ Multiplexing, of course, is where things get interesting. `cy`'s codebase has a 
 
 - `cmd`: Contains the code for all executables (in this case, programs with `main.go` files.)
   - `cy`: The main `cy` executable and the code necessary to connect to and create sockets.
-  - `stories`: A system for quickly iterating on `cy`'s visual design. Covered in more detail in [a dedicated chapter](./stories.md).
+  - `stories`: A system for quickly iterating on `cy`'s visual design. Covered in more detail in [a dedicated chapter](/stories.md).
   - `perf`: A (seldom-used) program for testing the performance of `cy`'s history search feature.
   - `docs`: A simple executable that dumps various information about `cy` to standard out as JSON, such as all of its API functions, built in key bindings, et cetera. This is used in an [mdbook preprocessor](https://rust-lang.github.io/mdBook/format/configuration/preprocessors.html) called [gendoc](https://github.com/cfoust/cy/blob/main/docs/gendoc.py) that generates Markdown content for `cy` on demand.
 - `pkg`: Contains a range of different Go packages, all of which might be charitably called libraries. The list below is not intended to be exhaustive, but just highlight several important ones.
@@ -43,10 +43,10 @@ Multiplexing, of course, is where things get interesting. `cy`'s codebase has a 
   - `janet`: A library for Janet/Go interoperation.
   - `emu`: A vt100 terminal emulator.
   - `input`: A collection of user input mechanisms.
-      - `fuzzy`: A [fuzzy finder](./user-input/fuzzy-finding.md).
+      - `fuzzy`: A [fuzzy finder](/user-input/fuzzy-finding.md).
       - `text`: A simple text input field.
-  - `replay`: A terminal session player, otherwise known as [replay mode](./replay-mode.md).
-  - `taro`: A fork of [charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea) adapted for use in `cy`'s windowing abstraction (described [below](./architecture.md#screens-and-streams).)
+  - `replay`: A terminal session player, otherwise known as [replay mode](/replay-mode.md).
+  - `taro`: A fork of [charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea) adapted for use in `cy`'s windowing abstraction (described [below](/architecture.md#screens-and-streams).)
 - `docs`: Contains all of `cy`'s documentation. `cy` uses [mdbook](https://github.com/rust-lang/mdBook) to build the documentation site.
 
 ## Screens and streams
@@ -91,7 +91,7 @@ The state of a screen (represented in the `cy` codebase as a [`tty.State`](https
 - A two-dimensional buffer of Unicode characters
 - The state of the cursor including its position and style
 
-A [**pane**](./groups-and-panes.md#panes), described elsewhere, is a good example of a `Screen`.
+A [**pane**](/groups-and-panes.md#panes), described elsewhere, is a good example of a `Screen`.
 
 If that all sounds abstract, the interface for `Screen` looks like this:
 
@@ -116,13 +116,13 @@ type Screen interface {
 
 The easiest way to understand this is to think of a `Screen` as something that can render a `Stream` and turn it into something that can be composed with other `Screen`s. In fact, there is a `Screen` that [does just that](https://github.com/cfoust/cy/blob/main/pkg/mux/screen/terminal.go?plain=1#L13).
 
-`cy`'s [fuzzy finder](./user-input/fuzzy-finding.md) and [replay mode](./replay-mode.md) are both just `Screen`s, albeit complicated ones.
+`cy`'s [fuzzy finder](/user-input/fuzzy-finding.md) and [replay mode](/replay-mode.md) are both just `Screen`s, albeit complicated ones.
 
 Some `Screen`s just exist to compose other screens in some way, which is the bread and butter of any terminal multiplexer.
 
 The simplest example of this is `cy`'s [`Layers`](https://github.com/cfoust/cy/blob/main/pkg/mux/screen/layers.go?plain=1#L22), a `Screen` that lets you render one or more `Screen`s on top of one another, letting the screens underneath show through if any cells of the layer above are transparent.
 
-`Layers` is used to place the pane the user is currently interacting with on top of a [frame](./frames.md), such as in the default viewport:
+`Layers` is used to place the pane the user is currently interacting with on top of a [frame](/frames.md), such as in the default viewport:
 
 {{story png placeholder}}
 

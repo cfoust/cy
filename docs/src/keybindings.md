@@ -12,7 +12,7 @@ This tells `cy` that whenever you type `ctrl+l` it should show a toast with the 
 
 The {{api key/bind}} function takes three parameters:
 
-1. **A scope**: The circumstances in which this binding should apply, such as a [group](./groups-and-panes.md) or mode (e.g. `:time`). In this case we use the `:root` [keyword](https://janet-lang.org/docs/strings.html), which is a handy way of saying this binding should apply everywhere.
+1. **A scope**: The circumstances in which this binding should apply, such as a [group](/groups-and-panes.md) or mode (e.g. `:time`). In this case we use the `:root` [keyword](https://janet-lang.org/docs/strings.html), which is a handy way of saying this binding should apply everywhere.
 1. **A key sequence**: A Janet [tuple](https://janet-lang.org/docs/data_structures/tuples.html) that indicates the keys that must be typed for the callback to execute.
 1. **A function**: The callback that should be executed when this key sequence matches.
 
@@ -37,7 +37,7 @@ You can also clear previously bound key bindings with {{api key/unbind}} or rebi
 Key sequences in `cy` are more flexible than they appear at first glance. Valid sequences can consist of the following elements:
 
 1. **Printable Unicode characters**: `你`, `Щ`, `a`
-1. **Preset keys**: `return`, `ctrl+a`, `f1` You can find a comprehensive list of the available keys [here](./preset-keys.md).
+1. **Preset keys**: `return`, `ctrl+a`, `f1` You can find a comprehensive list of the available keys [here](/preset-keys.md).
 1. **Regexes**: `[:re "^[a-z]$"]`
 
 The first two work exactly as you expect them to: `cy` will execute the first complete match for the keys that you type. After each key, `cy` gives you a second (=1000ms) to type the next key in the sequence. If you do not, `cy` does nothing. All keys that are not matched by any sequence are sent to the current pane.
@@ -70,14 +70,14 @@ Now if you type <kbd>ctrl+b</kbd> followed by <kbd>a</kbd>, the `toast-me` funct
 
 This allows you to build more sophisticated functionality without defining a binding for every possible character.
 
-A practical application of this can be found in `cy`'s source code, where we use this functionality to support `vim`-like character movements in [replay mode](./replay-mode.md):
+A practical application of this can be found in `cy`'s source code, where we use this functionality to support `vim`-like character movements in [replay mode](/replay-mode.md):
 
 ```janet
 (key/bind :copy ["f" [:re "."]] replay/jump-forward)
 (key/bind :copy ["F" [:re "."]] replay/jump-backward)
 ```
 
-[Key specifiers](./preset-keys.md) are matched as though their names were typed by the user; this means that providing the pattern `"ctrl\+[a-c]"` will match <kbd>ctrl+a</kbd>, <kbd>ctrl+b</kbd>, and <kbd>ctrl+c</kbd>.
+[Key specifiers](/preset-keys.md) are matched as though their names were typed by the user; this means that providing the pattern `"ctrl\+[a-c]"` will match <kbd>ctrl+a</kbd>, <kbd>ctrl+b</kbd>, and <kbd>ctrl+c</kbd>.
 
 Accessing individual match groups is not supported; functions always receive the full string that matched the pattern.
 

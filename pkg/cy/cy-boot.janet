@@ -15,7 +15,7 @@
 An action is just a Janet function that is registered to the cy server with a short human-readable string description. It provides a convenient method for making some functionality you use often more discoverable.
 
 In a similar way to other modern applications, cy has a command palette (invoked by default with {{bind :root ctrl+a ctrl+p}}, see [`(action/command-palette)
-`](api.md#actioncommand-palette)) in which all registered actions will appear.
+`](/api.md#actioncommand-palette)) in which all registered actions will appear.
 ````
   [name docstring & body]
   ~(upscope

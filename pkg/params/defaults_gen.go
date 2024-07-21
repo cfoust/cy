@@ -271,7 +271,7 @@ func init() {
 		},
 		{
 			Name:      "data-directory",
-			Docstring: "The directory in which .borg files will be saved. This is [inferred\non startup](replay-mode.md#recording-terminal-sessions-to-disk). If\nset to an empty string, recording to disk is disabled.",
+			Docstring: "The directory in which .borg files will be saved. This is [inferred\non startup](/replay-mode.md#recording-terminal-sessions-to-disk). If\nset to an empty string, recording to disk is disabled.",
 			Default:   defaults.DataDirectory,
 		},
 		{

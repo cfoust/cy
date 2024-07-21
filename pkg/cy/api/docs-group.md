@@ -4,25 +4,25 @@
 
 Create a new group with `parent` and (optionally) `name`.
 
-`parent` is a [NodeID](api.md#nodeid).
+`parent` is a [NodeID](/api.md#nodeid).
 
 # doc: Children
 
 (group/children group)
 
-Get the [NodeID](api.md#nodeid)s for all of `group`'s child nodes.
+Get the [NodeID](/api.md#nodeid)s for all of `group`'s child nodes.
 
 # doc: Leaves
 
 (group/leaves group)
 
-Get the [NodeID](api.md#nodeid)s for all of the leaf nodes reachable from `group`. In other words, this is a list of all of the [NodeID](api.md#nodeid)s for all panes that are descendants of `group`.
+Get the [NodeID](/api.md#nodeid)s for all of the leaf nodes reachable from `group`. In other words, this is a list of all of the [NodeID](/api.md#nodeid)s for all panes that are descendants of `group`.
 
 # doc: Mkdir
 
 (group/mkdir group path)
 
-Get the group at the end of `path` from the perspective of `group`, creating any groups that do not exist. Returns the [NodeID](api.md#nodeid) of the final group.
+Get the group at the end of `path` from the perspective of `group`, creating any groups that do not exist. Returns the [NodeID](/api.md#nodeid) of the final group.
 
 For example:
 

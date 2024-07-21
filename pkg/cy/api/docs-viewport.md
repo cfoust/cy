@@ -14,12 +14,12 @@ Set the size of the inner viewport. `size` is a tuple in the form `[rows, column
 
 Set the frame to `frame`, which is an identifier for the desired frame.
 
-You can get all of the available frames with [`(viewport/get-frames)`](api.md#viewportget-frames) and also browse them [here](./frames.md).
+You can get all of the available frames with [`(viewport/get-frames)`](/api.md#viewportget-frames) and also browse them [here](/frames.md).
 
 # doc: GetFrames
 
-Get a list of all of the available [frames](./frames.md).
+Get a list of all of the available [frames](/frames.md).
 
 # doc: GetAnimations
 
-Get a list of all of the available [animations](./animations.md).
+Get a list of all of the available [animations](/animations.md).

@@ -2,7 +2,7 @@
 
 `cy` was designed to be as configurable as possible. Users of `cy` provide a configuration written in [Janet](https://janet-lang.org/) that uses `cy`'s [API](/api.md) to define key bindings, set parameters, and set up `cy` in any way they like.
 
-Janet is a fun, embeddable [Lisp-like](<https://en.wikipedia.org/wiki/Lisp_(programming_language)>) language that is easy to learn. If you are new to Janet, I recommend starting out with its [documentation](https://janet-lang.org/docs/syntax.html) and Ian Henry's fantastic [_Janet for Mortals_](https://janet.guide/).
+Janet is a fun, embeddable [Lisp-like](https://en.wikipedia.org/wiki/Lisp_(programming_language) language that is easy to learn. If you are new to Janet, I recommend starting out with its [documentation](https://janet-lang.org/docs/syntax.html) and Ian Henry's fantastic [_Janet for Mortals_](https://janet.guide/).
 
 Janet looks like this:
 
