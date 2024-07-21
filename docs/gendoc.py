@@ -522,7 +522,7 @@ def transform_links() -> Transformer:
             Optional[Replacement],
             Optional[Error],
     ]:
-        target = match.group(1)
+        target = match.group(2)
 
         if target.startswith("http"):
             return None, None
@@ -556,9 +556,13 @@ def transform_links() -> Transformer:
                 f"broken link: {target} -> {md_file}",
             )
 
-        return None, None
+        return (
+            match.start(0),
+            match.end(0),
+            match.group(1) + f"({SITE_URL}{target})",
+        ), None
 
-    return handle_pattern(re.compile(r"\[[^]]+\]\(([^)]+)\)"), handler)
+    return handle_pattern(re.compile(r"(\[[^]]+\])\(([^)]+)\)"), handler)
 
 
 if __name__ == '__main__':
