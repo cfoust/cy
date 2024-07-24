@@ -103,13 +103,33 @@ func (l *LayoutEngine) createNode(
 		if err != nil {
 			return nil, err
 		}
-		return NewSplit(
+
+		split := NewSplit(
 			ctx,
 			screenA,
 			screenB,
-			.50,
 			node.Vertical,
-		), nil
+		)
+		split.SetAttached(
+			isAttached(node.A),
+			isAttached(node.B),
+		)
+
+		if node.Percent != nil {
+			err := split.SetPercent(*node.Percent)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if node.Cells != nil {
+			err := split.SetCells(*node.Cells)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return split, nil
 	}
 
 	return nil, fmt.Errorf("unimplemented screen")
@@ -132,6 +152,14 @@ func (l *LayoutEngine) Set(layout Layout) error {
 
 	screen.Resize(l.size)
 
+	if l.layoutLifetime != nil {
+		l.layoutLifetime.Cancel()
+	}
+
+	l.layoutLifetime = &layoutLifetime
+	l.layout = layout
+	l.screen = screen
+
 	go func() {
 		updates := screen.Subscribe(layoutLifetime.Ctx())
 		for {
@@ -143,14 +171,6 @@ func (l *LayoutEngine) Set(layout Layout) error {
 			}
 		}
 	}()
-
-	if l.layoutLifetime != nil {
-		l.layoutLifetime.Cancel()
-	}
-
-	l.layoutLifetime = &layoutLifetime
-	l.layout = layout
-	l.screen = screen
 	return nil
 }
 

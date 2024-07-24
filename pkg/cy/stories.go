@@ -214,7 +214,6 @@ func init() {
 			ctx,
 			screenA,
 			screenB,
-			.5,
 			false,
 		)
 
@@ -225,7 +224,7 @@ func init() {
 				if ctx.Err() != nil {
 					return
 				}
-				split.SetPercent(0.2 + float64(proportion)*0.1)
+				split.SetPercent(20 + proportion*10)
 
 				time.Sleep(time.Second)
 				proportion++
@@ -396,4 +395,43 @@ func init() {
 			stories.Wait(stories.ALot),
 		},
 	})
+
+	stories.Register("layout/split-half", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(layout/set
+        {:type :split
+         :percent 26
+	 :a {:type :pane :id cmd1 :attached true}
+	 :b {:type :pane :id cmd2}})
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("layout/split-half-top", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(def cmd3 (shell/new))
+(layout/set
+        {:type :split
+         :percent 50
+	 :vertical true
+	 :a {:type :split
+		 :percent 50
+		 :a {:type :pane :id cmd1}
+		 :b {:type :pane :id cmd2}}
+	 :b {:type :pane :id cmd3 :attached true}})
+		`)
+		return screen, err
+	}, stories.Config{})
 }

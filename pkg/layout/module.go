@@ -36,6 +36,8 @@ func New(node NodeType) Layout {
 	return Layout{root: node}
 }
 
+// getPaneType gets all of the panes that are descendants of the provided node,
+// in essence all of the leaf nodes.
 func getPaneType(tree NodeType) (panes []PaneType) {
 	switch node := tree.(type) {
 	case PaneType:
@@ -49,6 +51,20 @@ func getPaneType(tree NodeType) (panes []PaneType) {
 		return
 	}
 	return
+}
+
+// isAttached reports whether the node provided leads to a node that is
+// attached.
+func isAttached(tree NodeType) bool {
+	switch node := tree.(type) {
+	case PaneType:
+		return node.Attached
+	case SplitType:
+		return isAttached(node.A) || isAttached(node.B)
+	case MarginsType:
+		return isAttached(node.Node)
+	}
+	return false
 }
 
 // validateTree inspects a tree and ensures that it conforms to all relevant

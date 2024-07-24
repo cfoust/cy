@@ -20,18 +20,27 @@ type Split struct {
 
 	// The size of the Split's screen.
 	size geom.Size
+
+	// The location of screen B on the screen.
+	positionB geom.Size
+
 	// Whether the split should be vertical or horizontal.
 	isVertical bool
-	// Whether screenA is focused, which means its cursor position will be
-	// used and causes events to be sent to it.
-	isFocusA bool
 
-	// The proportion of the axis perpendicular to the split that A should occupy.
-	percent float64 // [0..1]
+	// Whether screenA or screenB "lead" to a screen that is attached. At
+	// most one of these can be true at a time.
+	isAttachedA, isAttachedB bool
+
+	// Whether the number of cells was set directly.
+	isCells bool
+
+	// The proportion of the axis perpendicular to the split that A should
+	// occupy.
+	percent int // [0, 100]
 
 	// The number of cells perpendicular to the split axis to include from
 	// screen A. This is calculated using `percent`.
-	splitCells int
+	cells int
 }
 
 var _ mux.Screen = (*Split)(nil)
@@ -48,40 +57,67 @@ func (s *Split) Kill() {
 	screenB.Kill()
 }
 
-func (s *Split) getPositionB() geom.Size {
-	positionB := geom.Size{C: s.splitCells}
-	if s.isVertical {
-		positionB = geom.Size{R: s.splitCells}
-	}
-
-	return positionB
-}
-
 func (s *Split) State() *tty.State {
 	s.RLock()
 	var (
-		size      = s.size
-		positionB = s.getPositionB()
+		size        = s.size
+		positionB   = s.positionB
+		isAttachedA = s.isAttachedA
+		isAttachedB = s.isAttachedB
 	)
 	s.RUnlock()
 
 	state := tty.New(size)
+
 	stateA := s.screenA.State()
+	if !isAttachedA {
+		cursor := stateA.Cursor
+		stateA.Image[cursor.R][cursor.C].BG = 8
+	}
 	tty.Copy(geom.Size{}, state, stateA)
+
 	stateB := s.screenB.State()
+	if !isAttachedB {
+		cursor := stateB.Cursor
+		stateB.Image[cursor.R][cursor.C].BG = 8
+	}
 	tty.Copy(positionB, state, stateB)
+
+	if isAttachedA {
+		state.Cursor = stateA.Cursor
+	} else if isAttachedB {
+		cursor := stateB.Cursor
+		cursor.C += positionB.C
+		cursor.R += positionB.R
+		state.Cursor = cursor
+	} else {
+		state.CursorVisible = false
+	}
 
 	return state
 }
 
+func (s *Split) SetAttached(isAttachedA, isAttachedB bool) {
+	s.Lock()
+	defer s.Unlock()
+	s.isAttachedA = isAttachedA
+	s.isAttachedB = isAttachedB
+}
+
 func (s *Split) Send(msg mux.Msg) {
-	if s.isFocusA {
+	if !s.isAttachedA && !s.isAttachedB {
+		return
+	}
+
+	// We don't need to translate the cursor position if screen is on the
+	// left or the top
+	if s.isAttachedA {
 		s.screenA.Send(msg)
 		return
 	}
 
 	s.RLock()
-	positionB := s.getPositionB()
+	positionB := s.positionB
 	s.RUnlock()
 
 	s.screenB.Send(taro.TranslateMouseMessage(
@@ -115,15 +151,31 @@ func (s *Split) recalculate(size geom.Size) error {
 		axisCells = size.R
 	}
 
-	s.splitCells = geom.Max(int(s.percent*float64(axisCells)), 1)
-	positionB := s.getPositionB()
+	desiredCells := s.cells
+	if !s.isCells {
+		proportion := float64(s.percent) / 100.
+		desiredCells = int((proportion * float64(axisCells)))
+	}
+
+	desiredCells = geom.Clamp(
+		desiredCells,
+		1,
+		axisCells-1,
+	)
+
+	positionB := geom.Size{C: desiredCells}
+	if s.isVertical {
+		positionB = geom.Size{R: desiredCells}
+	}
+	s.positionB = positionB
+
 	sizeA := geom.Size{
 		R: size.R,
-		C: s.splitCells,
+		C: desiredCells,
 	}
 	if s.isVertical {
 		sizeA = geom.Size{
-			R: s.splitCells,
+			R: desiredCells,
 			C: size.C,
 		}
 	}
@@ -141,10 +193,19 @@ func (s *Split) recalculate(size geom.Size) error {
 	return nil
 }
 
-func (s *Split) SetPercent(percent float64) error {
+func (s *Split) SetPercent(percent int) error {
 	s.Lock()
 	defer s.Unlock()
-	s.percent = percent
+	s.percent = geom.Clamp(percent, 0, 100)
+	s.isCells = false
+	return s.recalculate(s.size)
+}
+
+func (s *Split) SetCells(cells int) error {
+	s.Lock()
+	defer s.Unlock()
+	s.cells = cells
+	s.isCells = true
 	return s.recalculate(s.size)
 }
 
@@ -158,7 +219,6 @@ func (s *Split) Resize(size geom.Size) error {
 func NewSplit(
 	ctx context.Context,
 	screenA, screenB mux.Screen,
-	percent float64,
 	isVertical bool,
 ) *Split {
 	split := &Split{
@@ -166,7 +226,7 @@ func NewSplit(
 		screenA:         screenA,
 		screenB:         screenB,
 		isVertical:      isVertical,
-		percent:         percent,
+		percent:         50,
 	}
 
 	go split.poll(ctx)
