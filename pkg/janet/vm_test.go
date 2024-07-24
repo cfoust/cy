@@ -21,11 +21,11 @@ func writeFile(path string, data []byte) error {
 }
 
 func cmp[T any](t *testing.T, vm *VM, before T) {
-	value, err := vm.marshal(before)
+	value, err := vm.Marshal(before)
 	require.NoError(t, err)
 
 	var after T
-	err = vm.unmarshal(value, &after)
+	err = value.Unmarshal(&after)
 	require.NoError(t, err)
 
 	require.Equal(t, before, after, "should yield same result")
@@ -37,6 +37,35 @@ type TestModule struct {
 
 func (m *TestModule) Update(value int) {
 	m.Value = value
+}
+
+type CustomMarshal struct {
+	Number int
+}
+
+var _ Marshalable = (*CustomMarshal)(nil)
+
+func (c *CustomMarshal) MarshalJanet() interface{} {
+	return c.Number
+}
+
+var _ Unmarshalable = (*CustomMarshal)(nil)
+
+func (c *CustomMarshal) UnmarshalJanet(value *Value) error {
+	err := value.Unmarshal(&c.Number)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type TestValue struct {
+	One   int
+	Two   bool
+	Three string
+	Ints  [6]int
+	Bools []bool
 }
 
 func TestVM(t *testing.T) {
@@ -265,47 +294,66 @@ func TestVM(t *testing.T) {
 		cmp(t, vm, true)
 		cmp(t, vm, "test")
 
-		type Value struct {
-			One   int
-			Two   bool
-			Three string
-			Ints  [6]int
-			Bools []bool
-		}
-
-		bools := make([]bool, 2)
-		bools[0] = true
-		structValue := Value{
-			One:   2,
-			Two:   true,
-			Three: "test",
-			Ints: [6]int{
-				2,
-				3,
-			},
-			Bools: bools,
-		}
-		cmp(t, vm, structValue)
-
-		before, err := vm.marshal(structValue)
-		require.NoError(t, err)
-
 		// Ensure that unmarshaling in a separate goroutine works
+		done := make(chan error)
 		go func() {
-			var after Value
-			err := vm.Unmarshal(before, &after)
+			bools := make([]bool, 2)
+			bools[0] = true
+			structValue := TestValue{
+				One:   2,
+				Two:   true,
+				Three: "test",
+				Ints: [6]int{
+					2,
+					3,
+				},
+				Bools: bools,
+			}
+			cmp(t, vm, structValue)
+
+			before, err := vm.Marshal(structValue)
 			require.NoError(t, err)
-			require.Equal(t, before, after, "should yield same result")
+
+			var after TestValue
+			err = before.Unmarshal(&after)
+			require.NoError(t, err)
+			require.Equal(t, structValue, after, "should yield same result")
+			before.Free()
+			done <- nil
 		}()
+		<-done
+		require.NoError(t, err)
 
 		// keywords
-		keyword := Keyword("test")
-		value, err := vm.marshal(keyword)
-		require.NoError(t, err)
-		err = vm.unmarshal(value, &keyword)
-		require.NoError(t, err)
-		foo := Keyword("foo")
-		err = vm.unmarshal(value, &foo)
-		require.Error(t, err)
+		{
+			keyword := Keyword("test")
+			value, err := vm.Marshal(keyword)
+			require.NoError(t, err)
+			err = value.Unmarshal(&keyword)
+			require.NoError(t, err)
+
+			foo := Keyword("foo")
+			err = value.Unmarshal(&foo)
+			require.Error(t, err)
+		}
+
+		// public Marshal API
+		{
+			value := 2
+			_, err := vm.Marshal(value)
+			require.NoError(t, err)
+		}
+
+		// Marshalable and Unmarshalable
+		{
+			customBefore := CustomMarshal{Number: 2}
+			v, err := vm.Marshal(&customBefore)
+			require.NoError(t, err)
+
+			var customAfter = CustomMarshal{}
+			err = v.Unmarshal(&customAfter)
+			require.NoError(t, err)
+			require.Equal(t, customBefore.Number, customAfter.Number)
+		}
 	})
 }

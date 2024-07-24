@@ -24,6 +24,7 @@ type Value struct {
 	vm       *VM
 	janet    C.Janet
 	wasFreed bool
+	isSafe   bool
 }
 
 func (v *VM) value(janet C.Janet) *Value {
@@ -67,12 +68,21 @@ type unmarshalRequest struct {
 	errc   chan error
 }
 
+type marshalRequest struct {
+	source interface{}
+	result chan interface{}
+}
+
 func (v *Value) Unmarshal(dest interface{}) error {
+	if v.isSafe {
+		return v.vm.unmarshal(v.janet, dest)
+	}
+
 	if v.IsFree() {
 		return ERROR_FREED
 	}
 
-	return v.vm.Unmarshal(v.janet, dest)
+	return v.vm.unmarshalSafe(v.janet, dest)
 }
 
 type Table struct {

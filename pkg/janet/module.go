@@ -110,6 +110,15 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 					req.source,
 					req.dest,
 				)
+			case marshalRequest:
+				value, err := v.marshal(req.source)
+
+				if err != nil {
+					req.result <- err
+					continue
+				}
+
+				req.result <- v.value(value)
 			}
 		}
 	}
