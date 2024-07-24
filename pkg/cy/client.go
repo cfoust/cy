@@ -11,6 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
@@ -52,18 +53,13 @@ type Client struct {
 	// the client can have params of their own
 	params *params.Parameters
 
-	muxClient *server.Client
-	toast     *ToastLogger
-	toaster   *taro.Program
-	margins   *screen.Margins
-	frame     *frames.Framer
-	// Layers inside of the margins
-	// This is for rendering content that should obey the user's margin
-	// settings.
-	innerLayers *screen.Layers
-	// Layers outside of the margins
-	outerLayers *screen.Layers
-	renderer    *renderer.Renderer
+	muxClient    *server.Client
+	layoutEngine *layout.LayoutEngine
+	toast        *ToastLogger
+	toaster      *taro.Program
+	frame        *frames.Framer
+	outerLayers  *screen.Layers
+	renderer     *renderer.Renderer
 
 	// An array of all of the panes this client has attached to.
 	history []tree.NodeID
@@ -206,6 +202,10 @@ func (c *Client) OuterLayers() *screen.Layers {
 	return c.outerLayers
 }
 
+func (c *Client) Layout() *layout.LayoutEngine {
+	return c.layoutEngine
+}
+
 func (c *Cy) removeClient(client *Client) {
 	c.Lock()
 	newClients := make([]*Client, 0)
@@ -239,15 +239,7 @@ func (c *Client) initialize(options ClientOptions) error {
 
 	c.muxClient = c.cy.muxServer.AddClient(c.Ctx(), options.Size)
 
-	c.innerLayers = screen.NewLayers()
-	c.innerLayers.NewLayer(
-		c.Ctx(),
-		c.muxClient,
-		screen.PositionTop,
-		screen.WithOpaque,
-		screen.WithInteractive,
-	)
-	c.margins = screen.NewMargins(c.Ctx(), c.innerLayers)
+	c.layoutEngine = layout.NewLayoutEngine(c.Ctx())
 
 	c.outerLayers = screen.NewLayers()
 
@@ -268,10 +260,9 @@ func (c *Client) initialize(options ClientOptions) error {
 
 	c.outerLayers.NewLayer(
 		c.Ctx(),
-		c.margins,
+		c.layoutEngine,
 		screen.PositionTop,
 		screen.WithInteractive,
-		screen.WithOpaque,
 	)
 
 	if c.cy.showSplash {
@@ -454,10 +445,6 @@ func (c *Client) Get(key string) (value interface{}, ok bool) {
 
 func (c *Client) Params() *params.Parameters {
 	return c.params
-}
-
-func (c *Client) Margins() *screen.Margins {
-	return c.margins
 }
 
 func (c *Client) Frame() *frames.Framer {

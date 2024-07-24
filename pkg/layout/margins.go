@@ -1,4 +1,4 @@
-package screen
+package layout
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
+	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/sasha-s/go-deadlock"
@@ -20,18 +21,18 @@ type Margins struct {
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 
-	screen Screen
+	screen mux.Screen
 
 	// Whether Margins is in margin mode or size mode
 	isMargins bool
-	margins   Size
-	size      Size
+	margins   geom.Size
+	size      geom.Size
 
-	outer Size
+	outer geom.Size
 	inner geom.Rect
 }
 
-var _ Screen = (*Margins)(nil)
+var _ mux.Screen = (*Margins)(nil)
 
 func fitMargin(outer, margin int) int {
 	if margin == 0 {
@@ -99,9 +100,9 @@ func (l *Margins) Send(msg mux.Msg) {
 	))
 }
 
-func (l *Margins) getInner(outer Size) geom.Rect {
+func (l *Margins) getInner(outer geom.Size) geom.Rect {
 	// Resolve the desired margins to a real inner window size
-	factor := Size{
+	factor := geom.Size{
 		R: fitMargin(outer.R, l.margins.R),
 		C: fitMargin(outer.C, l.margins.C),
 	}
@@ -111,7 +112,7 @@ func (l *Margins) getInner(outer Size) geom.Rect {
 		factor = l.size
 	}
 
-	inner := Size{
+	inner := geom.Size{
 		R: geom.Max(getSize(outer.R, factor.R), 1),
 		C: geom.Max(getSize(outer.C, factor.C), 1),
 	}
@@ -122,10 +123,10 @@ func (l *Margins) getInner(outer Size) geom.Rect {
 	}
 }
 
-func (l *Margins) SetSize(size Size) error {
+func (l *Margins) SetSize(size geom.Size) error {
 	l.Lock()
 	l.isMargins = false
-	l.size = Size{
+	l.size = geom.Size{
 		R: geom.Max(0, size.R),
 		C: geom.Max(0, size.C),
 	}
@@ -133,7 +134,7 @@ func (l *Margins) SetSize(size Size) error {
 	return l.recalculate()
 }
 
-func (l *Margins) Size() Size {
+func (l *Margins) Size() geom.Size {
 	l.RLock()
 	defer l.RUnlock()
 	return l.size
@@ -171,17 +172,17 @@ func (l *Margins) recalculate() error {
 	return nil
 }
 
-func (l *Margins) Resize(size Size) error {
+func (l *Margins) Resize(size geom.Size) error {
 	l.Lock()
 	l.outer = size
 	l.Unlock()
 	return l.recalculate()
 }
 
-func NewMargins(ctx context.Context, screen Screen) *Margins {
+func NewMargins(ctx context.Context, screen mux.Screen) *Margins {
 	margins := &Margins{
 		UpdatePublisher: mux.NewPublisher(),
-		size: Size{
+		size: geom.Size{
 			C: 80,
 		},
 		screen: screen,
@@ -192,31 +193,31 @@ func NewMargins(ctx context.Context, screen Screen) *Margins {
 	return margins
 }
 
-func AddMargins(ctx context.Context, screen Screen) mux.Screen {
-	innerLayers := NewLayers()
+func AddMargins(ctx context.Context, screen mux.Screen) mux.Screen {
+	innerLayers := S.NewLayers()
 	innerLayers.NewLayer(
 		ctx,
 		screen,
-		PositionTop,
-		WithOpaque,
-		WithInteractive,
+		S.PositionTop,
+		S.WithOpaque,
+		S.WithInteractive,
 	)
 	margins := NewMargins(ctx, innerLayers)
 
-	outerLayers := NewLayers()
+	outerLayers := S.NewLayers()
 	frame := frames.NewFramer(ctx, frames.RandomFrame())
 	outerLayers.NewLayer(
 		ctx,
 		frame,
-		PositionTop,
+		S.PositionTop,
 	)
 
 	outerLayers.NewLayer(
 		ctx,
 		margins,
-		PositionTop,
-		WithInteractive,
-		WithOpaque,
+		S.PositionTop,
+		S.WithInteractive,
+		S.WithOpaque,
 	)
 
 	return outerLayers

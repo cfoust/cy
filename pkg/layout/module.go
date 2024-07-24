@@ -32,6 +32,10 @@ type Layout struct {
 	root NodeType
 }
 
+func New(node NodeType) Layout {
+	return Layout{root: node}
+}
+
 func getPaneType(tree NodeType) (panes []PaneType) {
 	switch node := tree.(type) {
 	case PaneType:

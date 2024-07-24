@@ -7,7 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux/screen/placeholder"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
@@ -18,7 +18,7 @@ import (
 func createInitial(size geom.Size) image.Image {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	outerLayers := screen.AddMargins(ctx, placeholder.New(ctx))
+	outerLayers := layout.AddMargins(ctx, placeholder.New(ctx))
 	outerLayers.Resize(size)
 	return outerLayers.State().Image
 }

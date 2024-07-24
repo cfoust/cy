@@ -226,23 +226,23 @@ For example:
   "Detach from the cy server."
   (cy/detach))
 
-(key/action
-  action/toggle-margins
-  "Toggle the screen's margins."
-  (def size (viewport/size))
-  (case (+ (size 0) (size 1))
-    0 (viewport/set-size [0 80])
-    (viewport/set-size [0 0])))
+#(key/action
+#action/toggle-margins
+#"Toggle the screen's margins."
+#(def size (viewport/size))
+#(case (+ (size 0) (size 1))
+#0 (viewport/set-size [0 80])
+#(viewport/set-size [0 0])))
 
-(key/action
-  action/margins-80
-  "Set size to 80 columns."
-  (viewport/set-size [0 80]))
+#(key/action
+#action/margins-80
+#"Set size to 80 columns."
+#(viewport/set-size [0 80]))
 
-(key/action
-  action/margins-160
-  "Set size to 160 columns."
-  (viewport/set-size [0 160]))
+#(key/action
+#action/margins-160
+#"Set size to 160 columns."
+#(viewport/set-size [0 160]))
 
 (key/action
   action/choose-frame
@@ -274,17 +274,17 @@ For example:
   (def rng (math/rng))
   (viewport/set-frame (get frames (math/rng-int rng (length frames)))))
 
-(key/action
-  action/margins-smaller
-  "Decrease margins by 5 columns."
-  (def [lines cols] (viewport/size))
-  (viewport/set-size [lines (+ cols 10)]))
+#(key/action
+#action/margins-smaller
+#"Decrease margins by 5 columns."
+#(def [lines cols] (viewport/size))
+#(viewport/set-size [lines (+ cols 10)]))
 
-(key/action
-  action/margins-bigger
-  "Increase margins by 5 columns."
-  (def [lines cols] (viewport/size))
-  (viewport/set-size [lines (- cols 10)]))
+#(key/action
+#action/margins-bigger
+#"Increase margins by 5 columns."
+#(def [lines cols] (viewport/size))
+#(viewport/set-size [lines (- cols 10)]))
 
 (key/action
   action/open-log
@@ -354,12 +354,12 @@ For example:
                    [prefix ";"] action/jump-pane
                    [prefix "c"] action/jump-pane-command)
 
-(key/bind-many-tag :root "viewport"
-                   [prefix "g"] action/toggle-margins
-                   [prefix "1"] action/margins-80
-                   [prefix "2"] action/margins-160
-                   [prefix "+"] action/margins-smaller
-                   [prefix "-"] action/margins-bigger)
+#(key/bind-many-tag :root "viewport"
+#[prefix "g"] action/toggle-margins
+#[prefix "1"] action/margins-80
+#[prefix "2"] action/margins-160
+#[prefix "+"] action/margins-smaller
+#[prefix "-"] action/margins-bigger)
 
 (key/bind-many-tag :root "unprefixed"
                    ["ctrl+l"] action/next-pane)
