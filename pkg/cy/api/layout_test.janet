@@ -3,23 +3,23 @@
       (layout/set {:type :pane :id 2})
       (layout/set {:type :pane}))
 
-(test ":splits"
+(test ":split"
       (layout/set
-        {:type :splits
+        {:type :split
          # horizontal
          :percent 26
          :a {:type :pane}
          :b {:type :pane}})
 
       (layout/set
-        {:type :splits
+        {:type :split
          :vertical true
          :percent 26
          :a {:type :pane}
          :b {:type :pane}})
 
       (expect-error (layout/set
-                      {:type :splits
+                      {:type :split
                        :vertical true
                        # don't let both of these get set
                        :cells 20
@@ -41,10 +41,18 @@
          :node {:type :pane}}))
 
 (test "bad input"
+      # bad node
       (expect-error (layout/set
                       {:type :margins
                        :cols 20
                        :rows 0
                        :frame "big-hex"
-                       # bad node
-                       :node 1213132})))
+                       :node 1213132}))
+
+      (expect-error (layout/set
+                      {:type :split
+                       :vertical true
+                       :cells 20
+                       :percent 26
+                       :a {:type :pane :attached true}
+                       :b {:type :pane :attached true}})))

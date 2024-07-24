@@ -27,6 +27,6 @@ func (l *LayoutEngine) Resize(size geom.Size) error {
 	return nil
 }
 
-func (l *LayoutEngine) Set(layout LayoutType) error {
+func (l *LayoutEngine) Set(layout Layout) error {
 	return nil
 }

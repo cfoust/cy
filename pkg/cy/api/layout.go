@@ -10,6 +10,6 @@ type LayoutModule struct {
 
 func (l *LayoutModule) Set(value *janet.Value) error {
 	defer value.Free()
-	var layout layout.LayoutType
+	var layout layout.Layout
 	return value.Unmarshal(&layout)
 }
