@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
@@ -74,14 +75,14 @@ func (s *Split) State() *tty.State {
 		cursor := stateA.Cursor
 		stateA.Image[cursor.R][cursor.C].BG = 8
 	}
-	tty.Copy(geom.Size{}, state, stateA)
+	image.CopyRaw(geom.Size{}, state.Image, stateA.Image)
 
 	stateB := s.screenB.State()
 	if !isAttachedB {
 		cursor := stateB.Cursor
 		stateB.Image[cursor.R][cursor.C].BG = 8
 	}
-	tty.Copy(positionB, state, stateB)
+	image.CopyRaw(positionB, state.Image, stateB.Image)
 
 	if isAttachedA {
 		state.Cursor = stateA.Cursor

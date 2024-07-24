@@ -24,6 +24,8 @@ const (
 	attrBlink
 	attrWrap
 	attrBlank
+	attrTransparent
+	attrOpaque
 )
 
 // State represents the terminal emulation state. Use Lock/Unlock

@@ -434,4 +434,40 @@ func init() {
 		`)
 		return screen, err
 	}, stories.Config{})
+
+	stories.Register("layout/split-half-cells", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(layout/set
+        {:type :split
+         :cells 30
+	 :a {:type :pane :id cmd1 :attached true}
+	 :b {:type :pane :id cmd2}})
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("layout/split-margins", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(layout/set
+        {:type :split
+         :percent 80
+	 :a {:type :margins
+	     :cols 40
+	     :node {:type :pane :id cmd1 :attached true}}
+	 :b {:type :pane :id cmd2}})
+		`)
+		return screen, err
+	}, stories.Config{})
 }

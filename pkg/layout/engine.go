@@ -13,6 +13,7 @@ import (
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/sasha-s/go-deadlock"
+	"github.com/rs/zerolog/log"
 )
 
 type LayoutEngine struct {
@@ -43,7 +44,9 @@ func (l *LayoutEngine) State() *tty.State {
 		return tty.New(geom.DEFAULT_SIZE)
 	}
 
-	return screen.State()
+	state := screen.State()
+	log.Info().Msgf("%+v", state.Image[0][0].Transparent())
+	return state
 }
 
 func (l *LayoutEngine) Send(msg mux.Msg) {
@@ -93,7 +96,17 @@ func (l *LayoutEngine) createNode(
 		if err != nil {
 			return nil, err
 		}
-		return NewMargins(ctx, screen), nil
+
+		margins := NewMargins(ctx, screen)
+		err = margins.SetSize(geom.Size{
+			R: node.Rows,
+			C: node.Cols,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return margins, nil
 	case SplitType:
 		screenA, err := l.createNode(ctx, node.A)
 		if err != nil {

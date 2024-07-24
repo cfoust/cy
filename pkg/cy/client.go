@@ -283,6 +283,7 @@ func (c *Client) initialize(options ClientOptions) error {
 		c.layoutEngine,
 		screen.PositionTop,
 		screen.WithInteractive,
+		screen.WithOpaque,
 	)
 
 	if c.cy.showSplash {

@@ -3,6 +3,7 @@ package layout
 import (
 	"context"
 
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -82,7 +83,7 @@ func (l *Margins) State() *tty.State {
 			}) {
 				continue
 			}
-			state.Image[row][col].Transparent = true
+			state.Image[row][col].Mode |= emu.AttrTransparent
 		}
 	}
 
