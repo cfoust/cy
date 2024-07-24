@@ -63,6 +63,24 @@ func (v *Value) Free() {
 	}
 }
 
+type stringRequest struct {
+	value C.Janet
+	result chan string
+}
+
+func (v *Value) String() string {
+	if v.isSafe {
+		return prettyPrint(v.janet)
+	}
+
+	result := make(chan string)
+	v.vm.requests <- stringRequest{
+		value: v.janet,
+		result: result,
+	}
+	return <-result
+}
+
 type unmarshalRequest struct {
 	source C.Janet
 	dest   interface{}

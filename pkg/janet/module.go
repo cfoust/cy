@@ -124,6 +124,8 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 				}
 
 				req.result <- v.value(value)
+			case stringRequest:
+				req.result <- prettyPrint(req.value)
 			}
 		}
 	}
