@@ -20,15 +20,13 @@ import (
 )
 
 // Marshalable lets you define a custom (pure) transformation to perform on
-// this type prior to translating it into a Janet value. The MarshalJanet()
-// implementation must have a _value_ receiver.
+// this type prior to translating it into a Janet value.
 type Marshalable interface {
 	MarshalJanet() interface{}
 }
 
 // Unmarshalable lets you define custom code for turning a Janet value into
-// this type. The UnmarshalJanet() implementation must have a _pointer_
-// receiver.
+// this type.
 type Unmarshalable interface {
 	UnmarshalJanet(value *Value) error
 }
@@ -36,14 +34,7 @@ type Unmarshalable interface {
 var MARSHALABLE = reflect.TypeOf((*Marshalable)(nil)).Elem()
 var UNMARSHALABLE = reflect.TypeOf((*Unmarshalable)(nil)).Elem()
 
-// checkInterfaces does a sanity check on the (Un)Marshalable types. There are
-// some mistakes that can't be checked automatically at compile time. This is
-// an issue with golang: to cast to an interface, the receivers of all of that
-// interface's methods must be of the same kind (pointer or value) in order for
-// the casting statement to return "ok".
-//
-// We specifically want Unmarshable to have a pointer receiver and Marshalable
-// to have a value receiver, because that's how the serde library works.
+// checkInterfaces does a sanity check on the (Un)Marshalable types.
 func checkInterfaces(type_ reflect.Type, value reflect.Value) error {
 	if _, ok := value.Interface().(Marshalable); ok {
 		if !type_.Implements(UNMARSHALABLE) {
@@ -54,10 +45,6 @@ func checkInterfaces(type_ reflect.Type, value reflect.Value) error {
 	if _, ok := value.Interface().(Unmarshalable); ok {
 		if value.Kind() != reflect.Pointer {
 			return fmt.Errorf("implementation of Unmarshalable for %s should have pointer receiver", type_.String())
-		}
-
-		if !type_.Implements(MARSHALABLE) {
-			return fmt.Errorf("implementation of Marshalable missing for %s", type_.String())
 		}
 	}
 
