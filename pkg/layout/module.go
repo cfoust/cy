@@ -66,5 +66,9 @@ func validateTree(tree NodeType) error {
 		return fmt.Errorf("you may only attach to one pane at once")
 	}
 
+	if numAttached == 0 {
+		return fmt.Errorf("you must attach to at least one pane")
+	}
+
 	return nil
 }

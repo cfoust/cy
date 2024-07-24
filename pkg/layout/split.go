@@ -1,4 +1,4 @@
-package screen
+package layout
 
 import (
 	"context"
@@ -16,10 +16,10 @@ type Split struct {
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 
-	screenA, screenB Screen
+	screenA, screenB mux.Screen
 
 	// The size of the Split's screen.
-	size Size
+	size geom.Size
 	// Whether the split should be vertical or horizontal.
 	isVertical bool
 	// Whether screenA is focused, which means its cursor position will be
@@ -34,7 +34,7 @@ type Split struct {
 	splitCells int
 }
 
-var _ Screen = (*Split)(nil)
+var _ mux.Screen = (*Split)(nil)
 
 func (s *Split) Kill() {
 	s.RLock()
@@ -48,7 +48,7 @@ func (s *Split) Kill() {
 	screenB.Kill()
 }
 
-func (s *Split) getPositionB() Size {
+func (s *Split) getPositionB() geom.Size {
 	positionB := geom.Size{C: s.splitCells}
 	if s.isVertical {
 		positionB = geom.Size{R: s.splitCells}
@@ -107,7 +107,7 @@ func (s *Split) poll(ctx context.Context) {
 	}
 }
 
-func (s *Split) recalculate(size Size) error {
+func (s *Split) recalculate(size geom.Size) error {
 	s.size = size
 
 	axisCells := size.C
@@ -148,7 +148,7 @@ func (s *Split) SetPercent(percent float64) error {
 	return s.recalculate(s.size)
 }
 
-func (s *Split) Resize(size Size) error {
+func (s *Split) Resize(size geom.Size) error {
 	s.Lock()
 	defer s.Unlock()
 
@@ -157,7 +157,7 @@ func (s *Split) Resize(size Size) error {
 
 func NewSplit(
 	ctx context.Context,
-	screenA, screenB Screen,
+	screenA, screenB mux.Screen,
 	percent float64,
 	isVertical bool,
 ) *Split {

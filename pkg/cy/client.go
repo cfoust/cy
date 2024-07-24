@@ -239,7 +239,27 @@ func (c *Client) initialize(options ClientOptions) error {
 
 	c.muxClient = c.cy.muxServer.AddClient(c.Ctx(), options.Size)
 
-	c.layoutEngine = layout.NewLayoutEngine(c.Ctx())
+	c.layoutEngine = layout.NewLayoutEngine(
+		c.Ctx(),
+		c.cy.tree,
+		c.cy.muxServer,
+	)
+
+	logId := tree.NodeID(2)
+	err = c.layoutEngine.Set(layout.New(layout.MarginsType{
+		Cols: 80,
+		Node: layout.SplitType{
+			Vertical: true,
+			A: layout.PaneType{
+				ID:       &logId,
+				Attached: true,
+			},
+			B: layout.PaneType{ID: &logId},
+		},
+	}))
+	if err != nil {
+		return err
+	}
 
 	c.outerLayers = screen.NewLayers()
 

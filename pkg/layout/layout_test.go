@@ -15,6 +15,10 @@ func TestValidate(t *testing.T) {
 			Attached: true,
 		},
 	}))
+	require.Error(t, validateTree(SplitType{
+		A: PaneType{},
+		B: PaneType{},
+	}))
 	require.NoError(t, validateTree(SplitType{
 		A: PaneType{
 			Attached: true,
