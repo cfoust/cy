@@ -2,8 +2,8 @@ name: Deploy documentation
 
 on:
   push:
-    tags:
-      - "*.*.*"
+    branches:
+      - main
 
 jobs:
   deploy:
