@@ -65,6 +65,8 @@
 
 # Developer guide
 
+- [Roadmap](./roadmap.md)
+
 - [Architecture](./architecture.md)
 
 - [Packages](./packages.md)

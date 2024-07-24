@@ -1,0 +1,20 @@
+# Roadmap
+
+`cy` is slowly starting to emerge from the proof-of-concept stage. The core features are solid, but it is not quite ready to be an alternative to `tmux` for most users. `cy` lacks some features necessary to satisfy users who are used to other multiplexers. There is also a lot left I plan on implementing to make `cy` the obvious choice.
+
+This document outlines the features I plan on implementing before `cy`'s 1.0 release. Features denoted with "\*" are tentative and may not make the cut.
+
+- [ ] **Layouts:** Many users rely on being able to see multiple panes at once. `cy`'s approach to this will differ from `tmux`'s: users will be able to change the pane a window is attached to at will, in essence mirroring `vim`'s functionality.
+  - [ ] **Proportional splits:** A layout akin to `tmux`'s default. Panes can be split horizontally and vertically and sized according to percentages or number of cells on the split axis.
+  - [ ] **Window titles:** Users should be able to configure the title of a window, which will be shown at the top or bottom. (This probably overlaps with "**Bars**" below.)
+  - [ ] **Borders:** The borders of each window should be configurable independently of the layout.
+  - [ ] **Layers (floating panes)\*:** It should be possible to spawn temporary layers that show a single pane that appears to float over all of the rest.
+- [ ] **Bars:** Users should be able to configure styled bars that appear above or below each window. These could be used to show the pane's current command, directory, time, et cetera. Ideally users would be able to provide a Janet function that could do anything they wanted.
+- [ ] **Searching through all recorded sessions:** Right now {{api replay/open-file}} is not very useful. There should be a mechanism for searching all recorded `.borg` files for a string.
+- [ ] **Command-line API access:** Users should be able to run Janet code with something like `cy -c '(some-code)'` to control `cy` programmatically just like they can control `tmux`. The result of this code could be written to standard output as JSON for easy interoperability.
+    - [ ] **fzf-cy\*:** `cy` literally uses `fzf`'s algorithm and its fuzzy finder should be able to be used as a drop-in replacement for `fzf` just like in [fzf-tmux](https://github.com/junegunn/fzf/blob/master/bin/fzf-tmux). In other words, `cy`'s fuzzy finder should support everything (within reason) that `fzf` does.
+- [ ] **Using the output of previous commands:** Similar to a Jupyter notebook, users should be able to access the output of previously executed commands from the command line. In essence, you could run `grep` on the output of a command you just ran without rerunning it: `cy -1 | grep 'some string'` where `-1` refers to the most recently executed command.
+- [ ] **Command history replacement\*:** The eventual goal of `cy` is to be able to replace `ctrl+r` in Bash (and other shells) with a command browser that not only lets you fuzzy-find a command among all of the commands you've ever run, but also see its output. Replaying a `.borg.` file to find all the commands run inside it is an expensive operation, so it's likely that this would involve some kind of SQLite caching mechanism.
+- [ ] **Client session replay:** `cy` should record _everything_ that happens on screen and let users open replay mode for the whole session, not just for individual panes. It is up for debate whether this should be saved to disk.
+    - [ ] **Smarter rendering algorithm:** `cy` uses a "damage" algorithm to detect what parts of the screen have changed and only rerender those portions. This is intended to minimize the burden on the client's terminal emulator. Unfortunately, the current approach will break searching the screen in client session recordings, so it needs to be rewritten to preserve the byte order of sequential cells that share the same styling.
+- [ ] **Theme system:** Users should be able to configure all of the visual aspects of `cy`'s interface from Janet, preferably using parameters.

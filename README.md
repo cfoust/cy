@@ -9,6 +9,12 @@
     <a href="https://github.com/cfoust/cy/blob/main/LICENSE"><img src="https://img.shields.io/github/license/cfoust/cy?color=48AC75&style=flat-square" alt="cy License Badge MIT" /></a>
 </p>
 
+<h4 align="center">
+    [<a href="https://cfoust.github.io/cy/installation.html">Installation</a>]
+    [<a href="https://cfoust.github.io/cy/architecture.html">Architecture</a>]
+    [<a href="https://cfoust.github.io/cy/roadmap.html">Roadmap</a>]
+</h4>
+
 ## What is this?
 
 `cy` is an experimental terminal multiplexer that aims to be a simple, modern, and ergonomic alternative to `tmux`. You can find out more in **[the documentation](https://cfoust.github.io/cy/)**.
