@@ -325,10 +325,12 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 			return err
 		}
 
+		v.isSafe = true
 		janetValue := v.value(source)
-		janetValue.isSafe = true
-		defer janetValue.unroot()
-		return u.UnmarshalJanet(janetValue)
+		err = u.UnmarshalJanet(janetValue)
+		janetValue.unroot()
+		v.isSafe = false
+		return err
 	}
 
 	type_ = type_.Elem()
@@ -409,8 +411,6 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 				return err
 			}
 			value.Set(ptr)
-		} else {
-			value.Set(reflect.ValueOf(nil))
 		}
 
 		//return fmt.Errorf("unimplemented pointer type: %s (%s)", type_.String(), type_.Kind().String())

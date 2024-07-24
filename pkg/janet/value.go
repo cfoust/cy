@@ -30,8 +30,9 @@ type Value struct {
 func (v *VM) value(janet C.Janet) *Value {
 	C.janet_gcroot(janet)
 	return &Value{
-		vm:    v,
-		janet: janet,
+		vm:     v,
+		janet:  janet,
+		isSafe: v.isSafe,
 	}
 }
 

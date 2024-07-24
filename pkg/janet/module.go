@@ -31,6 +31,11 @@ type VM struct {
 	requests chan Request
 
 	env *Table
+
+	// isSafe is used specifically for UnmarshalJanet to ensure that all
+	// unmarshaling happens _on the current goroutine_ when translating a
+	// custom type.
+	isSafe bool
 }
 
 func initJanet() {
