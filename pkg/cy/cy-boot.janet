@@ -145,6 +145,26 @@ For example:
       @[])
     @[]))
 
+(defn
+  layout/path
+  ```Resolve the path to a node. Returns nil if any portion of the path is invalid.```
+  [node path]
+  (if (= (length path) 0) (break node))
+  (def [head & rest] path)
+  (if (nil? (node head)) (break nil))
+  (layout/path (node head) rest))
+
+(defn
+  layout/assoc
+  ```Set the node at the given path in layout to the provided node. Returns a copy of the original node.```
+  [layout path node]
+  (if (= (length path) 0) (break node))
+  (def [head & rest] path)
+  (if (nil? (layout head)) (break layout))
+  (def new-layout (struct/to-table layout))
+  (put new-layout head (layout/assoc (layout head) rest node))
+  (table/to-struct new-layout))
+
 (key/action
   action/new-shell
   "Create a new shell."

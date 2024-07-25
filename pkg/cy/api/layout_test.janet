@@ -79,9 +79,75 @@
                    :frame "big-hex"
                    :node {:type :split
                           :vertical true
-                          # don't let both of these get set
                           :cells 20
                           :percent 26
                           :a {:type :pane :attached true}
                           :b {:type :pane}}})
                 @[:node :a])))
+
+
+(test "layout/path"
+      (assert (deep=
+                (layout/path
+                  {:type :margins
+                   :cols 20
+                   :rows 0
+                   :frame "big-hex"
+                   :node {:type :pane :attached true}}
+                  @[:node])
+                {:type :pane :attached true}))
+
+      (assert (deep=
+                (layout/path
+                  {:type :margins
+                   :cols 20
+                   :rows 0
+                   :frame "big-hex"
+                   :node {:type :split
+                          :percent 50
+                          :a {:type :pane :attached true}
+                          :b {:type :pane}}}
+                  @[:node :a])
+                {:type :pane :attached true}))
+
+      (assert (deep=
+                (layout/path
+                  {:type :margins
+                   :cols 20
+                   :rows 0
+                   :frame "big-hex"
+                   :node {:type :pane :attached true}}
+                  @[:a])
+                nil)))
+
+(test "layout/assoc"
+      (assert (deep=
+                (layout/assoc
+                  {:type :margins
+                   :cols 20
+                   :rows 0
+                   :frame "big-hex"
+                   :node {:type :pane :attached true}}
+                  @[:node]
+                  {:type :pane})
+                {:type :margins
+                 :cols 20
+                 :rows 0
+                 :frame "big-hex"
+                 :node {:type :pane}}))
+
+      # Does nothing, bad path
+      (assert (deep=
+                (layout/assoc
+                  {:type :margins
+                   :cols 20
+                   :rows 0
+                   :frame "big-hex"
+                   :node {:type :pane :attached true}}
+                  @[:a]
+                  {:type :pane})
+                {:type :margins
+                 :cols 20
+                 :rows 0
+                 :frame "big-hex"
+                 :node {:type :pane :attached true}})))
