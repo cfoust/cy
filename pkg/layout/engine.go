@@ -13,7 +13,6 @@ import (
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/sasha-s/go-deadlock"
-	"github.com/rs/zerolog/log"
 )
 
 type LayoutEngine struct {
@@ -33,6 +32,7 @@ type LayoutEngine struct {
 var _ mux.Screen = (*LayoutEngine)(nil)
 
 func (l *LayoutEngine) Kill() {
+	l.Cancel()
 }
 
 func (l *LayoutEngine) State() *tty.State {
@@ -44,12 +44,19 @@ func (l *LayoutEngine) State() *tty.State {
 		return tty.New(geom.DEFAULT_SIZE)
 	}
 
-	state := screen.State()
-	log.Info().Msgf("%+v", state.Image[0][0].Transparent())
-	return state
+	return screen.State()
 }
 
 func (l *LayoutEngine) Send(msg mux.Msg) {
+	l.RLock()
+	screen := l.screen
+	l.RUnlock()
+
+	if screen == nil {
+		return
+	}
+
+	screen.Send(msg)
 }
 
 func (l *LayoutEngine) Resize(size geom.Size) error {

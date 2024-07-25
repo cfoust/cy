@@ -67,6 +67,34 @@ func isAttached(tree NodeType) bool {
 	return false
 }
 
+func attach(node NodeType, id tree.NodeID) NodeType {
+	switch node := node.(type) {
+	case PaneType:
+		if node.Attached {
+			return PaneType{
+				Attached: true,
+				ID:       &id,
+			}
+		}
+
+		return node
+	case SplitType:
+		node.A = attach(node.A, id)
+		node.B = attach(node.B, id)
+		return node
+	case MarginsType:
+		node.Node = attach(node.Node, id)
+		return node
+	}
+
+	return node
+}
+
+// Attach changes the currently attached tree node to the one specified by id.
+func Attach(layout Layout, id tree.NodeID) Layout {
+	return Layout{root: attach(layout.root, id)}
+}
+
 // validateTree inspects a tree and ensures that it conforms to all relevant
 // constraints, namely there should only be one PaneType with Attached=true.
 func validateTree(tree NodeType) error {

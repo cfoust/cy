@@ -248,13 +248,9 @@ func (c *Client) initialize(options ClientOptions) error {
 	logId := tree.NodeID(2)
 	err = c.layoutEngine.Set(layout.New(layout.MarginsType{
 		Cols: 80,
-		Node: layout.SplitType{
-			Vertical: true,
-			A: layout.PaneType{
-				ID:       &logId,
-				Attached: true,
-			},
-			B: layout.PaneType{ID: &logId},
+		Node: layout.PaneType{
+			ID:       &logId,
+			Attached: true,
 		},
 	}))
 	if err != nil {
@@ -359,21 +355,13 @@ func (c *Client) attach(node tree.Node) error {
 		return fmt.Errorf("failed to find path to node")
 	}
 
-	c.muxClient.Attach(c.Ctx(), pane.Screen())
+	current := c.layoutEngine.Get()
+	err := c.layoutEngine.Set(layout.Attach(current, pane.Id()))
+	if err != nil {
+	    return err
+	}
 
-	go func() {
-		select {
-		case <-c.Ctx().Done():
-			return
-		case <-c.muxClient.Attachment().Ctx().Done():
-			return
-		case <-pane.Ctx().Done():
-			// TODO(cfoust): 12/15/23 handle error
-			c.findNewPane()
-			return
-		}
-	}()
-
+	// TODO(cfoust): 07/25/24
 	c.node = node
 
 	// Update bindings
