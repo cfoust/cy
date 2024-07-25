@@ -28,7 +28,7 @@ You can reload your configuration at any time using {{api action/reload-config}}
 
 ### Example configuration
 
-An example configuration that uses functionality from this API is shown below. You may also refer to the [default configuration](https://github.com/cfoust/cy/blob/main/pkg/cy/cy-boot.janet) for examples of more advanced API usage.
+An example configuration that uses functionality from this API is shown below. You may also refer to the [default configuration](https://github.com/cfoust/cy/blob/main/pkg/cy/boot) for examples of more advanced API usage.
 
 ```janet
 # Define a new action (which is just a function) with the name toast-pane-path

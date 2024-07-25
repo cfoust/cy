@@ -91,4 +91,4 @@ Here are some examples:
     ])
 ```
 
-{{api input/find}} is used extensively in `cy`'s [default startup script](https://github.com/cfoust/cy/blob/main/pkg/cy/cy-boot.janet). You can find several idiomatic examples of its usage there.
+{{api input/find}} is used extensively in `cy`'s [default startup script](https://github.com/cfoust/cy/blob/main/pkg/cy/boot/actions.janet). You can find several idiomatic examples of its usage there.
