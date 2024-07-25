@@ -2,7 +2,7 @@
 
 `cy` was designed to be as configurable as possible. Users of `cy` provide a configuration written in [Janet](https://janet-lang.org/) that uses `cy`'s [API](/api.md) to define key bindings, set parameters, and set up `cy` in any way they like.
 
-Janet is a fun, embeddable [Lisp-like](https://en.wikipedia.org/wiki/Lisp_(programming_language) language that is easy to learn. If you are new to Janet, I recommend starting out with its [documentation](https://janet-lang.org/docs/syntax.html) and Ian Henry's fantastic [_Janet for Mortals_](https://janet.guide/).
+Janet is a fun, embeddable [Lisp-like](https://en.wikipedia.org/wiki/Lisp_(programming_language)) language that is easy to learn. If you are new to Janet, I recommend starting out with its [documentation](https://janet-lang.org/docs/syntax.html) and Ian Henry's fantastic [_Janet for Mortals_](https://janet.guide/).
 
 Janet looks like this:
 
@@ -49,3 +49,14 @@ An example configuration that uses functionality from this API is shown below. Y
 # Bind a key sequence to this function
 (key/bind :root ["ctrl+a" "g"] toast-pane-path)
 ```
+
+### Execution context
+
+The Janet code executed in `cy` can be executed in two different contexts:
+
+- **The context of the server:** This is the context in which your configuration file is run, because when the `cy` server starts up, there are no clients.
+- **The context of a client:** When a client invokes an [action](/keybindings.md#actions) or types a keybinding sequence, the executed Janet code can see what client ran the action and respond appropriately.
+
+Because of this, _some API functionality can only be used in a keybinding or action._ This is because some kinds of state, such as the state that `(viewport/*)` family of functions uses to work, only makes sense in the context of a user.
+
+This is a confusing aspect of `cy` that I plan to improve over time, such as by letting you execute custom code in the context of a client whenever one connects.

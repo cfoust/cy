@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/params"
@@ -43,9 +41,9 @@ func (p *ParamModule) Get(
 	}
 
 	if params.Target == nil || isClientTarget(params.Target) {
-		client, ok := context.(Client)
-		if !ok {
-			return nil, fmt.Errorf("missing client context")
+		client, err := getClient(context)
+		if err != nil {
+			return nil, err
 		}
 
 		value, _ := client.Get(string(keyword))
@@ -78,11 +76,11 @@ func (p *ParamModule) Set(
 
 	var params *params.Parameters
 	if isClientTarget(target) {
-		if client, ok := context.(Client); ok {
-			params = client.Params()
-		} else {
-			return fmt.Errorf("missing client context")
+		client, err := getClient(context)
+		if err != nil {
+			return err
 		}
+		params = client.Params()
 	} else {
 		node, err := resolveNode(p.Tree, target)
 		if err != nil {

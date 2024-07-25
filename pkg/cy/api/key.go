@@ -187,11 +187,11 @@ func (k *KeyModule) Get(target *janet.Value) ([]Binding, error) {
 	return binds, nil
 }
 
-func (k *KeyModule) Current(user interface{}) []Binding {
-	client, ok := user.(Client)
-	if !ok {
-		return nil
+func (k *KeyModule) Current(context interface{}) ([]Binding, error) {
+	client, err := getClient(context)
+	if err != nil {
+		return nil, err
 	}
 
-	return client.Binds()
+	return client.Binds(), nil
 }

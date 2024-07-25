@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 
 	"github.com/cfoust/cy/pkg/anim"
@@ -32,7 +31,7 @@ type FuzzyParams struct {
 
 func (i *InputModule) Find(
 	ctx context.Context,
-	user interface{},
+	context interface{},
 	choices *janet.Value,
 	named *janet.Named[FuzzyParams],
 ) (interface{}, error) {
@@ -40,9 +39,9 @@ func (i *InputModule) Find(
 
 	params := named.Values()
 
-	client, ok := user.(Client)
-	if !ok {
-		return nil, fmt.Errorf("missing client context")
+	client, err := getClient(context)
+	if err != nil {
+		return nil, err
 	}
 
 	options, err := fuzzy.UnmarshalOptions(choices)
@@ -154,15 +153,15 @@ type TextParams struct {
 
 func (i *InputModule) Text(
 	ctx context.Context,
-	user interface{},
+	context interface{},
 	prompt string,
 	named *janet.Named[TextParams],
 ) (interface{}, error) {
 	params := named.Values()
 
-	client, ok := user.(Client)
-	if !ok {
-		return nil, fmt.Errorf("missing client context")
+	client, err := getClient(context)
+	if err != nil {
+		return nil, err
 	}
 
 	outerLayers := client.OuterLayers()

@@ -46,9 +46,9 @@ func (m *MsgModule) Toast(context interface{}, level *janet.Value, message strin
 		return err
 	}
 
-	client, ok := context.(Client)
-	if !ok {
-		return fmt.Errorf("unable to detect client")
+	client, err := getClient(context)
+	if err != nil {
+		return err
 	}
 
 	client.Toast(toasts.Toast{

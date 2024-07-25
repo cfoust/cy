@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
@@ -27,4 +29,15 @@ type Client interface {
 type Server interface {
 	ExecuteJanet(path string) error
 	Log(level zerolog.Level, message string)
+}
+
+func getClient(context interface{}) (Client, error) {
+	client, ok := context.(Client)
+	if !ok {
+		return nil, fmt.Errorf(
+			"this functionality can only be accessed in a keybinding or action, see https://cfoust.github.io/cy/configuration.html#execution-context for more information",
+		)
+	}
+
+	return client, nil
 }

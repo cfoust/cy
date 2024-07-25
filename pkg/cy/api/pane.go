@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 )
@@ -14,9 +12,9 @@ type PaneModule struct {
 func (p *PaneModule) Attach(context interface{}, id *janet.Value) error {
 	defer id.Free()
 
-	client, ok := context.(Client)
-	if !ok {
-		return fmt.Errorf("missing client context")
+	client, err := getClient(context)
+	if err != nil {
+		return err
 	}
 
 	pane, err := resolvePane(p.Tree, id)
@@ -28,18 +26,18 @@ func (p *PaneModule) Attach(context interface{}, id *janet.Value) error {
 }
 
 func (p *PaneModule) HistoryForward(context interface{}) error {
-	client, ok := context.(Client)
-	if !ok {
-		return fmt.Errorf("missing client context")
+	client, err := getClient(context)
+	if err != nil {
+		return err
 	}
 
 	return client.HistoryForward()
 }
 
 func (p *PaneModule) HistoryBackward(context interface{}) error {
-	client, ok := context.(Client)
-	if !ok {
-		return fmt.Errorf("missing client context")
+	client, err := getClient(context)
+	if err != nil {
+		return err
 	}
 
 	return client.HistoryBackward()

@@ -23,9 +23,9 @@ type ReplayModule struct {
 }
 
 func (m *ReplayModule) send(context interface{}, msg taro.Msg) error {
-	client, ok := context.(Client)
-	if !ok {
-		return fmt.Errorf("no client could be inferred")
+	client, err := getClient(context)
+	if err != nil {
+		return err
 	}
 
 	node := client.Node()

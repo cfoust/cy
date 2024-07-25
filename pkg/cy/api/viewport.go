@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
@@ -9,34 +11,37 @@ import (
 type ViewportModule struct {
 }
 
-func (c *ViewportModule) Size(context interface{}) *geom.Vec2 {
-	client, ok := context.(Client)
-	if !ok {
-		return nil
+func (c *ViewportModule) Size(context interface{}) (*geom.Vec2, error) {
+	client, err := getClient(context)
+	if err != nil {
+		return nil, err
 	}
+
 	size := client.Margins().Size()
-	return &size
+	return &size, nil
 }
 
-func (c *ViewportModule) SetSize(context interface{}, size geom.Size) {
-	client, ok := context.(Client)
-	if !ok {
-		return
+func (c *ViewportModule) SetSize(context interface{}, size geom.Size) error {
+	client, err := getClient(context)
+	if err != nil {
+		return err
 	}
 	client.Margins().SetSize(size)
+	return nil
 }
 
-func (c *ViewportModule) SetFrame(context interface{}, name string) {
-	client, ok := context.(Client)
-	if !ok {
-		return
+func (c *ViewportModule) SetFrame(context interface{}, name string) error {
+	client, err := getClient(context)
+	if err != nil {
+		return err
 	}
 
 	frame, ok := frames.Frames[name]
 	if !ok {
-		return
+		return fmt.Errorf("could not find frame '%s'", name)
 	}
 	client.Frame().Set(frame)
+	return nil
 }
 
 func (c *ViewportModule) GetFrames(context interface{}) []string {
