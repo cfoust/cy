@@ -10,10 +10,13 @@ import (
 type Server struct {
 	deadlock.RWMutex
 	clients []*Client
+	sizes   map[mux.Screen]geom.Size
 }
 
+// refreshPane resizes screen to the minimum of all of its clients' screen sizes.
 func (s *Server) refreshPane(screen mux.Screen) {
 	s.Lock()
+	defer s.Unlock()
 
 	// Get a list of all clients attached to this screen
 	attached := make([]*Client, 0)
@@ -25,7 +28,6 @@ func (s *Server) refreshPane(screen mux.Screen) {
 
 	// Don't do anything if no clients are attached to this pane
 	if len(attached) == 0 {
-		s.Unlock()
 		return
 	}
 
@@ -41,15 +43,47 @@ func (s *Server) refreshPane(screen mux.Screen) {
 		size = geom.GetMaximum(size, client.Size())
 	}
 
-	s.Unlock()
-
 	if size.IsZero() {
 		return
 	}
 
-	screen.Resize(size)
+	oldSize, haveSize := s.sizes[screen]
+	if haveSize && oldSize == size {
+		return
+	}
+
+	s.sizes[screen] = size
+
+	go screen.Resize(size)
+}
+
+// clearOldScreens removes any references to screens that Server might be holding on to.
+func (s *Server) clearOldScreens() {
+	s.Lock()
+	defer s.Unlock()
+
+	var (
+		newSizes = make(map[mux.Screen]geom.Size)
+		oldSizes = s.sizes
+	)
+
+	// Get a list of all clients attached to this screen
+	for _, client := range s.clients {
+		screen := client.Screen()
+		if screen == nil {
+			continue
+		}
+
+		if oldSize, ok := oldSizes[screen]; ok {
+			newSizes[screen] = oldSize
+		}
+	}
+
+	s.sizes = newSizes
 }
 
 func New() *Server {
-	return &Server{}
+	return &Server{
+		sizes: make(map[mux.Screen]geom.Size),
+	}
 }
