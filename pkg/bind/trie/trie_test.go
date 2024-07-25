@@ -74,6 +74,30 @@ func TestTrie(t *testing.T) {
 	require.Equal(t, 0, len(trie.Leaves()))
 }
 
+func TestManyRemap(t *testing.T) {
+	trie := New[int](nil)
+
+	trie.Set([]interface{}{
+		"one",
+		"three",
+	}, 1)
+
+	trie.Remap([]interface{}{
+		"one",
+	}, []interface{}{
+		"three",
+	})
+
+	require.Equal(t, 1, len(trie.Leaves()))
+
+	trie.Remap([]interface{}{
+		"one",
+	}, []interface{}{
+		"three",
+	})
+	require.Equal(t, 1, len(trie.Leaves()))
+}
+
 func TestRegex(t *testing.T) {
 	trie := New[int](nil)
 	trie.Set([]interface{}{

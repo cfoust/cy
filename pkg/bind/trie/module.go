@@ -337,8 +337,12 @@ func (t *Trie[T]) Remap(from, to []interface{}) {
 		next = oldParent.nextRe[step.Pattern].next
 	}
 
+	if next == nil {
+		return
+	}
+
 	// Remove that path
-	t.clear(from)
+	oldParent.clear(from)
 
 	// Then create the path to the new parent if necessary
 	newParent := t.access(from[:len(to)-1], true)
