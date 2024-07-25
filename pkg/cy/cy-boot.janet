@@ -211,6 +211,15 @@ For example:
   (layout/replace-attached node |(do {:type :pane :id ($ :id)})))
 
 (defn
+  layout/attach
+  ```Attach to the node at path in layout.```
+  [layout path]
+  (layout/replace
+    (layout/detach layout)
+    path
+    |{:type :pane :id ($ :id) :attached true}))
+
+(defn
   layout/find-bottom
   ```Find the path to the node at the bottom.```
   [node]
@@ -226,23 +235,79 @@ For example:
     nil))
 
 (defn
+  layout/move
+  ```This function attaches to the pane nearest to the one the user is currently attached to along an axis. It returns a new copy of layout with the attachment point changed or returns the same layout if no motion could be completed.
+
+is-axis is a unary function that, given a node, returns a boolean that indicates whether the node is arranged _along the axis in question._ For example, when moving vertically, a vertical split (two panes on top of each other) would return true.
+
+successors is a unary function that, given a node, returns the paths of all of the child nodes accessible from the node in the order of their appearance along the axis. For example, when moving vertically upwards, for a vertical split node this function would return @[[:b] [:a]], because :b is the first node from the bottom, and when moving vertically downwards it would return @[[:a] [:b]] because :a is the first node from the top.
+  ```
+  [layout is-axis successors]
+  (def path (layout/attach-path layout))
+  (if (nil? path) (break layout))
+
+  # We look for a path we can attach to in the opposite direction of
+  # movement.
+  # 
+  # Consider the case where a node has successors :a, :b:, and :c arranged
+  # along the axis of motion; if we're attached to a node on :b and moving in
+  # the direction of :a, we want `detached-successors` to return just [:a],
+  # since [:c] is "after" or "below" us.
+  (defn detached-successors [node]
+    (->>
+      (successors node)
+      (reverse)
+      (take-while |(not (layout/attached? (layout/path node $))))
+      (reverse)))
+
+  (defn check-node [node]
+    (and (is-axis node) (> (length (detached-successors node)) 0)))
+
+  # We first find the most recent ancestor to the node we're attached to that
+  # has a child tree that we can move to.
+  (def branch-path (layout/get-last layout path check-node))
+  (if (nil? branch-path) (break layout))
+
+  (def [next-path] (detached-successors (layout/path layout branch-path)))
+  (def full-path @[;branch-path ;next-path])
+
+  # Find the closest pane we can attach to in the direction of motion.
+  (defn
+    find-nearest
+    [node]
+    (if (layout/pane? node) (break @[]))
+    (def [nearest] (successors node))
+    @[;nearest ;(find-nearest (layout/path node nearest))])
+
+  (layout/attach
+    layout
+    @[;full-path ;(find-nearest (layout/path layout full-path))]))
+
+(defn
   layout/move-up
   ```Change the layout by moving to the next node "above" the attached pane.```
   [layout]
-  (def path (layout/attach-path layout))
-  (if (nil? path) (break layout))
-  (def split-path
-    (layout/get-last layout path |(and
-                                    (layout/type? :split $)
-                                    ($ :vertical)
-                                    (not (layout/attached? ($ :a))))))
-  (if (nil? split-path) (break layout))
-  (def target-path (layout/find-bottom ((layout/path layout split-path) :a)))
-  (if (nil? target-path) (break layout))
-  (layout/replace
-    (layout/detach layout)
-    @[;split-path :a ;target-path]
-    |{:type :pane :id ($ :id) :attached true}))
+  (layout/move
+    layout
+    |(and (layout/type? :split $) ($ :vertical))
+    |(cond
+       (layout/type? :split $) (if ($ :vertical)
+                                 @[[:b] [:a]]
+                                 @[[:a] [:b]])
+       (layout/type? :margins $) @[[:node]]
+       @[[]])))
+
+(defn
+  layout/move-down
+  ```Change the layout by moving to the next node "below" the attached pane.```
+  [layout]
+  (layout/move
+    layout
+    |(and (layout/type? :split $) ($ :vertical))
+    |(cond
+       (layout/type? :split $) @[[:a] [:b]]
+       (layout/type? :margins $) @[[:node]]
+       @[[]])))
 
 (defn
   layout/split-right
@@ -326,6 +391,16 @@ For example:
     (layout/split-up
       (layout/get)
       {:type :pane :id shell :attached true})))
+
+(key/action
+  action/move-up
+  "Move up to the next pane."
+  (layout/set (layout/move-up (layout/get))))
+
+(key/action
+  action/move-down
+  "Move down to the next pane."
+  (layout/set (layout/move-down (layout/get))))
 
 (key/action
   action/new-shell

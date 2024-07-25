@@ -281,3 +281,17 @@
                      :vertical true
                      :a {:type :pane}
                      :b {:type :pane}}})))
+
+
+(test "layout/move-down"
+      (assert (deep=
+                (layout/move-down
+                  {:type :split
+                   :vertical true
+                   :a {:type :pane :attached true}
+                   :b {:type :margins :node {:type :pane}}})
+
+                {:type :split
+                 :vertical true
+                 :a {:type :pane}
+                 :b {:type :margins :node {:type :pane :attached true}}})))
