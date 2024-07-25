@@ -6,6 +6,11 @@
 (test ":pane 2"
       (layout/set {:type :pane :attached true}))
 
+(test "layout/get"
+      (def layout {:type :pane :id 2 :attached true})
+      (layout/set layout)
+      (assert (deep= (layout/get) layout)))
+
 (test ":split"
       (layout/set
         {:type :split
@@ -151,3 +156,18 @@
                  :rows 0
                  :frame "big-hex"
                  :node {:type :pane :attached true}})))
+
+(test "layout/split-right"
+      (assert (deep=
+                (layout/split-right
+                  {:type :margins
+                   :cols 20
+                   :node {:type :pane :attached true}}
+                  {:type :pane :id 2 :attached true})
+
+                {:type :margins
+                 :cols 20
+                 :node {:type :split
+                        :percent 50
+                        :a {:type :pane}
+                        :b {:type :pane :id 2 :attached true}}})))

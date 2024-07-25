@@ -133,3 +133,55 @@ func (l *Layout) UnmarshalJanet(value *janet.Value) (err error) {
 
 	return validateTree(l.root)
 }
+
+var _ janet.Marshalable = (*Layout)(nil)
+
+func marshalNode(node NodeType) interface{} {
+	switch node := node.(type) {
+	case PaneType:
+		return struct {
+			Type     janet.Keyword
+			Attached bool
+			ID       *tree.NodeID
+		}{
+			Type:     KEYWORD_PANE,
+			Attached: node.Attached,
+			ID:       node.ID,
+		}
+	case SplitType:
+		return struct {
+			Type     janet.Keyword
+			Vertical bool
+			Percent  *int
+			Cells    *int
+			A        interface{}
+			B        interface{}
+		}{
+			Type:     KEYWORD_SPLIT,
+			Vertical: node.Vertical,
+			Percent:  node.Percent,
+			Cells:    node.Cells,
+			A:        marshalNode(node.A),
+			B:        marshalNode(node.B),
+		}
+	case MarginsType:
+		return struct {
+			Type  janet.Keyword
+			Cols  int
+			Rows  int
+			Frame *string
+			Node  interface{}
+		}{
+			Type:  KEYWORD_MARGINS,
+			Cols:  node.Cols,
+			Rows:  node.Rows,
+			Frame: node.Frame,
+			Node:  marshalNode(node.Node),
+		}
+	}
+	return nil
+}
+
+func (l *Layout) MarshalJanet() interface{} {
+	return marshalNode(l.root)
+}

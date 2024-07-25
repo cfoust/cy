@@ -1,6 +1,5 @@
 (def- prefix "ctrl+a")
 
-
 (def- actions @[])
 
 (defn
@@ -164,6 +163,42 @@ For example:
   (def new-layout (struct/to-table layout))
   (put new-layout head (layout/assoc (layout head) rest node))
   (table/to-struct new-layout))
+
+(defn
+  layout/detach
+  ```Replace the attached pane in this tree with a detached one.```
+  [node]
+  (if (layout/pane? node) (break {:type :pane :id (node :id)}))
+  (def path (layout/attach-path node))
+  (if (nil? path) (break node))
+  (def current (layout/path node path))
+  (layout/assoc node path {:type :pane :id (current :id)}))
+
+(defn
+  layout/split-right
+  ```Split the currently attached pane into two, replacing the right pane with the given node.```
+  [layout node]
+  (def path (layout/attach-path layout))
+  (if (nil? path) (break layout))
+  (def current (layout/path layout path))
+  (layout/assoc
+    layout
+    path
+    {:type :split
+     :percent 50
+     :a (layout/detach current)
+     :b node}))
+
+(key/action
+  action/split-right
+  "Split the current pane to the right."
+  (def path (cmd/path (pane/current)))
+  (def shells (group/mkdir :root "/shells"))
+  (def shell (cmd/new shells :path path :name (path/base path)))
+  (layout/set
+    (layout/split-right
+      (layout/get)
+      {:type :pane :id shell :attached true})))
 
 (key/action
   action/new-shell

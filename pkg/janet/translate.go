@@ -156,9 +156,11 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 			return
 		}
 
-		// TODO(cfoust): 06/23/23 maybe support this someday
-		err = fmt.Errorf("cannot marshal pointer to value")
-		return
+		if value.IsNil() {
+			return
+		}
+
+		return v.marshal(value.Elem().Interface())
 	}
 
 	switch type_.Kind() {

@@ -64,6 +64,8 @@ type TestValue struct {
 	One   int
 	Two   bool
 	Three string
+	Four  *int
+	Five  *int
 	Ints  [6]int
 	Bools []bool
 }
@@ -299,10 +301,12 @@ func TestVM(t *testing.T) {
 		go func() {
 			bools := make([]bool, 2)
 			bools[0] = true
+			five := 2
 			structValue := TestValue{
 				One:   2,
 				Two:   true,
 				Three: "test",
+				Five:  &five,
 				Ints: [6]int{
 					2,
 					3,
