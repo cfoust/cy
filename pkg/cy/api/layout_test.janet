@@ -59,3 +59,29 @@
                        :percent 26
                        :a {:type :pane :attached true}
                        :b {:type :pane :attached true}})))
+
+
+(test "layout/attach-path"
+      (assert (deep=
+                (layout/attach-path
+                  {:type :margins
+                   :cols 20
+                   :rows 0
+                   :frame "big-hex"
+                   :node {:type :pane :attached true}})
+                @[:node]))
+
+      (assert (deep=
+                (layout/attach-path
+                  {:type :margins
+                   :cols 20
+                   :rows 0
+                   :frame "big-hex"
+                   :node {:type :split
+                          :vertical true
+                          # don't let both of these get set
+                          :cells 20
+                          :percent 26
+                          :a {:type :pane :attached true}
+                          :b {:type :pane}}})
+                @[:node :a])))

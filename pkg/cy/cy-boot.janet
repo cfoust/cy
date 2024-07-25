@@ -100,6 +100,51 @@ For example:
   (def shells (group/mkdir :root "/shells"))
   (pane/attach (cmd/new shells :path path)))
 
+(defn
+  layout/type?
+  ```Report whether node is of the provided type.```
+  [type node]
+  (= (node :type) type))
+
+(defn
+  layout/pane?
+  ```Report whether node is of type :pane.```
+  [node]
+  (layout/type? :pane node))
+
+(defn
+  layout/attached?
+  ```Report whether node or one of its descendants is attached.```
+  [node]
+  (cond
+    (layout/type? :split node) (do
+                                 (def {:a a :b b} node)
+                                 (or (layout/attached? a) (layout/attached? b)))
+    (layout/type? :margins node) (layout/attached? (node :node))
+    (layout/type? :pane node) (node :attached)))
+
+(defn
+  layout/attach-path
+  ```Get the path to the attached node for the given node.```
+  [node]
+  (if
+    (layout/attached? node)
+    (cond
+      (layout/type? :split node)
+      (do
+        (def {:a a :b b} node)
+        (cond
+          (and
+            (layout/pane? a)
+            (layout/attached? a)) @[:a ;(layout/attach-path a)]
+          (and
+            (layout/pane? b)
+            (layout/attached? b)) @[:a ;(layout/attach-path b)]
+          @[]))
+      (layout/type? :margins node) @[:node ;(layout/attach-path (node :node))]
+      @[])
+    @[]))
+
 (key/action
   action/new-shell
   "Create a new shell."
