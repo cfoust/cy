@@ -38,6 +38,8 @@
                            :source-line line
                            :source-column col}] $]
 
+               (default name "<unknown>")
+
                (string/format
                  trace-format
                  (+ 1 index)

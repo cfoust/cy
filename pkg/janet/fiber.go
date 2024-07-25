@@ -166,7 +166,11 @@ func (v *VM) continueFiber(params Params, fiber Fiber, in *Value) {
 		return
 	case C.JANET_SIGNAL_ERROR:
 		var errStr string
-		v.unmarshal(out, &errStr)
+		if err := v.unmarshal(out, &errStr); err != nil {
+			params.Error(err)
+			return
+		}
+
 		params.Error(fmt.Errorf("%s", errStr))
 		return
 	case C.JANET_SIGNAL_YIELD:
