@@ -112,37 +112,42 @@ For example:
   (layout/type? :pane node))
 
 (defn
-  layout/attached?
-  ```Report whether node or one of its descendants is attached.```
-  [node]
+  layout/find-path
+  ```Get the path to the first node satisfying the predicate function or nil if none exists.```
+  [node predicate]
+  (if (predicate node) (break @[]))
+
   (cond
     (layout/type? :split node) (do
                                  (def {:a a :b b} node)
-                                 (or (layout/attached? a) (layout/attached? b)))
-    (layout/type? :margins node) (layout/attached? (node :node))
-    (layout/type? :pane node) (node :attached)))
+                                 (def a-path (layout/find-path a predicate))
+                                 (if (not (nil? a-path)) (break @[:a ;a-path]))
+                                 (def b-path (layout/find-path b predicate))
+                                 (if (not (nil? b-path)) (break @[:b ;b-path]))
+                                 nil)
+    (layout/type? :margins node) (do
+                                   (def {:node node} node)
+                                   (def path (layout/find-path node predicate))
+                                   (if (not (nil? path)) (break @[:node ;path])))
+    nil))
+
+(defn
+  layout/has?
+  ```Report whether this node or one of its descendants matches the predicate function.```
+  [node predicate]
+  (not (nil? (layout/find-path node predicate))))
+
+(defn
+  layout/attached?
+  ```Report whether node or one of its descendants is attached.```
+  [node]
+  (not (nil? (layout/find-path node |($ :attached)))))
 
 (defn
   layout/attach-path
   ```Get the path to the attached node for the given node.```
   [node]
-  (if
-    (layout/attached? node)
-    (cond
-      (layout/type? :split node)
-      (do
-        (def {:a a :b b} node)
-        (cond
-          (and
-            (layout/pane? a)
-            (layout/attached? a)) @[:a ;(layout/attach-path a)]
-          (and
-            (layout/pane? b)
-            (layout/attached? b)) @[:b ;(layout/attach-path b)]
-          @[]))
-      (layout/type? :margins node) @[:node ;(layout/attach-path (node :node))]
-      @[])
-    @[]))
+  (layout/find-path node |($ :attached)))
 
 (defn
   layout/path
@@ -155,7 +160,7 @@ For example:
 
 (defn
   layout/assoc
-  ```Set the node at the given path in layout to the provided node. Returns a copy of the original node.```
+  ```Set the node at the given path in layout to the provided node. Returns a copy of the original layout with the node changed.```
   [layout path node]
   (if (= (length path) 0) (break node))
   (def [head & rest] path)
@@ -163,6 +168,31 @@ For example:
   (def new-layout (struct/to-table layout))
   (put new-layout head (layout/assoc (layout head) rest node))
   (table/to-struct new-layout))
+
+(defn
+  layout/get-last
+  ```Get the path to the last node in the path where (predicate node) evaluates to true.```
+  [layout path predicate]
+  # Must be a valid path and actually map to a node
+  (if (= (length path) 0) (break nil))
+  (if (nil? (layout/path layout path)) (break nil))
+
+  (def found-path
+    (find
+      |(predicate (layout/path layout (array/slice path ;$)))
+      (->>
+        (range (length path))
+        (map |(tuple 0 $))
+        (reverse))))
+
+  (if (nil? found-path) (break nil))
+  (array/slice path ;found-path))
+
+(defn
+  layout/replace
+  ```Replace the node at the path by passing it through a replacer function.```
+  [node path replacer]
+  (layout/assoc node path (replacer (layout/path node path))))
 
 (defn
   layout/replace-attached
@@ -179,6 +209,40 @@ For example:
   ```Detach the attached node in the tree.```
   [node]
   (layout/replace-attached node |(do {:type :pane :id ($ :id)})))
+
+(defn
+  layout/find-bottom
+  ```Find the path to the node at the bottom.```
+  [node]
+  (if (layout/pane? node) (break @[]))
+
+  (cond
+    (layout/type? :split node) (do
+                                 (def {:vertical vertical :a a :b b} node)
+                                 (if vertical
+                                   @[:b ;(layout/find-bottom b)]
+                                   @[:a ;(layout/find-bottom a)]))
+    (layout/type? :margins node) @[:node ;(layout/find-bottom (node :node))]
+    nil))
+
+(defn
+  layout/move-up
+  ```Change the layout by moving to the next node "above" the attached pane.```
+  [layout]
+  (def path (layout/attach-path layout))
+  (if (nil? path) (break layout))
+  (def split-path
+    (layout/get-last layout path |(and
+                                    (layout/type? :split $)
+                                    ($ :vertical)
+                                    (not (layout/attached? ($ :a))))))
+  (if (nil? split-path) (break layout))
+  (def target-path (layout/find-bottom ((layout/path layout split-path) :a)))
+  (if (nil? target-path) (break layout))
+  (layout/replace
+    (layout/detach layout)
+    @[;split-path :a ;target-path]
+    |{:type :pane :id ($ :id) :attached true}))
 
 (defn
   layout/split-right

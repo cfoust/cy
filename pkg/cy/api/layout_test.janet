@@ -133,6 +133,27 @@
                   @[:a])
                 nil)))
 
+(test "layout/find-path"
+      (assert (deep=
+                (layout/find-path
+                  {:type :margins
+                   :cols 20
+                   :rows 0
+                   :frame "big-hex"
+                   :node {:type :pane :attached true}}
+                  |($ :attached))
+                @[:node]))
+
+      (assert (deep=
+                (layout/find-path
+                  {:type :margins
+                   :cols 20
+                   :rows 0
+                   :frame "big-hex"
+                   :node {:type :pane :attached true}}
+                  |(layout/type? :margins $))
+                @[])))
+
 (test "layout/assoc"
       (assert (deep=
                 (layout/assoc
@@ -208,3 +229,55 @@
                      :percent 50
                      :a {:type :pane}
                      :b {:type :pane :id 2 :attached true}}})))
+
+
+(test "layout/get-last"
+      (def layout
+        {:type :margins
+         :cols 20
+         :node {:type :margins
+                :cols 20
+                :node {:type :pane :attached true}}})
+
+      (def path (layout/attach-path layout))
+
+      (assert (deep=
+                (layout/get-last layout path |(layout/type? :margins $))
+                @[:node])))
+
+(test "layout/move-up"
+      (assert (deep=
+                (layout/move-up
+                  {:type :split
+                   :vertical true
+                   :a {:type :pane}
+                   :b {:type :margins :node {:type :pane :attached true}}})
+
+                {:type :split
+                 :vertical true
+                 :a {:type :pane :attached true}
+                 :b {:type :margins :node {:type :pane}}}))
+
+      (assert (deep=
+                (layout/move-up
+                  {:type :split
+                   :vertical true
+                   :a {:type :split
+                       :vertical true
+                       :a {:type :pane}
+                       :b {:type :pane}}
+                   :b {:type :split
+                       :vertical true
+                       :a {:type :pane :attached true}
+                       :b {:type :pane}}})
+
+                {:type :split
+                 :vertical true
+                 :a {:type :split
+                     :vertical true
+                     :a {:type :pane}
+                     :b {:type :pane :attached true}}
+                 :b {:type :split
+                     :vertical true
+                     :a {:type :pane}
+                     :b {:type :pane}}})))
