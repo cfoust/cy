@@ -26,7 +26,13 @@
                    [prefix "k"] action/jump-project
                    [prefix "l"] action/jump-shell
                    [prefix ";"] action/jump-pane
-                   [prefix "c"] action/jump-pane-command)
+                   [prefix "c"] action/jump-pane-command
+                   [prefix "|"] action/split-right
+                   [prefix "-"] action/split-down
+                   [prefix "H"] action/move-left
+                   [prefix "L"] action/move-right
+                   [prefix "K"] action/move-up
+                   [prefix "J"] action/move-down)
 
 #(key/bind-many-tag :root "viewport"
 #[prefix "g"] action/toggle-margins

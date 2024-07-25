@@ -209,6 +209,32 @@ successors is a unary function that, given a node, returns the paths of all of t
        @[[]])))
 
 (defn
+  layout/move-left
+  ```Change the layout by moving to the next node to the left of the attached pane.```
+  [layout]
+  (layout/move
+    layout
+    |(and (layout/type? :split $) (not ($ :vertical)))
+    |(cond
+       (layout/type? :split $) (if (not ($ :vertical))
+                                 @[[:b] [:a]]
+                                 @[[:a] [:b]])
+       (layout/type? :margins $) @[[:node]]
+       @[[]])))
+
+(defn
+  layout/move-right
+  ```Change the layout by moving to the next node to the right of the attached pane.```
+  [layout]
+  (layout/move
+    layout
+    |(and (layout/type? :split $) (not ($ :vertical)))
+    |(cond
+       (layout/type? :split $) @[[:a] [:b]]
+       (layout/type? :margins $) @[[:node]]
+       @[[]])))
+
+(defn
   layout/split-right
   ```Split the currently attached pane into two horizontally, replacing the right pane with the given node.```
   [layout node]
@@ -246,50 +272,40 @@ successors is a unary function that, given a node, returns the paths of all of t
                                         :b (layout/detach $)
                                         :a node})))
 
-# TODO(cfoust): 07/25/24 clean this up
-(key/action
+(defmacro-
+  pane-creator
+  [name docstring transformer]
+  ~(upscope
+     (key/action
+       ,name
+       ,docstring
+       (def path (,cmd/path (,pane/current)))
+       (def shells (,group/mkdir :root "/shells"))
+       (def shell (,cmd/new shells :path path :name (,path/base path)))
+       (,layout/set
+         (,transformer
+           (,layout/get)
+           {:type :pane :id shell :attached true})))))
+
+(pane-creator
   action/split-right
   "Split the current pane to the right."
-  (def path (cmd/path (pane/current)))
-  (def shells (group/mkdir :root "/shells"))
-  (def shell (cmd/new shells :path path :name (path/base path)))
-  (layout/set
-    (layout/split-right
-      (layout/get)
-      {:type :pane :id shell :attached true})))
+  layout/split-right)
 
-(key/action
-  action/split-right
-  "Split the current pane to the left"
-  (def path (cmd/path (pane/current)))
-  (def shells (group/mkdir :root "/shells"))
-  (def shell (cmd/new shells :path path :name (path/base path)))
-  (layout/set
-    (layout/split-left
-      (layout/get)
-      {:type :pane :id shell :attached true})))
+(pane-creator
+  action/split-left
+  "Split the current pane to the left."
+  layout/split-left)
 
-(key/action
+(pane-creator
+  action/split-up
+  "Split the current pane upwards."
+  layout/split-up)
+
+(pane-creator
   action/split-down
   "Split the current pane downwards."
-  (def path (cmd/path (pane/current)))
-  (def shells (group/mkdir :root "/shells"))
-  (def shell (cmd/new shells :path path :name (path/base path)))
-  (layout/set
-    (layout/split-down
-      (layout/get)
-      {:type :pane :id shell :attached true})))
-
-(key/action
-  action/split-up
-  "Split the current pane upwards"
-  (def path (cmd/path (pane/current)))
-  (def shells (group/mkdir :root "/shells"))
-  (def shell (cmd/new shells :path path :name (path/base path)))
-  (layout/set
-    (layout/split-up
-      (layout/get)
-      {:type :pane :id shell :attached true})))
+  layout/split-down)
 
 (key/action
   action/move-up
@@ -300,3 +316,13 @@ successors is a unary function that, given a node, returns the paths of all of t
   action/move-down
   "Move down to the next pane."
   (layout/set (layout/move-down (layout/get))))
+
+(key/action
+  action/move-left
+  "Move left to the next pane."
+  (layout/set (layout/move-left (layout/get))))
+
+(key/action
+  action/move-right
+  "Move right to the next pane."
+  (layout/set (layout/move-right (layout/get))))
