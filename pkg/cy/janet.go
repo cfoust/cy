@@ -2,6 +2,7 @@ package cy
 
 import (
 	"context"
+	"embed"
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/cy/api"
@@ -9,10 +10,8 @@ import (
 	"github.com/cfoust/cy/pkg/util"
 )
 
-import _ "embed"
-
-//go:embed cy-boot.janet
-var CY_BOOT_FILE []byte
+//go:embed boot/*.janet
+var CY_BOOT embed.FS
 
 func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 	vm, err := janet.New(ctx)
@@ -58,13 +57,34 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 		}
 	}
 
-	err = vm.ExecuteCall(ctx, nil, janet.Call{
-		Code:       CY_BOOT_FILE,
-		SourcePath: "cy-boot.janet",
-		Options:    janet.DEFAULT_CALL_OPTIONS,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute cy-boot.janet: %s", err.Error())
+	// These are specified here because order matters and I think something
+	// like 01_actions.janet, 02_layout.janet is ugly
+	files := []string{
+		"actions.janet",
+		"layout.janet",
+		"binds.janet",
+	}
+
+	for _, file := range files {
+		path := "boot/" + file
+
+		data, err := CY_BOOT.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+
+		err = vm.ExecuteCall(ctx, nil, janet.Call{
+			Code:       data,
+			SourcePath: path,
+			Options:    janet.DEFAULT_CALL_OPTIONS,
+		})
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to execute %s: %s",
+				file,
+				err.Error(),
+			)
+		}
 	}
 
 	return vm, nil
