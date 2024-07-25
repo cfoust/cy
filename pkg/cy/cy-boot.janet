@@ -138,7 +138,7 @@ For example:
             (layout/attached? a)) @[:a ;(layout/attach-path a)]
           (and
             (layout/pane? b)
-            (layout/attached? b)) @[:a ;(layout/attach-path b)]
+            (layout/attached? b)) @[:b ;(layout/attach-path b)]
           @[]))
       (layout/type? :margins node) @[:node ;(layout/attach-path (node :node))]
       @[])
@@ -165,30 +165,60 @@ For example:
   (table/to-struct new-layout))
 
 (defn
-  layout/detach
-  ```Replace the attached pane in this tree with a detached one.```
-  [node]
-  (if (layout/pane? node) (break {:type :pane :id (node :id)}))
+  layout/replace-attached
+  ```Replace the attached pane in this tree with a new one using the provided replacer function. This function will be invoked with a single argument, the node that is currently attached, and it should return a new node.```
+  [node replacer]
+  (if (layout/pane? node) (break (replacer node)))
   (def path (layout/attach-path node))
   (if (nil? path) (break node))
   (def current (layout/path node path))
-  (layout/assoc node path {:type :pane :id (current :id)}))
+  (layout/assoc node path (replacer current)))
+
+(defn
+  layout/detach
+  ```Detach the attached node in the tree.```
+  [node]
+  (layout/replace-attached node |(do {:type :pane :id ($ :id)})))
 
 (defn
   layout/split-right
-  ```Split the currently attached pane into two, replacing the right pane with the given node.```
+  ```Split the currently attached pane into two horizontally, replacing the right pane with the given node.```
   [layout node]
-  (def path (layout/attach-path layout))
-  (if (nil? path) (break layout))
-  (def current (layout/path layout path))
-  (layout/assoc
-    layout
-    path
-    {:type :split
-     :percent 50
-     :a (layout/detach current)
-     :b node}))
+  (layout/replace-attached layout |(do {:type :split
+                                        :percent 50
+                                        :a (layout/detach $)
+                                        :b node})))
 
+(defn
+  layout/split-left
+  ```Split the currently attached pane into two horizontally, replacing the left pane with the given node.```
+  [layout node]
+  (layout/replace-attached layout |(do {:type :split
+                                        :percent 50
+                                        :b (layout/detach $)
+                                        :a node})))
+
+(defn
+  layout/split-down
+  ```Split the currently attached pane into two vertically, replacing the bottom pane with the given node.```
+  [layout node]
+  (layout/replace-attached layout |(do {:type :split
+                                        :percent 50
+                                        :vertical true
+                                        :a (layout/detach $)
+                                        :b node})))
+
+(defn
+  layout/split-up
+  ```Split the currently attached pane into two vertically, replacing the top pane with the given node.```
+  [layout node]
+  (layout/replace-attached layout |(do {:type :split
+                                        :percent 50
+                                        :vertical true
+                                        :b (layout/detach $)
+                                        :a node})))
+
+# TODO(cfoust): 07/25/24 clean this up
 (key/action
   action/split-right
   "Split the current pane to the right."
@@ -197,6 +227,39 @@ For example:
   (def shell (cmd/new shells :path path :name (path/base path)))
   (layout/set
     (layout/split-right
+      (layout/get)
+      {:type :pane :id shell :attached true})))
+
+(key/action
+  action/split-right
+  "Split the current pane to the left"
+  (def path (cmd/path (pane/current)))
+  (def shells (group/mkdir :root "/shells"))
+  (def shell (cmd/new shells :path path :name (path/base path)))
+  (layout/set
+    (layout/split-left
+      (layout/get)
+      {:type :pane :id shell :attached true})))
+
+(key/action
+  action/split-down
+  "Split the current pane downwards."
+  (def path (cmd/path (pane/current)))
+  (def shells (group/mkdir :root "/shells"))
+  (def shell (cmd/new shells :path path :name (path/base path)))
+  (layout/set
+    (layout/split-down
+      (layout/get)
+      {:type :pane :id shell :attached true})))
+
+(key/action
+  action/split-up
+  "Split the current pane upwards"
+  (def path (cmd/path (pane/current)))
+  (def shells (group/mkdir :root "/shells"))
+  (def shell (cmd/new shells :path path :name (path/base path)))
+  (layout/set
+    (layout/split-up
       (layout/get)
       {:type :pane :id shell :attached true})))
 

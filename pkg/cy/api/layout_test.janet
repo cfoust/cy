@@ -78,6 +78,14 @@
 
       (assert (deep=
                 (layout/attach-path
+                  {:type :split
+                   :percent 50
+                   :a {:type :pane}
+                   :b {:type :pane :attached true}})
+                @[:b]))
+
+      (assert (deep=
+                (layout/attach-path
                   {:type :margins
                    :cols 20
                    :rows 0
@@ -157,7 +165,21 @@
                  :frame "big-hex"
                  :node {:type :pane :attached true}})))
 
-(test "layout/split-right"
+(test "layout/detach"
+      (assert (deep=
+                (layout/detach
+                  {:type :margins
+                   :cols 20
+                   :rows 0
+                   :frame "big-hex"
+                   :node {:type :pane :attached true}})
+                {:type :margins
+                 :cols 20
+                 :rows 0
+                 :frame "big-hex"
+                 :node {:type :pane :id nil}})))
+
+(test "layout/split-*"
       (assert (deep=
                 (layout/split-right
                   {:type :margins
@@ -170,4 +192,19 @@
                  :node {:type :split
                         :percent 50
                         :a {:type :pane}
-                        :b {:type :pane :id 2 :attached true}}})))
+                        :b {:type :pane :id 2 :attached true}}}))
+
+      (assert (deep=
+                (layout/split-down (layout/split-right
+                                     {:type :pane :attached true}
+                                     {:type :pane :attached true})
+                                   {:type :pane :id 2 :attached true})
+
+                {:type :split
+                 :percent 50
+                 :a {:type :pane}
+                 :b {:type :split
+                     :vertical true
+                     :percent 50
+                     :a {:type :pane}
+                     :b {:type :pane :id 2 :attached true}}})))
