@@ -29,6 +29,11 @@ func (t *Text) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 	case taro.KeyMsg:
 		switch msg.Type {
+		case taro.KeyEsc, taro.KeyCtrlC:
+			if t.result != nil {
+				t.result <- nil
+			}
+			return t.quit()
 		case taro.KeyEnter:
 			value := t.textInput.Value()
 			if len(value) > 0 {
