@@ -286,11 +286,26 @@ func (t *State) resize(size geom.Vec2) {
 		return
 	}
 
-	// Get rid of any wrapped lines (kitty does this too)
-	// TODO(cfoust): 02/28/24 what about in the alt screen?
+	// When a terminal is resized, we get rid of any wrapped lines so that
+	// we can avoid having to rewrap from where those lines began to figure
+	// out what the state of the "final" line should be. (kitty does this,
+	// too.)
+	//
+	// The usage of `rows` below is to prevent an infinite loop that occurs
+	// from time to time in terminals that have the scrollback disabled
+	// (t.disableHistory). I have not yet been able to find a way to
+	// reproduce that, so for now we bound this loop by the number of rows.
+	//
+	// TODO(cfoust): 02/28/24 what about when we're on the alt screen?
 	for isWrappedLines(t.history) || (t.disableHistory && t.wrapped) {
+		if rows == 0 {
+			break
+		}
 		t.scrollUp(0, 1)
+		rows--
 	}
+
+	rows = size.R
 
 	tabs := t.tabs
 	screen, altScreen := t.screen, t.altScreen
