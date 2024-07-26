@@ -120,6 +120,12 @@ func init() {
 	stories.Register("input/find/search", Search, config)
 	stories.Register("input/find/full-top", FullTop, config)
 	stories.Register("input/find/full-bottom", FullBottom, config)
+	stories.Register("input/find/empty", func(
+		ctx context.Context,
+	) (mux.Screen, error) {
+		f := New(ctx, []Option{})
+		return f, nil
+	}, config)
 
 	scrollingInputs := []interface{}{}
 	for i := 0; i < 150; i++ {

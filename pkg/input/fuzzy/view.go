@@ -64,7 +64,11 @@ func (f *Fuzzy) renderPreview(state *tty.State) {
 	)
 }
 
-func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) string {
+func (f *Fuzzy) renderOptions(
+	common, prompt lipgloss.Style,
+	options []Option,
+	maxOptions int,
+) string {
 	// the prompt otherwise comes with a fixed size, which messes with the
 	// table
 	prompt = prompt.Copy().Width(0)
@@ -76,11 +80,6 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) str
 	active := rowStyle.Copy().
 		Background(lipgloss.Color("#E8E3DF")).
 		Foreground(lipgloss.Color("#20111B"))
-
-	options := f.getOptions()
-	if len(options) == 0 {
-		return ""
-	}
 
 	var rows [][]string
 
@@ -103,7 +102,6 @@ func (f *Fuzzy) renderOptions(common, prompt lipgloss.Style, maxOptions int) str
 	windowEnd := geom.Min(len(options), windowOffset+maxOptions)
 
 	numColumns := 0
-
 	for index, option := range options[windowOffset:windowEnd] {
 		columns := append(
 			[]string{},
@@ -207,7 +205,15 @@ func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
 		return image.New(geom.Size{})
 	}
 
-	options := f.renderOptions(commonStyle, promptStyle, size.R-2)
+	var lines []string
+	if options := f.getOptions(); len(options) > 0 {
+		lines = append(lines, f.renderOptions(
+			commonStyle,
+			promptStyle,
+			options,
+			size.R-2,
+		))
+	}
 
 	promptStyle.GetBackground()
 	arrow := f.render.NewStyle().
@@ -230,20 +236,16 @@ func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
 
 	prompt := f.renderPrompt(promptStyle)
 
-	output := lipgloss.JoinVertical(
-		lipgloss.Left,
-		textInput,
-		prompt,
-		options,
-	)
 	if f.isUp {
-		output = lipgloss.JoinVertical(
-			lipgloss.Left,
-			options,
-			prompt,
+		lines = append(lines, prompt, textInput)
+	} else {
+		lines = append([]string{
 			textInput,
-		)
+			prompt,
+		}, lines...)
 	}
+
+	output := lipgloss.JoinVertical(lipgloss.Left, lines...)
 
 	window := image.New(geom.Size{
 		R: geom.Min(lipgloss.Height(output), size.R),
