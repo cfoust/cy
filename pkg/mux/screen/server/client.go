@@ -60,7 +60,14 @@ func (c *Client) Attachment() *util.Lifetime {
 }
 
 func (c *Client) Send(msg mux.Msg) {
-	c.screen.Send(msg)
+	c.RLock()
+	screen := c.screen
+	c.RUnlock()
+	if screen == nil {
+		return
+	}
+
+	screen.Send(msg)
 }
 
 func (c *Client) Kill() {

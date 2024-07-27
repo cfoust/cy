@@ -33,6 +33,7 @@ func (s *Static) Update(delta time.Duration) image.Image {
 	for row := 0; row < next.Size().R; row++ {
 		for col := 0; col < next.Size().C; col++ {
 			next[row][col].Char = BRAILLE[rand.Int()%len(BRAILLE)]
+			next[row][col].FG = 8
 		}
 	}
 	return next

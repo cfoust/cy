@@ -1,9 +1,10 @@
-package anim
+package main
 
 import (
 	"context"
 	_ "embed"
 
+	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -23,29 +24,29 @@ func createInitial(size geom.Size) image.Image {
 	return outerLayers.State().Image
 }
 
-type Story struct {
+type AnimationStory struct {
 	util.Lifetime
 	render   *taro.Renderer
 	animator *taro.Program
-	creator  Creator
+	creator  anim.Creator
 }
 
-var _ taro.Model = (*Story)(nil)
+var _ taro.Model = (*AnimationStory)(nil)
 
-func (s *Story) Init() tea.Cmd {
+func (s *AnimationStory) Init() tea.Cmd {
 	return taro.WaitScreens(s.animator.Ctx(), s.animator)
 }
 
-func (s *Story) View(state *tty.State) {
+func (s *AnimationStory) View(state *tty.State) {
 	tty.Copy(geom.Size{}, state, s.animator.State())
 }
 
-func (s *Story) initialize(size geom.Size) {
+func (s *AnimationStory) initialize(size geom.Size) {
 	if s.animator != nil {
 		s.animator.Cancel()
 	}
 
-	s.animator = NewAnimator(
+	s.animator = anim.NewAnimator(
 		s.Ctx(),
 		s.creator(),
 		createInitial(size),
@@ -54,7 +55,7 @@ func (s *Story) initialize(size geom.Size) {
 	s.animator.Resize(size)
 }
 
-func (s *Story) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
+func (s *AnimationStory) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		s.initialize(geom.Size{
@@ -69,11 +70,11 @@ func (s *Story) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	return s, nil
 }
 
-func NewStory(
+func NewAnimationStory(
 	ctx context.Context,
-	creator Creator,
+	creator anim.Creator,
 ) *taro.Program {
-	story := &Story{
+	story := &AnimationStory{
 		Lifetime: util.NewLifetime(ctx),
 		render:   taro.NewRenderer(),
 		creator:  creator,

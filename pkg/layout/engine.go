@@ -110,11 +110,18 @@ func (l *LayoutEngine) createNode(
 
 	switch config := config.(type) {
 	case PaneType:
-		node.Screen = NewPane(
+		pane := NewPane(
 			ctx,
 			l.tree,
 			l.server,
 		)
+
+		err := pane.setID(config.ID)
+		if err != nil {
+		    return nil, err
+		}
+
+		node.Screen = pane
 		return node, nil
 	case MarginsType:
 		marginsNode, err := l.createNode(ctx, config.Node)
