@@ -166,6 +166,7 @@ func (s *Server) AddClient(
 		}
 		s.clients = newClients
 		s.Unlock()
+		s.refreshPane(client.Screen())
 	}()
 
 	return client

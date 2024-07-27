@@ -158,11 +158,11 @@ func (l *LayoutEngine) Set(layout Layout) error {
 		return err
 	}
 
-	screen.Resize(l.size)
-
 	if l.layoutLifetime != nil {
 		l.layoutLifetime.Cancel()
 	}
+
+	screen.Resize(l.size)
 
 	l.layoutLifetime = &layoutLifetime
 	l.layout = layout

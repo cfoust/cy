@@ -86,11 +86,13 @@ func (s *Split) State() *tty.State {
 
 	if isAttachedA {
 		state.Cursor = stateA.Cursor
+		state.CursorVisible = stateA.CursorVisible
 	} else if isAttachedB {
 		cursor := stateB.Cursor
 		cursor.C += positionB.C
 		cursor.R += positionB.R
 		state.Cursor = cursor
+		state.CursorVisible = stateB.CursorVisible
 	} else {
 		state.CursorVisible = false
 	}
