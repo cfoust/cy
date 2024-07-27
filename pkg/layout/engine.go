@@ -105,14 +105,10 @@ func (l *LayoutEngine) createNode(
 		}
 
 		margins := NewMargins(ctx, screen)
-		err = margins.SetSize(geom.Size{
+		margins.setSize(geom.Size{
 			R: node.Rows,
 			C: node.Cols,
 		})
-		if err != nil {
-			return nil, err
-		}
-
 		return margins, nil
 	case SplitType:
 		screenA, err := l.createNode(ctx, node.A)
@@ -130,23 +126,15 @@ func (l *LayoutEngine) createNode(
 			screenB,
 			node.Vertical,
 		)
-		split.SetAttached(
-			isAttached(node.A),
-			isAttached(node.B),
-		)
+		split.isAttachedA = isAttached(node.A)
+		split.isAttachedB = isAttached(node.B)
 
 		if node.Percent != nil {
-			err := split.SetPercent(*node.Percent)
-			if err != nil {
-				return nil, err
-			}
+			split.setPercent(*node.Percent)
 		}
 
 		if node.Cells != nil {
-			err := split.SetCells(*node.Cells)
-			if err != nil {
-				return nil, err
-			}
+			split.setCells(*node.Cells)
 		}
 
 		return split, nil
@@ -191,6 +179,8 @@ func (l *LayoutEngine) Set(layout Layout) error {
 			}
 		}
 	}()
+
+	l.Notify()
 	return nil
 }
 

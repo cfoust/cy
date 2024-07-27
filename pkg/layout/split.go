@@ -70,15 +70,15 @@ func (s *Split) State() *tty.State {
 
 	state := tty.New(size)
 
-	stateA := s.screenA.State()
-	if !isAttachedA {
+	stateA := s.screenA.State().Clone()
+	if !isAttachedA && stateA.CursorVisible {
 		cursor := stateA.Cursor
 		stateA.Image[cursor.R][cursor.C].BG = 8
 	}
 	image.CopyRaw(geom.Size{}, state.Image, stateA.Image)
 
-	stateB := s.screenB.State()
-	if !isAttachedB {
+	stateB := s.screenB.State().Clone()
+	if !isAttachedB && stateB.CursorVisible {
 		cursor := stateB.Cursor
 		stateB.Image[cursor.R][cursor.C].BG = 8
 	}
@@ -144,8 +144,8 @@ func (s *Split) poll(ctx context.Context) {
 	}
 }
 
-func (s *Split) recalculate(size geom.Size) error {
-	s.size = size
+func (s *Split) recalculate() error {
+	size := s.size
 
 	axisCells := size.C
 	if s.isVertical {
@@ -194,27 +194,28 @@ func (s *Split) recalculate(size geom.Size) error {
 	return nil
 }
 
+func (s *Split) setPercent(percent int) {
+	s.percent = geom.Clamp(percent, 0, 100)
+	s.isCells = false
+}
+
 func (s *Split) SetPercent(percent int) error {
 	s.Lock()
 	defer s.Unlock()
-	s.percent = geom.Clamp(percent, 0, 100)
-	s.isCells = false
-	return s.recalculate(s.size)
+	s.setPercent(percent)
+	return s.recalculate()
 }
 
-func (s *Split) SetCells(cells int) error {
-	s.Lock()
-	defer s.Unlock()
+func (s *Split) setCells(cells int) {
 	s.cells = cells
 	s.isCells = true
-	return s.recalculate(s.size)
 }
 
 func (s *Split) Resize(size geom.Size) error {
 	s.Lock()
 	defer s.Unlock()
-
-	return s.recalculate(size)
+	s.size = size
+	return s.recalculate()
 }
 
 func NewSplit(

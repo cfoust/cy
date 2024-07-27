@@ -124,15 +124,12 @@ func (l *Margins) getInner(outer geom.Size) geom.Rect {
 	}
 }
 
-func (l *Margins) SetSize(size geom.Size) error {
-	l.Lock()
+func (l *Margins) setSize(size geom.Size) {
 	l.isMargins = false
 	l.size = geom.Size{
 		R: geom.Max(0, size.R),
 		C: geom.Max(0, size.C),
 	}
-	l.Unlock()
-	return l.recalculate()
 }
 
 func (l *Margins) Size() geom.Size {

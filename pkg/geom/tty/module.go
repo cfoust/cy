@@ -14,8 +14,7 @@ type State struct {
 
 func (s *State) Clone() *State {
 	cloned := New(s.Image.Size())
-	cloned.Cursor = s.Cursor
-	cloned.CursorVisible = s.CursorVisible
+	Copy(geom.Vec2{}, cloned, s)
 	return cloned
 }
 
