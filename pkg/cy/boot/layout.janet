@@ -1,4 +1,13 @@
 (defn
+  layout/path
+  ```Resolve the path to a node. Returns nil if any portion of the path is invalid.```
+  [node path]
+  (if (= (length path) 0) (break node))
+  (def [head & rest] path)
+  (if (nil? (node head)) (break nil))
+  (layout/path (node head) rest))
+
+(defn
   layout/type?
   ```Report whether node is of the provided type.```
   [type node]
@@ -11,7 +20,7 @@
   (layout/type? :pane node))
 
 (defn
-  layout/find-path
+  layout/find
   ```Get the path to the first node satisfying the predicate function or nil if none exists.```
   [node predicate]
   (if (predicate node) (break @[]))
@@ -19,57 +28,19 @@
   (cond
     (layout/type? :split node) (do
                                  (def {:a a :b b} node)
-                                 (def a-path (layout/find-path a predicate))
+                                 (def a-path (layout/find a predicate))
                                  (if (not (nil? a-path)) (break @[:a ;a-path]))
-                                 (def b-path (layout/find-path b predicate))
+                                 (def b-path (layout/find b predicate))
                                  (if (not (nil? b-path)) (break @[:b ;b-path]))
                                  nil)
     (layout/type? :margins node) (do
                                    (def {:node node} node)
-                                   (def path (layout/find-path node predicate))
+                                   (def path (layout/find node predicate))
                                    (if (not (nil? path)) (break @[:node ;path])))
     nil))
 
 (defn
-  layout/has?
-  ```Report whether this node or one of its descendants matches the predicate function.```
-  [node predicate]
-  (not (nil? (layout/find-path node predicate))))
-
-(defn
-  layout/attached?
-  ```Report whether node or one of its descendants is attached.```
-  [node]
-  (not (nil? (layout/find-path node |($ :attached)))))
-
-(defn
-  layout/attach-path
-  ```Get the path to the attached node for the given node.```
-  [node]
-  (layout/find-path node |($ :attached)))
-
-(defn
-  layout/path
-  ```Resolve the path to a node. Returns nil if any portion of the path is invalid.```
-  [node path]
-  (if (= (length path) 0) (break node))
-  (def [head & rest] path)
-  (if (nil? (node head)) (break nil))
-  (layout/path (node head) rest))
-
-(defn
-  layout/assoc
-  ```Set the node at the given path in layout to the provided node. Returns a copy of the original layout with the node changed.```
-  [layout path node]
-  (if (= (length path) 0) (break node))
-  (def [head & rest] path)
-  (if (nil? (layout head)) (break layout))
-  (def new-layout (struct/to-table layout))
-  (put new-layout head (layout/assoc (layout head) rest node))
-  (table/to-struct new-layout))
-
-(defn
-  layout/get-last
+  layout/find-last
   ```Get the path to the last node in the path where (predicate node) evaluates to true.```
   [layout path predicate]
   # Must be a valid path and actually map to a node
@@ -86,6 +57,35 @@
 
   (if (nil? found-path) (break nil))
   (array/slice path ;found-path))
+
+(defn
+  layout/has?
+  ```Report whether this node or one of its descendants matches the predicate function.```
+  [node predicate]
+  (not (nil? (layout/find node predicate))))
+
+(defn
+  layout/attached?
+  ```Report whether node or one of its descendants is attached.```
+  [node]
+  (not (nil? (layout/find node |($ :attached)))))
+
+(defn
+  layout/attach-path
+  ```Get the path to the attached node for the given node.```
+  [node]
+  (layout/find node |($ :attached)))
+
+(defn
+  layout/assoc
+  ```Set the node at the given path in layout to the provided node. Returns a copy of the original layout with the node changed.```
+  [layout path node]
+  (if (= (length path) 0) (break node))
+  (def [head & rest] path)
+  (if (nil? (layout head)) (break layout))
+  (def new-layout (struct/to-table layout))
+  (put new-layout head (layout/assoc (layout head) rest node))
+  (table/to-struct new-layout))
 
 (defn
   layout/replace
@@ -119,21 +119,6 @@
     |{:type :pane :id ($ :id) :attached true}))
 
 (defn
-  layout/find-bottom
-  ```Find the path to the node at the bottom.```
-  [node]
-  (if (layout/pane? node) (break @[]))
-
-  (cond
-    (layout/type? :split node) (do
-                                 (def {:vertical vertical :a a :b b} node)
-                                 (if vertical
-                                   @[:b ;(layout/find-bottom b)]
-                                   @[:a ;(layout/find-bottom a)]))
-    (layout/type? :margins node) @[:node ;(layout/find-bottom (node :node))]
-    nil))
-
-(defn
   layout/move
   ```This function attaches to the pane nearest to the one the user is currently attached to along an axis. It returns a new copy of layout with the attachment point changed or returns the same layout if no motion could be completed.
 
@@ -164,7 +149,7 @@ successors is a unary function that, given a node, returns the paths of all of t
 
   # We first find the most recent ancestor to the node we're attached to that
   # has a child tree that we can move to.
-  (def branch-path (layout/get-last layout path check-node))
+  (def branch-path (layout/find-last layout path check-node))
   (if (nil? branch-path) (break layout))
 
   (def [next-path] (detached-successors (layout/path layout branch-path)))

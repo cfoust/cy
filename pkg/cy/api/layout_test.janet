@@ -133,9 +133,9 @@
                   @[:a])
                 nil)))
 
-(test "layout/find-path"
+(test "layout/find"
       (assert (deep=
-                (layout/find-path
+                (layout/find
                   {:type :margins
                    :cols 20
                    :rows 0
@@ -145,7 +145,7 @@
                 @[:node]))
 
       (assert (deep=
-                (layout/find-path
+                (layout/find
                   {:type :margins
                    :cols 20
                    :rows 0
@@ -231,7 +231,7 @@
                      :b {:type :pane :id 2 :attached true}}})))
 
 
-(test "layout/get-last"
+(test "layout/find-last"
       (def layout
         {:type :margins
          :cols 20
@@ -242,7 +242,7 @@
       (def path (layout/attach-path layout))
 
       (assert (deep=
-                (layout/get-last layout path |(layout/type? :margins $))
+                (layout/find-last layout path |(layout/type? :margins $))
                 @[:node])))
 
 (test "layout/move-up"
