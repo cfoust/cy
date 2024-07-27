@@ -14,11 +14,20 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
+// reusable is used to describe a Screen that has a configuration that can
+// change. Often a Screen does not actually need to be created from scratch
+// when the corresponding layout node changes; it can just be updated. The
+// reuse function checks whether the Screen can be updated to match the new
+// configuration and updates it if possible.
 type reusable interface {
 	mux.Screen
 	reuse(NodeType) (bool, error)
 }
 
+// screenNode is a node in the tree of layout nodes that have already been
+// turned into Screens. It holds on to the Screen and the configuration that
+// was used to create it originally, along with references to this layout
+// node's children.
 type screenNode struct {
 	util.Lifetime
 	Screen   reusable
@@ -26,6 +35,9 @@ type screenNode struct {
 	Children []*screenNode
 }
 
+// LayoutEngine is a Screen that renders a declarative layout that consists of
+// other Screens. When the layout changes, LayoutEngine detects which Screens
+// in the layout can be reused and which must be created from scratch.
 type LayoutEngine struct {
 	util.Lifetime
 	deadlock.RWMutex
@@ -84,6 +96,8 @@ func (l *LayoutEngine) Resize(size geom.Size) error {
 	return screen.Resize(size)
 }
 
+// createNode takes a layout node and (recursively) creates a new screenNode
+// that corresponds to that layout node's configuration.
 func (l *LayoutEngine) createNode(
 	ctx context.Context,
 	config NodeType,
@@ -156,30 +170,33 @@ type updateNode struct {
 	Node   *screenNode
 }
 
+// updateNode attempts to reuse the given screenNode to match the provided
+// layout node's configuration if it is possible, or creates a new screenNode
+// if it is not.
 func (l *LayoutEngine) updateNode(
 	ctx context.Context,
-	type_ NodeType,
+	config NodeType,
 	current *screenNode,
 ) (*screenNode, error) {
 	if current == nil {
 		return l.createNode(
 			ctx,
-			type_,
+			config,
 		)
 	}
 
-	canReuse, err := current.Screen.reuse(type_)
+	canReuse, err := current.Screen.reuse(config)
 	if err != nil {
 		return nil, err
 	}
 
 	if !canReuse {
 		current.Cancel()
-		return l.createNode(ctx, type_)
+		return l.createNode(ctx, config)
 	}
 
 	var updates []updateNode
-	switch node := type_.(type) {
+	switch node := config.(type) {
 	case SplitType:
 		updates = append(updates,
 			updateNode{
@@ -213,7 +230,7 @@ func (l *LayoutEngine) updateNode(
 		}
 		if !canReuse {
 			current.Cancel()
-			return l.createNode(ctx, type_)
+			return l.createNode(ctx, config)
 		}
 
 		child, err := l.updateNode(
@@ -228,11 +245,13 @@ func (l *LayoutEngine) updateNode(
 		children = append(children, child)
 	}
 
-	current.Config = type_
+	current.Config = config
 	current.Children = children
 	return current, nil
 }
 
+// Set changes the Layout rendered by this LayoutEngine by reusing as many
+// existing Screens as it can.
 func (l *LayoutEngine) Set(layout Layout) error {
 	err := validateTree(layout.root)
 	if err != nil {
@@ -276,6 +295,7 @@ func (l *LayoutEngine) Set(layout Layout) error {
 	return nil
 }
 
+// Get gets the Layout this LayoutEngine is rendering.
 func (l *LayoutEngine) Get() Layout {
 	l.RLock()
 	layout := l.layout

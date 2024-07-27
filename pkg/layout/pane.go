@@ -66,6 +66,11 @@ func (p *Pane) Resize(size geom.Size) error {
 /*return client, nil*/
 
 func (p *Pane) reuse(node NodeType) (bool, error) {
+	_, ok := node.(PaneType)
+	if !ok {
+		return false, nil
+	}
+
 	return true, nil
 }
 
