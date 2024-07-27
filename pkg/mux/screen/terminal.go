@@ -5,15 +5,20 @@ import (
 	"io"
 
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
+
+	"github.com/sasha-s/go-deadlock"
 )
 
 type Terminal struct {
+	deadlock.RWMutex
 	*mux.UpdatePublisher
 	terminal emu.Terminal
 	stream   Stream
+	size     geom.Size
 }
 
 var _ Screen = (*Terminal)(nil)
@@ -27,6 +32,13 @@ func (t *Terminal) State() *tty.State {
 }
 
 func (t *Terminal) Resize(size Size) error {
+	t.Lock()
+	defer t.Unlock()
+	if size == t.size {
+		return nil
+	}
+
+	t.size = size
 	t.terminal.Resize(size)
 
 	err := t.stream.Resize(size)
