@@ -34,12 +34,13 @@
                    [prefix "K"] action/move-up
                    [prefix "J"] action/move-down)
 
-#(key/bind-many-tag :root "viewport"
-#[prefix "g"] action/toggle-margins
-#[prefix "1"] action/margins-80
-#[prefix "2"] action/margins-160
-#[prefix "+"] action/margins-smaller
-#[prefix "-"] action/margins-bigger)
+(key/bind-many-tag :root "viewport"
+                   [prefix "g"] action/toggle-margins
+                   #[prefix "1"] action/margins-80
+                   #[prefix "2"] action/margins-160
+                   #[prefix "+"] action/margins-smaller
+                   #[prefix "-"] action/margins-bigger
+)
 
 (key/bind-many-tag :root "unprefixed"
                    ["ctrl+l"] action/next-pane)

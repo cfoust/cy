@@ -217,24 +217,6 @@ For example:
   "Detach from the cy server."
   (cy/detach))
 
-#(key/action
-#action/toggle-margins
-#"Toggle the screen's margins."
-#(def size (viewport/size))
-#(case (+ (size 0) (size 1))
-#0 (viewport/set-size [0 80])
-#(viewport/set-size [0 0])))
-
-#(key/action
-#action/margins-80
-#"Set size to 80 columns."
-#(viewport/set-size [0 80]))
-
-#(key/action
-#action/margins-160
-#"Set size to 160 columns."
-#(viewport/set-size [0 160]))
-
 (key/action
   action/choose-frame
   "Choose a frame."

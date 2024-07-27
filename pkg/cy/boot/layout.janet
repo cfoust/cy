@@ -311,3 +311,26 @@ successors is a unary function that, given a node, returns the paths of all of t
   action/move-right
   "Move right to the next pane."
   (layout/set (layout/move-right (layout/get))))
+
+(key/action
+  action/toggle-margins
+  "Toggle the screen's margins."
+  (def layout (layout/get))
+  (def path (layout/attach-path layout))
+  (def margins-path (layout/find-last layout path |(layout/type? :margins $)))
+  (layout/set (if (not (nil? margins-path))
+                (do
+                  (def {:node node} (layout/path layout margins-path))
+                  (layout/assoc layout margins-path node))
+                {:type :margins :node layout :cols 80 :rows 0})))
+
+#(key/action
+#action/margins-80
+#"Set size to 80 columns."
+#(viewport/set-size [0 80]))
+
+#(key/action
+#action/margins-160
+#"Set size to 160 columns."
+#(viewport/set-size [0 160]))
+
