@@ -45,6 +45,7 @@ type Split struct {
 }
 
 var _ mux.Screen = (*Split)(nil)
+var _ reusable = (*Split)(nil)
 
 func (s *Split) Kill() {
 	s.RLock()
@@ -98,6 +99,33 @@ func (s *Split) State() *tty.State {
 	}
 
 	return state
+}
+
+func (s *Split) reuse(node NodeType) (bool, error) {
+	config, ok := node.(SplitType)
+	if !ok {
+		return false, nil
+	}
+
+	s.isAttachedA = isAttached(config.A)
+	s.isAttachedB = isAttached(config.B)
+
+	var changed bool
+	if config.Percent != nil && (s.isCells || s.percent != *config.Percent) {
+		s.setPercent(*config.Percent)
+		changed = true
+	}
+
+	if config.Cells != nil && (!s.isCells || s.cells != *config.Cells) {
+		s.setCells(*config.Cells)
+		changed = true
+	}
+
+	if !changed {
+		return true, nil
+	}
+
+	return true, s.recalculate()
 }
 
 func (s *Split) SetAttached(isAttachedA, isAttachedB bool) {

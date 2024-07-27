@@ -34,6 +34,7 @@ type Margins struct {
 }
 
 var _ mux.Screen = (*Margins)(nil)
+var _ reusable = (*Margins)(nil)
 
 func fitMargin(outer, margin int) int {
 	if margin == 0 {
@@ -53,6 +54,32 @@ func getSize(outer, desired int) int {
 	}
 
 	return desired
+}
+
+func (l *Margins) reuse(node NodeType) (bool, error) {
+	config, ok := node.(MarginsType)
+	if !ok {
+		return false, nil
+	}
+
+	l.RLock()
+	oldSize := l.size
+	l.RUnlock()
+
+	newSize := geom.Vec2{
+		R: config.Rows,
+		C: config.Cols,
+	}
+
+	if oldSize != newSize {
+		l.setSize(newSize)
+		err := l.recalculate()
+		if err != nil {
+			return false, err
+		}
+	}
+
+	return true, nil
 }
 
 func (l *Margins) Kill() {
