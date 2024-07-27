@@ -324,13 +324,76 @@ successors is a unary function that, given a node, returns the paths of all of t
                   (layout/assoc layout margins-path node))
                 {:type :margins :node layout :cols 80 :rows 0})))
 
-#(key/action
-#action/margins-80
-#"Set size to 80 columns."
-#(viewport/set-size [0 80]))
+(key/action
+  action/margins-80
+  "Toggle the screen's margins."
+  (def layout (layout/get))
+  (def path (layout/attach-path layout))
+  (def margins-path (layout/find-last layout path |(layout/type? :margins $)))
+  (layout/set (if (not (nil? margins-path))
+                (do
+                  (def {:node node} (layout/path layout margins-path))
+                  (layout/assoc layout margins-path node))
+                {:type :margins :node layout :cols 80 :rows 0})))
 
-#(key/action
-#action/margins-160
-#"Set size to 160 columns."
-#(viewport/set-size [0 160]))
+(key/action
+  action/margins-80
+  "Set margins size to 80 columns."
+  (def layout (layout/get))
+  (def path (layout/attach-path layout))
+  (def margins-path (layout/find-last layout path |(layout/type? :margins $)))
+  (layout/set (if (not (nil? margins-path))
+                (do
+                  (def {:node node} (layout/path layout margins-path))
+                  (layout/assoc
+                    layout
+                    margins-path
+                    {:type :margins :node node :cols 80 :rows 0}))
+                {:type :margins :node layout :cols 80 :rows 0})))
 
+(key/action
+  action/margins-160
+  "Set size to 160 columns."
+  (def layout (layout/get))
+  (def path (layout/attach-path layout))
+  (def margins-path (layout/find-last layout path |(layout/type? :margins $)))
+  (layout/set (if (not (nil? margins-path))
+                (do
+                  (def {:node node} (layout/path layout margins-path))
+                  (layout/assoc
+                    layout
+                    margins-path
+                    {:type :margins :node node :cols 160 :rows 0}))
+                {:type :margins :node layout :cols 160 :rows 0})))
+
+(key/action
+  action/margins-smaller
+  "Decrease margins by 5 columns."
+  (def layout (layout/get))
+  (def path (layout/attach-path layout))
+  (def margins-path (layout/find-last layout path |(layout/type? :margins $)))
+  (if (nil? margins-path) (break))
+  (def {:node node :cols cols :rows rows} (layout/path layout margins-path))
+  (layout/set (layout/assoc
+                layout
+                margins-path
+                {:type :margins
+                 :node node
+                 :cols (max (- cols 5) 5)
+                 :rows rows})))
+
+(key/action
+  action/margins-bigger
+  "Increase margins by 5 columns."
+  (def layout (layout/get))
+  (def path (layout/attach-path layout))
+  (def margins-path (layout/find-last layout path |(layout/type? :margins $)))
+  (if (nil? margins-path) (break))
+  (def {:node node :cols cols :rows rows} (layout/path layout margins-path))
+  (layout/set (layout/assoc
+                layout
+                margins-path
+                {:type :margins
+                 :node node
+                 :cols (+ cols 5)
+                 :rows rows})))

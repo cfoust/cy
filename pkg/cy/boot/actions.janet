@@ -247,18 +247,6 @@ For example:
   (def rng (math/rng))
   (viewport/set-frame (get frames (math/rng-int rng (length frames)))))
 
-#(key/action
-#action/margins-smaller
-#"Decrease margins by 5 columns."
-#(def [lines cols] (viewport/size))
-#(viewport/set-size [lines (+ cols 10)]))
-
-#(key/action
-#action/margins-bigger
-#"Increase margins by 5 columns."
-#(def [lines cols] (viewport/size))
-#(viewport/set-size [lines (- cols 10)]))
-
 (key/action
   action/open-log
   "Open a .borg file."

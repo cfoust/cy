@@ -120,11 +120,6 @@ func (c *Client) Attach(ctx context.Context, screen mux.Screen) {
 
 	go c.pollScreen(attachment.Ctx(), screen)
 
-	go func() {
-		<-attachment.Ctx().Done()
-		c.server.clearOldScreens()
-	}()
-
 	c.Notify()
 }
 
