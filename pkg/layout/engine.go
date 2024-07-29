@@ -237,17 +237,8 @@ func (l *LayoutEngine) updateNode(
 	// partially changing the screens they subscribe to.
 	var children []*screenNode
 	for _, update := range updates {
-		canReuse, err := update.Node.Screen.reuse(update.Config)
-		if err != nil {
-			return nil, err
-		}
-		if !canReuse {
-			current.Cancel()
-			return l.createNode(ctx, config)
-		}
-
 		child, err := l.updateNode(
-			ctx,
+			current.Ctx(),
 			update.Config,
 			update.Node,
 		)

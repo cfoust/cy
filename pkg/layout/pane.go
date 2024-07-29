@@ -146,6 +146,13 @@ func (p *Pane) reuse(node NodeType) (bool, error) {
 		return false, nil
 	}
 
+	oldID := p.id
+	newID := config.ID
+
+	if oldID != nil && newID != nil && *oldID == *newID {
+		return true, nil
+	}
+
 	if config.ID != p.id {
 		err := p.setID(config.ID)
 		if err != nil {
