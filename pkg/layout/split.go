@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -42,6 +43,8 @@ type Split struct {
 	// The number of cells perpendicular to the split axis to include from
 	// screen A. This is calculated using `percent`.
 	cells int
+
+	borderStyle *lipgloss.Border
 }
 
 var _ mux.Screen = (*Split)(nil)
@@ -66,6 +69,8 @@ func (s *Split) State() *tty.State {
 		positionB   = s.positionB
 		isAttachedA = s.isAttachedA
 		isAttachedB = s.isAttachedB
+		isVertical  = s.isVertical
+		borderStyle = s.borderStyle
 	)
 	s.RUnlock()
 
@@ -77,6 +82,22 @@ func (s *Split) State() *tty.State {
 		stateA.Image[cursor.R][cursor.C].BG = 8
 	}
 	image.CopyRaw(geom.Size{}, state.Image, stateA.Image)
+
+	if borderStyle != nil {
+		if !isVertical {
+			col := geom.Clamp(positionB.C-1, 0, size.C-1)
+			char := []rune(borderStyle.Left)[0]
+			for row := 0; row < size.R; row++ {
+				state.Image[row][col].Char = char
+			}
+		} else {
+			row := geom.Clamp(positionB.R-1, 0, size.R-1)
+			char := []rune(borderStyle.Top)[0]
+			for col := 0; col < size.C; col++ {
+				state.Image[row][col].Char = char
+			}
+		}
+	}
 
 	stateB := s.screenB.State().Clone()
 	if !isAttachedB && stateB.CursorVisible {
@@ -118,6 +139,11 @@ func (s *Split) reuse(node NodeType) (bool, error) {
 
 	if config.Cells != nil && (!s.isCells || s.cells != *config.Cells) {
 		s.setCells(*config.Cells)
+		changed = true
+	}
+
+	if config.Border != nil {
+		s.borderStyle = &config.Border.Style
 		changed = true
 	}
 
@@ -188,17 +214,22 @@ func (s *Split) recalculate() error {
 		desiredCells = int((proportion * float64(axisCells)))
 	}
 
+	positionB := geom.Size{C: desiredCells}
+	if s.isVertical {
+		positionB = geom.Size{R: desiredCells}
+	}
+
+	s.positionB = positionB
+
+	if s.borderStyle != nil {
+		desiredCells--
+	}
+
 	desiredCells = geom.Clamp(
 		desiredCells,
 		1,
 		axisCells-1,
 	)
-
-	positionB := geom.Size{C: desiredCells}
-	if s.isVertical {
-		positionB = geom.Size{R: desiredCells}
-	}
-	s.positionB = positionB
 
 	sizeA := geom.Size{
 		R: size.R,

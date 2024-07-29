@@ -3,7 +3,10 @@ package layout
 import (
 	"fmt"
 
+	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 type NodeType interface{}
@@ -13,10 +16,16 @@ type PaneType struct {
 	ID       *tree.NodeID
 }
 
+type Border struct {
+	Style   lipgloss.Border
+	Keyword janet.Keyword
+}
+
 type SplitType struct {
 	Vertical bool
 	Percent  *int
 	Cells    *int
+	Border   *Border
 	A        NodeType
 	B        NodeType
 }

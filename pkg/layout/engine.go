@@ -170,6 +170,10 @@ func (l *LayoutEngine) createNode(
 			split.setCells(*config.Cells)
 		}
 
+		if config.Border != nil {
+			split.borderStyle = &config.Border.Style
+		}
+
 		node.Screen = split
 		node.Children = []*screenNode{nodeA, nodeB}
 		return node, nil

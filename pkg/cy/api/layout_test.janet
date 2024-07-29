@@ -11,6 +11,35 @@
       (layout/set layout)
       (assert (deep= (layout/get) layout)))
 
+(test "borders"
+      (do
+        (def layout {:type :split
+                     :percent 26
+                     :border :normal
+                     :vertical false
+                     :a {:type :pane :attached true}
+                     :b {:type :pane :attached false}})
+        (layout/set layout)
+        (assert (deep= (layout/get) layout)))
+
+      (do
+        (def layout {:type :split
+                     :percent 26
+                     :border :none
+                     :vertical false
+                     :a {:type :pane :attached true}
+                     :b {:type :pane :attached false}})
+        (layout/set layout)
+        (assert (deep= (layout/get) layout)))
+
+      (expect-error (layout/set
+                      {:type :split
+                       :percent 26
+                       :border :asd
+                       :vertical false
+                       :a {:type :pane :attached true}
+                       :b {:type :pane :attached false}})))
+
 (test ":split"
       (layout/set
         {:type :split
