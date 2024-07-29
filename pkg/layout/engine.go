@@ -111,25 +111,31 @@ func (l *LayoutEngine) createNode(
 	switch config := config.(type) {
 	case PaneType:
 		pane := NewPane(
-			ctx,
+			nodeLifetime.Ctx(),
 			l.tree,
 			l.server,
 		)
 
 		err := pane.setID(config.ID)
 		if err != nil {
-		    return nil, err
+			return nil, err
 		}
 
 		node.Screen = pane
 		return node, nil
 	case MarginsType:
-		marginsNode, err := l.createNode(ctx, config.Node)
+		marginsNode, err := l.createNode(
+			nodeLifetime.Ctx(),
+			config.Node,
+		)
 		if err != nil {
 			return nil, err
 		}
 
-		margins := NewMargins(ctx, marginsNode.Screen)
+		margins := NewMargins(
+			nodeLifetime.Ctx(),
+			marginsNode.Screen,
+		)
 		margins.setSize(geom.Size{
 			R: config.Rows,
 			C: config.Cols,
@@ -138,17 +144,17 @@ func (l *LayoutEngine) createNode(
 		node.Children = []*screenNode{marginsNode}
 		return node, nil
 	case SplitType:
-		nodeA, err := l.createNode(ctx, config.A)
+		nodeA, err := l.createNode(nodeLifetime.Ctx(), config.A)
 		if err != nil {
 			return nil, err
 		}
-		nodeB, err := l.createNode(ctx, config.B)
+		nodeB, err := l.createNode(nodeLifetime.Ctx(), config.B)
 		if err != nil {
 			return nil, err
 		}
 
 		split := NewSplit(
-			ctx,
+			nodeLifetime.Ctx(),
 			nodeA.Screen,
 			nodeB.Screen,
 			config.Vertical,
@@ -247,6 +253,11 @@ func (l *LayoutEngine) updateNode(
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		if update.Node.Screen != child.Screen {
+			current.Cancel()
+			return l.createNode(ctx, config)
 		}
 
 		children = append(children, child)
