@@ -140,6 +140,11 @@ func (l *LayoutEngine) createNode(
 			R: config.Rows,
 			C: config.Cols,
 		})
+
+		if config.Border != nil {
+			margins.borderStyle = &config.Border.Style
+		}
+
 		node.Screen = margins
 		node.Children = []*screenNode{marginsNode}
 		return node, nil

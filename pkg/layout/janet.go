@@ -18,8 +18,8 @@ var (
 	KEYWORD_NORMAL     = janet.Keyword("normal")
 	KEYWORD_ROUNDED    = janet.Keyword("rounded")
 	KEYWORD_BLOCK      = janet.Keyword("block")
-	KEYWORD_OUTER_HALF = janet.Keyword("outerHalf")
-	KEYWORD_INNER_HALF = janet.Keyword("innerHalf")
+	KEYWORD_OUTER_HALF = janet.Keyword("outer-half")
+	KEYWORD_INNER_HALF = janet.Keyword("inner-half")
 	KEYWORD_THICK      = janet.Keyword("thick")
 	KEYWORD_DOUBLE     = janet.Keyword("double")
 	KEYWORD_HIDDEN     = janet.Keyword("hidden")
@@ -148,10 +148,11 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		return type_, nil
 	case KEYWORD_MARGINS:
 		type marginsArgs struct {
-			Cols  *int
-			Rows  *int
-			Frame *string
-			Node  *janet.Value
+			Cols   *int
+			Rows   *int
+			Frame  *string
+			Border *janet.Keyword
+			Node   *janet.Value
 		}
 		args := marginsArgs{}
 		err = value.Unmarshal(&args)
@@ -175,6 +176,19 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 
 		if args.Rows != nil {
 			type_.Rows = *args.Rows
+		}
+
+		if args.Border != nil {
+			border, err := unmarshalBorder(*args.Border)
+			if err != nil {
+				return nil, err
+			}
+			type_.Border = border
+		} else {
+			type_.Border = &Border{
+				Style:   lipgloss.DoubleBorder(),
+				Keyword: KEYWORD_DOUBLE,
+			}
 		}
 
 		return type_, nil

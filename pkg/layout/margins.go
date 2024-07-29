@@ -11,6 +11,7 @@ import (
 	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/taro"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -31,6 +32,8 @@ type Margins struct {
 
 	outer geom.Size
 	inner geom.Rect
+
+	borderStyle *lipgloss.Border
 }
 
 var _ mux.Screen = (*Margins)(nil)
@@ -71,15 +74,21 @@ func (l *Margins) reuse(node NodeType) (bool, error) {
 		C: config.Cols,
 	}
 
+	var changed bool
 	if oldSize != newSize {
 		l.setSize(newSize)
-		err := l.recalculate()
-		if err != nil {
-			return false, err
-		}
 	}
 
-	return true, nil
+	if config.Border != nil {
+		l.borderStyle = &config.Border.Style
+		changed = true
+	}
+
+	if !changed {
+		return true, nil
+	}
+
+	return true, l.recalculate()
 }
 
 func (l *Margins) Kill() {
@@ -94,6 +103,7 @@ func (l *Margins) State() *tty.State {
 	l.RLock()
 	inner := l.inner
 	outer := l.outer
+	borderStyle := l.borderStyle
 	l.RUnlock()
 
 	innerState := l.screen.State()
@@ -111,6 +121,22 @@ func (l *Margins) State() *tty.State {
 				continue
 			}
 			state.Image[row][col].Mode |= emu.AttrTransparent
+		}
+	}
+
+	if borderStyle != nil {
+		left := geom.Clamp(inner.Position.C-1, 0, size.C-1)
+		right := geom.Clamp(
+			inner.Position.C+inner.Size.C,
+			0,
+			size.C-1,
+		)
+		char := []rune(borderStyle.Left)[0]
+		for row := 0; row < size.R; row++ {
+			state.Image[row][left].Char = char
+			state.Image[row][left].Mode ^= emu.AttrTransparent
+			state.Image[row][right].Char = char
+			state.Image[row][right].Mode ^= emu.AttrTransparent
 		}
 	}
 
@@ -143,6 +169,13 @@ func (l *Margins) getInner(outer geom.Size) geom.Rect {
 	inner := geom.Size{
 		R: geom.Max(getSize(outer.R, factor.R), 1),
 		C: geom.Max(getSize(outer.C, factor.C), 1),
+	}
+
+	if l.borderStyle != nil {
+		inner.C = geom.Max(
+			inner.C-2,
+			1,
+		)
 	}
 
 	return geom.Rect{

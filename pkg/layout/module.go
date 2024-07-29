@@ -31,10 +31,11 @@ type SplitType struct {
 }
 
 type MarginsType struct {
-	Cols  int
-	Rows  int
-	Frame *string
-	Node  NodeType
+	Cols   int
+	Rows   int
+	Frame  *string
+	Border *Border
+	Node   NodeType
 }
 
 type Layout struct {
