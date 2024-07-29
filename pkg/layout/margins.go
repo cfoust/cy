@@ -237,6 +237,36 @@ func (l *Margins) Resize(size geom.Size) error {
 	return l.recalculate()
 }
 
+func (l *LayoutEngine) createMargins(
+	node *screenNode,
+	config MarginsType,
+) (*screenNode, error) {
+	marginsNode, err := l.createNode(
+		node.Ctx(),
+		config.Node,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	margins := NewMargins(
+		node.Ctx(),
+		marginsNode.Screen,
+	)
+	margins.setSize(geom.Size{
+		R: config.Rows,
+		C: config.Cols,
+	})
+
+	if config.Border != nil {
+		margins.borderStyle = &config.Border.Style
+	}
+
+	node.Screen = margins
+	node.Children = []*screenNode{marginsNode}
+	return node, nil
+}
+
 func NewMargins(ctx context.Context, screen mux.Screen) *Margins {
 	margins := &Margins{
 		UpdatePublisher: mux.NewPublisher(),

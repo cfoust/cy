@@ -110,78 +110,11 @@ func (l *LayoutEngine) createNode(
 
 	switch config := config.(type) {
 	case PaneType:
-		pane := NewPane(
-			nodeLifetime.Ctx(),
-			l.tree,
-			l.server,
-		)
-
-		err := pane.setID(config.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		node.Screen = pane
-		return node, nil
+		return l.createPane(node, config)
 	case MarginsType:
-		marginsNode, err := l.createNode(
-			nodeLifetime.Ctx(),
-			config.Node,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		margins := NewMargins(
-			nodeLifetime.Ctx(),
-			marginsNode.Screen,
-		)
-		margins.setSize(geom.Size{
-			R: config.Rows,
-			C: config.Cols,
-		})
-
-		if config.Border != nil {
-			margins.borderStyle = &config.Border.Style
-		}
-
-		node.Screen = margins
-		node.Children = []*screenNode{marginsNode}
-		return node, nil
+		return l.createMargins(node, config)
 	case SplitType:
-		nodeA, err := l.createNode(nodeLifetime.Ctx(), config.A)
-		if err != nil {
-			return nil, err
-		}
-		nodeB, err := l.createNode(nodeLifetime.Ctx(), config.B)
-		if err != nil {
-			return nil, err
-		}
-
-		split := NewSplit(
-			nodeLifetime.Ctx(),
-			nodeA.Screen,
-			nodeB.Screen,
-			config.Vertical,
-		)
-		split.isAttachedA = isAttached(config.A)
-		split.isAttachedB = isAttached(config.B)
-
-		if config.Percent != nil {
-			split.setPercent(*config.Percent)
-		}
-
-		if config.Cells != nil {
-			split.setCells(*config.Cells)
-		}
-
-		if config.Border != nil {
-			split.borderStyle = &config.Border.Style
-		}
-
-		node.Screen = split
-		node.Children = []*screenNode{nodeA, nodeB}
-		return node, nil
+		return l.createSplit(node, config)
 	}
 
 	return nil, fmt.Errorf("unimplemented screen")
@@ -201,10 +134,7 @@ func (l *LayoutEngine) updateNode(
 	current *screenNode,
 ) (*screenNode, error) {
 	if current == nil {
-		return l.createNode(
-			ctx,
-			config,
-		)
+		return l.createNode(ctx, config)
 	}
 
 	canReuse, err := current.Screen.reuse(config)

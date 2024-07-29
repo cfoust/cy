@@ -163,6 +163,25 @@ func (p *Pane) reuse(node NodeType) (bool, error) {
 	return true, nil
 }
 
+func (l *LayoutEngine) createPane(
+	node *screenNode,
+	config PaneType,
+) (*screenNode, error) {
+	pane := NewPane(
+		node.Ctx(),
+		l.tree,
+		l.server,
+	)
+
+	err := pane.setID(config.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	node.Screen = pane
+	return node, nil
+}
+
 func NewPane(
 	ctx context.Context,
 	tree *tree.Tree,

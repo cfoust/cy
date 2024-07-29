@@ -279,6 +279,45 @@ func (s *Split) Resize(size geom.Size) error {
 	return s.recalculate()
 }
 
+func (l *LayoutEngine) createSplit(
+	node *screenNode,
+	config SplitType,
+) (*screenNode, error) {
+	nodeA, err := l.createNode(node.Ctx(), config.A)
+	if err != nil {
+		return nil, err
+	}
+	nodeB, err := l.createNode(node.Ctx(), config.B)
+	if err != nil {
+		return nil, err
+	}
+
+	split := NewSplit(
+		node.Ctx(),
+		nodeA.Screen,
+		nodeB.Screen,
+		config.Vertical,
+	)
+	split.isAttachedA = isAttached(config.A)
+	split.isAttachedB = isAttached(config.B)
+
+	if config.Percent != nil {
+		split.setPercent(*config.Percent)
+	}
+
+	if config.Cells != nil {
+		split.setCells(*config.Cells)
+	}
+
+	if config.Border != nil {
+		split.borderStyle = &config.Border.Style
+	}
+
+	node.Screen = split
+	node.Children = []*screenNode{nodeA, nodeB}
+	return node, nil
+}
+
 func NewSplit(
 	ctx context.Context,
 	screenA, screenB mux.Screen,
