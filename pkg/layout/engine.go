@@ -68,7 +68,22 @@ func (l *LayoutEngine) State() *tty.State {
 		return tty.New(geom.DEFAULT_SIZE)
 	}
 
-	return screen.State()
+	state := screen.State()
+	size := state.Image.Size()
+
+	for i := 0; i < len(borders); i++ {
+		for row := 0; row < size.R; row++ {
+			for col := 0; col < size.C; col++ {
+				fillBorder(
+					state.Image,
+					row, col, size.R, size.C,
+					borders[i],
+				)
+			}
+		}
+	}
+
+	return state
 }
 
 func (l *LayoutEngine) Send(msg mux.Msg) {
