@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/util"
@@ -33,26 +34,45 @@ func (c *Client) State() *tty.State {
 	}
 
 	state := screen.State()
-	stateSize := state.Image.Size()
-	if stateSize.R >= size.R && stateSize.C >= size.C {
+	if size.IsZero() {
 		return state
 	}
 
-	centered := tty.New(size)
+	out := tty.New(size)
+	stateSize := state.Image.Size()
+	if stateSize.R >= size.R && stateSize.C >= size.C {
+		tty.Copy(
+			geom.Vec2{},
+			out,
+			state,
+		)
+		return out
+	}
+
 	for row := 0; row < size.R; row++ {
 		for col := 0; col < size.C; col++ {
-			centered.Image[row][col].Char = '-'
-			centered.Image[row][col].FG = 8
+			out.Image[row][col].Char = '-'
+			out.Image[row][col].FG = 8
 		}
 	}
 
 	tty.Copy(
 		size.Center(stateSize),
-		centered,
+		out,
 		state,
 	)
 
-	return centered
+	visible := geom.Rect{Size: geom.Vec2{
+		R: size.R - 1,
+		C: size.C - 1,
+	}}
+	if !visible.Contains(out.Cursor.Vec2) {
+		out.Cursor.R = 0
+		out.Cursor.C = 0
+		out.CursorVisible = false
+	}
+
+	return out
 }
 
 func (c *Client) Attachment() *util.Lifetime {

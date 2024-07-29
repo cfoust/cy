@@ -35,15 +35,20 @@ func (s *Server) refreshPane(screen mux.Screen) {
 	}
 
 	// Set the pane's size to the maximum that all clients can fit
-	size := attached[0].Size()
+	size := geom.Vec2{}
 	for _, client := range attached {
+		clientSize := client.Size()
 		// some clients don't want to impose size constraints on other
 		// clients, just see a pane for a moment
-		if client.Size().IsZero() {
+		if clientSize.IsZero() {
 			continue
 		}
 
-		size = geom.GetMaximum(size, client.Size())
+		if size.IsZero() {
+			size = clientSize
+		} else {
+			size = geom.GetMaximum(size, clientSize)
+		}
 	}
 
 	if size.IsZero() {
