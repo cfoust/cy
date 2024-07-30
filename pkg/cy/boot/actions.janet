@@ -94,7 +94,8 @@ For example:
 (key/action
   action/new-shell
   "Create a new shell."
-  (def path (cmd/path (pane/current)))
+  (def [ok current-path] (protect (cmd/path (pane/current))))
+  (def path (if ok current-path (os/getenv "HOME" "")))
   (def shells (group/mkdir :root "/shells"))
   (def shell (cmd/new shells :path path :name (path/base path)))
   (pane/attach shell))
@@ -109,8 +110,13 @@ For example:
     (cmd/new project
              :path path
              :name "editor"
+             :restart true
              :command (os/getenv "EDITOR" "vim")))
-  (def shell (cmd/new project :path path :name "shell"))
+  (def shell
+    (cmd/new project
+             :path path
+             :name "shell"
+             :restart true))
   (pane/attach editor))
 
 (key/action

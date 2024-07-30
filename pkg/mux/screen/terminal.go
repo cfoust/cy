@@ -2,7 +2,9 @@ package screen
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"os/exec"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
@@ -10,15 +12,22 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/sasha-s/go-deadlock"
 )
+
+type ExitEvent struct{}
 
 type Terminal struct {
 	deadlock.RWMutex
 	*mux.UpdatePublisher
-	terminal emu.Terminal
-	stream   Stream
-	size     geom.Size
+	render *taro.Renderer
+
+	terminal  emu.Terminal
+	stream    Stream
+	size      geom.Size
+	exited    bool
+	exitError error
 }
 
 var _ Screen = (*Terminal)(nil)
@@ -28,7 +37,51 @@ func (t *Terminal) Kill() {
 }
 
 func (t *Terminal) State() *tty.State {
-	return tty.Capture(t.terminal)
+	state := tty.Capture(t.terminal)
+	size := state.Image.Size()
+
+	t.RLock()
+	var (
+		exited    = t.exited
+		exitError = t.exitError
+	)
+	t.RUnlock()
+
+	if !exited {
+		return state
+	}
+
+	message := "exited"
+
+	offsetStyle := t.render.NewStyle().
+		Foreground(lipgloss.Color("10")).
+		Background(lipgloss.Color("240"))
+
+	if realError, ok := exitError.(*exec.ExitError); ok {
+		offsetStyle = t.render.NewStyle().
+			Foreground(lipgloss.Color("9")).
+			Background(lipgloss.Color("240"))
+
+		message = fmt.Sprintf(
+			"exited (%d)",
+			realError.ExitCode(),
+		)
+	}
+
+	t.render.RenderAt(
+		state.Image,
+		0,
+		0,
+		t.render.PlaceHorizontal(
+			size.C,
+			lipgloss.Right,
+			offsetStyle.Render(fmt.Sprintf(
+				"[%s]",
+				message,
+			)),
+		),
+	)
+	return state
 }
 
 func (t *Terminal) Resize(size Size) error {
@@ -110,15 +163,26 @@ func NewTerminal(
 	size Size,
 	options ...emu.TerminalOption,
 ) *Terminal {
-	options = append(options, emu.WithWriter(stream), emu.WithSize(size))
+	options = append(options,
+		emu.WithWriter(stream),
+		emu.WithSize(size),
+	)
 
-	terminal := &Terminal{
+	t := &Terminal{
 		UpdatePublisher: mux.NewPublisher(),
 		terminal:        emu.New(options...),
 		stream:          stream,
+		render:          taro.NewRenderer(),
 	}
 
-	go io.Copy(terminal, stream)
+	go func() {
+		_, err := io.Copy(t, stream)
+		t.Lock()
+		t.exited = true
+		t.exitError = err
+		t.Unlock()
+		t.Publish(ExitEvent{})
+	}()
 
-	return terminal
+	return t
 }

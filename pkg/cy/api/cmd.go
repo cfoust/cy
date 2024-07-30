@@ -18,6 +18,7 @@ type CmdParams struct {
 	Args    []string
 	Name    string
 	Path    string
+	Restart bool
 }
 
 type CmdModule struct {
@@ -53,6 +54,7 @@ func (c *CmdModule) New(
 			Command:   values.Command,
 			Args:      values.Args,
 			Directory: values.Path,
+			Restart:   values.Restart,
 		},
 		group.Params().DataDirectory(),
 		c.TimeBinds,
