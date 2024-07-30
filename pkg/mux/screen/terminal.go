@@ -16,7 +16,10 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
-type ExitEvent struct{}
+type ExitEvent struct {
+	Errored bool
+	Code    int
+}
 
 type Terminal struct {
 	deadlock.RWMutex
@@ -181,7 +184,15 @@ func NewTerminal(
 		t.exited = true
 		t.exitError = err
 		t.Unlock()
-		t.Publish(ExitEvent{})
+
+		if exitError, ok := err.(*exec.ExitError); ok {
+			t.Publish(ExitEvent{
+				Errored: true,
+				Code:    exitError.ExitCode(),
+			})
+		} else {
+			t.Publish(ExitEvent{})
+		}
 	}()
 
 	return t

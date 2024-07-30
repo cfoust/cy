@@ -39,6 +39,11 @@ type defaultParams struct {
 	// The frame used for all new clients. A blank string means a random
 	// frame will be chosen from all frames.
 	DefaultFrame string
+	// If this is `true`, when a pane's process exits or its node is killed
+	// (such as with {{api tree/kill}}), the portion of the layout related
+	// to that node will be removed. This makes cy's layout functionality
+	// work a bit more like tmux.
+	RemovePaneOnExit bool
 	// Whether to avoid blocking on (input/*) calls. Just for testing.
 	skipInput bool
 }

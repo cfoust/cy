@@ -243,6 +243,7 @@ func (c *Client) initialize(options ClientOptions) error {
 		c.Ctx(),
 		c.cy.tree,
 		c.cy.muxServer,
+		layout.WithParams(c.params),
 	)
 
 	logId := tree.NodeID(2)
@@ -358,7 +359,7 @@ func (c *Client) attach(node tree.Node) error {
 	current := c.layoutEngine.Get()
 	err := c.layoutEngine.Set(layout.Attach(current, pane.Id()))
 	if err != nil {
-	    return err
+		return err
 	}
 
 	// TODO(cfoust): 07/25/24

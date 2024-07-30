@@ -99,3 +99,26 @@ func TestClickInactivePane(t *testing.T) {
 		B: PaneType{Attached: true},
 	}, l.Get().root)
 }
+
+func TestRemoveAttached(t *testing.T) {
+	require.Equal(t,
+		MarginsType{Node: PaneType{Attached: true}},
+		removeAttached(SplitType{
+			A: MarginsType{Node: PaneType{}},
+			B: PaneType{Attached: true},
+		}),
+	)
+}
+
+func TestAttachFirst(t *testing.T) {
+	require.Equal(t,
+		SplitType{
+			A: MarginsType{Node: PaneType{Attached: true}},
+			B: PaneType{},
+		},
+		attachFirst(SplitType{
+			A: MarginsType{Node: PaneType{}},
+			B: PaneType{},
+		}),
+	)
+}

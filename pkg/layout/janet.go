@@ -73,8 +73,9 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 	switch n.Type {
 	case KEYWORD_PANE:
 		type paneArgs struct {
-			Attached *bool
-			ID       *tree.NodeID
+			Attached     *bool
+			RemoveOnExit *bool
+			ID           *tree.NodeID
 		}
 		args := paneArgs{}
 		err = value.Unmarshal(&args)
@@ -87,6 +88,10 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 
 		if args.Attached != nil {
 			type_.Attached = *args.Attached
+		}
+
+		if args.RemoveOnExit != nil {
+			type_.RemoveOnExit = args.RemoveOnExit
 		}
 
 		return type_, err

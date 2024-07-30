@@ -12,8 +12,9 @@ import (
 type NodeType interface{}
 
 type PaneType struct {
-	Attached bool
-	ID       *tree.NodeID
+	Attached     bool
+	RemoveOnExit *bool
+	ID           *tree.NodeID
 }
 
 type Border struct {
@@ -50,6 +51,8 @@ type nodeChangeEvent struct {
 	Config NodeType
 }
 
+type nodeRemoveEvent struct{}
+
 // getPaneType gets all of the panes that are descendants of the provided node,
 // in essence all of the leaf nodes.
 func getPaneType(tree NodeType) (panes []PaneType) {
@@ -65,6 +68,67 @@ func getPaneType(tree NodeType) (panes []PaneType) {
 		return
 	}
 	return
+}
+
+// getNumLeaves gets the number of leaves (panes) accessible from this node.
+func getNumLeaves(node NodeType) int {
+	switch node := node.(type) {
+	case PaneType:
+		return 1
+	case SplitType:
+		return getNumLeaves(node.A) + getNumLeaves(node.B)
+	case MarginsType:
+		return getNumLeaves(node.Node)
+	}
+	return 0
+}
+
+// attachFirst attaches to the first node it can find.
+func attachFirst(node NodeType) NodeType {
+	switch node := node.(type) {
+	case PaneType:
+		node.Attached = true
+		return node
+	case SplitType:
+		node.A = attachFirst(node.A)
+		return node
+	case MarginsType:
+		node.Node = attachFirst(node.Node)
+		return node
+	}
+
+	return node
+}
+
+// removeAttached removes the attached node by replacing its nearest parent
+// that has more than one child with a parent with that child removed, or the
+// other child if there are no other children.
+func removeAttached(node NodeType) NodeType {
+	if !isAttached(node) {
+		return node
+	}
+
+	switch node := node.(type) {
+	case PaneType:
+		return node
+	case SplitType:
+		if isAttached(node.A) && getNumLeaves(node.A) == 1 {
+			return attachFirst(node.B)
+		}
+
+		if isAttached(node.B) && getNumLeaves(node.B) == 1 {
+			return attachFirst(node.A)
+		}
+
+		node.A = removeAttached(node.A)
+		node.B = removeAttached(node.B)
+		return node
+	case MarginsType:
+		node.Node = removeAttached(node.Node)
+		return node
+	}
+
+	return node
 }
 
 // applyNodeChange replaces the configuration of the target node with

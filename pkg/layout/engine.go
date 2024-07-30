@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/sasha-s/go-deadlock"
@@ -43,6 +44,7 @@ type LayoutEngine struct {
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 
+	params *params.Parameters
 	tree   *tree.Tree
 	server *server.Server
 
@@ -148,6 +150,16 @@ func (l *LayoutEngine) handleChange(
 	return l.set(layout)
 }
 
+// removeAttached intelligently removes the currently attached pane from the
+// layout. This works in the same way tmux does, but it's more generalized. For
+// example, if the attached pane were a direct child of a split, that split
+// would be removed and replaced by the node in that split's other "branch".
+func (l *LayoutEngine) removeAttached() error {
+	l.Lock()
+	defer l.Unlock()
+	return l.set(removeAttached(l.layout))
+}
+
 // createNode takes a layout node and (recursively) creates a new screenNode
 // that corresponds to that layout node's configuration.
 func (l *LayoutEngine) createNode(
@@ -181,13 +193,14 @@ func (l *LayoutEngine) createNode(
 		for {
 			select {
 			case msg := <-updates.Recv():
-				change, ok := msg.(nodeChangeEvent)
-				if !ok {
-					continue
+				switch msg := msg.(type) {
+				case nodeChangeEvent:
+					// TODO(cfoust): 07/30/24 error
+					// handling
+					l.handleChange(node, msg.Config)
+				case nodeRemoveEvent:
+					l.removeAttached()
 				}
-
-				// TODO(cfoust): 07/30/24 error handling
-				l.handleChange(node, change.Config)
 			case <-node.Ctx().Done():
 				return
 			}
@@ -337,10 +350,19 @@ func (l *LayoutEngine) Get() Layout {
 	return New(layout)
 }
 
+type Setting func(*LayoutEngine)
+
+func WithParams(params *params.Parameters) Setting {
+	return func(l *LayoutEngine) {
+		l.params = params
+	}
+}
+
 func NewLayoutEngine(
 	ctx context.Context,
 	tree *tree.Tree,
 	muxServer *server.Server,
+	settings ...Setting,
 ) *LayoutEngine {
 	lifetime := util.NewLifetime(ctx)
 	engine := &LayoutEngine{
@@ -348,6 +370,11 @@ func NewLayoutEngine(
 		UpdatePublisher: mux.NewPublisher(),
 		tree:            tree,
 		server:          muxServer,
+		params:          params.New(),
+	}
+
+	for _, setting := range settings {
+		setting(engine)
 	}
 
 	return engine

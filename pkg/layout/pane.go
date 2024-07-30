@@ -7,8 +7,10 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
+	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -20,6 +22,7 @@ type Pane struct {
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 
+	params *params.Parameters
 	tree   *tree.Tree
 	server *server.Server
 
@@ -31,7 +34,8 @@ type Pane struct {
 	attachment *util.Lifetime
 	screen     mux.Screen
 
-	isAttached bool
+	isAttached   bool
+	removeOnExit bool
 }
 
 var _ mux.Screen = (*Pane)(nil)
@@ -114,7 +118,7 @@ func (p *Pane) attach(
 	if id == nil {
 		return NewStatic(
 			ctx,
-			true,
+			p.params.Animate(),
 			"disconnected",
 		), nil
 	}
@@ -123,7 +127,7 @@ func (p *Pane) attach(
 	if !ok {
 		return NewStatic(
 			ctx,
-			true,
+			p.params.Animate(),
 			fmt.Sprintf("node %d not found", *id),
 		), nil
 	}
@@ -132,7 +136,7 @@ func (p *Pane) attach(
 	if !ok {
 		return NewStatic(
 			ctx,
-			true,
+			p.params.Animate(),
 			fmt.Sprintf("node %d is not a pane", *id),
 		), nil
 	}
@@ -148,8 +152,20 @@ func (p *Pane) attach(
 		case <-ctx.Done():
 		case <-pane.Ctx().Done():
 			p.RLock()
-			newConfig := p.config
+			var (
+				newConfig    = p.config
+				removeOnExit = p.removeOnExit
+			)
 			p.RUnlock()
+
+			// Remove the node from the tree
+			if removeOnExit {
+				p.Publish(nodeRemoveEvent{})
+				return
+			}
+
+			// Keep the pane around, just detach from it in the
+			// layout
 			newConfig.ID = nil
 			p.Publish(nodeChangeEvent{
 				Config: newConfig,
@@ -187,13 +203,41 @@ func (p *Pane) setID(id *tree.NodeID) error {
 			case <-attachment.Ctx().Done():
 				return
 			case event := <-changes:
-				p.Publish(event)
+				exitEvent, ok := event.(S.ExitEvent)
+				if !ok {
+					p.Publish(event)
+					continue
+				}
+
+				p.RLock()
+				var (
+					removeOnExit = p.removeOnExit
+					isAttached   = p.isAttached
+				)
+				p.RUnlock()
+
+				if !removeOnExit && isAttached && !exitEvent.Errored {
+					continue
+				}
+
+				p.Publish(nodeRemoveEvent{})
 			}
 		}
 	}()
 
 	p.Notify()
 	return nil
+}
+
+func (p *Pane) applyConfig(config PaneType) {
+	p.config = config
+	p.isAttached = config.Attached
+
+	if config.RemoveOnExit != nil {
+		p.removeOnExit = *config.RemoveOnExit
+	} else {
+		p.removeOnExit = p.params.RemovePaneOnExit()
+	}
 }
 
 func (p *Pane) reuse(node NodeType) (bool, error) {
@@ -203,8 +247,7 @@ func (p *Pane) reuse(node NodeType) (bool, error) {
 	}
 
 	p.Lock()
-	p.config = config
-	p.isAttached = config.Attached
+	p.applyConfig(config)
 	p.Unlock()
 
 	oldID := p.id
@@ -232,10 +275,10 @@ func (l *LayoutEngine) createPane(
 		node.Ctx(),
 		l.tree,
 		l.server,
+		l.params,
 	)
 
-	pane.config = config
-	pane.isAttached = config.Attached
+	pane.applyConfig(config)
 
 	err := pane.setID(config.ID)
 	if err != nil {
@@ -250,6 +293,7 @@ func NewPane(
 	ctx context.Context,
 	tree *tree.Tree,
 	server *server.Server,
+	params *params.Parameters,
 ) *Pane {
 	lifetime := util.NewLifetime(ctx)
 	p := &Pane{
@@ -257,6 +301,7 @@ func NewPane(
 		UpdatePublisher: mux.NewPublisher(),
 		tree:            tree,
 		server:          server,
+		params:          params,
 	}
 
 	p.setID(nil)

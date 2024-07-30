@@ -8,12 +8,13 @@ import (
 )
 
 const (
-	ParamAnimate       = "animate"
-	ParamAnimations    = "animations"
-	ParamDataDirectory = "data-directory"
-	ParamDefaultFrame  = "default-frame"
-	ParamDefaultShell  = "default-shell"
-	ParamSkipInput     = "---skip-input"
+	ParamAnimate          = "animate"
+	ParamAnimations       = "animations"
+	ParamDataDirectory    = "data-directory"
+	ParamDefaultFrame     = "default-frame"
+	ParamDefaultShell     = "default-shell"
+	ParamRemovePaneOnExit = "remove-pane-on-exit"
+	ParamSkipInput        = "---skip-input"
 )
 
 func (p *Parameters) Animate() bool {
@@ -106,6 +107,24 @@ func (p *Parameters) SetDefaultShell(value string) {
 	p.set(ParamDefaultShell, value)
 }
 
+func (p *Parameters) RemovePaneOnExit() bool {
+	value, ok := p.Get(ParamRemovePaneOnExit)
+	if !ok {
+		return defaults.RemovePaneOnExit
+	}
+
+	realValue, ok := value.(bool)
+	if !ok {
+		return defaults.RemovePaneOnExit
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetRemovePaneOnExit(value bool) {
+	p.set(ParamRemovePaneOnExit, value)
+}
+
 func (p *Parameters) SkipInput() bool {
 	value, ok := p.Get(ParamSkipInput)
 	if !ok {
@@ -135,6 +154,8 @@ func (p *Parameters) isDefault(key string) bool {
 	case ParamDefaultFrame:
 		return true
 	case ParamDefaultShell:
+		return true
+	case ParamRemovePaneOnExit:
 		return true
 	case ParamSkipInput:
 		return true
@@ -241,6 +262,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
+	case ParamRemovePaneOnExit:
+		if !janetOk {
+			realValue, ok := value.(bool)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamRemovePaneOnExit, should be bool")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated bool
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :remove-pane-on-exit: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
 	case ParamSkipInput:
 		if !janetOk {
 			realValue, ok := value.(bool)
@@ -283,6 +323,11 @@ func init() {
 			Name:      "default-shell",
 			Docstring: "The default shell with which to start panes. Defaults to the value\nof `$SHELL` on startup.",
 			Default:   defaults.DefaultShell,
+		},
+		{
+			Name:      "remove-pane-on-exit",
+			Docstring: "If this is `true`, when a pane's process exits or its node is killed\n(such as with {{api tree/kill}}), the portion of the layout related\nto that node will be removed. This makes cy's layout functionality\nwork a bit more like tmux.",
+			Default:   defaults.RemovePaneOnExit,
 		},
 	}
 }
