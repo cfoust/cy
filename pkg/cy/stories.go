@@ -494,4 +494,40 @@ func init() {
 		`)
 		return screen, err
 	}, stories.Config{})
+
+	stories.Register("pane/killed", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd (cmd/new :root))
+(layout/set {:type :pane :id cmd :attached true})
+(tree/kill cmd)
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("pane/invalid-id", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(layout/set {:type :pane :id 1234 :attached true})
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("pane/invalid-group", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def group (group/mkdir :root "/foo/bar/baz"))
+(layout/set {:type :pane :id group :attached true})
+		`)
+		return screen, err
+	}, stories.Config{})
 }

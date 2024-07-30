@@ -41,35 +41,35 @@ func (p *Pane) Send(msg mux.Msg) {
 	p.RLock()
 	defer p.RUnlock()
 
-	if !p.isAttached {
-		msg, ok := msg.(taro.MouseMsg)
-		if !ok {
-			return
-		}
-
-		if msg.Type != taro.MousePress || msg.Button != taro.MouseLeft || msg.Down {
-			return
-		}
-
-		bounds := geom.Rect{
-			Size: p.size,
-		}
-		if !bounds.Contains(msg.Vec2) {
-			return
-		}
-
-		p.config.Attached = true
-		p.Publish(nodeChangeEvent{
-			Config: p.config,
-		})
-		return
-	}
-
 	if p.screen == nil {
 		return
 	}
 
-	p.screen.Send(msg)
+	if p.isAttached {
+		p.screen.Send(msg)
+		return
+	}
+
+	mouseMsg, ok := msg.(taro.MouseMsg)
+	if !ok {
+		return
+	}
+
+	if mouseMsg.Type != taro.MousePress || mouseMsg.Button != taro.MouseLeft || mouseMsg.Down {
+		return
+	}
+
+	bounds := geom.Rect{
+		Size: p.size,
+	}
+	if !bounds.Contains(mouseMsg.Vec2) {
+		return
+	}
+
+	p.config.Attached = true
+	p.Publish(nodeChangeEvent{
+		Config: p.config,
+	})
 }
 
 func (p *Pane) Kill() {
@@ -139,6 +139,24 @@ func (p *Pane) attach(
 
 	client := p.server.AddClient(ctx, p.size)
 	client.Attach(ctx, pane.Screen())
+
+	// When the tree node is removed (ie by (tree/kill)) we need to tell
+	// the layout engine to remove the reference to that NodeID from the
+	// config for this pane.
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-pane.Ctx().Done():
+			p.RLock()
+			newConfig := p.config
+			p.RUnlock()
+			newConfig.ID = nil
+			p.Publish(nodeChangeEvent{
+				Config: newConfig,
+			})
+		}
+	}()
+
 	return client, nil
 }
 
