@@ -84,7 +84,7 @@ func (p *Pane) State() *tty.State {
 		return tty.New(p.size)
 	}
 
-	state := p.screen.State()
+	state := p.screen.State().Clone()
 	if !p.isAttached && state.CursorVisible {
 		cursor := state.Cursor
 		state.CursorVisible = false
