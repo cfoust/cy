@@ -63,6 +63,8 @@ func (s *Static) resetScreen(size geom.Vec2) taro.Cmd {
 		)
 	}
 
+	bg.Resize(size)
+
 	s.size = size
 	s.bg = bg
 	s.watcher = taro.NewWatcher(s.Ctx(), bg)

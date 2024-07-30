@@ -21,6 +21,7 @@ type Animator struct {
 var _ taro.Model = (*Animator)(nil)
 
 func (a *Animator) Init() tea.Cmd {
+	a.state = a.animation.Update(0)
 	return a.waitFrame
 }
 
