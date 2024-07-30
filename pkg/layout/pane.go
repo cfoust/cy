@@ -27,6 +27,8 @@ type Pane struct {
 
 	attachment *util.Lifetime
 	screen     mux.Screen
+
+	isAttached bool
 }
 
 var _ mux.Screen = (*Pane)(nil)
@@ -35,7 +37,7 @@ var _ reusable = (*Pane)(nil)
 func (p *Pane) Send(msg mux.Msg) {
 	p.RLock()
 	defer p.RUnlock()
-	if p.screen == nil {
+	if p.screen == nil || !p.isAttached {
 		return
 	}
 
@@ -49,11 +51,19 @@ func (p *Pane) Kill() {
 func (p *Pane) State() *tty.State {
 	p.RLock()
 	defer p.RUnlock()
+
 	if p.screen == nil {
 		return tty.New(p.size)
 	}
 
-	return p.screen.State()
+	state := p.screen.State()
+	if !p.isAttached && state.CursorVisible {
+		cursor := state.Cursor
+		state.CursorVisible = false
+		state.Image[cursor.R][cursor.C].BG = 8
+	}
+
+	return state
 }
 
 func (p *Pane) Resize(size geom.Size) error {
@@ -146,6 +156,10 @@ func (p *Pane) reuse(node NodeType) (bool, error) {
 		return false, nil
 	}
 
+	p.Lock()
+	p.isAttached = config.Attached
+	p.Unlock()
+
 	oldID := p.id
 	newID := config.ID
 
@@ -172,6 +186,8 @@ func (l *LayoutEngine) createPane(
 		l.tree,
 		l.server,
 	)
+
+	pane.isAttached = config.Attached
 
 	err := pane.setID(config.ID)
 	if err != nil {

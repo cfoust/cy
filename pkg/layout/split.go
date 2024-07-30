@@ -29,10 +29,6 @@ type Split struct {
 	// Whether the split should be vertical or horizontal.
 	isVertical bool
 
-	// Whether screenA or screenB "lead" to a screen that is attached. At
-	// most one of these can be true at a time.
-	isAttachedA, isAttachedB bool
-
 	// Whether the number of cells was set directly.
 	isCells bool
 
@@ -67,8 +63,6 @@ func (s *Split) State() *tty.State {
 	var (
 		size        = s.size
 		positionB   = s.positionB
-		isAttachedA = s.isAttachedA
-		isAttachedB = s.isAttachedB
 		isVertical  = s.isVertical
 		borderStyle = s.borderStyle
 	)
@@ -77,10 +71,6 @@ func (s *Split) State() *tty.State {
 	state := tty.New(size)
 
 	stateA := s.screenA.State().Clone()
-	if !isAttachedA && stateA.CursorVisible {
-		cursor := stateA.Cursor
-		stateA.Image[cursor.R][cursor.C].BG = 8
-	}
 	image.CopyRaw(geom.Size{}, state.Image, stateA.Image)
 
 	if borderStyle != nil {
@@ -100,16 +90,12 @@ func (s *Split) State() *tty.State {
 	}
 
 	stateB := s.screenB.State().Clone()
-	if !isAttachedB && stateB.CursorVisible {
-		cursor := stateB.Cursor
-		stateB.Image[cursor.R][cursor.C].BG = 8
-	}
 	image.CopyRaw(positionB, state.Image, stateB.Image)
 
-	if isAttachedA {
+	if stateA.CursorVisible {
 		state.Cursor = stateA.Cursor
 		state.CursorVisible = stateA.CursorVisible
-	} else if isAttachedB {
+	} else if stateB.CursorVisible {
 		cursor := stateB.Cursor
 		cursor.C += positionB.C
 		cursor.R += positionB.R
@@ -127,9 +113,6 @@ func (s *Split) reuse(node NodeType) (bool, error) {
 	if !ok {
 		return false, nil
 	}
-
-	s.isAttachedA = isAttached(config.A)
-	s.isAttachedB = isAttached(config.B)
 
 	var changed bool
 	if config.Percent != nil && (s.isCells || s.percent != *config.Percent) {
@@ -154,24 +137,8 @@ func (s *Split) reuse(node NodeType) (bool, error) {
 	return true, s.recalculate()
 }
 
-func (s *Split) SetAttached(isAttachedA, isAttachedB bool) {
-	s.Lock()
-	defer s.Unlock()
-	s.isAttachedA = isAttachedA
-	s.isAttachedB = isAttachedB
-}
-
 func (s *Split) Send(msg mux.Msg) {
-	if !s.isAttachedA && !s.isAttachedB {
-		return
-	}
-
-	// We don't need to translate the cursor position if screen is on the
-	// left or the top
-	if s.isAttachedA {
-		s.screenA.Send(msg)
-		return
-	}
+	s.screenA.Send(msg)
 
 	s.RLock()
 	positionB := s.positionB
@@ -298,8 +265,6 @@ func (l *LayoutEngine) createSplit(
 		nodeB.Screen,
 		config.Vertical,
 	)
-	split.isAttachedA = isAttached(config.A)
-	split.isAttachedB = isAttached(config.B)
 
 	if config.Percent != nil {
 		split.setPercent(*config.Percent)
