@@ -2,6 +2,7 @@ package stream
 
 import (
 	"context"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -16,16 +17,13 @@ func TestHealthy(t *testing.T) {
 		CmdOptions{
 			Command: "/bin/sh",
 		},
-		geom.Vec2{
-			R: 26,
-			C: 80,
-		},
+		geom.DEFAULT_SIZE,
 	)
 	require.NoError(t, err)
 
 	time.Sleep(100 * time.Millisecond)
 
-	require.Equal(t, cmd.GetStatus(), CmdStatusHealthy)
+	require.Equal(t, CmdStatusHealthy, cmd.status)
 }
 
 func TestFailLoop(t *testing.T) {
@@ -33,18 +31,76 @@ func TestFailLoop(t *testing.T) {
 		context.Background(),
 		CmdOptions{
 			Command: "/bin/sh",
+			Restart: true,
 			Args: []string{
 				"-c",
 				"exit 1",
 			},
 		},
-		geom.Vec2{
-			R: 26,
-			C: 80,
-		},
+		geom.DEFAULT_SIZE,
 	)
 
 	time.Sleep(1 * time.Second)
 
-	require.Equal(t, cmd.GetStatus(), CmdStatusFailed)
+	require.Equal(t, CmdStatusFailed, cmd.status)
+}
+
+func TestComplete(t *testing.T) {
+	cmd, _ := NewCmd(
+		context.Background(),
+		CmdOptions{
+			Command: "/bin/sh",
+			Args: []string{
+				"-c",
+				"sleep 1 && exit 0",
+			},
+		},
+		geom.DEFAULT_SIZE,
+	)
+
+	time.Sleep(1*time.Second + 250*time.Millisecond)
+
+	require.Equal(t, CmdStatusComplete, cmd.status)
+}
+
+func TestKilled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cmd, _ := NewCmd(
+		ctx,
+		CmdOptions{
+			Command: "/bin/sh",
+			Args: []string{
+				"-c",
+				"sleep 5",
+			},
+		},
+		geom.DEFAULT_SIZE,
+	)
+
+	time.Sleep(1 * time.Second)
+	cancel()
+	time.Sleep(250 * time.Millisecond)
+
+	require.Equal(t, CmdStatusKilled, cmd.status)
+}
+
+func TestFailed(t *testing.T) {
+	cmd, _ := NewCmd(
+		context.Background(),
+		CmdOptions{
+			Command: "/bin/sh",
+			Args: []string{
+				"-c",
+				"exit 255",
+			},
+		},
+		geom.DEFAULT_SIZE,
+	)
+
+	time.Sleep(250 * time.Millisecond)
+
+	require.Equal(t, CmdStatusFailed, cmd.status)
+	require.Error(t, cmd.exitError)
+	_, ok := cmd.exitError.(*exec.ExitError)
+	require.True(t, ok)
 }
