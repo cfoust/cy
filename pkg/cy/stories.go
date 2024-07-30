@@ -470,4 +470,28 @@ func init() {
 		`)
 		return screen, err
 	}, stories.Config{})
+
+	stories.Register("command/success", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd (cmd/new :root :command "bash" :args ["-c" "exit 0"]))
+(pane/attach cmd)
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("command/fail", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd (cmd/new :root :command "bash" :args ["-c" "exit 128"]))
+(pane/attach cmd)
+		`)
+		return screen, err
+	}, stories.Config{})
 }
