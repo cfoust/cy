@@ -91,7 +91,6 @@ func TestClickInactivePane(t *testing.T) {
 		},
 		Type:   taro.MousePress,
 		Button: taro.MouseLeft,
-		Down:   true,
 	})
 	time.Sleep(500 * time.Millisecond)
 

@@ -42,24 +42,26 @@ func (p *Pane) Send(msg mux.Msg) {
 	defer p.RUnlock()
 
 	if !p.isAttached {
-		switch msg := msg.(type) {
-		case taro.MouseMsg:
-			if msg.Type != taro.MousePress || msg.Button != taro.MouseLeft || !msg.Down {
-				return
-			}
-
-			bounds := geom.Rect{
-				Size: p.size,
-			}
-			if !bounds.Contains(msg.Vec2) {
-				return
-			}
-
-			p.config.Attached = true
-			p.Publish(nodeChangeEvent{
-				Config: p.config,
-			})
+		msg, ok := msg.(taro.MouseMsg)
+		if !ok {
+			return
 		}
+
+		if msg.Type != taro.MousePress || msg.Button != taro.MouseLeft || msg.Down {
+			return
+		}
+
+		bounds := geom.Rect{
+			Size: p.size,
+		}
+		if !bounds.Contains(msg.Vec2) {
+			return
+		}
+
+		p.config.Attached = true
+		p.Publish(nodeChangeEvent{
+			Config: p.config,
+		})
 		return
 	}
 
