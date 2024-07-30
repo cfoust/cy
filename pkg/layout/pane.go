@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/sasha-s/go-deadlock"
@@ -21,6 +22,8 @@ type Pane struct {
 
 	tree   *tree.Tree
 	server *server.Server
+
+	config PaneType
 
 	size geom.Size
 	id   *tree.NodeID
@@ -37,7 +40,30 @@ var _ reusable = (*Pane)(nil)
 func (p *Pane) Send(msg mux.Msg) {
 	p.RLock()
 	defer p.RUnlock()
-	if p.screen == nil || !p.isAttached {
+
+	if !p.isAttached {
+		switch msg := msg.(type) {
+		case taro.MouseMsg:
+			if msg.Type != taro.MousePress || msg.Button != taro.MouseLeft || !msg.Down {
+				return
+			}
+
+			bounds := geom.Rect{
+				Size: p.size,
+			}
+			if !bounds.Contains(msg.Vec2) {
+				return
+			}
+
+			p.config.Attached = true
+			p.Publish(nodeChangeEvent{
+				Config: p.config,
+			})
+		}
+		return
+	}
+
+	if p.screen == nil {
 		return
 	}
 
@@ -157,6 +183,7 @@ func (p *Pane) reuse(node NodeType) (bool, error) {
 	}
 
 	p.Lock()
+	p.config = config
 	p.isAttached = config.Attached
 	p.Unlock()
 
@@ -180,22 +207,23 @@ func (p *Pane) reuse(node NodeType) (bool, error) {
 func (l *LayoutEngine) createPane(
 	node *screenNode,
 	config PaneType,
-) (*screenNode, error) {
+) error {
 	pane := NewPane(
 		node.Ctx(),
 		l.tree,
 		l.server,
 	)
 
+	pane.config = config
 	pane.isAttached = config.Attached
 
 	err := pane.setID(config.ID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	node.Screen = pane
-	return node, nil
+	return nil
 }
 
 func NewPane(

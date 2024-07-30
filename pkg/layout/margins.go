@@ -206,6 +206,9 @@ func (l *Margins) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-updates.Recv():
+			if _, ok := event.(nodeChangeEvent); ok {
+				continue
+			}
 			l.Publish(event)
 		}
 	}
@@ -240,13 +243,13 @@ func (l *Margins) Resize(size geom.Size) error {
 func (l *LayoutEngine) createMargins(
 	node *screenNode,
 	config MarginsType,
-) (*screenNode, error) {
+) error {
 	marginsNode, err := l.createNode(
 		node.Ctx(),
 		config.Node,
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	margins := NewMargins(
@@ -264,7 +267,7 @@ func (l *LayoutEngine) createMargins(
 
 	node.Screen = margins
 	node.Children = []*screenNode{marginsNode}
-	return node, nil
+	return nil
 }
 
 func NewMargins(ctx context.Context, screen mux.Screen) *Margins {

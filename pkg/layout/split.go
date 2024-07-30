@@ -160,8 +160,14 @@ func (s *Split) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-updatesA.Recv():
+			if _, ok := event.(nodeChangeEvent); ok {
+				continue
+			}
 			s.Publish(event)
 		case event := <-updatesB.Recv():
+			if _, ok := event.(nodeChangeEvent); ok {
+				continue
+			}
 			s.Publish(event)
 		}
 	}
@@ -249,14 +255,14 @@ func (s *Split) Resize(size geom.Size) error {
 func (l *LayoutEngine) createSplit(
 	node *screenNode,
 	config SplitType,
-) (*screenNode, error) {
+) error {
 	nodeA, err := l.createNode(node.Ctx(), config.A)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	nodeB, err := l.createNode(node.Ctx(), config.B)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	split := NewSplit(
@@ -280,7 +286,7 @@ func (l *LayoutEngine) createSplit(
 
 	node.Screen = split
 	node.Children = []*screenNode{nodeA, nodeB}
-	return node, nil
+	return nil
 }
 
 func NewSplit(

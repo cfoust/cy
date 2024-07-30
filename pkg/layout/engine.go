@@ -47,7 +47,7 @@ type LayoutEngine struct {
 	server *server.Server
 
 	size           geom.Size
-	layout         Layout
+	layout         NodeType
 	layoutLifetime *util.Lifetime
 	screen         mux.Screen
 	existing       *screenNode
@@ -111,6 +111,43 @@ func (l *LayoutEngine) Resize(size geom.Size) error {
 	return screen.Resize(size)
 }
 
+// handleChange changes the layout that was used to create node to the
+// configuration specified by config.
+//
+// Some nodes need to be able to change their own configuration in response to
+// user input. A good example of this is when the user clicks on an inactive
+// pane to focus it again. The Screen at that location detects the click and
+// indicates to the LayoutEngine that it should attach to it.
+func (l *LayoutEngine) handleChange(
+	node *screenNode,
+	config NodeType,
+) error {
+	l.Lock()
+	defer l.Unlock()
+
+	layout := l.layout
+
+	// If the new configuration changes the attachment point, we need to
+	// detach from whatever node we're currently attached to
+	if isAttached(config) {
+		layout = detach(layout)
+	}
+
+	layout = applyNodeChange(
+		l.existing,
+		node,
+		layout,
+		config,
+	)
+
+	err := validateTree(layout)
+	if err != nil {
+		return err
+	}
+
+	return l.set(layout)
+}
+
 // createNode takes a layout node and (recursively) creates a new screenNode
 // that corresponds to that layout node's configuration.
 func (l *LayoutEngine) createNode(
@@ -123,16 +160,41 @@ func (l *LayoutEngine) createNode(
 		Config:   config,
 	}
 
+	var err error
 	switch config := config.(type) {
 	case PaneType:
-		return l.createPane(node, config)
+		err = l.createPane(node, config)
 	case MarginsType:
-		return l.createMargins(node, config)
+		err = l.createMargins(node, config)
 	case SplitType:
-		return l.createSplit(node, config)
+		err = l.createSplit(node, config)
+	default:
+		err = fmt.Errorf("unimplemented screen")
 	}
 
-	return nil, fmt.Errorf("unimplemented screen")
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		updates := node.Screen.Subscribe(node.Ctx())
+		for {
+			select {
+			case msg := <-updates.Recv():
+				change, ok := msg.(nodeChangeEvent)
+				if !ok {
+					continue
+				}
+
+				// TODO(cfoust): 07/30/24 error handling
+				l.handleChange(node, change.Config)
+			case <-node.Ctx().Done():
+				return
+			}
+		}
+	}()
+
+	return node, err
 }
 
 type updateNode struct {
@@ -213,20 +275,10 @@ func (l *LayoutEngine) updateNode(
 	return current, nil
 }
 
-// Set changes the Layout rendered by this LayoutEngine by reusing as many
-// existing Screens as it can.
-func (l *LayoutEngine) Set(layout Layout) error {
-	err := validateTree(layout.root)
-	if err != nil {
-		return err
-	}
-
-	l.Lock()
-	defer l.Unlock()
-
+func (l *LayoutEngine) set(layout NodeType) error {
 	node, err := l.updateNode(
 		l.Ctx(),
-		layout.root,
+		layout,
 		l.existing,
 	)
 	if err != nil {
@@ -247,7 +299,12 @@ func (l *LayoutEngine) Set(layout Layout) error {
 		for {
 			select {
 			case msg := <-updates.Recv():
-				l.Publish(msg)
+				switch msg := msg.(type) {
+				case nodeChangeEvent:
+					// don't emit these
+				default:
+					l.Publish(msg)
+				}
 			case <-node.Ctx().Done():
 				return
 			}
@@ -258,12 +315,26 @@ func (l *LayoutEngine) Set(layout Layout) error {
 	return nil
 }
 
+// Set changes the Layout rendered by this LayoutEngine by reusing as many
+// existing Screens as it can.
+func (l *LayoutEngine) Set(layout Layout) error {
+	err := validateTree(layout.root)
+	if err != nil {
+		return err
+	}
+
+	l.Lock()
+	defer l.Unlock()
+
+	return l.set(layout.root)
+}
+
 // Get gets the Layout this LayoutEngine is rendering.
 func (l *LayoutEngine) Get() Layout {
 	l.RLock()
 	layout := l.layout
 	l.RUnlock()
-	return layout
+	return New(layout)
 }
 
 func NewLayoutEngine(

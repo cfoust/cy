@@ -46,6 +46,10 @@ func New(node NodeType) Layout {
 	return Layout{root: node}
 }
 
+type nodeChangeEvent struct {
+	Config NodeType
+}
+
 // getPaneType gets all of the panes that are descendants of the provided node,
 // in essence all of the leaf nodes.
 func getPaneType(tree NodeType) (panes []PaneType) {
@@ -63,6 +67,47 @@ func getPaneType(tree NodeType) (panes []PaneType) {
 	return
 }
 
+// applyNodeChange replaces the configuration of the target node with
+// newConfig. This is only used to allow nodes to change their own
+// configurations in response to user input (for now, just mouse events.)
+func applyNodeChange(
+	current, target *screenNode,
+	currentConfig, newConfig NodeType,
+) NodeType {
+	if current == target {
+		return newConfig
+	}
+
+	switch currentConfig := currentConfig.(type) {
+	case PaneType:
+		return currentConfig
+	case SplitType:
+		currentConfig.A = applyNodeChange(
+			current.Children[0],
+			target,
+			currentConfig.A,
+			newConfig,
+		)
+		currentConfig.B = applyNodeChange(
+			current.Children[1],
+			target,
+			currentConfig.B,
+			newConfig,
+		)
+		return currentConfig
+	case MarginsType:
+		currentConfig.Node = applyNodeChange(
+			current.Children[0],
+			target,
+			currentConfig.Node,
+			newConfig,
+		)
+		return currentConfig
+	}
+
+	return currentConfig
+}
+
 // isAttached reports whether the node provided leads to a node that is
 // attached.
 func isAttached(tree NodeType) bool {
@@ -77,6 +122,26 @@ func isAttached(tree NodeType) bool {
 	return false
 }
 
+// detach returns a copy of node with no attachment points.
+func detach(node NodeType) NodeType {
+	switch node := node.(type) {
+	case PaneType:
+		node.Attached = false
+		return node
+	case SplitType:
+		node.A = detach(node.A)
+		node.B = detach(node.B)
+		return node
+	case MarginsType:
+		node.Node = detach(node.Node)
+		return node
+	}
+
+	return node
+}
+
+// attach returns a copy of node with the NodeID of the current attachment
+// point replaced with id.
 func attach(node NodeType, id tree.NodeID) NodeType {
 	switch node := node.(type) {
 	case PaneType:
