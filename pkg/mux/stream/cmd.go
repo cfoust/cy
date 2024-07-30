@@ -173,7 +173,7 @@ func (c *Cmd) Read(p []byte) (n int, err error) {
 		return 0, exitError
 	}
 
-	if status == CmdStatusComplete || status == CmdStatusFailed {
+	if status != CmdStatusStarting && status != CmdStatusHealthy {
 		return 0, io.EOF
 	}
 
@@ -186,7 +186,7 @@ func (c *Cmd) Read(p []byte) (n int, err error) {
 		c.Lock()
 		c.ptmx = nil
 		c.Unlock()
-		return 0, nil
+		return c.Read(p)
 	}
 
 	return n, err
@@ -229,8 +229,8 @@ func (c *Cmd) runOnce(ctx context.Context) {
 			return
 		}
 
-		c.setStatus(CmdStatusFailed)
 		c.Lock()
+		c.status = CmdStatusFailed
 		c.exitError = err
 		c.Unlock()
 	}

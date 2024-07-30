@@ -1,7 +1,9 @@
 package stream
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"os/exec"
 	"testing"
 	"time"
@@ -97,10 +99,19 @@ func TestFailed(t *testing.T) {
 		geom.DEFAULT_SIZE,
 	)
 
+	errc := make(chan error)
+	go func() {
+		var b bytes.Buffer
+		_, err := io.Copy(&b, cmd)
+		errc <- err
+	}()
+
 	time.Sleep(250 * time.Millisecond)
 
 	require.Equal(t, CmdStatusFailed, cmd.status)
-	require.Error(t, cmd.exitError)
-	_, ok := cmd.exitError.(*exec.ExitError)
+	err := <-errc
+	require.Error(t, err)
+	require.Equal(t, err, cmd.exitError)
+	_, ok := err.(*exec.ExitError)
 	require.True(t, ok)
 }
