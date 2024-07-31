@@ -182,9 +182,11 @@ func (c *Client) pollEvents() {
 			// We don't want mouse motion to trigger this
 			if _, ok := event.(taro.KeyMsg); ok {
 				c.RLock()
-				node := c.node.Id()
+				node := c.node
 				c.RUnlock()
-				c.interact(c.cy.writes, node)
+				if node != nil {
+					c.interact(c.cy.writes, node.Id())
+				}
 			}
 
 			c.renderer.Send(event)

@@ -209,11 +209,6 @@ For example:
          (pane/attach _)))
 
 (key/action
-  action/kill-current-pane
-  "Kill the current pane."
-  (tree/kill (pane/current)))
-
-(key/action
   action/kill-server
   "Kill the cy server."
   (cy/kill-server))

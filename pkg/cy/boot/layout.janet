@@ -77,6 +77,24 @@
   (layout/find node |($ :attached)))
 
 (defn
+  layout/successors
+  ````Get the paths to all of the direct children of this node.
+
+For example:
+```janet
+# For a node of type :split
+@[[:a] [:b]]
+# For a node of type :pane (it has no children)
+@[]
+```
+  ````
+  [node]
+  (cond
+    (layout/type? :split node) @[[:a] [:b]]
+    (layout/type? :margins node) @[[:node]]
+    @[[]]))
+
+(defn
   layout/assoc
   ```Set the node at the given path in layout to the provided node. Returns a copy of the original layout with the node changed.```
   [layout path node]
@@ -118,6 +136,9 @@
     path
     |{:type :pane :id ($ :id) :attached true}))
 
+# TODO(cfoust): 07/31/24 caller should not have to provide comprehensive
+# successor function, it should only be called on nodes that are along the axis
+# (ie where ix-axis returns true.) You can use (layout/successors) for this.
 (defn
   layout/move
   ```This function attaches to the pane nearest to the one the user is currently attached to along an axis. It returns a new copy of layout with the attachment point changed or returns the same layout if no motion could be completed.
@@ -132,7 +153,7 @@ successors is a unary function that, given a node, returns the paths of all of t
 
   # We look for a path we can attach to in the opposite direction of
   # movement.
-  # 
+  #
   # Consider the case where a node has successors :a, :b:, and :c arranged
   # along the axis of motion; if we're attached to a node on :b and moving in
   # the direction of :a, we want `detached-successors` to return just [:a],
@@ -256,6 +277,55 @@ successors is a unary function that, given a node, returns the paths of all of t
                                         :vertical true
                                         :b (layout/detach $)
                                         :a node})))
+
+(defn
+  layout/attach-first
+  ```Attach to the first pane found in the layout.```
+  [layout]
+  (def path (layout/find layout layout/pane?))
+  (if (nil? path) (break layout))
+  (layout/attach layout path))
+
+(defn
+  layout/remove-attached
+  ```Remove the attached node from the layout, simplifying the nearest ancestor with children.```
+  [layout]
+  (def path (layout/attach-path layout))
+  (if (nil? path) (break layout))
+  (def parent-path (layout/find-last
+                     layout
+                     path
+                     |(> (length (layout/successors $)) 1)))
+
+  # If there are no parents with other children, it's game over, just set the
+  # layout to a disconnected pane
+  (if (nil? parent-path)
+    (break {:type :pane :attached true}))
+
+  (def parent (layout/path layout parent-path))
+
+  # For now, only splits satisfy this (they are the only node type that can
+  # have more than one successor)
+  (def {:a a :b b} parent)
+  (layout/assoc
+    layout
+    parent-path
+    (cond
+      (layout/attached? a) (layout/attach-first b)
+      (layout/attached? b) (layout/attach-first a))))
+
+(key/action
+  action/remove-current-pane
+  "Remove the current pane from the layout."
+  (layout/set (layout/remove-attached (layout/get))))
+
+(key/action
+  action/kill-current-pane
+  "Kill the pane and remove it from the layout."
+  (def layout (layout/get))
+  (def {:id id} (layout/path layout (layout/attach-path layout)))
+  (layout/set (layout/remove-attached layout))
+  (if (not (nil? id)) (tree/kill id)))
 
 (defmacro-
   pane-creator

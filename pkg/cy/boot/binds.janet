@@ -18,7 +18,8 @@
 (key/bind-many-tag :root "panes"
                    [prefix "ctrl+i"] pane/history-forward
                    [prefix "ctrl+o"] pane/history-backward
-                   [prefix "x"] action/kill-current-pane
+                   [prefix "x"] action/remove-current-pane
+                   [prefix "X"] action/kill-current-pane
                    [prefix "C"] action/jump-command
                    [prefix ":"] action/jump-screen-lines
                    [prefix "j"] action/new-shell
@@ -37,9 +38,7 @@
 (key/bind-many-tag :root "viewport"
                    [prefix "g"] action/toggle-margins
                    [prefix "1"] action/margins-80
-                   [prefix "2"] action/margins-160
-                   [prefix "+"] action/margins-smaller
-                   [prefix "-"] action/margins-bigger)
+                   [prefix "2"] action/margins-160)
 
 (key/bind-many-tag :root "unprefixed"
                    ["ctrl+l"] action/next-pane)
