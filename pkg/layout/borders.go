@@ -71,9 +71,9 @@ func fillBorder(
 		char = []rune(border.MiddleLeft)[0]
 	} else if left && !right && top && bottom {
 		char = []rune(border.MiddleRight)[0]
-	} else if left && right && top && !bottom {
+	} else if left && right && !top && !bottom {
 		char = []rune(border.MiddleTop)[0]
-	} else if left && right && !top && bottom {
+	} else if left && right && top && !bottom {
 		char = []rune(border.MiddleBottom)[0]
 	}
 
