@@ -64,7 +64,7 @@ func (v *Value) Free() {
 }
 
 type stringRequest struct {
-	value C.Janet
+	value  C.Janet
 	result chan string
 }
 
@@ -75,7 +75,7 @@ func (v *Value) String() string {
 
 	result := make(chan string)
 	v.vm.requests <- stringRequest{
-		value: v.janet,
+		value:  v.janet,
 		result: result,
 	}
 	return <-result

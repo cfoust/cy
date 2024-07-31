@@ -170,7 +170,7 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		}
 
 		type_ := MarginsType{
-			Node:  node,
+			Node: node,
 		}
 
 		if args.Cols != nil {
