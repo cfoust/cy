@@ -23,7 +23,7 @@ func (l *LayoutModule) Set(user interface{}, value *janet.Value) error {
 		return fmt.Errorf("missing client context")
 	}
 
-	return client.Layout().Set(layout)
+	return client.SetLayout(layout)
 }
 
 func (l *LayoutModule) Get(user interface{}) (*layout.Layout, error) {
@@ -32,6 +32,6 @@ func (l *LayoutModule) Get(user interface{}) (*layout.Layout, error) {
 		return nil, fmt.Errorf("missing client context")
 	}
 
-	layout := client.Layout().Get()
+	layout := client.GetLayout()
 	return &layout, nil
 }

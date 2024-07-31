@@ -21,7 +21,8 @@ type Client interface {
 	Get(key string) (value interface{}, ok bool)
 	Params() *params.Parameters
 	OuterLayers() *screen.Layers
-	Layout() *layout.LayoutEngine
+	SetLayout(layout.Layout) error
+	GetLayout() layout.Layout
 	Frame() *frames.Framer
 	Binds() []Binding
 	Toast(toasts.Toast)

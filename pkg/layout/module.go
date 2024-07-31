@@ -234,6 +234,34 @@ func Attach(layout Layout, id tree.NodeID) Layout {
 	return Layout{root: attach(layout.root, id)}
 }
 
+func getAttached(node NodeType) *tree.NodeID {
+	switch node := node.(type) {
+	case PaneType:
+		if node.Attached {
+			return node.ID
+		}
+
+		return nil
+	case SplitType:
+		if idA := getAttached(node.A); idA != nil {
+			return idA
+		}
+		if idB := getAttached(node.B); idB != nil {
+			return idB
+		}
+		return nil
+	case MarginsType:
+		return getAttached(node.Node)
+	}
+
+	return nil
+}
+
+// Attached returns the ID field of the attached pane in the layout.
+func Attached(layout Layout) *tree.NodeID {
+	return getAttached(layout.root)
+}
+
 // validateTree inspects a tree and ensures that it conforms to all relevant
 // constraints, namely there should only be one PaneType with Attached=true.
 func validateTree(tree NodeType) error {

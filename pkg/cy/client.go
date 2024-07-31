@@ -202,10 +202,6 @@ func (c *Client) OuterLayers() *screen.Layers {
 	return c.outerLayers
 }
 
-func (c *Client) Layout() *layout.LayoutEngine {
-	return c.layoutEngine
-}
-
 func (c *Cy) removeClient(client *Client) {
 	c.Lock()
 	newClients := make([]*Client, 0)
@@ -246,11 +242,9 @@ func (c *Client) initialize(options ClientOptions) error {
 		layout.WithParams(c.params),
 	)
 
-	logId := tree.NodeID(2)
 	err = c.layoutEngine.Set(layout.New(layout.MarginsType{
 		Cols: 80,
 		Node: layout.PaneType{
-			ID:       &logId,
 			Attached: true,
 		},
 	}))
@@ -345,25 +339,55 @@ func (c *Client) findNewPane() error {
 	return c.execute(`(shell/attach)`)
 }
 
-func (c *Client) attach(node tree.Node) error {
-	pane, ok := node.(*tree.Pane)
-	if !ok {
-		return fmt.Errorf("node was not a pane")
-	}
+func (c *Client) GetLayout() layout.Layout {
+	return c.layoutEngine.Get()
+}
 
-	path := c.cy.tree.PathTo(node)
-	if len(path) == 0 {
-		return fmt.Errorf("failed to find path to node")
-	}
-
-	current := c.layoutEngine.Get()
-	err := c.layoutEngine.Set(layout.Attach(current, pane.Id()))
+// SetLayout sets the layout in the client's LayoutEngine to the one provided.
+// If the tree node the client is attached to in the layout exists, SetLayout
+// also updates the client's bindings and params to point to that node. If it
+// does not exist, the client uses the bindings and parameters of the root
+// node.
+func (c *Client) SetLayout(l layout.Layout) error {
+	err := c.layoutEngine.Set(l)
 	if err != nil {
 		return err
 	}
 
-	// TODO(cfoust): 07/25/24
+	c.Lock()
+	defer c.Unlock()
+
+	var node tree.Node
+
+	attached := layout.Attached(l)
+	if attached != nil {
+		node, _ = c.cy.tree.NodeById(*attached)
+	}
+
 	c.node = node
+
+	isPane := false
+	if node != nil {
+		_, isPane = node.(*tree.Pane)
+	}
+
+	var path []tree.Node
+	if node != nil {
+		path = c.cy.tree.PathTo(node)
+	}
+
+	// In these four scenarios we let the Pane in the LayoutEngine tell
+	// the user what's wrong:
+	// * They are connected to any pane
+	// * They are connected to a tree node that is not a pane
+	// * The node they specified does not exist
+	// But their bindings still have to work.
+	if node == nil || !isPane || len(path) == 0 {
+		root := c.cy.tree.Root()
+		c.binds.SetScopes(root.Binds())
+		c.params.SetParent(root.Params())
+		return nil
+	}
 
 	// Update bindings
 	scopes := make([]*bind.BindScope, 0)
@@ -377,14 +401,23 @@ func (c *Client) attach(node tree.Node) error {
 	return nil
 }
 
-func (c *Client) Attach(node tree.Node) error {
-	c.Lock()
-	defer c.Unlock()
+// attach changes the tree node the client is currently attached to in their
+// layout.
+func (c *Client) attach(node tree.Node) error {
+	current := c.layoutEngine.Get()
+	return c.SetLayout(layout.Attach(current, node.Id()))
+}
 
+// Attach attaches to the given node and (as distinct from attach()) adds an
+// entry to the client's node history.
+func (c *Client) Attach(node tree.Node) error {
 	err := c.attach(node)
 	if err != nil {
 		return err
 	}
+
+	c.Lock()
+	defer c.Unlock()
 
 	// If we're back in time, start the history index anew
 	if c.historyIndex < len(c.history)-1 {
@@ -396,14 +429,15 @@ func (c *Client) Attach(node tree.Node) error {
 	return nil
 }
 
+// HistoryForward moves forward in the client's node history. This has no
+// effect if they are already at the latest entry.
 func (c *Client) HistoryForward() error {
-	c.Lock()
-	defer c.Unlock()
-
+	c.RLock()
 	var (
 		history      = c.history
 		historyIndex = c.historyIndex
 	)
+	c.RUnlock()
 
 	for i := historyIndex + 1; i < len(history); i++ {
 		node, ok := c.cy.tree.NodeById(history[i])
@@ -415,21 +449,24 @@ func (c *Client) HistoryForward() error {
 			return err
 		}
 
+		c.Lock()
 		c.historyIndex = i
+		c.Unlock()
 		break
 	}
 
 	return nil
 }
 
+// HistoryForward moves backward in the client's node history and attaches to
+// the node they were attached to before the current one.
 func (c *Client) HistoryBackward() error {
-	c.Lock()
-	defer c.Unlock()
-
+	c.RLock()
 	var (
 		history      = c.history
 		historyIndex = c.historyIndex
 	)
+	c.RUnlock()
 
 	for i := historyIndex - 1; i >= 0; i-- {
 		node, ok := c.cy.tree.NodeById(history[i])
@@ -442,7 +479,9 @@ func (c *Client) HistoryBackward() error {
 			return err
 		}
 
+		c.Lock()
 		c.historyIndex = i
+		c.Unlock()
 		break
 	}
 
