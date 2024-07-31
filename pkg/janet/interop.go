@@ -123,6 +123,10 @@ func handleReturn(v *VM, value reflect.Value) (C.Janet, error) {
 			return v.janet, nil
 		}
 
+		if _, ok := value.Interface().(Marshalable); ok {
+			return v.marshal(value.Interface())
+		}
+
 		value = value.Elem()
 	}
 

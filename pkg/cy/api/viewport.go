@@ -5,29 +5,9 @@ import (
 
 	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/frames"
-	"github.com/cfoust/cy/pkg/geom"
 )
 
 type ViewportModule struct {
-}
-
-func (c *ViewportModule) Size(context interface{}) (*geom.Vec2, error) {
-	client, err := getClient(context)
-	if err != nil {
-		return nil, err
-	}
-
-	size := client.Margins().Size()
-	return &size, nil
-}
-
-func (c *ViewportModule) SetSize(context interface{}, size geom.Size) error {
-	client, err := getClient(context)
-	if err != nil {
-		return err
-	}
-	client.Margins().SetSize(size)
-	return nil
 }
 
 func (c *ViewportModule) SetFrame(context interface{}, name string) error {

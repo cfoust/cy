@@ -6,6 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/stories"
@@ -66,16 +67,40 @@ var initNoFrame stories.InitFunc = func(ctx context.Context) (mux.Screen, error)
 }
 
 func init() {
-	stories.Register("cy/viewport", initWithFrame, stories.Config{
+	stories.Register("quick-start/layout", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd (cmd/new :root))
+(layout/set {:type :pane :id cmd :attached true})
+		`)
+		return screen, err
+	}, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "|"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "-"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "K"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "H"),
+			stories.Wait(stories.More),
+		},
+	})
+
+	stories.Register("quick-start/margins", initWithFrame, stories.Config{
 		Input: []interface{}{
 			stories.Wait(stories.Some),
 			stories.Type("ctrl+a", "g"),
 			stories.Wait(stories.More),
 			stories.Type("ctrl+a", "g"),
 			stories.Wait(stories.More),
-			stories.Type("ctrl+a", "+"),
-			stories.Wait(stories.Some),
-			stories.Type("ctrl+a", "-"),
+			stories.Type("ctrl+a", "1"),
+			stories.Wait(stories.More),
+			stories.Type("ctrl+a", "2"),
 			stories.Wait(stories.More),
 		},
 	})
@@ -209,11 +234,10 @@ func init() {
 			return nil, err
 		}
 
-		split := S.NewSplit(
+		split := layout.NewSplit(
 			ctx,
 			screenA,
 			screenB,
-			.5,
 			false,
 		)
 
@@ -224,7 +248,7 @@ func init() {
 				if ctx.Err() != nil {
 					return
 				}
-				split.SetPercent(0.2 + float64(proportion)*0.1)
+				split.SetPercent(20 + proportion*10)
 
 				time.Sleep(time.Second)
 				proportion++
@@ -395,4 +419,139 @@ func init() {
 			stories.Wait(stories.ALot),
 		},
 	})
+
+	stories.Register("layout/split-half", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(layout/set
+        {:type :split
+         :percent 26
+	 :a {:type :pane :id cmd1 :attached true}
+	 :b {:type :pane :id cmd2}})
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("layout/split-half-top", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(def cmd3 (shell/new))
+(layout/set
+        {:type :split
+         :percent 50
+	 :vertical true
+	 :a {:type :split
+		 :percent 50
+		 :a {:type :pane :id cmd1}
+		 :b {:type :pane :id cmd2}}
+	 :b {:type :pane :id cmd3 :attached true}})
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("layout/split-half-cells", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(layout/set
+        {:type :split
+         :cells 30
+	 :a {:type :pane :id cmd1 :attached true}
+	 :b {:type :pane :id cmd2}})
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("layout/split-margins", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(layout/set
+        {:type :split
+         :percent 80
+	 :a {:type :margins
+	     :cols 40
+	     :node {:type :pane :id cmd1 :attached true}}
+	 :b {:type :pane :id cmd2}})
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("command/success", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd (cmd/new :root :command "bash" :args ["-c" "exit 0"]))
+(pane/attach cmd)
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("command/fail", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd (cmd/new :root :command "bash" :args ["-c" "exit 128"]))
+(pane/attach cmd)
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("pane/killed", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd (cmd/new :root))
+(layout/set {:type :pane :id cmd :attached true})
+(tree/kill cmd)
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("pane/invalid-id", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(layout/set {:type :pane :id 1234 :attached true})
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("pane/invalid-group", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def group (group/mkdir :root "/foo/bar/baz"))
+(layout/set {:type :pane :id group :attached true})
+		`)
+		return screen, err
+	}, stories.Config{})
 }

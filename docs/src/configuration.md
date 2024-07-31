@@ -1,14 +1,20 @@
 # Configuration
 
-`cy` was designed to be as configurable as possible. Users of `cy` provide a configuration written in [Janet](https://janet-lang.org/) that uses `cy`'s [API](/api.md) to define key bindings, set parameters, and set up `cy` in any way they like.
+`cy` is not really a terminal multiplexer. It's actually an API for making terminal multiplexers that happens to come with a decent default configuration. This is because `cy` was designed to be as configurable as possible:
 
-Janet is a fun, embeddable [Lisp-like](https://en.wikipedia.org/wiki/Lisp_(programming_language)) language that is easy to learn. If you are new to Janet, I recommend starting out with its [documentation](https://janet-lang.org/docs/syntax.html) and Ian Henry's fantastic [_Janet for Mortals_](https://janet.guide/).
+1. Features are first built to expand the functionality available in the API.
+2. They then are incorporated into the default configuration where appropriate.
 
-Janet looks like this:
+As a result, `cy` is the best choice for users who enjoy tinkering with the tools they use.
 
-```janet
-(print "hello world!")
-```
+`cy` uses [Janet](https://janet-lang.org/) as its configuration language. Janet is a fun, embeddable [Lisp-like](https://en.wikipedia.org/wiki/Lisp_(programming_language)) language that is easy to learn. If you are new to Janet, I recommend starting out with its [documentation](https://janet-lang.org/docs/syntax.html) and Ian Henry's fantastic [_Janet for Mortals_](https://janet.guide/).
+
+> #### Why Janet?
+> This might come as a surprise, but I am far from being a Lisp zealot and have
+> never seriously used `emacs`. I found Janet several years ago and enjoyed
+> experimenting with it. The language avoids most of the scary levels of
+> abstraction present in some Lisps and strikes a balance between functional
+> programming orthodoxy and practical imperative programming needs.
 
 ### Configuration files
 
@@ -28,7 +34,7 @@ You can reload your configuration at any time using {{api action/reload-config}}
 
 ### Example configuration
 
-An example configuration that uses functionality from this API is shown below. You may also refer to the [default configuration](https://github.com/cfoust/cy/blob/main/pkg/cy/cy-boot.janet) for examples of more advanced API usage.
+An example configuration that uses functionality from this API is shown below. You may also refer to the [default configuration](https://github.com/cfoust/cy/blob/main/pkg/cy/boot) for examples of more advanced API usage.
 
 ```janet
 # Define a new action (which is just a function) with the name toast-pane-path

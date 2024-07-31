@@ -18,6 +18,9 @@ const (
 	AttrGfx
 	AttrItalic
 	AttrBlink
+	AttrWrap
+	AttrBlank
+	AttrTransparent
 )
 
 const (
@@ -67,11 +70,10 @@ const (
 )
 
 type Glyph struct {
-	Char        rune
-	Mode        int16
-	FG, BG      Color
-	Transparent bool
-	Write       WriteID
+	Char   rune
+	Mode   int16
+	FG, BG Color
+	Write  WriteID
 }
 
 func (g Glyph) IsEmpty() bool {
@@ -80,6 +82,10 @@ func (g Glyph) IsEmpty() bool {
 
 func (g Glyph) IsDefault() bool {
 	return g.Mode&attrBlank != 0
+}
+
+func (g Glyph) Transparent() bool {
+	return g.Mode&attrTransparent != 0
 }
 
 func (g Glyph) Width() int {

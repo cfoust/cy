@@ -34,8 +34,9 @@
     (string name)
     doc
     (if (> (length file) 0)
-      (string
-        "https://github.com/cfoust/cy/blob/main/pkg/cy/cy-boot.janet#L"
+      (string/format
+        "https://github.com/cfoust/cy/blob/main/pkg/cy/%s#L%d"
+        file
         line)
       "")
     macro))

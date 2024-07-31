@@ -19,6 +19,38 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
+// Marshalable lets you define a custom (pure) transformation to perform on
+// this type prior to translating it into a Janet value.
+type Marshalable interface {
+	MarshalJanet() interface{}
+}
+
+// Unmarshalable lets you define custom code for turning a Janet value into
+// this type.
+type Unmarshalable interface {
+	UnmarshalJanet(value *Value) error
+}
+
+var MARSHALABLE = reflect.TypeOf((*Marshalable)(nil)).Elem()
+var UNMARSHALABLE = reflect.TypeOf((*Unmarshalable)(nil)).Elem()
+
+// checkInterfaces does a sanity check on the (Un)Marshalable types.
+func checkInterfaces(type_ reflect.Type, value reflect.Value) error {
+	if _, ok := value.Interface().(Marshalable); ok {
+		if !type_.Implements(UNMARSHALABLE) {
+			return fmt.Errorf("implementation of Unmarshalable missing for %s", type_.String())
+		}
+	}
+
+	if _, ok := value.Interface().(Unmarshalable); ok {
+		if value.Kind() != reflect.Pointer {
+			return fmt.Errorf("implementation of Unmarshalable for %s should have pointer receiver", type_.String())
+		}
+	}
+
+	return nil
+}
+
 // Wrap a string as a Janet keyword.
 func wrapKeyword(word string) C.Janet {
 	str := C.CString(word)
@@ -94,7 +126,7 @@ func IsValidType(value interface{}) bool {
 	return isValidType(reflect.TypeOf(value))
 }
 
-// Marshal a Go value into a Janet value.
+// marshal turns a Go value into a Janet value. This is a low-level interface.
 func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 	result = C.janet_wrap_nil()
 
@@ -104,6 +136,15 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 
 	type_ := reflect.TypeOf(item)
 	value := reflect.ValueOf(item)
+
+	if m, ok := value.Interface().(Marshalable); ok {
+		err = checkInterfaces(type_, value)
+		if err != nil {
+			return
+		}
+
+		return v.marshal(m.MarshalJanet())
+	}
 
 	if value.Kind() == reflect.Pointer {
 		if v, ok := item.(*Value); ok {
@@ -115,9 +156,11 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 			return
 		}
 
-		// TODO(cfoust): 06/23/23 maybe support this someday
-		err = fmt.Errorf("cannot marshal pointer to value")
-		return
+		if value.IsNil() {
+			return
+		}
+
+		return v.marshal(value.Elem().Interface())
 	}
 
 	switch type_.Kind() {
@@ -278,6 +321,20 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 		return fmt.Errorf("cannot unmarshal into non-pointer value")
 	}
 
+	if u, ok := value.Interface().(Unmarshalable); ok {
+		err := checkInterfaces(type_, value)
+		if err != nil {
+			return err
+		}
+
+		v.isSafe = true
+		janetValue := v.value(source)
+		err = u.UnmarshalJanet(janetValue)
+		janetValue.unroot()
+		v.isSafe = false
+		return err
+	}
+
 	type_ = type_.Elem()
 	value = value.Elem()
 
@@ -356,8 +413,6 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 				return err
 			}
 			value.Set(ptr)
-		} else {
-			value.Set(reflect.ValueOf(nil))
 		}
 
 		//return fmt.Errorf("unimplemented pointer type: %s (%s)", type_.String(), type_.Kind().String())
@@ -473,7 +528,8 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 	return nil
 }
 
-func (v *VM) Unmarshal(source C.Janet, dest interface{}) error {
+// unmarshalSafe sends an unmarshalRequest to the VM and waits for the result.
+func (v *VM) unmarshalSafe(source C.Janet, dest interface{}) error {
 	errc := make(chan error)
 	v.requests <- unmarshalRequest{
 		source: source,
@@ -481,4 +537,23 @@ func (v *VM) Unmarshal(source C.Janet, dest interface{}) error {
 		errc:   errc,
 	}
 	return <-errc
+}
+
+// Marshal sends a marshalRequest to the VM and waits for the result.
+func (v *VM) Marshal(source interface{}) (value *Value, err error) {
+	result := make(chan interface{})
+	v.requests <- marshalRequest{
+		source: source,
+		result: result,
+	}
+
+	res := <-result
+	switch res := res.(type) {
+	case *Value:
+		return res, nil
+	case error:
+		return nil, res
+	}
+
+	return nil, fmt.Errorf("never got result of Marshal")
 }

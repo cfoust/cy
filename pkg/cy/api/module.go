@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/frames"
+	"github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -20,7 +21,8 @@ type Client interface {
 	Get(key string) (value interface{}, ok bool)
 	Params() *params.Parameters
 	OuterLayers() *screen.Layers
-	Margins() *screen.Margins
+	SetLayout(layout.Layout) error
+	GetLayout() layout.Layout
 	Frame() *frames.Framer
 	Binds() []Binding
 	Toast(toasts.Toast)

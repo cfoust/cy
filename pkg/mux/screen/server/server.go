@@ -12,8 +12,14 @@ type Server struct {
 	clients []*Client
 }
 
+// refreshPane resizes screen to the minimum of all of its clients' screen sizes.
 func (s *Server) refreshPane(screen mux.Screen) {
+	if screen == nil {
+		return
+	}
+
 	s.Lock()
+	defer s.Unlock()
 
 	// Get a list of all clients attached to this screen
 	attached := make([]*Client, 0)
@@ -25,29 +31,31 @@ func (s *Server) refreshPane(screen mux.Screen) {
 
 	// Don't do anything if no clients are attached to this pane
 	if len(attached) == 0 {
-		s.Unlock()
 		return
 	}
 
 	// Set the pane's size to the maximum that all clients can fit
-	size := attached[0].Size()
+	size := geom.Vec2{}
 	for _, client := range attached {
+		clientSize := client.Size()
 		// some clients don't want to impose size constraints on other
 		// clients, just see a pane for a moment
-		if client.Size().IsZero() {
+		if clientSize.IsZero() {
 			continue
 		}
 
-		size = geom.GetMaximum(size, client.Size())
+		if size.IsZero() {
+			size = clientSize
+		} else {
+			size = geom.GetMaximum(size, clientSize)
+		}
 	}
-
-	s.Unlock()
 
 	if size.IsZero() {
 		return
 	}
 
-	screen.Resize(size)
+	go screen.Resize(size)
 }
 
 func New() *Server {

@@ -46,7 +46,7 @@ jobs:
           go build
           -ldflags "-X github.com/cfoust/cy/pkg/version.Version=${CY_VERSION}"
           -o docs/storybook
-          ./cmd/stories/main.go
+          ./cmd/stories/...
 
       - name: Install the latest VHS
         run: |

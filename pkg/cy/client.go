@@ -11,6 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
@@ -52,18 +53,13 @@ type Client struct {
 	// the client can have params of their own
 	params *params.Parameters
 
-	muxClient *server.Client
-	toast     *ToastLogger
-	toaster   *taro.Program
-	margins   *screen.Margins
-	frame     *frames.Framer
-	// Layers inside of the margins
-	// This is for rendering content that should obey the user's margin
-	// settings.
-	innerLayers *screen.Layers
-	// Layers outside of the margins
-	outerLayers *screen.Layers
-	renderer    *renderer.Renderer
+	muxClient    *server.Client
+	layoutEngine *layout.LayoutEngine
+	toast        *ToastLogger
+	toaster      *taro.Program
+	frame        *frames.Framer
+	outerLayers  *screen.Layers
+	renderer     *renderer.Renderer
 
 	// An array of all of the panes this client has attached to.
 	history []tree.NodeID
@@ -186,9 +182,11 @@ func (c *Client) pollEvents() {
 			// We don't want mouse motion to trigger this
 			if _, ok := event.(taro.KeyMsg); ok {
 				c.RLock()
-				node := c.node.Id()
+				node := c.node
 				c.RUnlock()
-				c.interact(c.cy.writes, node)
+				if node != nil {
+					c.interact(c.cy.writes, node.Id())
+				}
 			}
 
 			c.renderer.Send(event)
@@ -239,15 +237,22 @@ func (c *Client) initialize(options ClientOptions) error {
 
 	c.muxClient = c.cy.muxServer.AddClient(c.Ctx(), options.Size)
 
-	c.innerLayers = screen.NewLayers()
-	c.innerLayers.NewLayer(
+	c.layoutEngine = layout.NewLayoutEngine(
 		c.Ctx(),
-		c.muxClient,
-		screen.PositionTop,
-		screen.WithOpaque,
-		screen.WithInteractive,
+		c.cy.tree,
+		c.cy.muxServer,
+		layout.WithParams(c.params),
 	)
-	c.margins = screen.NewMargins(c.Ctx(), c.innerLayers)
+
+	err = c.layoutEngine.Set(layout.New(layout.MarginsType{
+		Cols: 80,
+		Node: layout.PaneType{
+			Attached: true,
+		},
+	}))
+	if err != nil {
+		return err
+	}
 
 	c.outerLayers = screen.NewLayers()
 
@@ -268,7 +273,7 @@ func (c *Client) initialize(options ClientOptions) error {
 
 	c.outerLayers.NewLayer(
 		c.Ctx(),
-		c.margins,
+		c.layoutEngine,
 		screen.PositionTop,
 		screen.WithInteractive,
 		screen.WithOpaque,
@@ -336,33 +341,55 @@ func (c *Client) findNewPane() error {
 	return c.execute(`(shell/attach)`)
 }
 
-func (c *Client) attach(node tree.Node) error {
-	pane, ok := node.(*tree.Pane)
-	if !ok {
-		return fmt.Errorf("node was not a pane")
+func (c *Client) GetLayout() layout.Layout {
+	return c.layoutEngine.Get()
+}
+
+// SetLayout sets the layout in the client's LayoutEngine to the one provided.
+// If the tree node the client is attached to in the layout exists, SetLayout
+// also updates the client's bindings and params to point to that node. If it
+// does not exist, the client uses the bindings and parameters of the root
+// node.
+func (c *Client) SetLayout(l layout.Layout) error {
+	err := c.layoutEngine.Set(l)
+	if err != nil {
+		return err
 	}
 
-	path := c.cy.tree.PathTo(node)
-	if len(path) == 0 {
-		return fmt.Errorf("failed to find path to node")
+	c.Lock()
+	defer c.Unlock()
+
+	var node tree.Node
+
+	attached := layout.Attached(l)
+	if attached != nil {
+		node, _ = c.cy.tree.NodeById(*attached)
 	}
-
-	c.muxClient.Attach(c.Ctx(), pane.Screen())
-
-	go func() {
-		select {
-		case <-c.Ctx().Done():
-			return
-		case <-c.muxClient.Attachment().Ctx().Done():
-			return
-		case <-pane.Ctx().Done():
-			// TODO(cfoust): 12/15/23 handle error
-			c.findNewPane()
-			return
-		}
-	}()
 
 	c.node = node
+
+	isPane := false
+	if node != nil {
+		_, isPane = node.(*tree.Pane)
+	}
+
+	var path []tree.Node
+	if node != nil {
+		path = c.cy.tree.PathTo(node)
+	}
+
+	// In these four scenarios we let the Pane in the LayoutEngine tell
+	// the user what's wrong:
+	// * They are connected to any pane
+	// * They are connected to a tree node that is not a pane
+	// * The node they specified does not exist
+	// But their bindings still have to work.
+	if node == nil || !isPane || len(path) == 0 {
+		root := c.cy.tree.Root()
+		c.binds.SetScopes(root.Binds())
+		c.params.SetParent(root.Params())
+		return nil
+	}
 
 	// Update bindings
 	scopes := make([]*bind.BindScope, 0)
@@ -376,14 +403,23 @@ func (c *Client) attach(node tree.Node) error {
 	return nil
 }
 
-func (c *Client) Attach(node tree.Node) error {
-	c.Lock()
-	defer c.Unlock()
+// attach changes the tree node the client is currently attached to in their
+// layout.
+func (c *Client) attach(node tree.Node) error {
+	current := c.layoutEngine.Get()
+	return c.SetLayout(layout.Attach(current, node.Id()))
+}
 
+// Attach attaches to the given node and (as distinct from attach()) adds an
+// entry to the client's node history.
+func (c *Client) Attach(node tree.Node) error {
 	err := c.attach(node)
 	if err != nil {
 		return err
 	}
+
+	c.Lock()
+	defer c.Unlock()
 
 	// If we're back in time, start the history index anew
 	if c.historyIndex < len(c.history)-1 {
@@ -395,14 +431,15 @@ func (c *Client) Attach(node tree.Node) error {
 	return nil
 }
 
+// HistoryForward moves forward in the client's node history. This has no
+// effect if they are already at the latest entry.
 func (c *Client) HistoryForward() error {
-	c.Lock()
-	defer c.Unlock()
-
+	c.RLock()
 	var (
 		history      = c.history
 		historyIndex = c.historyIndex
 	)
+	c.RUnlock()
 
 	for i := historyIndex + 1; i < len(history); i++ {
 		node, ok := c.cy.tree.NodeById(history[i])
@@ -414,21 +451,24 @@ func (c *Client) HistoryForward() error {
 			return err
 		}
 
+		c.Lock()
 		c.historyIndex = i
+		c.Unlock()
 		break
 	}
 
 	return nil
 }
 
+// HistoryForward moves backward in the client's node history and attaches to
+// the node they were attached to before the current one.
 func (c *Client) HistoryBackward() error {
-	c.Lock()
-	defer c.Unlock()
-
+	c.RLock()
 	var (
 		history      = c.history
 		historyIndex = c.historyIndex
 	)
+	c.RUnlock()
 
 	for i := historyIndex - 1; i >= 0; i-- {
 		node, ok := c.cy.tree.NodeById(history[i])
@@ -441,7 +481,9 @@ func (c *Client) HistoryBackward() error {
 			return err
 		}
 
+		c.Lock()
 		c.historyIndex = i
+		c.Unlock()
 		break
 	}
 
@@ -454,10 +496,6 @@ func (c *Client) Get(key string) (value interface{}, ok bool) {
 
 func (c *Client) Params() *params.Parameters {
 	return c.params
-}
-
-func (c *Client) Margins() *screen.Margins {
-	return c.margins
 }
 
 func (c *Client) Frame() *frames.Framer {

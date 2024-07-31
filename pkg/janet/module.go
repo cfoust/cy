@@ -31,6 +31,11 @@ type VM struct {
 	requests chan Request
 
 	env *Table
+
+	// isSafe is used specifically for UnmarshalJanet to ensure that all
+	// unmarshaling happens _on the current goroutine_ when translating a
+	// custom type.
+	isSafe bool
 }
 
 func initJanet() {
@@ -110,6 +115,17 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 					req.source,
 					req.dest,
 				)
+			case marshalRequest:
+				value, err := v.marshal(req.source)
+
+				if err != nil {
+					req.result <- err
+					continue
+				}
+
+				req.result <- v.value(value)
+			case stringRequest:
+				req.result <- prettyPrint(req.value)
 			}
 		}
 	}

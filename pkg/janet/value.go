@@ -24,13 +24,15 @@ type Value struct {
 	vm       *VM
 	janet    C.Janet
 	wasFreed bool
+	isSafe   bool
 }
 
 func (v *VM) value(janet C.Janet) *Value {
 	C.janet_gcroot(janet)
 	return &Value{
-		vm:    v,
-		janet: janet,
+		vm:     v,
+		janet:  janet,
+		isSafe: v.isSafe,
 	}
 }
 
@@ -61,18 +63,45 @@ func (v *Value) Free() {
 	}
 }
 
+type stringRequest struct {
+	value  C.Janet
+	result chan string
+}
+
+func (v *Value) String() string {
+	if v.isSafe {
+		return prettyPrint(v.janet)
+	}
+
+	result := make(chan string)
+	v.vm.requests <- stringRequest{
+		value:  v.janet,
+		result: result,
+	}
+	return <-result
+}
+
 type unmarshalRequest struct {
 	source C.Janet
 	dest   interface{}
 	errc   chan error
 }
 
+type marshalRequest struct {
+	source interface{}
+	result chan interface{}
+}
+
 func (v *Value) Unmarshal(dest interface{}) error {
+	if v.isSafe {
+		return v.vm.unmarshal(v.janet, dest)
+	}
+
 	if v.IsFree() {
 		return ERROR_FREED
 	}
 
-	return v.vm.Unmarshal(v.janet, dest)
+	return v.vm.unmarshalSafe(v.janet, dest)
 }
 
 type Table struct {

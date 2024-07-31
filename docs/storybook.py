@@ -109,7 +109,7 @@ if __name__ == '__main__':
     # release version, so we don't need to build this again
     if not 'CI' in os.environ:
         if subprocess.call(
-            "go build -o storybook ../cmd/stories/main.go",
+            "go build -o storybook ../cmd/stories/...",
             shell=True
         ) != 0:
             raise Exception("failed to build storybook")

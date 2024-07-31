@@ -113,3 +113,12 @@ var _ janet.Documented = (*MsgModule)(nil)
 func (m *MsgModule) Documentation() string {
 	return DOCS_MSG
 }
+
+//go:embed docs-layout.md
+var DOCS_LAYOUT string
+
+var _ janet.Documented = (*LayoutModule)(nil)
+
+func (l *LayoutModule) Documentation() string {
+	return DOCS_LAYOUT
+}

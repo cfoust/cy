@@ -19,6 +19,7 @@ type CmdOptions struct {
 	Directory string
 	Command   string
 	Args      []string
+	Restart   bool
 }
 
 type CmdStatus int
@@ -28,33 +29,30 @@ const (
 	CmdStatusHealthy
 	CmdStatusFailed
 	CmdStatusComplete
+	CmdStatusKilled
 )
 
 type Cmd struct {
 	util.Lifetime
 	deadlock.RWMutex
 
-	status  CmdStatus
+	status        CmdStatus
+	statusUpdates *util.Publisher[CmdStatus]
+
 	options CmdOptions
 	size    Size
-
-	statusUpdates *util.Publisher[CmdStatus]
 
 	ptmx *os.File
 	proc *os.Process
 	done chan error
+
+	exitError error
 }
 
 var _ Stream = (*Cmd)(nil)
 
 func (c *Cmd) Kill() {
 	c.Cancel()
-}
-
-func (c *Cmd) getSize() Size {
-	c.RLock()
-	defer c.RUnlock()
-	return c.size
 }
 
 func (c *Cmd) Resize(size Size) error {
@@ -66,13 +64,6 @@ func (c *Cmd) Resize(size Size) error {
 		Rows: uint16(size.R),
 		Cols: uint16(size.C),
 	})
-}
-
-func (c *Cmd) GetStatus() CmdStatus {
-	c.RLock()
-	status := c.status
-	c.RUnlock()
-	return status
 }
 
 func (c *Cmd) Path() (string, error) {
@@ -95,12 +86,16 @@ func (c *Cmd) setStatus(status CmdStatus) {
 
 func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 	started := make(chan error)
-	shellDone := make(chan error)
+	done := make(chan error)
 	options := c.options
 	size := c.size
 
 	go func() {
-		cmd := exec.CommandContext(ctx, options.Command, options.Args...)
+		cmd := exec.CommandContext(
+			ctx,
+			options.Command,
+			options.Args...,
+		)
 		cmd.Dir = options.Directory
 		cmd.Env = append(
 			os.Environ(),
@@ -127,7 +122,7 @@ func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 		c.Unlock()
 
 		defer fd.Close()
-		shellDone <- cmd.Wait()
+		done <- cmd.Wait()
 	}()
 
 	err := <-started
@@ -135,23 +130,23 @@ func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 		return nil, err
 	}
 
-	return shellDone, nil
+	return done, nil
 }
 
 // Run the pane's command and only return when it's finished.
 func (c *Cmd) run(ctx context.Context) error {
 	started := make(chan error)
 
-	var shellDone chan error
+	var done chan error
 	go func() {
 		c.setStatus(CmdStatusStarting)
 
-		done, err := c.runPty(ctx)
+		ptyDone, err := c.runPty(ctx)
 		if err != nil {
 			started <- err
 		}
 
-		shellDone = done
+		done = ptyDone
 
 		started <- nil
 		c.setStatus(CmdStatusHealthy)
@@ -162,18 +157,23 @@ func (c *Cmd) run(ctx context.Context) error {
 		return err
 	}
 
-	return <-shellDone
+	return <-done
 }
 
 func (c *Cmd) Read(p []byte) (n int, err error) {
 	c.RLock()
 	var (
-		ptmx   = c.ptmx
-		status = c.status
+		ptmx      = c.ptmx
+		status    = c.status
+		exitError = c.exitError
 	)
 	c.RUnlock()
 
-	if status == CmdStatusComplete {
+	if exitError != nil {
+		return 0, exitError
+	}
+
+	if status != CmdStatusStarting && status != CmdStatusHealthy {
 		return 0, io.EOF
 	}
 
@@ -186,7 +186,7 @@ func (c *Cmd) Read(p []byte) (n int, err error) {
 		c.Lock()
 		c.ptmx = nil
 		c.Unlock()
-		return 0, nil
+		return c.Read(p)
 	}
 
 	return n, err
@@ -209,9 +209,36 @@ const (
 	SPIN_THRESHOLD = 1 * time.Second
 )
 
-// Run the pane's pty command over and over (exiting a shell or an editor will
-// just start it again.) If it fails more than SPIN_NUM_TRIES in under
-// SPIN_THRESHOLD, don't restart it.
+func (c *Cmd) runOnce(ctx context.Context) {
+	errChan := make(chan error)
+
+	go func() {
+		select {
+		case <-ctx.Done():
+		case errChan <- c.run(ctx):
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		c.setStatus(CmdStatusKilled)
+		return
+	case err := <-errChan:
+		if err == nil {
+			c.setStatus(CmdStatusComplete)
+			return
+		}
+
+		c.Lock()
+		c.status = CmdStatusFailed
+		c.exitError = err
+		c.Unlock()
+	}
+}
+
+// spin runs the command over and over (exiting a shell or an editor will just
+// start it again.) If it fails more than SPIN_NUM_TRIES in under
+// SPIN_THRESHOLD, it will not be restarted.
 func (c *Cmd) spin(ctx context.Context) {
 	errChan := make(chan error)
 
@@ -257,15 +284,11 @@ func (c *Cmd) spin(ctx context.Context) {
 	}
 }
 
-func (c *Cmd) Subscribe(ctx context.Context) *util.Subscriber[CmdStatus] {
-	return c.statusUpdates.Subscribe(ctx)
-}
-
 func (c *Cmd) waitHealthy(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	changes := c.Subscribe(ctx)
+	changes := c.statusUpdates.Subscribe(ctx)
 
 	errc := make(chan error)
 	go func() {
@@ -280,7 +303,10 @@ func (c *Cmd) waitHealthy(ctx context.Context) error {
 					errc <- nil
 					return
 				case CmdStatusFailed:
-					errc <- fmt.Errorf("starting cmd failed: %d", status)
+					errc <- fmt.Errorf(
+						"starting cmd failed: %d",
+						status,
+					)
 					return
 				}
 			}
@@ -299,7 +325,11 @@ func NewCmd(ctx context.Context, options CmdOptions, size Size) (*Cmd, error) {
 		statusUpdates: util.NewPublisher[CmdStatus](),
 	}
 
-	go cmd.spin(lifetime.Ctx())
+	if options.Restart {
+		go cmd.spin(lifetime.Ctx())
+	} else {
+		go cmd.runOnce(lifetime.Ctx())
+	}
 
 	err := cmd.waitHealthy(lifetime.Ctx())
 	if err != nil {

@@ -71,7 +71,7 @@ func main() {
 			stories.Register(
 				fmt.Sprintf("animation/%s", name),
 				func(ctx context.Context) (mux.Screen, error) {
-					return anim.NewStory(
+					return NewAnimationStory(
 						ctx,
 						a,
 					), nil
