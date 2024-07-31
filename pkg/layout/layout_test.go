@@ -2,6 +2,7 @@ package layout
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -149,6 +150,21 @@ func TestPaneRemoval(t *testing.T) {
 		return static, pane, &id
 	}
 
+	// Suffice it to say that I'm not happy about this, but it turns out
+	// that there are a lot of sensitive timing issues here and fixing this
+	// with a bunch of channels shoved into the LayoutEngine added a lot of
+	// complexity. It's not only a matter of waiting for the layout to be
+	// updated; you must also ensure that all nodes all the way down the
+	// tree have all started the goroutines they need to function. Worth a
+	// revisit someday if this is still flaky.
+	sleepDuration := 500 * time.Millisecond
+	if _, ok := os.LookupEnv("CI"); ok {
+		sleepDuration = 2 * time.Second
+	}
+	sleep := func() {
+		time.Sleep(sleepDuration)
+	}
+
 	// First we just test killing the tree nodes
 	{
 		_, pane1, id1 := createPane()
@@ -169,9 +185,11 @@ func TestPaneRemoval(t *testing.T) {
 		))
 		require.NoError(t, err)
 
-		// The attached node should stick around
+		sleep()
 		pane1.Cancel()
-		time.Sleep(250 * time.Millisecond)
+		sleep()
+
+		// The attached node should stick around
 		require.Equal(t, SplitType{
 			A: PaneType{
 				Attached: true,
@@ -199,7 +217,7 @@ func TestPaneRemoval(t *testing.T) {
 
 		// This pane should not stick around
 		pane2.Cancel()
-		time.Sleep(250 * time.Millisecond)
+		sleep()
 		require.Equal(t, PaneType{
 			Attached: true,
 			ID:       nil,
@@ -228,7 +246,7 @@ func TestPaneRemoval(t *testing.T) {
 		// If static1 exits without an error and removeOnExit is not
 		// true, nothing should happen.
 		static1.Publish(S.ExitEvent{})
-		time.Sleep(250 * time.Millisecond)
+		sleep()
 		require.Equal(t, SplitType{
 			A: PaneType{
 				Attached: true,
@@ -248,7 +266,7 @@ func TestPaneRemoval(t *testing.T) {
 		static1.Publish(S.ExitEvent{
 			Errored: true,
 		})
-		time.Sleep(250 * time.Millisecond)
+		sleep()
 		require.Equal(t, SplitType{
 			A: PaneType{
 				Attached: true,
@@ -272,10 +290,11 @@ func TestPaneRemoval(t *testing.T) {
 		}
 		require.NoError(t, l.Set(New(PaneType{Attached: true})))
 		require.NoError(t, l.Set(New(layout)))
+		sleep()
 
 		// If static2 exits without an error, it should remove the node
 		static2.Publish(S.ExitEvent{})
-		time.Sleep(250 * time.Millisecond)
+		sleep()
 		require.Equal(t, PaneType{
 			Attached: true,
 			ID:       id1,
@@ -287,7 +306,7 @@ func TestPaneRemoval(t *testing.T) {
 
 		// If static2 exits with an error, it should NOT remove the node
 		static2.Publish(S.ExitEvent{Errored: true})
-		time.Sleep(250 * time.Millisecond)
+		sleep()
 		require.Equal(t, layout, l.Get().root)
 	}
 }
