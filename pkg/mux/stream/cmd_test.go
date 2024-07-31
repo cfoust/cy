@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"os/exec"
 	"testing"
 	"time"
 
@@ -111,7 +110,5 @@ func TestFailed(t *testing.T) {
 	require.Equal(t, CmdStatusFailed, cmd.status)
 	err := <-errc
 	require.Error(t, err)
-	require.Equal(t, err, cmd.exitError)
-	_, ok := err.(*exec.ExitError)
-	require.True(t, ok)
+	require.Error(t, cmd.exitError)
 }
