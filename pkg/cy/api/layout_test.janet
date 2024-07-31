@@ -7,7 +7,10 @@
       (layout/set {:type :pane :attached true}))
 
 (test "layout/get"
-      (def layout {:type :pane :id 2 :attached true})
+      (def layout {:type :pane
+                   :id 2
+                   :remove-on-exit false
+                   :attached true})
       (layout/set layout)
       (assert (deep= (layout/get) layout)))
 

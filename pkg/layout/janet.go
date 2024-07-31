@@ -219,13 +219,15 @@ func marshalNode(node NodeType) interface{} {
 	switch node := node.(type) {
 	case PaneType:
 		return struct {
-			Type     janet.Keyword
-			Attached bool
-			ID       *tree.NodeID
+			Type         janet.Keyword
+			Attached     bool
+			ID           *tree.NodeID
+			RemoveOnExit *bool
 		}{
-			Type:     KEYWORD_PANE,
-			Attached: node.Attached,
-			ID:       node.ID,
+			Type:         KEYWORD_PANE,
+			Attached:     node.Attached,
+			ID:           node.ID,
+			RemoveOnExit: node.RemoveOnExit,
 		}
 	case SplitType:
 		type splitType struct {
