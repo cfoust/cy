@@ -67,16 +67,40 @@ var initNoFrame stories.InitFunc = func(ctx context.Context) (mux.Screen, error)
 }
 
 func init() {
-	stories.Register("cy/viewport", initWithFrame, stories.Config{
+	stories.Register("quick-start/layout", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd (cmd/new :root))
+(layout/set {:type :pane :id cmd :attached true})
+		`)
+		return screen, err
+	}, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "|"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "-"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "K"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "H"),
+			stories.Wait(stories.More),
+		},
+	})
+
+	stories.Register("quick-start/margins", initWithFrame, stories.Config{
 		Input: []interface{}{
 			stories.Wait(stories.Some),
 			stories.Type("ctrl+a", "g"),
 			stories.Wait(stories.More),
 			stories.Type("ctrl+a", "g"),
 			stories.Wait(stories.More),
-			stories.Type("ctrl+a", "+"),
-			stories.Wait(stories.Some),
-			stories.Type("ctrl+a", "-"),
+			stories.Type("ctrl+a", "1"),
+			stories.Wait(stories.More),
+			stories.Type("ctrl+a", "2"),
 			stories.Wait(stories.More),
 		},
 	})

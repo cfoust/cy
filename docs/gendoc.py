@@ -373,11 +373,11 @@ def transform_bind(
         return (
             match.start(0),
             match.end(0),
-            f"{key_sequence} [[?]]({symbol_to_url(symbol)})",
+            f"{key_sequence} [<sup>[?]</sup>]({symbol_to_url(symbol)})",
         ), None
 
     return handle_pattern(
-        re.compile(r"{{bind :(\w+) (([0-9a-zA-Z+-?;\\\[\]]+\s*)+)}}"),
+        re.compile(r"{{bind :(\w+) (([0-9a-zA-Z+-?;|\-\\\[\]]+\s*)+)}}"),
         handler,
     )
 
@@ -664,7 +664,9 @@ if __name__ == '__main__':
 
     if num_errors > 0:
         print(f"{num_errors} error(s) while preprocessing", file=sys.stderr)
-        exit(1)
+
+        if 'CI' in os.environ:
+            exit(1)
 
     runner.kill()
     print(json.dumps(book))

@@ -30,17 +30,9 @@ Without trying it for yourself, it's hard to appreciate just how useful it is to
 
 {{story png placeholder}}
 
-`cy` does not (yet) have windows and panes like `tmux` does. It displays one terminal session at a time, and by default that session is centered on your screen with a fixed number of columns. This lets you concentrate on one "pane" at a time.
+Most of the time, however, you can keep things simple. `cy` makes it easy to switch between panes using [fuzzy finding](/user-input/fuzzy-finding.md) (with previews!). It also contains a minimal, [filesystem-like abstraction](/groups-and-panes.md) for grouping panes together.
 
-To some, this may seem like a surprising decision. The predominant abstraction for terminal multiplexers for at least a couple of decades has been the familiar pattern of vertical and horizontal splits.
-
-Yet I found that I have spent more time fighting with this (or writing [plugins to remove it](https://github.com/cfoust/tmux-oakthree)) than benefiting from it. Rarely do I feel like I need to see more than one pane at a time.
-
-This is practical because `cy` makes it easy to switch between panes. It emphasizes using [fuzzy finding](/user-input/fuzzy-finding.md) (with previews!) so you can quickly find what you're looking for. It also contains a minimal, [filesystem-like abstraction](/groups-and-panes.md) for grouping panes together.
-
-As of writing, `cy` also lacks `tmux`'s status line. Because there is no notion of windows, there is nothing akin to the tab-like behavior that `tmux` encourages (and thus little immediate need to display it.)
-
-Neither of these are principled omissions. My intent with `cy` is to, sooner or later, address these use cases in a flexible way.
+As of writing, `cy` also lacks `tmux`'s status line, but that should change sooner or later.
 
 ## Configuration
 
@@ -49,6 +41,4 @@ Anyone who has tried to do anything sophisticated with `tmux` runs into a famili
 1. `tmux`'s configuration language is hacky and primitive, which makes it hard to do anything interesting without running an external command.
 2. Its key binding system is limited.
 
-`cy` allows you to bind arbitrary sequences of keys to [Janet](https://janet-lang.org/) functions. It even supports binding [regexes](/keybindings.md#regexes), matches for which will be passed to the function you bound.
-
-You can also create bindings that apply only in a [specific pane or group of panes](/groups-and-panes.md#groups).
+`cy` allows you to bind arbitrary sequences of keys to [Janet](https://janet-lang.org/) functions. It even supports binding [regexes](/keybindings.md#regexes), matches for which will be passed to the function you provide. You can also create bindings and settings that are in effect only when attached to a [specific pane or group of panes](/groups-and-panes.md#groups).

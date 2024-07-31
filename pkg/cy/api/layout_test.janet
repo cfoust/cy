@@ -72,7 +72,6 @@
         {:type :margins
          :cols 20
          :rows 0
-         :frame "big-hex"
          :node {:type :pane :attached true}})
 
       # omit a bunch of fields
@@ -86,7 +85,6 @@
                       {:type :margins
                        :cols 20
                        :rows 0
-                       :frame "big-hex"
                        :node 1213132}))
 
       (expect-error (layout/set
@@ -104,7 +102,6 @@
                   {:type :margins
                    :cols 20
                    :rows 0
-                   :frame "big-hex"
                    :node {:type :pane :attached true}})
                 @[:node]))
 
@@ -121,7 +118,6 @@
                   {:type :margins
                    :cols 20
                    :rows 0
-                   :frame "big-hex"
                    :node {:type :split
                           :vertical true
                           :cells 20
@@ -137,7 +133,6 @@
                   {:type :margins
                    :cols 20
                    :rows 0
-                   :frame "big-hex"
                    :node {:type :pane :attached true}}
                   @[:node])
                 {:type :pane :attached true}))
@@ -147,7 +142,6 @@
                   {:type :margins
                    :cols 20
                    :rows 0
-                   :frame "big-hex"
                    :node {:type :split
                           :percent 50
                           :a {:type :pane :attached true}
@@ -160,7 +154,6 @@
                   {:type :margins
                    :cols 20
                    :rows 0
-                   :frame "big-hex"
                    :node {:type :pane :attached true}}
                   @[:a])
                 nil)))
@@ -171,7 +164,6 @@
                   {:type :margins
                    :cols 20
                    :rows 0
-                   :frame "big-hex"
                    :node {:type :pane :attached true}}
                   |($ :attached))
                 @[:node]))
@@ -181,7 +173,6 @@
                   {:type :margins
                    :cols 20
                    :rows 0
-                   :frame "big-hex"
                    :node {:type :pane :attached true}}
                   |(layout/type? :margins $))
                 @[])))
@@ -192,14 +183,12 @@
                   {:type :margins
                    :cols 20
                    :rows 0
-                   :frame "big-hex"
                    :node {:type :pane :attached true}}
                   @[:node]
                   {:type :pane})
                 {:type :margins
                  :cols 20
                  :rows 0
-                 :frame "big-hex"
                  :node {:type :pane}}))
 
       # Does nothing, bad path
@@ -208,14 +197,12 @@
                   {:type :margins
                    :cols 20
                    :rows 0
-                   :frame "big-hex"
                    :node {:type :pane :attached true}}
                   @[:a]
                   {:type :pane})
                 {:type :margins
                  :cols 20
                  :rows 0
-                 :frame "big-hex"
                  :node {:type :pane :attached true}})))
 
 (test "layout/detach"
@@ -224,12 +211,10 @@
                   {:type :margins
                    :cols 20
                    :rows 0
-                   :frame "big-hex"
                    :node {:type :pane :attached true}})
                 {:type :margins
                  :cols 20
                  :rows 0
-                 :frame "big-hex"
                  :node {:type :pane :id nil}})))
 
 (test "layout/split-*"

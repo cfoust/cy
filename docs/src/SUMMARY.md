@@ -12,7 +12,7 @@
 
 - [Starting cy](./quick-start/starting-cy.md)
 
-- [Using the viewport](./quick-start/the-viewport.md)
+- [Changing the layout](./quick-start/the-layout.md)
 
 - [Entering replay mode](./quick-start/replay-mode.md)
 
@@ -28,7 +28,7 @@
 
 - [Configuration](./configuration.md)
 
-- [Viewport](./viewport.md)
+- [Layouts](./layouts.md)
 
 - [Keybindings](./keybindings.md)
 

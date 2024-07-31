@@ -119,7 +119,7 @@ func (p *Pane) attach(
 		return NewStatic(
 			ctx,
 			p.params.Animate(),
-			"disconnected",
+			"disconnected from pane",
 		), nil
 	}
 

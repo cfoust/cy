@@ -33,7 +33,11 @@
                    [prefix "H"] action/move-left
                    [prefix "L"] action/move-right
                    [prefix "K"] action/move-up
-                   [prefix "J"] action/move-down)
+                   [prefix "J"] action/move-down
+                   [prefix "left"] action/move-left
+                   [prefix "right"] action/move-right
+                   [prefix "up"] action/move-up
+                   [prefix "down"] action/move-down)
 
 (key/bind-many-tag :root "viewport"
                    [prefix "g"] action/toggle-margins

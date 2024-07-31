@@ -155,7 +155,6 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		type marginsArgs struct {
 			Cols   *int
 			Rows   *int
-			Frame  *string
 			Border *janet.Keyword
 			Node   *janet.Value
 		}
@@ -171,7 +170,6 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		}
 
 		type_ := MarginsType{
-			Frame: args.Frame,
 			Node:  node,
 		}
 

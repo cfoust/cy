@@ -16,3 +16,5 @@ The controls should be familiar to you if you have ever used a fuzzy finder:
 - {{bind :root ctrl+a k}}: Jump to a project.
 - {{bind :root ctrl+a l}}: Jump to a shell based on its current working directory.
 - {{bind :root ctrl+a :}}: Jump to a pane by fuzzy-finding lines on the screen.
+
+As you can tell, swapping to a new pane does not affect the existence of panes that are no longer on the screen.
