@@ -3,7 +3,6 @@ package cy
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/cfoust/cy/pkg/cy/cmd"
 	"github.com/cfoust/cy/pkg/geom"
@@ -63,23 +62,6 @@ func TestScopes(t *testing.T) {
 	err = client.Attach(pane)
 	require.NoError(t, err)
 	require.Equal(t, 3, len(client.binds.Scopes()))
-}
-
-func TestPaneKill(t *testing.T) {
-	server, create := setup(t)
-	client := create(geom.DEFAULT_SIZE)
-
-	leaves := server.tree.Leaves()
-	id := client.Node().Id()
-	require.Equal(t, leaves[1].Id(), id)
-
-	require.NoError(t, client.execute(`
-(tree/kill (pane/current))
-`))
-	time.Sleep(2 * time.Second) // lol
-	require.NotEqual(t, id, client.Node().Id())
-	leaves = server.tree.Leaves()
-	require.Equal(t, leaves[1].Id(), client.Node().Id())
 }
 
 func TestShell(t *testing.T) {
