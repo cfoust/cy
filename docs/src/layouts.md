@@ -26,6 +26,8 @@ A layout is just a configuration for how the `cy` screen should look. It contain
 
 A layout is composed of nodes of different types. It need only adhere to a single constraint: it must have exactly one pane node where `:attached` is `true`. The attached node is the visual element to which the client's user input (that does not match any bindings) is sent.
 
+Layouts are just standard Janet values. `cy` comes with a comprehensive [Janet library](https://github.com/cfoust/cy/blob/main/pkg/cy/boot/layout.janet) with handy tools for manipulating them more easily.
+
 ### Node types
 
 `cy` currently supports the following layout node types:
@@ -90,7 +92,7 @@ These properties set the size of the node inside of the `:margins` node; they do
 
 `:border`
 
-A [border](/layouts.md#border) can optionally be rendered around the node.
+A [border](/layouts.md#borders) can optionally be rendered around the node.
 
 `:node`
 
@@ -122,7 +124,7 @@ At most one of these can be defined. Both determine the amount of space given to
 
 `:border`
 
-A [border](/layouts.md#border) can optionally be rendered around the node.
+A [border](/layouts.md#borders) can optionally be rendered around the node.
 
 `:a` and `:b`
 

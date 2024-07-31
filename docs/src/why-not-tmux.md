@@ -30,7 +30,9 @@ Without trying it for yourself, it's hard to appreciate just how useful it is to
 
 {{story png placeholder}}
 
-Most of the time, however, you can keep things simple. `cy` makes it easy to switch between panes using [fuzzy finding](/user-input/fuzzy-finding.md) (with previews!). It also contains a minimal, [filesystem-like abstraction](/groups-and-panes.md) for grouping panes together.
+`cy` has a ridiculously flexible [layout system](/layouts.md) and the state of all of the panes you have running are separate from what is actually shown on the screen, just like buffers in `vim`.
+
+Most of the time, however, you can keep things simple, because `cy` makes it easy to switch between panes using [fuzzy finding](/user-input/fuzzy-finding.md) (with previews!). It also contains a minimal, [filesystem-like abstraction](/groups-and-panes.md) for grouping panes together.
 
 As of writing, `cy` also lacks `tmux`'s status line, but that should change sooner or later.
 
