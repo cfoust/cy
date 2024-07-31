@@ -155,11 +155,12 @@ func (p *Pane) attach(
 			var (
 				newConfig    = p.config
 				removeOnExit = p.removeOnExit
+				isAttached   = p.isAttached
 			)
 			p.RUnlock()
 
 			// Remove the node from the tree
-			if removeOnExit {
+			if removeOnExit && isAttached {
 				p.Publish(nodeRemoveEvent{})
 				return
 			}
@@ -216,7 +217,7 @@ func (p *Pane) setID(id *tree.NodeID) error {
 				)
 				p.RUnlock()
 
-				if !removeOnExit && isAttached && !exitEvent.Errored {
+				if !removeOnExit || !isAttached || exitEvent.Errored {
 					continue
 				}
 
