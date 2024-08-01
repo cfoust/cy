@@ -63,7 +63,7 @@ Where {{api input/find}} really shines, however, is in its ability to show a pre
 Options with previews are passed to {{api input/find}} as Janet tuples with three elements:
 
 1. The text (or columns) that the user will filter against
-1. A Janet [table](https://janet-lang.org/docs/data_structures/tables.html) describing how this option should be previewed
+1. A Janet [struct](https://janet-lang.org/docs/data_structures/structs.html) describing how this option should be previewed
 1. The value that should be returned if the user chooses this option
 
 Here are some examples:
