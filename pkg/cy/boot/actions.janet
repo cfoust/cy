@@ -205,6 +205,22 @@ For example:
          (pane/attach _)))
 
 (key/action
+  action/jump-group-pane
+  "Jump to a pane that is a descendant of the current group."
+  (as?-> (pane/current) _
+         (tree/parent _)
+         (group/leaves _)
+         (map |(tuple (tree/path $) {:type :node :id $} $) _)
+         (input/find _
+                     :prompt (string
+                               "search: panes in "
+                               (->>
+                                 (pane/current)
+                                 (tree/parent)
+                                 (tree/path))))
+         (pane/attach _)))
+
+(key/action
   action/jump-screen-lines
   "Jump to a pane based on screen lines."
   (as?-> (group/leaves :root) _
