@@ -52,6 +52,9 @@ type Fuzzy struct {
 	// shown before the number of items
 	prompt string
 
+	// whether search should be case-sensitive
+	caseSensitive bool
+
 	// headers for the table
 	headers []string
 
@@ -239,6 +242,14 @@ func WithHeaders(headers ...string) Setting {
 	}
 }
 
+// WithCaseSensitive determines whether the matching algorithm will be
+// case-sensitive.
+func WithCaseSensitive(value bool) Setting {
+	return func(ctx context.Context, f *Fuzzy) {
+		f.caseSensitive = value
+	}
+}
+
 func newFuzzy(
 	ctx context.Context,
 	options []Option,
@@ -277,10 +288,18 @@ type matchResult struct {
 	Filtered []Option
 }
 
-func queryOptions(options []Option, pattern string) tea.Cmd {
+func queryOptions(
+	options []Option,
+	pattern string,
+	caseSensitive bool,
+) tea.Cmd {
 	return func() tea.Msg {
 		return matchResult{
-			Filtered: Filter(options, pattern),
+			Filtered: Filter(
+				options,
+				pattern,
+				caseSensitive,
+			),
 		}
 	}
 }

@@ -141,11 +141,15 @@ func UnmarshalOptions(input *janet.Value) (result []Option, err error) {
 	return
 }
 
-func Filter(options []Option, search string) []Option {
+func Filter(
+	options []Option,
+	search string,
+	caseSensitive bool,
+) []Option {
 	matches := make([]Option, 0)
 	for _, option := range options {
 		result, pos := fzf.FuzzyMatchV2(
-			true,
+			caseSensitive,
 			true,
 			true,
 			option.Chars,

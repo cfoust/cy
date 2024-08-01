@@ -22,11 +22,12 @@ type InputModule struct {
 }
 
 type FuzzyParams struct {
-	Prompt   string
-	Full     bool
-	Reverse  bool
-	Animated *bool
-	Headers  *[]string
+	Prompt        string
+	Full          bool
+	Reverse       bool
+	CaseSensitive bool
+	Animated      *bool
+	Headers       *[]string
 }
 
 func (i *InputModule) Find(
@@ -61,6 +62,7 @@ func (i *InputModule) Find(
 		fuzzy.WithResult(result),
 		fuzzy.WithPrompt(params.Prompt),
 		fuzzy.WithInitial(initial),
+		fuzzy.WithCaseSensitive(params.CaseSensitive),
 	}
 
 	if !params.Full {

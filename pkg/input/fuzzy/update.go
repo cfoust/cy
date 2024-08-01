@@ -86,7 +86,11 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	value := f.textInput.Value()
 	if f.pattern != value {
 		f.pattern = value
-		cmds = append(cmds, queryOptions(f.options, value))
+		cmds = append(cmds, queryOptions(
+			f.options,
+			value,
+			f.caseSensitive,
+		))
 	}
 
 	return f, tea.Batch(cmds...)
