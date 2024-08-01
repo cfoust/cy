@@ -150,9 +150,11 @@ For example:
          (input/find _ :prompt "search: shell")
          (pane/attach _)))
 
-(key/action
-  action/next-pane
-  "Move to the next pane."
+(defn-
+  get-siblings
+  "Get the siblings of the current pane."
+  []
+
   (def children
     (-?>>
       (pane/current)
@@ -163,16 +165,25 @@ For example:
   (when (nil? children) (break))
 
   (def index (index-of (pane/current) children))
+  (array/concat
+    (array)
+    (array/slice children (+ index 1))
+    (array/slice children 0 index)))
 
-  (def next-panes
-    (array/concat
-      (array)
-      (array/slice children (+ index 1))
-      (array/slice children 0 index)))
+(key/action
+  action/next-pane
+  "Move to the next sibling pane."
+  (as?-> (get-siblings) _
+         (get _ 0)
+         (pane/attach _)))
 
-  (when (= 0 (length next-panes)) (break))
-  (def [next] next-panes)
-  (pane/attach next))
+(key/action
+  action/prev-pane
+  "Move to the previous sibling pane."
+  (as?-> (get-siblings) _
+         (reverse _)
+         (get _ 0)
+         (pane/attach _)))
 
 (key/action
   action/rename-pane
