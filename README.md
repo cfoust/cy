@@ -11,6 +11,7 @@
 
 <h4 align="center">
     [<a href="https://cfoust.github.io/cy/installation.html">Installation</a>]
+    [<a href="https://cfoust.github.io/cy/index.html">Documentation</a>]
     [<a href="https://cfoust.github.io/cy/architecture.html">Architecture</a>]
     [<a href="https://cfoust.github.io/cy/roadmap.html">Roadmap</a>]
 </h4>
