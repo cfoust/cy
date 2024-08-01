@@ -35,8 +35,11 @@ func getKeySequence(value *janet.Value) (result []interface{}, err error) {
 		strErr := item.Unmarshal(&str)
 		if strErr == nil {
 			// TODO(cfoust): 07/14/24 this is probably not the best place to do this
-			if str == "ctrl+i" {
+			switch str {
+			case "ctrl+i":
 				str = "tab"
+			case "alt":
+				str = "esc"
 			}
 
 			result = append(result, str)

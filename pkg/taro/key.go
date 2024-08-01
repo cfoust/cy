@@ -32,6 +32,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strings"
 	"unicode/utf8"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -144,9 +145,16 @@ func (k KeyType) String() (str string) {
 // etc) into KeyMsg events. Unrecognized strings are represented as KeyRunes.
 func KeysToMsg(keys ...string) (msgs []KeyMsg) {
 	for _, key := range keys {
+		var alt bool
+		if strings.HasPrefix(key, "alt+") && len(key) > 4 {
+			alt = true
+			key = key[4:]
+		}
+
 		if _type, ok := keyRefs[key]; ok {
 			msgs = append(msgs, KeyMsg{
 				Type: _type,
+				Alt:  alt,
 			})
 			continue
 		}

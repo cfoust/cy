@@ -15,7 +15,11 @@ func TestKeysToMsg(t *testing.T) {
 		{
 			Type: KeyCtrlA,
 		},
-	}, KeysToMsg("test", "ctrl+a"))
+		{
+			Type: KeyCtrlA,
+			Alt:  true,
+		},
+	}, KeysToMsg("test", "ctrl+a", "alt+ctrl+a"))
 }
 
 func TestKeysToBytes(t *testing.T) {
