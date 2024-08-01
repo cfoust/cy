@@ -17,7 +17,7 @@ This functionality was inspired by [Storybook](https://storybook.js.org/), a fra
 Run the following to open the stories interface:
 
 ```bash
-go run ./cmd/stories/main.go
+go run ./cmd/stories/...
 ```
 
 Press <kbd>q</kbd> to quit at any time.
@@ -27,13 +27,13 @@ The stories executable accepts a range of arguments. Provide `--help` to see the
 To run only a single story:
 
 ```bash
-go run ./cmd/stories/main.go -s input/find/search
+go run ./cmd/stories/... -s input/find/search
 ```
 
 To filter the list of stories with a prefix:
 
 ```bash
-go run ./cmd/stories/main.go -p input
+go run ./cmd/stories/... -p input
 ```
 
 Any stories with names that do not begin with `input` will be filtered out.
