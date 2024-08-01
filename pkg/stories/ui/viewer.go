@@ -14,6 +14,7 @@ import (
 	"github.com/cfoust/cy/pkg/util"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/rs/zerolog/log"
 )
 
 // A Viewer shows a single story.
@@ -87,7 +88,8 @@ func (v *Viewer) loadStory() tea.Cmd {
 		lifetime := util.NewLifetime(v.Ctx())
 		screen, err := story.Init(lifetime.Ctx())
 		if err != nil {
-			panic(err)
+			log.Error().Err(err).Msgf("failed loading story")
+			return nil
 		}
 
 		if !config.Size.IsZero() {
