@@ -7,9 +7,9 @@ import (
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -40,7 +40,7 @@ type Split struct {
 	// screen A. This is calculated using `percent`.
 	cells int
 
-	borderStyle *lipgloss.Border
+	borderStyle *style.Border
 }
 
 var _ mux.Screen = (*Split)(nil)
@@ -126,7 +126,7 @@ func (s *Split) reuse(node NodeType) (bool, error) {
 	}
 
 	if config.Border != nil {
-		s.borderStyle = &config.Border.Style
+		s.borderStyle = config.Border
 		changed = true
 	}
 
@@ -281,7 +281,7 @@ func (l *LayoutEngine) createSplit(
 	}
 
 	if config.Border != nil {
-		split.borderStyle = &config.Border.Style
+		split.borderStyle = config.Border
 	}
 
 	node.Screen = split

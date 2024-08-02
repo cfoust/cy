@@ -66,7 +66,6 @@
                        :percent 26
                        :a {:type :pane :attached true}
                        :b {:type :pane}})))
-
 (test ":margins"
       (layout/set
         {:type :margins
@@ -77,6 +76,17 @@
       # omit a bunch of fields
       (layout/set
         {:type :margins
+         :node {:type :pane :attached true}}))
+
+(test ":border"
+      (layout/set
+        {:type :border
+         :title "test"
+         :border :double
+         :node {:type :pane :attached true}})
+
+      (layout/set
+        {:type :border
          :node {:type :pane :attached true}}))
 
 (test "bad input"

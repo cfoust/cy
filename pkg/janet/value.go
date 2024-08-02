@@ -104,6 +104,12 @@ func (v *Value) Unmarshal(dest interface{}) error {
 	return v.vm.unmarshalSafe(v.janet, dest)
 }
 
+func (v *Value) Nil() bool {
+	// XXX add real support for checking nil, but this works
+	var val *int = nil
+	return v.Unmarshal(&val) == nil
+}
+
 type Table struct {
 	*Value
 	table *C.JanetTable

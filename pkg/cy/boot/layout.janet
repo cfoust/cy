@@ -14,6 +14,26 @@
   (= (node :type) type))
 
 (defn
+  layout/successors
+  ````Get the paths to all of the direct children of this node.
+
+For example:
+```janet
+# For a node of type :split
+@[[:a] [:b]]
+# For a node of type :pane (it has no children)
+@[]
+```
+  ````
+  [node]
+  (cond
+    (layout/type? :split node) @[[:a] [:b]]
+    (or
+      (layout/type? :margins node)
+      (layout/type? :border node)) @[[:node]]
+    @[]))
+
+(defn
   layout/pane?
   ```Report whether node is of type :pane.```
   [node]
@@ -24,20 +44,17 @@
   ```Get the path to the first node satisfying the predicate function or nil if none exists.```
   [node predicate]
   (if (predicate node) (break @[]))
+  (var path nil)
 
-  (cond
-    (layout/type? :split node) (do
-                                 (def {:a a :b b} node)
-                                 (def a-path (layout/find a predicate))
-                                 (if (not (nil? a-path)) (break @[:a ;a-path]))
-                                 (def b-path (layout/find b predicate))
-                                 (if (not (nil? b-path)) (break @[:b ;b-path]))
-                                 nil)
-    (layout/type? :margins node) (do
-                                   (def {:node node} node)
-                                   (def path (layout/find node predicate))
-                                   (if (not (nil? path)) (break @[:node ;path])))
-    nil))
+  (each successor (layout/successors node)
+    (def found (layout/find
+                 (layout/path node successor)
+                 predicate))
+    (if
+      (not (nil? found))
+      (set path @[;successor ;found])))
+
+  path)
 
 (defn
   layout/find-last
@@ -75,24 +92,6 @@
   ```Get the path to the attached node for the given node.```
   [node]
   (layout/find node |($ :attached)))
-
-(defn
-  layout/successors
-  ````Get the paths to all of the direct children of this node.
-
-For example:
-```janet
-# For a node of type :split
-@[[:a] [:b]]
-# For a node of type :pane (it has no children)
-@[]
-```
-  ````
-  [node]
-  (cond
-    (layout/type? :split node) @[[:a] [:b]]
-    (layout/type? :margins node) @[[:node]]
-    @[[]]))
 
 (defn
   layout/assoc

@@ -554,4 +554,18 @@ func init() {
 		`)
 		return screen, err
 	}, stories.Config{})
+
+	stories.Register("borders", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd1 (shell/new))
+(layout/set
+        {:type :border
+	 :node {:type :pane :id cmd1 :attached true}})
+		`)
+		return screen, err
+	}, stories.Config{})
 }

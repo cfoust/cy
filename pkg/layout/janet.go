@@ -5,6 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/style"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -13,54 +14,34 @@ var (
 	KEYWORD_PANE    = janet.Keyword("pane")
 	KEYWORD_SPLIT   = janet.Keyword("split")
 	KEYWORD_MARGINS = janet.Keyword("margins")
+	KEYWORD_BORDER  = janet.Keyword("border")
 
-	// Border styles
-	KEYWORD_NORMAL     = janet.Keyword("normal")
-	KEYWORD_ROUNDED    = janet.Keyword("rounded")
-	KEYWORD_BLOCK      = janet.Keyword("block")
-	KEYWORD_OUTER_HALF = janet.Keyword("outer-half")
-	KEYWORD_INNER_HALF = janet.Keyword("inner-half")
-	KEYWORD_THICK      = janet.Keyword("thick")
-	KEYWORD_DOUBLE     = janet.Keyword("double")
-	KEYWORD_HIDDEN     = janet.Keyword("hidden")
-	KEYWORD_NONE       = janet.Keyword("none")
+	// Special border behavior
+	KEYWORD_NONE = janet.Keyword("none")
 )
 
 type nodeType struct {
 	Type janet.Keyword
 }
 
-func unmarshalBorder(keyword janet.Keyword) (*Border, error) {
-	var border lipgloss.Border
-	switch keyword {
-	case KEYWORD_NORMAL:
-		border = lipgloss.NormalBorder()
-	case KEYWORD_ROUNDED:
-		border = lipgloss.RoundedBorder()
-	case KEYWORD_BLOCK:
-		border = lipgloss.BlockBorder()
-	case KEYWORD_OUTER_HALF:
-		border = lipgloss.OuterHalfBlockBorder()
-	case KEYWORD_INNER_HALF:
-		border = lipgloss.InnerHalfBlockBorder()
-	case KEYWORD_THICK:
-		border = lipgloss.ThickBorder()
-	case KEYWORD_DOUBLE:
-		border = lipgloss.DoubleBorder()
-	case KEYWORD_HIDDEN:
-		border = lipgloss.HiddenBorder()
-	case KEYWORD_NONE:
-		return nil, nil
-	default:
-		return nil, fmt.Errorf(
-			"invalid border style: %s", keyword,
-		)
+func unmarshalBorder(value *janet.Value) (*style.Border, error) {
+	border := style.NewBorder(
+		lipgloss.DoubleBorder(),
+	)
+
+	if value == nil || value.Nil() {
+		return &border, nil
 	}
 
-	return &Border{
-		Style:   border,
-		Keyword: keyword,
-	}, nil
+	if err := value.Unmarshal(&KEYWORD_NONE); err == nil {
+		return nil, nil
+	}
+
+	err := value.Unmarshal(&border)
+	if err != nil {
+		return nil, err
+	}
+	return &border, nil
 }
 
 func unmarshalNode(value *janet.Value) (NodeType, error) {
@@ -100,7 +81,7 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			Vertical *bool
 			Percent  *int
 			Cells    *int
-			Border   *janet.Keyword
+			Border   *janet.Value
 			A        *janet.Value
 			B        *janet.Value
 		}
@@ -133,17 +114,9 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			B:       b,
 		}
 
-		if args.Border != nil {
-			border, err := unmarshalBorder(*args.Border)
-			if err != nil {
-				return nil, err
-			}
-			type_.Border = border
-		} else {
-			type_.Border = &Border{
-				Style:   lipgloss.DoubleBorder(),
-				Keyword: KEYWORD_DOUBLE,
-			}
+		type_.Border, err = unmarshalBorder(args.Border)
+		if err != nil {
+			return nil, err
 		}
 
 		if args.Vertical != nil {
@@ -155,7 +128,7 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		type marginsArgs struct {
 			Cols   *int
 			Rows   *int
-			Border *janet.Keyword
+			Border *janet.Value
 			Node   *janet.Value
 		}
 		args := marginsArgs{}
@@ -181,17 +154,43 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			type_.Rows = *args.Rows
 		}
 
-		if args.Border != nil {
-			border, err := unmarshalBorder(*args.Border)
-			if err != nil {
-				return nil, err
-			}
-			type_.Border = border
-		} else {
-			type_.Border = &Border{
-				Style:   lipgloss.DoubleBorder(),
-				Keyword: KEYWORD_DOUBLE,
-			}
+		type_.Border, err = unmarshalBorder(args.Border)
+		if err != nil {
+			return nil, err
+		}
+
+		return type_, nil
+	case KEYWORD_BORDER:
+		type borderArgs struct {
+			Title  *string
+			Border *janet.Value
+			Node   *janet.Value
+		}
+		args := borderArgs{}
+		err = value.Unmarshal(&args)
+		if err != nil {
+			return nil, err
+		}
+
+		node, err := unmarshalNode(args.Node)
+		if err != nil {
+			return nil, err
+		}
+
+		type_ := BorderType{
+			Title: args.Title,
+			Node:  node,
+		}
+
+		type_.Border, err = unmarshalBorder(args.Border)
+		if err != nil {
+			return nil, err
+		}
+
+		if type_.Border == nil {
+			return nil, fmt.Errorf(
+				"type :border does not support :border=:none",
+			)
 		}
 
 		return type_, nil
@@ -213,6 +212,14 @@ func (l *Layout) UnmarshalJanet(value *janet.Value) (err error) {
 
 var _ janet.Marshalable = (*Layout)(nil)
 
+func marshalBorder(border *style.Border) interface{} {
+	if border == nil {
+		return KEYWORD_NONE
+	}
+
+	return border.MarshalJanet()
+}
+
 func marshalNode(node NodeType) interface{} {
 	switch node := node.(type) {
 	case PaneType:
@@ -233,7 +240,7 @@ func marshalNode(node NodeType) interface{} {
 			Vertical bool
 			Percent  *int
 			Cells    *int
-			Border   *janet.Keyword
+			Border   interface{}
 			A        interface{}
 			B        interface{}
 		}
@@ -243,28 +250,38 @@ func marshalNode(node NodeType) interface{} {
 			Vertical: node.Vertical,
 			Percent:  node.Percent,
 			Cells:    node.Cells,
+			Border:   marshalBorder(node.Border),
 			A:        marshalNode(node.A),
 			B:        marshalNode(node.B),
-		}
-		if node.Border != nil {
-			s.Border = &node.Border.Keyword
-		} else {
-			s.Border = &KEYWORD_NONE
 		}
 		return s
 	case MarginsType:
 		return struct {
-			Type  janet.Keyword
-			Cols  int
-			Rows  int
-			Frame *string
-			Node  interface{}
+			Type   janet.Keyword
+			Cols   int
+			Rows   int
+			Frame  *string
+			Border interface{}
+			Node   interface{}
 		}{
-			Type:  KEYWORD_MARGINS,
-			Cols:  node.Cols,
-			Rows:  node.Rows,
-			Frame: node.Frame,
-			Node:  marshalNode(node.Node),
+			Type:   KEYWORD_MARGINS,
+			Cols:   node.Cols,
+			Rows:   node.Rows,
+			Frame:  node.Frame,
+			Border: marshalBorder(node.Border),
+			Node:   marshalNode(node.Node),
+		}
+	case BorderType:
+		return struct {
+			Type   janet.Keyword
+			Title  *string
+			Border interface{}
+			Node   interface{}
+		}{
+			Type:   KEYWORD_BORDER,
+			Title:  node.Title,
+			Border: marshalBorder(node.Border),
+			Node:   marshalNode(node.Node),
 		}
 	}
 	return nil

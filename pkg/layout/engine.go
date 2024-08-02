@@ -11,6 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/params"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/util"
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -142,13 +143,13 @@ func (l *LayoutEngine) State() *tty.State {
 	state := screen.State()
 	size := state.Image.Size()
 
-	for i := 0; i < len(borders); i++ {
+	for i := 0; i < len(style.Borders); i++ {
 		for row := 0; row < size.R; row++ {
 			for col := 0; col < size.C; col++ {
-				fillBorder(
+				style.FillBorder(
 					state.Image,
 					row, col, size.R, size.C,
-					borders[i],
+					style.Borders[i],
 				)
 			}
 		}
@@ -249,6 +250,8 @@ func (l *LayoutEngine) createNode(
 		err = l.createMargins(node, config)
 	case SplitType:
 		err = l.createSplit(node, config)
+	case BorderType:
+		err = l.createBorders(node, config)
 	default:
 		err = fmt.Errorf("unimplemented screen")
 	}

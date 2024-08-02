@@ -3,10 +3,8 @@ package layout
 import (
 	"fmt"
 
-	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
-
-	"github.com/charmbracelet/lipgloss"
+	"github.com/cfoust/cy/pkg/style"
 )
 
 type NodeType interface{}
@@ -17,16 +15,11 @@ type PaneType struct {
 	ID           *tree.NodeID
 }
 
-type Border struct {
-	Style   lipgloss.Border
-	Keyword janet.Keyword
-}
-
 type SplitType struct {
 	Vertical bool
 	Percent  *int
 	Cells    *int
-	Border   *Border
+	Border   *style.Border
 	A        NodeType
 	B        NodeType
 }
@@ -35,7 +28,13 @@ type MarginsType struct {
 	Cols   int
 	Rows   int
 	Frame  *string
-	Border *Border
+	Border *style.Border
+	Node   NodeType
+}
+
+type BorderType struct {
+	Title  *string
+	Border *style.Border
 	Node   NodeType
 }
 
@@ -66,6 +65,9 @@ func getPaneType(tree NodeType) (panes []PaneType) {
 	case MarginsType:
 		panes = append(panes, getPaneType(node.Node)...)
 		return
+	case BorderType:
+		panes = append(panes, getPaneType(node.Node)...)
+		return
 	}
 	return
 }
@@ -78,6 +80,8 @@ func getNumLeaves(node NodeType) int {
 	case SplitType:
 		return getNumLeaves(node.A) + getNumLeaves(node.B)
 	case MarginsType:
+		return getNumLeaves(node.Node)
+	case BorderType:
 		return getNumLeaves(node.Node)
 	}
 	return 0
@@ -93,6 +97,9 @@ func attachFirst(node NodeType) NodeType {
 		node.A = attachFirst(node.A)
 		return node
 	case MarginsType:
+		node.Node = attachFirst(node.Node)
+		return node
+	case BorderType:
 		node.Node = attachFirst(node.Node)
 		return node
 	}
@@ -124,6 +131,9 @@ func removeAttached(node NodeType) NodeType {
 		node.B = removeAttached(node.B)
 		return node
 	case MarginsType:
+		node.Node = removeAttached(node.Node)
+		return node
+	case BorderType:
 		node.Node = removeAttached(node.Node)
 		return node
 	}
@@ -167,6 +177,14 @@ func applyNodeChange(
 			newConfig,
 		)
 		return currentConfig
+	case BorderType:
+		currentConfig.Node = applyNodeChange(
+			current.Children[0],
+			target,
+			currentConfig.Node,
+			newConfig,
+		)
+		return currentConfig
 	}
 
 	return currentConfig
@@ -181,6 +199,8 @@ func isAttached(tree NodeType) bool {
 	case SplitType:
 		return isAttached(node.A) || isAttached(node.B)
 	case MarginsType:
+		return isAttached(node.Node)
+	case BorderType:
 		return isAttached(node.Node)
 	}
 	return false
@@ -197,6 +217,9 @@ func detach(node NodeType) NodeType {
 		node.B = detach(node.B)
 		return node
 	case MarginsType:
+		node.Node = detach(node.Node)
+		return node
+	case BorderType:
 		node.Node = detach(node.Node)
 		return node
 	}
@@ -222,6 +245,9 @@ func attach(node NodeType, id tree.NodeID) NodeType {
 		node.B = attach(node.B, id)
 		return node
 	case MarginsType:
+		node.Node = attach(node.Node, id)
+		return node
+	case BorderType:
 		node.Node = attach(node.Node, id)
 		return node
 	}
@@ -251,6 +277,8 @@ func getAttached(node NodeType) *tree.NodeID {
 		}
 		return nil
 	case MarginsType:
+		return getAttached(node.Node)
+	case BorderType:
 		return getAttached(node.Node)
 	}
 

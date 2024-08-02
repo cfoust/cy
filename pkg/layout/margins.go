@@ -9,9 +9,9 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -33,7 +33,7 @@ type Margins struct {
 	outer geom.Size
 	inner geom.Rect
 
-	borderStyle *lipgloss.Border
+	borderStyle *style.Border
 }
 
 var _ mux.Screen = (*Margins)(nil)
@@ -80,7 +80,7 @@ func (l *Margins) reuse(node NodeType) (bool, error) {
 	}
 
 	if config.Border != nil {
-		l.borderStyle = &config.Border.Style
+		l.borderStyle = config.Border
 		changed = true
 	}
 
@@ -262,7 +262,7 @@ func (l *LayoutEngine) createMargins(
 	})
 
 	if config.Border != nil {
-		margins.borderStyle = &config.Border.Style
+		margins.borderStyle = config.Border
 	}
 
 	node.Screen = margins
