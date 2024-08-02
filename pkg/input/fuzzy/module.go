@@ -59,6 +59,7 @@ type Fuzzy struct {
 	headers []string
 
 	tree            *tree.Tree
+	server          *server.Server
 	client          *server.Client
 	preview         mux.Screen
 	previewLifetime util.Lifetime
@@ -157,6 +158,7 @@ func (f *Fuzzy) getPreview() mux.Screen {
 		f.previewLifetime.Ctx(),
 		f.tree,
 		f.client,
+		f.server,
 		f.initial.Clone(),
 		option.Preview,
 	)
@@ -166,7 +168,9 @@ func (f *Fuzzy) getPreview() mux.Screen {
 	}
 
 	switch option.Preview.(type) {
-	case preview.FrameType, preview.AnimationType:
+	case preview.FrameType,
+		preview.AnimationType,
+		preview.LayoutType:
 		p.Resize(f.size)
 	default:
 		p.Resize(geom.DEFAULT_SIZE)
@@ -204,10 +208,14 @@ func WithSticky(ctx context.Context, f *Fuzzy) {
 }
 
 // If both of these are provided, Fuzzy can show previews for panes.
-func WithNodes(t *tree.Tree, client *server.Client) Setting {
+func WithNodes(
+	tree *tree.Tree,
+	server *server.Server,
+) Setting {
 	return func(ctx context.Context, f *Fuzzy) {
-		f.tree = t
-		f.client = client
+		f.tree = tree
+		f.server = server
+		f.client = server.AddClient(ctx, geom.Vec2{})
 	}
 }
 

@@ -13,6 +13,7 @@ func New(
 	ctx context.Context,
 	tree *tree.Tree,
 	client *server.Client,
+	muxServer *server.Server,
 	initial image.Image,
 	args interface{},
 ) mux.Screen {
@@ -29,6 +30,13 @@ func New(
 		return NewFrame(ctx, args)
 	case AnimationType:
 		return NewAnimation(ctx, initial, args)
+	case LayoutType:
+		return NewLayout(
+			ctx,
+			tree,
+			muxServer,
+			args,
+		)
 	}
 
 	return nil

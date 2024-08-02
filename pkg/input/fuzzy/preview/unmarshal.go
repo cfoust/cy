@@ -9,6 +9,7 @@ import (
 var (
 	KEYWORD_ANIMATION  = janet.Keyword("animation")
 	KEYWORD_FRAME      = janet.Keyword("frame")
+	KEYWORD_LAYOUT     = janet.Keyword("layout")
 	KEYWORD_NODE       = janet.Keyword("node")
 	KEYWORD_REPLAY     = janet.Keyword("replay")
 	KEYWORD_SCROLLBACK = janet.Keyword("scrollback")
@@ -70,6 +71,13 @@ func Unmarshal(input *janet.Value) (result interface{}, err error) {
 			return
 		}
 		result = animation
+	case KEYWORD_LAYOUT:
+		layout := LayoutType{}
+		err = input.Unmarshal(&layout)
+		if err != nil {
+			return
+		}
+		result = layout
 	default:
 		err = fmt.Errorf("invalid preview type %s", preview.Type)
 		return

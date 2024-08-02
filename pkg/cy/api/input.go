@@ -55,10 +55,7 @@ func (i *InputModule) Find(
 	initial := state.Image
 	result := make(chan interface{})
 	settings := []fuzzy.Setting{
-		fuzzy.WithNodes(
-			i.Tree,
-			i.Server.AddClient(ctx, geom.Vec2{}),
-		),
+		fuzzy.WithNodes(i.Tree, i.Server),
 		fuzzy.WithResult(result),
 		fuzzy.WithPrompt(params.Prompt),
 		fuzzy.WithInitial(initial),

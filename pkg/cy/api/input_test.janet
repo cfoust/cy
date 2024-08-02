@@ -3,3 +3,10 @@
 
 (test "animation"
       (input/find @[["test" {:type :animation :name "midjo"} 2]]))
+
+(test "layout"
+      (input/find @[["test" {:type :layout
+                             :layout {:type :border
+                                      :title "test"
+                                      :border :double
+                                      :node {:type :pane :attached true}}} 2]]))

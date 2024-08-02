@@ -141,7 +141,9 @@ For example:
 
 is-axis is a unary function that, given a node, returns a boolean that indicates whether the node is arranged _along the axis in question._ For example, when moving vertically, a vertical split (two panes on top of each other) would return true.
 
-successors is a unary function that, given a node, returns the paths of all of the child nodes accessible from the node in the order of their appearance along the axis. For example, when moving vertically upwards, for a vertical split node this function would return @[[:b] [:a]], because :b is the first node from the bottom, and when moving vertically downwards it would return @[[:a] [:b]] because :a is the first node from the top.
+successors is a unary function that, given a node where is-axis was true, returns the paths of all of the child nodes accessible from the node in the order of their appearance along the axis.
+
+For example, when moving vertically upwards, for a vertical split node this function would return @[[:b] [:a]], because :b is the first node from the bottom, and when moving vertically downwards it would return @[[:a] [:b]] because :a is the first node from the top.
   ```
   [layout is-axis axis-successors]
   (def path (layout/attach-path layout))
