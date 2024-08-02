@@ -275,6 +275,18 @@ For example, when moving vertically upwards, for a vertical split node this func
   (layout/attach layout path))
 
 (defn
+  layout/map
+  ```Pass all nodes in the tree into a mapping function.```
+  [mapping layout]
+  (def mapped (mapping layout))
+  (reduce
+    (fn [node successor]
+      (layout/assoc node successor
+                    (layout/map mapping (layout/path node successor))))
+    mapped
+    (layout/successors mapped)))
+
+(defn
   layout/remove-attached
   ```Remove the attached node from the layout, simplifying the nearest ancestor with children.```
   [layout]
@@ -369,6 +381,14 @@ For example, when moving vertically upwards, for a vertical split node this func
   action/move-right
   "Move right to the next pane."
   (layout/set (layout/move-right (layout/get))))
+
+(key/action
+  action/add-borders
+  "Add borders to the current pane."
+  (layout/set
+    (layout/replace-attached
+      (layout/get)
+      |(struct :type :border :node $))))
 
 (key/action
   action/toggle-margins

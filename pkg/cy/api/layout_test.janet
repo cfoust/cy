@@ -322,3 +322,17 @@
                  :vertical true
                  :a {:type :pane}
                  :b {:type :margins :node {:type :pane :attached true}}})))
+
+(test "layout/map"
+      (assert (deep=
+                (layout/map
+                  |(if (layout/pane? $) {:type :pane :id 2} $)
+                  {:type :split
+                   :vertical true
+                   :a {:type :pane :attached true}
+                   :b {:type :margins :node {:type :pane}}})
+
+                {:type :split
+                 :vertical true
+                 :a {:type :pane :id 2}
+                 :b {:type :margins :node {:type :pane :id 2}}})))
