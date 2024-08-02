@@ -323,6 +323,20 @@
                  :a {:type :pane}
                  :b {:type :margins :node {:type :pane :attached true}}})))
 
+(test "layout/move-left"
+      (assert (deep=
+                (layout/move-left
+                  {:type :split
+                   :a {:type :pane}
+                   :b {:type :border
+                       :node {:type :pane
+                              :attached true}}})
+
+                {:type :split
+                 :a {:type :pane :attached true}
+                 :b {:type :border
+                     :node {:type :pane}}})))
+
 (test "layout/map"
       (assert (deep=
                 (layout/map
@@ -336,6 +350,13 @@
                  :vertical true
                  :a {:type :pane :id 2}
                  :b {:type :margins :node {:type :pane :id 2}}})))
+
+(test "action/add-borders"
+      (action/split-right)
+      (action/add-borders)
+      (action/move-left)
+      (action/add-borders)
+      (action/add-borders))
 
 (test "action/set-layout-borders"
       (layout/set

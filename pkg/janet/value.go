@@ -93,7 +93,11 @@ type marshalRequest struct {
 }
 
 func (v *Value) Unmarshal(dest interface{}) error {
-	if v.isSafe {
+	v.RLock()
+	isSafe := v.isSafe
+	v.RUnlock()
+
+	if isSafe {
 		return v.vm.unmarshal(v.janet, dest)
 	}
 

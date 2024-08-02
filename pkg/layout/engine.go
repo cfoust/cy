@@ -333,6 +333,13 @@ func (l *LayoutEngine) updateNode(
 				Node:   current.Children[0],
 			},
 		)
+	case BorderType:
+		updates = append(updates,
+			updateNode{
+				Config: node.Node,
+				Node:   current.Children[0],
+			},
+		)
 	}
 
 	// If any of the node's children cannot be reused, we need to remake

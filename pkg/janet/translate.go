@@ -327,11 +327,15 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 			return err
 		}
 
+		// TODO(cfoust): 08/03/24 tests for this behavior
+		wasSafe := v.isSafe
 		v.isSafe = true
 		janetValue := v.value(source)
 		err = u.UnmarshalJanet(janetValue)
 		janetValue.unroot()
-		v.isSafe = false
+		if !wasSafe {
+			v.isSafe = false
+		}
 		return err
 	}
 
