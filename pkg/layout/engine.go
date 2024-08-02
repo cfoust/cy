@@ -144,6 +144,10 @@ func (l *LayoutEngine) State() *tty.State {
 	size := state.Image.Size()
 
 	for i := 0; i < len(style.Borders); i++ {
+		if !style.Borders[i].Smoothable() {
+			continue
+		}
+
 		for row := 0; row < size.R; row++ {
 			for col := 0; col < size.C; col++ {
 				style.FillBorder(

@@ -26,7 +26,7 @@ type nodeType struct {
 
 func unmarshalBorder(value *janet.Value) (*style.Border, error) {
 	border := style.NewBorder(
-		lipgloss.DoubleBorder(),
+		lipgloss.RoundedBorder(),
 	)
 
 	if value == nil || value.Nil() {

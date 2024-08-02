@@ -21,15 +21,15 @@ var (
 	KEYWORD_HIDDEN     = janet.Keyword("hidden")
 )
 
-var Borders = []lipgloss.Border{
-	lipgloss.NormalBorder(),
-	lipgloss.RoundedBorder(),
-	lipgloss.BlockBorder(),
-	lipgloss.OuterHalfBlockBorder(),
-	lipgloss.InnerHalfBlockBorder(),
-	lipgloss.ThickBorder(),
-	lipgloss.DoubleBorder(),
-	lipgloss.HiddenBorder(),
+var Borders = []Border{
+	NewBorder(lipgloss.NormalBorder()),
+	NewBorder(lipgloss.RoundedBorder()),
+	NewBorder(lipgloss.BlockBorder()),
+	NewBorder(lipgloss.OuterHalfBlockBorder()),
+	NewBorder(lipgloss.InnerHalfBlockBorder()),
+	NewBorder(lipgloss.ThickBorder()),
+	NewBorder(lipgloss.DoubleBorder()),
+	NewBorder(lipgloss.HiddenBorder()),
 }
 
 var borderMap = map[janet.Keyword]lipgloss.Border{
@@ -49,7 +49,7 @@ var borderMap = map[janet.Keyword]lipgloss.Border{
 func FillBorder(
 	image image.Image,
 	row, col, rows, cols int,
-	border lipgloss.Border,
+	border Border,
 ) {
 	leftChar := []rune(border.Left)[0]
 	topChar := []rune(border.Top)[0]
@@ -108,6 +108,22 @@ func FillBorder(
 
 type Border struct {
 	lipgloss.Border
+}
+
+func (b Border) Smoothable() bool {
+	for _, s := range []string{
+		b.Middle,
+		b.MiddleLeft,
+		b.MiddleRight,
+		b.MiddleTop,
+		b.MiddleBottom,
+	} {
+		if len(s) == 0 {
+			return false
+		}
+	}
+
+	return true
 }
 
 func NewBorder(border lipgloss.Border) Border {

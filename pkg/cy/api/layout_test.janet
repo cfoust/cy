@@ -336,3 +336,12 @@
                  :vertical true
                  :a {:type :pane :id 2}
                  :b {:type :margins :node {:type :pane :id 2}}})))
+
+(test "action/set-layout-borders"
+      (layout/set
+        {:type :border
+         :title "test"
+         :border :double
+         :node {:type :pane :attached true}})
+
+      (action/set-layout-borders))

@@ -475,3 +475,33 @@ For example, when moving vertically upwards, for a vertical split node this func
                  :node node
                  :cols (+ cols 5)
                  :rows rows})))
+
+
+(key/action
+  action/set-layout-borders
+  "Change the border style across the entire layout."
+  (def layout (layout/get))
+  (as?-> (map (fn [style]
+                (def style-layout (layout/map
+                                    (fn [node]
+                                      (def {:border border} node)
+                                      (if (or
+                                            (= border :none)
+                                            (nil? border)) (break node))
+                                      (def modifiable (struct/to-table node))
+                                      (put modifiable :border style)
+                                      (table/to-struct modifiable)) layout))
+                [(string style)
+                 {:type :layout :layout style-layout}
+                 style-layout])
+              @[:normal
+                :rounded
+                :block
+                :outer-half
+                :inner-half
+                :thick
+                :double
+                :hidden]) _
+         (input/find _
+                     :prompt "choose a border style")
+         (layout/set _)))
