@@ -135,9 +135,6 @@ For example:
     path
     |{:type :pane :id ($ :id) :attached true}))
 
-# TODO(cfoust): 07/31/24 caller should not have to provide comprehensive
-# successor function, it should only be called on nodes that are along the axis
-# (ie where ix-axis returns true.) You can use (layout/successors) for this.
 (defn
   layout/move
   ```This function attaches to the pane nearest to the one the user is currently attached to along an axis. It returns a new copy of layout with the attachment point changed or returns the same layout if no motion could be completed.
@@ -146,9 +143,15 @@ is-axis is a unary function that, given a node, returns a boolean that indicates
 
 successors is a unary function that, given a node, returns the paths of all of the child nodes accessible from the node in the order of their appearance along the axis. For example, when moving vertically upwards, for a vertical split node this function would return @[[:b] [:a]], because :b is the first node from the bottom, and when moving vertically downwards it would return @[[:a] [:b]] because :a is the first node from the top.
   ```
-  [layout is-axis successors]
+  [layout is-axis axis-successors]
   (def path (layout/attach-path layout))
   (if (nil? path) (break layout))
+
+  (defn successors
+    [node]
+    (if (is-axis node)
+      (axis-successors node)
+      (layout/successors node)))
 
   # We look for a path we can attach to in the opposite direction of
   # movement.
@@ -194,12 +197,7 @@ successors is a unary function that, given a node, returns the paths of all of t
   (layout/move
     layout
     |(and (layout/type? :split $) ($ :vertical))
-    |(cond
-       (layout/type? :split $) (if ($ :vertical)
-                                 @[[:b] [:a]]
-                                 @[[:a] [:b]])
-       (layout/type? :margins $) @[[:node]]
-       @[[]])))
+    |(identity (reverse (layout/successors $)))))
 
 (defn
   layout/move-down
@@ -208,10 +206,7 @@ successors is a unary function that, given a node, returns the paths of all of t
   (layout/move
     layout
     |(and (layout/type? :split $) ($ :vertical))
-    |(cond
-       (layout/type? :split $) @[[:a] [:b]]
-       (layout/type? :margins $) @[[:node]]
-       @[[]])))
+    |(identity (layout/successors $))))
 
 (defn
   layout/move-left
@@ -220,12 +215,7 @@ successors is a unary function that, given a node, returns the paths of all of t
   (layout/move
     layout
     |(and (layout/type? :split $) (not ($ :vertical)))
-    |(cond
-       (layout/type? :split $) (if (not ($ :vertical))
-                                 @[[:b] [:a]]
-                                 @[[:a] [:b]])
-       (layout/type? :margins $) @[[:node]]
-       @[[]])))
+    |(identity (reverse (layout/successors $)))))
 
 (defn
   layout/move-right
@@ -234,10 +224,7 @@ successors is a unary function that, given a node, returns the paths of all of t
   (layout/move
     layout
     |(and (layout/type? :split $) (not ($ :vertical)))
-    |(cond
-       (layout/type? :split $) @[[:a] [:b]]
-       (layout/type? :margins $) @[[:node]]
-       @[[]])))
+    |(identity (layout/successors $))))
 
 (defn
   layout/split-right
