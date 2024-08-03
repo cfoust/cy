@@ -3,6 +3,7 @@ package layout
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -11,6 +12,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/util"
+	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/sasha-s/go-deadlock"
 )
@@ -36,6 +38,72 @@ type screenNode struct {
 	Children []*screenNode
 }
 
+// throttle is a throttled update publisher that only allows nil messages to
+// be published at a maximum frame rate. This is particularly useful for the
+// LayoutEngine because any time a node tells its subscribers that its state
+// has changed, all of its ancestors are also notified, which is usually
+// desirable, but causes lots of unnecessary renders in the top-level
+// LayoutEngine.
+type throttle struct {
+	deadlock.RWMutex
+	publish *mux.UpdatePublisher
+	wait    chan interface{}
+	ready   time.Time
+	sleepMs time.Duration
+}
+
+func (t *throttle) poll(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.wait:
+			time.Sleep(t.sleepMs)
+			t.publish.Notify()
+		}
+	}
+}
+
+func (t *throttle) Publish(value tea.Msg) {
+	if value != nil {
+		t.publish.Publish(value)
+		return
+	}
+
+	t.RLock()
+	var (
+		ready = t.ready
+	)
+	t.RUnlock()
+
+	if time.Now().Before(ready) {
+		return
+	}
+
+	t.Lock()
+	t.ready = time.Now().Add(t.sleepMs)
+	t.Unlock()
+
+	t.wait <- nil
+}
+
+func newThrottle(
+	ctx context.Context,
+	p *mux.UpdatePublisher,
+	maxFps int,
+) *throttle {
+	t := &throttle{
+		publish: p,
+		wait:    make(chan interface{}),
+		sleepMs: time.Second / time.Duration(maxFps),
+		ready:   time.Now(),
+	}
+
+	go t.poll(ctx)
+
+	return t
+}
+
 // LayoutEngine is a Screen that renders a declarative layout that consists of
 // other Screens. When the layout changes, LayoutEngine detects which Screens
 // in the layout can be reused and which must be created from scratch.
@@ -43,6 +111,7 @@ type LayoutEngine struct {
 	util.Lifetime
 	deadlock.RWMutex
 	*mux.UpdatePublisher
+	throttle *throttle
 
 	params *params.Parameters
 	tree   *tree.Tree
@@ -316,7 +385,7 @@ func (l *LayoutEngine) set(layout NodeType) error {
 				case nodeChangeEvent:
 					// don't emit these
 				default:
-					l.Publish(msg)
+					l.throttle.Publish(msg)
 				}
 			case <-node.Ctx().Done():
 				return
@@ -365,12 +434,19 @@ func NewLayoutEngine(
 	settings ...Setting,
 ) *LayoutEngine {
 	lifetime := util.NewLifetime(ctx)
+	p := mux.NewPublisher()
+	t := newThrottle(
+		lifetime.Ctx(),
+		p,
+		60,
+	)
 	engine := &LayoutEngine{
 		Lifetime:        lifetime,
-		UpdatePublisher: mux.NewPublisher(),
+		UpdatePublisher: p,
 		tree:            tree,
 		server:          muxServer,
 		params:          params.New(),
+		throttle:        t,
 	}
 
 	for _, setting := range settings {
