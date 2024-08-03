@@ -162,9 +162,10 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		return type_, nil
 	case KEYWORD_BORDER:
 		type borderArgs struct {
-			Title  *string
-			Border *janet.Value
-			Node   *janet.Value
+			Title       *string
+			TitleBottom *string
+			Border      *janet.Value
+			Node        *janet.Value
 		}
 		args := borderArgs{}
 		err = value.Unmarshal(&args)
@@ -178,8 +179,9 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		}
 
 		type_ := BorderType{
-			Title: args.Title,
-			Node:  node,
+			Title:       args.Title,
+			TitleBottom: args.TitleBottom,
+			Node:        node,
 		}
 
 		type_.Border, err = unmarshalBorder(args.Border)
@@ -273,15 +275,17 @@ func marshalNode(node NodeType) interface{} {
 		}
 	case BorderType:
 		return struct {
-			Type   janet.Keyword
-			Title  *string
-			Border interface{}
-			Node   interface{}
+			Type        janet.Keyword
+			Title       *string
+			TitleBottom *string
+			Border      interface{}
+			Node        interface{}
 		}{
-			Type:   KEYWORD_BORDER,
-			Title:  node.Title,
-			Border: marshalBorder(node.Border),
-			Node:   marshalNode(node.Node),
+			Type:        KEYWORD_BORDER,
+			Title:       node.Title,
+			TitleBottom: node.TitleBottom,
+			Border:      marshalBorder(node.Border),
+			Node:        marshalNode(node.Node),
 		}
 	}
 	return nil

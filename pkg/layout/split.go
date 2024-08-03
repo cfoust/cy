@@ -114,6 +114,9 @@ func (s *Split) reuse(node NodeType) (bool, error) {
 		return false, nil
 	}
 
+	s.Lock()
+	defer s.Unlock()
+
 	var changed bool
 	if config.Percent != nil && (s.isCells || s.percent != *config.Percent) {
 		s.setPercent(*config.Percent)

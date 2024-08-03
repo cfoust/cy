@@ -33,9 +33,10 @@ type MarginsType struct {
 }
 
 type BorderType struct {
-	Title  *string
-	Border *style.Border
-	Node   NodeType
+	Title       *string
+	TitleBottom *string
+	Border      *style.Border
+	Node        NodeType
 }
 
 type Layout struct {

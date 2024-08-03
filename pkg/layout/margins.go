@@ -65,9 +65,10 @@ func (l *Margins) reuse(node NodeType) (bool, error) {
 		return false, nil
 	}
 
-	l.RLock()
+	l.Lock()
+	defer l.Unlock()
+
 	oldSize := l.size
-	l.RUnlock()
 
 	newSize := geom.Vec2{
 		R: config.Rows,
@@ -215,28 +216,16 @@ func (l *Margins) poll(ctx context.Context) {
 }
 
 func (l *Margins) recalculate() error {
-	l.RLock()
 	outer := l.outer
-	l.RUnlock()
-
 	inner := l.getInner(outer)
-
-	l.Lock()
 	l.inner = inner
-	l.Unlock()
-
-	err := l.screen.Resize(inner.Size)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return l.screen.Resize(inner.Size)
 }
 
 func (l *Margins) Resize(size geom.Size) error {
 	l.Lock()
 	l.outer = size
-	l.Unlock()
+	defer l.Unlock()
 	return l.recalculate()
 }
 

@@ -21,6 +21,8 @@ type Borders struct {
 	size        geom.Size
 	inner       geom.Rect
 	borderStyle *style.Border
+
+	title, titleBottom string
 }
 
 var _ mux.Screen = (*Borders)(nil)
@@ -33,6 +35,15 @@ func (l *Borders) reuse(node NodeType) (bool, error) {
 	}
 
 	l.borderStyle = config.Border
+
+	if config.Title != nil {
+		l.title = *config.Title
+	}
+
+	if config.TitleBottom != nil {
+		l.titleBottom = *config.TitleBottom
+	}
+
 	return true, nil
 }
 
@@ -49,6 +60,8 @@ func (l *Borders) State() *tty.State {
 	inner := l.inner
 	size := l.size
 	borderStyle := l.borderStyle
+	title := l.title
+	titleBottom := l.titleBottom
 	l.RUnlock()
 
 	innerState := l.screen.State()
@@ -68,6 +81,26 @@ func (l *Borders) State() *tty.State {
 		Render("")
 
 	l.render.RenderAt(state.Image, 0, 0, boxText)
+
+	if len(title) > 0 {
+		l.render.RenderAt(
+			state.Image,
+			0, 1,
+			l.render.NewStyle().
+				MaxWidth(inner.Size.C).
+				Render(title),
+		)
+	}
+
+	if len(titleBottom) > 0 {
+		l.render.RenderAt(
+			state.Image,
+			size.R-1, 1,
+			l.render.NewStyle().
+				MaxWidth(inner.Size.C).
+				Render(titleBottom),
+		)
+	}
 
 	return state
 }
@@ -154,6 +187,15 @@ func (l *LayoutEngine) createBorders(
 		innerNode.Screen,
 	)
 	borders.borderStyle = config.Border
+
+	if config.Title != nil {
+		borders.title = *config.Title
+	}
+
+	if config.TitleBottom != nil {
+		borders.titleBottom = *config.TitleBottom
+	}
+
 	node.Screen = borders
 	node.Children = []*screenNode{innerNode}
 	return nil

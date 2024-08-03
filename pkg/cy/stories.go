@@ -555,7 +555,7 @@ func init() {
 		return screen, err
 	}, stories.Config{})
 
-	stories.Register("borders", func(ctx context.Context) (
+	stories.Register("layout/border", func(ctx context.Context) (
 		mux.Screen,
 		error,
 	) {
@@ -564,8 +564,12 @@ func init() {
 (def cmd1 (shell/new))
 (layout/set
         {:type :border
+	 :title ":title"
+	 :title-bottom ":title-bottom"
 	 :node {:type :pane :id cmd1 :attached true}})
 		`)
 		return screen, err
-	}, stories.Config{})
+	}, stories.Config{
+		Size: geom.DEFAULT_SIZE,
+	})
 }
