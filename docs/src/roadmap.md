@@ -2,9 +2,9 @@
 
 `cy` is slowly starting to emerge from the proof-of-concept stage. The core features are solid, but it is not quite ready to be an alternative to `tmux` for most users. This document outlines the features I plan on implementing before `cy`'s 1.0 release. Features denoted with "\*" are tentative and may not make the cut.
 
-- [X] [`v.0.4.0`](https://github.com/cfoust/cy/releases/tag/v0.4.0) **Layouts:** Many users rely on being able to see multiple panes at once. `cy`'s approach to this will differ from `tmux`'s: users will be able to define layouts using a declarative layout API.
-  - [X] [`v.0.4.0`](https://github.com/cfoust/cy/releases/tag/v0.4.0) **Proportional splits:** A layout akin to `tmux`'s default. Panes can be split horizontally and vertically and sized according to percentages or number of cells on the split axis.
-  - [ ] **Borders:** The borders of each window should be configurable independently of the layout.
+- [x] [`v0.4.0`](https://github.com/cfoust/cy/releases/tag/v0.4.0) **Layouts:** Many users rely on being able to see multiple panes at once. `cy`'s approach to this will differ from `tmux`'s: users will be able to define layouts using a declarative layout API.
+  - [x] [`v0.4.0`](https://github.com/cfoust/cy/releases/tag/v0.4.0) **Proportional splits:** A layout akin to `tmux`'s default. Panes can be split horizontally and vertically and sized according to percentages or number of cells on the split axis.
+  - [x] [`v0.5.0`](https://github.com/cfoust/cy/releases/tag/v0.5.0) **Borders:** The borders of each window should be configurable independently of the layout.
   - [ ] **Floating panes\*:** It should be possible to spawn temporary layers that show a single pane that appears to float over all of the rest.
 - [ ] **Bars:** Users should be able to configure styled bars that appear above or below each window. These could be used to show the pane's current command, directory, time, et cetera. Ideally users would be able to provide a Janet function that could do anything they wanted.
 - [ ] **Searching through all recorded sessions:** Right now {{api replay/open-file}} is not very useful. There should be a mechanism for searching all recorded `.borg` files for a string.
