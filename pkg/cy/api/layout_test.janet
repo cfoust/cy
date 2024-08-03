@@ -351,13 +351,6 @@
                  :a {:type :pane :id 2}
                  :b {:type :margins :node {:type :pane :id 2}}})))
 
-(test "action/add-borders"
-      (action/split-right)
-      (action/add-borders)
-      (action/move-left)
-      (action/add-borders)
-      (action/add-borders))
-
 (test "action/set-layout-borders"
       (layout/set
         {:type :borders

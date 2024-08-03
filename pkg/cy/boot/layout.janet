@@ -383,12 +383,66 @@ For example, when moving vertically upwards, for a vertical split node this func
   (layout/set (layout/move-right (layout/get))))
 
 (key/action
-  action/add-borders
-  "Add borders to the current pane."
-  (layout/set
-    (layout/replace-attached
-      (layout/get)
-      |(struct :type :borders :node $))))
+  action/add-node
+  "Add a node to the layout."
+  (def layout (layout/get))
+  (def types @[[":borders" |(struct :type :borders :node $)]
+               [":margins" |(struct :type :margins :node $)]
+               [":split (horizontal)" |(struct :type :split
+
+                                               :a $
+                                               :b {:type :pane})]
+               [":split (vertical)" |(struct :type :split
+                                             :vertical true
+                                             :a $
+                                             :b {:type :pane})]])
+  (as?-> types _
+         (map (fn [[name mapper]]
+                (def new-layout (layout/replace-attached layout mapper))
+                [name {:type :layout :layout new-layout} new-layout])
+              _)
+         (input/find _ :prompt "add a node" :animate false)
+         (layout/set _)))
+
+(key/action
+  action/remove-parent
+  "Remove the parent of the current node."
+  (def layout (layout/get))
+  (def path (layout/attach-path layout))
+  (if (< (length path) 1) (break))
+  (layout/set (layout/assoc layout
+                            (array/slice path 0 (- (length path) 1))
+                            (layout/path layout path))))
+
+(defn-
+  set-borders-property
+  [prop message]
+  (def layout (layout/get))
+  (def path (layout/attach-path layout))
+  (def borders-path (layout/find-last layout path |(layout/type? :borders $)))
+  (if (nil? borders-path) (break))
+  (def borders (struct/to-table (layout/path layout borders-path)))
+  (var old (get borders prop))
+  (default old "")
+  (def new (input/text message :preset old :animated false))
+  (if (nil? new) (break))
+  (put borders prop new)
+  (layout/set (layout/assoc layout borders-path (table/to-struct borders))))
+
+(key/action
+  action/set-borders-title
+  "Set the :title for a :borders node."
+  (set-borders-property :title "enter a value for :title"))
+
+(key/action
+  action/set-borders-title-bottom
+  "Set the :title-bottom for a :borders node."
+  (set-borders-property :title-bottom "enter a value for :title-bottom"))
+
+(key/action
+  action/clear-layout
+  "Clear out the layout."
+  (layout/set {:type :pane :attached true}))
 
 (key/action
   action/toggle-margins

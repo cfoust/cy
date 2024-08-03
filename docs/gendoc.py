@@ -524,7 +524,7 @@ def transform_links() -> Transformer:
     ]:
         target = match.group(2)
 
-        if target.startswith("http"):
+        if target.startswith("http") or target.startswith("#"):
             return None, None
 
         if 'html' in target:

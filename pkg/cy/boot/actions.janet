@@ -9,9 +9,10 @@ In a similar way to other modern applications, cy has a command palette (invoked
 `](/api.md#actioncommand-palette)) in which all registered actions will appear.
 ````
   [name docstring & body]
+  (def func-name (string name))
   ~(upscope
      (defn ,name ,docstring [] ,;body)
-     (,array/push actions [,docstring ,name])))
+     (,array/push actions [,func-name ,docstring ,name])))
 
 (defmacro key/bind-many
   ````Bind many bindings at once in the same scope.
@@ -59,13 +60,13 @@ For example:
   (def bound-actions
     (map
       |(do
-         (def [desc func] $)
+         (def [name desc func] $)
          (def sequence (as?-> binds x
                               (find |(= func ($ :function)) x)
                               (get x :sequence)
                               (string/join x " ")
                               (string " " x " ")))
-         (tuple [desc (string sequence)] func))
+         (tuple [desc name (string sequence)] func))
       actions))
 
   (as?-> bound-actions _
