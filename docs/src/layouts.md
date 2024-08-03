@@ -28,6 +28,16 @@ A layout is composed of nodes of different types. It need only adhere to a singl
 
 Layouts are just standard Janet values. `cy` comes with a comprehensive [Janet library](https://github.com/cfoust/cy/blob/main/pkg/cy/boot/layout.janet) with handy tools for manipulating them more easily.
 
+## Editing layouts
+
+You can access most layout functionality without ever writing a line of code using actions that are available in the command palette:
+
+- **{{api action/add-node}}**: Quickly add nodes of any type to the layout.
+- **{{api action/remove-parent}}**: Remove the most recent parent of the currently attached node.
+- **{{api action/clear-layout}}**: Completely empty out the layout.
+
+Some node types have actions as well. For example, the `:borders` type has {{api action/set-borders-title}} and {{api action/set-borders-title-bottom}}.
+
 ## Node types
 
 `cy` currently supports the following layout node types:
