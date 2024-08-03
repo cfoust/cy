@@ -80,13 +80,13 @@
 
 (test ":border"
       (layout/set
-        {:type :border
+        {:type :borders
          :title "test"
          :border :double
          :node {:type :pane :attached true}})
 
       (layout/set
-        {:type :border
+        {:type :borders
          :node {:type :pane :attached true}}))
 
 (test "bad input"
@@ -328,13 +328,13 @@
                 (layout/move-left
                   {:type :split
                    :a {:type :pane}
-                   :b {:type :border
+                   :b {:type :borders
                        :node {:type :pane
                               :attached true}}})
 
                 {:type :split
                  :a {:type :pane :attached true}
-                 :b {:type :border
+                 :b {:type :borders
                      :node {:type :pane}}})))
 
 (test "layout/map"
@@ -360,7 +360,7 @@
 
 (test "action/set-layout-borders"
       (layout/set
-        {:type :border
+        {:type :borders
          :title "test"
          :border :double
          :node {:type :pane :attached true}})

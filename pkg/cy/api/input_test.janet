@@ -6,7 +6,7 @@
 
 (test "layout"
       (input/find @[["test" {:type :layout
-                             :layout {:type :border
+                             :layout {:type :borders
                                       :title "test"
                                       :border :double
                                       :node {:type :pane :attached true}}} 2]]))

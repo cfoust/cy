@@ -476,6 +476,21 @@ func init() {
 		return screen, err
 	}, stories.Config{})
 
+	stories.Register("layout/margins", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd1 (shell/new))
+(layout/set
+        {:type :margins
+         :cols 40
+         :node {:type :pane :id cmd1 :attached true}})
+		`)
+		return screen, err
+	}, stories.Config{})
+
 	stories.Register("layout/split-margins", func(ctx context.Context) (
 		mux.Screen,
 		error,
@@ -486,7 +501,6 @@ func init() {
 (def cmd2 (shell/new))
 (layout/set
         {:type :split
-         :percent 80
 	 :a {:type :margins
 	     :cols 40
 	     :node {:type :pane :id cmd1 :attached true}}
@@ -563,13 +577,11 @@ func init() {
 		client.execute(`
 (def cmd1 (shell/new))
 (layout/set
-        {:type :border
+        {:type :borders
 	 :title ":title"
 	 :title-bottom ":title-bottom"
 	 :node {:type :pane :id cmd1 :attached true}})
 		`)
 		return screen, err
-	}, stories.Config{
-		Size: geom.DEFAULT_SIZE,
-	})
+	}, stories.Config{})
 }

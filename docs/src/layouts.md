@@ -28,17 +28,18 @@ A layout is composed of nodes of different types. It need only adhere to a singl
 
 Layouts are just standard Janet values. `cy` comes with a comprehensive [Janet library](https://github.com/cfoust/cy/blob/main/pkg/cy/boot/layout.janet) with handy tools for manipulating them more easily.
 
-### Node types
+## Node types
 
 `cy` currently supports the following layout node types:
 
-- **Pane**: A pane node can be attached to panes that exist in [the node tree](/groups-and-panes.md).
-- **Margins**: A margins mode constrains the size of its child node by adding transparent margins.
-- **Split**: A split node divides the screen space of its parent node in two and provides it to two other nodes, drawing a line on the screen between them.
+- **[Pane](#pane)**: A pane node can be attached to panes that exist in [the node tree](/groups-and-panes.md).
+- **[Margins](#margins)**: A margins mode constrains the size of its child node by adding transparent margins.
+- **[Split](#split)**: A split node divides the screen space of its parent node in two and provides it to two other nodes, drawing a line on the screen between them.
+- **[Borders](#borders)**: A node is enclosed in borders with an optional title on the top or bottom.
 
 The following sections go into these types in more detail.
 
-#### Pane
+### Pane
 
 A `:pane` node is an attachment point for a [pane](/groups-and-panes.md#panes).
 
@@ -72,7 +73,9 @@ In other words, to make this global you can do the following:
 (param/set :client :remove-pane-on-exit true)
 ```
 
-#### Margins
+### Margins
+
+{{story cast layout/margins}}
 
 A `:margins` node puts transparent margins around its child allowing the current frame to show through.
 
@@ -81,7 +84,7 @@ A `:margins` node puts transparent margins around its child allowing the current
     :type :margins
     :cols 0 # number, optional
     :rows 0 # number, optional
-    :border :double # border type, optional
+    :border :rounded # border type, optional
     :node {} # a node
 }
 ```
@@ -92,13 +95,15 @@ These properties set the size of the node inside of the `:margins` node; they do
 
 `:border`
 
-A [border](/layouts.md#borders) can optionally be rendered around the node.
+The [border style](#border-styles) for the borders around the node.
 
 `:node`
 
 A valid layout node.
 
-#### Split
+### Split
+
+{{story cast layout/split-half}}
 
 A `:split` node divides its visual space in two and gives it to two other nodes, rendering a line down the middle.
 
@@ -108,7 +113,7 @@ A `:split` node divides its visual space in two and gives it to two other nodes,
     :vertical false # boolean, optional
     :cells nil # int or nil, optional
     :percent nil # int or nil, optional
-    :border :double # border type, optional
+    :border :rounded # border type, optional
     :a {} # a node
     :b {} # a node
 }
@@ -124,13 +129,41 @@ At most one of these can be defined. Both determine the amount of space given to
 
 `:border`
 
-A [border](/layouts.md#borders) can optionally be rendered around the node.
+The [border style](#border-styles) to use for the dividing line.
 
 `:a` and `:b`
 
 Both must be valid layout nodes.
 
 ### Borders
+
+{{story cast layout/border}}
+
+A `:borders` node surrounds its child in borders and adds an optional title to the top or bottom.
+
+```janet
+{
+    :type :borders
+    :title nil # string or nil, optional
+    :title-bottom nil # string or nil, optional
+    :border :rounded # border type, optional
+    :node {} # a node
+}
+```
+
+`:title` and `:title-bottom`
+
+These strings will be rendered on the top and the bottom of the window, respectively.
+
+`:border`
+
+The [border style](#border-styles) for this node. `:none` is not supported.
+
+`:node`
+
+A valid layout node.
+
+## Border styles
 
 Some nodes have a `:border` property that determines the appearance of the node's borders. The border property can be one of the following keywords:
 

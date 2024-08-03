@@ -30,7 +30,7 @@ For example:
     (layout/type? :split node) @[[:a] [:b]]
     (or
       (layout/type? :margins node)
-      (layout/type? :border node)) @[[:node]]
+      (layout/type? :borders node)) @[[:node]]
     @[]))
 
 (defn
@@ -388,7 +388,7 @@ For example, when moving vertically upwards, for a vertical split node this func
   (layout/set
     (layout/replace-attached
       (layout/get)
-      |(struct :type :border :node $))))
+      |(struct :type :borders :node $))))
 
 (key/action
   action/toggle-margins

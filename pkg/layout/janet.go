@@ -14,7 +14,7 @@ var (
 	KEYWORD_PANE    = janet.Keyword("pane")
 	KEYWORD_SPLIT   = janet.Keyword("split")
 	KEYWORD_MARGINS = janet.Keyword("margins")
-	KEYWORD_BORDER  = janet.Keyword("border")
+	KEYWORD_BORDERS = janet.Keyword("borders")
 
 	// Special border behavior
 	KEYWORD_NONE = janet.Keyword("none")
@@ -160,7 +160,7 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		}
 
 		return type_, nil
-	case KEYWORD_BORDER:
+	case KEYWORD_BORDERS:
 		type borderArgs struct {
 			Title       *string
 			TitleBottom *string
@@ -281,7 +281,7 @@ func marshalNode(node NodeType) interface{} {
 			Border      interface{}
 			Node        interface{}
 		}{
-			Type:        KEYWORD_BORDER,
+			Type:        KEYWORD_BORDERS,
 			Title:       node.Title,
 			TitleBottom: node.TitleBottom,
 			Border:      marshalBorder(node.Border),
