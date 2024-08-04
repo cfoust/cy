@@ -1,18 +1,17 @@
-(def- actions @[])
+(def- actions @{})
 
 (defmacro key/action
-  ````Register an action. Equivalent to the Janet built-in `(defn`), but requires a docstring.
+  ````Register an action. Equivalent to the Janet built-in `(defn)`, but requires a docstring.
 
 An action is just a Janet function that is registered to the cy server with a short human-readable string description. It provides a convenient method for making some functionality you use often more discoverable.
 
-In a similar way to other modern applications, cy has a command palette (invoked by default with {{bind :root ctrl+a ctrl+p}}, see [`(action/command-palette)
-`](/api.md#actioncommand-palette)) in which all registered actions will appear.
+In a similar way to other modern applications, cy has a command palette (invoked by default with {{bind :root ctrl+a ctrl+p}}, see {{api action/command-palette}}) in which all registered actions will appear.
 ````
   [name docstring & body]
   (def func-name (string name))
   ~(upscope
      (defn ,name ,docstring [] ,;body)
-     (,array/push actions [,func-name ,docstring ,name])))
+     (,put actions ,func-name [,docstring ,name])))
 
 (defmacro key/bind-many
   ````Bind many bindings at once in the same scope.
@@ -60,14 +59,14 @@ For example:
   (def bound-actions
     (map
       |(do
-         (def [name desc func] $)
+         (def [name [desc func]] $)
          (def sequence (as?-> binds x
                               (find |(= func ($ :function)) x)
                               (get x :sequence)
                               (string/join x " ")
                               (string " " x " ")))
          (tuple [desc name (string sequence)] func))
-      actions))
+      (pairs actions)))
 
   (as?-> bound-actions _
          (input/find _
