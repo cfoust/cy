@@ -1,47 +1,48 @@
-(test ":pane"
-      (layout/set {:type :pane :attached true :id 2})
-      (layout/set {:type :pane :id 2 :attached true})
-      (layout/set {:type :pane :attached true}))
+(test "layout/new"
+      (assert (deep= (layout/new (pane)) (layout/pane)))
+      (assert (deep= (layout/new (attach)) (layout/pane :attached true)))
+      (assert (deep=
+                (layout/new (split (pane) (pane)))
+                (layout/split (layout/pane) (layout/pane)))))
 
-(test ":pane 2"
-      (layout/set {:type :pane :attached true}))
+(test ":pane"
+      (layout/set (layout/pane :id 2 :attached true))
+      (layout/set (layout/pane :attached true)))
 
 (test "layout/get"
-      (def layout {:type :pane
-                   :id 2
-                   :remove-on-exit false
-                   :attached true})
+      (def layout (layout/pane
+                    :id 2
+                    :remove-on-exit false
+                    :attached true))
       (layout/set layout)
       (assert (deep= (layout/get) layout)))
 
+(pp (layout/new (split
+                  (pane)
+                  (vsplit
+                    (margins (attach))
+                    (borders (pane))))))
+
 (test "borders"
       (do
-        (def layout {:type :split
-                     :percent 26
-                     :border :normal
-                     :vertical false
-                     :a {:type :pane :attached true}
-                     :b {:type :pane :attached false}})
+        (def layout (layout/new (split (attach) (pane)
+                                       :percent 26
+                                       :border :normal)))
         (layout/set layout)
         (assert (deep= (layout/get) layout)))
 
       (do
-        (def layout {:type :split
-                     :percent 26
-                     :border :none
-                     :vertical false
-                     :a {:type :pane :attached true}
-                     :b {:type :pane :attached false}})
+        (def layout (layout/new (split (attach) (pane)
+                                       :percent 26
+                                       :border :none)))
         (layout/set layout)
         (assert (deep= (layout/get) layout)))
 
       (expect-error (layout/set
-                      {:type :split
-                       :percent 26
-                       :border :asd
-                       :vertical false
-                       :a {:type :pane :attached true}
-                       :b {:type :pane :attached false}})))
+                      (layout/new (split (attach) (pane)
+                                         :percent 26
+                                         :border :asd
+                                         :vertical false)))))
 
 (test ":split"
       (layout/set
@@ -217,46 +218,32 @@
 
 (test "layout/detach"
       (assert (deep=
-                (layout/detach
-                  {:type :margins
-                   :cols 20
-                   :rows 0
-                   :node {:type :pane :attached true}})
-                {:type :margins
-                 :cols 20
-                 :rows 0
-                 :node {:type :pane :id nil}})))
+                (layout/detach (layout/new (margins (attach)
+                                                    :cols 20
+                                                    :rows 0)))
+                (layout/new (margins (pane)
+                                     :cols 20
+                                     :rows 0)))))
 
 (test "layout/split-*"
       (assert (deep=
                 (layout/split-right
-                  {:type :margins
-                   :cols 20
-                   :node {:type :pane :attached true}}
-                  {:type :pane :id 2 :attached true})
+                  (layout/new (margins (attach) :cols 20))
+                  (layout/pane :id 2 :attached true))
 
-                {:type :margins
-                 :cols 20
-                 :node {:type :split
-                        :percent 50
-                        :a {:type :pane}
-                        :b {:type :pane :id 2 :attached true}}}))
+                (layout/new
+                  (margins
+                    (split (pane) (attach :id 2))
+                    :cols 20))))
 
       (assert (deep=
                 (layout/split-down (layout/split-right
-                                     {:type :pane :attached true}
-                                     {:type :pane :attached true})
-                                   {:type :pane :id 2 :attached true})
+                                     (layout/pane :attached true)
+                                     (layout/pane :attached true))
+                                   (layout/pane :id 2 :attached true))
 
-                {:type :split
-                 :percent 50
-                 :a {:type :pane}
-                 :b {:type :split
-                     :vertical true
-                     :percent 50
-                     :a {:type :pane}
-                     :b {:type :pane :id 2 :attached true}}})))
-
+                (layout/new (split (pane)
+                                   (vsplit (pane) (attach :id 2)))))))
 
 (test "layout/find-last"
       (def layout
@@ -277,13 +264,13 @@
                 (layout/move-up
                   {:type :split
                    :vertical true
-                   :a {:type :pane}
+                   :a (layout/pane)
                    :b {:type :margins :node {:type :pane :attached true}}})
 
                 {:type :split
                  :vertical true
                  :a {:type :pane :attached true}
-                 :b {:type :margins :node {:type :pane}}}))
+                 :b {:type :margins :node (layout/pane)}}))
 
       (assert (deep=
                 (layout/move-up
@@ -291,23 +278,23 @@
                    :vertical true
                    :a {:type :split
                        :vertical true
-                       :a {:type :pane}
-                       :b {:type :pane}}
+                       :a (layout/pane)
+                       :b (layout/pane)}
                    :b {:type :split
                        :vertical true
                        :a {:type :pane :attached true}
-                       :b {:type :pane}}})
+                       :b (layout/pane)}})
 
                 {:type :split
                  :vertical true
                  :a {:type :split
                      :vertical true
-                     :a {:type :pane}
+                     :a (layout/pane)
                      :b {:type :pane :attached true}}
                  :b {:type :split
                      :vertical true
-                     :a {:type :pane}
-                     :b {:type :pane}}})))
+                     :a (layout/pane)
+                     :b (layout/pane)}})))
 
 
 (test "layout/move-down"
@@ -316,18 +303,18 @@
                   {:type :split
                    :vertical true
                    :a {:type :pane :attached true}
-                   :b {:type :margins :node {:type :pane}}})
+                   :b {:type :margins :node (layout/pane)}})
 
                 {:type :split
                  :vertical true
-                 :a {:type :pane}
+                 :a (layout/pane)
                  :b {:type :margins :node {:type :pane :attached true}}})))
 
 (test "layout/move-left"
       (assert (deep=
                 (layout/move-left
                   {:type :split
-                   :a {:type :pane}
+                   :a (layout/pane)
                    :b {:type :borders
                        :node {:type :pane
                               :attached true}}})
@@ -335,7 +322,7 @@
                 {:type :split
                  :a {:type :pane :attached true}
                  :b {:type :borders
-                     :node {:type :pane}}})))
+                     :node (layout/pane)}})))
 
 (test "layout/map"
       (assert (deep=

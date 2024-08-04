@@ -40,6 +40,100 @@ For example:
   (layout/type? :pane node))
 
 (defn
+  layout/pane
+  ```Convenience function for creating a new pane node.```
+  [&named id attached remove-on-exit]
+  (default attached false)
+  {:type :pane
+   :id id
+   :attached attached
+   :remove-on-exit remove-on-exit})
+
+(defn
+  layout/split
+  ```Convenience function for creating a new split node.```
+  [a b &named vertical cells percent border]
+  (default vertical false)
+  {:type :split
+   :a a
+   :b b
+   :vertical vertical
+   :cells cells
+   :percent percent
+   :border border})
+
+(defn
+  layout/vsplit
+  ```Convenience function for creating a new vertical split node.```
+  [a b &named cells percent border]
+  (layout/split a b
+                :vertical true
+                :cells cells
+                :percent percent
+                :border border))
+
+(defn
+  layout/hsplit
+  ```Convenience function for creating a new horizontal split node.```
+  [a b &named cells percent border]
+  (layout/split a b
+                :vertical false
+                :cells cells
+                :percent percent
+                :border border))
+
+(defn
+  layout/margins
+  ```Convenience function for creating a new margins node.```
+  [node &named cols rows border]
+  {:type :margins
+   :node node
+   :cols cols
+   :rows rows
+   :border border})
+
+(defn
+  layout/borders
+  ```Convenience function for creating a new borders node.```
+  [node &named title title-bottom border]
+  {:type :borders
+   :node node
+   :title title
+   :title-bottom title-bottom
+   :border border})
+
+(defmacro
+  layout/new
+  ```Macro for quickly creating layouts. layout/new replaces shorthand versions of node creation functions with their longform versions and also includes a few abbreviations that do not exist elsewhere in the API.
+
+Supported short forms:
+* pane: A detached pane node.
+* attach: An attached pane node.
+* split: A split node.
+* hsplit: A split node with :vertical=false.
+* vsplit: A split node with :vertical=true.
+* borders: A borders node.
+* margins: A margins node.
+
+See [the layouts chapter](/layouts.md#programmatic-use) for more information.
+  ```
+  [body]
+  (defn attach
+    [&named id remove-on-exit]
+    (layout/pane :id id
+                 :remove-on-exit remove-on-exit
+                 :attached true))
+  ~(do
+     (def pane ,layout/pane)
+     (def split ,layout/split)
+     (def hsplit ,layout/hsplit)
+     (def vsplit ,layout/vsplit)
+     (def borders ,layout/borders)
+     (def margins ,layout/margins)
+     (def attach ,attach)
+     ,body))
+
+(defn
   layout/find
   ```Get the path to the first node satisfying the predicate function or nil if none exists.```
   [node predicate]
@@ -124,7 +218,7 @@ For example:
   layout/detach
   ```Detach the attached node in the tree.```
   [node]
-  (layout/replace-attached node |(do {:type :pane :id ($ :id)})))
+  (layout/replace-attached node |(layout/pane :id ($ :id))))
 
 (defn
   layout/attach
@@ -133,7 +227,7 @@ For example:
   (layout/replace
     (layout/detach layout)
     path
-    |{:type :pane :id ($ :id) :attached true}))
+    |(layout/pane :attached true :id ($ :id))))
 
 (defn
   layout/move
@@ -232,26 +326,19 @@ For example, when moving vertically upwards, for a vertical split node this func
   layout/split-right
   ```Split the currently attached pane into two horizontally, replacing the right pane with the given node.```
   [layout node]
-  (layout/replace-attached layout |(do {:type :split
-                                        :percent 50
-                                        :a (layout/detach $)
-                                        :b node})))
+  (layout/replace-attached layout |(layout/split (layout/detach $) node)))
 
 (defn
   layout/split-left
   ```Split the currently attached pane into two horizontally, replacing the left pane with the given node.```
   [layout node]
-  (layout/replace-attached layout |(do {:type :split
-                                        :percent 50
-                                        :b (layout/detach $)
-                                        :a node})))
+  (layout/replace-attached layout |(layout/split node (layout/detach $))))
 
 (defn
   layout/split-down
   ```Split the currently attached pane into two vertically, replacing the bottom pane with the given node.```
   [layout node]
   (layout/replace-attached layout |(do {:type :split
-                                        :percent 50
                                         :vertical true
                                         :a (layout/detach $)
                                         :b node})))
@@ -261,7 +348,6 @@ For example, when moving vertically upwards, for a vertical split node this func
   ```Split the currently attached pane into two vertically, replacing the top pane with the given node.```
   [layout node]
   (layout/replace-attached layout |(do {:type :split
-                                        :percent 50
                                         :vertical true
                                         :b (layout/detach $)
                                         :a node})))

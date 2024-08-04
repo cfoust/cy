@@ -26,9 +26,32 @@ A layout is just a configuration for how the `cy` screen should look. It contain
 
 A layout is composed of nodes of different types. It need only adhere to a single constraint: it must have exactly one pane node where `:attached` is `true`. The attached node is the visual element to which the client's user input (that does not match any bindings) is sent.
 
-Layouts are just standard Janet values. `cy` comes with a comprehensive [Janet library](https://github.com/cfoust/cy/blob/main/pkg/cy/boot/layout.janet) with handy tools for manipulating them more easily.
+## Programmatic use
 
-## Editing layouts
+Layouts are just standard Janet values. `cy` comes with a comprehensive [Janet library](https://github.com/cfoust/cy/blob/main/pkg/cy/boot/layout.janet) with handy tools for manipulating them more easily. For example, you can quickly create nodes with a family of creation functions like {{api layout/pane}}, {{api layout/split}}, {{api layout/vsplit}}, et cetera.
+
+There is also {{api layout/new}}, which is a Janet macro that expands shortened forms of these node creation functions into their full forms for you. This lets you describe layouts succinctly:
+
+```janet
+(layout/new (split
+              (pane)
+              (vsplit
+                (margins (attach))
+                (borders (pane)))))
+
+# Expands to:
+{:type :split
+ :vertical false
+ :a {:attached false :type :pane}
+ :b {:type :split
+     :vertical true
+     :a {:type :margins
+         :node {:attached true :type :pane}}
+     :b {:type :borders
+         :node {:attached false :type :pane}}}}
+```
+
+## Creating layouts at runtime
 
 You can access most layout functionality without ever writing a line of code using actions that are available in the command palette:
 
