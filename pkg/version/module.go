@@ -5,5 +5,5 @@ var (
 	Version   = "development"
 	GoVersion = "1.21"
 	GitCommit = "unknown"
-	BuildTime = "unknown"
+	BuildTime = "1979-01-09T16:09:53+00:00"
 )

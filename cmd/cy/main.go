@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"runtime/pprof"
 	"runtime/trace"
+
+	"github.com/cfoust/cy/pkg/version"
 
 	"github.com/alecthomas/kong"
 	"github.com/rs/zerolog/log"
@@ -14,8 +17,9 @@ import (
 var CLI struct {
 	Socket string `help:"Specify the name of the socket." name:"socket-name" optional:"" short:"L" default:"default"`
 
-	CPU   string `help:"Save a CPU performance report to the given path." name:"perf-file" optional:"" default:""`
-	Trace string `help:"Save a trace report to the given path." name:"trace-file" optional:"" default:""`
+	CPU     string `help:"Save a CPU performance report to the given path." name:"perf-file" optional:"" default:""`
+	Trace   string `help:"Save a trace report to the given path." name:"trace-file" optional:"" default:""`
+	Version bool   `help:"Print version information and exit." short:"v"`
 }
 
 func main() {
@@ -27,6 +31,19 @@ func main() {
 			Compact: true,
 			Summary: true,
 		}))
+
+	if CLI.Version {
+		fmt.Printf(
+			"cy %s (commit %s)\n",
+			version.Version,
+			version.GitCommit,
+		)
+		fmt.Printf(
+			"built %s\n",
+			version.BuildTime,
+		)
+		os.Exit(0)
+	}
 
 	var socketPath string
 

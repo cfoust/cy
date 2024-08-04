@@ -31,7 +31,7 @@ builds:
       - -X github.com/cfoust/cy/pkg/version.Version={{.Version}}
       - -X github.com/cfoust/cy/pkg/version.GoVersion=${GO_VERSION}
       - -X github.com/cfoust/cy/pkg/version.GitCommit={{.Commit}}
-      - -X github.com/cfoust/cy/pkg/version.BuildTime={{.Timestamp}}
+      - -X github.com/cfoust/cy/pkg/version.BuildTime={{.Date}}
     tags:
       - release
       - embed_frontend
