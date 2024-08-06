@@ -1,4 +1,4 @@
-package layout
+package pane
 
 import (
 	"context"

@@ -356,6 +356,24 @@ func isNamable(type_ reflect.Type) bool {
 	return getNamable(type_) != nil
 }
 
+func isMarshalable(type_ reflect.Type) bool {
+	if type_.Kind() != reflect.Pointer {
+		return false
+	}
+
+	_, ok := reflect.New(type_.Elem()).Interface().(Marshalable)
+	return ok
+}
+
+func isUnmarshalable(type_ reflect.Type) bool {
+	if type_.Kind() != reflect.Pointer {
+		return false
+	}
+
+	_, ok := reflect.New(type_.Elem()).Interface().(Unmarshalable)
+	return ok
+}
+
 func isParamType(type_ reflect.Type) bool {
 	if type_.Kind() == reflect.Pointer && isValidType(type_.Elem()) {
 		return true
@@ -404,7 +422,7 @@ func validateFunction(in, out []reflect.Type) error {
 			break
 		}
 
-		if !isSpecial(argType) && !isParamType(argType) && !isInterface(argType) {
+		if !isSpecial(argType) && !isUnmarshalable(argType) && !isParamType(argType) && !isInterface(argType) {
 			return fmt.Errorf(
 				"arg %d's type %s (%s) not supported",
 				i,
@@ -423,13 +441,13 @@ func validateFunction(in, out []reflect.Type) error {
 	// The first return value can be an error or valid type
 	if numResults == 1 {
 		first := out[0]
-		if !isParamType(first) && !isErrorType(first) && !isInterface(first) {
+		if !isParamType(first) && !isMarshalable(first) && !isErrorType(first) && !isInterface(first) {
 			return fmt.Errorf("first callback return type must be valid type or error")
 		}
 	}
 
 	if numResults == 2 {
-		if !isParamType(out[0]) && !isInterface(out[0]) {
+		if !isParamType(out[0]) && !isInterface(out[0]) && !isMarshalable(out[0]) {
 			return fmt.Errorf("first callback return type must be valid type")
 		}
 

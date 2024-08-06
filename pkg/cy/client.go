@@ -12,6 +12,7 @@ import (
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/layout/engine"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
@@ -54,7 +55,7 @@ type Client struct {
 	params *params.Parameters
 
 	muxClient    *server.Client
-	layoutEngine *layout.LayoutEngine
+	layoutEngine *engine.LayoutEngine
 	toast        *ToastLogger
 	toaster      *taro.Program
 	frame        *frames.Framer
@@ -237,11 +238,11 @@ func (c *Client) initialize(options ClientOptions) error {
 
 	c.muxClient = c.cy.muxServer.AddClient(c.Ctx(), options.Size)
 
-	c.layoutEngine = layout.NewLayoutEngine(
+	c.layoutEngine = engine.New(
 		c.Ctx(),
 		c.cy.tree,
 		c.cy.muxServer,
-		layout.WithParams(c.params),
+		engine.WithParams(c.params),
 	)
 
 	err = c.layoutEngine.Set(layout.New(layout.MarginsType{

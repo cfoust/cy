@@ -1,4 +1,4 @@
-package layout
+package pane
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	L "github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
@@ -26,7 +27,7 @@ type Pane struct {
 	tree   *tree.Tree
 	server *server.Server
 
-	config PaneType
+	config L.PaneType
 
 	size geom.Size
 	id   *tree.NodeID
@@ -39,7 +40,7 @@ type Pane struct {
 }
 
 var _ mux.Screen = (*Pane)(nil)
-var _ reusable = (*Pane)(nil)
+var _ L.Reusable = (*Pane)(nil)
 
 func (p *Pane) Send(msg mux.Msg) {
 	p.RLock()
@@ -71,7 +72,7 @@ func (p *Pane) Send(msg mux.Msg) {
 	}
 
 	p.config.Attached = true
-	p.Publish(nodeChangeEvent{
+	p.Publish(L.NodeChangeEvent{
 		Config: p.config,
 	})
 }
@@ -161,14 +162,14 @@ func (p *Pane) attach(
 
 			// Remove the node from the tree
 			if removeOnExit && isAttached {
-				p.Publish(nodeRemoveEvent{})
+				p.Publish(L.NodeRemoveEvent{})
 				return
 			}
 
 			// Keep the pane around, just detach from it in the
 			// layout
 			newConfig.ID = nil
-			p.Publish(nodeChangeEvent{
+			p.Publish(L.NodeChangeEvent{
 				Config: newConfig,
 			})
 		}
@@ -221,7 +222,7 @@ func (p *Pane) setID(id *tree.NodeID) error {
 					continue
 				}
 
-				p.Publish(nodeRemoveEvent{})
+				p.Publish(L.NodeRemoveEvent{})
 			}
 		}
 	}()
@@ -230,7 +231,7 @@ func (p *Pane) setID(id *tree.NodeID) error {
 	return nil
 }
 
-func (p *Pane) applyConfig(config PaneType) {
+func (p *Pane) applyConfig(config L.PaneType) {
 	p.config = config
 	p.isAttached = config.Attached
 
@@ -241,8 +242,8 @@ func (p *Pane) applyConfig(config PaneType) {
 	}
 }
 
-func (p *Pane) reuse(node NodeType) (bool, error) {
-	config, ok := node.(PaneType)
+func (p *Pane) Apply(node L.NodeType) (bool, error) {
+	config, ok := node.(L.PaneType)
 	if !ok {
 		return false, nil
 	}
@@ -268,29 +269,7 @@ func (p *Pane) reuse(node NodeType) (bool, error) {
 	return true, nil
 }
 
-func (l *LayoutEngine) createPane(
-	node *screenNode,
-	config PaneType,
-) error {
-	pane := NewPane(
-		node.Ctx(),
-		l.tree,
-		l.server,
-		l.params,
-	)
-
-	pane.applyConfig(config)
-
-	err := pane.setID(config.ID)
-	if err != nil {
-		return err
-	}
-
-	node.Screen = pane
-	return nil
-}
-
-func NewPane(
+func New(
 	ctx context.Context,
 	tree *tree.Tree,
 	server *server.Server,

@@ -1,10 +1,11 @@
-package layout
+package borders
 
 import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	L "github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
@@ -26,10 +27,10 @@ type Borders struct {
 }
 
 var _ mux.Screen = (*Borders)(nil)
-var _ reusable = (*Borders)(nil)
+var _ L.Reusable = (*Borders)(nil)
 
-func (l *Borders) reuse(node NodeType) (bool, error) {
-	config, ok := node.(BorderType)
+func (l *Borders) Apply(node L.NodeType) (bool, error) {
+	config, ok := node.(L.BorderType)
 	if !ok {
 		return false, nil
 	}
@@ -130,7 +131,7 @@ func (l *Borders) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-updates.Recv():
-			if _, ok := event.(nodeChangeEvent); ok {
+			if _, ok := event.(L.NodeChangeEvent); ok {
 				continue
 			}
 			l.Publish(event)
@@ -170,38 +171,7 @@ func (l *Borders) Resize(size geom.Size) error {
 	return l.recalculate()
 }
 
-func (l *LayoutEngine) createBorders(
-	node *screenNode,
-	config BorderType,
-) error {
-	innerNode, err := l.createNode(
-		node.Ctx(),
-		config.Node,
-	)
-	if err != nil {
-		return err
-	}
-
-	borders := NewBorders(
-		node.Ctx(),
-		innerNode.Screen,
-	)
-	borders.borderStyle = config.Border
-
-	if config.Title != nil {
-		borders.title = *config.Title
-	}
-
-	if config.TitleBottom != nil {
-		borders.titleBottom = *config.TitleBottom
-	}
-
-	node.Screen = borders
-	node.Children = []*screenNode{innerNode}
-	return nil
-}
-
-func NewBorders(ctx context.Context, screen mux.Screen) *Borders {
+func New(ctx context.Context, screen mux.Screen) *Borders {
 	borders := &Borders{
 		UpdatePublisher: mux.NewPublisher(),
 		size:            geom.DEFAULT_SIZE,

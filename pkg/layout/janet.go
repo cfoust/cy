@@ -204,12 +204,12 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 var _ janet.Unmarshalable = (*Layout)(nil)
 
 func (l *Layout) UnmarshalJanet(value *janet.Value) (err error) {
-	l.root, err = unmarshalNode(value)
+	l.Root, err = unmarshalNode(value)
 	if err != nil {
 		return
 	}
 
-	return validateTree(l.root)
+	return ValidateTree(l.Root)
 }
 
 var _ janet.Marshalable = (*Layout)(nil)
@@ -292,5 +292,5 @@ func marshalNode(node NodeType) interface{} {
 }
 
 func (l *Layout) MarshalJanet() interface{} {
-	return marshalNode(l.root)
+	return marshalNode(l.Root)
 }

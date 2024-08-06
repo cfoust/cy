@@ -1,4 +1,4 @@
-package layout
+package split
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	L "github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
@@ -44,7 +45,7 @@ type Split struct {
 }
 
 var _ mux.Screen = (*Split)(nil)
-var _ reusable = (*Split)(nil)
+var _ L.Reusable = (*Split)(nil)
 
 func (s *Split) Kill() {
 	s.RLock()
@@ -108,8 +109,8 @@ func (s *Split) State() *tty.State {
 	return state
 }
 
-func (s *Split) reuse(node NodeType) (bool, error) {
-	config, ok := node.(SplitType)
+func (s *Split) Apply(node L.NodeType) (bool, error) {
+	config, ok := node.(L.SplitType)
 	if !ok {
 		return false, nil
 	}
@@ -163,12 +164,12 @@ func (s *Split) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-updatesA.Recv():
-			if _, ok := event.(nodeChangeEvent); ok {
+			if _, ok := event.(L.NodeChangeEvent); ok {
 				continue
 			}
 			s.Publish(event)
 		case event := <-updatesB.Recv():
-			if _, ok := event.(nodeChangeEvent); ok {
+			if _, ok := event.(L.NodeChangeEvent); ok {
 				continue
 			}
 			s.Publish(event)
@@ -255,44 +256,7 @@ func (s *Split) Resize(size geom.Size) error {
 	return s.recalculate()
 }
 
-func (l *LayoutEngine) createSplit(
-	node *screenNode,
-	config SplitType,
-) error {
-	nodeA, err := l.createNode(node.Ctx(), config.A)
-	if err != nil {
-		return err
-	}
-	nodeB, err := l.createNode(node.Ctx(), config.B)
-	if err != nil {
-		return err
-	}
-
-	split := NewSplit(
-		node.Ctx(),
-		nodeA.Screen,
-		nodeB.Screen,
-		config.Vertical,
-	)
-
-	if config.Percent != nil {
-		split.setPercent(*config.Percent)
-	}
-
-	if config.Cells != nil {
-		split.setCells(*config.Cells)
-	}
-
-	if config.Border != nil {
-		split.borderStyle = config.Border
-	}
-
-	node.Screen = split
-	node.Children = []*screenNode{nodeA, nodeB}
-	return nil
-}
-
-func NewSplit(
+func New(
 	ctx context.Context,
 	screenA, screenB mux.Screen,
 	isVertical bool,

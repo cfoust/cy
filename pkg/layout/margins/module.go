@@ -1,4 +1,4 @@
-package layout
+package margins
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	L "github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/style"
@@ -37,7 +38,7 @@ type Margins struct {
 }
 
 var _ mux.Screen = (*Margins)(nil)
-var _ reusable = (*Margins)(nil)
+var _ L.Reusable = (*Margins)(nil)
 
 func fitMargin(outer, margin int) int {
 	if margin == 0 {
@@ -59,8 +60,8 @@ func getSize(outer, desired int) int {
 	return desired
 }
 
-func (l *Margins) reuse(node NodeType) (bool, error) {
-	config, ok := node.(MarginsType)
+func (l *Margins) Apply(node L.NodeType) (bool, error) {
+	config, ok := node.(L.MarginsType)
 	if !ok {
 		return false, nil
 	}
@@ -207,7 +208,7 @@ func (l *Margins) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-updates.Recv():
-			if _, ok := event.(nodeChangeEvent); ok {
+			if _, ok := event.(L.NodeChangeEvent); ok {
 				continue
 			}
 			l.Publish(event)
@@ -229,37 +230,7 @@ func (l *Margins) Resize(size geom.Size) error {
 	return l.recalculate()
 }
 
-func (l *LayoutEngine) createMargins(
-	node *screenNode,
-	config MarginsType,
-) error {
-	marginsNode, err := l.createNode(
-		node.Ctx(),
-		config.Node,
-	)
-	if err != nil {
-		return err
-	}
-
-	margins := NewMargins(
-		node.Ctx(),
-		marginsNode.Screen,
-	)
-	margins.setSize(geom.Size{
-		R: config.Rows,
-		C: config.Cols,
-	})
-
-	if config.Border != nil {
-		margins.borderStyle = config.Border
-	}
-
-	node.Screen = margins
-	node.Children = []*screenNode{marginsNode}
-	return nil
-}
-
-func NewMargins(ctx context.Context, screen mux.Screen) *Margins {
+func New(ctx context.Context, screen mux.Screen) *Margins {
 	margins := &Margins{
 		UpdatePublisher: mux.NewPublisher(),
 		size: geom.Size{
@@ -273,7 +244,7 @@ func NewMargins(ctx context.Context, screen mux.Screen) *Margins {
 	return margins
 }
 
-func AddMargins(ctx context.Context, screen mux.Screen) mux.Screen {
+func Add(ctx context.Context, screen mux.Screen) mux.Screen {
 	innerLayers := S.NewLayers()
 	innerLayers.NewLayer(
 		ctx,
@@ -282,7 +253,7 @@ func AddMargins(ctx context.Context, screen mux.Screen) mux.Screen {
 		S.WithOpaque,
 		S.WithInteractive,
 	)
-	margins := NewMargins(ctx, innerLayers)
+	margins := New(ctx, innerLayers)
 
 	outerLayers := S.NewLayers()
 	frame := frames.NewFramer(ctx, frames.RandomFrame())

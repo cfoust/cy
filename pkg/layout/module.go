@@ -3,6 +3,7 @@ package layout
 import (
 	"fmt"
 
+	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/style"
 )
@@ -40,18 +41,18 @@ type BorderType struct {
 }
 
 type Layout struct {
-	root NodeType
+	Root NodeType
 }
 
 func New(node NodeType) Layout {
-	return Layout{root: node}
+	return Layout{Root: node}
 }
 
-type nodeChangeEvent struct {
+type NodeChangeEvent struct {
 	Config NodeType
 }
 
-type nodeRemoveEvent struct{}
+type NodeRemoveEvent struct{}
 
 // getPaneType gets all of the panes that are descendants of the provided node,
 // in essence all of the leaf nodes.
@@ -88,31 +89,31 @@ func getNumLeaves(node NodeType) int {
 	return 0
 }
 
-// attachFirst attaches to the first node it can find.
-func attachFirst(node NodeType) NodeType {
+// AttachFirst attaches to the first node it can find.
+func AttachFirst(node NodeType) NodeType {
 	switch node := node.(type) {
 	case PaneType:
 		node.Attached = true
 		return node
 	case SplitType:
-		node.A = attachFirst(node.A)
+		node.A = AttachFirst(node.A)
 		return node
 	case MarginsType:
-		node.Node = attachFirst(node.Node)
+		node.Node = AttachFirst(node.Node)
 		return node
 	case BorderType:
-		node.Node = attachFirst(node.Node)
+		node.Node = AttachFirst(node.Node)
 		return node
 	}
 
 	return node
 }
 
-// removeAttached removes the attached node by replacing its nearest parent
+// RemoveAttached removes the attached node by replacing its nearest parent
 // that has more than one child with a parent with that child removed, or the
 // other child if there are no other children.
-func removeAttached(node NodeType) NodeType {
-	if !isAttached(node) {
+func RemoveAttached(node NodeType) NodeType {
+	if !IsAttached(node) {
 		return node
 	}
 
@@ -120,108 +121,59 @@ func removeAttached(node NodeType) NodeType {
 	case PaneType:
 		return node
 	case SplitType:
-		if isAttached(node.A) && getNumLeaves(node.A) == 1 {
-			return attachFirst(node.B)
+		if IsAttached(node.A) && getNumLeaves(node.A) == 1 {
+			return AttachFirst(node.B)
 		}
 
-		if isAttached(node.B) && getNumLeaves(node.B) == 1 {
-			return attachFirst(node.A)
+		if IsAttached(node.B) && getNumLeaves(node.B) == 1 {
+			return AttachFirst(node.A)
 		}
 
-		node.A = removeAttached(node.A)
-		node.B = removeAttached(node.B)
+		node.A = RemoveAttached(node.A)
+		node.B = RemoveAttached(node.B)
 		return node
 	case MarginsType:
-		node.Node = removeAttached(node.Node)
+		node.Node = RemoveAttached(node.Node)
 		return node
 	case BorderType:
-		node.Node = removeAttached(node.Node)
+		node.Node = RemoveAttached(node.Node)
 		return node
 	}
 
 	return node
 }
 
-// applyNodeChange replaces the configuration of the target node with
-// newConfig. This is only used to allow nodes to change their own
-// configurations in response to user input (for now, just mouse events.)
-func applyNodeChange(
-	current, target *screenNode,
-	currentConfig, newConfig NodeType,
-) NodeType {
-	if current == target {
-		return newConfig
-	}
-
-	switch currentConfig := currentConfig.(type) {
-	case PaneType:
-		return currentConfig
-	case SplitType:
-		currentConfig.A = applyNodeChange(
-			current.Children[0],
-			target,
-			currentConfig.A,
-			newConfig,
-		)
-		currentConfig.B = applyNodeChange(
-			current.Children[1],
-			target,
-			currentConfig.B,
-			newConfig,
-		)
-		return currentConfig
-	case MarginsType:
-		currentConfig.Node = applyNodeChange(
-			current.Children[0],
-			target,
-			currentConfig.Node,
-			newConfig,
-		)
-		return currentConfig
-	case BorderType:
-		currentConfig.Node = applyNodeChange(
-			current.Children[0],
-			target,
-			currentConfig.Node,
-			newConfig,
-		)
-		return currentConfig
-	}
-
-	return currentConfig
-}
-
-// isAttached reports whether the node provided leads to a node that is
+// IsAttached reports whether the node provided leads to a node that is
 // attached.
-func isAttached(tree NodeType) bool {
+func IsAttached(tree NodeType) bool {
 	switch node := tree.(type) {
 	case PaneType:
 		return node.Attached
 	case SplitType:
-		return isAttached(node.A) || isAttached(node.B)
+		return IsAttached(node.A) || IsAttached(node.B)
 	case MarginsType:
-		return isAttached(node.Node)
+		return IsAttached(node.Node)
 	case BorderType:
-		return isAttached(node.Node)
+		return IsAttached(node.Node)
 	}
 	return false
 }
 
-// detach returns a copy of node with no attachment points.
-func detach(node NodeType) NodeType {
+// Detach returns a copy of node with no attachment points.
+func Detach(node NodeType) NodeType {
 	switch node := node.(type) {
 	case PaneType:
 		node.Attached = false
 		return node
 	case SplitType:
-		node.A = detach(node.A)
-		node.B = detach(node.B)
+		node.A = Detach(node.A)
+		node.B = Detach(node.B)
 		return node
 	case MarginsType:
-		node.Node = detach(node.Node)
+		node.Node = Detach(node.Node)
 		return node
 	case BorderType:
-		node.Node = detach(node.Node)
+		node.Node = Detach(node.Node)
 		return node
 	}
 
@@ -258,7 +210,7 @@ func attach(node NodeType, id tree.NodeID) NodeType {
 
 // Attach changes the currently attached tree node to the one specified by id.
 func Attach(layout Layout, id tree.NodeID) Layout {
-	return Layout{root: attach(layout.root, id)}
+	return Layout{Root: attach(layout.Root, id)}
 }
 
 func getAttached(node NodeType) *tree.NodeID {
@@ -288,12 +240,12 @@ func getAttached(node NodeType) *tree.NodeID {
 
 // Attached returns the ID field of the attached pane in the layout.
 func Attached(layout Layout) *tree.NodeID {
-	return getAttached(layout.root)
+	return getAttached(layout.Root)
 }
 
-// validateTree inspects a tree and ensures that it conforms to all relevant
+// ValidateTree inspects a tree and ensures that it conforms to all relevant
 // constraints, namely there should only be one PaneType with Attached=true.
-func validateTree(tree NodeType) error {
+func ValidateTree(tree NodeType) error {
 	numAttached := 0
 	for _, pane := range getPaneType(tree) {
 		if pane.Attached != true {
@@ -311,4 +263,14 @@ func validateTree(tree NodeType) error {
 	}
 
 	return nil
+}
+
+// Reusable is used to describe a Screen that has a configuration that can
+// change. Often a Screen does not actually need to be created from scratch
+// when the corresponding layout node changes; it can just be updated. The
+// reuse function checks whether the Screen can be updated to match the new
+// configuration and updates it if possible.
+type Reusable interface {
+	mux.Screen
+	Apply(NodeType) (bool, error)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/layout/engine"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -19,7 +20,7 @@ func NewLayout(
 	muxServer *server.Server,
 	args LayoutType,
 ) mux.Screen {
-	l := layout.NewLayoutEngine(
+	l := engine.New(
 		ctx,
 		tree,
 		muxServer,
