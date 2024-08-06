@@ -87,7 +87,9 @@ func swapImage(
 			}
 
 			if mode&emu.AttrItalic != 0 {
-				info.Fprintf(data, terminfo.EnterItalicsMode)
+				// TODO(cfoust): 08/07/24 why does this not work?
+				//info.Fprintf(data, terminfo.EnterItalicsMode)
+				data.Write([]byte("\033[3m"))
 			}
 
 			if mode&emu.AttrBlink != 0 {
