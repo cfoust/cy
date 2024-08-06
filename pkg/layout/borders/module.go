@@ -35,6 +35,9 @@ func (l *Borders) Apply(node L.NodeType) (bool, error) {
 		return false, nil
 	}
 
+	l.Lock()
+	defer l.Unlock()
+
 	l.borderStyle = config.Border
 
 	if config.Title != nil {

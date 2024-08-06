@@ -46,6 +46,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 			TimeBinds: c.timeBinds,
 			CopyBinds: c.copyBinds,
 		},
+		"style":    &api.StyleModule{},
 		"tree":     &api.TreeModule{Tree: c.tree},
 		"viewport": &api.ViewportModule{},
 	}

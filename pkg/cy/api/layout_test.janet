@@ -17,12 +17,6 @@
       (layout/set layout)
       (assert (deep= (layout/get) layout)))
 
-(pp (layout/new (split
-                  (pane)
-                  (vsplit
-                    (margins (attach))
-                    (borders (pane))))))
-
 (test "borders"
       (do
         (def layout (layout/new (split (attach) (pane)
