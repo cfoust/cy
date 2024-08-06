@@ -36,7 +36,6 @@ func testBytes(
 		name,
 		string(newBytes),
 	)
-	t.Logf("%s %+v", name, termB.Screen()[0][0])
 }
 
 func TestAttributes(t *testing.T) {
