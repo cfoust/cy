@@ -143,9 +143,10 @@ func (s *Server) HandleWSClient(conn ws.Client[P.Message]) {
 
 func serve(path string) error {
 	cy, err := cy.Start(context.Background(), cy.Options{
-		Config:  cy.FindConfig(),
-		DataDir: cy.FindDataDir(),
-		Shell:   getShell(),
+		SocketPath: path,
+		Config:     cy.FindConfig(),
+		DataDir:    cy.FindDataDir(),
+		Shell:      getShell(),
 	})
 	if err != nil {
 		return err

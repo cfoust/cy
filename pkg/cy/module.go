@@ -36,6 +36,8 @@ type Options struct {
 	HideSplash bool
 	// Whether to skip blocking (input/*) API calls. Just for testing.
 	SkipInput bool
+	// The path to the Unix domain socket for this server.
+	SocketPath string
 }
 
 type historyEvent struct {
@@ -70,8 +72,8 @@ type Cy struct {
 
 	log zerolog.Logger
 
-	configPath string
-	showSplash bool
+	configPath, socketPath string
+	showSplash             bool
 
 	toast        *ToastLogger
 	queuedToasts []toasts.Toast
@@ -296,6 +298,10 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	if len(options.Config) != 0 {
 		cy.configPath = options.Config
 		cy.loadConfig()
+	}
+
+	if len(options.SocketPath) != 0 {
+		cy.socketPath = options.SocketPath
 	}
 
 	return &cy, nil

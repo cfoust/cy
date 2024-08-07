@@ -1,7 +1,14 @@
 package cy
 
 import (
+	"fmt"
+	"os"
+	"runtime/pprof"
+	"runtime/trace"
+	"time"
+
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 )
 
 import _ "embed"
@@ -34,6 +41,90 @@ func (c *CyModule) Detach(user interface{}) {
 
 func (c *CyModule) ReloadConfig() error {
 	return c.cy.reloadConfig()
+}
+
+func (c *CyModule) CpuProfile(user interface{}) error {
+	client, ok := user.(*Client)
+	if !ok {
+		return fmt.Errorf("no user")
+	}
+
+	socketPath := c.cy.socketPath
+	if len(socketPath) == 0 {
+		return fmt.Errorf("no socket path")
+	}
+
+	path := fmt.Sprintf(
+		"%s-cpu-%s.prof",
+		socketPath,
+		time.Now().Format("2006.01.02.15.04.05"),
+	)
+
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	if err := pprof.StartCPUProfile(f); err != nil {
+		return err
+	}
+
+	client.Toast(toasts.Toast{
+		Message: "started cpu profile: " + path,
+	})
+
+	go func() {
+		time.Sleep(15 * time.Second)
+		pprof.StopCPUProfile()
+		f.Close()
+
+		client.Toast(toasts.Toast{
+			Message: "finished cpu profile: " + path,
+		})
+	}()
+	return nil
+}
+
+func (c *CyModule) Trace(user interface{}) error {
+	client, ok := user.(*Client)
+	if !ok {
+		return fmt.Errorf("no user")
+	}
+
+	socketPath := c.cy.socketPath
+	if len(socketPath) == 0 {
+		return fmt.Errorf("no socket path")
+	}
+
+	path := fmt.Sprintf(
+		"%s-trace-%s.out",
+		socketPath,
+		time.Now().Format("2006.01.02.15.04.05"),
+	)
+
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	if err := trace.Start(f); err != nil {
+		return err
+	}
+
+	client.Toast(toasts.Toast{
+		Message: "started trace: " + path,
+	})
+
+	go func() {
+		time.Sleep(15 * time.Second)
+		trace.Stop()
+		f.Close()
+
+		client.Toast(toasts.Toast{
+			Message: "finished trace: " + path,
+		})
+	}()
+	return nil
 }
 
 func (c *CyModule) Paste(user interface{}) {

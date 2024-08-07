@@ -320,3 +320,13 @@ For example:
   action/open-replay
   "Enter replay mode for the current pane."
   (replay/open (pane/current)))
+
+(key/action
+  action/cpu-profile
+  "Save a CPU profile to cy's socket directory."
+  (cy/cpu-profile))
+
+(key/action
+  action/trace
+  "Save a trace to cy's socket directory."
+  (cy/trace))
