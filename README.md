@@ -6,7 +6,10 @@
 
 <p align="center">
     <a href="https://discord.gg/NRQG3wbWGM"><img src="https://img.shields.io/discord/1175485543421837455?color=5865F2&label=discord&style=flat-square" alt="Discord" /></a>
+    <img src="https://wakatime.com/badge/github/cfoust/cy.svg&style=flat-square" alt="WakaTime badge" />
+    <a href="https://github.com/cfoust/cy/releases"><img src="https://img.shields.io/github/downloads/cfoust/cy/latest/total?style=flat-square" alt="cy releases" /></a>
     <a href="https://github.com/cfoust/cy/blob/main/LICENSE"><img src="https://img.shields.io/github/license/cfoust/cy?color=48AC75&style=flat-square" alt="cy License Badge MIT" /></a>
+
 </p>
 
 <h4 align="center">
