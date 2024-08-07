@@ -97,6 +97,11 @@ func swapImage(
 
 			data.Write([]byte(string(srcCell.Char)))
 
+			// TODO(cfoust): 08/07/24 why does ExitAttributeMode not cover this in alacritty?
+			if mode&emu.AttrStrikethrough != 0 {
+				data.Write([]byte("\033[29m"))
+			}
+
 			info.Fprintf(data, terminfo.ExitAttributeMode)
 
 			// CJK characters
