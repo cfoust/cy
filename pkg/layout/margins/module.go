@@ -12,6 +12,7 @@ import (
 	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/sasha-s/go-deadlock"
 )
@@ -23,6 +24,7 @@ import (
 type Margins struct {
 	deadlock.RWMutex
 	*mux.UpdatePublisher
+	render *taro.Renderer
 
 	screen mux.Screen
 
@@ -145,34 +147,30 @@ func (l *Margins) State() *tty.State {
 		return state
 	}
 
-	fg := emu.DefaultFG
-	bg := emu.DefaultBG
+	boxStyle := l.render.NewStyle().
+		Border(borderStyle.Border).
+		BorderForeground(lipgloss.Color("7")).
+		BorderTop(true).
+		BorderLeft(true).
+		BorderRight(true).
+		BorderBottom(true).
+		Width(inner.Size.C).
+		Height(inner.Size.R)
 
 	if borderFg != nil {
-		fg = borderFg.Emu()
+		boxStyle = boxStyle.BorderForeground(borderFg.Color)
 	}
 
 	if borderBg != nil {
-		bg = borderBg.Emu()
+		boxStyle = boxStyle.BorderBackground(borderBg.Color)
 	}
 
-	left := geom.Clamp(inner.Position.C-1, 0, size.C-1)
-	right := geom.Clamp(
-		inner.Position.C+inner.Size.C,
-		0,
-		size.C-1,
+	l.render.RenderAt(
+		state.Image,
+		inner.Position.R-1,
+		inner.Position.C-1,
+		boxStyle.Render(""),
 	)
-	char := []rune(borderStyle.Left)[0]
-	for row := 0; row < size.R; row++ {
-		state.Image[row][left].Char = char
-		state.Image[row][left].Mode ^= emu.AttrTransparent
-		state.Image[row][left].FG = fg
-		state.Image[row][left].BG = bg
-		state.Image[row][right].Char = char
-		state.Image[row][right].Mode ^= emu.AttrTransparent
-		state.Image[row][right].FG = fg
-		state.Image[row][right].BG = bg
-	}
 
 	return state
 }
@@ -269,6 +267,7 @@ func New(ctx context.Context, screen mux.Screen) *Margins {
 			C: 80,
 		},
 		screen: screen,
+		render: taro.NewRenderer(),
 	}
 
 	go margins.poll(ctx)
