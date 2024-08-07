@@ -21,6 +21,7 @@ const (
 	attrBold
 	attrGfx
 	attrItalic
+	attrStrikethrough
 	attrBlink
 	attrWrap
 	attrBlank
@@ -722,6 +723,8 @@ func (t *State) setAttr(attr []int) {
 			t.cur.Attr.Mode |= attrBlink
 		case 7:
 			t.cur.Attr.Mode |= attrReverse
+		case 9:
+			t.cur.Attr.Mode |= attrStrikethrough
 		case 21, 22:
 			t.cur.Attr.Mode &^= attrBold
 		case 23:
@@ -732,6 +735,8 @@ func (t *State) setAttr(attr []int) {
 			t.cur.Attr.Mode &^= attrBlink
 		case 27:
 			t.cur.Attr.Mode &^= attrReverse
+		case 29:
+			t.cur.Attr.Mode &^= attrStrikethrough
 		case 38:
 			if i+2 < len(attr) && attr[i+1] == 5 {
 				i += 2

@@ -78,6 +78,10 @@ func swapImage(
 				info.Fprintf(data, terminfo.EnterUnderlineMode)
 			}
 
+			if mode&emu.AttrStrikethrough != 0 {
+				data.Write([]byte("\033[9m"))
+			}
+
 			if mode&emu.AttrItalic != 0 {
 				// TODO(cfoust): 08/07/24 why does this not work?
 				//info.Fprintf(data, terminfo.EnterItalicsMode)

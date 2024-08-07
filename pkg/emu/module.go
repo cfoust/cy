@@ -17,6 +17,7 @@ const (
 	AttrBold
 	AttrGfx
 	AttrItalic
+	AttrStrikethrough
 	AttrBlink
 	AttrWrap
 	AttrBlank
