@@ -25,6 +25,21 @@ For example:
 }
 ```
 
+#### Color
+
+Some API functions, such as {{api style/render}}, accept colors as input. `cy` supports True Color colors specified in hexadecimal along with ANSI 16 and ANSI-256 colors. Under the hood, `cy` uses [charmbracelet/lipgloss](https://github.com/charmbracelet/lipgloss?tab=readme-ov-file#colors) and thus supports its color references.
+
+You can read more about color support in terminal emiulators [here](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#color-codes).
+
+Examples of valid colors:
+
+```janet
+"#ffffff" # true color
+"#123456" # true color
+"255" # ANSI 256
+"0" # ANSI 16
+```
+
 #### NodeID
 
 Many API functions have a parameter of type `NodeID`, which can be one of two values:

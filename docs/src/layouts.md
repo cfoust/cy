@@ -118,6 +118,8 @@ A `:margins` node puts transparent margins around its child allowing the current
     :cols 0 # number, optional
     :rows 0 # number, optional
     :border :rounded # border type, optional
+    :border-fg nil # color, optional
+    :border-bg nil # color, optional
     :node {} # a node
 }
 ```
@@ -129,6 +131,10 @@ These properties set the size of the node inside of the `:margins` node; they do
 `:border`
 
 The [border style](#border-styles) for the borders around the node.
+
+`:border-fg` and `:border-bg`
+
+The foreground and background [color](/api.md#color) of the border.
 
 `:node`
 
@@ -147,6 +153,8 @@ A `:split` node divides its visual space in two and gives it to two other nodes,
     :cells nil # int or nil, optional
     :percent nil # int or nil, optional
     :border :rounded # border type, optional
+    :border-fg nil # color, optional
+    :border-bg nil # color, optional
     :a {} # a node
     :b {} # a node
 }
@@ -164,6 +172,10 @@ At most one of these can be defined. Both determine the amount of space given to
 
 The [border style](#border-styles) to use for the dividing line.
 
+`:border-fg` and `:border-bg`
+
+The foreground and background [color](/api.md#color) of the border.
+
 `:a` and `:b`
 
 Both must be valid layout nodes.
@@ -180,6 +192,8 @@ A `:borders` node surrounds its child in borders and adds an optional title to t
     :title nil # string or nil, optional
     :title-bottom nil # string or nil, optional
     :border :rounded # border type, optional
+    :border-fg nil # color, optional
+    :border-bg nil # color, optional
     :node {} # a node
 }
 ```
@@ -191,6 +205,10 @@ These strings will be rendered on the top and the bottom of the window, respecti
 `:border`
 
 The [border style](#border-styles) for this node. `:none` is not supported.
+
+`:border-fg` and `:border-bg`
+
+The foreground and background [color](/api.md#color) of the border.
 
 `:node`
 
@@ -215,3 +233,33 @@ Some nodes have a `:border` property that determines the appearance of the node'
 ### Frames
 
 The patterned background seen in the screenshot above is referred to as the **frame**. `cy` comes with a [range of different frames](/frames.md). You can choose between all of the available frames using the {{api action/choose-frame}} function, which is bound by default to {{bind :root ctrl+a F}}, and set the default frame on startup using the [`:default-frame`](/default-parameters.md#default-frame) parameter.
+
+### Styling
+
+{{story cast layout/styled}}
+
+All string layout properties accept text styled with {{api style/render}} (or {{api style/text}}).
+
+The layout shown in the monstrosity above was generated with the following code:
+
+```janet
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(layout/set
+  (layout/new
+    (margins
+      (split
+        (borders
+          (attach :id cmd1)
+          :border-fg "6"
+          :title (style/text "some pane" :fg "0" :bg "6")
+          :title-bottom (style/text "some subtitle" :fg "0" :bg "6"))
+        (borders
+          (pane :id cmd2)
+          :border-fg "5"
+          :title (style/text "some pane" :italic true :bg "5")
+          :title-bottom (style/text "some subtitle" :italic true :bg "5"))
+        :border-bg "3")
+      :cols 70
+      :border-bg "4")))
+```

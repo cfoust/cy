@@ -52,7 +52,7 @@ For example:
 (defn
   layout/split
   ```Convenience function for creating a new split node.```
-  [a b &named vertical cells percent border]
+  [a b &named vertical cells percent border border-fg border-bg]
   (default vertical false)
   {:type :split
    :a a
@@ -60,47 +60,58 @@ For example:
    :vertical vertical
    :cells cells
    :percent percent
-   :border border})
+   :border border
+   :border-fg border-fg
+   :border-bg border-bg})
 
 (defn
   layout/vsplit
   ```Convenience function for creating a new vertical split node.```
-  [a b &named cells percent border]
+  [a b &named cells percent border border-fg border-bg]
   (layout/split a b
                 :vertical true
                 :cells cells
                 :percent percent
-                :border border))
+                :border border
+                :border-fg border-fg
+                :border-bg border-bg))
 
 (defn
   layout/hsplit
   ```Convenience function for creating a new horizontal split node.```
-  [a b &named cells percent border]
+  [a b &named cells percent border border-fg border-bg]
   (layout/split a b
                 :vertical false
                 :cells cells
                 :percent percent
-                :border border))
+                :border border
+                :border-fg border-fg
+                :border-bg border-bg))
 
 (defn
   layout/margins
   ```Convenience function for creating a new margins node.```
-  [node &named cols rows border]
+  [node &named cols rows border border-fg border-bg]
   {:type :margins
    :node node
    :cols cols
    :rows rows
-   :border border})
+   :border border
+   :border-fg border-fg
+   :border-bg border-bg})
 
 (defn
   layout/borders
   ```Convenience function for creating a new borders node.```
-  [node &named title title-bottom border]
+  [node &named title title-bottom border border-fg border-bg]
   {:type :borders
    :node node
    :title title
    :title-bottom title-bottom
-   :border border})
+   :border border
+   :border-fg border-fg
+   :border-bg border-bg})
+
 
 (defmacro
   layout/new

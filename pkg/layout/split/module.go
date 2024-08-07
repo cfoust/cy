@@ -3,6 +3,7 @@ package split
 import (
 	"context"
 
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -41,7 +42,8 @@ type Split struct {
 	// screen A. This is calculated using `percent`.
 	cells int
 
-	borderStyle *style.Border
+	borderStyle        *style.Border
+	borderFg, borderBg *style.Color
 }
 
 var _ mux.Screen = (*Split)(nil)
@@ -66,6 +68,8 @@ func (s *Split) State() *tty.State {
 		positionB   = s.positionB
 		isVertical  = s.isVertical
 		borderStyle = s.borderStyle
+		borderFg    = s.borderFg
+		borderBg    = s.borderBg
 	)
 	s.RUnlock()
 
@@ -73,22 +77,6 @@ func (s *Split) State() *tty.State {
 
 	stateA := s.screenA.State().Clone()
 	image.CopyRaw(geom.Size{}, state.Image, stateA.Image)
-
-	if borderStyle != nil {
-		if !isVertical {
-			col := geom.Clamp(positionB.C-1, 0, size.C-1)
-			char := []rune(borderStyle.Left)[0]
-			for row := 0; row < size.R; row++ {
-				state.Image[row][col].Char = char
-			}
-		} else {
-			row := geom.Clamp(positionB.R-1, 0, size.R-1)
-			char := []rune(borderStyle.Top)[0]
-			for col := 0; col < size.C; col++ {
-				state.Image[row][col].Char = char
-			}
-		}
-	}
 
 	stateB := s.screenB.State().Clone()
 	image.CopyRaw(positionB, state.Image, stateB.Image)
@@ -104,6 +92,39 @@ func (s *Split) State() *tty.State {
 		state.CursorVisible = stateB.CursorVisible
 	} else {
 		state.CursorVisible = false
+	}
+
+	if borderStyle == nil {
+		return state
+	}
+
+	fg := emu.DefaultFG
+	bg := emu.DefaultBG
+
+	if borderFg != nil {
+		fg = borderFg.Emu()
+	}
+
+	if borderBg != nil {
+		bg = borderBg.Emu()
+	}
+
+	if !isVertical {
+		col := geom.Clamp(positionB.C-1, 0, size.C-1)
+		char := []rune(borderStyle.Left)[0]
+		for row := 0; row < size.R; row++ {
+			state.Image[row][col].Char = char
+			state.Image[row][col].FG = fg
+			state.Image[row][col].BG = bg
+		}
+	} else {
+		row := geom.Clamp(positionB.R-1, 0, size.R-1)
+		char := []rune(borderStyle.Top)[0]
+		for col := 0; col < size.C; col++ {
+			state.Image[row][col].Char = char
+			state.Image[row][col].FG = fg
+			state.Image[row][col].BG = bg
+		}
 	}
 
 	return state
@@ -129,8 +150,18 @@ func (s *Split) Apply(node L.NodeType) (bool, error) {
 		changed = true
 	}
 
-	if config.Border != nil {
+	if config.Border != s.borderStyle {
 		s.borderStyle = config.Border
+		changed = true
+	}
+
+	if config.BorderFg != s.borderFg {
+		s.borderFg = config.BorderFg
+		changed = true
+	}
+
+	if config.BorderBg != s.borderBg {
+		s.borderBg = config.BorderBg
 		changed = true
 	}
 

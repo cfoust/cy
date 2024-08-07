@@ -13,8 +13,6 @@ import (
 
 func setColor(info *terminfo.Terminfo, color emu.Color, isBg bool) []byte {
 	data := new(bytes.Buffer)
-	num := uint32(color)
-	maxColors := uint32(info.Nums[terminfo.MaxColors])
 
 	if (!isBg && color == emu.DefaultFG) || (isBg && color == emu.DefaultBG) {
 		return make([]byte, 0)
@@ -22,30 +20,24 @@ func setColor(info *terminfo.Terminfo, color emu.Color, isBg bool) []byte {
 
 	// Special case for reversed text when still set to default
 	if isBg && color == emu.DefaultFG {
-		num = 15
-		color = 15
+		color = emu.ANSIColor(15)
 	} else if !isBg && color == emu.DefaultBG {
-		num = 0
-		color = 0
+		color = emu.ANSIColor(0)
 	}
 
-	if num > maxColors {
-		r := color >> 16
-		g := (color >> 8) & 0xff
-		b := color & 0xff
-
+	if r, g, b, ok := color.RGB(); ok {
 		if isBg {
 			fmt.Fprintf(data, "\x1b[48;2;%d;%d;%dm", r, g, b)
 		} else {
 			fmt.Fprintf(data, "\x1b[38;2;%d;%d;%dm", r, g, b)
 		}
-	} else {
+	} else if xterm, ok := color.XTerm(); ok {
 		code := terminfo.SetABackground
 		if !isBg {
 			code = terminfo.SetAForeground
 		}
 
-		info.Fprintf(data, code, int(color))
+		info.Fprintf(data, code, xterm)
 	}
 
 	return data.Bytes()
@@ -86,8 +78,14 @@ func swapImage(
 				info.Fprintf(data, terminfo.EnterUnderlineMode)
 			}
 
+			if mode&emu.AttrStrikethrough != 0 {
+				data.Write([]byte("\033[9m"))
+			}
+
 			if mode&emu.AttrItalic != 0 {
-				info.Fprintf(data, terminfo.EnterItalicsMode)
+				// TODO(cfoust): 08/07/24 why does this not work?
+				//info.Fprintf(data, terminfo.EnterItalicsMode)
+				data.Write([]byte("\033[3m"))
 			}
 
 			if mode&emu.AttrBlink != 0 {
@@ -98,6 +96,11 @@ func swapImage(
 			data.Write(setColor(info, srcCell.BG, true))
 
 			data.Write([]byte(string(srcCell.Char)))
+
+			// TODO(cfoust): 08/07/24 why does ExitAttributeMode not cover this in alacritty?
+			if mode&emu.AttrStrikethrough != 0 {
+				data.Write([]byte("\033[29m"))
+			}
 
 			info.Fprintf(data, terminfo.ExitAttributeMode)
 

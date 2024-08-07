@@ -7,7 +7,6 @@ import (
 	"github.com/cfoust/cy/pkg/janet"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -136,7 +135,6 @@ func (b *Border) UnmarshalJanet(value *janet.Value) (err error) {
 	var keyword janet.Keyword
 	err = value.Unmarshal(&keyword)
 	if err != nil {
-		log.Info().Msgf("Unmarshal border %s", err)
 		return err
 	}
 

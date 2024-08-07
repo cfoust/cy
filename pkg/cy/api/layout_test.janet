@@ -17,12 +17,6 @@
       (layout/set layout)
       (assert (deep= (layout/get) layout)))
 
-(pp (layout/new (split
-                  (pane)
-                  (vsplit
-                    (margins (attach))
-                    (borders (pane))))))
-
 (test "borders"
       (do
         (def layout (layout/new (split (attach) (pane)
@@ -56,6 +50,8 @@
         {:type :split
          :vertical true
          :percent 26
+         :border-fg "7"
+         :border-bg "7"
          :a {:type :pane :attached true}
          :b {:type :pane}})
 

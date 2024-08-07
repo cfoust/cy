@@ -34,7 +34,8 @@ type Margins struct {
 	outer geom.Size
 	inner geom.Rect
 
-	borderStyle *style.Border
+	borderStyle        *style.Border
+	borderFg, borderBg *style.Color
 }
 
 var _ mux.Screen = (*Margins)(nil)
@@ -81,8 +82,18 @@ func (l *Margins) Apply(node L.NodeType) (bool, error) {
 		l.setSize(newSize)
 	}
 
-	if config.Border != nil {
+	if config.Border != l.borderStyle {
 		l.borderStyle = config.Border
+		changed = true
+	}
+
+	if config.BorderFg != l.borderFg {
+		l.borderFg = config.BorderFg
+		changed = true
+	}
+
+	if config.BorderBg != l.borderBg {
+		l.borderBg = config.BorderBg
 		changed = true
 	}
 
@@ -103,9 +114,13 @@ func (l *Margins) Kill() {
 
 func (l *Margins) State() *tty.State {
 	l.RLock()
-	inner := l.inner
-	outer := l.outer
-	borderStyle := l.borderStyle
+	var (
+		inner       = l.inner
+		outer       = l.outer
+		borderStyle = l.borderStyle
+		borderFg    = l.borderFg
+		borderBg    = l.borderBg
+	)
 	l.RUnlock()
 
 	innerState := l.screen.State()
@@ -126,20 +141,37 @@ func (l *Margins) State() *tty.State {
 		}
 	}
 
-	if borderStyle != nil {
-		left := geom.Clamp(inner.Position.C-1, 0, size.C-1)
-		right := geom.Clamp(
-			inner.Position.C+inner.Size.C,
-			0,
-			size.C-1,
-		)
-		char := []rune(borderStyle.Left)[0]
-		for row := 0; row < size.R; row++ {
-			state.Image[row][left].Char = char
-			state.Image[row][left].Mode ^= emu.AttrTransparent
-			state.Image[row][right].Char = char
-			state.Image[row][right].Mode ^= emu.AttrTransparent
-		}
+	if borderStyle == nil {
+		return state
+	}
+
+	fg := emu.DefaultFG
+	bg := emu.DefaultBG
+
+	if borderFg != nil {
+		fg = borderFg.Emu()
+	}
+
+	if borderBg != nil {
+		bg = borderBg.Emu()
+	}
+
+	left := geom.Clamp(inner.Position.C-1, 0, size.C-1)
+	right := geom.Clamp(
+		inner.Position.C+inner.Size.C,
+		0,
+		size.C-1,
+	)
+	char := []rune(borderStyle.Left)[0]
+	for row := 0; row < size.R; row++ {
+		state.Image[row][left].Char = char
+		state.Image[row][left].Mode ^= emu.AttrTransparent
+		state.Image[row][left].FG = fg
+		state.Image[row][left].BG = bg
+		state.Image[row][right].Char = char
+		state.Image[row][right].Mode ^= emu.AttrTransparent
+		state.Image[row][right].FG = fg
+		state.Image[row][right].BG = bg
 	}
 
 	return state

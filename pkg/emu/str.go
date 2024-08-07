@@ -77,8 +77,8 @@ func (t *State) handleSTR() {
 			c := s.argString(1, "")
 			p := &c
 			if p != nil && *p == "?" {
-				t.oscColorResponse(int(DefaultFG), 10)
-			} else if err := t.setColorName(int(DefaultFG), p); err != nil {
+				t.oscColorResponse(DefaultFG, 10)
+			} else if err := t.setColorName(DefaultFG, p); err != nil {
 				t.logf("invalid foreground color: %s\n", maybe(p))
 			} else {
 				// TODO: redraw
@@ -91,8 +91,8 @@ func (t *State) handleSTR() {
 			c := s.argString(1, "")
 			p := &c
 			if p != nil && *p == "?" {
-				t.oscColorResponse(int(DefaultBG), 11)
-			} else if err := t.setColorName(int(DefaultBG), p); err != nil {
+				t.oscColorResponse(DefaultBG, 11)
+			} else if err := t.setColorName(DefaultBG, p); err != nil {
 				t.logf("invalid cursor color: %s\n", maybe(p))
 			} else {
 				// TODO: redraw
@@ -125,8 +125,8 @@ func (t *State) handleSTR() {
 				j = s.arg(1, 0)
 			}
 			if p != nil && *p == "?" { // report
-				t.osc4ColorResponse(j)
-			} else if err := t.setColorName(j, p); err != nil {
+				t.osc4ColorResponse(XTermColor(j))
+			} else if err := t.setColorName(XTermColor(j), p); err != nil {
 				if !(d == 104 && len(s.args) <= 1) {
 					t.logf("invalid color j=%d, p=%s\n", j, maybe(p))
 				}
@@ -153,58 +153,51 @@ func (t *State) handleSTR() {
 	}
 }
 
-func (t *State) setColorName(j int, p *string) error {
-	if !between(j, 0, 1<<24) {
-		return fmt.Errorf("invalid color value %d", j)
-	}
-
+func (t *State) setColorName(j Color, p *string) error {
 	if p == nil {
 		// restore color
-		delete(t.colorOverride, Color(j))
+		delete(t.colorOverride, j)
 	} else {
 		// set color
 		r, g, b, err := parseColor(*p)
 		if err != nil {
 			return err
 		}
-		t.colorOverride[Color(j)] = Color(r<<16 | g<<8 | b)
+		t.colorOverride[j] = RGBColor(r, g, b)
 	}
 
 	return nil
 }
 
-func (t *State) oscColorResponse(j, num int) {
-	if j < 0 {
-		t.logf("failed to fetch osc color %d\n", j)
+func (t *State) oscColorResponse(j Color, num int) {
+	k, ok := t.colorOverride[j]
+	if ok {
+		j = k
+	}
+
+	r, g, b, ok := j.RGB()
+	if !ok {
 		return
 	}
-
-	k, ok := t.colorOverride[Color(j)]
-	if ok {
-		j = int(k)
-	}
-
-	r, g, b := rgb(j)
 	t.w.Write([]byte(fmt.Sprintf("\033]%d;rgb:%02x%02x/%02x%02x/%02x%02x\007", num, r, r, g, g, b, b)))
 }
 
-func (t *State) osc4ColorResponse(j int) {
+func (t *State) osc4ColorResponse(j Color) {
 	if j < 0 {
 		t.logf("failed to fetch osc4 color %d\n", j)
 		return
 	}
 
-	k, ok := t.colorOverride[Color(j)]
+	k, ok := t.colorOverride[j]
 	if ok {
-		j = int(k)
+		j = k
 	}
 
-	r, g, b := rgb(j)
+	r, g, b, ok := j.RGB()
+	if !ok {
+		return
+	}
 	t.w.Write([]byte(fmt.Sprintf("\033]4;%d;rgb:%02x%02x/%02x%02x/%02x%02x\007", j, r, r, g, g, b, b)))
-}
-
-func rgb(j int) (r, g, b int) {
-	return (j >> 16) & 0xff, (j >> 8) & 0xff, j & 0xff
 }
 
 var (

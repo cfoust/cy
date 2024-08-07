@@ -46,6 +46,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 			TimeBinds: c.timeBinds,
 			CopyBinds: c.copyBinds,
 		},
+		"style":    &api.StyleModule{},
 		"tree":     &api.TreeModule{Tree: c.tree},
 		"viewport": &api.ViewportModule{},
 	}
@@ -61,6 +62,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 	// like 01_actions.janet, 02_layout.janet is ugly
 	files := []string{
 		"actions.janet",
+		"style.janet",
 		"layout.janet",
 		"binds.janet",
 	}
