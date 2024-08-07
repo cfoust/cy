@@ -17,7 +17,7 @@ func TestHighlight(
 	highlights []Highlight,
 	lines ...string,
 ) {
-	bg := emu.Color(1)
+	bg := emu.ANSIColor(1)
 	for i := range highlights {
 		highlights[i].BG = bg
 	}

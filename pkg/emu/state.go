@@ -736,7 +736,7 @@ func (t *State) setAttr(attr []int) {
 			if i+2 < len(attr) && attr[i+1] == 5 {
 				i += 2
 				if between(attr[i], 0, 255) {
-					t.cur.Attr.FG = Color(attr[i])
+					t.cur.Attr.FG = XTermColor(attr[i])
 				} else {
 					t.logf("bad fgcolor %d\n", attr[i])
 				}
@@ -746,7 +746,7 @@ func (t *State) setAttr(attr []int) {
 				if !between(r, 0, 255) || !between(g, 0, 255) || !between(b, 0, 255) {
 					t.logf("bad fg rgb color (%d,%d,%d)\n", r, g, b)
 				} else {
-					t.cur.Attr.FG = Color(r<<16 | g<<8 | b)
+					t.cur.Attr.FG = RGBColor(r, g, b)
 				}
 			} else {
 				t.logf("gfx attr %d unknown\n", a)
@@ -757,7 +757,7 @@ func (t *State) setAttr(attr []int) {
 			if i+2 < len(attr) && attr[i+1] == 5 {
 				i += 2
 				if between(attr[i], 0, 255) {
-					t.cur.Attr.BG = Color(attr[i])
+					t.cur.Attr.BG = XTermColor(attr[i])
 				} else {
 					t.logf("bad bgcolor %d\n", attr[i])
 				}
@@ -767,7 +767,7 @@ func (t *State) setAttr(attr []int) {
 				if !between(r, 0, 255) || !between(g, 0, 255) || !between(b, 0, 255) {
 					t.logf("bad bg rgb color (%d,%d,%d)\n", r, g, b)
 				} else {
-					t.cur.Attr.BG = Color(r<<16 | g<<8 | b)
+					t.cur.Attr.BG = RGBColor(r, g, b)
 				}
 			} else {
 				t.logf("gfx attr %d unknown\n", a)
@@ -776,13 +776,13 @@ func (t *State) setAttr(attr []int) {
 			t.cur.Attr.BG = DefaultBG
 		default:
 			if between(a, 30, 37) {
-				t.cur.Attr.FG = Color(a - 30)
+				t.cur.Attr.FG = ANSIColor(a - 30)
 			} else if between(a, 40, 47) {
-				t.cur.Attr.BG = Color(a - 40)
+				t.cur.Attr.BG = ANSIColor(a - 40)
 			} else if between(a, 90, 97) {
-				t.cur.Attr.FG = Color(a - 90 + 8)
+				t.cur.Attr.FG = ANSIColor(a - 90 + 8)
 			} else if between(a, 100, 107) {
-				t.cur.Attr.BG = Color(a - 100 + 8)
+				t.cur.Attr.BG = ANSIColor(a - 100 + 8)
 			} else {
 				t.logf("gfx attr %d unknown\n", a)
 			}

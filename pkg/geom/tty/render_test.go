@@ -32,8 +32,9 @@ func testBytes(
 		t,
 		termA.Screen(),
 		termB.Screen(),
-		"style %s was not equal: %#v",
+		"style %s was not equal: '%#v' '%#v'",
 		name,
+		string(bytes),
 		string(newBytes),
 	)
 }
@@ -52,8 +53,9 @@ func TestAttributes(t *testing.T) {
 			Foreground(lipgloss.Color("#123456")),
 		"italics":       r.NewStyle().Italic(true),
 		"strikethrough": r.NewStyle().Strikethrough(true),
+		"bg 255":        r.NewStyle().Foreground(lipgloss.Color("255")),
 	} {
-		testBytes(t, name, []byte(style.Render("foobar")))
+		testBytes(t, name, []byte(style.Render("f")))
 	}
 
 	testBytes(t, "style", []byte("\033[48;2;255;0;0m           \033[0m\033[3;38;2;0;0;255;48;2;255;0;0mtest\033[0m"))

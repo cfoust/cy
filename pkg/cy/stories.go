@@ -578,7 +578,12 @@ func init() {
 (def cmd1 (shell/new))
 (layout/set
         {:type :borders
-	 :title ":title"
+	 :title (style/render {:fg "#ff0000"
+		     :italic true
+		     :bold true
+		     :bg "#123456"
+		     #:strikethrough true
+		     } ":title")
 	 :title-bottom ":title-bottom"
 	 :node {:type :pane :id cmd1 :attached true}})
 		`)
