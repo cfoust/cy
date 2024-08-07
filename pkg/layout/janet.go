@@ -44,6 +44,19 @@ func unmarshalBorder(value *janet.Value) (*style.Border, error) {
 	return &border, nil
 }
 
+func unmarshalColor(value *janet.Value) (*style.Color, error) {
+	if value == nil || value.Nil() {
+		return nil, nil
+	}
+
+	var color style.Color
+	err := value.Unmarshal(&color)
+	if err != nil {
+		return nil, err
+	}
+	return &color, nil
+}
+
 func unmarshalNode(value *janet.Value) (NodeType, error) {
 	n := nodeType{}
 	err := value.Unmarshal(&n)
@@ -84,6 +97,8 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			Border   *janet.Value
 			A        *janet.Value
 			B        *janet.Value
+			BorderBg *janet.Value
+			BorderFg *janet.Value
 		}
 		args := splitArgs{}
 		err = value.Unmarshal(&args)
@@ -119,6 +134,16 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			return nil, err
 		}
 
+		type_.BorderFg, err = unmarshalColor(args.BorderFg)
+		if err != nil {
+			return nil, err
+		}
+
+		type_.BorderBg, err = unmarshalColor(args.BorderBg)
+		if err != nil {
+			return nil, err
+		}
+
 		if args.Vertical != nil {
 			type_.Vertical = *args.Vertical
 		}
@@ -126,10 +151,12 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		return type_, nil
 	case KEYWORD_MARGINS:
 		type marginsArgs struct {
-			Cols   *int
-			Rows   *int
-			Border *janet.Value
-			Node   *janet.Value
+			Cols     *int
+			Rows     *int
+			Border   *janet.Value
+			BorderBg *janet.Value
+			BorderFg *janet.Value
+			Node     *janet.Value
 		}
 		args := marginsArgs{}
 		err = value.Unmarshal(&args)
@@ -159,6 +186,16 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			return nil, err
 		}
 
+		type_.BorderFg, err = unmarshalColor(args.BorderFg)
+		if err != nil {
+			return nil, err
+		}
+
+		type_.BorderBg, err = unmarshalColor(args.BorderBg)
+		if err != nil {
+			return nil, err
+		}
+
 		return type_, nil
 	case KEYWORD_BORDERS:
 		type borderArgs struct {
@@ -166,6 +203,8 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			TitleBottom *string
 			Border      *janet.Value
 			Node        *janet.Value
+			BorderBg    *janet.Value
+			BorderFg    *janet.Value
 		}
 		args := borderArgs{}
 		err = value.Unmarshal(&args)
@@ -193,6 +232,16 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			return nil, fmt.Errorf(
 				"type :border does not support :border=:none",
 			)
+		}
+
+		type_.BorderFg, err = unmarshalColor(args.BorderFg)
+		if err != nil {
+			return nil, err
+		}
+
+		type_.BorderBg, err = unmarshalColor(args.BorderBg)
+		if err != nil {
+			return nil, err
 		}
 
 		return type_, nil

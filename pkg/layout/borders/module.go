@@ -17,13 +17,14 @@ import (
 type Borders struct {
 	deadlock.RWMutex
 	*mux.UpdatePublisher
-	render      *taro.Renderer
-	screen      mux.Screen
-	size        geom.Size
-	inner       geom.Rect
-	borderStyle *style.Border
+	render *taro.Renderer
+	screen mux.Screen
+	size   geom.Size
+	inner  geom.Rect
 
 	title, titleBottom string
+	borderStyle        *style.Border
+	borderFg, borderBg *style.Color
 }
 
 var _ mux.Screen = (*Borders)(nil)
@@ -39,13 +40,19 @@ func (l *Borders) Apply(node L.NodeType) (bool, error) {
 	defer l.Unlock()
 
 	l.borderStyle = config.Border
+	l.borderBg = config.BorderBg
+	l.borderFg = config.BorderFg
 
 	if config.Title != nil {
 		l.title = *config.Title
+	} else {
+		l.title = ""
 	}
 
 	if config.TitleBottom != nil {
 		l.titleBottom = *config.TitleBottom
+	} else {
+		l.titleBottom = ""
 	}
 
 	return true, nil
@@ -61,11 +68,15 @@ func (l *Borders) Kill() {
 
 func (l *Borders) State() *tty.State {
 	l.RLock()
-	inner := l.inner
-	size := l.size
-	borderStyle := l.borderStyle
-	title := l.title
-	titleBottom := l.titleBottom
+	var (
+		inner       = l.inner
+		size        = l.size
+		borderStyle = l.borderStyle
+		title       = l.title
+		titleBottom = l.titleBottom
+		borderFg    = l.borderFg
+		borderBg    = l.borderBg
+	)
 	l.RUnlock()
 
 	innerState := l.screen.State()
@@ -73,7 +84,7 @@ func (l *Borders) State() *tty.State {
 
 	tty.Copy(inner.Position, state, innerState)
 
-	boxText := l.render.NewStyle().
+	boxStyle := l.render.NewStyle().
 		Border(borderStyle.Border).
 		BorderForeground(lipgloss.Color("7")).
 		BorderTop(true).
@@ -81,10 +92,17 @@ func (l *Borders) State() *tty.State {
 		BorderRight(true).
 		BorderBottom(true).
 		Width(inner.Size.C).
-		Height(inner.Size.R).
-		Render("")
+		Height(inner.Size.R)
 
-	l.render.RenderAt(state.Image, 0, 0, boxText)
+	if borderFg != nil {
+		boxStyle = boxStyle.BorderForeground(borderFg.Color)
+	}
+
+	if borderBg != nil {
+		boxStyle = boxStyle.BorderBackground(borderBg.Color)
+	}
+
+	l.render.RenderAt(state.Image, 0, 0, boxStyle.Render(""))
 
 	if len(title) > 0 {
 		l.render.RenderAt(

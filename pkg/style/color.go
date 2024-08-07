@@ -1,9 +1,11 @@
 package style
 
 import (
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/janet"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 )
 
 type Color struct {
@@ -28,4 +30,18 @@ var _ janet.Marshalable = (*Color)(nil)
 
 func (c *Color) MarshalJanet() interface{} {
 	return string(c.Color)
+}
+
+func (c *Color) Emu() emu.Color {
+	switch c := renderer.ColorProfile().Color(string(c.Color)).(type) {
+	case termenv.ANSIColor:
+		return emu.ANSIColor(int(c))
+	case termenv.ANSI256Color:
+		return emu.XTermColor(int(c))
+	case termenv.RGBColor:
+		r, g, b, _ := termenv.ConvertToRGB(c).RGBA()
+		return emu.RGBColor(int(r), int(g), int(b))
+	}
+
+	return emu.DefaultFG
 }

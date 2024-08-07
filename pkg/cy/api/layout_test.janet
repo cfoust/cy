@@ -50,6 +50,8 @@
         {:type :split
          :vertical true
          :percent 26
+         :border-fg "7"
+         :border-bg "7"
          :a {:type :pane :attached true}
          :b {:type :pane}})
 

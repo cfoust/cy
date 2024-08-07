@@ -21,22 +21,28 @@ type SplitType struct {
 	Percent  *int
 	Cells    *int
 	Border   *style.Border
+	BorderFg *style.Color
+	BorderBg *style.Color
 	A        NodeType
 	B        NodeType
 }
 
 type MarginsType struct {
-	Cols   int
-	Rows   int
-	Frame  *string
-	Border *style.Border
-	Node   NodeType
+	Cols     int
+	Rows     int
+	Frame    *string
+	Border   *style.Border
+	BorderFg *style.Color
+	BorderBg *style.Color
+	Node     NodeType
 }
 
 type BorderType struct {
 	Title       *string
 	TitleBottom *string
 	Border      *style.Border
+	BorderFg    *style.Color
+	BorderBg    *style.Color
 	Node        NodeType
 }
 

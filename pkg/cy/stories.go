@@ -594,18 +594,22 @@ func init() {
 (def cmd1 (shell/new))
 (def cmd2 (shell/new))
 (layout/set
-	(layout/new
-		(split
-		  (borders
-		    (attach :id cmd1)
-		    :title (style/text "some pane" :bg "6")
-		    :title-bottom (style/text "some subtitle" :bg "6"))
-		  (borders
-		    (pane :id cmd2)
-		    :title (style/text "some pane" :italic true :bg "5")
-		    :title-bottom (style/text "some subtitle" :italic true :bg "5"))
-		  :border :none)
-	))
+  (layout/new
+    (margins
+      (split
+        (borders
+          (attach :id cmd1)
+          :border-fg "6"
+          :title (style/text "some pane" :fg "0" :bg "6")
+          :title-bottom (style/text "some subtitle" :fg "0" :bg "6"))
+        (borders
+          (pane :id cmd2)
+          :border-fg "5"
+          :title (style/text "some pane" :italic true :bg "5")
+          :title-bottom (style/text "some subtitle" :italic true :bg "5"))
+        :border-bg "3")
+      :cols 70
+      :border-bg "4")))
 		`)
 		return screen, err
 	}, stories.Config{})
