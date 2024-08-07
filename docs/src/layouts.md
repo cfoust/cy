@@ -215,3 +215,27 @@ Some nodes have a `:border` property that determines the appearance of the node'
 ### Frames
 
 The patterned background seen in the screenshot above is referred to as the **frame**. `cy` comes with a [range of different frames](/frames.md). You can choose between all of the available frames using the {{api action/choose-frame}} function, which is bound by default to {{bind :root ctrl+a F}}, and set the default frame on startup using the [`:default-frame`](/default-parameters.md#default-frame) parameter.
+
+### Styling
+
+{{story cast layout/styled}}
+
+All string layout properties accept text styled with {{api style/render}} (or {{api style/text}}).
+
+The layout shown in the asciicast above was generated with the following code:
+```janet
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(layout/set
+	(layout/new
+		(split
+		  (borders
+		    (attach :id cmd1)
+		    :title (style/text "some pane" :bg "6")
+		    :title-bottom (style/text "some subtitle" :bg "6"))
+		  (borders
+		    (pane :id cmd2)
+		    :title (style/text "some pane" :italic true :bg "5")
+		    :title-bottom (style/text "some subtitle" :italic true :bg "5"))
+		  :border :none)))
+```

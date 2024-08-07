@@ -25,6 +25,19 @@ For example:
 }
 ```
 
+#### Color
+
+Some API functions, such as {{api style/render}}, accept colors as input. `cy` supports RGB colors specified in hexadecimal and direct references to colors in the 256-color terminal color palette traditionally supported in terminal emulators like `xterm`. You can read more about color support in terminal emiulators [here](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#color-codes).
+
+Examples of valid colors:
+
+```janet
+"#ffffff"
+"#123456"
+"255"
+"0"
+```
+
 #### NodeID
 
 Many API functions have a parameter of type `NodeID`, which can be one of two values:

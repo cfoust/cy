@@ -578,14 +578,34 @@ func init() {
 (def cmd1 (shell/new))
 (layout/set
         {:type :borders
-	 :title (style/render {:fg "#ff0000"
-		     :italic true
-		     :bold true
-		     :bg "#123456"
-		     #:strikethrough true
-		     } ":title")
+	 :title ":title"
 	 :title-bottom ":title-bottom"
 	 :node {:type :pane :id cmd1 :attached true}})
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("layout/styled", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		err = client.execute(`
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(layout/set
+	(layout/new
+		(split
+		  (borders
+		    (attach :id cmd1)
+		    :title (style/text "some pane" :bg "6")
+		    :title-bottom (style/text "some subtitle" :bg "6"))
+		  (borders
+		    (pane :id cmd2)
+		    :title (style/text "some pane" :italic true :bg "5")
+		    :title-bottom (style/text "some subtitle" :italic true :bg "5"))
+		  :border :none)
+	))
 		`)
 		return screen, err
 	}, stories.Config{})

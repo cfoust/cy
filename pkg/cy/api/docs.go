@@ -122,3 +122,12 @@ var _ janet.Documented = (*LayoutModule)(nil)
 func (l *LayoutModule) Documentation() string {
 	return DOCS_LAYOUT
 }
+
+//go:embed docs-style.md
+var DOCS_STYLE string
+
+var _ janet.Documented = (*StyleModule)(nil)
+
+func (s *StyleModule) Documentation() string {
+	return DOCS_STYLE
+}
