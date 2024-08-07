@@ -55,7 +55,7 @@ func TestAttributes(t *testing.T) {
 		"strikethrough": r.NewStyle().Strikethrough(true),
 		"bg 255":        r.NewStyle().Foreground(lipgloss.Color("255")),
 	} {
-		testBytes(t, name, []byte(style.Render("f")))
+		testBytes(t, name, []byte(style.Render("on")+" off"))
 	}
 
 	testBytes(t, "style", []byte("\033[48;2;255;0;0m           \033[0m\033[3;38;2;0;0;255;48;2;255;0;0mtest\033[0m"))

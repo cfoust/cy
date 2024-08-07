@@ -710,7 +710,7 @@ func (t *State) setAttr(attr []int) {
 		a := attr[i]
 		switch a {
 		case 0:
-			t.cur.Attr.Mode &^= attrReverse | attrUnderline | attrBold | attrItalic | attrBlink
+			t.cur.Attr.Mode &^= attrReverse | attrStrikethrough | attrUnderline | attrBold | attrItalic | attrBlink
 			t.cur.Attr.FG = DefaultFG
 			t.cur.Attr.BG = DefaultBG
 		case 1:
