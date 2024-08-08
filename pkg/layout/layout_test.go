@@ -25,4 +25,22 @@ func TestValidate(t *testing.T) {
 		},
 		B: PaneType{},
 	}))
+	require.Error(t, ValidateTree(TabsType{
+		Tabs: []Tab{},
+	}))
+	require.Error(t, ValidateTree(TabsType{
+		Tabs: []Tab{
+			{},
+		},
+	}))
+	require.NoError(t, ValidateTree(TabsType{
+		Tabs: []Tab{
+			{
+				Active: true,
+				Node: PaneType{
+					Attached: true,
+				},
+			},
+		},
+	}))
 }

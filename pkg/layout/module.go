@@ -46,6 +46,20 @@ type BorderType struct {
 	Node        NodeType
 }
 
+type Tab struct {
+	Active bool
+	Name   string
+	Node   NodeType
+}
+
+type TabsType struct {
+	ActiveFg, ActiveBg     *style.Color
+	InactiveFg, InactiveBg *style.Color
+	Bg                     *style.Color
+	Bottom                 bool
+	Tabs                   []Tab
+}
+
 type Layout struct {
 	Root NodeType
 }
@@ -76,6 +90,10 @@ func getPaneType(tree NodeType) (panes []PaneType) {
 	case BorderType:
 		panes = append(panes, getPaneType(node.Node)...)
 		return
+	case TabsType:
+		for _, tab := range node.Tabs {
+			panes = append(panes, getPaneType(tab.Node)...)
+		}
 	}
 	return
 }
@@ -91,6 +109,12 @@ func getNumLeaves(node NodeType) int {
 		return getNumLeaves(node.Node)
 	case BorderType:
 		return getNumLeaves(node.Node)
+	case TabsType:
+		var result int
+		for _, tab := range node.Tabs {
+			result += getNumLeaves(tab.Node)
+		}
+		return result
 	}
 	return 0
 }
@@ -109,6 +133,14 @@ func AttachFirst(node NodeType) NodeType {
 		return node
 	case BorderType:
 		node.Node = AttachFirst(node.Node)
+		return node
+	case TabsType:
+		for i, tab := range node.Tabs {
+			if !tab.Active {
+				continue
+			}
+			node.Tabs[i].Node = AttachFirst(tab.Node)
+		}
 		return node
 	}
 
@@ -144,6 +176,32 @@ func RemoveAttached(node NodeType) NodeType {
 	case BorderType:
 		node.Node = RemoveAttached(node.Node)
 		return node
+	case TabsType:
+		tabs := node.Tabs
+		if len(tabs) == 1 {
+			return tabs[0].Node
+		}
+
+		var attached = -1
+		for i, tab := range tabs {
+			if !IsAttached(tab.Node) {
+				continue
+			}
+			attached = i
+			break
+		}
+
+		newTabs := append([]Tab{}, tabs[0:attached]...)
+		if attached < len(tabs)-1 {
+			newTabs = append(newTabs, tabs[attached+1:]...)
+		}
+
+		newTabs[0].Active = true
+		newTabs[0].Node = AttachFirst(newTabs[0].Node)
+
+		newNode := node
+		newNode.Tabs = newTabs
+		return newNode
 	}
 
 	return node
@@ -161,6 +219,13 @@ func IsAttached(tree NodeType) bool {
 		return IsAttached(node.Node)
 	case BorderType:
 		return IsAttached(node.Node)
+	case TabsType:
+		for _, tab := range node.Tabs {
+			if IsAttached(tab.Node) {
+				return true
+			}
+		}
+		return false
 	}
 	return false
 }
@@ -180,6 +245,11 @@ func Detach(node NodeType) NodeType {
 		return node
 	case BorderType:
 		node.Node = Detach(node.Node)
+		return node
+	case TabsType:
+		for i, tab := range node.Tabs {
+			node.Tabs[i].Node = Detach(tab.Node)
+		}
 		return node
 	}
 
@@ -208,6 +278,11 @@ func attach(node NodeType, id tree.NodeID) NodeType {
 		return node
 	case BorderType:
 		node.Node = attach(node.Node, id)
+		return node
+	case TabsType:
+		for i, tab := range node.Tabs {
+			node.Tabs[i].Node = attach(tab.Node, id)
+		}
 		return node
 	}
 
@@ -239,6 +314,13 @@ func getAttached(node NodeType) *tree.NodeID {
 		return getAttached(node.Node)
 	case BorderType:
 		return getAttached(node.Node)
+	case TabsType:
+		for _, tab := range node.Tabs {
+			if IsAttached(tab.Node) {
+				return getAttached(tab.Node)
+			}
+		}
+		return nil
 	}
 
 	return nil
@@ -247,6 +329,47 @@ func getAttached(node NodeType) *tree.NodeID {
 // Attached returns the ID field of the attached pane in the layout.
 func Attached(layout Layout) *tree.NodeID {
 	return getAttached(layout.Root)
+}
+
+// validateNodes makes sure that nodes in the layout provided match a set of
+// constraints.
+func validateNodes(node NodeType) error {
+	switch node := node.(type) {
+	case SplitType:
+		if err := validateNodes(node.A); err != nil {
+			return err
+		}
+
+		if err := validateNodes(node.B); err != nil {
+			return err
+		}
+
+		return nil
+	case MarginsType:
+		return validateNodes(node.Node)
+	case BorderType:
+		return validateNodes(node.Node)
+	case TabsType:
+		tabs := node.Tabs
+		if len(tabs) == 0 {
+			return fmt.Errorf(":tabs must have at least one tab")
+		}
+
+		haveActive := false
+		for _, tab := range node.Tabs {
+			if tab.Active {
+				haveActive = true
+			}
+		}
+
+		if !haveActive {
+			return fmt.Errorf(":tabs must have at least one active tab")
+		}
+
+		return nil
+	}
+
+	return nil
 }
 
 // ValidateTree inspects a tree and ensures that it conforms to all relevant
@@ -268,7 +391,7 @@ func ValidateTree(tree NodeType) error {
 		return fmt.Errorf("you must attach to at least one pane")
 	}
 
-	return nil
+	return validateNodes(tree)
 }
 
 // Reusable is used to describe a Screen that has a configuration that can
