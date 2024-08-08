@@ -29,6 +29,10 @@ func (c *Color) UnmarshalJanet(value *janet.Value) (err error) {
 var _ janet.Marshalable = (*Color)(nil)
 
 func (c *Color) MarshalJanet() interface{} {
+	if c == nil {
+		return nil
+	}
+
 	return string(c.Color)
 }
 

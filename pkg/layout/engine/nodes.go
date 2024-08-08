@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/layout/margins"
 	"github.com/cfoust/cy/pkg/layout/pane"
 	"github.com/cfoust/cy/pkg/layout/split"
+	"github.com/cfoust/cy/pkg/layout/tabs"
 	"github.com/cfoust/cy/pkg/util"
 )
 
@@ -34,6 +35,8 @@ func (l *LayoutEngine) createNode(
 		err = l.createSplit(node, config)
 	case L.BorderType:
 		err = l.createBorders(node, config)
+	case L.TabsType:
+		err = l.createTabs(node, config)
 	default:
 		err = fmt.Errorf("unimplemented screen")
 	}
@@ -237,6 +240,21 @@ func (l *LayoutEngine) createBorders(
 
 	node.Screen = borders
 	node.Children = []*screenNode{innerNode}
+	return nil
+}
+
+func (l *LayoutEngine) createTabs(
+	node *screenNode,
+	config L.TabsType,
+) error {
+	tabs := tabs.New(
+		node.Ctx(),
+	)
+
+	tabs.Apply(config)
+
+	node.Screen = tabs
+	node.Children = []*screenNode{}
 	return nil
 }
 

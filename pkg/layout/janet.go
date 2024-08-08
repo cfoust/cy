@@ -15,6 +15,7 @@ var (
 	KEYWORD_SPLIT   = janet.Keyword("split")
 	KEYWORD_MARGINS = janet.Keyword("margins")
 	KEYWORD_BORDERS = janet.Keyword("borders")
+	KEYWORD_TABS    = janet.Keyword("tabs")
 
 	// Special border behavior
 	KEYWORD_NONE = janet.Keyword("none")
@@ -245,6 +246,70 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		}
 
 		return type_, nil
+	case KEYWORD_TABS:
+		type tabArg struct {
+			Active *bool
+			Name   string
+			Node   *janet.Value
+		}
+		type tabsArgs struct {
+			ActiveFg, ActiveBg     *janet.Value
+			InactiveFg, InactiveBg *janet.Value
+			Bg                     *janet.Value
+			Bottom                 *bool
+			Tabs                   []tabArg
+		}
+		args := tabsArgs{}
+		err = value.Unmarshal(&args)
+		if err != nil {
+			return nil, err
+		}
+
+		type_ := TabsType{}
+
+		for _, color := range []struct {
+			dest **style.Color
+			src  *janet.Value
+		}{
+			{&type_.ActiveFg, args.ActiveFg},
+			{&type_.ActiveBg, args.ActiveBg},
+			{&type_.InactiveFg, args.InactiveFg},
+			{&type_.InactiveBg, args.InactiveBg},
+		} {
+			c, err := unmarshalColor(color.src)
+			if err != nil {
+				return nil, err
+			}
+
+			*color.dest = c
+		}
+
+		if args.Bottom != nil {
+			type_.Bottom = *args.Bottom
+		}
+
+		for i, tab := range args.Tabs {
+			newTab := Tab{}
+			if tab.Active != nil {
+				newTab.Active = *tab.Active
+			}
+
+			newTab.Name = tab.Name
+			if len(tab.Name) == 0 {
+				return nil, fmt.Errorf("tab %d has empty name", i)
+			}
+
+			node, err := unmarshalNode(tab.Node)
+			if err != nil {
+				return nil, fmt.Errorf("tab %d invalid: %s", i, err)
+			}
+
+			newTab.Node = node
+
+			type_.Tabs = append(type_.Tabs, newTab)
+		}
+
+		return type_, nil
 	}
 
 	return nil, fmt.Errorf("invalid node type: %s", n.Type)
@@ -292,6 +357,8 @@ func marshalNode(node NodeType) interface{} {
 			Percent  *int
 			Cells    *int
 			Border   interface{}
+			BorderFg *style.Color
+			BorderBg *style.Color
 			A        interface{}
 			B        interface{}
 		}
@@ -302,25 +369,31 @@ func marshalNode(node NodeType) interface{} {
 			Percent:  node.Percent,
 			Cells:    node.Cells,
 			Border:   marshalBorder(node.Border),
+			BorderFg: node.BorderFg,
+			BorderBg: node.BorderBg,
 			A:        marshalNode(node.A),
 			B:        marshalNode(node.B),
 		}
 		return s
 	case MarginsType:
 		return struct {
-			Type   janet.Keyword
-			Cols   int
-			Rows   int
-			Frame  *string
-			Border interface{}
-			Node   interface{}
+			Type     janet.Keyword
+			Cols     int
+			Rows     int
+			Frame    *string
+			Border   interface{}
+			BorderFg *style.Color
+			BorderBg *style.Color
+			Node     interface{}
 		}{
-			Type:   KEYWORD_MARGINS,
-			Cols:   node.Cols,
-			Rows:   node.Rows,
-			Frame:  node.Frame,
-			Border: marshalBorder(node.Border),
-			Node:   marshalNode(node.Node),
+			Type:     KEYWORD_MARGINS,
+			Cols:     node.Cols,
+			Rows:     node.Rows,
+			Frame:    node.Frame,
+			Border:   marshalBorder(node.Border),
+			BorderFg: node.BorderFg,
+			BorderBg: node.BorderBg,
+			Node:     marshalNode(node.Node),
 		}
 	case BorderType:
 		return struct {
@@ -328,14 +401,53 @@ func marshalNode(node NodeType) interface{} {
 			Title       *string
 			TitleBottom *string
 			Border      interface{}
+			BorderFg    *style.Color
+			BorderBg    *style.Color
 			Node        interface{}
 		}{
 			Type:        KEYWORD_BORDERS,
 			Title:       node.Title,
 			TitleBottom: node.TitleBottom,
 			Border:      marshalBorder(node.Border),
+			BorderFg:    node.BorderFg,
+			BorderBg:    node.BorderBg,
 			Node:        marshalNode(node.Node),
 		}
+	case TabsType:
+		type tabArg struct {
+			Active bool
+			Name   string
+			Node   interface{}
+		}
+		type_ := struct {
+			Type                   janet.Keyword
+			ActiveFg, ActiveBg     *style.Color
+			InactiveFg, InactiveBg *style.Color
+			Bg                     *style.Color
+			Bottom                 bool
+			Tabs                   []tabArg
+		}{
+			Type:       KEYWORD_TABS,
+			ActiveFg:   node.ActiveFg,
+			ActiveBg:   node.ActiveBg,
+			InactiveFg: node.InactiveFg,
+			InactiveBg: node.InactiveBg,
+			Bg:         node.Bg,
+			Bottom:     node.Bottom,
+		}
+
+		for _, tab := range node.Tabs {
+			type_.Tabs = append(
+				type_.Tabs,
+				tabArg{
+					Active: tab.Active,
+					Name:   tab.Name,
+					Node:   marshalNode(tab.Node),
+				},
+			)
+		}
+
+		return type_
 	}
 	return nil
 }

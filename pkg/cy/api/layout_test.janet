@@ -38,6 +38,12 @@
                                          :border :asd
                                          :vertical false)))))
 
+(test "tabs"
+      (layout/set {:type :tabs
+                   :tabs @[{:name "asd"
+                            :active true
+                            :node (layout/pane :attached true)}]}))
+
 (test ":split"
       (layout/set
         {:type :split
