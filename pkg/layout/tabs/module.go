@@ -51,7 +51,7 @@ func (t *Tabs) State() *tty.State {
 
 	activeBg := lipgloss.Color("7")
 	if config.ActiveBg != nil {
-		activeFg = config.ActiveBg.Color
+		activeBg = config.ActiveBg.Color
 	}
 
 	tabStyle := t.render.NewStyle().
