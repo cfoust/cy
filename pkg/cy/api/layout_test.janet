@@ -39,10 +39,21 @@
                                          :vertical false)))))
 
 (test "tabs"
-      (layout/set {:type :tabs
-                   :tabs @[{:name "asd"
-                            :active true
-                            :node (layout/pane :attached true)}]}))
+      (def layout
+        (layout/new
+          (tabs
+            @[(active-tab "pane" (attach))]
+            :bottom false)))
+
+      (layout/set layout)
+      (assert (deep= (layout/get) layout)))
+
+(layout/new
+  (tabs
+    @[(active-tab "tab 1" (attach :id cmd1))
+      (tab "tab 2" (pane))
+      (tab "tab 3" (pane))]
+    :bottom false))
 
 (test ":split"
       (layout/set

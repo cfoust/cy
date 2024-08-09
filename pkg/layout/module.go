@@ -60,6 +60,18 @@ type TabsType struct {
 	Tabs                   []Tab
 }
 
+func (t TabsType) Active() (tab Tab) {
+	var active Tab
+	for _, tab := range t.Tabs {
+		if !tab.Active {
+			continue
+		}
+		active = tab
+		break
+	}
+	return active
+}
+
 type Layout struct {
 	Root NodeType
 }

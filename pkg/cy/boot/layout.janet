@@ -41,7 +41,7 @@ For example:
 
 (defn
   layout/pane
-  ```Convenience function for creating a new pane node.```
+  ```Convenience function for creating a new :pane node.```
   [&named id attached remove-on-exit]
   (default attached false)
   {:type :pane
@@ -51,7 +51,7 @@ For example:
 
 (defn
   layout/split
-  ```Convenience function for creating a new split node.```
+  ```Convenience function for creating a new :split node.```
   [a b &named vertical cells percent border border-fg border-bg]
   (default vertical false)
   {:type :split
@@ -66,7 +66,7 @@ For example:
 
 (defn
   layout/vsplit
-  ```Convenience function for creating a new vertical split node.```
+  ```Convenience function for creating a new vertical :split node.```
   [a b &named cells percent border border-fg border-bg]
   (layout/split a b
                 :vertical true
@@ -78,7 +78,7 @@ For example:
 
 (defn
   layout/hsplit
-  ```Convenience function for creating a new horizontal split node.```
+  ```Convenience function for creating a new horizontal :split node.```
   [a b &named cells percent border border-fg border-bg]
   (layout/split a b
                 :vertical false
@@ -90,7 +90,7 @@ For example:
 
 (defn
   layout/margins
-  ```Convenience function for creating a new margins node.```
+  ```Convenience function for creating a new :margins node.```
   [node &named cols rows border border-fg border-bg]
   {:type :margins
    :node node
@@ -102,7 +102,7 @@ For example:
 
 (defn
   layout/borders
-  ```Convenience function for creating a new borders node.```
+  ```Convenience function for creating a new :borders node.```
   [node &named title title-bottom border border-fg border-bg]
   {:type :borders
    :node node
@@ -112,19 +112,52 @@ For example:
    :border-fg border-fg
    :border-bg border-bg})
 
+(defn
+  layout/tab
+  ```Convenience function for creating a new tab (inside of a :tabs node).```
+  [name
+   node
+   &named
+   active]
+  {:name name
+   :node node
+   :active active})
+
+(defn
+  layout/tabs
+  ```Convenience function for creating a new :tabs node.```
+  [tabs
+   &named
+   active-fg
+   active-bg
+   inactive-fg
+   inactive-bg
+   bg
+   bottom]
+  {:type :tabs
+   :tabs tabs
+   :active-fg active-fg
+   :active-bg active-bg
+   :inactive-fg inactive-fg
+   :inactive-bg inactive-bg
+   :bg bg
+   :bottom bottom})
 
 (defmacro
   layout/new
   ```Macro for quickly creating layouts. layout/new replaces shorthand versions of node creation functions with their longform versions and also includes a few abbreviations that do not exist elsewhere in the API.
 
 Supported short forms:
-* pane: A detached pane node.
-* attach: An attached pane node.
-* split: A split node.
-* hsplit: A split node with :vertical=false.
-* vsplit: A split node with :vertical=true.
-* borders: A borders node.
-* margins: A margins node.
+* pane: A detached :pane node.
+* attach: An attached :pane node.
+* split: A :split node.
+* hsplit: A :split node with :vertical=false.
+* vsplit: A :split node with :vertical=true.
+* borders: A :borders node.
+* margins: A :margins node.
+* tabs: A :tabs node.
+* tab: A :tab inside of a :tabs node.
+* active-tab: A :tab with :active=true inside of a :tabs node.
 
 See [the layouts chapter](/layouts.md#programmatic-use) for more information.
   ```
@@ -134,14 +167,21 @@ See [the layouts chapter](/layouts.md#programmatic-use) for more information.
     (layout/pane :id id
                  :remove-on-exit remove-on-exit
                  :attached true))
+  (defn active-tab
+    [name node]
+    (layout/tab name node :active true))
+
   ~(do
      (def pane ,layout/pane)
+     (def attach ,attach)
      (def split ,layout/split)
      (def hsplit ,layout/hsplit)
      (def vsplit ,layout/vsplit)
      (def borders ,layout/borders)
      (def margins ,layout/margins)
-     (def attach ,attach)
+     (def tabs ,layout/tabs)
+     (def tab ,layout/tab)
+     (def active-tab ,active-tab)
      ,body))
 
 (defn

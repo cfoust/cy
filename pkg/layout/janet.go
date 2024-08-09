@@ -249,7 +249,7 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 	case KEYWORD_TABS:
 		type tabArg struct {
 			Active *bool
-			Name   string
+			Name   *string
 			Node   *janet.Value
 		}
 		type tabsArgs struct {
@@ -294,10 +294,11 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 				newTab.Active = *tab.Active
 			}
 
-			newTab.Name = tab.Name
-			if len(tab.Name) == 0 {
+			if tab.Name == nil || len(*tab.Name) == 0 {
 				return nil, fmt.Errorf("tab %d has empty name", i)
 			}
+
+			newTab.Name = *tab.Name
 
 			node, err := unmarshalNode(tab.Node)
 			if err != nil {

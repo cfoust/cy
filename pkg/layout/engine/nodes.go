@@ -121,6 +121,13 @@ func (l *LayoutEngine) updateNode(
 				Node:   current.Children[0],
 			},
 		)
+	case L.TabsType:
+		updates = append(updates,
+			updateNode{
+				Config: node.Active().Node,
+				Node:   current.Children[0],
+			},
+		)
 	}
 
 	// If any of the node's children cannot be reused, we need to remake
@@ -247,14 +254,23 @@ func (l *LayoutEngine) createTabs(
 	node *screenNode,
 	config L.TabsType,
 ) error {
+	innerNode, err := l.createNode(
+		node.Ctx(),
+		config.Active().Node,
+	)
+	if err != nil {
+		return err
+	}
+
 	tabs := tabs.New(
 		node.Ctx(),
+		innerNode.Screen,
 	)
 
 	tabs.Apply(config)
 
 	node.Screen = tabs
-	node.Children = []*screenNode{}
+	node.Children = []*screenNode{innerNode}
 	return nil
 }
 

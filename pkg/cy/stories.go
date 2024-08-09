@@ -486,6 +486,7 @@ func init() {
 (layout/set
         {:type :margins
          :cols 40
+	 :rows 20
          :node {:type :pane :id cmd1 :attached true}})
 		`)
 		return screen, err
@@ -610,6 +611,23 @@ func init() {
         :border-bg "3")
       :cols 70
       :border-bg "4")))
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("layout/tabs", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		err = client.execute(`
+(def cmd1 (shell/new))
+(layout/set (layout/new
+  (tabs
+    @[(active-tab "tab 1" (attach :id cmd1))
+      (tab "tab 2" (pane))
+      (tab "tab 3" (pane))]
+    :bottom false)))
 		`)
 		return screen, err
 	}, stories.Config{})
