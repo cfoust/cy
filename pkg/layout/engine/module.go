@@ -236,12 +236,19 @@ func (l *LayoutEngine) set(layout L.NodeType) error {
 
 	screen := node.Screen
 
-	l.existing = node
+	reusedRoot := l.existing == node
 
 	screen.Resize(l.size)
 
+	l.existing = node
 	l.layout = layout
 	l.screen = screen
+
+	defer l.Notify()
+
+	if reusedRoot {
+		return nil
+	}
 
 	go func() {
 		updates := screen.Subscribe(node.Ctx())
@@ -260,7 +267,6 @@ func (l *LayoutEngine) set(layout L.NodeType) error {
 		}
 	}()
 
-	l.Notify()
 	return nil
 }
 
