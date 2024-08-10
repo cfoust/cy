@@ -60,6 +60,7 @@ type TabsType struct {
 	Tabs                   []Tab
 }
 
+// Active returns the Tab config of the currently active tab.
 func (t TabsType) Active() (tab Tab) {
 	var active Tab
 	for _, tab := range t.Tabs {
@@ -70,6 +71,17 @@ func (t TabsType) Active() (tab Tab) {
 		break
 	}
 	return active
+}
+
+// Active returns the index of the currently active tab.
+func (t TabsType) ActiveIndex() int {
+	for index, tab := range t.Tabs {
+		if !tab.Active {
+			continue
+		}
+		return index
+	}
+	return -1
 }
 
 type Layout struct {

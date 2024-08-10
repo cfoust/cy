@@ -291,3 +291,95 @@ func TestPaneRemoval(t *testing.T) {
 		require.Equal(t, layout, l.Get().Root)
 	}
 }
+
+func TestClickTabs(t *testing.T) {
+	size := geom.DEFAULT_SIZE
+	l := New(
+		context.Background(),
+		T.NewTree(),
+		server.New(),
+	)
+	l.Resize(size)
+
+	name := "tab"
+	err := l.Set(L.New(
+		L.TabsType{
+			Tabs: []L.Tab{
+				{
+					Name:   name,
+					Active: true,
+					Node:   L.PaneType{Attached: true},
+				},
+				{
+					Name:   name,
+					Active: false,
+					Node:   L.PaneType{},
+				},
+			},
+		},
+	))
+	require.NoError(t, err)
+
+	// Required to force the bar bounds to calculate
+	l.State()
+
+	click := func(loc geom.Vec2) {
+		l.Send(taro.MouseMsg{
+			Vec2:   loc,
+			Type:   taro.MousePress,
+			Button: taro.MouseLeft,
+		})
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	// Should be on the second tab
+	click(geom.Vec2{C: 5})
+	require.Equal(t, L.TabsType{
+		Tabs: []L.Tab{
+			{
+				Name:   name,
+				Active: false,
+				Node:   L.PaneType{},
+			},
+			{
+				Name:   name,
+				Active: true,
+				Node:   L.PaneType{Attached: true},
+			},
+		},
+	}, l.Get().Root)
+
+	// Should be on the first tab
+	click(geom.Vec2{C: 1})
+	require.Equal(t, L.TabsType{
+		Tabs: []L.Tab{
+			{
+				Name:   name,
+				Active: true,
+				Node:   L.PaneType{Attached: true},
+			},
+			{
+				Name:   name,
+				Active: false,
+				Node:   L.PaneType{},
+			},
+		},
+	}, l.Get().Root)
+
+	// This should not cause any trouble
+	click(geom.Vec2{C: 1})
+	require.Equal(t, L.TabsType{
+		Tabs: []L.Tab{
+			{
+				Name:   name,
+				Active: true,
+				Node:   L.PaneType{Attached: true},
+			},
+			{
+				Name:   name,
+				Active: false,
+				Node:   L.PaneType{},
+			},
+		},
+	}, l.Get().Root)
+}

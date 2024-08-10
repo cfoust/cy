@@ -226,6 +226,10 @@ func (t *Tabs) Send(msg mux.Msg) {
 	)
 	t.RUnlock()
 
+	if tabIndex == config.ActiveIndex() {
+		return
+	}
+
 	isAttached := L.IsAttached(config)
 
 	if isAttached {

@@ -548,6 +548,10 @@ For example, when moving vertically upwards, for a vertical split node this func
                [":tabs" |(layout/new
                            (tabs
                              [(active-tab "new tab" $)]))]
+               [":tabs (bottom)" |(layout/new
+                                    (tabs
+                                      [(active-tab "new tab" $)]
+                                      :bottom true))]
                [":split (horizontal)" |(struct :type :split
 
                                                :a $
