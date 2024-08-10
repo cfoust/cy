@@ -36,6 +36,7 @@ func TestValidate(t *testing.T) {
 	require.NoError(t, ValidateTree(TabsType{
 		Tabs: []Tab{
 			{
+				Name:   "foo",
 				Active: true,
 				Node: PaneType{
 					Attached: true,
@@ -46,6 +47,7 @@ func TestValidate(t *testing.T) {
 	require.Error(t, ValidateTree(TabsType{
 		Tabs: []Tab{
 			{
+				Name:   "foo",
 				Active: true,
 				// The inner node has no active tab
 				Node: TabsType{
@@ -67,6 +69,7 @@ func TestAttachFirst(t *testing.T) {
 	require.Equal(t, TabsType{
 		Tabs: []Tab{
 			{
+				Name:   "foo",
 				Active: true,
 				Node: PaneType{
 					Attached: true,
@@ -76,6 +79,7 @@ func TestAttachFirst(t *testing.T) {
 	}, AttachFirst(TabsType{
 		Tabs: []Tab{
 			{
+				Name:   "foo",
 				Active: true,
 				Node: PaneType{
 					Attached: false,

@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/style"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type NodeType interface{}
@@ -426,6 +427,13 @@ func validateNodes(node NodeType) error {
 		}
 
 		for index, tab := range tabs {
+			if lipgloss.Width(tab.Name) == 0 {
+				return fmt.Errorf(
+					":tabs index %d has empty name",
+					index,
+				)
+			}
+
 			err := validateNodes(tab.Node)
 			if err == nil {
 				continue
