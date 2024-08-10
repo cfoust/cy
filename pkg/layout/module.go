@@ -143,6 +143,41 @@ func getNumLeaves(node NodeType) int {
 	return 0
 }
 
+// Copy recursively copies the node. This is so mutations don't affect the
+// original.
+func Copy(node NodeType) NodeType {
+	switch node := node.(type) {
+	case PaneType:
+		copied := node
+		return copied
+	case SplitType:
+		copied := node
+		copied.A = Copy(node.A)
+		copied.B = Copy(node.B)
+		return node
+	case MarginsType:
+		copied := node
+		copied.Node = Copy(node.Node)
+		return node
+	case BorderType:
+		copied := node
+		copied.Node = Copy(node.Node)
+		return node
+	case TabsType:
+		copied := node
+		var newTabs []Tab
+		for _, tab := range node.Tabs {
+			copiedTab := tab
+			copiedTab.Node = Copy(tab.Node)
+			newTabs = append(newTabs, copiedTab)
+		}
+		copied.Tabs = newTabs
+		return copied
+	}
+
+	return node
+}
+
 // AttachFirst attaches to the first node it can find.
 func AttachFirst(node NodeType) NodeType {
 	switch node := node.(type) {
@@ -388,6 +423,19 @@ func validateNodes(node NodeType) error {
 
 		if !haveActive {
 			return fmt.Errorf(":tabs must have at least one active tab")
+		}
+
+		for index, tab := range tabs {
+			err := validateNodes(tab.Node)
+			if err == nil {
+				continue
+			}
+
+			return fmt.Errorf(
+				":tabs index %d is invalid: %s",
+				index,
+				err,
+			)
 		}
 
 		return nil

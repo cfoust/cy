@@ -222,7 +222,7 @@ func (t *Tabs) Send(msg mux.Msg) {
 	tabIndex := int(lastBar[0][mouseMsg.C].Write)
 	t.RLock()
 	var (
-		config = t.config
+		config = L.Copy(t.config).(L.TabsType)
 	)
 	t.RUnlock()
 

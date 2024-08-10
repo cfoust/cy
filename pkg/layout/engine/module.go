@@ -196,7 +196,7 @@ func (l *LayoutEngine) handleChange(
 	// If the new configuration changes the attachment point, we need to
 	// detach from whatever node we're currently attached to
 	if L.IsAttached(config) {
-		layout = L.Detach(layout)
+		layout = L.Detach(L.Copy(layout))
 	}
 
 	layout = applyNodeChange(

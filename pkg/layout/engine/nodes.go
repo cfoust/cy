@@ -11,6 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/layout/split"
 	"github.com/cfoust/cy/pkg/layout/tabs"
 	"github.com/cfoust/cy/pkg/util"
+	"github.com/rs/zerolog/log"
 )
 
 // createNode takes a layout node and (recursively) creates a new screenNode
@@ -52,9 +53,12 @@ func (l *LayoutEngine) createNode(
 			case msg := <-updates.Recv():
 				switch msg := msg.(type) {
 				case L.NodeChangeEvent:
-					// TODO(cfoust): 07/30/24 error
-					// handling
-					l.handleChange(node, msg.Config)
+					err := l.handleChange(node, msg.Config)
+					if err == nil {
+						continue
+					}
+
+					log.Debug().Msgf("node %+v had invalid NodeChangeEvent: %s", node, err)
 				case L.NodeRemoveEvent:
 					l.removeAttached()
 				}

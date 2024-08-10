@@ -382,4 +382,55 @@ func TestClickTabs(t *testing.T) {
 			},
 		},
 	}, l.Get().Root)
+
+	// Now set nested tabs
+	err = l.Set(L.New(
+		L.TabsType{
+			Tabs: []L.Tab{
+				{
+					Name:   name,
+					Active: true,
+					Node:   L.PaneType{Attached: true},
+				},
+				{
+					Name:   name,
+					Active: false,
+					Node: L.TabsType{
+						Tabs: []L.Tab{
+							{
+								Name:   name,
+								Active: true,
+								Node:   L.PaneType{},
+							},
+						},
+					},
+				},
+			},
+		},
+	))
+	require.NoError(t, err)
+	click(geom.Vec2{C: 5})
+
+	require.Equal(t, L.TabsType{
+		Tabs: []L.Tab{
+			{
+				Name:   name,
+				Active: false,
+				Node:   L.PaneType{},
+			},
+			{
+				Name:   name,
+				Active: true,
+				Node: L.TabsType{
+					Tabs: []L.Tab{
+						{
+							Name:   name,
+							Active: true,
+							Node:   L.PaneType{Attached: true},
+						},
+					},
+				},
+			},
+		},
+	}, l.Get().Root)
 }
