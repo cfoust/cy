@@ -622,15 +622,32 @@ func init() {
 		_, client, screen, err := createStory(ctx)
 		err = client.execute(`
 (def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(def cmd3 (shell/new))
 (layout/set (layout/new
   (tabs
     @[(active-tab "tab 1" (attach :id cmd1))
-      (tab "tab 2" (pane))
-      (tab "tab 3" (pane))]
+      (tab "tab 2" (margins (pane :id cmd2) :cols 40))
+      (tab "tab 3" (borders (pane :id cmd3) :title "foobar"))]
     :bottom false)))
 		`)
 		return screen, err
-	}, stories.Config{})
+	}, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "N"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "N"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "N"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "P"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "P"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "P"),
+		},
+	})
 
 	stories.Register("layout/tabs/bottom", func(ctx context.Context) (
 		mux.Screen,

@@ -8,7 +8,11 @@ By default, `cy` centers the pane and fills the rest of the horizontal space wit
 
 `cy` refers to the configuration of the content shown on your screen as the [**layout**](/layouts.md). Unlike `tmux`, every client on the `cy` server has their own layout that can be configured independently of other clients. The layout shown above has a single pane that has its horizontal sized fixed to 80 columns.
 
-`cy`'s has pane and split functionality that should feel familiar. Like other terminal multiplexers, in `cy` you can divide your screen up into any number of panes. This can be done with {{bind :root ctrl+a -}} to split the current pane along a horizontal line and {{bind :root ctrl+a |}} to split along a vertical one.
+### Panes and splits
+
+{{story cast quick-start/layout --width 120 --height 26}}
+
+`cy`'s has pane and split functionality that should feel familiar to users of tmux. Like other terminal multiplexers, in `cy` you can divide your screen up into any number of panes. This can be done with {{bind :root ctrl+a -}} to split the current pane along a horizontal line and {{bind :root ctrl+a |}} to split along a vertical one.
 
 After creating a few, you can move between them using directional keys:
 
@@ -17,9 +21,22 @@ After creating a few, you can move between them using directional keys:
 - {{bind :root ctrl+a H}} or {{bind :root ctrl+a left}} to move left
 - {{bind :root ctrl+a L}} or {{bind :root ctrl+a right}} to move right
 
-{{story cast quick-start/layout --width 120 --height 26}}
+### Tabs
+
+{{story cast layout/tabs}}
+
+`cy` also has tabs:
+
+- {{bind :root ctrl+a t}} to create a new tab
+- {{bind :root ctrl+a R}} to rename the current tab
+- {{bind :root ctrl+a N}} to move to the next tab
+- {{bind :root ctrl+a P}} to move to the previous tab
+
+### Removing layout nodes
 
 You can also remove panes from your layout with {{bind :root ctrl+a x}}. However, it is important to note that unlike in other terminal multiplexers, removing a pane from your layout does not kill it; you can still attach to it again, such as by using {{bind :root ctrl+a ;}}. To remove it from your layout and kill the underlying process, you can use {{bind :root ctrl+a X}}.
+
+### Margins
 
 The outer margins can be adjusted or disabled with a few keybindings. Note that **these will only have an effect if your terminal is wider than 80 columns and the margins are visible.**
 
