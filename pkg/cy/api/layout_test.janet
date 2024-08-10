@@ -388,3 +388,26 @@
          :node {:type :pane :attached true}})
 
       (action/set-layout-borders))
+
+(test "layout/remove-attached"
+      (assert (deep=
+                (layout/remove-attached
+                  (layout/new
+                    (split
+                      (attach)
+                      (pane :id 2))))
+
+                (layout/new
+                  (attach :id 2))))
+
+      # We keep other tabs if they're there
+      (assert (deep=
+                (layout/remove-attached
+                  (layout/new
+                    (tabs
+                      @[(active-tab "tab" (attach))
+                        (tab "tab" (pane :id 2))])))
+
+                (layout/new
+                  (tabs
+                    @[(active-tab "tab" (attach :id 2))])))))

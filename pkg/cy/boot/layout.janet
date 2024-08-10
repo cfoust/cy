@@ -1,4 +1,12 @@
 (defn
+  assoc
+  "Set a property in a struct, returning a new struct."
+  [s key value]
+  (def new (struct/to-table s))
+  (put new key value)
+  (table/to-struct new))
+
+(defn
   layout/path
   ```Resolve the path to a node. Returns nil if any portion of the path is invalid.```
   [node path]
@@ -29,15 +37,12 @@ For example:
   [node]
   (cond
     (layout/type? :split node) @[[:a] [:b]]
-    (layout/type? :tabs node) (do
-                                (def active-index
-                                  (find-index
-                                    |($ :active)
-                                    (node :tabs)))
-                                (if
-                                  (not (nil? active-index))
-                                  @[[:tabs active-index :node]]
-                                  @[]))
+    (layout/type? :tabs node) (map
+                                |[:tabs $ :node]
+                                (->
+                                  (node :tabs)
+                                  (length)
+                                  (range)))
     (or
       (layout/type? :margins node)
       (layout/type? :borders node)) @[[:node]]
@@ -461,15 +466,30 @@ For example, when moving vertically upwards, for a vertical split node this func
 
   (def parent (layout/path layout parent-path))
 
-  # For now, only splits satisfy this (they are the only node type that can
-  # have more than one successor)
-  (def {:a a :b b} parent)
-  (layout/assoc
-    layout
-    parent-path
+  (def new-parent
     (cond
-      (layout/attached? a) (layout/attach-first b)
-      (layout/attached? b) (layout/attach-first a))))
+      (layout/type?
+        :tabs
+        parent) (do
+                  (def [head & rest] (filter
+                                       |(not (layout/attached? ($ :node)))
+                                       (parent :tabs)))
+
+                  (def new-head
+                    (as?-> head _
+                           (assoc _ :node (layout/attach-first (_ :node)))
+                           (assoc _ :active true)))
+
+                  (assoc parent :tabs @[new-head ;rest]))
+      (layout/type?
+        :split
+        parent) (do
+                  (def {:a a :b b} parent)
+                  (cond
+                    (layout/attached? a) (layout/attach-first b)
+                    (layout/attached? b) (layout/attach-first a)))))
+
+  (layout/assoc layout parent-path new-parent))
 
 (key/action
   action/remove-current-pane
@@ -724,14 +744,6 @@ For example, when moving vertically upwards, for a vertical split node this func
                      :prompt "choose a border style")
          (layout/set _)))
 
-(defn
-  assoc
-  "Set a property in a struct, returning a new struct."
-  [s key value]
-  (def new (struct/to-table s))
-  (put new key value)
-  (table/to-struct new))
-
 (key/action
   action/new-tab
   "Create a new tab."
@@ -777,9 +789,11 @@ For example, when moving vertically upwards, for a vertical split node this func
 
   (def detached (layout/detach layout))
   (def node (layout/path detached tabs-path))
-  (def [[_ active-index]] (layout/successors node))
-  (def {:tabs existing-tabs} node)
+  (def [_ active-index] (find
+                          |((layout/path node (array/slice $ 0 2)) :active)
+                          (layout/successors node)))
 
+  (def {:tabs existing-tabs} node)
   (def new-index (mod (+ active-index delta) (length existing-tabs)))
 
   (def new-layout
