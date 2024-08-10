@@ -743,7 +743,6 @@ For example, when moving vertically upwards, for a vertical split node this func
                  :cols (+ cols 5)
                  :rows rows})))
 
-
 (key/action
   action/set-layout-borders
   "Change the border style across the entire layout."

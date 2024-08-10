@@ -53,7 +53,7 @@ func (t *Tabs) State() *tty.State {
 		activeFg = config.ActiveFg.Color
 	}
 
-	activeBg := lipgloss.Color("7")
+	activeBg := lipgloss.Color("4")
 	if config.ActiveBg != nil {
 		activeBg = config.ActiveBg.Color
 	}
@@ -65,12 +65,12 @@ func (t *Tabs) State() *tty.State {
 		Foreground(activeFg).
 		Background(activeBg)
 
-	inactiveFg := lipgloss.Color("7")
+	inactiveFg := lipgloss.Color("0")
 	if config.InactiveFg != nil {
 		inactiveFg = config.InactiveFg.Color
 	}
 
-	inactiveBg := lipgloss.Color("0")
+	inactiveBg := lipgloss.Color("7")
 	if config.InactiveBg != nil {
 		inactiveBg = config.InactiveBg.Color
 	}
