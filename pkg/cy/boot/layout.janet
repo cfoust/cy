@@ -11,6 +11,7 @@
   layout/type?
   ```Report whether node is of the provided type.```
   [type node]
+  (if (not (struct? node)) (break false))
   (= (node :type) type))
 
 (defn
@@ -28,6 +29,15 @@ For example:
   [node]
   (cond
     (layout/type? :split node) @[[:a] [:b]]
+    (layout/type? :tabs node) (do
+                                (def active-index
+                                  (find-index
+                                    |($ :active)
+                                    (node :tabs)))
+                                (if
+                                  (not (nil? active-index))
+                                  @[[:tabs active-index :node]]
+                                  @[]))
     (or
       (layout/type? :margins node)
       (layout/type? :borders node)) @[[:node]]
@@ -206,6 +216,7 @@ See [the layouts chapter](/layouts.md#programmatic-use) for more information.
   ```Get the path to the last node in the path where (predicate node) evaluates to true.```
   [layout path predicate]
   # Must be a valid path and actually map to a node
+  (if (nil? path) (break nil))
   (if (= (length path) 0) (break nil))
   (if (nil? (layout/path layout path)) (break nil))
 
@@ -218,6 +229,7 @@ See [the layouts chapter](/layouts.md#programmatic-use) for more information.
         (reverse))))
 
   (if (nil? found-path) (break nil))
+  (if (= (length found-path) 0) (break @[]))
   (array/slice path ;found-path))
 
 (defn
@@ -245,6 +257,14 @@ See [the layouts chapter](/layouts.md#programmatic-use) for more information.
   (if (= (length path) 0) (break node))
   (def [head & rest] path)
   (if (nil? (layout head)) (break layout))
+  (if (and (number? head) (not (indexed? layout))) (break layout))
+  (if (number? head)
+    (break (->>
+             (pairs layout)
+             (map |(if (= head ($ 0))
+                     (layout/assoc (layout head) rest node)
+                     ($ 1))))))
+
   (def new-layout (struct/to-table layout))
   (put new-layout head (layout/assoc (layout head) rest node))
   (table/to-struct new-layout))
@@ -525,6 +545,9 @@ For example, when moving vertically upwards, for a vertical split node this func
   (def layout (layout/get))
   (def types @[[":borders" |(struct :type :borders :node $)]
                [":margins" |(struct :type :margins :node $)]
+               [":tabs" |(layout/new
+                           (tabs
+                             [(active-tab "new tab" $)]))]
                [":split (horizontal)" |(struct :type :split
 
                                                :a $
@@ -696,3 +719,44 @@ For example, when moving vertically upwards, for a vertical split node this func
          (input/find _
                      :prompt "choose a border style")
          (layout/set _)))
+
+(defn
+  assoc
+  "Set a property in a struct, returning a new struct."
+  [s key value]
+  (def new (struct/to-table s))
+  (put new key value)
+  (table/to-struct new))
+
+(key/action
+  action/new-tab
+  "Create a new tab."
+  (def layout (layout/get))
+  (def shell (shell/new))
+  (def new-tab (layout/new
+                 (tab "new tab" (attach :id shell) :active true)))
+
+  (def detached (layout/detach layout))
+
+  (def tabs-path (layout/find-last
+                   layout
+                   (layout/attach-path layout)
+                   |(layout/type? :tabs $)))
+
+  (def new-layout (if (nil? tabs-path)
+                    (layout/new
+                      (tabs
+                        @[(tab "new tab" detached)
+                          new-tab]))
+
+                    (do
+                      (def node (layout/path detached tabs-path))
+                      (def {:tabs existing-tabs} node)
+                      (layout/assoc
+                        detached
+                        tabs-path
+                        (assoc node :tabs
+                               @[;(map |(assoc $ :active false) existing-tabs)
+                                 new-tab])))))
+
+  (layout/set new-layout))

@@ -77,9 +77,12 @@ For example:
 
 (defn
   shell/new
-  ```Create a new shell initialized in the working directory `path`.```
+  ```Create a new shell initialized in the working directory `path`. If `path` is not provided, this uses the path of the current pane.```
   [&opt path]
-  (default path "")
+  (default path
+    (do
+      (def [ok current-path] (protect (cmd/path (pane/current))))
+      (if ok current-path (os/getenv "HOME" ""))))
   (def shells (group/mkdir :root "/shells"))
   (cmd/new shells :path path))
 
@@ -87,9 +90,7 @@ For example:
   shell/attach
   ```Create a new shell initialized in the working directory `path` and attach to it.```
   [&opt path]
-  (default path "")
-  (def shells (group/mkdir :root "/shells"))
-  (pane/attach (cmd/new shells :path path)))
+  (pane/attach (shell/new path)))
 
 (key/action
   action/new-shell

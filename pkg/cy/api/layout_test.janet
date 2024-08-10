@@ -48,12 +48,10 @@
       (layout/set layout)
       (assert (deep= (layout/get) layout)))
 
-(layout/new
-  (tabs
-    @[(active-tab "tab 1" (attach :id cmd1))
-      (tab "tab 2" (pane))
-      (tab "tab 3" (pane))]
-    :bottom false))
+(test "tab actions"
+      (action/new-tab)
+      (action/new-tab)
+      (action/new-tab))
 
 (test ":split"
       (layout/set
@@ -121,6 +119,13 @@
 
 
 (test "layout/attach-path"
+      (assert (deep=
+                (layout/attach-path
+                  (layout/new
+                    (tabs
+                      @[(active-tab "tab" (attach))])))
+                @[:tabs 0 :node]))
+
       (assert (deep=
                 (layout/attach-path
                   {:type :margins

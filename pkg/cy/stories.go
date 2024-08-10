@@ -631,4 +631,81 @@ func init() {
 		`)
 		return screen, err
 	}, stories.Config{})
+
+	stories.Register("layout/tabs/many", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		err = client.execute(`
+(def cmd1 (shell/new))
+(layout/set (layout/new
+  (tabs
+    @[(tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (active-tab "tabtabtab" (attach :id cmd1))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))]
+    :bottom false)))
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("layout/tabs/many-last", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		err = client.execute(`
+(def cmd1 (shell/new))
+(layout/set (layout/new
+  (tabs
+    @[(tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (tab "tabtabtab" (pane))
+      (active-tab "tabtabtab" (attach :id cmd1))]
+    :bottom false)))
+		`)
+		return screen, err
+	}, stories.Config{})
 }

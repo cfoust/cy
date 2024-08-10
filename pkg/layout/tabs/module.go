@@ -23,6 +23,10 @@ type Tabs struct {
 	size       geom.Size
 	inner, bar geom.Rect
 	config     L.TabsType
+
+	// The tab bar at the time of the last render. Saving this lets us use
+	// it for hit detection on clicks.
+	lastBar image.Image
 }
 
 var _ mux.Screen = (*Tabs)(nil)
@@ -80,8 +84,9 @@ func (t *Tabs) State() *tty.State {
 		bg = config.Bg.Emu()
 	}
 
+	var barWidth, activeLoc, activeWidth int
 	var tabs []image.Image
-	for _, tab := range config.Tabs {
+	for index, tab := range config.Tabs {
 		name := tab.Name
 		cols := lipgloss.Width(name)
 
@@ -106,25 +111,50 @@ func (t *Tabs) State() *tty.State {
 			0, 0,
 			name,
 		)
+
+		// Save the tab index somewhere for click hitscan
+		for col := 0; col < cols; col++ {
+			i[0][col].Write = emu.WriteID(index)
+		}
+
 		tabs = append(tabs, i)
+
+		if tab.Active {
+			activeLoc = barWidth
+			activeWidth = cols
+		}
+
+		barWidth += cols
 	}
 
 	for col := 0; col < size.C; col++ {
 		state.Image[bar.Position.R][col].BG = bg
 	}
 
+	// Render the tab bar into one long line so we can shift it
+	// appropriately when the active tab is not on the screen
+	renderedBar := image.New(geom.Vec2{
+		R: 1,
+		C: barWidth,
+	})
 	var col int
 	for _, tab := range tabs {
-		image.Copy(
-			geom.Vec2{
-				C: col,
-				R: bar.Position.R,
-			},
-			state.Image,
-			tab,
-		)
+		image.Copy(geom.Vec2{C: col}, renderedBar, tab)
 		col += tab.Size().C
 	}
+
+	barOffset := geom.Clamp(
+		activeLoc+(activeWidth/2)-(size.C/2),
+		0,
+		geom.Max(0, barWidth-size.C),
+	)
+	renderedBar[0] = renderedBar[0][barOffset:]
+	image.Copy(bar.Position, state.Image, renderedBar)
+
+	// Save this for hit detection
+	t.Lock()
+	t.lastBar = renderedBar
+	t.Unlock()
 
 	tty.Copy(inner.Position, state, screen.State())
 
@@ -145,7 +175,62 @@ func (t *Tabs) Apply(node L.NodeType) (bool, error) {
 }
 
 func (t *Tabs) Send(msg mux.Msg) {
-	t.screen.Send(msg)
+	t.RLock()
+	var (
+		lastBar = t.lastBar
+		inner   = t.inner
+		bar     = t.bar
+	)
+	t.RUnlock()
+
+	mouseMsg, ok := msg.(taro.MouseMsg)
+	if !ok {
+		t.screen.Send(msg)
+		return
+	}
+
+	if inner.Contains(mouseMsg.Vec2) {
+		t.screen.Send(taro.TranslateMouseMessage(
+			msg,
+			-inner.Position.C,
+			-inner.Position.R,
+		))
+		return
+	}
+
+	// Must be a click
+	if mouseMsg.Type != taro.MousePress || mouseMsg.Button != taro.MouseLeft || mouseMsg.Down {
+		return
+	}
+
+	// And must be inside the bounds of the bar
+	if !bar.Contains(mouseMsg.Vec2) || mouseMsg.C < 0 || mouseMsg.C >= lastBar.Size().C {
+		return
+	}
+
+	tabIndex := int(lastBar[0][mouseMsg.C].Write)
+	t.RLock()
+	var (
+		config = t.config
+	)
+	t.RUnlock()
+
+	var newTabs []L.Tab
+	for index, tab := range config.Tabs {
+		// Do nothing if we're already on this tab
+		if index == tabIndex && tab.Active {
+			return
+		}
+
+		newTabs = append(newTabs, L.Tab{
+			Active: index == tabIndex,
+			Name:   tab.Name,
+			Node:   tab.Node,
+		})
+	}
+
+	config.Tabs = newTabs
+	t.Publish(L.NodeChangeEvent{Config: config})
 }
 
 func (t *Tabs) Resize(size geom.Size) error {

@@ -34,6 +34,7 @@
                    [prefix "L"] action/move-right
                    [prefix "K"] action/move-up
                    [prefix "J"] action/move-down
+                   [prefix "t"] action/new-tab
                    [prefix "left"] action/move-left
                    [prefix "right"] action/move-right
                    [prefix "up"] action/move-up
