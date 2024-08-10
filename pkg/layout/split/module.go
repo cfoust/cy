@@ -211,6 +211,11 @@ func (s *Split) poll(ctx context.Context) {
 func (s *Split) recalculate() error {
 	size := s.size
 
+	// We don't want to recalculate until we have a real size
+	if size.IsZero() {
+		return nil
+	}
+
 	axisCells := size.C
 	if s.isVertical {
 		axisCells = size.R
