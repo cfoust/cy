@@ -77,4 +77,4 @@
 
 ---
 
-[Acknowledgments](./acknowledgments.md)
+[Acknowledgements](./acknowledgements.md)
