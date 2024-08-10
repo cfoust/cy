@@ -156,7 +156,18 @@ func (t *Tabs) State() *tty.State {
 	t.lastBar = renderedBar
 	t.Unlock()
 
-	tty.Copy(inner.Position, state, screen.State())
+	screenState := screen.State()
+	// We want to preserve transparency
+	image.CopyRaw(inner.Position, state.Image, screenState.Image)
+
+	tty.Copy(inner.Position, state, screenState)
+	state.CursorVisible = screenState.CursorVisible
+	if screenState.CursorVisible {
+		cursor := screenState.Cursor
+		cursor.C += inner.Position.C
+		cursor.R += inner.Position.R
+		state.Cursor = cursor
+	}
 
 	return state
 }
