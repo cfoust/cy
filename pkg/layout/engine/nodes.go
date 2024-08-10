@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	L "github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/layout/bar"
 	"github.com/cfoust/cy/pkg/layout/borders"
 	"github.com/cfoust/cy/pkg/layout/margins"
 	"github.com/cfoust/cy/pkg/layout/pane"
@@ -38,6 +39,8 @@ func (l *LayoutEngine) createNode(
 		err = l.createBorders(node, config)
 	case L.TabsType:
 		err = l.createTabs(node, config)
+	case L.BarType:
+		err = l.createBar(node, config)
 	default:
 		err = fmt.Errorf("unimplemented screen")
 	}
@@ -129,6 +132,13 @@ func (l *LayoutEngine) updateNode(
 		updates = append(updates,
 			updateNode{
 				Config: node.Active().Node,
+				Node:   current.Children[0],
+			},
+		)
+	case L.BarType:
+		updates = append(updates,
+			updateNode{
+				Config: node.Node,
 				Node:   current.Children[0],
 			},
 		)
@@ -278,6 +288,30 @@ func (l *LayoutEngine) createTabs(
 	return nil
 }
 
+func (l *LayoutEngine) createBar(
+	node *screenNode,
+	config L.BarType,
+) error {
+	innerNode, err := l.createNode(
+		node.Ctx(),
+		config.Node,
+	)
+	if err != nil {
+		return err
+	}
+
+	bar := bar.New(
+		node.Ctx(),
+		innerNode.Screen,
+	)
+
+	bar.Apply(config)
+
+	node.Screen = bar
+	node.Children = []*screenNode{innerNode}
+	return nil
+}
+
 // applyNodeChange replaces the configuration of the target node with
 // newConfig. This is only used to allow nodes to change their own
 // configurations in response to user input (for now, just mouse events.)
@@ -336,6 +370,14 @@ func applyNodeChange(
 			)
 			return currentConfig
 		}
+	case L.BarType:
+		currentConfig.Node = applyNodeChange(
+			current.Children[0],
+			target,
+			currentConfig.Node,
+			newConfig,
+		)
+		return currentConfig
 	}
 
 	return currentConfig

@@ -53,7 +53,7 @@ func (p Params) Out(value *Value) {
 	}
 }
 
-func (p Params) Wait() error {
+func (p Params) WaitErr() error {
 	select {
 	case result := <-p.Result:
 		if result.Out != nil {
@@ -62,6 +62,15 @@ func (p Params) Wait() error {
 		return result.Error
 	case <-p.Context.Done():
 		return p.Context.Err()
+	}
+}
+
+func (p Params) WaitResult() (*Value, error) {
+	select {
+	case result := <-p.Result:
+		return result.Out, result.Error
+	case <-p.Context.Done():
+		return nil, p.Context.Err()
 	}
 }
 

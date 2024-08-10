@@ -16,6 +16,7 @@ var (
 	KEYWORD_MARGINS = janet.Keyword("margins")
 	KEYWORD_BORDERS = janet.Keyword("borders")
 	KEYWORD_TABS    = janet.Keyword("tabs")
+	KEYWORD_BAR     = janet.Keyword("bar")
 
 	// Special border behavior
 	KEYWORD_NONE = janet.Keyword("none")
@@ -311,6 +312,33 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		}
 
 		return type_, nil
+	case KEYWORD_BAR:
+		type barArgs struct {
+			Render *janet.Function
+			Bottom *bool
+			Node   *janet.Value
+		}
+		args := barArgs{}
+		err = value.Unmarshal(&args)
+		if err != nil {
+			return nil, err
+		}
+
+		node, err := unmarshalNode(args.Node)
+		if err != nil {
+			return nil, err
+		}
+
+		type_ := BarType{
+			Node:   node,
+			Render: args.Render,
+		}
+
+		if args.Bottom != nil {
+			type_.Bottom = *args.Bottom
+		}
+
+		return type_, nil
 	}
 
 	return nil, fmt.Errorf("invalid node type: %s", n.Type)
@@ -449,6 +477,18 @@ func marshalNode(node NodeType) interface{} {
 		}
 
 		return type_
+	case BarType:
+		return struct {
+			Type   janet.Keyword
+			Render *janet.Function
+			Bottom bool
+			Node   interface{}
+		}{
+			Type:   KEYWORD_BAR,
+			Render: node.Render,
+			Bottom: node.Bottom,
+			Node:   marshalNode(node.Node),
+		}
 	}
 	return nil
 }

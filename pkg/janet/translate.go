@@ -147,12 +147,19 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 	}
 
 	if value.Kind() == reflect.Pointer {
-		if v, ok := item.(*Value); ok {
+		switch item := item.(type) {
+		case *Value:
 			// TODO(cfoust): 02/01/24 this is spooky
 			if v == nil {
 				return
 			}
-			result = v.janet
+			result = item.janet
+			return
+		case *Function:
+			if v == nil {
+				return
+			}
+			result = item.janet
 			return
 		}
 

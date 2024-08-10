@@ -192,7 +192,7 @@ func (v *VM) ExecuteCall(ctx context.Context, user interface{}, call Call) error
 		Call: call,
 	}
 	v.requests <- req
-	return req.Wait()
+	return req.WaitErr()
 }
 
 func (v *VM) Execute(ctx context.Context, code string) error {

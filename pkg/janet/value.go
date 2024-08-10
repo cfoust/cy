@@ -154,7 +154,27 @@ func (f *Function) CallContext(
 	}
 	f.vm.requests <- req
 
-	return req.Wait()
+	return req.WaitErr()
+}
+
+func (f *Function) CallResult(
+	ctx context.Context,
+	user interface{},
+	params ...interface{},
+) (*Value, error) {
+	result := make(chan Result)
+	req := functionRequest{
+		Args:     params,
+		Function: f,
+		Params: Params{
+			Context: ctx,
+			User:    user,
+			Result:  result,
+		},
+	}
+	f.vm.requests <- req
+
+	return req.WaitResult()
 }
 
 func (f *Function) Call(ctx context.Context, params ...interface{}) error {

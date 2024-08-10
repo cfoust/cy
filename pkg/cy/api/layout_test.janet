@@ -48,6 +48,17 @@
       (layout/set layout)
       (assert (deep= (layout/get) layout)))
 
+(test "bar"
+      (def layout
+        (layout/new
+          (bar
+            |(string "asd")
+            (attach)
+            :bottom true)))
+
+      (layout/set layout)
+      (assert (deep= (layout/get) layout)))
+
 (test "tab actions"
       (action/new-tab)
       (action/new-tab)

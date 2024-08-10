@@ -45,6 +45,7 @@ For example:
                                   (range)))
     (or
       (layout/type? :margins node)
+      (layout/type? :bar node)
       (layout/type? :borders node)) @[[:node]]
     @[]))
 
@@ -158,6 +159,15 @@ For example:
    :bg bg
    :bottom bottom})
 
+(defn
+  layout/bar
+  ```Convenience function for creating a new :bar node.```
+  [render node &named bottom]
+  {:type :bar
+   :node node
+   :render render
+   :bottom bottom})
+
 (defmacro
   layout/new
   ```Macro for quickly creating layouts. layout/new replaces shorthand versions of node creation functions with their longform versions and also includes a few abbreviations that do not exist elsewhere in the API.
@@ -173,6 +183,7 @@ Supported short forms:
 * tabs: A :tabs node.
 * tab: A :tab inside of a :tabs node.
 * active-tab: A :tab with :active=true inside of a :tabs node.
+* bar: A :bar node.
 
 See [the layouts chapter](/layouts.md#programmatic-use) for more information.
   ```
@@ -197,6 +208,7 @@ See [the layouts chapter](/layouts.md#programmatic-use) for more information.
      (def tabs ,layout/tabs)
      (def tab ,layout/tab)
      (def active-tab ,active-tab)
+     (def bar ,layout/bar)
      ,body))
 
 (defn

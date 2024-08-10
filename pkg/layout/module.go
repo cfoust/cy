@@ -3,6 +3,7 @@ package layout
 import (
 	"fmt"
 
+	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/style"
@@ -85,6 +86,12 @@ func (t TabsType) ActiveIndex() int {
 	return -1
 }
 
+type BarType struct {
+	Render *janet.Function
+	Bottom bool
+	Node   NodeType
+}
+
 type Layout struct {
 	Root NodeType
 }
@@ -115,6 +122,9 @@ func getPaneType(tree NodeType) (panes []PaneType) {
 	case BorderType:
 		panes = append(panes, getPaneType(node.Node)...)
 		return
+	case BarType:
+		panes = append(panes, getPaneType(node.Node)...)
+		return
 	case TabsType:
 		for _, tab := range node.Tabs {
 			panes = append(panes, getPaneType(tab.Node)...)
@@ -133,6 +143,8 @@ func getNumLeaves(node NodeType) int {
 	case MarginsType:
 		return getNumLeaves(node.Node)
 	case BorderType:
+		return getNumLeaves(node.Node)
+	case BarType:
 		return getNumLeaves(node.Node)
 	case TabsType:
 		var result int
@@ -164,6 +176,10 @@ func Copy(node NodeType) NodeType {
 		copied := node
 		copied.Node = Copy(node.Node)
 		return node
+	case BarType:
+		copied := node
+		copied.Node = Copy(node.Node)
+		return node
 	case TabsType:
 		copied := node
 		var newTabs []Tab
@@ -192,6 +208,9 @@ func AttachFirst(node NodeType) NodeType {
 		node.Node = AttachFirst(node.Node)
 		return node
 	case BorderType:
+		node.Node = AttachFirst(node.Node)
+		return node
+	case BarType:
 		node.Node = AttachFirst(node.Node)
 		return node
 	case TabsType:
@@ -234,6 +253,9 @@ func RemoveAttached(node NodeType) NodeType {
 		node.Node = RemoveAttached(node.Node)
 		return node
 	case BorderType:
+		node.Node = RemoveAttached(node.Node)
+		return node
+	case BarType:
 		node.Node = RemoveAttached(node.Node)
 		return node
 	case TabsType:
@@ -279,6 +301,8 @@ func IsAttached(tree NodeType) bool {
 		return IsAttached(node.Node)
 	case BorderType:
 		return IsAttached(node.Node)
+	case BarType:
+		return IsAttached(node.Node)
 	case TabsType:
 		for _, tab := range node.Tabs {
 			if IsAttached(tab.Node) {
@@ -304,6 +328,9 @@ func Detach(node NodeType) NodeType {
 		node.Node = Detach(node.Node)
 		return node
 	case BorderType:
+		node.Node = Detach(node.Node)
+		return node
+	case BarType:
 		node.Node = Detach(node.Node)
 		return node
 	case TabsType:
@@ -337,6 +364,9 @@ func attach(node NodeType, id tree.NodeID) NodeType {
 		node.Node = attach(node.Node, id)
 		return node
 	case BorderType:
+		node.Node = attach(node.Node, id)
+		return node
+	case BarType:
 		node.Node = attach(node.Node, id)
 		return node
 	case TabsType:
@@ -374,6 +404,8 @@ func getAttached(node NodeType) *tree.NodeID {
 		return getAttached(node.Node)
 	case BorderType:
 		return getAttached(node.Node)
+	case BarType:
+		return getAttached(node.Node)
 	case TabsType:
 		for _, tab := range node.Tabs {
 			if IsAttached(tab.Node) {
@@ -408,6 +440,8 @@ func validateNodes(node NodeType) error {
 	case MarginsType:
 		return validateNodes(node.Node)
 	case BorderType:
+		return validateNodes(node.Node)
+	case BarType:
 		return validateNodes(node.Node)
 	case TabsType:
 		tabs := node.Tabs
