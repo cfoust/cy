@@ -318,6 +318,20 @@ func applyNodeChange(
 			newConfig,
 		)
 		return currentConfig
+	case L.TabsType:
+		for i, tab := range currentConfig.Tabs {
+			if !tab.Active {
+				continue
+			}
+
+			currentConfig.Tabs[i].Node = applyNodeChange(
+				current.Children[0],
+				target,
+				currentConfig.Tabs[i].Node,
+				newConfig,
+			)
+			return currentConfig
+		}
 	}
 
 	return currentConfig

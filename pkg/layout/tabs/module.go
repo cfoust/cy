@@ -226,6 +226,14 @@ func (t *Tabs) Send(msg mux.Msg) {
 	)
 	t.RUnlock()
 
+	isAttached := L.IsAttached(config)
+
+	if isAttached {
+		if newConfig, ok := L.Detach(config).(L.TabsType); ok {
+			config = newConfig
+		}
+	}
+
 	var newTabs []L.Tab
 	for index, tab := range config.Tabs {
 		// Do nothing if we're already on this tab
@@ -236,7 +244,9 @@ func (t *Tabs) Send(msg mux.Msg) {
 		isActive := index == tabIndex
 		node := tab.Node
 
-		if isActive {
+		// Don't attach to the node unless we were otherwise attached
+		// to this tabs node
+		if isActive && isAttached {
 			node = L.AttachFirst(tab.Node)
 		}
 
