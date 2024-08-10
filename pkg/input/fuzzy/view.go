@@ -207,12 +207,14 @@ func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
 
 	var lines []string
 	if options := f.getOptions(); len(options) > 0 {
-		lines = append(lines, f.renderOptions(
+		optionsLines := f.renderOptions(
 			commonStyle,
 			promptStyle,
 			options,
 			size.R-2,
-		))
+		)
+		f.numRenderedOptions = lipgloss.Height(optionsLines)
+		lines = append(lines, optionsLines)
 	}
 
 	promptStyle.GetBackground()

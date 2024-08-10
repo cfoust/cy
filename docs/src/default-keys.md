@@ -42,6 +42,10 @@ These bindings are not prefixed by <kbd>ctrl+a</kbd>.
 | <kbd>ctrl+j</kbd> or <kbd>down</kbd> | Move down one option.               |
 | <kbd>enter</kbd>                     | Choose the option under the cursor. |
 | <kbd>ctrl+c</kbd> or <kbd>esc</kbd>  | Quit without choosing.              |
+| <kbd>home</kbd>                      | Jump to the top of the list.        |
+| <kbd>end</kbd>                       | Jump to the bottom of the list.     |
+| <kbd>pgup</kbd>                      | Move upwards by a single page.      |
+| <kbd>pgdown</kbd>                    | Move downwards by a single page.    |
 
 ## Replay mode
 

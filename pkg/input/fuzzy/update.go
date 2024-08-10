@@ -40,6 +40,37 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				f.result <- nil
 			}
 			return f.quit()
+		case taro.KeyHome, taro.KeyEnd:
+			isTop := msg.Type == taro.KeyHome
+			last := len(f.getOptions()) - 1
+
+			var index int
+			if (f.isUp && isTop) || (!f.isUp && !isTop) {
+				index = last
+			}
+
+			return f, tea.Sequence(
+				f.setSelected(index),
+				f.emitOption(),
+			)
+		case taro.KeyPgUp, taro.KeyPgDown:
+			delta := f.numRenderedOptions
+			if delta == 0 {
+				return f, nil
+			}
+
+			if msg.Type == taro.KeyPgUp {
+				delta *= -1
+			}
+
+			if f.isUp {
+				delta *= -1
+			}
+
+			return f, tea.Sequence(
+				f.setSelected(f.selected+delta),
+				f.emitOption(),
+			)
 		case taro.KeyDown, taro.KeyCtrlJ, taro.KeyUp, taro.KeyCtrlK:
 			f.haveMoved = true
 			upwards := false
@@ -56,7 +87,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				delta = 1
 			}
 
-			return f, tea.Batch(
+			return f, tea.Sequence(
 				f.setSelected(f.selected+delta),
 				f.emitOption(),
 			)

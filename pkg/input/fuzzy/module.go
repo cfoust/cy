@@ -49,6 +49,10 @@ type Fuzzy struct {
 	selected int
 	pattern  string
 
+	// The number of options rendered on the last call View(). Used for
+	// paging behavior.
+	numRenderedOptions int
+
 	// shown before the number of items
 	prompt string
 

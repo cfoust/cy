@@ -13,6 +13,8 @@ import (
 // goroutines are instead executed in the calling goroutine. This is useful
 // exclusively in testing.
 func Test(m Model) func(msgs ...interface{}) {
+	size := geom.DEFAULT_SIZE
+
 	return func(msgs ...interface{}) {
 		var cmd, subCmd Cmd
 		var realMsg Msg
@@ -33,11 +35,9 @@ func Test(m Model) func(msgs ...interface{}) {
 				default:
 					m, cmd = m.Update(msg)
 				}
-				m.View(tty.New(geom.DEFAULT_SIZE))
+				m.View(tty.New(size))
 			}
 		}
-
-		size := geom.DEFAULT_SIZE
 
 		for _, msg := range msgs {
 			realMsg = msg
