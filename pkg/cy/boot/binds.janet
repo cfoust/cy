@@ -37,6 +37,7 @@
                    [prefix "t"] action/new-tab
                    [prefix "N"] action/next-tab
                    [prefix "P"] action/prev-tab
+                   [prefix "R"] action/set-tab-name
                    [prefix "left"] action/move-left
                    [prefix "right"] action/move-right
                    [prefix "up"] action/move-up

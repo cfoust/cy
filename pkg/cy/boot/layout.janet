@@ -624,6 +624,35 @@ For example, when moving vertically upwards, for a vertical split node this func
   (set-borders-property :title-bottom "enter a value for :title-bottom"))
 
 (key/action
+  action/set-tab-name
+  "Set the name of the current tab."
+  (def layout (layout/get))
+  (def path (layout/attach-path layout))
+  (def tabs-path (layout/find-last layout path |(layout/type? :tabs $)))
+  (if (nil? tabs-path) (break))
+  (def tabs (layout/path layout tabs-path))
+  (def active-path (find
+                     |((layout/path tabs (array/slice $ 0 2)) :active)
+                     (layout/successors tabs)))
+
+  (def tab-path (array/slice active-path 0 2))
+  (def active (layout/path tabs tab-path))
+  (def new-name (input/text
+                  "set the tab name"
+                  :preset (active :name)
+                  :animated false))
+
+  (if (or (nil? new-name) (= 0 (length new-name))) (break))
+
+  (def new-layout
+    (layout/assoc
+      layout
+      @[;tabs-path ;tab-path]
+      (assoc active :name new-name)))
+
+  (layout/set new-layout))
+
+(key/action
   action/clear-layout
   "Clear out the layout."
   (layout/set {:type :pane :attached true}))
