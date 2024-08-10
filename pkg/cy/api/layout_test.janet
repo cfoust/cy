@@ -51,7 +51,31 @@
 (test "tab actions"
       (action/new-tab)
       (action/new-tab)
-      (action/new-tab))
+      (action/new-tab)
+
+      (action/next-tab)
+      (do
+        (def {:tabs tabs} (layout/get))
+        (def {:active active} (tabs 0))
+        (assert active))
+
+      (action/next-tab)
+      (do
+        (def {:tabs tabs} (layout/get))
+        (def {:active active} (tabs 1))
+        (assert active))
+
+      (action/prev-tab)
+      (do
+        (def {:tabs tabs} (layout/get))
+        (def {:active active} (tabs 0))
+        (assert active))
+
+      (action/prev-tab)
+      (do
+        (def {:tabs tabs} (layout/get))
+        (def {:active active} (tabs 3))
+        (assert active)))
 
 (test ":split"
       (layout/set

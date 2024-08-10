@@ -222,10 +222,17 @@ func (t *Tabs) Send(msg mux.Msg) {
 			return
 		}
 
+		isActive := index == tabIndex
+		node := tab.Node
+
+		if isActive {
+			node = L.AttachFirst(tab.Node)
+		}
+
 		newTabs = append(newTabs, L.Tab{
-			Active: index == tabIndex,
+			Active: isActive,
 			Name:   tab.Name,
-			Node:   tab.Node,
+			Node:   node,
 		})
 	}
 

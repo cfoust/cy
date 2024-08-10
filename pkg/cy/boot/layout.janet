@@ -760,3 +760,45 @@ For example, when moving vertically upwards, for a vertical split node this func
                                  new-tab])))))
 
   (layout/set new-layout))
+
+(defn-
+  switch-tab-delta
+  [delta]
+  (def layout (layout/get))
+  (def tabs-path (layout/find-last
+                   layout
+                   (layout/attach-path layout)
+                   |(layout/type? :tabs $)))
+  (if (nil? tabs-path) (break))
+
+  (def detached (layout/detach layout))
+  (def node (layout/path detached tabs-path))
+  (def [[_ active-index]] (layout/successors node))
+  (def {:tabs existing-tabs} node)
+
+  (def new-index (mod (+ active-index delta) (length existing-tabs)))
+
+  (def new-layout
+    (layout/assoc
+      detached
+      tabs-path
+      (assoc node :tabs
+             (->>
+               (pairs existing-tabs)
+               (map |(if (= new-index ($ 0))
+                       (as?-> ($ 1) _
+                              (assoc _ :active true)
+                              (assoc _ :node (layout/attach-first (_ :node))))
+                       (assoc ($ 1) :active false)))))))
+
+  (layout/set new-layout))
+
+(key/action
+  action/next-tab
+  "Switch to the next tab."
+  (switch-tab-delta 1))
+
+(key/action
+  action/prev-tab
+  "Switch to the previous tab."
+  (switch-tab-delta -1))
