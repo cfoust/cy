@@ -764,6 +764,70 @@ func init() {
 		return screen, err
 	}, stories.Config{})
 
+	stories.Register("layout/bar/bad", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		err = client.execute(`
+(def cmd1 (shell/new))
+(layout/set (layout/new
+              (bar
+                (fn [])
+                (attach :id cmd1))))
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("layout/dynamic", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		err = client.execute(`
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(defn
+  border-title
+  [layout]
+  (def node (layout/attach-id layout))
+
+  (if
+    (nil? node) (style/text "detached" :bg "4" :italic true)
+    (style/text (tree/path node) :bg "5")))
+(defn
+  border-fg
+  [layout]
+  (def node (layout/attach-id layout))
+
+  (if (nil? node) "4" "5"))
+
+(layout/set (layout/new
+              (split
+                (borders
+                  (attach :id cmd1)
+                  :title border-title
+                  :border-fg border-fg)
+                (borders
+                  (pane :id cmd2)
+                  :title border-title
+                  :border-fg border-fg))))
+		`)
+		return screen, err
+	}, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "L"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "H"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "L"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "H"),
+			stories.Wait(stories.Some),
+		},
+	})
+
 	stories.Register("layout/bar/bottom", func(ctx context.Context) (
 		mux.Screen,
 		error,
