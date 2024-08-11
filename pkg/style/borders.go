@@ -18,6 +18,9 @@ var (
 	KEYWORD_THICK      = janet.Keyword("thick")
 	KEYWORD_DOUBLE     = janet.Keyword("double")
 	KEYWORD_HIDDEN     = janet.Keyword("hidden")
+
+	// Special border behavior
+	KEYWORD_NONE = janet.Keyword("none")
 )
 
 var Borders = []Border{
@@ -106,7 +109,15 @@ func FillBorder(
 }
 
 type Border struct {
+	// a "none" border is one that is explicitly hidden, which is
+	// supported in some layout nodes
+	isNone bool
 	lipgloss.Border
+}
+
+// None reports whether this Border is none, or should not be rendered.
+func (b Border) None() bool {
+	return b.isNone
 }
 
 func (b Border) Smoothable() bool {
@@ -156,6 +167,9 @@ func (b *Border) UnmarshalJanet(value *janet.Value) (err error) {
 		border = lipgloss.DoubleBorder()
 	case KEYWORD_HIDDEN:
 		border = lipgloss.HiddenBorder()
+	case KEYWORD_NONE:
+		b.isNone = true
+		return nil
 	default:
 		return fmt.Errorf(
 			"invalid border style: %s", keyword,
@@ -169,6 +183,10 @@ func (b *Border) UnmarshalJanet(value *janet.Value) (err error) {
 var _ janet.Marshalable = (*Border)(nil)
 
 func (b *Border) MarshalJanet() interface{} {
+	if b.isNone {
+		return KEYWORD_NONE
+	}
+
 	for key, value := range borderMap {
 		if b.Border != value {
 			continue

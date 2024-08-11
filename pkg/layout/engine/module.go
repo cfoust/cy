@@ -13,8 +13,10 @@ import (
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/util"
-	tea "github.com/charmbracelet/bubbletea"
 
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -104,9 +106,11 @@ type LayoutEngine struct {
 	*mux.UpdatePublisher
 	throttle *throttle
 
-	params *params.Parameters
-	tree   *tree.Tree
-	server *server.Server
+	context interface{}
+	params  *params.Parameters
+	tree    *tree.Tree
+	server  *server.Server
+	log     zerolog.Logger
 
 	size           geom.Size
 	layout         L.NodeType
@@ -300,6 +304,18 @@ func WithParams(params *params.Parameters) Setting {
 	}
 }
 
+func WithContext(context interface{}) Setting {
+	return func(l *LayoutEngine) {
+		l.context = context
+	}
+}
+
+func WithLogger(logger zerolog.Logger) Setting {
+	return func(l *LayoutEngine) {
+		l.log = logger
+	}
+}
+
 func New(
 	ctx context.Context,
 	tree *tree.Tree,
@@ -320,6 +336,7 @@ func New(
 		server:          muxServer,
 		params:          params.New(),
 		throttle:        t,
+		log:             log.Logger,
 	}
 
 	for _, setting := range settings {

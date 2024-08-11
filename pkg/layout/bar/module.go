@@ -2,7 +2,6 @@ package bar
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
@@ -10,13 +9,12 @@ import (
 	L "github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
-	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/sasha-s/go-deadlock"
 )
 
 type Bar struct {
-	util.Lifetime
+	*L.Computable
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 	render     *taro.Renderer
@@ -46,18 +44,8 @@ func (b *Bar) State() *tty.State {
 	state := tty.New(size)
 
 	var barState string
-
-	layout := L.New(config.Node)
-	result, err := config.Text.Get(
-		b.Ctx(),
-		nil,
-		bar.Size,
-		&layout,
-	)
-	if err == nil {
-		barState = result
-	} else {
-		barState = fmt.Sprintf("%s", err)
+	if value, ok := config.Text.GetPreset(); ok {
+		barState = value
 	}
 
 	barState = b.render.NewStyle().
@@ -98,6 +86,15 @@ func (b *Bar) Apply(node L.NodeType) (bool, error) {
 	defer b.Unlock()
 
 	b.config = config
+
+	layout := L.New(config)
+	config.Text.Preset(
+		b.Ctx(),
+		b.Context.Context(),
+		&layout,
+	)
+	config.Text.SetLogger(b.Logger)
+
 	return true, nil
 }
 
@@ -173,16 +170,16 @@ func New(
 	ctx context.Context,
 	screen mux.Screen,
 ) *Bar {
-	l := util.NewLifetime(ctx)
+	c := L.NewComputable(ctx)
 	bar := &Bar{
-		Lifetime:        l,
+		Computable:      c,
 		UpdatePublisher: mux.NewPublisher(),
 		screen:          screen,
 		size:            geom.DEFAULT_SIZE,
 		render:          taro.NewRenderer(),
 	}
 
-	go bar.poll(l.Ctx())
+	go bar.poll(bar.Ctx())
 
 	return bar
 }

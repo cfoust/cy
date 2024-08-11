@@ -4,9 +4,8 @@ import (
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/layout/prop"
-	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
-	"github.com/cfoust/cy/pkg/style"
+
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -22,9 +21,9 @@ type SplitType struct {
 	Vertical bool
 	Percent  *int
 	Cells    *int
-	Border   *style.Border
-	BorderFg *style.Color
-	BorderBg *style.Color
+	Border   *prop.Border
+	BorderFg *prop.Color
+	BorderBg *prop.Color
 	A        NodeType
 	B        NodeType
 }
@@ -33,18 +32,18 @@ type MarginsType struct {
 	Cols     int
 	Rows     int
 	Frame    *string
-	Border   *style.Border
-	BorderFg *style.Color
-	BorderBg *style.Color
+	Border   *prop.Border
+	BorderFg *prop.Color
+	BorderBg *prop.Color
 	Node     NodeType
 }
 
 type BorderType struct {
-	Title       *string
-	TitleBottom *string
-	Border      *style.Border
-	BorderFg    *style.Color
-	BorderBg    *style.Color
+	Title       *prop.String
+	TitleBottom *prop.String
+	Border      *prop.Border
+	BorderFg    *prop.Color
+	BorderBg    *prop.Color
 	Node        NodeType
 }
 
@@ -55,9 +54,9 @@ type Tab struct {
 }
 
 type TabsType struct {
-	ActiveFg, ActiveBg     *style.Color
-	InactiveFg, InactiveBg *style.Color
-	Bg                     *style.Color
+	ActiveFg, ActiveBg     *prop.Color
+	InactiveFg, InactiveBg *prop.Color
+	Bg                     *prop.Color
 	Bottom                 bool
 	Tabs                   []Tab
 }
@@ -506,14 +505,4 @@ func ValidateTree(tree NodeType) error {
 	}
 
 	return validateNodes(tree)
-}
-
-// Reusable is used to describe a Screen that has a configuration that can
-// change. Often a Screen does not actually need to be created from scratch
-// when the corresponding layout node changes; it can just be updated. The
-// reuse function checks whether the Screen can be updated to match the new
-// configuration and updates it if possible.
-type Reusable interface {
-	mux.Screen
-	Apply(NodeType) (bool, error)
 }

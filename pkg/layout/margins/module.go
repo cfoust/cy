@@ -8,9 +8,9 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	L "github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
-	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/charmbracelet/lipgloss"
 
@@ -22,6 +22,7 @@ import (
 // fixed). In margin mode, the Screen is surrounded by fixed-size margins that
 // do not change with the screen size.
 type Margins struct {
+	*L.Computable
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 	render *taro.Renderer
@@ -33,11 +34,9 @@ type Margins struct {
 	margins   geom.Size
 	size      geom.Size
 
-	outer geom.Size
-	inner geom.Rect
-
-	borderStyle        *style.Border
-	borderFg, borderBg *style.Color
+	outer  geom.Size
+	inner  geom.Rect
+	config L.MarginsType
 }
 
 var _ mux.Screen = (*Margins)(nil)
@@ -72,35 +71,30 @@ func (l *Margins) Apply(node L.NodeType) (bool, error) {
 	l.Lock()
 	defer l.Unlock()
 
-	oldSize := l.size
+	l.config = config
 
+	oldSize := l.size
 	newSize := geom.Vec2{
 		R: config.Rows,
 		C: config.Cols,
 	}
 
-	var changed bool
 	if oldSize != newSize {
 		l.setSize(newSize)
 	}
 
-	if config.Border != l.borderStyle {
-		l.borderStyle = config.Border
-		changed = true
-	}
-
-	if config.BorderFg != l.borderFg {
-		l.borderFg = config.BorderFg
-		changed = true
-	}
-
-	if config.BorderBg != l.borderBg {
-		l.borderBg = config.BorderBg
-		changed = true
-	}
-
-	if !changed {
-		return true, nil
+	layout := L.New(config.Node)
+	for _, prop := range []prop.Presettable{
+		config.Border,
+		config.BorderFg,
+		config.BorderBg,
+	} {
+		prop.Preset(
+			l.Ctx(),
+			l.Context.Context(),
+			&layout,
+		)
+		prop.SetLogger(l.Logger)
 	}
 
 	return true, l.recalculate()
@@ -117,11 +111,9 @@ func (l *Margins) Kill() {
 func (l *Margins) State() *tty.State {
 	l.RLock()
 	var (
-		inner       = l.inner
-		outer       = l.outer
-		borderStyle = l.borderStyle
-		borderFg    = l.borderFg
-		borderBg    = l.borderBg
+		inner  = l.inner
+		outer  = l.outer
+		config = l.config
 	)
 	l.RUnlock()
 
@@ -143,7 +135,8 @@ func (l *Margins) State() *tty.State {
 		}
 	}
 
-	if borderStyle == nil {
+	borderStyle, ok := config.Border.GetPreset()
+	if !ok || borderStyle.None() {
 		return state
 	}
 
@@ -157,12 +150,12 @@ func (l *Margins) State() *tty.State {
 		Width(inner.Size.C).
 		Height(inner.Size.R)
 
-	if borderFg != nil {
-		boxStyle = boxStyle.BorderForeground(borderFg.Color)
+	if value, ok := config.BorderFg.GetPreset(); ok {
+		boxStyle = boxStyle.BorderForeground(value.Color)
 	}
 
-	if borderBg != nil {
-		boxStyle = boxStyle.BorderBackground(borderBg.Color)
+	if value, ok := config.BorderBg.GetPreset(); ok {
+		boxStyle = boxStyle.BorderBackground(value.Color)
 	}
 
 	l.render.RenderAt(
@@ -203,7 +196,7 @@ func (l *Margins) getInner(outer geom.Size) geom.Rect {
 		C: geom.Max(getSize(outer.C, factor.C), 1),
 	}
 
-	if l.borderStyle != nil {
+	if value, ok := l.config.Border.GetPreset(); ok && !value.None() {
 		inner.C = geom.Max(
 			inner.C-2,
 			1,
@@ -261,7 +254,9 @@ func (l *Margins) Resize(size geom.Size) error {
 }
 
 func New(ctx context.Context, screen mux.Screen) *Margins {
+	c := L.NewComputable(ctx)
 	margins := &Margins{
+		Computable:      c,
 		UpdatePublisher: mux.NewPublisher(),
 		size: geom.Size{
 			C: 80,

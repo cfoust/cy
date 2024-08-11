@@ -6,8 +6,8 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	L "github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
-	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/charmbracelet/lipgloss"
@@ -15,16 +15,14 @@ import (
 )
 
 type Borders struct {
+	*L.Computable
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 	render *taro.Renderer
 	screen mux.Screen
 	size   geom.Size
 	inner  geom.Rect
-
-	title, titleBottom string
-	borderStyle        *style.Border
-	borderFg, borderBg *style.Color
+	config L.BorderType
 }
 
 var _ mux.Screen = (*Borders)(nil)
@@ -39,20 +37,22 @@ func (l *Borders) Apply(node L.NodeType) (bool, error) {
 	l.Lock()
 	defer l.Unlock()
 
-	l.borderStyle = config.Border
-	l.borderBg = config.BorderBg
-	l.borderFg = config.BorderFg
+	l.config = config
 
-	if config.Title != nil {
-		l.title = *config.Title
-	} else {
-		l.title = ""
-	}
-
-	if config.TitleBottom != nil {
-		l.titleBottom = *config.TitleBottom
-	} else {
-		l.titleBottom = ""
+	layout := L.New(config.Node)
+	for _, prop := range []prop.Presettable{
+		config.Title,
+		config.TitleBottom,
+		config.Border,
+		config.BorderFg,
+		config.BorderBg,
+	} {
+		prop.Preset(
+			l.Ctx(),
+			l.Context.Context(),
+			&layout,
+		)
+		prop.SetLogger(l.Logger)
 	}
 
 	return true, nil
@@ -69,13 +69,9 @@ func (l *Borders) Kill() {
 func (l *Borders) State() *tty.State {
 	l.RLock()
 	var (
-		inner       = l.inner
-		size        = l.size
-		borderStyle = l.borderStyle
-		title       = l.title
-		titleBottom = l.titleBottom
-		borderFg    = l.borderFg
-		borderBg    = l.borderBg
+		inner  = l.inner
+		size   = l.size
+		config = l.config
 	)
 	l.RUnlock()
 
@@ -84,8 +80,13 @@ func (l *Borders) State() *tty.State {
 
 	tty.Copy(inner.Position, state, innerState)
 
+	borderStyle := lipgloss.RoundedBorder()
+	if value, ok := config.Border.GetPreset(); ok {
+		borderStyle = value.Border
+	}
+
 	boxStyle := l.render.NewStyle().
-		Border(borderStyle.Border).
+		Border(borderStyle).
 		BorderForeground(lipgloss.Color("7")).
 		BorderTop(true).
 		BorderLeft(true).
@@ -94,33 +95,33 @@ func (l *Borders) State() *tty.State {
 		Width(inner.Size.C).
 		Height(inner.Size.R)
 
-	if borderFg != nil {
-		boxStyle = boxStyle.BorderForeground(borderFg.Color)
+	if value, ok := config.BorderFg.GetPreset(); ok {
+		boxStyle = boxStyle.BorderForeground(value.Color)
 	}
 
-	if borderBg != nil {
-		boxStyle = boxStyle.BorderBackground(borderBg.Color)
+	if value, ok := config.BorderBg.GetPreset(); ok {
+		boxStyle = boxStyle.BorderBackground(value.Color)
 	}
 
 	l.render.RenderAt(state.Image, 0, 0, boxStyle.Render(""))
 
-	if len(title) > 0 {
+	if value, ok := config.Title.GetPreset(); ok {
 		l.render.RenderAt(
 			state.Image,
 			0, 1,
 			l.render.NewStyle().
 				MaxWidth(inner.Size.C).
-				Render(title),
+				Render(value),
 		)
 	}
 
-	if len(titleBottom) > 0 {
+	if value, ok := config.TitleBottom.GetPreset(); ok {
 		l.render.RenderAt(
 			state.Image,
 			size.R-1, 1,
 			l.render.NewStyle().
 				MaxWidth(inner.Size.C).
-				Render(titleBottom),
+				Render(value),
 		)
 	}
 
@@ -193,14 +194,16 @@ func (l *Borders) Resize(size geom.Size) error {
 }
 
 func New(ctx context.Context, screen mux.Screen) *Borders {
+	c := L.NewComputable(ctx)
 	borders := &Borders{
+		Computable:      c,
 		UpdatePublisher: mux.NewPublisher(),
 		size:            geom.DEFAULT_SIZE,
 		screen:          screen,
 		render:          taro.NewRenderer(),
 	}
 
-	go borders.poll(ctx)
+	go borders.poll(borders.Ctx())
 
 	return borders
 }

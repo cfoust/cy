@@ -243,6 +243,8 @@ func (c *Client) initialize(options ClientOptions) error {
 		c.cy.tree,
 		c.cy.muxServer,
 		engine.WithParams(c.params),
+		engine.WithContext(c),
+		engine.WithLogger(c.cy.log),
 	)
 
 	err = c.layoutEngine.Set(layout.New(layout.MarginsType{

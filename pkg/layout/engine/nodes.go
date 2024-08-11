@@ -12,6 +12,7 @@ import (
 	"github.com/cfoust/cy/pkg/layout/split"
 	"github.com/cfoust/cy/pkg/layout/tabs"
 	"github.com/cfoust/cy/pkg/util"
+
 	"github.com/rs/zerolog/log"
 )
 
@@ -47,6 +48,18 @@ func (l *LayoutEngine) createNode(
 
 	if err != nil {
 		return nil, err
+	}
+
+	if log, ok := node.Screen.(L.Loggable); ok {
+		log.SetLogger(l.log)
+	}
+
+	if c, ok := node.Screen.(L.Contextable); ok {
+		c.SetContext(l.context)
+	}
+
+	if r, ok := node.Screen.(L.Reusable); ok {
+		r.Apply(config)
 	}
 
 	go func() {
@@ -184,7 +197,6 @@ func (l *LayoutEngine) createPane(
 		l.params,
 	)
 
-	pane.Apply(config)
 	node.Screen = pane
 	return nil
 }
@@ -205,8 +217,6 @@ func (l *LayoutEngine) createMargins(
 		node.Ctx(),
 		marginsNode.Screen,
 	)
-
-	margins.Apply(config)
 
 	node.Screen = margins
 	node.Children = []*screenNode{marginsNode}
@@ -233,8 +243,6 @@ func (l *LayoutEngine) createSplit(
 		config.Vertical,
 	)
 
-	split.Apply(config)
-
 	node.Screen = split
 	node.Children = []*screenNode{nodeA, nodeB}
 	return nil
@@ -256,8 +264,6 @@ func (l *LayoutEngine) createBorders(
 		node.Ctx(),
 		innerNode.Screen,
 	)
-
-	borders.Apply(config)
 
 	node.Screen = borders
 	node.Children = []*screenNode{innerNode}
@@ -281,8 +287,6 @@ func (l *LayoutEngine) createTabs(
 		innerNode.Screen,
 	)
 
-	tabs.Apply(config)
-
 	node.Screen = tabs
 	node.Children = []*screenNode{innerNode}
 	return nil
@@ -304,8 +308,6 @@ func (l *LayoutEngine) createBar(
 		node.Ctx(),
 		innerNode.Screen,
 	)
-
-	bar.Apply(config)
 
 	node.Screen = bar
 	node.Children = []*screenNode{innerNode}

@@ -6,9 +6,6 @@ import (
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
-	"github.com/cfoust/cy/pkg/style"
-
-	"github.com/charmbracelet/lipgloss"
 )
 
 var (
@@ -18,46 +15,10 @@ var (
 	KEYWORD_BORDERS = janet.Keyword("borders")
 	KEYWORD_TABS    = janet.Keyword("tabs")
 	KEYWORD_BAR     = janet.Keyword("bar")
-
-	// Special border behavior
-	KEYWORD_NONE = janet.Keyword("none")
 )
 
 type nodeType struct {
 	Type janet.Keyword
-}
-
-func unmarshalBorder(value *janet.Value) (*style.Border, error) {
-	border := style.NewBorder(
-		lipgloss.RoundedBorder(),
-	)
-
-	if value == nil || value.Nil() {
-		return &border, nil
-	}
-
-	if err := value.Unmarshal(&KEYWORD_NONE); err == nil {
-		return nil, nil
-	}
-
-	err := value.Unmarshal(&border)
-	if err != nil {
-		return nil, err
-	}
-	return &border, nil
-}
-
-func unmarshalColor(value *janet.Value) (*style.Color, error) {
-	if value == nil || value.Nil() {
-		return nil, nil
-	}
-
-	var color style.Color
-	err := value.Unmarshal(&color)
-	if err != nil {
-		return nil, err
-	}
-	return &color, nil
 }
 
 func unmarshalNode(value *janet.Value) (NodeType, error) {
@@ -97,11 +58,11 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			Vertical *bool
 			Percent  *int
 			Cells    *int
-			Border   *janet.Value
 			A        *janet.Value
 			B        *janet.Value
-			BorderBg *janet.Value
-			BorderFg *janet.Value
+			Border   *prop.Border
+			BorderFg *prop.Color
+			BorderBg *prop.Color
 		}
 		args := splitArgs{}
 		err = value.Unmarshal(&args)
@@ -126,25 +87,13 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		}
 
 		type_ := SplitType{
-			Percent: args.Percent,
-			Cells:   args.Cells,
-			A:       a,
-			B:       b,
-		}
-
-		type_.Border, err = unmarshalBorder(args.Border)
-		if err != nil {
-			return nil, err
-		}
-
-		type_.BorderFg, err = unmarshalColor(args.BorderFg)
-		if err != nil {
-			return nil, err
-		}
-
-		type_.BorderBg, err = unmarshalColor(args.BorderBg)
-		if err != nil {
-			return nil, err
+			Percent:  args.Percent,
+			Cells:    args.Cells,
+			A:        a,
+			B:        b,
+			Border:   args.Border,
+			BorderFg: args.BorderFg,
+			BorderBg: args.BorderBg,
 		}
 
 		if args.Vertical != nil {
@@ -156,9 +105,9 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		type marginsArgs struct {
 			Cols     *int
 			Rows     *int
-			Border   *janet.Value
-			BorderBg *janet.Value
-			BorderFg *janet.Value
+			Border   *prop.Border
+			BorderBg *prop.Color
+			BorderFg *prop.Color
 			Node     *janet.Value
 		}
 		args := marginsArgs{}
@@ -173,7 +122,10 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		}
 
 		type_ := MarginsType{
-			Node: node,
+			Node:     node,
+			Border:   args.Border,
+			BorderFg: args.BorderFg,
+			BorderBg: args.BorderBg,
 		}
 
 		if args.Cols != nil {
@@ -184,30 +136,15 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			type_.Rows = *args.Rows
 		}
 
-		type_.Border, err = unmarshalBorder(args.Border)
-		if err != nil {
-			return nil, err
-		}
-
-		type_.BorderFg, err = unmarshalColor(args.BorderFg)
-		if err != nil {
-			return nil, err
-		}
-
-		type_.BorderBg, err = unmarshalColor(args.BorderBg)
-		if err != nil {
-			return nil, err
-		}
-
 		return type_, nil
 	case KEYWORD_BORDERS:
 		type borderArgs struct {
-			Title       *string
-			TitleBottom *string
-			Border      *janet.Value
+			Title       *prop.String
+			TitleBottom *prop.String
+			Border      *prop.Border
 			Node        *janet.Value
-			BorderBg    *janet.Value
-			BorderFg    *janet.Value
+			BorderBg    *prop.Color
+			BorderFg    *prop.Color
 		}
 		args := borderArgs{}
 		err = value.Unmarshal(&args)
@@ -224,27 +161,16 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			Title:       args.Title,
 			TitleBottom: args.TitleBottom,
 			Node:        node,
+			Border:      args.Border,
+			BorderFg:    args.BorderFg,
 		}
 
-		type_.Border, err = unmarshalBorder(args.Border)
-		if err != nil {
-			return nil, err
-		}
-
-		if type_.Border == nil {
-			return nil, fmt.Errorf(
-				"type :border does not support :border=:none",
-			)
-		}
-
-		type_.BorderFg, err = unmarshalColor(args.BorderFg)
-		if err != nil {
-			return nil, err
-		}
-
-		type_.BorderBg, err = unmarshalColor(args.BorderBg)
-		if err != nil {
-			return nil, err
+		if type_.Border != nil {
+			if border, ok := type_.Border.Static(); ok && border.None() {
+				return nil, fmt.Errorf(
+					"type :border does not support :border=:none",
+				)
+			}
 		}
 
 		return type_, nil
@@ -255,9 +181,9 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			Node   *janet.Value
 		}
 		type tabsArgs struct {
-			ActiveFg, ActiveBg     *janet.Value
-			InactiveFg, InactiveBg *janet.Value
-			Bg                     *janet.Value
+			ActiveFg, ActiveBg     *prop.Color
+			InactiveFg, InactiveBg *prop.Color
+			Bg                     *prop.Color
 			Bottom                 *bool
 			Tabs                   []tabArg
 		}
@@ -267,23 +193,12 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			return nil, err
 		}
 
-		type_ := TabsType{}
-
-		for _, color := range []struct {
-			dest **style.Color
-			src  *janet.Value
-		}{
-			{&type_.ActiveFg, args.ActiveFg},
-			{&type_.ActiveBg, args.ActiveBg},
-			{&type_.InactiveFg, args.InactiveFg},
-			{&type_.InactiveBg, args.InactiveBg},
-		} {
-			c, err := unmarshalColor(color.src)
-			if err != nil {
-				return nil, err
-			}
-
-			*color.dest = c
+		type_ := TabsType{
+			ActiveFg:   args.ActiveFg,
+			ActiveBg:   args.ActiveBg,
+			InactiveFg: args.InactiveFg,
+			InactiveBg: args.InactiveBg,
+			Bg:         args.Bg,
 		}
 
 		if args.Bottom != nil {
@@ -364,14 +279,6 @@ func (l *Layout) UnmarshalJanet(value *janet.Value) (err error) {
 
 var _ janet.Marshalable = (*Layout)(nil)
 
-func marshalBorder(border *style.Border) interface{} {
-	if border == nil {
-		return KEYWORD_NONE
-	}
-
-	return border.MarshalJanet()
-}
-
 func marshalNode(node NodeType) interface{} {
 	switch node := node.(type) {
 	case PaneType:
@@ -392,9 +299,9 @@ func marshalNode(node NodeType) interface{} {
 			Vertical bool
 			Percent  *int
 			Cells    *int
-			Border   interface{}
-			BorderFg *style.Color
-			BorderBg *style.Color
+			Border   *prop.Border
+			BorderFg *prop.Color
+			BorderBg *prop.Color
 			A        interface{}
 			B        interface{}
 		}
@@ -404,7 +311,7 @@ func marshalNode(node NodeType) interface{} {
 			Vertical: node.Vertical,
 			Percent:  node.Percent,
 			Cells:    node.Cells,
-			Border:   marshalBorder(node.Border),
+			Border:   node.Border,
 			BorderFg: node.BorderFg,
 			BorderBg: node.BorderBg,
 			A:        marshalNode(node.A),
@@ -417,16 +324,16 @@ func marshalNode(node NodeType) interface{} {
 			Cols     int
 			Rows     int
 			Frame    *string
-			Border   interface{}
-			BorderFg *style.Color
-			BorderBg *style.Color
+			Border   *prop.Border
+			BorderFg *prop.Color
+			BorderBg *prop.Color
 			Node     interface{}
 		}{
 			Type:     KEYWORD_MARGINS,
 			Cols:     node.Cols,
 			Rows:     node.Rows,
 			Frame:    node.Frame,
-			Border:   marshalBorder(node.Border),
+			Border:   node.Border,
 			BorderFg: node.BorderFg,
 			BorderBg: node.BorderBg,
 			Node:     marshalNode(node.Node),
@@ -434,17 +341,17 @@ func marshalNode(node NodeType) interface{} {
 	case BorderType:
 		return struct {
 			Type        janet.Keyword
-			Title       *string
-			TitleBottom *string
-			Border      interface{}
-			BorderFg    *style.Color
-			BorderBg    *style.Color
+			Title       *prop.String
+			TitleBottom *prop.String
+			Border      *prop.Border
+			BorderFg    *prop.Color
+			BorderBg    *prop.Color
 			Node        interface{}
 		}{
 			Type:        KEYWORD_BORDERS,
 			Title:       node.Title,
 			TitleBottom: node.TitleBottom,
-			Border:      marshalBorder(node.Border),
+			Border:      node.Border,
 			BorderFg:    node.BorderFg,
 			BorderBg:    node.BorderBg,
 			Node:        marshalNode(node.Node),
@@ -457,9 +364,9 @@ func marshalNode(node NodeType) interface{} {
 		}
 		type_ := struct {
 			Type                   janet.Keyword
-			ActiveFg, ActiveBg     *style.Color
-			InactiveFg, InactiveBg *style.Color
-			Bg                     *style.Color
+			ActiveFg, ActiveBg     *prop.Color
+			InactiveFg, InactiveBg *prop.Color
+			Bg                     *prop.Color
 			Bottom                 bool
 			Tabs                   []tabArg
 		}{

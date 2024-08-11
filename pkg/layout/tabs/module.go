@@ -8,6 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	L "github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
 
@@ -16,6 +17,7 @@ import (
 )
 
 type Tabs struct {
+	*L.Computable
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 	render     *taro.Renderer
@@ -49,13 +51,13 @@ func (t *Tabs) State() *tty.State {
 	state := tty.New(size)
 
 	activeFg := lipgloss.Color("0")
-	if config.ActiveFg != nil {
-		activeFg = config.ActiveFg.Color
+	if value, ok := config.ActiveFg.GetPreset(); ok {
+		activeFg = value.Color
 	}
 
 	activeBg := lipgloss.Color("4")
-	if config.ActiveBg != nil {
-		activeBg = config.ActiveBg.Color
+	if value, ok := config.ActiveBg.GetPreset(); ok {
+		activeBg = value.Color
 	}
 
 	tabStyle := t.render.NewStyle().
@@ -66,13 +68,13 @@ func (t *Tabs) State() *tty.State {
 		Background(activeBg)
 
 	inactiveFg := lipgloss.Color("0")
-	if config.InactiveFg != nil {
-		inactiveFg = config.InactiveFg.Color
+	if value, ok := config.InactiveBg.GetPreset(); ok {
+		inactiveFg = value.Color
 	}
 
 	inactiveBg := lipgloss.Color("7")
-	if config.InactiveBg != nil {
-		inactiveBg = config.InactiveBg.Color
+	if value, ok := config.InactiveBg.GetPreset(); ok {
+		inactiveBg = value.Color
 	}
 
 	inactive := tabStyle.
@@ -80,8 +82,8 @@ func (t *Tabs) State() *tty.State {
 		Background(inactiveBg)
 
 	bg := emu.DefaultBG
-	if config.Bg != nil {
-		bg = config.Bg.Emu()
+	if value, ok := config.Bg.GetPreset(); ok {
+		bg = value.Emu()
 	}
 
 	var barWidth, activeLoc, activeWidth int
@@ -180,6 +182,22 @@ func (t *Tabs) Apply(node L.NodeType) (bool, error) {
 
 	t.Lock()
 	defer t.Unlock()
+
+	layout := L.New(config.Active())
+	for _, prop := range []*prop.Color{
+		config.ActiveFg,
+		config.ActiveBg,
+		config.InactiveFg,
+		config.InactiveBg,
+		config.Bg,
+	} {
+		prop.Preset(
+			t.Ctx(),
+			t.Context.Context(),
+			&layout,
+		)
+		prop.SetLogger(t.Logger)
+	}
 
 	t.config = config
 	return true, nil
@@ -311,14 +329,16 @@ func (t *Tabs) poll(ctx context.Context) {
 }
 
 func New(ctx context.Context, screen mux.Screen) *Tabs {
+	c := L.NewComputable(ctx)
 	tabs := &Tabs{
+		Computable:      c,
 		UpdatePublisher: mux.NewPublisher(),
 		screen:          screen,
 		size:            geom.DEFAULT_SIZE,
 		render:          taro.NewRenderer(),
 	}
 
-	go tabs.poll(ctx)
+	go tabs.poll(tabs.Ctx())
 
 	return tabs
 }

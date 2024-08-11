@@ -9,7 +9,6 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	L "github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux"
-	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/sasha-s/go-deadlock"
@@ -17,6 +16,7 @@ import (
 
 // Split renders two screens side by side (or one above the other) at a fixed proportion of its full width or height (respectively.)
 type Split struct {
+	*L.Computable
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 
@@ -40,10 +40,8 @@ type Split struct {
 
 	// The number of cells perpendicular to the split axis to include from
 	// screen A. This is calculated using `percent`.
-	cells int
-
-	borderStyle        *style.Border
-	borderFg, borderBg *style.Color
+	cells  int
+	config L.SplitType
 }
 
 var _ mux.Screen = (*Split)(nil)
@@ -64,12 +62,10 @@ func (s *Split) Kill() {
 func (s *Split) State() *tty.State {
 	s.RLock()
 	var (
-		size        = s.size
-		positionB   = s.positionB
-		isVertical  = s.isVertical
-		borderStyle = s.borderStyle
-		borderFg    = s.borderFg
-		borderBg    = s.borderBg
+		size       = s.size
+		positionB  = s.positionB
+		isVertical = s.isVertical
+		config     = s.config
 	)
 	s.RUnlock()
 
@@ -94,19 +90,20 @@ func (s *Split) State() *tty.State {
 		state.CursorVisible = false
 	}
 
-	if borderStyle == nil {
+	borderStyle, ok := config.Border.GetPreset()
+	if !ok || borderStyle.None() {
 		return state
 	}
 
 	fg := emu.DefaultFG
 	bg := emu.DefaultBG
 
-	if borderFg != nil {
-		fg = borderFg.Emu()
+	if value, ok := config.BorderFg.GetPreset(); ok {
+		fg = value.Emu()
 	}
 
-	if borderBg != nil {
-		bg = borderBg.Emu()
+	if value, ok := config.BorderBg.GetPreset(); ok {
+		bg = value.Emu()
 	}
 
 	if !isVertical {
@@ -139,6 +136,8 @@ func (s *Split) Apply(node L.NodeType) (bool, error) {
 	s.Lock()
 	defer s.Unlock()
 
+	s.config = config
+
 	var changed bool
 	if config.Percent != nil && (s.isCells || s.percent != *config.Percent) {
 		s.setPercent(*config.Percent)
@@ -147,21 +146,6 @@ func (s *Split) Apply(node L.NodeType) (bool, error) {
 
 	if config.Cells != nil && (!s.isCells || s.cells != *config.Cells) {
 		s.setCells(*config.Cells)
-		changed = true
-	}
-
-	if config.Border != s.borderStyle {
-		s.borderStyle = config.Border
-		changed = true
-	}
-
-	if config.BorderFg != s.borderFg {
-		s.borderFg = config.BorderFg
-		changed = true
-	}
-
-	if config.BorderBg != s.borderBg {
-		s.borderBg = config.BorderBg
 		changed = true
 	}
 
@@ -234,7 +218,7 @@ func (s *Split) recalculate() error {
 
 	s.positionB = positionB
 
-	if s.borderStyle != nil {
+	if value, ok := s.config.Border.GetPreset(); ok && !value.None() {
 		desiredCells--
 	}
 
@@ -297,7 +281,9 @@ func New(
 	screenA, screenB mux.Screen,
 	isVertical bool,
 ) *Split {
+	c := L.NewComputable(ctx)
 	split := &Split{
+		Computable:      c,
 		UpdatePublisher: mux.NewPublisher(),
 		screenA:         screenA,
 		screenB:         screenB,
