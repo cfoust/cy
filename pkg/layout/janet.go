@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/style"
 
@@ -314,7 +315,7 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		return type_, nil
 	case KEYWORD_BAR:
 		type barArgs struct {
-			Render *janet.Function
+			Text   *prop.String
 			Bottom *bool
 			Node   *janet.Value
 		}
@@ -329,9 +330,15 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			return nil, err
 		}
 
+		if args.Text == nil {
+			return nil, fmt.Errorf(
+				":bar node missing :text",
+			)
+		}
+
 		type_ := BarType{
-			Node:   node,
-			Render: args.Render,
+			Node: node,
+			Text: args.Text,
 		}
 
 		if args.Bottom != nil {
@@ -480,12 +487,12 @@ func marshalNode(node NodeType) interface{} {
 	case BarType:
 		return struct {
 			Type   janet.Keyword
-			Render *janet.Function
+			Text   *prop.String
 			Bottom bool
 			Node   interface{}
 		}{
 			Type:   KEYWORD_BAR,
-			Render: node.Render,
+			Text:   node.Text,
 			Bottom: node.Bottom,
 			Node:   marshalNode(node.Node),
 		}

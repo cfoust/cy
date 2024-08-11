@@ -162,10 +162,10 @@ For example:
 (defn
   layout/bar
   ```Convenience function for creating a new :bar node.```
-  [render node &named bottom]
+  [text node &named bottom]
   {:type :bar
    :node node
-   :render render
+   :text text
    :bottom bottom})
 
 (defmacro

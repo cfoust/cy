@@ -17,18 +17,6 @@
                 (layout/attach-id (layout/pane :id nil :attached true))
                 nil)))
 
-(def cmd1 (shell/new))
-(layout/set (layout/new
-              (bar
-                (fn [[rows cols] layout]
-                  (def node (layout/attach-path layout))
-                  (def text
-                    (if
-                      (nil? node) "detached"
-                      (tree/path node)))
-                  (style/text text :bg "4" :width cols))
-                (attach :id cmd1))))
-
 (test "layout/get"
       (def layout (layout/pane
                     :id 2
@@ -78,6 +66,14 @@
 
       (layout/set layout)
       (assert (deep= (layout/get) layout)))
+
+(test "invalid bar"
+      (def layout
+        (layout/new
+          {:type :bar
+           :node (attach)}))
+
+      (expect-error (layout/set layout)))
 
 (test "tab actions"
       (action/new-tab)

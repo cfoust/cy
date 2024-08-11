@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/layout"
 )
@@ -10,7 +8,7 @@ import (
 type LayoutModule struct {
 }
 
-func (l *LayoutModule) Set(user interface{}, value *janet.Value) error {
+func (l *LayoutModule) Set(context interface{}, value *janet.Value) error {
 	defer value.Free()
 	var layout layout.Layout
 	err := value.Unmarshal(&layout)
@@ -18,18 +16,18 @@ func (l *LayoutModule) Set(user interface{}, value *janet.Value) error {
 		return err
 	}
 
-	client, ok := user.(Client)
-	if !ok {
-		return fmt.Errorf("missing client context")
+	client, err := getClient(context)
+	if err != nil {
+		return err
 	}
 
 	return client.SetLayout(layout)
 }
 
-func (l *LayoutModule) Get(user interface{}) (*layout.Layout, error) {
-	client, ok := user.(Client)
-	if !ok {
-		return nil, fmt.Errorf("missing client context")
+func (l *LayoutModule) Get(context interface{}) (*layout.Layout, error) {
+	client, err := getClient(context)
+	if err != nil {
+		return nil, err
 	}
 
 	layout := client.GetLayout()

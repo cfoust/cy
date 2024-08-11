@@ -3,7 +3,7 @@ package layout
 import (
 	"fmt"
 
-	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/style"
@@ -87,7 +87,7 @@ func (t TabsType) ActiveIndex() int {
 }
 
 type BarType struct {
-	Render *janet.Function
+	Text   *prop.String
 	Bottom bool
 	Node   NodeType
 }

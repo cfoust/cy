@@ -48,14 +48,14 @@ func (b *Bar) State() *tty.State {
 	var barState string
 
 	layout := L.New(config.Node)
-	result, err := config.Render.CallResult(
+	result, err := config.Text.Get(
 		b.Ctx(),
 		nil,
 		bar.Size,
 		&layout,
 	)
 	if err == nil {
-		result.Unmarshal(&barState)
+		barState = result
 	} else {
 		barState = fmt.Sprintf("%s", err)
 	}
