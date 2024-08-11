@@ -44,7 +44,13 @@ func (b *Bar) State() *tty.State {
 	state := tty.New(size)
 
 	var barState string
-	if value, ok := config.Text.GetPreset(); ok {
+	layout := L.New(config.Node)
+	if value, ok := config.Text.Get(
+		b.Ctx(),
+		b.Context.Context(),
+		bar.Size,
+		&layout,
+	); ok {
 		barState = value
 	}
 
@@ -86,13 +92,6 @@ func (b *Bar) Apply(node L.NodeType) (bool, error) {
 	defer b.Unlock()
 
 	b.config = config
-
-	layout := L.New(config)
-	config.Text.Preset(
-		b.Ctx(),
-		b.Context.Context(),
-		&layout,
-	)
 	config.Text.SetLogger(b.Logger)
 
 	return true, nil
