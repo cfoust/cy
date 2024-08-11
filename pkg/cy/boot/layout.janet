@@ -268,6 +268,14 @@ See [the layouts chapter](/layouts.md#programmatic-use) for more information.
   (layout/find node |($ :attached)))
 
 (defn
+  layout/attach-id
+  ```Get the NodeID of the attached node for the given node.```
+  [node]
+  (def path (layout/find node |($ :attached)))
+  (if (nil? path) (break))
+  ((layout/path node path) :id))
+
+(defn
   layout/assoc
   ```Set the node at the given path in layout to the provided node. Returns a copy of the original layout with the node changed.```
   [layout path node]

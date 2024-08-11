@@ -2,6 +2,7 @@ package bar
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
@@ -55,6 +56,8 @@ func (b *Bar) State() *tty.State {
 	)
 	if err == nil {
 		result.Unmarshal(&barState)
+	} else {
+		barState = fmt.Sprintf("%s", err)
 	}
 
 	barState = b.render.NewStyle().

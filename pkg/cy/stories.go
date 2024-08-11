@@ -751,10 +751,32 @@ func init() {
 		err = client.execute(`
 (def cmd1 (shell/new))
 (layout/set (layout/new
+              (bar
+                (fn [[rows cols] layout]
+                  (def node (layout/attach-id layout))
+                  (def text
+                    (if
+                      (nil? node) "detached"
+                      (tree/path node)))
+                  (style/text text :bg "4" :width cols))
+                (attach :id cmd1))))
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("layout/bar/bottom", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		err = client.execute(`
+(def cmd1 (shell/new))
+(layout/set (layout/new
   (bar
     (fn [[rows cols] layout]
-      (style/text "blah" :bg "4" :width cols))
-    (attach :id cmd1))))
+      (style/text "foobar" :bg "4" :width cols))
+    (attach :id cmd1)
+    :bottom true)))
 		`)
 		return screen, err
 	}, stories.Config{})

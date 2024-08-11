@@ -9,6 +9,26 @@
       (layout/set (layout/pane :id 2 :attached true))
       (layout/set (layout/pane :attached true)))
 
+(test "layout/attach-id"
+      (assert (deep=
+                (layout/attach-id (layout/pane :id 2 :attached true))
+                2))
+      (assert (deep=
+                (layout/attach-id (layout/pane :id nil :attached true))
+                nil)))
+
+(def cmd1 (shell/new))
+(layout/set (layout/new
+              (bar
+                (fn [[rows cols] layout]
+                  (def node (layout/attach-path layout))
+                  (def text
+                    (if
+                      (nil? node) "detached"
+                      (tree/path node)))
+                  (style/text text :bg "4" :width cols))
+                (attach :id cmd1))))
+
 (test "layout/get"
       (def layout (layout/pane
                     :id 2
