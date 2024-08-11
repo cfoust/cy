@@ -77,15 +77,24 @@ func (p Params) WaitResult() (*Value, error) {
 type fiberRequest struct {
 	Params
 	// The fiber to run
-	Fiber Fiber
+	Fiber *Fiber
 	// The value with which to resume
 	In *Value
 }
 
-func (v *VM) createFiber(fun *C.JanetFunction, args []C.Janet) Fiber {
+func (v *VM) createFiber(fun *C.JanetFunction, args []C.Janet) (*Fiber, error) {
 	argPtr := unsafe.Pointer(nil)
 	if len(args) > 0 {
 		argPtr = unsafe.Pointer(&args[0])
+	}
+
+	arity := C.get_arity(fun)
+	if int(arity) != len(args) {
+		return nil, fmt.Errorf(
+			"function takes %d args, got %d",
+			arity,
+			len(args),
+		)
 	}
 
 	fiber := C.janet_fiber(
@@ -95,14 +104,14 @@ func (v *VM) createFiber(fun *C.JanetFunction, args []C.Janet) Fiber {
 		(*C.Janet)(argPtr),
 	)
 
-	return Fiber{
+	return &Fiber{
 		Value: v.value(C.janet_wrap_fiber(fiber)),
 		fiber: fiber,
-	}
+	}, nil
 }
 
 // Run a fiber to completion.
-func (v *VM) runFiber(params Params, fiber Fiber, in *Value) {
+func (v *VM) runFiber(params Params, fiber *Fiber, in *Value) {
 	v.requests <- fiberRequest{
 		Params: params,
 		Fiber:  fiber,
@@ -110,7 +119,7 @@ func (v *VM) runFiber(params Params, fiber Fiber, in *Value) {
 	}
 }
 
-func (v *VM) handleYield(params Params, fiber Fiber, out C.Janet) {
+func (v *VM) handleYield(params Params, fiber *Fiber, out C.Janet) {
 	if C.janet_checktype(out, C.JANET_TUPLE) == 0 {
 		params.Error(fmt.Errorf("(yield) called with non-tuple"))
 		return
@@ -155,7 +164,7 @@ func (v *VM) handleYield(params Params, fiber Fiber, out C.Janet) {
 	return
 }
 
-func (v *VM) continueFiber(params Params, fiber Fiber, in *Value) {
+func (v *VM) continueFiber(params Params, fiber *Fiber, in *Value) {
 	arg := C.janet_wrap_nil()
 	if in != nil {
 		arg = in.janet

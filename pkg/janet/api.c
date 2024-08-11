@@ -39,3 +39,7 @@ Janet wrap_keyword(const char *str) {
 int tuple_length(const Janet *t) {
     return janet_tuple_length(t);
 }
+
+int get_arity(JanetFunction *callee) {
+    return callee->def->arity;
+}

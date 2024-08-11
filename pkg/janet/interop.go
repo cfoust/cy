@@ -136,7 +136,7 @@ func handleReturn(v *VM, value reflect.Value) (C.Janet, error) {
 // A request to receive the result of a callback.
 type resolveRequest struct {
 	Params
-	Fiber Fiber
+	Fiber *Fiber
 	// The type signature of the callback
 	Type reflect.Type
 	// The results of the function call
