@@ -332,12 +332,22 @@
                     if (cast == null) {
                         return
                     }
+
+                    const isStatic = v.attributes['data-static']?.value === "1"
                     AsciinemaPlayer.create(
                         `{{ path_to_root }}images/${cast.value}.cast`,
                         v,
                         {
                             autoPlay: true,
                             loop: true,
+                            ...(isStatic ? {
+                                speed: 5,
+                                markers: [
+                                    [1.0, ""],
+                                ],
+                                pauseOnMarkers: true,
+                                controls: false,
+                            }: {}),
                         },
                     );
             })

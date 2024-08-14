@@ -22,7 +22,7 @@ from typing import (
     Callable,
 )
 
-STORY_REGEX = re.compile(r"{{story ((\w+).)?(png|gif|cast) (.+)}}")
+STORY_REGEX = re.compile(r"{{story ((\w+).)?(png|gif|cast|static) (.+)}}")
 
 COMMON = """
 Set FontSize 18
@@ -137,6 +137,11 @@ if __name__ == '__main__':
 
             original = filename
 
+            static = type_ == "static"
+
+            if static:
+                type_ = "cast"
+
             filename += "." + type_
 
             filename = "/images/" + filename
@@ -148,7 +153,8 @@ if __name__ == '__main__':
                 replacement = f"![{command}](/cy/{filename[1:]})"
 
             if filename.endswith("cast"):
-                replacement = f"<div data-cast=\"{original}\"></div>"
+                static_attr = "1" if static else "0"
+                replacement = f"<div data-cast=\"{original}\" data-static=\"{static_attr}\"></div>"
 
             replace.append(
                 (

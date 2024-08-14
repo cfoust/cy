@@ -1,6 +1,6 @@
 # Layouts
 
-`cy` uses a declarative, tree-based system for defining how panes are displayed on the screen. It refers to this as the **layout**. Every `cy` client has a layout that can be retrieved with {{api layout/get}} and set with {{api layout/set}}. A layout is just a configuration for how the `cy` screen should look. It is composed of **nodes** of different types, like panes, splits, et cetera. In other words, a layout is a description of all of the visual elements on the screen.
+`cy` uses a declarative, tree-based system for defining how panes are displayed on the screen. It refers to this as the **layout**. A layout is just a configuration for how the `cy` screen should look. It is composed of **nodes** of different types, like panes, splits, et cetera. In other words, a layout is a description of all of the visual elements on the screen.
 
 The structure of a typical layout might look something like this:
 
@@ -24,19 +24,11 @@ A node consists of a Janet struct with a `:type` property indicating the type of
 
 A layout must have exactly one pane node where `:attached` is `true`. The attached node is the visual element to which the client's input (that does not match any bindings) is sent.
 
-## Changing the layout
+## API
 
-You can access some layout functionality using actions that are available in the command palette:
+Layouts are just standard Janet values. You can retrieve the current layout with {{api layout/get}} and set it with {{api layout/set}}.
 
-- **{{api action/add-node}}**: Quickly add nodes of any type to the layout.
-- **{{api action/remove-parent}}**: Remove the most recent parent of the currently attached node.
-- **{{api action/clear-layout}}**: Completely empty out the layout.
-
-Some node types have actions as well. They are described alongside the node description below.
-
-## Programmatic use
-
-Layouts are just standard Janet values. `cy` comes with a comprehensive [Janet library](https://github.com/cfoust/cy/blob/main/pkg/cy/boot/layout.janet) with handy tools for manipulating them more easily. For example, you can quickly create nodes with a family of creation functions like {{api layout/pane}}, {{api layout/split}}, {{api layout/vsplit}}, et cetera.
+`cy` includes a comprehensive [Janet library](https://github.com/cfoust/cy/blob/main/pkg/cy/boot/layout.janet) with handy tools for manipulating them more easily. For example, you can quickly create nodes with a family of creation functions like {{api layout/pane}}, {{api layout/split}}, {{api layout/vsplit}}, et cetera.
 
 There is also {{api layout/new}}, which is a Janet macro that expands shortened forms of these node creation functions into their full forms for you. This lets you describe layouts succinctly:
 
@@ -59,264 +51,26 @@ There is also {{api layout/new}}, which is a Janet macro that expands shortened 
          :node {:attached false :type :pane}}}}
 ```
 
-## Node types
+## Properties
 
-`cy` currently supports the following layout node types:
+Every node type has a set of properties that determines that node's appearance and functionality. Here are some common examples:
 
-- **[Pane](#pane)**: A pane node can be attached to panes that exist in [the node tree](/groups-and-panes.md).
-- **[Margins](#margins)**: A margins mode constrains the size of its child node by adding transparent margins.
-- **[Split](#split)**: A split node divides the screen space of its parent node in two and provides it to two other nodes, drawing a line on the screen between them.
-- **[Borders](#borders)**: A node is enclosed in borders with an optional title on the top or bottom.
-- **[Tabs](#tabs)**: A node that can display different pages of content navigable using a familiar tab bar.
+* The color and style of that node's borders
+* The children of that node, one or more of which may be shown at any one time
+* Titles shown above or below the node
 
-The following sections go into these types in more detail.
+Valid values for properties are usually primitive types in Janet, such as strings, numbers, and booleans. But most node types also have **dynamic properties**, which are properties whose values are computed _when that node is rendered_. Instead of providing a static value for a property, you instead provide a function that returns a value of the property's original type.
 
-### Pane
+## Layout actions
 
-A `:pane` node is an attachment point for a [pane](/groups-and-panes.md#panes).
+You can access some layout functionality using [actions](/keybindings.md#actions) that are available in the command palette:
 
-```janet
-{
-    :type :pane
-    :id nil # number or nil, optional
-    :attached true # boolean or nil, optional
-    :remove-on-exit false # boolean or nil, optional
-}
-```
+- **{{api action/add-node}}**: Quickly add nodes of any type to the layout.
+- **{{api action/remove-parent}}**: Remove the most recent parent of the currently attached node.
+- **{{api action/clear-layout}}**: Completely empty out the layout.
 
-`:id`
+Some node types have actions as well. Each node type in the next chapter describes those actions, where appropriate.
 
-Specifies the NodeID this pane is connected to. If `nil`, the part of the screen
-occupied by this pane will just show a "disconnected" state.
-
-`:attached`
-
-If `true`, user input will be sent to the pane specified by `:id`.
-
-`:remove-on-exit`
-
-If `true`, when the pane specified by `:id` exits successfully (ie with exit code 0) or is killed using {{api tree/kill}}, this pane will be removed from the layout. This works just like `exit`ing from a shell in `tmux` does: the intent is to preserve that behavior for users who want it.
-
-The value of `:remove-on-exit`, by default, is the value of the [:remove-pane-on-exit](/default-parameters.md#remove-pane-on-exit) parameter.
-
-In other words, to make this global you can do the following:
-
-```janet
-(param/set :client :remove-pane-on-exit true)
-```
-
-### Margins
-
-{{story cast layout/margins}}
-
-A `:margins` node puts transparent margins around its child allowing the current frame to show through.
-
-```janet
-{
-    :type :margins
-    :cols 0 # number, optional
-    :rows 0 # number, optional
-    :border :rounded # border type, optional
-    :border-fg nil # color, optional
-    :border-bg nil # color, optional
-    :node {} # a node
-}
-```
-
-`:cols` and `:rows`
-
-These properties set the size of the node inside of the `:margins` node; they do not refer to the width of the margins. A value of 0 for either property means that the node will use the full space available to it in that dimension.
-
-`:border`
-
-The [border style](#border-styles) for the borders around the node.
-
-`:border-fg` and `:border-bg`
-
-The foreground and background [color](/api.md#color) of the border.
-
-`:node`
-
-A valid layout node.
-
-### Split
-
-{{story cast layout/split-half}}
-
-A `:split` node divides its visual space in two and gives it to two other nodes, rendering a line down the middle.
-
-```janet
-{
-    :type :split
-    :vertical false # boolean, optional
-    :cells nil # int or nil, optional
-    :percent nil # int or nil, optional
-    :border :rounded # border type, optional
-    :border-fg nil # color, optional
-    :border-bg nil # color, optional
-    :a {} # a node
-    :b {} # a node
-}
-```
-
-`:vertical`
-
-If `true`, the nodes are rendered on top of one another. If `false`, they are rendered side by side.
-
-`:cells` and `:percent`
-
-At most one of these can be defined. Both determine the amount of space given to the node described by `:a`. `:cells` is the number of cells along the split axis `:a` will be given; `:percent` is a percentage (`[0, 100]`) of the total size of the node along the split axis that will be allocated to `:a`.
-
-`:border`
-
-The [border style](#border-styles) to use for the dividing line.
-
-`:border-fg` and `:border-bg`
-
-The foreground and background [color](/api.md#color) of the border.
-
-`:a` and `:b`
-
-Both must be valid layout nodes.
-
-### Borders
-
-{{story cast layout/border}}
-
-A `:borders` node surrounds its child in borders and adds an optional title to the top or bottom.
-
-```janet
-{
-    :type :borders
-    :title nil # string or nil, optional
-    :title-bottom nil # string or nil, optional
-    :border :rounded # border type, optional
-    :border-fg nil # color, optional
-    :border-bg nil # color, optional
-    :node {} # a node
-}
-```
-
-`:title` and `:title-bottom`
-
-These strings will be rendered on the top and the bottom of the window, respectively.
-
-`:border`
-
-The [border style](#border-styles) for this node. `:none` is not supported.
-
-`:border-fg` and `:border-bg`
-
-The foreground and background [color](/api.md#color) of the border.
-
-`:node`
-
-A valid layout node.
-
-#### Actions
-
-- {{api action/set-borders-title}}
-- {{api action/set-borders-title-bottom}}
-
-### Tabs
-
-{{story cast layout/tabs}}
-
-A `:tabs` node is a standard tab system with customizable nibs (these are also sometimes called "leaves").
-
-```janet
-{
-    :type :tabs
-    :active-fg nil # color, optional
-    :active-bg nil # color, optional
-    :inactive-fg nil # color, optional
-    :inactive-bg nil # color, optional
-    :bg nil # color, optional
-    :bottom false # boolean, optional
-    :tabs @[] # list of tabs
-}
-
-# tabs look like this:
-{
-    :active false # boolean, optional
-    :name "" # string
-    :node {} # a node
-}
-```
-
-`:active-fg`, `:active-bg`, `:inactive-fg`, and `:inactive-bg`
-
-These are all [colors](/api.md#color) and are used to style the tab's title **if the tab's `:name` property does not contain ANSI escape sequences**, such as those generated by {{api style/render}} et al.
-
-`:bg`
-
-This is the background [color](/api.md#color) for the tab bar.
-
-`:bottom`
-
-If `true`, the tab bar will be on the bottom of the node instead of the top.
-
-#### The `:tabs` property
-
-There are some important constraints on the `:tabs` property:
-
-- You must provide at least one tab.
-- There must be exactly one tab with `:active` set to `true`.
-- All provided tabs must have `:name` fields with non-zero visual width.
-
-#### Actions
-
-- {{api action/new-tab}}
-- {{api action/set-tab-name}}
-- {{api action/next-tab}}
-- {{api action/prev-tab}}
-
-## Border styles
-
-Some nodes have a `:border` property that determines the appearance of the node's borders. The border property can be one of the following keywords:
-
-- `:normal`
-- `:rounded`
-- `:block`
-- `:outer-half`
-- `:inner-half`
-- `:thick`
-- `:double`
-- `:hidden`
-- `:none`
-
-`:hidden` still renders the border with blank cells; `:none` does not render a border at all.
-
-### Frames
+## Frames
 
 The patterned background seen in the screenshot above is referred to as the **frame**. `cy` comes with a [range of different frames](/frames.md). You can choose between all of the available frames using the {{api action/choose-frame}} function, which is bound by default to {{bind :root ctrl+a F}}, and set the default frame on startup using the [`:default-frame`](/default-parameters.md#default-frame) parameter.
-
-### Styling
-
-{{story cast layout/styled}}
-
-All string layout properties accept text styled with {{api style/render}} (or {{api style/text}}).
-
-The layout shown in the monstrosity above was generated with the following code:
-
-```janet
-(def cmd1 (shell/new))
-(def cmd2 (shell/new))
-(layout/set
-  (layout/new
-    (margins
-      (split
-        (borders
-          (attach :id cmd1)
-          :border-fg "6"
-          :title (style/text "some pane" :fg "0" :bg "6")
-          :title-bottom (style/text "some subtitle" :fg "0" :bg "6"))
-        (borders
-          (pane :id cmd2)
-          :border-fg "5"
-          :title (style/text "some pane" :italic true :bg "5")
-          :title-bottom (style/text "some subtitle" :italic true :bg "5"))
-        :border-bg "3")
-      :cols 70
-      :border-bg "4")))
-```
