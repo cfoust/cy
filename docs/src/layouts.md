@@ -1,14 +1,12 @@
 # Layouts
 
-`cy` uses a declarative, tree-based system for defining how panes are displayed on the screen. Every `cy` client has a layout that can be retrieved with {{api layout/get}} and set with {{api layout/set}}.
+`cy` uses a declarative, tree-based system for defining how panes are displayed on the screen. It refers to this as the **layout**. Every `cy` client has a layout that can be retrieved with {{api layout/get}} and set with {{api layout/set}}. A layout is just a configuration for how the `cy` screen should look. It is composed of **nodes** of different types, like panes, splits, et cetera. In other words, a layout is a description of all of the visual elements on the screen.
 
-The structure of a typical layout returned by {{api layout/get}} might look something like this:
+The structure of a typical layout might look something like this:
 
 ```janet
 {
     :type :split
-    :percent 26
-    :border :none
     :vertical false
     :a {
         :type :pane
@@ -22,9 +20,19 @@ The structure of a typical layout returned by {{api layout/get}} might look some
 }
 ```
 
-A layout is just a configuration for how the `cy` screen should look. It contains a description of all of the different visual elements on the screen including their locations, settings, and appearances.
+A node consists of a Janet struct with a `:type` property indicating the type of the node and a set of properties that describe how the node should appear. The layout above describes a horizontal split (two nodes side by side). The client is attached to the left pane.
 
-A layout is composed of nodes of different types. It need only adhere to a single constraint: it must have exactly one pane node where `:attached` is `true`. The attached node is the visual element to which the client's user input (that does not match any bindings) is sent.
+A layout must have exactly one pane node where `:attached` is `true`. The attached node is the visual element to which the client's input (that does not match any bindings) is sent.
+
+## Changing the layout
+
+You can access some layout functionality using actions that are available in the command palette:
+
+- **{{api action/add-node}}**: Quickly add nodes of any type to the layout.
+- **{{api action/remove-parent}}**: Remove the most recent parent of the currently attached node.
+- **{{api action/clear-layout}}**: Completely empty out the layout.
+
+Some node types have actions as well. They are described alongside the node description below.
 
 ## Programmatic use
 
@@ -50,16 +58,6 @@ There is also {{api layout/new}}, which is a Janet macro that expands shortened 
      :b {:type :borders
          :node {:attached false :type :pane}}}}
 ```
-
-## Creating layouts at runtime
-
-You can access most layout functionality without ever writing a line of code using actions that are available in the command palette:
-
-- **{{api action/add-node}}**: Quickly add nodes of any type to the layout.
-- **{{api action/remove-parent}}**: Remove the most recent parent of the currently attached node.
-- **{{api action/clear-layout}}**: Completely empty out the layout.
-
-Some node types have actions as well. For example, the `:borders` type has {{api action/set-borders-title}} and {{api action/set-borders-title-bottom}}.
 
 ## Node types
 
@@ -215,6 +213,11 @@ The foreground and background [color](/api.md#color) of the border.
 
 A valid layout node.
 
+#### Actions
+
+- {{api action/set-borders-title}}
+- {{api action/set-borders-title-bottom}}
+
 ### Tabs
 
 {{story cast layout/tabs}}
@@ -257,9 +260,16 @@ If `true`, the tab bar will be on the bottom of the node instead of the top.
 
 There are some important constraints on the `:tabs` property:
 
-* You must provide at least one tab.
-* There must be exactly one tab with `:active` set to `true`.
-* All provided tabs must have `:name` fields with non-zero visual width.
+- You must provide at least one tab.
+- There must be exactly one tab with `:active` set to `true`.
+- All provided tabs must have `:name` fields with non-zero visual width.
+
+#### Actions
+
+- {{api action/new-tab}}
+- {{api action/set-tab-name}}
+- {{api action/next-tab}}
+- {{api action/prev-tab}}
 
 ## Border styles
 
