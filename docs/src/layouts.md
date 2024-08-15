@@ -53,13 +53,57 @@ There is also {{api layout/new}}, which is a Janet macro that expands shortened 
 
 ## Properties
 
-Every node type has a set of properties that determines that node's appearance and functionality. Here are some common examples:
+Every node type has a set of properties that determines that node's appearance and functionality. Valid values for properties are usually primitive types in Janet, such as strings, numbers, and booleans. Here are some common examples:
 
-* The color and style of that node's borders
-* The children of that node, one or more of which may be shown at any one time
-* Titles shown above or below the node
+- The color and style of that node's borders
+- The children of that node, one or more of which may be shown at any one time
+- Titles shown above or below the node
 
-Valid values for properties are usually primitive types in Janet, such as strings, numbers, and booleans. But most node types also have **dynamic properties**, which are properties whose values are computed _when that node is rendered_. Instead of providing a static value for a property, you instead provide a function that returns a value of the property's original type.
+But most node types also have **dynamic properties**. In addition to accepting static values, dynamic properties can be set to a function that returns a value of the proper type. That function is executed _when that node is rendered_. The arguments to that function vary based on the node and the property.
+
+To illustrate, [border nodes](/layouts/nodes.md#borders) have a property called `:title`, which is a string that is shown at the top-right of the node. The `:border-fg` property determines the color of the border surrounding the node.
+
+By providing a function to both properties, we can change the color and title of the borders node as the user switches between panes. In this case, the functions are invoked with a single argument: the value of the `:node` property in each borders node, which contains whatever node is displayed inside of the borders.
+
+This lets you accomplish things like this:
+
+{{story cast layout/dynamic/borders}}
+
+This example uses the following code:
+
+```janet
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+
+(defn
+  border-title
+  [layout]
+  # Get the NodeID of the node the user is attached to
+  (def node (layout/attach-id layout))
+  (if
+    (nil? node) (style/text "detached" :bg "4" :italic true)
+    (style/text (tree/path node) :bg "5")))
+
+(defn
+  border-fg
+  [layout]
+  (def node (layout/attach-id layout))
+
+  (if (nil? node) "4" "5"))
+
+(layout/set (layout/new
+              (split
+                (borders
+                  (attach :id cmd1)
+                  :title border-title
+                  :border-fg border-fg)
+                (borders
+                  (pane :id cmd2)
+                  :title border-title
+                  :border-fg border-fg))))
+```
+
+Swapping panes causes the layout to change by changing the pane where `:attached` is `true`. This causes the layout to rerender, which reruns the functions we provided when we created the borders node. Since now the `:node` that each borders node renders has changed, the `:title` and `:border-fg` properties produce different results, all without explicitly calling {{api layout/set}} again.
 
 ## Layout actions
 
