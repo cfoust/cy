@@ -779,7 +779,7 @@ func init() {
 		return screen, err
 	}, stories.Config{})
 
-	stories.Register("layout/dynamic", func(ctx context.Context) (
+	stories.Register("layout/dynamic/borders", func(ctx context.Context) (
 		mux.Screen,
 		error,
 	) {
@@ -812,6 +812,52 @@ func init() {
                   (pane :id cmd2)
                   :title border-title
                   :border-fg border-fg))))
+		`)
+		return screen, err
+	}, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "L"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "H"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "L"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "H"),
+			stories.Wait(stories.Some),
+		},
+	})
+	stories.Register("layout/dynamic/bar", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		err = client.execute(`
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+
+(defn
+  bar-text
+  [[rows cols] layout]
+  (def node (layout/attach-id layout))
+
+  (if
+    (nil? node) (style/text
+                  "detached"
+                  :bg "4"
+                  :width cols
+                  :italic true)
+    (style/text
+      (tree/path node)
+      :bg "5"
+      :width cols)))
+
+(layout/set (layout/new
+              (bar
+                bar-text
+                (split
+                  (attach :id cmd1)
+                  (pane :id cmd2)))))
 		`)
 		return screen, err
 	}, stories.Config{

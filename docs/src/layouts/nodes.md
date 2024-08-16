@@ -10,7 +10,6 @@
 
 The following sections go into these types in more detail.
 
-
 ## Pane
 
 A `:pane` node is an attachment point for a [pane](/groups-and-panes.md#panes).
@@ -56,9 +55,9 @@ A `:margins` node puts transparent margins around its child allowing the current
     :type :margins
     :cols 0 # number, optional
     :rows 0 # number, optional
-    :border :rounded # border type, optional
-    :border-fg nil # color, optional
-    :border-bg nil # color, optional
+    :border :rounded # border type, dynamic, optional
+    :border-fg nil # color, dynamic, optional
+    :border-bg nil # color, dynamic, optional
     :node {} # a node
 }
 ```
@@ -79,6 +78,10 @@ The foreground and background [color](/api.md#color) of the border.
 
 A valid layout node.
 
+### Dynamic
+
+Functions passed to dynamic properties are invoked with a single argument, the current value of `:node` of this `:margins` node.
+
 ## Split
 
 {{story static layout/split-half}}
@@ -91,9 +94,9 @@ A `:split` node divides its visual space in two and gives it to two other nodes,
     :vertical false # boolean, optional
     :cells nil # int or nil, optional
     :percent nil # int or nil, optional
-    :border :rounded # border type, optional
-    :border-fg nil # color, optional
-    :border-bg nil # color, optional
+    :border :rounded # border type, dynamic, optional
+    :border-fg nil # color, dynamic, optional
+    :border-bg nil # color, dynamic, optional
     :a {} # a node
     :b {} # a node
 }
@@ -118,6 +121,10 @@ The foreground and background [color](/api.md#color) of the border.
 `:a` and `:b`
 
 Both must be valid layout nodes.
+
+### Dynamic
+
+Functions passed to dynamic properties are invoked with two arguments, the current values of `:a` and `:b` of this `:split` node.
 
 ## Borders
 
@@ -157,6 +164,10 @@ A valid layout node.
 
 - {{api action/set-borders-title}}
 - {{api action/set-borders-title-bottom}}
+
+### Dynamic
+
+Functions passed to dynamic properties are invoked with a single argument, the current value of `:node` of this `:borders` node.
 
 ## Tabs
 
@@ -210,3 +221,38 @@ There are some important constraints on the `:tabs` property:
 - {{api action/set-tab-name}}
 - {{api action/next-tab}}
 - {{api action/prev-tab}}
+
+### Dynamic
+
+Functions passed to dynamic properties are invoked with a single argument, the current value of `:node` of the active tab of this `:tabs` node.
+
+## Bar
+
+{{story cast layout/dynamic/bar}}
+
+A `:bar` node is a status bar shown above or below the node that it contains.
+
+```janet
+{
+    :type :bar
+    :bottom false # boolean, optional
+    :text nil # string, dynamic
+    :node {} # a node
+}
+```
+
+`:bottom`
+
+If `true`, the bar will be on the bottom of the node instead of the top.
+
+`:text`
+
+The contents of the bar.
+
+`:node`
+
+A valid layout node.
+
+### Dynamic
+
+A function passed to `:text` is invoked with a single argument, the current value of `:node` of this `:bar` node.

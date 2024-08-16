@@ -1,6 +1,6 @@
 # Layouts
 
-`cy` uses a declarative, tree-based system for defining how panes are displayed on the screen. It refers to this as the **layout**. A layout is just a configuration for how the `cy` screen should look. It is composed of **nodes** of different types, like panes, splits, et cetera. In other words, a layout is a description of all of the visual elements on the screen.
+`cy` uses a declarative, tree-based system for defining what is shown on the screen. It refers to this as the **layout**. It is composed of **nodes** of different types such as panes, splits, and tabs.
 
 The structure of a typical layout might look something like this:
 
@@ -20,7 +20,7 @@ The structure of a typical layout might look something like this:
 }
 ```
 
-A node consists of a Janet struct with a `:type` property indicating the type of the node and a set of properties that describe how the node should appear. The layout above describes a horizontal split (two nodes side by side). The client is attached to the left pane.
+Every node consists of a Janet struct with a `:type` property indicating the type of the node and a set of properties that describe how the node should look and behave. The layout above describes a horizontal split (two nodes side by side). The client is attached to the left pane.
 
 A layout must have exactly one pane node where `:attached` is `true`. The attached node is the visual element to which the client's input (that does not match any bindings) is sent.
 
@@ -105,7 +105,7 @@ This example uses the following code:
 
 Swapping panes causes the layout to change by changing the pane where `:attached` is `true`. This causes the layout to rerender, which reruns the functions we provided when we created the borders node. Since now the `:node` that each borders node renders has changed, the `:title` and `:border-fg` properties produce different results, all without explicitly calling {{api layout/set}} again.
 
-## Layout actions
+## Actions
 
 You can access some layout functionality using [actions](/keybindings.md#actions) that are available in the command palette:
 

@@ -28,6 +28,12 @@
 
 - [Configuration](./configuration.md)
 
+- [Keybindings](./keybindings.md)
+
+- [Groups and panes](./groups-and-panes.md)
+
+- [Parameters](./parameters.md)
+
 - [Layouts](./layouts.md)
 
   - [Nodes](./layouts/nodes.md)
@@ -35,12 +41,6 @@
   - [Borders](./layouts/borders.md)
 
   - [Styling](./layouts/styling.md)
-
-- [Keybindings](./keybindings.md)
-
-- [Groups and panes](./groups-and-panes.md)
-
-- [Parameters](./parameters.md)
 
 - [Replay mode](./replay-mode.md)
 
