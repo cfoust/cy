@@ -32,7 +32,9 @@ func (t *Bar) Kill() {
 }
 
 func (b *Bar) State() *tty.State {
-	b.RLock()
+	b.Lock()
+	defer b.Unlock()
+
 	var (
 		size   = b.size
 		inner  = b.inner
@@ -40,7 +42,6 @@ func (b *Bar) State() *tty.State {
 		screen = b.screen
 		config = b.config
 	)
-	b.RUnlock()
 	state := tty.New(size)
 
 	var barState string
@@ -92,6 +93,7 @@ func (b *Bar) Apply(node L.NodeType) (bool, error) {
 	defer b.Unlock()
 
 	b.config = config
+	config.Text.ClearCache()
 	config.Text.SetLogger(b.Logger)
 
 	return true, nil
@@ -145,6 +147,8 @@ func (b *Bar) Resize(size geom.Size) error {
 	} else {
 		b.inner.Position = geom.Vec2{R: 1}
 	}
+
+	b.config.Text.ClearCache()
 
 	return b.screen.Resize(b.inner.Size)
 }

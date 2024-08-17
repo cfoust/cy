@@ -208,6 +208,14 @@ func (l *Borders) recalculate() error {
 
 	l.Lock()
 	l.inner = inner
+	// Title and TitleBottom depend on the dimensions of the node, so they
+	// must be reset when the dimensions change
+	for _, prop := range []prop.Presettable{
+		l.config.Title,
+		l.config.TitleBottom,
+	} {
+		prop.ClearCache()
+	}
 	l.Unlock()
 
 	err := l.screen.Resize(inner.Size)
