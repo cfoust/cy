@@ -241,10 +241,13 @@ func (l *Margins) poll(ctx context.Context) {
 }
 
 func (l *Margins) recalculate() error {
-	outer := l.outer
-	inner := l.getInner(outer)
-	l.inner = inner
-	return l.screen.Resize(inner.Size)
+	// We don't want to recalculate until we have a real size
+	if l.outer.IsZero() {
+		return nil
+	}
+
+	l.inner = l.getInner(l.outer)
+	return l.screen.Resize(l.inner.Size)
 }
 
 func (l *Margins) Resize(size geom.Size) error {
