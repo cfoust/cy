@@ -56,10 +56,10 @@ func (p *Prop[T]) SetLogger(log zerolog.Logger) {
 
 	// We want to be careful not to spam the user
 	sampler := &zerolog.BurstSampler{
-		Burst:  5,
-		Period: 1 * time.Second,
+		Burst:       5,
+		Period:      1 * time.Second,
+		NextSampler: &zerolog.BasicSampler{N: 100},
 	}
-	sampler.NextSampler = sampler
 	p.log = log.Sample(sampler)
 }
 
