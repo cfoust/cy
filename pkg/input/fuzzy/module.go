@@ -15,6 +15,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/rs/zerolog/log"
 )
 
 type Fuzzy struct {
@@ -125,6 +126,11 @@ func (f *Fuzzy) setSelected(index int) taro.Cmd {
 		)
 	}
 
+	cmds = append(
+		cmds,
+		f.emitOption(),
+	)
+
 	return tea.Batch(cmds...)
 }
 
@@ -134,6 +140,7 @@ func (f *Fuzzy) emitOption() taro.Cmd {
 	}
 
 	return func() taro.Msg {
+		log.Info().Msgf("emitting %+v", f.getOptions()[f.selected])
 		return taro.PublishMsg{
 			Msg: SelectedEvent{
 				Option: f.getOptions()[f.selected],

@@ -16,10 +16,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return f, msg.Wait()
 	case matchResult:
 		f.filtered = msg.Filtered
-		return f, tea.Batch(
-			f.setSelected(f.selected),
-			f.emitOption(),
-		)
+		return f, f.setSelected(f.selected)
 	case tea.WindowSizeMsg:
 		size := geom.Size{
 			R: msg.Height,
@@ -49,10 +46,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				index = last
 			}
 
-			return f, tea.Sequence(
-				f.setSelected(index),
-				f.emitOption(),
-			)
+			return f, f.setSelected(index)
 		case taro.KeyPgUp, taro.KeyPgDown:
 			delta := f.numRenderedOptions
 			if delta == 0 {
@@ -67,10 +61,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				delta *= -1
 			}
 
-			return f, tea.Sequence(
-				f.setSelected(f.selected+delta),
-				f.emitOption(),
-			)
+			return f, f.setSelected(f.selected + delta)
 		case taro.KeyDown, taro.KeyCtrlJ, taro.KeyUp, taro.KeyCtrlK:
 			f.haveMoved = true
 			upwards := false
@@ -87,10 +78,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				delta = 1
 			}
 
-			return f, tea.Sequence(
-				f.setSelected(f.selected+delta),
-				f.emitOption(),
-			)
+			return f, f.setSelected(f.selected + delta)
 		case taro.KeyEnter:
 			if f.isSticky {
 				return f, nil
