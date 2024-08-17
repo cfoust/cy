@@ -17,7 +17,7 @@ var (
 	KEYWORD_TABS    = janet.Keyword("tabs")
 	KEYWORD_BAR     = janet.Keyword("bar")
 
-	defaultBorderProp = prop.NewStatic(&style.DefaultBorder)
+	defaultBorder = prop.NewStatic(&style.DefaultBorder)
 )
 
 type nodeType struct {
@@ -99,6 +99,10 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			BorderBg: args.BorderBg,
 		}
 
+		if args.Border == nil {
+			type_.Border = defaultBorder
+		}
+
 		if args.Vertical != nil {
 			type_.Vertical = *args.Vertical
 		}
@@ -132,7 +136,7 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		}
 
 		if args.Border == nil {
-			type_.Border = defaultBorderProp
+			type_.Border = defaultBorder
 		}
 
 		if args.Cols != nil {

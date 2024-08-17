@@ -8,6 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	L "github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
 
@@ -60,14 +61,15 @@ func (s *Split) Kill() {
 }
 
 func (s *Split) State() *tty.State {
-	s.RLock()
+	s.Lock()
+	defer s.Unlock()
+
 	var (
 		size       = s.size
 		positionB  = s.positionB
 		isVertical = s.isVertical
 		config     = s.config
 	)
-	s.RUnlock()
 
 	state := tty.New(size)
 
@@ -147,6 +149,22 @@ func (s *Split) Apply(node L.NodeType) (bool, error) {
 	if config.Cells != nil && (!s.isCells || s.cells != *config.Cells) {
 		s.setCells(*config.Cells)
 		changed = true
+	}
+
+	a := L.New(config.A)
+	b := L.New(config.B)
+	for _, prop := range []prop.Presettable{
+		config.Border,
+		config.BorderFg,
+		config.BorderBg,
+	} {
+		prop.Preset(
+			s.Ctx(),
+			s.Context.Context(),
+			&a,
+			&b,
+		)
+		prop.SetLogger(s.Logger)
 	}
 
 	if !changed {

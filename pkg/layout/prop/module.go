@@ -63,6 +63,8 @@ func (p *Prop[T]) SetLogger(log zerolog.Logger) {
 	p.log = log.Sample(sampler)
 }
 
+// Presettable is a general interface for providing preset values to many
+// properties at once.
 type Presettable interface {
 	Preset(
 		ctx context.Context,
@@ -72,6 +74,8 @@ type Presettable interface {
 	SetLogger(log zerolog.Logger)
 }
 
+// SetTTL sets the time-to-live for the property. This is the amount of time to
+// wait before recalculating the property.
 func (p *Prop[T]) SetTTL(ttl time.Duration) {
 	p.ttl = ttl
 }
