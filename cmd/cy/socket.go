@@ -9,13 +9,11 @@ import (
 )
 
 const (
-	CY_SOCKET_ENV      = "CY"
 	CY_SOCKET_TEMPLATE = "/tmp/cy-%d"
 )
 
 // Much of the socket creation code is ported from tmux. (see tmux.c)
 // Part laziness, part I wanted cy to be as familiar as possible.
-
 func getSocketPath(name string) (string, error) {
 	uid := os.Getuid()
 	directory := fmt.Sprintf(CY_SOCKET_TEMPLATE, uid)

@@ -49,7 +49,7 @@ func (c *CyModule) CpuProfile(user interface{}) error {
 		return fmt.Errorf("no user")
 	}
 
-	socketPath := c.cy.socketPath
+	socketPath := c.cy.options.SocketPath
 	if len(socketPath) == 0 {
 		return fmt.Errorf("no socket path")
 	}
@@ -91,7 +91,7 @@ func (c *CyModule) Trace(user interface{}) error {
 		return fmt.Errorf("no user")
 	}
 
-	socketPath := c.cy.socketPath
+	socketPath := c.cy.options.SocketPath
 	if len(socketPath) == 0 {
 		return fmt.Errorf("no socket path")
 	}
