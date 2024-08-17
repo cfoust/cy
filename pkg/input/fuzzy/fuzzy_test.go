@@ -22,6 +22,21 @@ var simpleOptions []Option = []Option{
 	NewOption("baz", 2),
 }
 
+func TestCapitalization(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	f := newFuzzy(ctx, []Option{
+		NewOption("foo", 0),
+		NewOption("bar", 1),
+		NewOption("Baz", 2),
+	})
+	test := taro.Test(f)
+	test("Baz")
+	option := f.getOptions()[f.selected]
+	require.Equal(t, "Baz", option.Text)
+}
+
 func TestBasic(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

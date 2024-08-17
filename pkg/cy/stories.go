@@ -196,7 +196,7 @@ func init() {
 			stories.Wait(stories.Some),
 			stories.Type("ctrl+a", "ctrl+p"),
 			stories.Wait(stories.More),
-			stories.Type("Choose"),
+			stories.Type("Choose a frame"),
 			stories.Wait(stories.Some),
 			stories.Type("enter"),
 			stories.Wait(stories.Some),

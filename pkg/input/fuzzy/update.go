@@ -1,6 +1,8 @@
 package fuzzy
 
 import (
+	"strings"
+
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/taro"
 
@@ -107,7 +109,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		f.pattern = value
 		cmds = append(cmds, queryOptions(
 			f.options,
-			value,
+			strings.ToLower(value),
 			f.caseSensitive,
 		))
 	}
