@@ -72,17 +72,26 @@ type Presettable interface {
 		params ...interface{},
 	)
 	SetLogger(log zerolog.Logger)
+	ClearCache()
 }
 
 // SetTTL sets the time-to-live for the property. This is the amount of time to
 // wait before recalculating the property.
 func (p *Prop[T]) SetTTL(ttl time.Duration) {
+	if p == nil {
+		return
+	}
+
 	p.ttl = ttl
 }
 
 // ClearCache clears the cache of the property, forcing it to be recalculated
 // on the next call to Get if necessary.
 func (p *Prop[T]) ClearCache() {
+	if p == nil {
+		return
+	}
+
 	p.cacheExpires = time.Time{}
 	var zero T
 	p.cachedValue = zero

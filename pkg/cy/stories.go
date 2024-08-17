@@ -813,7 +813,7 @@ func init() {
 (def cmd2 (shell/new))
 (defn
   border-title
-  [layout]
+  [_ layout]
   (def node (layout/attach-id layout))
 
   (if

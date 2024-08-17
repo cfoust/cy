@@ -179,9 +179,11 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		if type_.Border != nil {
 			if border, ok := type_.Border.Static(); ok && border.None() {
 				return nil, fmt.Errorf(
-					"type :border does not support :border=:none",
+					"type :border does not support :border=:none, use :hidden instead",
 				)
 			}
+		} else {
+			type_.Border = defaultBorder
 		}
 
 		return type_, nil

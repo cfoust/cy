@@ -39,10 +39,19 @@ func (l *Borders) Apply(node L.NodeType) (bool, error) {
 
 	l.config = config
 
-	layout := L.New(config.Node)
 	for _, prop := range []prop.Presettable{
 		config.Title,
 		config.TitleBottom,
+		config.Border,
+		config.BorderFg,
+		config.BorderBg,
+	} {
+		prop.SetLogger(l.Logger)
+	}
+
+	// Some properties only get the layout, so they can be preset
+	layout := L.New(config.Node)
+	for _, prop := range []prop.Presettable{
 		config.Border,
 		config.BorderFg,
 		config.BorderBg,
@@ -52,7 +61,14 @@ func (l *Borders) Apply(node L.NodeType) (bool, error) {
 			l.Context.Context(),
 			&layout,
 		)
-		prop.SetLogger(l.Logger)
+	}
+
+	// But Title and TitleBottom depend on the dimensions of the node
+	for _, prop := range []prop.Presettable{
+		config.Title,
+		config.TitleBottom,
+	} {
+		prop.ClearCache()
 	}
 
 	return true, nil
@@ -67,13 +83,14 @@ func (l *Borders) Kill() {
 }
 
 func (l *Borders) State() *tty.State {
-	l.RLock()
+	l.Lock()
+	defer l.Unlock()
+
 	var (
 		inner  = l.inner
 		size   = l.size
 		config = l.config
 	)
-	l.RUnlock()
 
 	innerState := l.screen.State()
 	state := tty.New(size)
@@ -104,8 +121,18 @@ func (l *Borders) State() *tty.State {
 	}
 
 	l.render.RenderAt(state.Image, 0, 0, boxStyle.Render(""))
+	titleSize := geom.Vec2{
+		R: 1,
+		C: inner.Size.C,
+	}
 
-	if value, ok := config.Title.GetPreset(); ok {
+	layout := L.New(config.Node)
+	if value, ok := config.Title.Get(
+		l.Ctx(),
+		l.Context.Context(),
+		titleSize,
+		&layout,
+	); ok {
 		l.render.RenderAt(
 			state.Image,
 			0, 1,
@@ -115,7 +142,12 @@ func (l *Borders) State() *tty.State {
 		)
 	}
 
-	if value, ok := config.TitleBottom.GetPreset(); ok {
+	if value, ok := config.TitleBottom.Get(
+		l.Ctx(),
+		l.Context.Context(),
+		titleSize,
+		&layout,
+	); ok {
 		l.render.RenderAt(
 			state.Image,
 			size.R-1, 1,
