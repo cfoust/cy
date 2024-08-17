@@ -140,6 +140,8 @@ func NewBorder(border lipgloss.Border) Border {
 	return Border{Border: border}
 }
 
+var DefaultBorder = NewBorder(lipgloss.RoundedBorder())
+
 var _ janet.Unmarshalable = (*Border)(nil)
 
 func (b *Border) UnmarshalJanet(value *janet.Value) (err error) {

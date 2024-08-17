@@ -492,6 +492,30 @@ func init() {
 		return screen, err
 	}, stories.Config{})
 
+	stories.Register("layout/dynamic/margins", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		client.execute(`
+(def cmd1 (shell/new))
+(layout/set
+        {:type :margins
+         :cols 40
+	 :rows 20
+	 :border-fg (fn [layout] (if (nil? (layout/attach-id layout)) "4" "5"))
+         :node {:type :pane :id cmd1 :attached true}})
+		`)
+		return screen, err
+	}, stories.Config{
+		Input: []interface{}{
+			stories.Some,
+			stories.Type("foo bar baz"),
+			stories.Some,
+			stories.Type("foo bar baz"),
+		},
+	})
+
 	stories.Register("layout/split-margins", func(ctx context.Context) (
 		mux.Screen,
 		error,

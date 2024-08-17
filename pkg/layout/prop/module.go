@@ -2,7 +2,6 @@ package prop
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/cfoust/cy/pkg/janet"
@@ -11,19 +10,35 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// Prop is a property that can be either static or dynamic. If it is static, it
+// will always return the same value. If it is dynamic, it will call a Janet
+// function to calculate the value.
 type Prop[T any] struct {
 	isStatic bool
-	static   T
-	dynamic  *janet.Function
 
+	// A static value that will be returned if the property is static.
+	static T
+	// The Janet function that will be called to calculate the property.
+	dynamic *janet.Function
+
+	// Whether the user provided preset arguments.
 	havePreset bool
-	ctx        context.Context
-	context    interface{}
-	params     []interface{}
+
+	// All presets that will be used to calculate the property.
+	ctx     context.Context
+	context interface{}
+	params  []interface{}
+
+	cacheExpires time.Time
+	cachedValue  T
+	ttl          time.Duration
 
 	log zerolog.Logger
 }
 
+// Static reports whether the property is static. If it is, it will return the
+// value and true. If it is not, it will return the zero value of the type and
+// false.
 func (p *Prop[T]) Static() (value T, ok bool) {
 	if !p.isStatic {
 		return
@@ -32,6 +47,8 @@ func (p *Prop[T]) Static() (value T, ok bool) {
 	return p.static, true
 }
 
+// SetLogger sets the logger for the property. This is useful for debugging
+// purposes.
 func (p *Prop[T]) SetLogger(log zerolog.Logger) {
 	if p == nil {
 		return
@@ -55,6 +72,21 @@ type Presettable interface {
 	SetLogger(log zerolog.Logger)
 }
 
+func (p *Prop[T]) SetTTL(ttl time.Duration) {
+	p.ttl = ttl
+}
+
+// ClearCache clears the cache of the property, forcing it to be recalculated
+// on the next call to Get if necessary.
+func (p *Prop[T]) ClearCache() {
+	p.cacheExpires = time.Time{}
+	var zero T
+	p.cachedValue = zero
+}
+
+// Preset sets the context and parameters for the property ahead of time. This
+// is useful for properties that are dynamic and need to be calculated with a
+// specific context and parameters.
 func (p *Prop[T]) Preset(
 	ctx context.Context,
 	context interface{},
@@ -68,8 +100,12 @@ func (p *Prop[T]) Preset(
 	p.ctx = ctx
 	p.context = context
 	p.params = params
+	p.ClearCache()
 }
 
+// Get returns the value of the property. If the property is static, it will
+// return the value and true. If the property is dynamic, it will call the
+// function with the context and parameters and return the result.
 func (p *Prop[T]) Get(
 	ctx context.Context,
 	context interface{},
@@ -83,6 +119,10 @@ func (p *Prop[T]) Get(
 
 	if p.isStatic {
 		return p.static, true
+	}
+
+	if p.cacheExpires.After(time.Now()) {
+		return p.cachedValue, true
 	}
 
 	janetValue, err := p.dynamic.CallResult(
@@ -107,9 +147,18 @@ func (p *Prop[T]) Get(
 		return
 	}
 	ok = err == nil
+
+	if !ok {
+		return
+	}
+
+	p.cachedValue = value
+	p.cacheExpires = time.Now().Add(p.ttl)
 	return
 }
 
+// GetPreset returns the value of the property, computing it using the preset
+// values provided in the Preset method.
 func (p *Prop[T]) GetPreset() (value T, ok bool) {
 	if p == nil {
 		return
@@ -131,38 +180,12 @@ func (p *Prop[T]) GetPreset() (value T, ok bool) {
 	)
 }
 
-func (p *Prop[T]) UnmarshalJanet(value *janet.Value) error {
-	var fun *janet.Function
-	err := value.Unmarshal(&fun)
-	if err == nil {
-		p.dynamic = fun
-		return nil
+// NewStatic creates a new static property with the given value.
+func NewStatic[T any](value T) *Prop[T] {
+	return &Prop[T]{
+		isStatic: true,
+		static:   value,
 	}
-
-	var staticValue T
-	err = value.Unmarshal(&staticValue)
-	if err == nil {
-		p.isStatic = true
-		p.static = staticValue
-		return nil
-	}
-
-	return fmt.Errorf(
-		"property must be function or static value: %s",
-		err,
-	)
-}
-
-func (p *Prop[T]) MarshalJanet() interface{} {
-	if p == nil {
-		return nil
-	}
-
-	if p.isStatic {
-		return p.static
-	}
-
-	return p.dynamic
 }
 
 type String = Prop[string]

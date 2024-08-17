@@ -109,13 +109,14 @@ func (l *Margins) Kill() {
 }
 
 func (l *Margins) State() *tty.State {
-	l.RLock()
+	l.Lock()
+	defer l.Unlock()
+
 	var (
 		inner  = l.inner
 		outer  = l.outer
 		config = l.config
 	)
-	l.RUnlock()
 
 	innerState := l.screen.State()
 	state := tty.New(outer)

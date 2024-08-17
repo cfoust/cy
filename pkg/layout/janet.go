@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/style"
 )
 
 var (
@@ -15,6 +16,8 @@ var (
 	KEYWORD_BORDERS = janet.Keyword("borders")
 	KEYWORD_TABS    = janet.Keyword("tabs")
 	KEYWORD_BAR     = janet.Keyword("bar")
+
+	defaultBorderProp = prop.NewStatic(&style.DefaultBorder)
 )
 
 type nodeType struct {
@@ -126,6 +129,10 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 			Border:   args.Border,
 			BorderFg: args.BorderFg,
 			BorderBg: args.BorderBg,
+		}
+
+		if args.Border == nil {
+			type_.Border = defaultBorderProp
 		}
 
 		if args.Cols != nil {

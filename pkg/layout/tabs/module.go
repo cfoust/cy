@@ -183,7 +183,7 @@ func (t *Tabs) Apply(node L.NodeType) (bool, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	layout := L.New(config.Active())
+	layout := L.New(config.Active().Node)
 	for _, prop := range []*prop.Color{
 		config.ActiveFg,
 		config.ActiveBg,
