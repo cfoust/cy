@@ -22,6 +22,7 @@ type CmdParams struct {
 }
 
 type CmdModule struct {
+	Server               Server
 	Lifetime             util.Lifetime
 	Tree                 *tree.Tree
 	TimeBinds, CopyBinds *bind.BindScope
@@ -48,6 +49,8 @@ func (c *CmdModule) New(
 		Command: command,
 	})
 
+	id, create := group.NewPaneCreator(c.Lifetime.Ctx())
+
 	replayable, err := cmd.New(
 		c.Lifetime.Ctx(),
 		stream.CmdOptions{
@@ -55,6 +58,13 @@ func (c *CmdModule) New(
 			Args:      values.Args,
 			Directory: values.Path,
 			Restart:   values.Restart,
+			Env: map[string]string{
+				"CY": fmt.Sprintf(
+					"%s:%d",
+					c.Server.SocketName(),
+					id,
+				),
+			},
 		},
 		group.Params().DataDirectory(),
 		c.TimeBinds,
@@ -64,7 +74,8 @@ func (c *CmdModule) New(
 		return 0, err
 	}
 
-	pane := group.NewPane(c.Lifetime.Ctx(), replayable)
+	pane := create(replayable)
+
 	if values.Name != "" {
 		pane.SetName(values.Name)
 	}

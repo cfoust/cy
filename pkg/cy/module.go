@@ -38,6 +38,8 @@ type Options struct {
 	SkipInput bool
 	// The path to the Unix domain socket for this server.
 	SocketPath string
+	// The name of the socket (before calculating the real path.)
+	SocketName string
 }
 
 type historyEvent struct {
@@ -72,8 +74,7 @@ type Cy struct {
 
 	log zerolog.Logger
 
-	configPath, socketPath string
-	showSplash             bool
+	options Options
 
 	toast        *ToastLogger
 	queuedToasts []toasts.Toast
@@ -94,7 +95,7 @@ func (c *Cy) Log(level zerolog.Level, message string) {
 }
 
 func (c *Cy) loadConfig() error {
-	err := c.ExecuteFile(c.Ctx(), c.configPath)
+	err := c.ExecuteFile(c.Ctx(), c.options.Config)
 
 	// We want to make a lot of noise if this fails for some reason, even
 	// if this is being called in user code
@@ -102,7 +103,7 @@ func (c *Cy) loadConfig() error {
 		c.log.Error().Err(err).Msg("failed to execute config")
 		message := fmt.Sprintf(
 			"an error occurred while loading %s: %s",
-			c.configPath,
+			c.options.Config,
 			err.Error(),
 		)
 		c.toast.Error(message)
@@ -118,7 +119,7 @@ func (c *Cy) reloadConfig() error {
 	}
 
 	c.Lock()
-	c.configPath = path
+	c.options.Config = path
 	c.Unlock()
 
 	return c.loadConfig()
@@ -234,6 +235,10 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 	}
 }
 
+func (c *Cy) SocketName() string {
+	return c.options.SocketName
+}
+
 func Start(ctx context.Context, options Options) (*Cy, error) {
 	timeBinds := bind.NewBindScope(nil)
 	copyBinds := bind.NewBindScope(nil)
@@ -241,17 +246,17 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	defaults := params.New()
 	t := tree.NewTree(tree.WithParams(defaults.NewChild()))
 	cy := Cy{
-		Lifetime:   util.NewLifetime(ctx),
-		tree:       t,
-		muxServer:  server.New(),
-		defaults:   defaults,
-		timeBinds:  timeBinds,
-		copyBinds:  copyBinds,
-		showSplash: !options.HideSplash,
-		lastVisit:  make(map[tree.NodeID]historyEvent),
-		lastWrite:  make(map[tree.NodeID]historyEvent),
-		writes:     make(chan historyEvent),
-		visits:     make(chan historyEvent),
+		Lifetime:  util.NewLifetime(ctx),
+		tree:      t,
+		muxServer: server.New(),
+		defaults:  defaults,
+		timeBinds: timeBinds,
+		copyBinds: copyBinds,
+		options:   options,
+		lastVisit: make(map[tree.NodeID]historyEvent),
+		lastWrite: make(map[tree.NodeID]historyEvent),
+		writes:    make(chan historyEvent),
+		visits:    make(chan historyEvent),
 	}
 	cy.toast = NewToastLogger(cy.sendToast)
 
@@ -296,12 +301,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	cy.VM = vm
 
 	if len(options.Config) != 0 {
-		cy.configPath = options.Config
 		cy.loadConfig()
-	}
-
-	if len(options.SocketPath) != 0 {
-		cy.socketPath = options.SocketPath
 	}
 
 	return &cy, nil

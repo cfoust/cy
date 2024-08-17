@@ -144,6 +144,7 @@ func (s *Server) HandleWSClient(conn ws.Client[P.Message]) {
 func serve(path string) error {
 	cy, err := cy.Start(context.Background(), cy.Options{
 		SocketPath: path,
+		SocketName: CLI.Socket,
 		Config:     cy.FindConfig(),
 		DataDir:    cy.FindDataDir(),
 		Shell:      getShell(),

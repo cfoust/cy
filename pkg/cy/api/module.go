@@ -29,6 +29,7 @@ type Client interface {
 }
 
 type Server interface {
+	SocketName() string
 	ExecuteJanet(path string) error
 	Log(level zerolog.Level, message string)
 }

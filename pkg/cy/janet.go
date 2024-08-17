@@ -21,6 +21,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 
 	modules := map[string]interface{}{
 		"cmd": &api.CmdModule{
+			Server:    c,
 			Lifetime:  util.NewLifetime(c.Ctx()),
 			Tree:      c.tree,
 			TimeBinds: c.timeBinds,

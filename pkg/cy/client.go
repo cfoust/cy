@@ -284,7 +284,7 @@ func (c *Client) initialize(options ClientOptions) error {
 		screen.WithOpaque,
 	)
 
-	if c.cy.showSplash {
+	if !c.cy.options.HideSplash {
 		splashScreen := splash.New(c.Ctx(), options.Size, !isClientSSH)
 		c.outerLayers.NewLayer(
 			splashScreen.Ctx(),
