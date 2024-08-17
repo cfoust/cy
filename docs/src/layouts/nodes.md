@@ -7,6 +7,7 @@
 - **[Split](#split)**: A split node divides the screen space of its parent node in two and provides it to two other nodes, drawing a line on the screen between them.
 - **[Borders](#borders)**: A node is enclosed in borders with an optional title on the top or bottom.
 - **[Tabs](#tabs)**: A node that can display different pages of content navigable using a familiar tab bar.
+- **[Bar](#bar)**: A node that adds a customizable status bar to the top or bottom of a node.
 
 The following sections go into these types in more detail.
 
