@@ -2,28 +2,32 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
-	"runtime/pprof"
-	"runtime/trace"
 
 	"github.com/cfoust/cy/pkg/version"
 
 	"github.com/alecthomas/kong"
 	"github.com/rs/zerolog/log"
-	"github.com/sevlyar/go-daemon"
 )
 
 var CLI struct {
 	Socket string `help:"Specify the name of the socket." name:"socket-name" optional:"" short:"L" default:"default"`
 
-	CPU     string `help:"Save a CPU performance report to the given path." name:"perf-file" optional:"" default:""`
-	Trace   string `help:"Save a trace report to the given path." name:"trace-file" optional:"" default:""`
-	Version bool   `help:"Print version information and exit." short:"v"`
+	Version bool `help:"Print version information and exit." short:"v"`
+
+	Exec struct {
+		Command string `help:"Provide Janet code as a string argument." name:"command" short:"c" optional:"" default:""`
+		File    string `arg:"" optional:"" help:"Provide a file containing Janet code." type:"existingfile"`
+	} `cmd:"" help:"Execute Janet code on the cy server."`
+
+	Connect struct {
+		CPU   string `help:"Save a CPU performance report to the given path." name:"perf-file" optional:"" default:""`
+		Trace string `help:"Save a trace report to the given path." name:"trace-file" optional:"" default:""`
+	} `cmd:"" default:"1" help:"Connect to the cy server, starting one if necessary."`
 }
 
 func main() {
-	kong.Parse(&CLI,
+	ctx := kong.Parse(&CLI,
 		kong.Name("cy"),
 		kong.Description("the time traveling terminal multiplexer"),
 		kong.UsageOnError(),
@@ -45,69 +49,17 @@ func main() {
 		os.Exit(0)
 	}
 
-	var socketPath string
-
-	if envPath, ok := os.LookupEnv(CY_SOCKET_ENV); ok {
-		socketPath = envPath
-	} else {
-		label, err := getSocketPath(CLI.Socket)
+	switch ctx.Command() {
+	case "exec":
+		err := execCommand()
 		if err != nil {
-			log.Panic().Err(err).Msg("failed to detect socket path")
+			log.Fatal().Err(err).Msg("failed to execute Janet code")
 		}
-		socketPath = label
-	}
-
-	if daemon.WasReborn() {
-		cntx := new(daemon.Context)
-		_, err := cntx.Reborn()
+	case "connect":
+		err := connectCommand()
 		if err != nil {
-			log.Panic().Err(err).Msg("failed to reincarnate")
+			log.Fatal().Err(err).Msg("failed to connect")
 		}
-
-		defer func() {
-			if err := cntx.Release(); err != nil {
-				log.Panic().Err(err).Msg("unable to release pid-file")
-			}
-		}()
-
-		if len(CLI.CPU) > 0 {
-			f, err := os.Create(CLI.CPU)
-			if err != nil {
-				log.Panic().Err(err).Msgf("unable to create %s", CLI.CPU)
-			}
-			defer f.Close()
-			if err := pprof.StartCPUProfile(f); err != nil {
-				log.Panic().Err(err).Msgf("could not start CPU profile")
-			}
-			defer pprof.StopCPUProfile()
-		}
-
-		if len(CLI.Trace) > 0 {
-			f, err := os.Create(CLI.Trace)
-			if err != nil {
-				log.Panic().Err(err).Msgf("unable to create %s", CLI.Trace)
-			}
-			defer f.Close()
-			if err := trace.Start(f); err != nil {
-				log.Panic().Err(err).Msgf("could not start trace profile")
-			}
-			defer trace.Stop()
-		}
-
-		err = serve(socketPath)
-		if err != nil && err != http.ErrServerClosed {
-			log.Panic().Err(err).Msg("failed to start cy")
-		}
-		return
 	}
 
-	conn, err := connect(socketPath)
-	if err != nil {
-		log.Panic().Err(err).Msg("failed to start cy")
-	}
-
-	err = poll(conn)
-	if err != nil {
-		log.Panic().Err(err).Msg("failed while polling")
-	}
 }
