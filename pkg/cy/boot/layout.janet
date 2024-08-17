@@ -185,7 +185,7 @@ Supported short forms:
 * active-tab: A :tab with :active=true inside of a :tabs node.
 * bar: A :bar node.
 
-See [the layouts chapter](/layouts.md#programmatic-use) for more information.
+See [the layouts chapter](/layouts.md#api) for more information.
   ```
   [body]
   (defn attach

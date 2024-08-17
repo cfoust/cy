@@ -80,7 +80,9 @@ A valid layout node.
 
 ### Dynamic
 
-Functions passed to dynamic properties are invoked with a single argument, the current value of `:node` of this `:margins` node.
+All dynamic properties are invoked with the same arguments:
+
+1. The current value of `:node`.
 
 ## Split
 
@@ -124,7 +126,10 @@ Both must be valid layout nodes.
 
 ### Dynamic
 
-Functions passed to dynamic properties are invoked with two arguments, the current values of `:a` and `:b` of this `:split` node.
+All dynamic properties are invoked with the same arguments:
+
+1. The current value of `:a`.
+1. The current value of `:b`.
 
 ## Borders
 
@@ -135,11 +140,11 @@ A `:borders` node surrounds its child in borders and adds an optional title to t
 ```janet
 {
     :type :borders
-    :title nil # string or nil, optional
-    :title-bottom nil # string or nil, optional
-    :border :rounded # border type, optional
-    :border-fg nil # color, optional
-    :border-bg nil # color, optional
+    :title nil # string or nil, dynamic, optional
+    :title-bottom nil # string or nil, dynamic, optional
+    :border :rounded # border type, dynamic, optional
+    :border-fg nil # color, dynamic, optional
+    :border-bg nil # color, dynamic, optional
     :node {} # a node
 }
 ```
@@ -167,7 +172,14 @@ A valid layout node.
 
 ### Dynamic
 
-Functions passed to dynamic properties are invoked with a single argument, the current value of `:node` of this `:borders` node.
+`:title` and `:title-bottom`
+
+1. The dimensions of the space available to either property as a tuple, `[rows, cols]`. `rows` is always `1`, but this structure is preserved for consistency.
+1. The current value of `:node`.
+
+All other properties:
+
+1. The current value of `:node`.
 
 ## Tabs
 
@@ -224,7 +236,9 @@ There are some important constraints on the `:tabs` property:
 
 ### Dynamic
 
-Functions passed to dynamic properties are invoked with a single argument, the current value of `:node` of the active tab of this `:tabs` node.
+All dynamic properties are invoked with the same arguments:
+
+1. The current value of `:node` of the active tab of this `:tabs` node.
 
 ## Bar
 
@@ -255,4 +269,5 @@ A valid layout node.
 
 ### Dynamic
 
-A function passed to `:text` is invoked with a single argument, the current value of `:node` of this `:bar` node.
+1. The dimensions of the space available to either property as a tuple, `[rows cols]`. `rows` is always `1`, but this structure is preserved for consistency.
+1. The current value of `:node`.

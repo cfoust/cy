@@ -59,7 +59,11 @@ Every node type has a set of properties that determines that node's appearance a
 - The children of that node, one or more of which may be shown at any one time
 - Titles shown above or below the node
 
-But most node types also have **dynamic properties**. In addition to accepting static values, dynamic properties can be set to a function that returns a value of the proper type. That function is executed _when that node is rendered_. The arguments to that function vary based on the node and the property.
+But most node types also have **dynamic properties**. In addition to accepting static values, dynamic properties can be set to a function that returns a value of the proper type. That function is called _when that node is rendered_.
+
+The arguments to that function vary based on the node and the property. The function does not need to be pure. However, functions passed to dynamic properties are _only ever invoked with properties of that node_.
+
+In other words, these functions are only given access to the node they are passed to and the descendants of that node. They do not get to see the whole layout (though nothing stops you from calling {{api layout/get}} in a dynamic property.)
 
 To illustrate, [border nodes](/layouts/nodes.md#borders) have a property called `:title`, which is a string that is shown at the top-right of the node. The `:border-fg` property determines the color of the border surrounding the node.
 
