@@ -29,8 +29,8 @@ After creating a few, you can move between them using directional keys:
 
 - {{bind :root ctrl+a t}} to create a new tab
 - {{bind :root ctrl+a R}} to rename the current tab
-- {{bind :root ctrl+a N}} to move to the next tab
-- {{bind :root ctrl+a P}} to move to the previous tab
+- {{bind :root ctrl+a tab}} to move to the next tab
+- {{bind :root ctrl+a shift+tab}} to move to the previous tab
 
 ### Removing layout nodes
 

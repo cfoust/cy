@@ -35,8 +35,8 @@
                    [prefix "K"] action/move-up
                    [prefix "J"] action/move-down
                    [prefix "t"] action/new-tab
-                   [prefix "N"] action/next-tab
-                   [prefix "P"] action/prev-tab
+                   [prefix "tab"] action/next-tab
+                   [prefix "shift+tab"] action/prev-tab
                    [prefix "R"] action/set-tab-name
                    [prefix "left"] action/move-left
                    [prefix "right"] action/move-right
