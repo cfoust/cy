@@ -109,6 +109,13 @@ This example uses the following code:
 
 Swapping panes causes the layout to change by changing the pane where `:attached` is `true`. This causes the layout to rerender, which reruns the functions we provided when we created the borders node. Since now the `:node` that each borders node renders has changed, the `:title` and `:border-fg` properties produce different results, all without explicitly calling {{api layout/set}} again.
 
+### What if a function passed to a dynamic property throws an error?
+
+Errors thrown by functions passed to dynamic properties do not prevent the
+layout from rendering. The layout will continue to render as if the function
+had returned that property's default value and an appropriate error message
+will be sent to the `/logs` pane.
+
 ## Actions
 
 You can access some layout functionality using [actions](/keybindings.md#actions) that are available in the command palette:
@@ -121,4 +128,4 @@ Some node types have actions as well. Each node type in the next chapter describ
 
 ## Frames
 
-The patterned background seen in the screenshot above is referred to as the **frame**. `cy` comes with a [range of different frames](/frames.md). You can choose between all of the available frames using the {{api action/choose-frame}} function, which is bound by default to {{bind :root ctrl+a F}}, and set the default frame on startup using the [`:default-frame`](/default-parameters.md#default-frame) parameter.
+The patterned background shown underneath the layout is referred to as the **frame**. `cy` comes with a [range of different frames](/frames.md). You can choose between all of the available frames using the {{api action/choose-frame}} function, which is bound by default to {{bind :root ctrl+a F}}, and set the default frame for new clients using the [`:default-frame`](/default-parameters.md#default-frame) parameter.

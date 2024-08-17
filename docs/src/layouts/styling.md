@@ -1,4 +1,4 @@
-# Styling
+# Text styling
 
 {{story cast layout/styled}}
 

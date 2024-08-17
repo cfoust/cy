@@ -40,7 +40,7 @@
 
   - [Borders](./layouts/borders.md)
 
-  - [Styling](./layouts/styling.md)
+  - [Text styling](./layouts/styling.md)
 
 - [Replay mode](./replay-mode.md)
 
