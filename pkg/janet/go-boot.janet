@@ -69,12 +69,12 @@
 
   (defn on-parse-error [parser where]
     (set err (go/capture-stderr bad-parse parser where))
-    (set (env :exit) true))
+    (put env :exit true))
 
   (defn on-compile-error [msg fiber where line col]
     (set err (go/capture-stderr bad-compile msg nil where line col))
     (set err-fiber fiber)
-    (set (env :exit) true))
+    (put env :exit true))
 
   (run-context
     {:env env
@@ -87,7 +87,7 @@
                     (set err-fiber f)
                     (put env :exit true)))
      :source source
-     :fiber-flags :dti})
+     :fiber-flags :dt})
 
   (if (nil? err) env err))
 
