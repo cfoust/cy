@@ -16,7 +16,7 @@ As a result, `cy` is the best choice for users who enjoy tinkering with the tool
 > abstraction present in some Lisps and strikes a balance between functional
 > programming orthodoxy and practical imperative programming needs.
 
-### Configuration files
+## Configuration files
 
 On startup, `cy` will search for and execute the first file containing Janet source code that it finds in the following locations. `cy` adheres to the [XDG base directory specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html).
 
@@ -32,7 +32,7 @@ On startup, `cy` will search for and execute the first file containing Janet sou
 
 You can reload your configuration at any time using {{api action/reload-config}}, which by default is bound to {{bind :root ctrl+a r}}.
 
-### Example configuration
+## Example configuration
 
 An example configuration that uses functionality from this API is shown below. You may also refer to the [default configuration](https://github.com/cfoust/cy/blob/main/pkg/cy/boot) for examples of more advanced API usage.
 
@@ -56,7 +56,7 @@ An example configuration that uses functionality from this API is shown below. Y
 (key/bind :root ["ctrl+a" "g"] toast-pane-path)
 ```
 
-### Execution context
+## Execution context
 
 The Janet code executed in `cy` can be executed in two different contexts:
 
@@ -66,3 +66,7 @@ The Janet code executed in `cy` can be executed in two different contexts:
 Because of this, _some API functionality can only be used in a keybinding or action._ This is because some kinds of state, such as the state that `(viewport/*)` family of functions uses to work, only makes sense in the context of a user.
 
 This is a confusing aspect of `cy` that I plan to improve over time, such as by letting you execute custom code in the context of a client whenever one connects.
+
+## Error handling
+
+If an uncaught error is thrown while running Janet code, `cy` will send all connected users a toast with that error and log the error to the `/logs` pane, which you can attach to like any other pane. 
