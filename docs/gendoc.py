@@ -160,6 +160,9 @@ def render_params(params: List[Param]) -> str:
 def render_key(key: str) -> str:
     if key == " ":
         return "space"
+    elif key == "|":
+        # Escape the pipe character
+        return "&#124;"
     return key
 
 
