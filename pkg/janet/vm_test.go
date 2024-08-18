@@ -360,4 +360,10 @@ func TestVM(t *testing.T) {
 			require.Equal(t, customBefore.Number, customAfter.Number)
 		}
 	})
+
+	t.Run("json", func(t *testing.T) {
+		err = vm.Execute(ctx, `(json/encode [1 2 3])`)
+		require.NoError(t, err)
+	})
+
 }

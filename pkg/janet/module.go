@@ -60,7 +60,7 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 	defer deInitJanet()
 
 	// Set up the core environment
-	env := C.janet_core_env(nil)
+	env := C.go_janet_core_env()
 	v.runCodeUnsafe(GO_BOOT_FILE, "go-boot.janet")
 
 	// Then store our evaluation function

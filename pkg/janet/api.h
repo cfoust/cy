@@ -8,3 +8,4 @@ const char *_pretty_print(Janet value);
 Janet wrap_keyword(const char *str);
 int tuple_length(const Janet *t);
 int get_arity(JanetFunction *callee);
+JANET_API JanetTable *go_janet_core_env();
