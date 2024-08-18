@@ -76,7 +76,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 			return nil, err
 		}
 
-		err = vm.ExecuteCall(ctx, nil, janet.Call{
+		_, err = vm.ExecuteCall(ctx, nil, janet.Call{
 			Code:       data,
 			SourcePath: path,
 			Options:    janet.DEFAULT_CALL_OPTIONS,

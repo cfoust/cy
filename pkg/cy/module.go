@@ -95,8 +95,8 @@ func (c *Cy) ExecuteOnBehalf(
 	node tree.NodeID,
 	code []byte,
 	path string,
-) (result *janet.Value, err error) {
-	return c.ExecuteCallResult(
+) (*janet.Value, error) {
+	_, err := c.ExecuteCall(
 		ctx,
 		// todo: infer
 		nil,
@@ -105,6 +105,7 @@ func (c *Cy) ExecuteOnBehalf(
 			SourcePath: path,
 		},
 	)
+	return nil, err
 }
 
 func (c *Cy) Log(level zerolog.Level, message string) {

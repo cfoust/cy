@@ -75,6 +75,7 @@ func (i ErrorMessage) Type() MessageType { return MessageTypeError }
 
 type RPCRequestMessage struct {
 	Name string
+	JSON bool
 	Args []byte
 }
 

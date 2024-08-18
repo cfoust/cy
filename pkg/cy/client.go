@@ -529,10 +529,11 @@ func (c *Client) Detach() {
 
 // execute runs some Janet code on behalf of the client.
 func (c *Client) execute(code string) error {
-	return c.cy.ExecuteCall(c.Ctx(), c, janet.Call{
+	_, err := c.cy.ExecuteCall(c.Ctx(), c, janet.Call{
 		Code:    []byte(code),
 		Options: janet.DEFAULT_CALL_OPTIONS,
 	})
+	return err
 }
 
 func (c *Client) Toast(toast toasts.Toast) {
