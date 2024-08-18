@@ -14,12 +14,13 @@ type RPCExecArgs struct {
 	Node   int
 	Code   []byte
 	Dir    string
+	JSON   bool
 }
 
 type RPCExecResponse struct {
 }
 
-// RPC executes an RPC call on the server.
+// RPC executes an RPC call on the server over the given Connection.
 func RPC[S any, T any](
 	conn Connection,
 	name string,
@@ -87,48 +88,64 @@ func RPC[S any, T any](
 	return result, nil
 }
 
-func (s *Server) HandleRPC(conn Connection, msg *P.RPCRequestMessage) {
+// callRPC executes an RPC call and returns the result.
+func (s *Server) callRPC(
+	conn Connection,
+	request *P.RPCRequestMessage,
+) (interface{}, error) {
 	handle := new(codec.MsgpackHandle)
 
-	var responseBytes []byte
-	var err error
-
-	switch msg.Name {
+	switch request.Name {
 	case "exec":
 		var args RPCExecArgs
-		if err = codec.NewDecoderBytes(
-			msg.Args,
+		if err := codec.NewDecoderBytes(
+			request.Args,
 			handle,
 		).Decode(&args); err != nil {
-			break
+			return nil, err
 		}
 
-		_, err = s.cy.ExecuteOnBehalf(
+		_, err := s.cy.ExecuteOnBehalf(
 			conn.Ctx(),
 			tree.NodeID(args.Node),
 			args.Code,
 			args.Source,
 		)
 		if err != nil {
-			break
+			return nil, err
 		}
 
-		enc := codec.NewEncoderBytes(&responseBytes, handle)
-		if err = enc.Encode(nil); err != nil {
-			return
-		}
-	default:
-		err = fmt.Errorf("unknown RPC: %s", msg.Name)
+		return nil, nil
 	}
 
-	response := P.RPCResponseMessage{
+	return nil, fmt.Errorf("unknown RPC: %s", request.Name)
+}
+
+// HandleRPC handles an RPC request, calling the appropriate function and
+// encoding the response.
+func (s *Server) HandleRPC(conn Connection, request *P.RPCRequestMessage) {
+	response, err := s.callRPC(conn, request)
+	if err != nil {
+		return
+	}
+
+	var responseBytes []byte
+	if response != nil {
+		enc := codec.NewEncoderBytes(
+			&responseBytes,
+			new(codec.MsgpackHandle),
+		)
+		err = enc.Encode(response)
+	}
+
+	msg := P.RPCResponseMessage{
 		Errored:  err != nil,
 		Response: responseBytes,
 	}
 
 	if err != nil {
-		response.Error = err.Error()
+		msg.Error = err.Error()
 	}
 
-	conn.Send(response)
+	conn.Send(msg)
 }
