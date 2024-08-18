@@ -28,6 +28,8 @@ type VM struct {
 	callbacks map[string]*Callback
 	evaluate  C.Janet
 
+	jsonEncode, format *Function
+
 	requests chan Request
 
 	env *Table
@@ -50,6 +52,20 @@ func (v *VM) Env() *Table {
 	return v.env
 }
 
+func (v *VM) getFunction(env *C.JanetTable, name string) *Function {
+	var fun C.Janet
+	C.janet_resolve(
+		env,
+		C.janet_csymbol(C.CString(name)),
+		&fun,
+	)
+
+	return &Function{
+		Value:    v.value(fun),
+		function: C.janet_unwrap_function(fun),
+	}
+}
+
 // Wait for code calls and process them.
 func (v *VM) poll(ctx context.Context, ready chan bool) {
 	// All Janet state is thread-local, so we explicitly want to execute
@@ -68,6 +84,9 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 	C.janet_resolve(env, C.janet_csymbol(C.CString("go/evaluate")), &evaluate)
 	C.janet_gcroot(evaluate)
 	v.evaluate = evaluate
+
+	v.jsonEncode = v.getFunction(env, "json/encode")
+	v.format = v.getFunction(env, "string/format")
 
 	ready <- true
 

@@ -17,8 +17,13 @@ import (
 	"unsafe"
 )
 
+// Result is the value produced when a fiber finishes executing. Fibers can halt in three ways:
+// - They can return a value, which is stored in Out.
+// - They can yield (with (yield)), which is stored in Yield.
+// - They can error, the message for which is stored in Error.
 type Result struct {
 	Out   *Value
+	Yield *Value
 	Error error
 }
 
@@ -53,11 +58,22 @@ func (p Params) Out(value *Value) {
 	}
 }
 
+func (p Params) Yield(value *Value) {
+	p.Result <- Result{
+		Yield: value,
+	}
+}
+
+// WaitErr waits for a fiber to finish executing, ignoring any values it
+// returns or yields.
 func (p Params) WaitErr() error {
 	select {
 	case result := <-p.Result:
 		if result.Out != nil {
 			result.Out.Free()
+		}
+		if result.Yield != nil {
+			result.Yield.Free()
 		}
 		return result.Error
 	case <-p.Context.Done():
@@ -65,10 +81,26 @@ func (p Params) WaitErr() error {
 	}
 }
 
-func (p Params) WaitResult() (*Value, error) {
+// WaitOut waits for the result of a fiber. If the fiber yields (instead of
+// just returning a result), WaitOut will return an error.
+func (p Params) WaitOut() (*Value, error) {
 	select {
 	case result := <-p.Result:
+		if result.Yield != nil {
+			return nil, fmt.Errorf("unexpected yield")
+		}
+
 		return result.Out, result.Error
+	case <-p.Context.Done():
+		return nil, p.Context.Err()
+	}
+}
+
+// WaitResult waits for the fiber to produce a Result and returns it.
+func (p Params) WaitResult() (*Result, error) {
+	select {
+	case result := <-p.Result:
+		return &result, result.Error
 	case <-p.Context.Done():
 		return nil, p.Context.Err()
 	}
@@ -119,9 +151,10 @@ func (v *VM) runFiber(params Params, fiber *Fiber, in *Value) {
 	}
 }
 
-func (v *VM) handleYield(params Params, fiber *Fiber, out C.Janet) {
+// handleCallback invokes a callback defined in Go.
+func (v *VM) handleCallback(params Params, fiber *Fiber, out C.Janet) {
 	if C.janet_checktype(out, C.JANET_TUPLE) == 0 {
-		params.Error(fmt.Errorf("(yield) called with non-tuple"))
+		params.Error(fmt.Errorf("(signal) called with non-tuple"))
 		return
 	}
 
@@ -182,6 +215,9 @@ func (v *VM) continueFiber(params Params, fiber *Fiber, in *Value) {
 	case C.JANET_SIGNAL_OK:
 		params.Out(v.value(out))
 		return
+	case C.JANET_SIGNAL_YIELD:
+		params.Yield(v.value(out))
+		return
 	case C.JANET_SIGNAL_ERROR:
 		var errStr string
 		if err := v.unmarshal(out, &errStr); err != nil {
@@ -191,8 +227,9 @@ func (v *VM) continueFiber(params Params, fiber *Fiber, in *Value) {
 
 		params.Error(fmt.Errorf("%s", errStr))
 		return
-	case C.JANET_SIGNAL_YIELD:
-		v.handleYield(params, fiber, out)
+	case C.JANET_SIGNAL_USER5:
+		v.handleCallback(params, fiber, out)
+		return
 	default:
 		params.Error(fmt.Errorf("unrecognized signal: %d", signal))
 		return

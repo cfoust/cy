@@ -364,6 +364,19 @@ func TestVM(t *testing.T) {
 	t.Run("json", func(t *testing.T) {
 		err = vm.Execute(ctx, `(json/encode [1 2 3])`)
 		require.NoError(t, err)
+
+		out, err := vm.ExecuteCallResult(
+			ctx,
+			nil,
+			CallString(`(yield [1 2 3])`),
+		)
+		require.NoError(t, err)
+		require.NotNil(t, out)
+
+		json, err := out.JSON(ctx)
+		require.NoError(t, err)
+
+		t.Logf("json: %s", json)
 	})
 
 }

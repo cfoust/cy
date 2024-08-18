@@ -64,18 +64,7 @@ func (v *VM) runCodeUnsafe(code []byte, source string) {
 	C.free(unsafe.Pointer(sourcePtr))
 }
 
-func (v *VM) handleCodeResult(params Params, call Call) error {
-	var out *Value
-	select {
-	case <-params.Context.Done():
-		return params.Context.Err()
-	case result := <-params.Result:
-		if result.Error != nil {
-			return result.Error
-		}
-		out = result.Out
-	}
-
+func (v *VM) handleCodeResult(call Call, out *Value) error {
 	result := out.janet
 	resultType := C.janet_type(result)
 
@@ -102,13 +91,14 @@ func (v *VM) handleCodeResult(params Params, call Call) error {
 			Value: v.value(result),
 			table: C.janet_unwrap_table(result),
 		}
+	} else {
+		out.unroot()
 	}
 
 	return nil
 }
 
 // Run a string containing Janet code and return any error that occurs.
-// TODO(cfoust): 07/20/23 send error to errc with timeout
 func (v *VM) runCode(params Params, call Call) {
 	sourcePtr := C.CString(call.SourcePath)
 
@@ -148,17 +138,42 @@ func (v *VM) runCode(params Params, call Call) {
 
 	go func() {
 		v.runFiber(subParams, fiber, nil)
-		err := v.handleCodeResult(subParams, call)
-		if err != nil {
-			params.Error(err)
-			return
-		}
 
-		params.Ok()
+		select {
+		case <-params.Context.Done():
+			params.Error(params.Context.Err())
+			return
+		case result := <-params.Result:
+			if result.Error != nil {
+				params.Error(result.Error)
+				return
+			}
+			if result.Yield != nil {
+				params.Yield(result.Yield)
+				return
+			}
+
+			err := v.handleCodeResult(
+				call,
+				result.Out,
+			)
+			if err != nil {
+				params.Error(err)
+				return
+			}
+
+			params.Ok()
+		}
 	}()
 }
 
-func (v *VM) runFunction(params Params, fun *C.JanetFunction, args []interface{}) {
+// runFunction creates a fiber for the given function and arguments and runs
+// it.
+func (v *VM) runFunction(
+	params Params,
+	fun *C.JanetFunction,
+	args []interface{},
+) {
 	cArgs := make([]C.Janet, 0)
 	for _, arg := range args {
 		value, err := v.marshal(arg)
@@ -181,27 +196,13 @@ func (v *VM) runFunction(params Params, fun *C.JanetFunction, args []interface{}
 	go v.runFiber(params, fiber, nil)
 }
 
-func (v *VM) ExecuteCall(ctx context.Context, user interface{}, call Call) error {
-	result := make(chan Result)
-	req := callRequest{
-		Params: Params{
-			Context: ctx,
-			User:    user,
-			Result:  result,
-		},
-		Call: call,
-	}
-	v.requests <- req
-	return req.WaitErr()
-}
-
-// ExecuteCallResult executes a call and returns the Janet value the code
-// returned.
-func (v *VM) ExecuteCallResult(
+// ExecuteCall executes a Call, which is the lowest-level interface for running
+// Janet code.
+func (v *VM) ExecuteCall(
 	ctx context.Context,
 	user interface{},
 	call Call,
-) (*Value, error) {
+) (*Result, error) {
 	result := make(chan Result)
 	req := callRequest{
 		Params: Params{
@@ -216,9 +217,11 @@ func (v *VM) ExecuteCallResult(
 }
 
 func (v *VM) Execute(ctx context.Context, code string) error {
-	return v.ExecuteCall(ctx, nil, CallString(code))
+	_, err := v.ExecuteCall(ctx, nil, CallString(code))
+	return err
 }
 
+// ExecuteFile executes a file containing Janet code.
 func (v *VM) ExecuteFile(ctx context.Context, path string) error {
 	bytes, err := readFile(path)
 	if err != nil {
@@ -228,5 +231,6 @@ func (v *VM) ExecuteFile(ctx context.Context, path string) error {
 	call := CallBytes(bytes)
 	call.SourcePath = path
 
-	return v.ExecuteCall(ctx, nil, call)
+	_, err = v.ExecuteCall(ctx, nil, call)
+	return err
 }

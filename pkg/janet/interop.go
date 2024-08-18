@@ -585,7 +585,7 @@ func (v *VM) registerCallback(
 	code += "\n(merge-module root-env (curenv))"
 	call := CallString(code)
 	call.Options.UpdateEnv = true
-	err = v.ExecuteCall(context.Background(), nil, call)
+	_, err = v.ExecuteCall(context.Background(), nil, call)
 	if err != nil {
 		return err
 	}

@@ -95,7 +95,7 @@
   go/callback
   "Invoke a Go callback by name and return the result, but raise errors instead of returning them."
   [& args]
-  (def [status result] (yield args))
+  (def [status result] (signal 5 args))
 
   (case status
     :value result
