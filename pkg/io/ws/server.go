@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	P "github.com/cfoust/cy/pkg/io/pipe"
 	"github.com/cfoust/cy/pkg/util"
 
 	"nhooyr.io/websocket"
@@ -33,10 +34,13 @@ func (ws *WSServer[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer c.Close(websocket.StatusInternalError, "operational fault during relay")
 
 	client := WSClient[T]{
-		Lifetime: util.NewLifetime(r.Context()),
-		Conn:     c,
-		protocol: ws.protocol,
+		Lifetime:  util.NewLifetime(r.Context()),
+		Publisher: util.NewPublisher[P.Packet[T]](),
+		Conn:      c,
+		protocol:  ws.protocol,
 	}
+
+	go client.poll()
 
 	done := make(chan bool)
 	go func() {

@@ -15,18 +15,14 @@ import (
 func connectCommand() error {
 	var socketPath string
 
-	if envPath, ok := os.LookupEnv(CY_SOCKET_ENV); ok {
-		socketPath = envPath
-	} else {
-		label, err := getSocketPath(CLI.Socket)
-		if err != nil {
-			return fmt.Errorf(
-				"failed to detect socket path: %s",
-				err,
-			)
-		}
-		socketPath = label
+	label, err := getSocketPath(CLI.Socket)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to detect socket path: %s",
+			err,
+		)
 	}
+	socketPath = label
 
 	if daemon.WasReborn() {
 		cntx := new(daemon.Context)
@@ -89,7 +85,7 @@ func connectCommand() error {
 		return nil
 	}
 
-	conn, err := connect(socketPath)
+	conn, err := connect(socketPath, true)
 	if err != nil {
 		return fmt.Errorf(
 			"failed to start cy: %s",

@@ -76,7 +76,7 @@ func (c *Client) Write(data []byte) (n int, err error) {
 }
 
 func (s *Server) HandleWSClient(conn ws.Client[P.Message]) {
-	events := conn.Receive()
+	events := conn.Subscribe(conn.Ctx())
 
 	// First we need to wait for the client's handshake to know how to
 	// handle its terminal
@@ -88,15 +88,19 @@ func (s *Server) HandleWSClient(conn ws.Client[P.Message]) {
 	var err error
 
 	select {
+	case <-conn.Ctx().Done():
+		return
 	case <-handshakeCtx.Done():
 		wsClient.closeError(fmt.Errorf("no handshake received"))
 		return
-	case message, more := <-events:
-		if handshake, ok := message.Contents.(*P.HandshakeMessage); ok {
-			client, err = s.cy.NewClient(conn.Ctx(), *handshake)
-		} else if !more {
-			err = fmt.Errorf("closed by remote")
-		} else {
+	case msg := <-events.Recv():
+		switch msg := msg.Contents.(type) {
+		case *P.HandshakeMessage:
+			client, err = s.cy.NewClient(conn.Ctx(), *msg)
+		case *P.RPCRequestMessage:
+			s.HandleRPC(conn, msg)
+			return
+		default:
 			err = fmt.Errorf("must send handshake first")
 		}
 
@@ -115,7 +119,7 @@ func (s *Server) HandleWSClient(conn ws.Client[P.Message]) {
 		case <-client.Ctx().Done():
 			wsClient.close()
 			return
-		case packet := <-events:
+		case packet := <-events.Recv():
 			if packet.Error != nil {
 				// TODO(cfoust): 06/08/23 handle gracefully
 				continue

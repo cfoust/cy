@@ -14,6 +14,8 @@ const (
 	MessageTypeSize
 	MessageTypeInput
 	MessageTypeOutput
+	MessageTypeRPCRequest
+	MessageTypeRPCResponse
 	MessageTypeClose
 )
 
@@ -70,3 +72,18 @@ type ErrorMessage struct {
 }
 
 func (i ErrorMessage) Type() MessageType { return MessageTypeError }
+
+type RPCRequestMessage struct {
+	Name string
+	Args []byte
+}
+
+func (r RPCRequestMessage) Type() MessageType { return MessageTypeRPCRequest }
+
+type RPCResponseMessage struct {
+	Response []byte
+	Errored  bool
+	Error    string
+}
+
+func (r RPCResponseMessage) Type() MessageType { return MessageTypeRPCResponse }
