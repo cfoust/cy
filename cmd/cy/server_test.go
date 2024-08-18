@@ -128,12 +128,33 @@ func TestBadHandshake(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	events := conn.Subscribe(conn.Ctx())
+
 	go func() {
 		for {
-			<-conn.Receive()
+			<-events.Recv()
 		}
 	}()
 
 	<-conn.Ctx().Done()
 	require.Error(t, conn.Ctx().Err())
+}
+
+func TestRPC(t *testing.T) {
+	server := setupServer(t)
+	defer server.Release()
+
+	conn, err := server.Connect()
+	require.NoError(t, err)
+
+	result, err := RPC[RPCExecArgs, RPCExecResponse](
+		conn,
+		"exec",
+		RPCExecArgs{
+			Source: "<unknown>",
+			Code:   []byte(`(pp "hello")`),
+		},
+	)
+	require.NoError(t, err)
+	require.NotNil(t, result)
 }

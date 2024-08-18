@@ -90,6 +90,23 @@ func (c *Cy) ExecuteJanet(path string) error {
 	return c.ExecuteFile(c.Ctx(), path)
 }
 
+func (c *Cy) ExecuteOnBehalf(
+	ctx context.Context,
+	node tree.NodeID,
+	code []byte,
+	path string,
+) (result *janet.Value, err error) {
+	return c.ExecuteCallResult(
+		ctx,
+		// todo: infer
+		nil,
+		janet.Call{
+			Code:       code,
+			SourcePath: path,
+		},
+	)
+}
+
 func (c *Cy) Log(level zerolog.Level, message string) {
 	c.log.WithLevel(level).Msgf(message)
 }

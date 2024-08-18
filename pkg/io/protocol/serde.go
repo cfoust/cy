@@ -33,6 +33,10 @@ func Decode(data []byte) (Message, error) {
 		msg = &SizeMessage{}
 	case MessageTypeClose:
 		msg = &CloseMessage{}
+	case MessageTypeRPCRequest:
+		msg = &RPCRequestMessage{}
+	case MessageTypeRPCResponse:
+		msg = &RPCResponseMessage{}
 	default:
 		return nil, fmt.Errorf("invalid type: %d", type_)
 	}

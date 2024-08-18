@@ -195,6 +195,26 @@ func (v *VM) ExecuteCall(ctx context.Context, user interface{}, call Call) error
 	return req.WaitErr()
 }
 
+// ExecuteCallResult executes a call and returns the Janet value the code
+// returned.
+func (v *VM) ExecuteCallResult(
+	ctx context.Context,
+	user interface{},
+	call Call,
+) (*Value, error) {
+	result := make(chan Result)
+	req := callRequest{
+		Params: Params{
+			Context: ctx,
+			User:    user,
+			Result:  result,
+		},
+		Call: call,
+	}
+	v.requests <- req
+	return req.WaitResult()
+}
+
 func (v *VM) Execute(ctx context.Context, code string) error {
 	return v.ExecuteCall(ctx, nil, CallString(code))
 }

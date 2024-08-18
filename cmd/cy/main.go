@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
+	"github.com/cfoust/cy/pkg/cy"
 	"github.com/cfoust/cy/pkg/version"
 
 	"github.com/alecthomas/kong"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -36,6 +39,9 @@ func main() {
 			Summary: true,
 		}))
 
+	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	log.Logger = log.Output(consoleWriter)
+
 	if CLI.Version {
 		fmt.Printf(
 			"cy %s (commit %s)\n",
@@ -49,8 +55,14 @@ func main() {
 		os.Exit(0)
 	}
 
+	if !cy.SOCKET_REGEX.MatchString(CLI.Socket) {
+		log.Fatal().Msg("invalid socket name, the socket name must be alphanumeric")
+	}
+
 	switch ctx.Command() {
 	case "exec":
+		fallthrough
+	case "exec <file>":
 		err := execCommand()
 		if err != nil {
 			log.Fatal().Err(err).Msg("failed to execute Janet code")
@@ -61,5 +73,4 @@ func main() {
 			log.Fatal().Err(err).Msg("failed to connect")
 		}
 	}
-
 }
