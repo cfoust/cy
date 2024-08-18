@@ -52,7 +52,7 @@ type callRequest struct {
 
 // Run code without using our evaluation function. This can panic.
 func (v *VM) runCodeUnsafe(code []byte, source string) {
-	env := C.janet_core_env(nil)
+	env := C.go_janet_core_env()
 	sourcePtr := C.CString(source)
 	C.janet_dobytes(
 		env,
@@ -112,7 +112,7 @@ func (v *VM) handleCodeResult(params Params, call Call) error {
 func (v *VM) runCode(params Params, call Call) {
 	sourcePtr := C.CString(call.SourcePath)
 
-	var env *C.JanetTable = C.janet_core_env(nil)
+	var env *C.JanetTable = C.go_janet_core_env()
 
 	if v.env != nil {
 		env = v.env.table

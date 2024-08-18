@@ -1,4 +1,5 @@
 #include <janet.h>
+#include <json.h>
 
 Janet wrap_result_value(Janet value) {
     Janet parts[2] = {
@@ -42,4 +43,11 @@ int tuple_length(const Janet *t) {
 
 int get_arity(JanetFunction *callee) {
     return callee->def->arity;
+}
+
+JANET_API JanetTable *go_janet_core_env() {
+    JanetTable *env = janet_core_env(NULL);
+    module_json(env);
+    printf("registered json\n");
+    return env;
 }
