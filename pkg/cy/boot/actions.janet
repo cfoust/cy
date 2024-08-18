@@ -11,7 +11,7 @@ In a similar way to other modern applications, cy has a command palette (invoked
   (def func-name (string name))
   ~(upscope
      (defn ,name ,docstring [] ,;body)
-     (,put actions ,func-name [,docstring ,name])))
+     (,put ,actions ,func-name [,docstring ,name])))
 
 (defmacro key/bind-many
   ````Bind many bindings at once in the same scope.
@@ -331,3 +331,5 @@ For example:
   action/trace
   "Save a trace to cy's socket directory."
   (cy/trace))
+
+(merge-module root-env (curenv))

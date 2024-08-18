@@ -163,3 +163,5 @@
                    ["F" [:re "."]] replay/jump-backward
                    ["t" [:re "."]] replay/jump-to-forward
                    ["T" [:re "."]] replay/jump-to-backward)
+
+(merge-module root-env (curenv))
