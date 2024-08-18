@@ -868,3 +868,5 @@ For example, when moving vertically upwards, for a vertical split node this func
   action/prev-tab
   "Switch to the previous tab."
   (switch-tab-delta -1))
+
+(merge-module root-env (curenv))

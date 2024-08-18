@@ -555,6 +555,7 @@ func (v *VM) registerCallback(
 
 	docstring = strings.TrimSpace(docstring)
 
+	// TODO(cfoust): 08/18/24 this should be a Go template
 	format := "(defn %s %s %s)"
 
 	// You can provide a custom method prototype by providing a docstring
@@ -581,6 +582,7 @@ func (v *VM) registerCallback(
 		docstring,
 		prototype,
 	)
+	code += "\n(merge-module root-env (curenv))"
 	call := CallString(code)
 	call.Options.UpdateEnv = true
 	err = v.ExecuteCall(context.Background(), nil, call)
