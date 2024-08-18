@@ -68,6 +68,30 @@ type stringRequest struct {
 	result chan string
 }
 
+func (v *Value) JSON(ctx context.Context) ([]byte, error) {
+	if v.IsFree() {
+		return nil, ERROR_FREED
+	}
+
+	out, err := v.vm.jsonEncode.CallResult(
+		ctx,
+		nil,
+		v.janet,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []byte
+	err = out.Unmarshal(&result)
+	if err != nil {
+		out.Free()
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (v *Value) String() string {
 	if v.isSafe {
 		return prettyPrint(v.janet)
@@ -174,7 +198,7 @@ func (f *Function) CallResult(
 	}
 	f.vm.requests <- req
 
-	return req.WaitResult()
+	return req.WaitOut()
 }
 
 func (f *Function) Call(ctx context.Context, params ...interface{}) error {

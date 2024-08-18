@@ -48,6 +48,5 @@ int get_arity(JanetFunction *callee) {
 JANET_API JanetTable *go_janet_core_env() {
     JanetTable *env = janet_core_env(NULL);
     module_json(env);
-    printf("registered json\n");
     return env;
 }
