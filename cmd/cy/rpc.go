@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	P "github.com/cfoust/cy/pkg/io/protocol"
-	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/janet"
 
 	"github.com/ugorji/go/codec"
 )
@@ -18,6 +18,7 @@ type RPCExecArgs struct {
 }
 
 type RPCExecResponse struct {
+	Data []byte
 }
 
 // RPC executes an RPC call on the server over the given Connection.
@@ -105,17 +106,35 @@ func (s *Server) callRPC(
 			return nil, err
 		}
 
-		_, err := s.cy.ExecuteOnBehalf(
+		result, err := s.cy.ExecuteCall(
 			conn.Ctx(),
-			tree.NodeID(args.Node),
-			args.Code,
-			args.Source,
+			// todo: infer
+			nil,
+			janet.Call{
+				Code:       args.Code,
+				SourcePath: args.Source,
+			},
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		return nil, nil
+		response := RPCExecResponse{}
+
+		if result.Yield == nil {
+			return response, nil
+		}
+
+		if args.JSON {
+			response.Data, err = result.Yield.JSON()
+			if err != nil {
+				return nil, err
+			}
+			return response, nil
+		}
+
+		response.Data = []byte(result.Yield.String())
+		return response, nil
 	}
 
 	return nil, fmt.Errorf("unknown RPC: %s", request.Name)
@@ -125,7 +144,19 @@ func (s *Server) callRPC(
 // encoding the response.
 func (s *Server) HandleRPC(conn Connection, request *P.RPCRequestMessage) {
 	response, err := s.callRPC(conn, request)
+
+	if err == nil && response == nil {
+		err = fmt.Errorf(
+			"no response from RPC call %s",
+			request.Name,
+		)
+	}
+
 	if err != nil {
+		conn.Send(P.RPCResponseMessage{
+			Errored: err != nil,
+			Error:   err.Error(),
+		})
 		return
 	}
 

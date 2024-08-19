@@ -3,13 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/cfoust/cy/pkg/cy"
 	"github.com/cfoust/cy/pkg/version"
 
 	"github.com/alecthomas/kong"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -29,6 +27,11 @@ var CLI struct {
 	} `cmd:"" default:"1" help:"Connect to the cy server, starting one if necessary."`
 }
 
+func writeError(err error) {
+	fmt.Fprintf(os.Stderr, "%s\n", err)
+	os.Exit(1)
+}
+
 func main() {
 	ctx := kong.Parse(&CLI,
 		kong.Name("cy"),
@@ -38,9 +41,6 @@ func main() {
 			Compact: true,
 			Summary: true,
 		}))
-
-	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
-	log.Logger = log.Output(consoleWriter)
 
 	if CLI.Version {
 		fmt.Printf(
@@ -65,12 +65,12 @@ func main() {
 	case "exec <file>":
 		err := execCommand()
 		if err != nil {
-			log.Fatal().Err(err).Msg("failed to execute Janet code")
+			writeError(err)
 		}
 	case "connect":
 		err := connectCommand()
 		if err != nil {
-			log.Fatal().Err(err).Msg("failed to connect")
+			writeError(err)
 		}
 	}
 }
