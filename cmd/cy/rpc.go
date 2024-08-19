@@ -10,12 +10,25 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
+type OutputFormat int
+
+const (
+	OutputFormatRaw OutputFormat = iota
+	OutputFormatJSON
+	OutputFormatJanet
+)
+
+const (
+	RPCExec = "exec"
+)
+
 type RPCExecArgs struct {
 	Source string
+	// The NodeID of a tree node, which will be used to infer which client
+	// on behalf of whom the code will be run.
 	Node   int
 	Code   []byte
-	Dir    string
-	JSON   bool
+	Format OutputFormat
 }
 
 type RPCExecResponse struct {
@@ -64,7 +77,7 @@ func RPC[S any, T any](
 	}
 
 	conn.Send(P.RPCRequestMessage{
-		Name: "exec",
+		Name: name,
 		Args: payload,
 	})
 
@@ -98,7 +111,7 @@ func (s *Server) callRPC(
 	handle := new(codec.MsgpackHandle)
 
 	switch request.Name {
-	case "exec":
+	case RPCExec:
 		var args RPCExecArgs
 		if err := codec.NewDecoderBytes(
 			request.Args,
@@ -125,23 +138,36 @@ func (s *Server) callRPC(
 		if err != nil {
 			return nil, err
 		}
-
 		response := RPCExecResponse{}
 
 		if result.Yield == nil {
 			return response, nil
 		}
 
-		if args.JSON {
+		defer result.Yield.Free()
+
+		switch args.Format {
+		case OutputFormatRaw:
+			response.Data, err = result.Yield.Raw()
+			if err != nil {
+				return nil, err
+			}
+			return response, nil
+		case OutputFormatJanet:
+			response.Data = []byte(result.Yield.String())
+			return response, nil
+		case OutputFormatJSON:
 			response.Data, err = result.Yield.JSON()
 			if err != nil {
 				return nil, err
 			}
 			return response, nil
+		default:
+			return nil, fmt.Errorf(
+				"unknown output format: %d",
+				args.Format,
+			)
 		}
-
-		response.Data = []byte(result.Yield.String())
-		return response, nil
 	}
 
 	return nil, fmt.Errorf("unknown RPC: %s", request.Name)

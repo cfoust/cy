@@ -145,21 +145,55 @@ func TestBadHandshake(t *testing.T) {
 	require.Error(t, conn.Ctx().Err())
 }
 
-func TestRPC(t *testing.T) {
+func TestExec(t *testing.T) {
 	server := setupServer(t)
 	defer server.Release()
 
-	conn, err := server.Connect()
-	require.NoError(t, err)
-
-	result, err := RPC[RPCExecArgs, RPCExecResponse](
-		conn,
-		"exec",
-		RPCExecArgs{
-			Source: "<unknown>",
-			Code:   []byte(`(pp "hello")`),
+	for _, test := range []struct {
+		Args   RPCExecArgs
+		Result []byte
+	}{
+		{
+			Args: RPCExecArgs{
+				Code: []byte(`(pp "hello")`),
+			},
+			Result: nil,
 		},
-	)
-	require.NoError(t, err)
-	require.NotNil(t, result)
+		{
+			Args: RPCExecArgs{
+				Code:   []byte(`(yield 2)`),
+				Format: OutputFormatRaw,
+			},
+			Result: []byte(`2`),
+		},
+		{
+			Args: RPCExecArgs{
+				Code:   []byte(`(yield {:a 2})`),
+				Format: OutputFormatJSON,
+			},
+			Result: []byte(`{"a":2}`),
+		},
+		{
+			Args: RPCExecArgs{
+				Code:   []byte(`(yield {:a 2})`),
+				Format: OutputFormatJanet,
+			},
+			Result: []byte(`{:a 2}`),
+		},
+	} {
+		conn, err := server.Connect()
+		require.NoError(t, err)
+
+		result, err := RPC[RPCExecArgs, RPCExecResponse](
+			conn,
+			RPCExec,
+			test.Args,
+		)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Equal(t, test.Result, result.Data)
+
+		conn.Close()
+	}
+
 }

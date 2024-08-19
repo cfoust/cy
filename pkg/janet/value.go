@@ -77,10 +77,41 @@ func (v *Value) JSON() ([]byte, error) {
 		return nil, err
 	}
 
+	defer out.Free()
+
 	var result []byte
 	err = out.Unmarshal(&result)
 	if err != nil {
-		out.Free()
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (v *Value) Raw() ([]byte, error) {
+	if v.IsFree() {
+		return nil, ERROR_FREED
+	}
+
+	out, err := v.vm.raw.CallResult(
+		context.Background(),
+		nil,
+		v,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer out.Free()
+
+	var str string
+	if err := out.Unmarshal(&str); err == nil {
+		return []byte(str), nil
+	}
+
+	var result []byte
+	err = out.Unmarshal(&result)
+	if err != nil {
 		return nil, err
 	}
 
