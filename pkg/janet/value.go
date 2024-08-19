@@ -63,20 +63,15 @@ func (v *Value) Free() {
 	}
 }
 
-type stringRequest struct {
-	value  C.Janet
-	result chan string
-}
-
-func (v *Value) JSON(ctx context.Context) ([]byte, error) {
+func (v *Value) JSON() ([]byte, error) {
 	if v.IsFree() {
 		return nil, ERROR_FREED
 	}
 
 	out, err := v.vm.jsonEncode.CallResult(
-		ctx,
+		context.Background(),
 		nil,
-		v.janet,
+		v,
 	)
 	if err != nil {
 		return nil, err
@@ -93,16 +88,28 @@ func (v *Value) JSON(ctx context.Context) ([]byte, error) {
 }
 
 func (v *Value) String() string {
-	if v.isSafe {
-		return prettyPrint(v.janet)
+	if v.IsFree() {
+		return ""
 	}
 
-	result := make(chan string)
-	v.vm.requests <- stringRequest{
-		value:  v.janet,
-		result: result,
+	out, err := v.vm.format.CallResult(
+		context.Background(),
+		nil,
+		"%n",
+		v,
+	)
+	if err != nil {
+		return ""
 	}
-	return <-result
+
+	var result string
+	err = out.Unmarshal(&result)
+	if err != nil {
+		out.Free()
+		return ""
+	}
+
+	return result
 }
 
 type unmarshalRequest struct {
