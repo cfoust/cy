@@ -209,7 +209,7 @@ func (c *Cy) getClient(id ClientID) (client *Client, found bool) {
 	return
 }
 
-func (c *Cy) inferClient(node tree.NodeID) (client *Client, found bool) {
+func (c *Cy) InferClient(node tree.NodeID) (client *Client, found bool) {
 	c.RLock()
 	write, haveWrite := c.lastWrite[node]
 	visit, haveVisit := c.lastVisit[node]
@@ -237,7 +237,7 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 				continue
 			}
 
-			client, ok := c.inferClient(nodeEvent.Id)
+			client, ok := c.InferClient(nodeEvent.Id)
 			if !ok {
 				continue
 			}
