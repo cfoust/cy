@@ -18,7 +18,7 @@ var CLI struct {
 
 	Exec struct {
 		Command string `help:"Provide Janet code as a string argument." name:"command" short:"c" optional:"" default:""`
-		JSON    bool   `name:"json" optional:"" short:"j" help:"Write any yielded value as JSON."`
+		Format  string `name:"format" optional:"" enum:"raw,json,janet" short:"f" default:"raw" help:"Set the desired output format."`
 		File    string `arg:"" optional:"" help:"Provide a file containing Janet code." type:"existingfile"`
 	} `cmd:"" help:"Execute Janet code on the cy server."`
 

@@ -110,3 +110,11 @@
   go/-/string/format
   [format value]
   (string/format format value))
+
+(defn
+  go/-/raw
+  [value]
+  (cond
+    (or (string? value) (buffer? value)) value
+    (or (nil? value) (boolean? value) (number? value)) (string value)
+    (error "type cannot be encoded as raw")))

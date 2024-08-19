@@ -33,13 +33,8 @@ func execCommand() error {
 	}
 
 	var err error
-	var source, cwd string
+	var source string
 	var code []byte
-
-	cwd, err = os.Getwd()
-	if err != nil {
-		return err
-	}
 
 	if CLI.Exec.Command != "" {
 		source = "<unknown>"
@@ -74,13 +69,29 @@ func execCommand() error {
 		return err
 	}
 
+	format := OutputFormatRaw
+	switch CLI.Exec.Format {
+	case "raw":
+		format = OutputFormatRaw
+	case "json":
+		format = OutputFormatJSON
+	case "janet":
+		format = OutputFormatJanet
+	default:
+		return fmt.Errorf(
+			"unknown output format: %s",
+			CLI.Exec.Format,
+		)
+	}
+
 	response, err := RPC[RPCExecArgs, RPCExecResponse](
-		conn, "exec", RPCExecArgs{
+		conn,
+		RPCExec,
+		RPCExecArgs{
 			Source: source,
 			Code:   code,
 			Node:   id,
-			Dir:    cwd,
-			JSON:   CLI.Exec.JSON,
+			Format: format,
 		},
 	)
 	if err != nil || len(response.Data) == 0 {

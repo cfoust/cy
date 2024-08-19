@@ -28,7 +28,7 @@ type VM struct {
 	callbacks map[string]*Callback
 	evaluate  C.Janet
 
-	jsonEncode, format *Function
+	jsonEncode, raw, format *Function
 
 	requests chan Request
 
@@ -90,6 +90,7 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 	v.evaluate = evaluate
 
 	v.jsonEncode = v.getFunction(env, "go/-/json/encode")
+	v.raw = v.getFunction(env, "go/-/raw")
 	v.format = v.getFunction(env, "go/-/string/format")
 
 	ready <- true
