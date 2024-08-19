@@ -80,6 +80,7 @@ func execCommand() error {
 			Code:   code,
 			Node:   id,
 			Dir:    cwd,
+			JSON:   CLI.Exec.JSON,
 		},
 	)
 	if err != nil || len(response.Data) == 0 {

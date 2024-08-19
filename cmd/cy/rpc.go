@@ -5,6 +5,7 @@ import (
 
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux/screen/tree"
 
 	"github.com/ugorji/go/codec"
 )
@@ -106,10 +107,16 @@ func (s *Server) callRPC(
 			return nil, err
 		}
 
+		var context interface{} = nil
+		if client, found := s.cy.InferClient(
+			tree.NodeID(args.Node),
+		); found {
+			context = client
+		}
+
 		result, err := s.cy.ExecuteCall(
 			conn.Ctx(),
-			// todo: infer
-			nil,
+			context,
 			janet.Call{
 				Code:       args.Code,
 				SourcePath: args.Source,

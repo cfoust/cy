@@ -55,7 +55,7 @@ func runTestFile(t *testing.T, file string) (failures []testFailure) {
 		})
 	})
 
-	err = server.ExecuteCall(server.Ctx(), nil, janet.Call{
+	_, err = server.ExecuteCall(server.Ctx(), nil, janet.Call{
 		Code:       API_TEST_FILE,
 		SourcePath: "api_test.janet",
 		Options:    janet.DEFAULT_CALL_OPTIONS,
