@@ -140,10 +140,10 @@ func (v *VM) runCode(params Params, call Call) {
 		v.runFiber(subParams, fiber, nil)
 
 		select {
-		case <-params.Context.Done():
-			params.Error(params.Context.Err())
+		case <-subParams.Context.Done():
+			params.Error(subParams.Context.Err())
 			return
-		case result := <-params.Result:
+		case result := <-subParams.Result:
 			if result.Error != nil {
 				params.Error(result.Error)
 				return

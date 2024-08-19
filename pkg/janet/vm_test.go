@@ -61,13 +61,14 @@ func (c *CustomMarshal) UnmarshalJanet(value *Value) error {
 }
 
 type TestValue struct {
-	One   int
-	Two   bool
-	Three string
-	Four  *int
-	Five  *int
-	Ints  [6]int
-	Bools []bool
+	One    int
+	Two    bool
+	Three  string
+	Four   *int
+	Five   *int
+	Ints   [6]int
+	Bools  []bool
+	Buffer []byte
 }
 
 func TestVM(t *testing.T) {
@@ -82,6 +83,7 @@ func TestVM(t *testing.T) {
 		ok = true
 	})
 	require.NoError(t, err)
+	t.Logf("callback")
 
 	t.Run("callback", func(t *testing.T) {
 		ok = false
@@ -116,7 +118,7 @@ func TestVM(t *testing.T) {
 		require.NoError(t, err)
 
 		call := CallString(`(test-context)`)
-		err = vm.ExecuteCall(ctx, 1, call)
+		_, err = vm.ExecuteCall(ctx, 1, call)
 		require.NoError(t, err)
 		require.Equal(t, 1, state)
 	})
@@ -135,7 +137,7 @@ func TestVM(t *testing.T) {
 		require.NoError(t, err)
 
 		call := CallString(`(test-context-ctx)`)
-		err = vm.ExecuteCall(ctx, 1, call)
+		_, err = vm.ExecuteCall(ctx, 1, call)
 		require.NoError(t, err)
 		require.Equal(t, 1, state)
 	})
@@ -301,6 +303,7 @@ func TestVM(t *testing.T) {
 		go func() {
 			bools := make([]bool, 2)
 			bools[0] = true
+			buffer := []byte{1, 2, 3}
 			five := 2
 			structValue := TestValue{
 				One:   2,
@@ -311,7 +314,8 @@ func TestVM(t *testing.T) {
 					2,
 					3,
 				},
-				Bools: bools,
+				Bools:  bools,
+				Buffer: buffer,
 			}
 			cmp(t, vm, structValue)
 
@@ -365,18 +369,19 @@ func TestVM(t *testing.T) {
 		err = vm.Execute(ctx, `(json/encode [1 2 3])`)
 		require.NoError(t, err)
 
-		out, err := vm.ExecuteCallResult(
+		out, err := vm.ExecuteCall(
 			ctx,
 			nil,
-			CallString(`(yield [1 2 3])`),
+			CallString(`(yield {:a 1 :b 2})`),
 		)
 		require.NoError(t, err)
 		require.NotNil(t, out)
+		require.NotNil(t, out.Yield)
 
-		json, err := out.JSON(ctx)
+		json, err := out.Yield.JSON()
 		require.NoError(t, err)
-
-		t.Logf("json: %s", json)
+		require.Equal(t, `{"a":1,"b":2}`, string(json))
+		require.Equal(t, `{:a 1 :b 2}`, out.Yield.String())
 	})
 
 }

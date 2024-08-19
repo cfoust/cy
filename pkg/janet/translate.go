@@ -243,6 +243,16 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 		}
 		result = C.janet_wrap_struct(C.janet_struct_end(struct_))
 	case reflect.Array, reflect.Slice:
+		if type_.Kind() == reflect.Slice && type_.Elem().Kind() == reflect.Uint8 {
+			slice := value.Bytes()
+			buffer := C.janet_buffer(C.int(len(slice)))
+			for i := 0; i < len(slice); i++ {
+				C.janet_buffer_push_u8(buffer, C.uint8_t(slice[i]))
+			}
+			result = C.janet_wrap_buffer(buffer)
+			return
+		}
+
 		numElements := 0
 		if type_.Kind() == reflect.Array {
 			numElements = type_.Len()
@@ -509,6 +519,20 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 			}
 		}
 	case reflect.Slice:
+		isBuffer := assertType(source, C.JANET_BUFFER) == nil
+		if isBuffer && type_.Elem().Kind() == reflect.Uint8 {
+			buffer := C.janet_unwrap_buffer(source)
+			length := int(buffer.count)
+			slice := make([]byte, length)
+			for i := 0; i < length; i++ {
+				slice[i] = *(*byte)(unsafe.Pointer(
+					uintptr(unsafe.Pointer(buffer.data)) + uintptr(i),
+				))
+			}
+			value.Set(reflect.ValueOf(slice))
+			return nil
+		}
+
 		if err := assertType(
 			source,
 			C.JANET_ARRAY,

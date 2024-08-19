@@ -60,6 +60,10 @@ func (v *VM) getFunction(env *C.JanetTable, name string) *Function {
 		&fun,
 	)
 
+	if C.janet_checktype(fun, C.JANET_FUNCTION) != 1 {
+		panic("function not found: " + name)
+	}
+
 	return &Function{
 		Value:    v.value(fun),
 		function: C.janet_unwrap_function(fun),
@@ -85,8 +89,8 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 	C.janet_gcroot(evaluate)
 	v.evaluate = evaluate
 
-	v.jsonEncode = v.getFunction(env, "json/encode")
-	v.format = v.getFunction(env, "string/format")
+	v.jsonEncode = v.getFunction(env, "go/-/json/encode")
+	v.format = v.getFunction(env, "go/-/string/format")
 
 	ready <- true
 
@@ -143,8 +147,6 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 				}
 
 				req.result <- v.value(value)
-			case stringRequest:
-				req.result <- prettyPrint(req.value)
 			}
 		}
 	}

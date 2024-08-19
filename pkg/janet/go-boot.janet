@@ -100,3 +100,13 @@
   (case status
     :value result
     :error (error (go/stacktrace (fiber/current) result 3))))
+
+(defn
+  go/-/json/encode
+  [x & rest]
+  (json/encode x ;rest))
+
+(defn
+  go/-/string/format
+  [format value]
+  (string/format format value))
