@@ -74,7 +74,7 @@ func execCommand() error {
 		return err
 	}
 
-	_, err = RPC[RPCExecArgs, RPCExecResponse](
+	response, err := RPC[RPCExecArgs, RPCExecResponse](
 		conn, "exec", RPCExecArgs{
 			Source: source,
 			Code:   code,
@@ -82,6 +82,10 @@ func execCommand() error {
 			Dir:    cwd,
 		},
 	)
+	if err != nil || len(response.Data) == 0 {
+		return err
+	}
 
+	_, err = os.Stdout.Write(response.Data)
 	return err
 }

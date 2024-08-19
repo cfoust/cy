@@ -84,7 +84,12 @@ func setupServer(t *testing.T) *TestServer {
 	}
 
 	go func() {
-		ws.Serve[P.Message](testServer.Ctx(), socketPath, P.Protocol, server)
+		ws.Serve[P.Message](
+			testServer.Ctx(),
+			socketPath,
+			P.Protocol,
+			server,
+		)
 		os.RemoveAll(dir)
 	}()
 
