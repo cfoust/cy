@@ -175,13 +175,13 @@ func connect(socketPath string, shouldStart bool) (Connection, error) {
 	locked := false
 	started := false
 	for {
-		conn, err := ws.Connect(context.Background(), P.Protocol, socketPath)
-		if err == nil {
-			return conn, nil
-		}
-
-		if !shouldStart {
-			return nil, err
+		conn, err := ws.Connect(
+			context.Background(),
+			P.Protocol,
+			socketPath,
+		)
+		if err == nil || !shouldStart {
+			return conn, err
 		}
 
 		message := err.Error()

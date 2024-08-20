@@ -45,7 +45,7 @@ type WSClient[T any] struct {
 }
 
 const (
-	WRITE_TIMEOUT = 1 * time.Second
+	WRITE_TIMEOUT = 5 * time.Second
 )
 
 func (c *WSClient[T]) Send(data T) error {
