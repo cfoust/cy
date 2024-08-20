@@ -26,6 +26,8 @@
 
 # User guide
 
+- [CLI](./cli.md)
+
 - [Configuration](./configuration.md)
 
 - [Keybindings](./keybindings.md)
