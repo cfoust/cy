@@ -22,6 +22,10 @@ var CLI struct {
 		File    string `arg:"" optional:"" help:"Provide a file containing Janet code." type:"existingfile"`
 	} `cmd:"" help:"Execute Janet code on the cy server."`
 
+	Output struct {
+		Reference string `arg:"" optional:"" help:"A reference to a command."`
+	} `cmd:"" help:"Recall the output of a previous command."`
+
 	Connect struct {
 		CPU   string `help:"Save a CPU performance report to the given path." name:"perf-file" optional:"" default:""`
 		Trace string `help:"Save a trace report to the given path." name:"trace-file" optional:"" default:""`
@@ -34,6 +38,18 @@ func writeError(err error) {
 }
 
 func main() {
+	// Shortcut for getting output e.g. cy -1
+	if len(os.Args) == 2 {
+		arg := os.Args[1]
+		if _, err := parseReference(arg); err == nil {
+			err := outputCommand(arg)
+			if err != nil {
+				writeError(err)
+			}
+			return
+		}
+	}
+
 	ctx := kong.Parse(&CLI,
 		kong.Name("cy"),
 		kong.Description("the time traveling terminal multiplexer"),
@@ -65,6 +81,11 @@ func main() {
 		fallthrough
 	case "exec <file>":
 		err := execCommand()
+		if err != nil {
+			writeError(err)
+		}
+	case "output <reference>":
+		err := outputCommand(CLI.Output.Reference)
 		if err != nil {
 			writeError(err)
 		}
