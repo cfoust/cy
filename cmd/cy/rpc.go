@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/janet"
@@ -76,14 +77,26 @@ func RPC[S any, T any](
 		return result, err
 	}
 
-	conn.Send(P.RPCRequestMessage{
+	err := conn.Send(P.RPCRequestMessage{
 		Name: name,
 		Args: payload,
 	})
+	if err != nil {
+		return result, err
+	}
+
+	done := make(chan struct{}, 1)
+	go func() {
+		<-conn.Ctx().Done()
+		time.Sleep(1 * time.Second)
+		done <- struct{}{}
+	}()
 
 	select {
-	case <-conn.Ctx().Done():
-		return result, conn.Ctx().Err()
+	case <-done:
+		return result, fmt.Errorf(
+			"connection closed by server",
+		)
 	case err := <-errc:
 		return result, err
 	case msg := <-response:
