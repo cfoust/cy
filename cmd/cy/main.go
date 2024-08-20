@@ -42,6 +42,7 @@ func main() {
 	if len(os.Args) == 2 {
 		arg := os.Args[1]
 		if _, err := parseReference(arg); err == nil {
+			CLI.Socket = "default"
 			err := outputCommand(arg)
 			if err != nil {
 				writeError(err)

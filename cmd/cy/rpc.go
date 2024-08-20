@@ -20,7 +20,8 @@ const (
 )
 
 const (
-	RPCExec = "exec"
+	RPCExec   = "exec"
+	RPCOutput = "output"
 )
 
 type RPCExecArgs struct {
@@ -33,6 +34,15 @@ type RPCExecArgs struct {
 }
 
 type RPCExecResponse struct {
+	Data []byte
+}
+
+type RPCOutputArgs struct {
+	Node  int
+	Index int
+}
+
+type RPCOutputResponse struct {
 	Data []byte
 }
 
@@ -181,6 +191,26 @@ func (s *Server) callRPC(
 				args.Format,
 			)
 		}
+	case RPCOutput:
+		var args RPCOutputArgs
+		if err := codec.NewDecoderBytes(
+			request.Args,
+			handle,
+		).Decode(&args); err != nil {
+			return nil, err
+		}
+
+		data, err := s.cy.Output(
+			tree.NodeID(args.Node),
+			args.Index,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return RPCOutputResponse{
+			Data: data,
+		}, nil
 	}
 
 	return nil, fmt.Errorf("unknown RPC: %s", request.Name)

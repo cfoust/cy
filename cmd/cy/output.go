@@ -91,6 +91,38 @@ func outputCommand(reference string) error {
 		return err
 	}
 
-	fmt.Fprintf(os.Stdout, "ref %+v\n", ref)
-	return nil
+	socketName := ref.Socket
+	if CLI.Socket != "default" {
+		socketName = CLI.Socket
+	}
+
+	socketPath, err := getSocketPath(socketName)
+	if err != nil {
+		return err
+	}
+
+	var conn Connection
+	conn, err = connect(socketPath, false)
+	if err != nil {
+		return err
+	}
+
+	response, err := RPC[RPCOutputArgs, RPCOutputResponse](
+		conn,
+		RPCOutput,
+		RPCOutputArgs{
+			Node:  ref.Node,
+			Index: ref.Index,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	if len(response.Data) == 0 {
+		return nil
+	}
+
+	_, err = os.Stdout.Write(response.Data)
+	return err
 }

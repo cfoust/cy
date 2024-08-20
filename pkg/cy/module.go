@@ -209,6 +209,47 @@ func (c *Cy) getClient(id ClientID) (client *Client, found bool) {
 	return
 }
 
+func (c *Cy) Output(node tree.NodeID, index int) ([]byte, error) {
+	treeNode, ok := c.tree.NodeById(node)
+	if !ok {
+		return nil, fmt.Errorf("node %d not found", node)
+	}
+
+	pane, ok := treeNode.(*tree.Pane)
+	if !ok {
+		return nil, fmt.Errorf("node %d is not a pane", node)
+	}
+
+	r, ok := pane.Screen().(*replay.Replayable)
+	if !ok {
+		return nil, fmt.Errorf("node %d was not a cmd", node)
+	}
+
+	commands := r.Commands()
+
+	// Skip pending command
+	if len(commands) > 0 && commands[len(commands)-1].Pending {
+		index--
+	}
+
+	if index < 0 {
+		index = len(commands) + index
+	}
+
+	if index < 0 || index >= len(commands) {
+		return nil, fmt.Errorf("index %d out of range", index)
+	}
+
+	command := commands[index]
+
+	data, ok := r.Output(command.Executed+1, command.Completed+1)
+	if !ok {
+		return nil, fmt.Errorf("no output")
+	}
+
+	return data, nil
+}
+
 func (c *Cy) InferClient(node tree.NodeID) (client *Client, found bool) {
 	c.RLock()
 	write, haveWrite := c.lastWrite[node]
