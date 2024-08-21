@@ -6,7 +6,9 @@ import (
 
 	"github.com/cfoust/cy/pkg/cy/cmd"
 	"github.com/cfoust/cy/pkg/geom"
+	T "github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/replay"
 
 	"github.com/stretchr/testify/require"
 )
@@ -84,4 +86,35 @@ func TestClients(t *testing.T) {
 	for i := 0; i < numClients; i++ {
 		clients[i].Cancel()
 	}
+}
+
+func TestDefaultShell(t *testing.T) {
+	ctx := context.Background()
+	cy, err := Start(ctx, Options{
+		Shell: "/bin/zsh",
+	})
+	require.NoError(t, err)
+
+	client, err := cy.NewClient(ctx, ClientOptions{
+		Env: map[string]string{
+			"TERM": "xterm-256color",
+		},
+		Size: geom.DEFAULT_SIZE,
+	})
+	require.NoError(t, err)
+
+	node := client.Node()
+	require.NotNil(t, node)
+
+	pane, ok := node.(*T.Pane)
+	require.True(t, ok)
+
+	r, ok := pane.Screen().(*replay.Replayable)
+	require.True(t, ok)
+
+	cmd, ok := r.Cmd().(*stream.Cmd)
+	require.True(t, ok)
+
+	options := cmd.Options()
+	require.Equal(t, "/bin/zsh", options.Command)
 }

@@ -85,6 +85,8 @@ func (c *Cy) NewClient(ctx context.Context, options ClientOptions) (*Client, err
 		return nil, err
 	}
 
+	client.params.SetParent(c.tree.Root().Params())
+
 	c.Lock()
 	c.clients = append(c.clients, client)
 	c.Unlock()

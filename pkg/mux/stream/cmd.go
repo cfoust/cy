@@ -66,6 +66,11 @@ func (c *Cmd) Resize(size Size) error {
 	})
 }
 
+// Options returns the original arguments used to start the command.
+func (c *Cmd) Options() CmdOptions {
+	return c.options
+}
+
 func (c *Cmd) Path() (string, error) {
 	c.RLock()
 	proc := c.proc
