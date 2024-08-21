@@ -209,6 +209,8 @@ func (c *Cy) getClient(id ClientID) (client *Client, found bool) {
 	return
 }
 
+// Output returns everything that was written by a command at the given index
+// in the node's scrollback.
 func (c *Cy) Output(node tree.NodeID, index int) ([]byte, error) {
 	treeNode, ok := c.tree.NodeById(node)
 	if !ok {
@@ -227,8 +229,10 @@ func (c *Cy) Output(node tree.NodeID, index int) ([]byte, error) {
 
 	commands := r.Commands()
 
+	original := index
+
 	// Skip pending command
-	if len(commands) > 0 && commands[len(commands)-1].Pending {
+	if index < 0 && len(commands) > 0 && commands[len(commands)-1].Pending {
 		index--
 	}
 
@@ -237,19 +241,29 @@ func (c *Cy) Output(node tree.NodeID, index int) ([]byte, error) {
 	}
 
 	if index < 0 || index >= len(commands) {
-		return nil, fmt.Errorf("index %d out of range", index)
+		return nil, fmt.Errorf(
+			"index %d out of range",
+			original,
+		)
 	}
 
 	command := commands[index]
-
 	data, ok := r.Output(command.Executed+1, command.Completed+1)
 	if !ok {
 		return nil, fmt.Errorf("no output")
 	}
 
+	// Skip the newline produced when the user originally executed the
+	// command
+	if len(data) > 1 && data[0] == '\r' && data[1] == '\n' {
+		data = data[2:]
+	}
+
 	return data, nil
 }
 
+// InferClient returns the client that most recently interacted with the given
+// node. This uses the same strategy tmux does.
 func (c *Cy) InferClient(node tree.NodeID) (client *Client, found bool) {
 	c.RLock()
 	write, haveWrite := c.lastWrite[node]
