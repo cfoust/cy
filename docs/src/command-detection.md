@@ -1,6 +1,6 @@
 # Command detection
 
-`cy` can detect the commands you run and the output they produce. It does this by ~using magic~ having you put a special string in your shell's prompt that lets it determine where the commands you enter begin and end.
+`cy` can detect the commands you run and the output they produce. It does this using a special string that you put in your shell's prompt that lets it determine where the commands you enter begin and end.
 
 By enabling this feature, you gain access to a range of functionality for jumping between panes, copying command output, and much more.
 
@@ -40,9 +40,9 @@ Put this somewhere in your `fish_prompt` or just add `\033Pcy\033\\` to any exis
 printf '\033Pcy\033\\'
 ```
 
-## Usage
+## Features
 
-## Replay mode
+### Replay mode
 
 Enabling command detection adds additional features to replay mode both in time mode and copy mode.
 
@@ -64,9 +64,13 @@ You can also quickly select the complete output of a command using {{bind :copy 
 
 {{story cast replay/command/copy-jump-and-copy}}
 
-## Switching panes
+### Switching panes
 
-`cy`'s default configuration also defines two actions that use the newly-detected commands to do interesting things:
+`cy`'s default configuration also defines a few actions that use command detection to do interesting things:
 
-* {{api action/jump-pane-command}} ({{bind :root ctrl+a c}}): Choose from a list of all of the commands run since the `cy` server started and jump to the pane where that command was run.
 * {{api action/jump-command}} ({{bind :root ctrl+a C}}): Choose from a list of all commands and jump to the location of that command in its pane's scrollback history.
+* {{api action/jump-pane-command}} ({{bind :root ctrl+a c}}): Choose from a list of all of the commands run since the `cy` server started and jump to the pane where that command was run.
+
+### Recall
+
+[`cy recall`](/cli.md#recall) only works if command detection is enabled.

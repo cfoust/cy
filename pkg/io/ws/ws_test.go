@@ -43,9 +43,9 @@ func TestServer(t *testing.T) {
 	ok := make(chan bool, 1)
 	c, err := Connect(ctx, RawProtocol, socketPath)
 	assert.NoError(t, err)
+	reads := c.Subscribe(ctx)
 	go func() {
 		time.Sleep(100 * time.Millisecond)
-		reads := c.Receive()
 
 		timeout, cancel := context.WithTimeout(ctx, 1*time.Second)
 		defer cancel()
@@ -53,7 +53,7 @@ func TestServer(t *testing.T) {
 		select {
 		case <-timeout.Done():
 			ok <- false
-		case msg := <-reads:
+		case msg := <-reads.Recv():
 			ok <- string(msg.Contents) == "test"
 		}
 	}()

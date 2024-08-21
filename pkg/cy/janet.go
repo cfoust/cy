@@ -21,6 +21,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 
 	modules := map[string]interface{}{
 		"cmd": &api.CmdModule{
+			Server:    c,
 			Lifetime:  util.NewLifetime(c.Ctx()),
 			Tree:      c.tree,
 			TimeBinds: c.timeBinds,
@@ -75,7 +76,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 			return nil, err
 		}
 
-		err = vm.ExecuteCall(ctx, nil, janet.Call{
+		_, err = vm.ExecuteCall(ctx, nil, janet.Call{
 			Code:       data,
 			SourcePath: path,
 			Options:    janet.DEFAULT_CALL_OPTIONS,

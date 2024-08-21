@@ -38,6 +38,8 @@ type Options struct {
 	SkipInput bool
 	// The path to the Unix domain socket for this server.
 	SocketPath string
+	// The name of the socket (before calculating the real path.)
+	SocketName string
 }
 
 type historyEvent struct {
@@ -72,8 +74,7 @@ type Cy struct {
 
 	log zerolog.Logger
 
-	configPath, socketPath string
-	showSplash             bool
+	options Options
 
 	toast        *ToastLogger
 	queuedToasts []toasts.Toast
@@ -89,12 +90,30 @@ func (c *Cy) ExecuteJanet(path string) error {
 	return c.ExecuteFile(c.Ctx(), path)
 }
 
+func (c *Cy) ExecuteOnBehalf(
+	ctx context.Context,
+	node tree.NodeID,
+	code []byte,
+	path string,
+) (*janet.Value, error) {
+	_, err := c.ExecuteCall(
+		ctx,
+		// todo: infer
+		nil,
+		janet.Call{
+			Code:       code,
+			SourcePath: path,
+		},
+	)
+	return nil, err
+}
+
 func (c *Cy) Log(level zerolog.Level, message string) {
 	c.log.WithLevel(level).Msgf(message)
 }
 
 func (c *Cy) loadConfig() error {
-	err := c.ExecuteFile(c.Ctx(), c.configPath)
+	err := c.ExecuteFile(c.Ctx(), c.options.Config)
 
 	// We want to make a lot of noise if this fails for some reason, even
 	// if this is being called in user code
@@ -102,7 +121,7 @@ func (c *Cy) loadConfig() error {
 		c.log.Error().Err(err).Msg("failed to execute config")
 		message := fmt.Sprintf(
 			"an error occurred while loading %s: %s",
-			c.configPath,
+			c.options.Config,
 			err.Error(),
 		)
 		c.toast.Error(message)
@@ -118,7 +137,7 @@ func (c *Cy) reloadConfig() error {
 	}
 
 	c.Lock()
-	c.configPath = path
+	c.options.Config = path
 	c.Unlock()
 
 	return c.loadConfig()
@@ -190,7 +209,62 @@ func (c *Cy) getClient(id ClientID) (client *Client, found bool) {
 	return
 }
 
-func (c *Cy) inferClient(node tree.NodeID) (client *Client, found bool) {
+// Output returns everything that was written by a command at the given index
+// in the node's scrollback.
+func (c *Cy) Output(node tree.NodeID, index int) ([]byte, error) {
+	treeNode, ok := c.tree.NodeById(node)
+	if !ok {
+		return nil, fmt.Errorf("node %d not found", node)
+	}
+
+	pane, ok := treeNode.(*tree.Pane)
+	if !ok {
+		return nil, fmt.Errorf("node %d is not a pane", node)
+	}
+
+	r, ok := pane.Screen().(*replay.Replayable)
+	if !ok {
+		return nil, fmt.Errorf("node %d was not a cmd", node)
+	}
+
+	commands := r.Commands()
+
+	original := index
+
+	// Skip pending command
+	if index < 0 && len(commands) > 0 && commands[len(commands)-1].Pending {
+		index--
+	}
+
+	if index < 0 {
+		index = len(commands) + index
+	}
+
+	if index < 0 || index >= len(commands) {
+		return nil, fmt.Errorf(
+			"index %d out of range",
+			original,
+		)
+	}
+
+	command := commands[index]
+	data, ok := r.Output(command.Executed+1, command.Completed+1)
+	if !ok {
+		return nil, fmt.Errorf("no output")
+	}
+
+	// Skip the newline produced when the user originally executed the
+	// command
+	if len(data) > 1 && data[0] == '\r' && data[1] == '\n' {
+		data = data[2:]
+	}
+
+	return data, nil
+}
+
+// InferClient returns the client that most recently interacted with the given
+// node. This uses the same strategy tmux does.
+func (c *Cy) InferClient(node tree.NodeID) (client *Client, found bool) {
 	c.RLock()
 	write, haveWrite := c.lastWrite[node]
 	visit, haveVisit := c.lastVisit[node]
@@ -218,7 +292,7 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 				continue
 			}
 
-			client, ok := c.inferClient(nodeEvent.Id)
+			client, ok := c.InferClient(nodeEvent.Id)
 			if !ok {
 				continue
 			}
@@ -234,6 +308,10 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 	}
 }
 
+func (c *Cy) SocketName() string {
+	return c.options.SocketName
+}
+
 func Start(ctx context.Context, options Options) (*Cy, error) {
 	timeBinds := bind.NewBindScope(nil)
 	copyBinds := bind.NewBindScope(nil)
@@ -241,17 +319,17 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	defaults := params.New()
 	t := tree.NewTree(tree.WithParams(defaults.NewChild()))
 	cy := Cy{
-		Lifetime:   util.NewLifetime(ctx),
-		tree:       t,
-		muxServer:  server.New(),
-		defaults:   defaults,
-		timeBinds:  timeBinds,
-		copyBinds:  copyBinds,
-		showSplash: !options.HideSplash,
-		lastVisit:  make(map[tree.NodeID]historyEvent),
-		lastWrite:  make(map[tree.NodeID]historyEvent),
-		writes:     make(chan historyEvent),
-		visits:     make(chan historyEvent),
+		Lifetime:  util.NewLifetime(ctx),
+		tree:      t,
+		muxServer: server.New(),
+		defaults:  defaults,
+		timeBinds: timeBinds,
+		copyBinds: copyBinds,
+		options:   options,
+		lastVisit: make(map[tree.NodeID]historyEvent),
+		lastWrite: make(map[tree.NodeID]historyEvent),
+		writes:    make(chan historyEvent),
+		visits:    make(chan historyEvent),
 	}
 	cy.toast = NewToastLogger(cy.sendToast)
 
@@ -296,12 +374,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	cy.VM = vm
 
 	if len(options.Config) != 0 {
-		cy.configPath = options.Config
 		cy.loadConfig()
-	}
-
-	if len(options.SocketPath) != 0 {
-		cy.socketPath = options.SocketPath
 	}
 
 	return &cy, nil

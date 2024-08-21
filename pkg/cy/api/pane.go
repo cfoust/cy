@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/taro"
 )
 
 type PaneModule struct {
@@ -73,4 +74,19 @@ func (p *PaneModule) Screen(id *janet.Value) ([]string, error) {
 	}
 
 	return lines, nil
+}
+
+func (p *PaneModule) SendKeys(id *janet.Value, keys []string) error {
+	defer id.Free()
+
+	pane, err := resolvePane(p.Tree, id)
+	if err != nil {
+		return err
+	}
+
+	for _, key := range taro.KeysToMsg(keys...) {
+		pane.Screen().Send(key)
+	}
+
+	return nil
 }

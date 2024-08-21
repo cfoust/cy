@@ -2,28 +2,56 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
-	"runtime/pprof"
-	"runtime/trace"
 
+	"github.com/cfoust/cy/pkg/cy"
 	"github.com/cfoust/cy/pkg/version"
 
 	"github.com/alecthomas/kong"
 	"github.com/rs/zerolog/log"
-	"github.com/sevlyar/go-daemon"
 )
 
 var CLI struct {
 	Socket string `help:"Specify the name of the socket." name:"socket-name" optional:"" short:"L" default:"default"`
 
-	CPU     string `help:"Save a CPU performance report to the given path." name:"perf-file" optional:"" default:""`
-	Trace   string `help:"Save a trace report to the given path." name:"trace-file" optional:"" default:""`
-	Version bool   `help:"Print version information and exit." short:"v"`
+	Version bool `help:"Print version information and exit." short:"v"`
+
+	Exec struct {
+		Command string `help:"Provide Janet code as a string argument." name:"command" short:"c" optional:"" default:""`
+		Format  string `name:"format" optional:"" enum:"raw,json,janet" short:"f" default:"raw" help:"Set the desired output format."`
+		File    string `arg:"" optional:"" help:"Provide a file containing Janet code." type:"existingfile"`
+	} `cmd:"" help:"Execute Janet code on the cy server."`
+
+	Recall struct {
+		Reference string `arg:"" optional:"" help:"A reference to a command."`
+	} `cmd:"" help:"Recall the output of a previous command."`
+
+	Connect struct {
+		CPU   string `help:"Save a CPU performance report to the given path." name:"perf-file" optional:"" default:""`
+		Trace string `help:"Save a trace report to the given path." name:"trace-file" optional:"" default:""`
+	} `cmd:"" default:"1" help:"Connect to the cy server, starting one if necessary."`
+}
+
+func writeError(err error) {
+	fmt.Fprintf(os.Stderr, "%s\n", err)
+	os.Exit(1)
 }
 
 func main() {
-	kong.Parse(&CLI,
+	// Shortcut for getting output e.g. cy -1
+	if len(os.Args) == 2 {
+		arg := os.Args[1]
+		if _, err := parseReference(arg); err == nil {
+			CLI.Socket = "default"
+			err := recallCommand(arg)
+			if err != nil {
+				writeError(err)
+			}
+			return
+		}
+	}
+
+	ctx := kong.Parse(&CLI,
 		kong.Name("cy"),
 		kong.Description("the time traveling terminal multiplexer"),
 		kong.UsageOnError(),
@@ -45,69 +73,27 @@ func main() {
 		os.Exit(0)
 	}
 
-	var socketPath string
+	if !cy.SOCKET_REGEX.MatchString(CLI.Socket) {
+		log.Fatal().Msg("invalid socket name, the socket name must be alphanumeric")
+	}
 
-	if envPath, ok := os.LookupEnv(CY_SOCKET_ENV); ok {
-		socketPath = envPath
-	} else {
-		label, err := getSocketPath(CLI.Socket)
+	switch ctx.Command() {
+	case "exec":
+		fallthrough
+	case "exec <file>":
+		err := execCommand()
 		if err != nil {
-			log.Panic().Err(err).Msg("failed to detect socket path")
+			writeError(err)
 		}
-		socketPath = label
-	}
-
-	if daemon.WasReborn() {
-		cntx := new(daemon.Context)
-		_, err := cntx.Reborn()
+	case "recall <reference>":
+		err := recallCommand(CLI.Recall.Reference)
 		if err != nil {
-			log.Panic().Err(err).Msg("failed to reincarnate")
+			writeError(err)
 		}
-
-		defer func() {
-			if err := cntx.Release(); err != nil {
-				log.Panic().Err(err).Msg("unable to release pid-file")
-			}
-		}()
-
-		if len(CLI.CPU) > 0 {
-			f, err := os.Create(CLI.CPU)
-			if err != nil {
-				log.Panic().Err(err).Msgf("unable to create %s", CLI.CPU)
-			}
-			defer f.Close()
-			if err := pprof.StartCPUProfile(f); err != nil {
-				log.Panic().Err(err).Msgf("could not start CPU profile")
-			}
-			defer pprof.StopCPUProfile()
+	case "connect":
+		err := connectCommand()
+		if err != nil {
+			writeError(err)
 		}
-
-		if len(CLI.Trace) > 0 {
-			f, err := os.Create(CLI.Trace)
-			if err != nil {
-				log.Panic().Err(err).Msgf("unable to create %s", CLI.Trace)
-			}
-			defer f.Close()
-			if err := trace.Start(f); err != nil {
-				log.Panic().Err(err).Msgf("could not start trace profile")
-			}
-			defer trace.Stop()
-		}
-
-		err = serve(socketPath)
-		if err != nil && err != http.ErrServerClosed {
-			log.Panic().Err(err).Msg("failed to start cy")
-		}
-		return
-	}
-
-	conn, err := connect(socketPath)
-	if err != nil {
-		log.Panic().Err(err).Msg("failed to start cy")
-	}
-
-	err = poll(conn)
-	if err != nil {
-		log.Panic().Err(err).Msg("failed while polling")
 	}
 }

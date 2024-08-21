@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/sasha-s/go-deadlock"
 )
@@ -62,6 +63,37 @@ func (g *Group) removeNode(node Node) {
 
 func (g *Group) Leaves() []Node {
 	return getLeaves(g)
+}
+
+// NewPaneCreator is the same as NewPane, but it gives you the NodeID before
+// the Node is created and a function to call with the final Screen.
+func (g *Group) NewPaneCreator(ctx context.Context) (NodeID, func(screen mux.Screen) *Pane) {
+	p := &Pane{Lifetime: util.NewLifetime(ctx)}
+	metadata := g.tree.newMetadata(p)
+	p.metaData = metadata
+
+	return p.Id(), func(screen mux.Screen) *Pane {
+		p.screen = screen
+		metadata.params = g.params.NewChild()
+		g.addNode(p)
+
+		go func() {
+			updates := screen.Subscribe(ctx)
+			for {
+				select {
+				case event := <-updates.Recv():
+					g.tree.Publish(NodeEvent{
+						Id:    metadata.Id(),
+						Event: event,
+					})
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
+
+		return p
+	}
 }
 
 func (g *Group) NewPane(ctx context.Context, screen mux.Screen) *Pane {

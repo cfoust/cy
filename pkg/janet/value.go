@@ -63,22 +63,84 @@ func (v *Value) Free() {
 	}
 }
 
-type stringRequest struct {
-	value  C.Janet
-	result chan string
+func (v *Value) JSON() ([]byte, error) {
+	if v.IsFree() {
+		return nil, ERROR_FREED
+	}
+
+	out, err := v.vm.jsonEncode.CallResult(
+		context.Background(),
+		nil,
+		v,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer out.Free()
+
+	var result []byte
+	err = out.Unmarshal(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (v *Value) Raw() ([]byte, error) {
+	if v.IsFree() {
+		return nil, ERROR_FREED
+	}
+
+	out, err := v.vm.raw.CallResult(
+		context.Background(),
+		nil,
+		v,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer out.Free()
+
+	var str string
+	if err := out.Unmarshal(&str); err == nil {
+		return []byte(str), nil
+	}
+
+	var result []byte
+	err = out.Unmarshal(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (v *Value) String() string {
-	if v.isSafe {
-		return prettyPrint(v.janet)
+	if v.IsFree() {
+		return ""
 	}
 
-	result := make(chan string)
-	v.vm.requests <- stringRequest{
-		value:  v.janet,
-		result: result,
+	out, err := v.vm.format.CallResult(
+		context.Background(),
+		nil,
+		"%n",
+		v,
+	)
+	if err != nil {
+		return ""
 	}
-	return <-result
+
+	var result string
+	err = out.Unmarshal(&result)
+	if err != nil {
+		out.Free()
+		return ""
+	}
+
+	return result
 }
 
 type unmarshalRequest struct {
@@ -174,7 +236,7 @@ func (f *Function) CallResult(
 	}
 	f.vm.requests <- req
 
-	return req.WaitResult()
+	return req.WaitOut()
 }
 
 func (f *Function) Call(ctx context.Context, params ...interface{}) error {

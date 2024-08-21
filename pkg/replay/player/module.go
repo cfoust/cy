@@ -4,6 +4,7 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/movement/flow"
@@ -57,6 +58,38 @@ func (p *Player) Release() {
 	for _, event := range buffer {
 		p.consume(event)
 	}
+}
+
+// Output gets all of the output written in the range [start, end).
+func (p *Player) Output(start, end int) (data []byte, ok bool) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	events := p.events
+
+	if start < 0 || start >= len(events) {
+		return
+	}
+
+	if end < 0 || end > len(events) {
+		return
+	}
+
+	ok = true
+
+	if start >= end {
+		return
+	}
+
+	for i := start; i < end; i++ {
+		event := events[i]
+		switch e := event.Message.(type) {
+		case P.OutputMessage:
+			data = append(data, e.Data...)
+		}
+	}
+
+	return
 }
 
 func (p *Player) Events() []sessions.Event {

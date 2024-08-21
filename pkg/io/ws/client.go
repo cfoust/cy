@@ -39,12 +39,13 @@ type RawClient Client[[]byte]
 
 type WSClient[T any] struct {
 	util.Lifetime
+	*util.Publisher[P.Packet[T]]
 	Conn     *websocket.Conn
 	protocol Protocol[T]
 }
 
 const (
-	WRITE_TIMEOUT = 1 * time.Second
+	WRITE_TIMEOUT = 5 * time.Second
 )
 
 func (c *WSClient[T]) Send(data T) error {
@@ -59,39 +60,35 @@ func (c *WSClient[T]) Send(data T) error {
 	return c.Conn.Write(ctx, websocket.MessageBinary, encoded)
 }
 
-func (c *WSClient[T]) Receive() <-chan P.Packet[T] {
+func (c *WSClient[T]) poll() {
 	ctx := c.Ctx()
-	out := make(chan P.Packet[T])
-	go func() {
-		for {
-			if ctx.Err() != nil {
-				return
-			}
 
-			typ, message, err := c.Conn.Read(ctx)
-			if err != nil {
-				out <- P.Packet[T]{
-					Error: err,
-				}
-				// TODO(cfoust): 05/27/23 error handling?
-				c.Cancel()
-				return
-			}
-
-			if typ != websocket.MessageBinary {
-				continue
-			}
-
-			decoded, err := c.protocol.Decode(message)
-
-			out <- P.Packet[T]{
-				Contents: decoded,
-				Error:    err,
-			}
+	for {
+		if ctx.Err() != nil {
+			return
 		}
-	}()
 
-	return out
+		typ, message, err := c.Conn.Read(ctx)
+		if err != nil {
+			c.Publish(P.Packet[T]{
+				Error: err,
+			})
+			// TODO(cfoust): 05/27/23 error handling?
+			c.Cancel()
+			return
+		}
+
+		if typ != websocket.MessageBinary {
+			continue
+		}
+
+		decoded, err := c.protocol.Decode(message)
+
+		c.Publish(P.Packet[T]{
+			Contents: decoded,
+			Error:    err,
+		})
+	}
 }
 
 func (c *WSClient[T]) Close() error {
@@ -123,10 +120,13 @@ func Connect[T any](ctx context.Context, protocol Protocol[T], socketPath string
 	c.SetReadLimit(32768 * 256)
 
 	client := WSClient[T]{
-		protocol: protocol,
-		Lifetime: util.NewLifetime(ctx),
-		Conn:     c,
+		Lifetime:  util.NewLifetime(ctx),
+		Publisher: util.NewPublisher[P.Packet[T]](),
+		protocol:  protocol,
+		Conn:      c,
 	}
+
+	go client.poll()
 
 	go func() {
 		<-client.Ctx().Done()

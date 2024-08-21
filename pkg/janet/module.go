@@ -28,6 +28,8 @@ type VM struct {
 	callbacks map[string]*Callback
 	evaluate  C.Janet
 
+	jsonEncode, raw, format *Function
+
 	requests chan Request
 
 	env *Table
@@ -50,6 +52,24 @@ func (v *VM) Env() *Table {
 	return v.env
 }
 
+func (v *VM) getFunction(env *C.JanetTable, name string) *Function {
+	var fun C.Janet
+	C.janet_resolve(
+		env,
+		C.janet_csymbol(C.CString(name)),
+		&fun,
+	)
+
+	if C.janet_checktype(fun, C.JANET_FUNCTION) != 1 {
+		panic("function not found: " + name)
+	}
+
+	return &Function{
+		Value:    v.value(fun),
+		function: C.janet_unwrap_function(fun),
+	}
+}
+
 // Wait for code calls and process them.
 func (v *VM) poll(ctx context.Context, ready chan bool) {
 	// All Janet state is thread-local, so we explicitly want to execute
@@ -60,7 +80,7 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 	defer deInitJanet()
 
 	// Set up the core environment
-	env := C.janet_core_env(nil)
+	env := C.go_janet_core_env()
 	v.runCodeUnsafe(GO_BOOT_FILE, "go-boot.janet")
 
 	// Then store our evaluation function
@@ -68,6 +88,10 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 	C.janet_resolve(env, C.janet_csymbol(C.CString("go/evaluate")), &evaluate)
 	C.janet_gcroot(evaluate)
 	v.evaluate = evaluate
+
+	v.jsonEncode = v.getFunction(env, "go/-/json/encode")
+	v.raw = v.getFunction(env, "go/-/raw")
+	v.format = v.getFunction(env, "go/-/string/format")
 
 	ready <- true
 
@@ -124,8 +148,6 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 				}
 
 				req.result <- v.value(value)
-			case stringRequest:
-				req.result <- prettyPrint(req.value)
 			}
 		}
 	}

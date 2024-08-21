@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"syscall"
-	"time"
 
 	"github.com/cfoust/cy/pkg/cy"
 	"github.com/cfoust/cy/pkg/geom"
@@ -75,47 +74,28 @@ func (c *Client) Write(data []byte) (n int, err error) {
 	})
 }
 
-func (s *Server) HandleWSClient(conn ws.Client[P.Message]) {
-	events := conn.Receive()
-
-	// First we need to wait for the client's handshake to know how to
-	// handle its terminal
-	handshakeCtx, cancel := context.WithTimeout(conn.Ctx(), 1*time.Second)
-	defer cancel()
-
-	wsClient := &Client{conn: conn}
-	var client *cy.Client
-	var err error
-
-	select {
-	case <-handshakeCtx.Done():
-		wsClient.closeError(fmt.Errorf("no handshake received"))
-		return
-	case message, more := <-events:
-		if handshake, ok := message.Contents.(*P.HandshakeMessage); ok {
-			client, err = s.cy.NewClient(conn.Ctx(), *handshake)
-		} else if !more {
-			err = fmt.Errorf("closed by remote")
-		} else {
-			err = fmt.Errorf("must send handshake first")
-		}
-
-		if err != nil {
-			wsClient.closeError(err)
-			return
-		}
+func (s *Server) handleCyClient(
+	conn Connection,
+	ws *Client,
+	handshake *P.HandshakeMessage,
+) error {
+	cy, err := s.cy.NewClient(conn.Ctx(), *handshake)
+	if err != nil {
+		return err
 	}
 
-	go func() { _, _ = io.Copy(wsClient, client) }()
+	events := conn.Subscribe(conn.Ctx())
+
+	go func() { _, _ = io.Copy(ws, cy) }()
 
 	for {
 		select {
 		case <-conn.Ctx().Done():
-			return
-		case <-client.Ctx().Done():
-			wsClient.close()
-			return
-		case packet := <-events:
+			return nil
+		case <-cy.Ctx().Done():
+			ws.close()
+			return nil
+		case packet := <-events.Recv():
 			if packet.Error != nil {
 				// TODO(cfoust): 06/08/23 handle gracefully
 				continue
@@ -124,26 +104,55 @@ func (s *Server) HandleWSClient(conn ws.Client[P.Message]) {
 			switch packet.Contents.Type() {
 			case P.MessageTypeSize:
 				msg := packet.Contents.(*P.SizeMessage)
-				client.Resize(geom.Vec2{
+				cy.Resize(geom.Vec2{
 					R: msg.Rows,
 					C: msg.Columns,
 				})
 
 			case P.MessageTypeInput:
 				msg := packet.Contents.(*P.InputMessage)
-				_, err := client.Write(msg.Data)
+				_, err := cy.Write(msg.Data)
 				if err != nil {
-					wsClient.closeError(err)
-					return
+					return err
 				}
 			}
 		}
 	}
 }
 
+func (s *Server) HandleWSClient(conn Connection) {
+	events := conn.Subscribe(conn.Ctx())
+
+	wsClient := &Client{conn: conn}
+
+	for {
+		select {
+		case <-conn.Ctx().Done():
+			return
+		case msg := <-events.Recv():
+			switch msg := msg.Contents.(type) {
+			case *P.HandshakeMessage:
+				if err := s.handleCyClient(
+					conn,
+					wsClient,
+					msg,
+				); err != nil {
+					wsClient.closeError(err)
+					return
+				}
+				return
+			case *P.RPCRequestMessage:
+				s.HandleRPC(conn, msg)
+			}
+		}
+	}
+
+}
+
 func serve(path string) error {
 	cy, err := cy.Start(context.Background(), cy.Options{
 		SocketPath: path,
+		SocketName: CLI.Socket,
 		Config:     cy.FindConfig(),
 		DataDir:    cy.FindDataDir(),
 		Shell:      getShell(),

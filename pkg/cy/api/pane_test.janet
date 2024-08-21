@@ -56,3 +56,8 @@
 
       (action/prev-pane)
       (assert (= (pane/current) cmd2)))
+
+(test "(pane/send-keys)"
+      (def cmd (cmd/new :root))
+      (pane/send-keys cmd @["test"
+                            "ctrl+a"]))

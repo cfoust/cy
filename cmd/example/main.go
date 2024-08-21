@@ -38,7 +38,7 @@ func main() {
 			panic(err)
 		}
 
-		err = server.ExecuteCall(
+		_, err = server.ExecuteCall(
 			context.Background(),
 			client,
 			janet.CallBytes(buffer[:n]),

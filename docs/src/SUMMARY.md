@@ -26,6 +26,8 @@
 
 # User guide
 
+- [CLI](./cli.md)
+
 - [Configuration](./configuration.md)
 
 - [Keybindings](./keybindings.md)
@@ -46,7 +48,7 @@
 
   - [Modes](./replay-mode/modes.md)
 
-  - [Command detection](./replay-mode/command-detection.md)
+- [Command detection](./command-detection.md)
 
 - [User input](./user-input.md)
 

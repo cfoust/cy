@@ -137,12 +137,12 @@ func poll(conn Connection) error {
 	}
 
 	go func() {
-		events := conn.Receive()
+		events := conn.Subscribe(conn.Ctx())
 		for {
 			select {
 			case <-conn.Ctx().Done():
 				return
-			case packet := <-events:
+			case packet := <-events.Recv():
 				if packet.Error != nil {
 					// TODO(cfoust): 12/25/23
 					return
@@ -167,7 +167,7 @@ func poll(conn Connection) error {
 	)
 }
 
-func connect(socketPath string) (Connection, error) {
+func connect(socketPath string, shouldStart bool) (Connection, error) {
 	// mimics client_connect() in tmux's client.c
 	var lockFd *os.File
 	var lockPath string
@@ -175,9 +175,13 @@ func connect(socketPath string) (Connection, error) {
 	locked := false
 	started := false
 	for {
-		conn, err := ws.Connect(context.Background(), P.Protocol, socketPath)
-		if err == nil {
-			return conn, nil
+		conn, err := ws.Connect(
+			context.Background(),
+			P.Protocol,
+			socketPath,
+		)
+		if err == nil || !shouldStart {
+			return conn, err
 		}
 
 		message := err.Error()

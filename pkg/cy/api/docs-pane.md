@@ -21,3 +21,21 @@ Move forward in the pane history. Works in a similar way to vim's <kbd>ctrl+i</k
 # doc: HistoryBackward
 
 Move backward in the pane history. Works in a similar way to vim's <kbd>ctrl+o</kbd>.
+
+# doc: SendKeys
+
+(pane/send-keys pane keys)
+
+Send keys to the pane referred to by [NodeID](/api.md#nodeid). `keys` is an array of strings. Strings that are not [key specifiers](/preset-keys.md) will be written as-is.
+
+```janet
+# {
+(def pane (cmd/new :root))
+# }
+
+# Send the string "test" to the pane
+(pane/send-keys pane @["test"])
+
+# Send ctrl+c to the pane
+(pane/send-keys pane @["ctrl+c"])
+```

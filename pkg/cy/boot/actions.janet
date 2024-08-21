@@ -289,18 +289,20 @@ For example:
   (var [ok commands] (protect (cmd/commands id)))
   (if (not ok) (set commands @[]))
   (default commands @[])
-  (map |(tuple [(string/replace-all "\n" "↵" ($ :text)) (tree/path id)]
-               {:type :scrollback
-                :focus ((($ :input) 0) :from)
-                :highlights @[(($ :input) 0)]
-                :id id}
-               (result-func $)) commands))
+  (map |(let [[index cmd] $]
+          [[(string/replace-all "\n" "↵" (cmd :text)) (tree/path id)]
+           {:type :scrollback
+            :focus (((cmd :input) 0) :from)
+            :highlights @[((cmd :input) 0)]
+            :id id}
+           (result-func index cmd)])
+       (pairs commands)))
 
 (key/action
   action/jump-pane-command
   "Jump to a pane based on a command."
   (as?-> (group/leaves :root) _
-         (mapcat |(get-pane-commands $ (fn [cmd] $)) _)
+         (mapcat |(get-pane-commands $ (fn [index cmd] $)) _)
          (input/find _ :prompt "search: pane (command)")
          (pane/attach _)))
 
@@ -308,7 +310,7 @@ For example:
   action/jump-command
   "Jump to the output of a command."
   (as?-> (group/leaves :root) _
-         (mapcat |(get-pane-commands $ (fn [cmd] [$ cmd])) _)
+         (mapcat |(get-pane-commands $ (fn [index cmd] [$ cmd])) _)
          (input/find _ :prompt "search: command")
          (let [[id cmd] _]
            (pane/attach id)
@@ -316,6 +318,18 @@ For example:
              id
              :main true
              :location (((cmd :input) 0) :from)))))
+
+(key/action
+  action/recall-command
+  "Recall the output of a command to the current shell."
+  (as?-> (group/leaves :root) _
+         (mapcat |(get-pane-commands $ (fn [index &] [$ index])) _)
+         (input/find _ :prompt "search: command")
+         (let [[node index] _]
+           (def ref (if
+                      (= node (pane/current)) (string index)
+                      (string node ":" index)))
+           (pane/send-keys (pane/current) @[(string "cy " ref)]))))
 
 (key/action
   action/open-replay

@@ -20,6 +20,7 @@ type CmdOptions struct {
 	Command   string
 	Args      []string
 	Restart   bool
+	Env       map[string]string
 }
 
 type CmdStatus int
@@ -107,6 +108,14 @@ func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 			// TODO(cfoust): 08/08/23 this is complicated
 			"TERM=xterm-256color",
 		)
+
+		for key, value := range options.Env {
+			cmd.Env = append(
+				cmd.Env,
+				// TODO(cfoust): 08/17/24 escaping?
+				fmt.Sprintf("%s=%s", key, value),
+			)
+		}
 
 		fd, err := pty.StartWithSize(
 			cmd,
