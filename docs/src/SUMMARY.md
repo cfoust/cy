@@ -48,7 +48,7 @@
 
   - [Modes](./replay-mode/modes.md)
 
-  - [Command detection](./replay-mode/command-detection.md)
+- [Command detection](./command-detection.md)
 
 - [User input](./user-input.md)
 
