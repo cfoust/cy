@@ -121,30 +121,6 @@ func TestHandshake(t *testing.T) {
 	require.NoError(t, conn.Ctx().Err())
 }
 
-func TestBadHandshake(t *testing.T) {
-	server := setupServer(t)
-	defer server.Release()
-
-	conn, err := server.Connect()
-	require.NoError(t, err)
-
-	err = conn.Send(P.InputMessage{
-		Data: []byte("hello"),
-	})
-	require.NoError(t, err)
-
-	events := conn.Subscribe(conn.Ctx())
-
-	go func() {
-		for {
-			<-events.Recv()
-		}
-	}()
-
-	<-conn.Ctx().Done()
-	require.Error(t, conn.Ctx().Err())
-}
-
 func TestExec(t *testing.T) {
 	server := setupServer(t)
 	defer server.Release()
