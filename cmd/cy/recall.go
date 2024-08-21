@@ -85,7 +85,7 @@ func parseReference(value string) (*Reference, error) {
 	return nil, fmt.Errorf("invalid reference: %s", value)
 }
 
-func outputCommand(reference string) error {
+func recallCommand(reference string) error {
 	ref, err := parseReference(reference)
 	if err != nil {
 		return err

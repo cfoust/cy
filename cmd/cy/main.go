@@ -22,7 +22,7 @@ var CLI struct {
 		File    string `arg:"" optional:"" help:"Provide a file containing Janet code." type:"existingfile"`
 	} `cmd:"" help:"Execute Janet code on the cy server."`
 
-	Output struct {
+	Recall struct {
 		Reference string `arg:"" optional:"" help:"A reference to a command."`
 	} `cmd:"" help:"Recall the output of a previous command."`
 
@@ -43,7 +43,7 @@ func main() {
 		arg := os.Args[1]
 		if _, err := parseReference(arg); err == nil {
 			CLI.Socket = "default"
-			err := outputCommand(arg)
+			err := recallCommand(arg)
 			if err != nil {
 				writeError(err)
 			}
@@ -85,8 +85,8 @@ func main() {
 		if err != nil {
 			writeError(err)
 		}
-	case "output <reference>":
-		err := outputCommand(CLI.Output.Reference)
+	case "recall <reference>":
+		err := recallCommand(CLI.Recall.Reference)
 		if err != nil {
 			writeError(err)
 		}
