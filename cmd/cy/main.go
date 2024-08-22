@@ -51,6 +51,17 @@ func main() {
 		}
 	}
 
+	// This seems crazy, but the negative numbers passed to `cy recall` are
+	// interpreted as flags by kong (it does not appear we can configure
+	// this,) so we need to adjust them before parsing.
+	if len(os.Args) > 1 && os.Args[1] == "recall" {
+		for i, arg := range os.Args {
+			if RELATIVE_REFERENCE.MatchString(arg) {
+				os.Args[i] = "!" + arg
+			}
+		}
+	}
+
 	ctx := kong.Parse(&CLI,
 		kong.Name("cy"),
 		kong.Description("the time traveling terminal multiplexer"),
@@ -86,7 +97,12 @@ func main() {
 			writeError(err)
 		}
 	case "recall <reference>":
-		err := recallCommand(CLI.Recall.Reference)
+		ref := CLI.Recall.Reference
+		if ref[0] == '!' {
+			ref = ref[1:]
+		}
+
+		err := recallCommand(ref)
 		if err != nil {
 			writeError(err)
 		}
