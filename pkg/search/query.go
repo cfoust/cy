@@ -63,7 +63,10 @@ func readEvents(filename string) ([]sessions.Event, error) {
 	return events, nil
 }
 
-func searchFile(query string, filename string) ([]search.SearchResult, error) {
+func searchFile(
+	query string,
+	filename string,
+) ([]search.SearchResult, error) {
 	pattern, err := regexp.Compile(query)
 	if err != nil {
 		panic(err)
@@ -149,6 +152,7 @@ func execute(
 
 		close(jobc)
 		wg.Wait()
+		close(out)
 		return finishedEvent{}
 	}
 }
@@ -179,7 +183,7 @@ func (s *Search) Execute(request Request) (taro.Model, tea.Cmd) {
 	s.searchLifetime = &l
 	s.searching = true
 
-	s.resultc = make(chan fileResult)
+	s.resultc = make(chan fileResult, len(request.Files))
 	jobs := make([]job, len(request.Files))
 	s.results = make([]fileResult, len(request.Files))
 	for id, file := range request.Files {
@@ -191,7 +195,7 @@ func (s *Search) Execute(request Request) (taro.Model, tea.Cmd) {
 
 	return s, tea.Batch(
 		execute(
-			s.Lifetime.Ctx(),
+			l.Ctx(),
 			request.Query,
 			request.Workers,
 			jobs,

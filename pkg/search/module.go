@@ -35,6 +35,9 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case Request:
 		return s.Execute(msg)
+	case resultEvent:
+		s.results[msg.fileResult.ID] = msg.fileResult
+		return s, s.waitResult()
 	}
 
 	return s, nil
