@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/cfoust/cy/pkg/sessions"
@@ -71,6 +72,11 @@ func searchFile(query string, filename string) ([]search.SearchResult, error) {
 	return search.Search(events, query, nil)
 }
 
+type Result struct {
+	Path    string
+	Results []search.SearchResult
+}
+
 func main() {
 	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
 	log.Logger = log.Output(consoleWriter)
@@ -86,12 +92,17 @@ func main() {
 
 	log.Info().Msgf("searching for %s in %d files", CLI.Query, len(CLI.Files))
 
+	var wg sync.WaitGroup
+
+	resultc := make(chan Result)
 	numWorkers := 5
 	jobs := make(chan string, numWorkers)
 	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			for file := range jobs {
-				_, err := searchFile(
+				results, err := searchFile(
 					CLI.Query,
 					file,
 				)
@@ -99,12 +110,37 @@ func main() {
 					log.Error().Msgf("failed to search in %s", file)
 					continue
 				}
+
+				if results == nil || len(results) == 0 {
+					continue
+				}
+
+				resultc <- Result{
+					Path:    file,
+					Results: results,
+				}
 			}
 		}()
 	}
+
+	results := []Result{}
+	go func() {
+		for result := range resultc {
+			results = append(results, result)
+		}
+	}()
 
 	for i, file := range CLI.Files {
 		jobs <- file
 		log.Info().Msgf("%d/%d", i, len(CLI.Files))
 	}
+	close(jobs)
+	wg.Wait()
+
+	numMatches := 0
+	for _, result := range results {
+		numMatches += len(result.Results)
+	}
+
+	log.Info().Msgf("found %d matches in %d/%d files", numMatches, len(results), len(CLI.Files))
 }
