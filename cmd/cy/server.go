@@ -84,7 +84,7 @@ func (s *Server) handleCyClient(
 		return err
 	}
 
-	events := conn.Subscribe(conn.Ctx())
+	events := conn.Receive()
 
 	go func() { _, _ = io.Copy(ws, cy) }()
 
@@ -95,7 +95,7 @@ func (s *Server) handleCyClient(
 		case <-cy.Ctx().Done():
 			ws.close()
 			return nil
-		case packet := <-events.Recv():
+		case packet := <-events:
 			if packet.Error != nil {
 				// TODO(cfoust): 06/08/23 handle gracefully
 				continue
@@ -121,7 +121,7 @@ func (s *Server) handleCyClient(
 }
 
 func (s *Server) HandleWSClient(conn Connection) {
-	events := conn.Subscribe(conn.Ctx())
+	events := conn.Receive()
 
 	wsClient := &Client{conn: conn}
 
@@ -129,7 +129,7 @@ func (s *Server) HandleWSClient(conn Connection) {
 		select {
 		case <-conn.Ctx().Done():
 			return
-		case msg := <-events.Recv():
+		case msg := <-events:
 			switch msg := msg.Contents.(type) {
 			case *P.HandshakeMessage:
 				if err := s.handleCyClient(

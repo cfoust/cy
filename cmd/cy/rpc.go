@@ -54,7 +54,7 @@ func RPC[S any, T any](
 ) (T, error) {
 	var result T
 
-	msgs := conn.Subscribe(conn.Ctx())
+	msgs := conn.Receive()
 	errc := make(chan error)
 	response := make(chan *P.RPCResponseMessage)
 
@@ -63,7 +63,7 @@ func RPC[S any, T any](
 			select {
 			case <-conn.Ctx().Done():
 				return
-			case msg := <-msgs.Recv():
+			case msg := <-msgs:
 				if msg.Error != nil {
 					errc <- msg.Error
 					return

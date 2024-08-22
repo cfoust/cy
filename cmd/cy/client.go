@@ -137,12 +137,12 @@ func poll(conn Connection) error {
 	}
 
 	go func() {
-		events := conn.Subscribe(conn.Ctx())
+		events := conn.Receive()
 		for {
 			select {
 			case <-conn.Ctx().Done():
 				return
-			case packet := <-events.Recv():
+			case packet := <-events:
 				if packet.Error != nil {
 					// TODO(cfoust): 12/25/23
 					return
