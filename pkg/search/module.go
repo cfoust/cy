@@ -32,6 +32,11 @@ func (s *Search) Init() tea.Cmd {
 }
 
 func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case Request:
+		return s.Execute(msg)
+	}
+
 	return s, nil
 }
 
@@ -43,14 +48,18 @@ func WithRequest(req Request) Option {
 	}
 }
 
+func newSearch(ctx context.Context) *Search {
+	return &Search{
+		Lifetime: util.NewLifetime(ctx),
+		render:   taro.NewRenderer(),
+	}
+}
+
 func New(
 	ctx context.Context,
 	options ...Option,
 ) *taro.Program {
-	s := &Search{
-		Lifetime: util.NewLifetime(ctx),
-		render:   taro.NewRenderer(),
-	}
+	s := newSearch(ctx)
 
 	for _, option := range options {
 		option(s)

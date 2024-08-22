@@ -17,9 +17,8 @@ import (
 )
 
 type Request struct {
-	Query  string
-	Filter string
-	Files  []string
+	Query string
+	Files []string
 	// The number of goroutines to use
 	Workers int
 }
@@ -182,7 +181,7 @@ func (s *Search) Execute(request Request) (taro.Model, tea.Cmd) {
 
 	s.resultc = make(chan fileResult)
 	jobs := make([]job, len(request.Files))
-	s.results = make([]fileResult, 0, len(request.Files))
+	s.results = make([]fileResult, len(request.Files))
 	for id, file := range request.Files {
 		s.results[id].ID = id
 		s.results[id].File = file
