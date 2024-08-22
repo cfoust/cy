@@ -27,7 +27,7 @@ Some examples:
 cy exec -c "(shell/attach \"$(pwd)\")"
 
 # Set a parameter on the client
-cy exec -c "(param/set :client :default-frame 'big-hex')"
+cy exec -c "(param/set :client :default-frame \"big-hex\")"
 ```
 
 #### Reading data from `cy`
