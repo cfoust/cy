@@ -335,3 +335,26 @@ func TestGetLines(t *testing.T) {
 	require.Equal(t, "foobar", lines[0].String())
 	require.Equal(t, "baz", lines[1].String())
 }
+
+func TestBrokenLine(t *testing.T) {
+	term := New()
+	term.Write([]byte(LineFeedMode))
+
+	setup := []string{
+		"> ", "command\n",
+	}
+
+	bigWrite := ""
+	for row := 0; row < geom.DEFAULT_SIZE.R*2; row++ {
+		bigWrite += "foo\n"
+	}
+	setup = append(setup, bigWrite)
+	setup = append(setup, "> ")
+
+	for _, item := range setup {
+		term.Write([]byte(item))
+	}
+
+	lines := term.GetLines(0, 0)
+	require.Equal(t, "> command", lines[0].String())
+}
