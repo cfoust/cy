@@ -14,10 +14,12 @@ type Search struct {
 	render         *taro.Renderer
 	initialRequest *Request
 
-	resultc        chan fileResult
-	searching      bool
-	searchLifetime *util.Lifetime
-	results        []fileResult
+	resultc chan fileResult
+
+	selected          int
+	searching         bool
+	searchLifetime    *util.Lifetime
+	pending, complete []fileResult
 }
 
 var _ taro.Model = (*Search)(nil)
@@ -36,8 +38,31 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case Request:
 		return s.Execute(msg)
 	case resultEvent:
-		s.results[msg.fileResult.ID] = msg.fileResult
-		return s, s.waitResult()
+		s.pending[msg.fileResult.ID] = msg.fileResult
+
+		allDone := true
+		for _, result := range s.pending {
+			if result.Done {
+				continue
+			}
+			allDone = false
+		}
+
+		if !allDone {
+			return s, s.waitResult()
+		}
+
+		s.complete = make([]fileResult, len(s.pending))
+		copy(s.complete, s.pending)
+		s.pending = nil
+		s.cancelSearch()
+		return s, nil
+	case ActionEvent:
+		switch msg.Type {
+		case ActionCancel:
+			s.cancelSearch()
+			return s, nil
+		}
 	}
 
 	return s, nil

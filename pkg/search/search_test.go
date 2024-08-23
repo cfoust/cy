@@ -18,7 +18,7 @@ var sim = sessions.NewSimulator
 func createBorg(path string) error {
 	s := sim().Add(geom.DEFAULT_SIZE)
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100; i++ {
 		str := "foo"
 		if i%20 == 0 {
 			str = "bar"
@@ -60,9 +60,26 @@ func TestSearch(t *testing.T) {
 	s := newSearch(context.Background())
 	test := taro.Test(s)
 
-	test(Request{
+	request := Request{
 		Query:   "bar",
 		Files:   paths,
 		Workers: 3,
-	})
+	}
+
+	test(request)
+
+	require.Equal(t, len(paths), len(s.complete))
+	for _, result := range s.complete {
+		require.True(t, result.Done)
+	}
+	require.False(t, s.searching)
+
+	test(request, ActionEvent{Type: ActionCancel})
+	require.False(t, s.searching)
+
+	// Should leave complete untouched
+	require.Equal(t, len(paths), len(s.complete))
+	for _, result := range s.complete {
+		require.True(t, result.Done)
+	}
 }

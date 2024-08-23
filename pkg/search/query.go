@@ -35,8 +35,6 @@ type resultEvent struct {
 	fileResult
 }
 
-type finishedEvent struct{}
-
 type job struct {
 	ID   int
 	File string
@@ -116,12 +114,16 @@ func work(
 				job.File,
 			)
 
-			out <- fileResult{
+			select {
+			case <-ctx.Done():
+				return
+			case out <- fileResult{
 				ID:      job.ID,
 				File:    job.File,
 				Done:    true,
 				Error:   err,
 				Results: results,
+			}:
 			}
 		}
 	}
@@ -147,34 +149,52 @@ func execute(
 		}
 
 		for _, job := range jobs {
-			jobc <- job
+			select {
+			case <-ctx.Done():
+				return nil
+			case jobc <- job:
+			}
 		}
 
 		close(jobc)
 		wg.Wait()
-		close(out)
-		return finishedEvent{}
+		return nil
 	}
 }
 
 func (s *Search) waitResult() tea.Cmd {
-	if s.resultc == nil {
+	lifetime := s.searchLifetime
+	if s.resultc == nil || lifetime == nil {
 		return nil
 	}
 
 	return func() tea.Msg {
-		result, more := <-s.resultc
-		if !more {
+		select {
+		case <-lifetime.Ctx().Done():
 			return nil
+		case result, more := <-s.resultc:
+			if !more {
+				return nil
+			}
+			return resultEvent{
+				fileResult: result,
+			}
 		}
 
-		return resultEvent{
-			fileResult: result,
-		}
 	}
 }
 
+func (s *Search) cancelSearch() {
+	if s.searchLifetime != nil {
+		s.searchLifetime.Cancel()
+	}
+	s.resultc = nil
+	s.searching = false
+}
+
 func (s *Search) Execute(request Request) (taro.Model, tea.Cmd) {
+	s.cancelSearch()
+
 	if request.Workers == 0 || len(request.Files) == 0 {
 		return s, nil
 	}
@@ -183,12 +203,13 @@ func (s *Search) Execute(request Request) (taro.Model, tea.Cmd) {
 	s.searchLifetime = &l
 	s.searching = true
 
-	s.resultc = make(chan fileResult, len(request.Files))
+	resultc := make(chan fileResult, len(request.Files))
 	jobs := make([]job, len(request.Files))
-	s.results = make([]fileResult, len(request.Files))
+	s.resultc = resultc
+	s.pending = make([]fileResult, len(request.Files))
 	for id, file := range request.Files {
-		s.results[id].ID = id
-		s.results[id].File = file
+		s.pending[id].ID = id
+		s.pending[id].File = file
 		jobs[id].ID = id
 		jobs[id].File = file
 	}
@@ -199,7 +220,7 @@ func (s *Search) Execute(request Request) (taro.Model, tea.Cmd) {
 			request.Query,
 			request.Workers,
 			jobs,
-			s.resultc,
+			resultc,
 		),
 		s.waitResult(),
 	)
