@@ -78,7 +78,24 @@ type Program struct {
 
 	initialModel Model
 
+	// When testing, we need to be sure that all messages and commands
+	// have finished being processed and executed (respectively) before
+	// checking the state of the Model, among other things.
+	isTest           bool
+	// These let us keep track of how many messages and commands are in
+	// flight.
+	mu               deadlock.RWMutex
+	numMsgs, numCmds int
+	// This channel is used to signal when all messages and commands have
+	// been handled.
+	clear            chan struct{}
+	// In testing we need to be able to ignore some messages (like cursor
+	// blinking) that always produce a new command, meaning they'll cause
+	// tests to run forever.
+	filter           func(tea.Msg) tea.Msg
+
 	msgs     chan tea.Msg
+	cmds     chan Cmd
 	errs     chan error
 	finished chan struct{}
 
@@ -116,14 +133,37 @@ type PublishMsg struct {
 	Msg Msg
 }
 
-// NewProgram creates a new Program.
-func NewProgram(model Model) *Program {
-	p := &Program{
-		initialModel: model,
-		msgs:         make(chan tea.Msg),
+func (p *Program) inc(cmd bool) {
+	if !p.isTest {
+		return
 	}
 
-	return p
+	p.mu.Lock()
+	if cmd {
+		p.numCmds++
+	} else {
+		p.numMsgs++
+	}
+	p.mu.Unlock()
+}
+
+func (p *Program) dec(cmd bool) {
+	if !p.isTest {
+		return
+	}
+
+	p.mu.Lock()
+	if cmd {
+		p.numCmds--
+	} else {
+		p.numMsgs--
+	}
+	sum := p.numCmds + p.numMsgs
+	p.mu.Unlock()
+
+	if sum == 0 && p.clear != nil {
+		p.clear <- struct{}{}
+	}
 }
 
 func (p *Program) Write(data []byte) (n int, err error) {
@@ -156,6 +196,7 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 				go func() {
 					msg := cmd() // this can be long.
 					p.Send(msg)
+					p.dec(true)
 				}()
 			}
 		}
@@ -182,23 +223,34 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			return model, err
 
 		case msg := <-p.msgs:
+			if p.filter != nil {
+				msg = p.filter(msg)
+			}
+
 			if msg == nil {
+				p.dec(false)
 				continue
 			}
 
 			// Handle special internal messages.
 			switch msg := msg.(type) {
 			case tea.QuitMsg:
+				p.dec(false)
 				return model, nil
 
 			case PublishMsg:
 				p.Publish(msg.Msg)
+				p.dec(false)
 				continue
 
 			case tea.BatchMsg:
 				for _, cmd := range msg {
+					if cmd != nil {
+						p.inc(true)
+					}
 					cmds <- cmd
 				}
+				p.dec(false)
 				continue
 
 			case sequenceMsg:
@@ -232,13 +284,18 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			var cmd Cmd
 			model, cmd = model.Update(msg) // run update
-			cmds <- cmd                    // process command (if any)
+			if cmd != nil {
+				p.inc(true)
+			}
+			cmds <- cmd // process command (if any)
 			frameStart := time.Now()
 			p.renderer.write(model) // send view to renderer
 			frameTime := time.Now().Sub(frameStart)
 			if frameTime > 16*time.Millisecond {
 				log.Debug().Msgf("%T: frame render time exceeded threshold (%+v)", p.initialModel, frameTime)
 			}
+
+			p.dec(false)
 		}
 	}
 }
@@ -299,7 +356,7 @@ func (p *Program) waitForReadLoop() {
 // Returns the final model.
 func (p *Program) Run() (Model, error) {
 	handlers := handlers{}
-	cmds := make(chan Cmd)
+	p.cmds = make(chan Cmd)
 	p.errs = make(chan error)
 	p.finished = make(chan struct{}, 1)
 
@@ -307,18 +364,21 @@ func (p *Program) Run() (Model, error) {
 
 	// Initialize the program.
 	model := p.initialModel
-	if initCmd := model.Init(); initCmd != nil {
-		ch := make(chan struct{})
-		handlers.add(ch)
+	if !p.isTest {
+		if initCmd := model.Init(); initCmd != nil {
+			ch := make(chan struct{})
+			handlers.add(ch)
 
-		go func() {
-			defer close(ch)
+			go func() {
+				defer close(ch)
 
-			select {
-			case cmds <- initCmd:
-			case <-p.Ctx().Done():
-			}
-		}()
+				select {
+				case p.cmds <- initCmd:
+				case <-p.Ctx().Done():
+				}
+			}()
+		}
+
 	}
 
 	// Render the initial view.
@@ -332,10 +392,10 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Process commands.
-	handlers.add(p.handleCommands(cmds))
+	handlers.add(p.handleCommands(p.cmds))
 
 	// Run event loop, handle updates and draw.
-	model, err := p.eventLoop(model, cmds)
+	model, err := p.eventLoop(model, p.cmds)
 	killed := p.Ctx().Err() != nil
 	if killed {
 		err = ErrProgramKilled
@@ -373,6 +433,7 @@ func (p *Program) Run() (Model, error) {
 // If the program has already been terminated this will be a no-op, so it's safe
 // to send messages after the program has exited.
 func (p *Program) Send(msg events.Msg) {
+	p.inc(false)
 	select {
 	case <-p.Ctx().Done():
 	case p.msgs <- msg:
@@ -427,10 +488,10 @@ func (h handlers) shutdown() {
 	wg.Wait()
 }
 
-func New(ctx context.Context, model Model) *Program {
+func NewProgram(ctx context.Context, model Model) *Program {
 	in, writes := io.Pipe()
 
-	p := &Program{
+	return &Program{
 		Lifetime: util.NewLifetime(ctx),
 		renderer: renderer{
 			state:           tty.New(geom.DEFAULT_SIZE),
@@ -441,6 +502,10 @@ func New(ctx context.Context, model Model) *Program {
 		writes:       writes,
 		input:        in,
 	}
+}
+
+func New(ctx context.Context, model Model) *Program {
+	p := NewProgram(ctx, model)
 
 	go p.Run()
 

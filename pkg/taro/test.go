@@ -1,8 +1,9 @@
 package taro
 
 import (
+	"context"
+
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/geom/tty"
 
 	"github.com/charmbracelet/bubbles/cursor"
 	tea "github.com/charmbracelet/bubbletea"
@@ -16,38 +17,40 @@ func Test(m Model) func(msgs ...interface{}) {
 	size := geom.DEFAULT_SIZE
 
 	return func(msgs ...interface{}) {
-		var cmd, subCmd Cmd
-		var realMsg Msg
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
-		var handleCmd func(Cmd)
-		handleCmd = func(cmd Cmd) {
-			for cmd != nil {
-				msg := cmd()
+		p := NewProgram(ctx, m)
+		p.isTest = true
+		p.renderer.resize(size)
+		clearc := make(chan struct{})
+		p.clear = clearc
 
-				switch msg := msg.(type) {
-				case cursor.BlinkMsg:
-				case tea.BatchMsg:
-					for _, cmd := range msg {
-						m, subCmd = m.Update(cmd())
-						handleCmd(subCmd)
-					}
-					cmd = nil
-				default:
-					m, cmd = m.Update(msg)
-				}
-				m.View(tty.New(size))
+		// Skip Blink messages, since they repeat forever
+		p.filter = func(msg tea.Msg) tea.Msg {
+			if _, ok := msg.(cursor.BlinkMsg); ok {
+				return nil
 			}
+			return msg
 		}
 
+		cmds := []tea.Cmd{}
+
+		var realMsg Msg
 		for _, msg := range msgs {
 			realMsg = msg
 			switch msg := msg.(type) {
 			case geom.Size:
-				size = msg
-				realMsg = tea.WindowSizeMsg{
-					Width:  msg.C,
-					Height: msg.R,
-				}
+				newSize := msg
+				cmds = append(cmds, func() tea.Msg {
+					size = newSize
+					p.renderer.resize(newSize)
+					return tea.WindowSizeMsg{
+						Width:  newSize.C,
+						Height: newSize.R,
+					}
+				})
+				continue
 			case string:
 				keyMsgs := KeysToMsg(msg)
 				if len(keyMsgs) == 1 {
@@ -55,9 +58,24 @@ func Test(m Model) func(msgs ...interface{}) {
 				}
 			}
 
-			m, cmd = m.Update(realMsg)
-			handleCmd(cmd)
-			m.View(tty.New(size))
+			cmds = append(cmds, func(msg tea.Msg) tea.Cmd {
+				return func() tea.Msg {
+					return msg
+				}
+			}(realMsg))
 		}
+
+		done := make(chan struct{})
+		go func() {
+			p.Run()
+			done <- struct{}{}
+		}()
+
+		p.Send(sequenceMsg(cmds))
+
+		<-p.clear
+		p.clear = nil
+		p.Send(tea.QuitMsg{})
+		<-done
 	}
 }
