@@ -126,7 +126,7 @@ func (v *Value) String() string {
 	out, err := v.vm.format.CallResult(
 		context.Background(),
 		nil,
-		"%n",
+		"%j",
 		v,
 	)
 	if err != nil {
