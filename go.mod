@@ -1,6 +1,6 @@
 module github.com/cfoust/cy
 
-go 1.21
+go 1.23.0
 
 require (
 	github.com/charmbracelet/bubbles v0.16.1
@@ -11,7 +11,7 @@ require (
 	github.com/muesli/cancelreader v0.2.2
 	github.com/muesli/termenv v0.15.2
 	github.com/rs/zerolog v1.29.1
-	github.com/sasha-s/go-deadlock v0.3.1
+	github.com/sasha-s/go-deadlock v0.3.5
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e
 	golang.org/x/sync v0.1.0
 )
@@ -40,7 +40,7 @@ require (
 	github.com/muesli/ansi v0.0.0-20211018074035-2e021307bc4b // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/petermattis/goid v0.0.0-20230516130339-69c5d00fc54d // indirect
+	github.com/petermattis/goid v0.0.0-20240813172612-4fcff4a6cae7 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sevlyar/go-daemon v0.1.6 // indirect
