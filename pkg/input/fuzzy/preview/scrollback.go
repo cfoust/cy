@@ -7,8 +7,8 @@ import (
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
-	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/replay/movement"
+	"github.com/cfoust/cy/pkg/replay/replayable"
 	"github.com/cfoust/cy/pkg/sessions/search"
 	"github.com/cfoust/cy/pkg/taro"
 
@@ -31,7 +31,7 @@ func NewScrollback(
 		return nil
 	}
 
-	r, ok := pane.Screen().(*replay.Replayable)
+	r, ok := pane.Screen().(*replayable.Replayable)
 	if !ok {
 		return nil
 	}

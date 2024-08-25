@@ -17,6 +17,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay"
+	"github.com/cfoust/cy/pkg/replay/replayable"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/rs/zerolog"
@@ -222,7 +223,7 @@ func (c *Cy) Output(node tree.NodeID, index int) ([]byte, error) {
 		return nil, fmt.Errorf("node %d is not a pane", node)
 	}
 
-	r, ok := pane.Screen().(*replay.Replayable)
+	r, ok := pane.Screen().(*replayable.Replayable)
 	if !ok {
 		return nil, fmt.Errorf("node %d was not a cmd", node)
 	}
@@ -351,7 +352,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	go cy.pollInteractions(cy.Ctx(), cy.lastVisit, cy.visits)
 
 	logs := stream.NewReader()
-	logScreen := replay.NewReplayable(
+	logScreen := replayable.New(
 		cy.Ctx(),
 		logs,
 		logs,

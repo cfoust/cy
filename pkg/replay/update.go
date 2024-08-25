@@ -19,8 +19,8 @@ func (r *Replay) quit() (taro.Model, tea.Cmd) {
 	return r, tea.Quit
 }
 
-type applyOptions struct {
-	options []Option
+type ApplyOptionsEvent struct {
+	Options []Option
 }
 
 func (r *Replay) emit(event bind.BindEvent) tea.Cmd {
@@ -35,8 +35,8 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	viewport := r.viewport
 
 	switch msg := msg.(type) {
-	case applyOptions:
-		for _, option := range msg.options {
+	case ApplyOptionsEvent:
+		for _, option := range msg.Options {
 			option(r)
 		}
 		return r, nil
