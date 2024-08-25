@@ -55,16 +55,22 @@ func (n *Node) Init() taro.Cmd {
 
 func (n *Node) Update(msg taro.Msg) (taro.Model, taro.Cmd) {
 	switch msg := msg.(type) {
+	case taro.ScreenUpdate:
+		return n, msg.Wait()
 	case AttachEvent:
 		n.isAttached = true
-		return n, func() tea.Msg {
-			select {
-			case <-n.client.Attachment().Ctx().Done():
-				return nil
-			case <-msg.pane.Ctx().Done():
-				return DetachEvent{}
-			}
-		}
+		w := taro.NewWatcher(n.Ctx(), msg.pane.Screen())
+		return n, tea.Batch(
+			func() tea.Msg {
+				select {
+				case <-n.client.Attachment().Ctx().Done():
+					return nil
+				case <-msg.pane.Ctx().Done():
+					return DetachEvent{}
+				}
+			},
+			w.Wait(),
+		)
 	case DetachEvent:
 		n.isAttached = false
 		return n, nil

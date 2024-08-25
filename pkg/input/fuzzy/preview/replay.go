@@ -112,6 +112,8 @@ func (r *Replay) View(state *tty.State) {
 
 func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case taro.ScreenUpdate:
+		return r, msg.Wait()
 	case tea.WindowSizeMsg:
 		r.size = geom.Size{
 			R: msg.Height,
@@ -129,6 +131,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 		r.replay = msg.replay
 		r.replay.Resize(r.size)
+
+		w := taro.NewWatcher(r.Ctx(), msg.replay)
+		return r, w.Wait()
 	}
 
 	return r, nil
