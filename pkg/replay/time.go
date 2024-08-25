@@ -5,17 +5,32 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/taro"
+	"github.com/cfoust/cy/pkg/util"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type seekEvent struct {
+// seekProgressEvent is sent when the progress of an ongoing seek operation
+// changes.
+type seekProgressEvent struct {
+	progress int
+}
+
+// seekShowEvent is sent when the UI should update to reflect a seek; if a seek
+// is short, we don't show anything.
+type seekShowEvent struct{}
+
+type seekFinishEvent struct {
 	updateTime bool
 }
 
 func (r *Replay) handleSeek(updateTime bool) {
 	r.isSeeking = false
+	r.showSeek = false
+	r.seekLifetime.Cancel()
 	r.isSwapped = false
 
 	events := r.Events()
@@ -29,16 +44,55 @@ func (r *Replay) handleSeek(updateTime bool) {
 	r.initializeMovement()
 }
 
+// waitSeekProgress waits for the next progress event while seeking.
+func (r *Replay) waitSeekProgress() tea.Cmd {
+	return func() tea.Msg {
+		select {
+		case <-r.seekLifetime.Ctx().Done():
+			return nil
+		case p := <-r.seekProgressc:
+			return seekProgressEvent{
+				progress: p,
+			}
+		}
+	}
+}
+
 // Move the terminal back in time to the event at `index` and byte offset (if
 // the event is an OutputMessage) of `indexByte`.
 func (r *Replay) setIndex(index, indexByte int, updateTime bool) tea.Cmd {
 	r.isSeeking = true
-	return func() tea.Msg {
-		r.Goto(index, indexByte)
-		return seekEvent{
-			updateTime: updateTime,
-		}
+	r.showSeek = false
+	r.seekProgress = 0
+
+	seekLifetime := util.NewLifetime(r.Ctx())
+	r.seekLifetime = &seekLifetime
+
+	r.seekState = nil
+	location := r.Location()
+	if r.movement != nil && location.Index != 0 && location.Offset != 0 {
+		viewport := tty.New(r.viewport)
+		r.movement.View(viewport, []movement.Highlight{})
+		r.seekState = viewport
 	}
+
+	progress := make(chan int)
+	r.seekProgressc = progress
+
+	return tea.Batch(
+		func() tea.Msg {
+			r.GotoProgress(index, indexByte, progress)
+
+			return seekFinishEvent{
+				updateTime: updateTime,
+			}
+		},
+		r.waitSeekProgress(),
+		func() tea.Msg {
+			time.Sleep(SEEK_THRESHOLD)
+			return seekShowEvent{}
+		},
+	)
 }
 
 func (r *Replay) gotoIndex(index, indexByte int) tea.Cmd {
@@ -51,7 +105,7 @@ func (r *Replay) forceIndex(index, indexByte int) {
 	cmd := r.gotoIndex(index, indexByte)
 
 	msg := cmd()
-	if seek, ok := msg.(seekEvent); ok {
+	if seek, ok := msg.(seekFinishEvent); ok {
 		r.handleSeek(seek.updateTime)
 	}
 }
@@ -181,7 +235,7 @@ func (r *Replay) forceTimeDelta(delta time.Duration, skipInactivity bool) {
 	cmd := r.setTimeDelta(delta, skipInactivity)
 
 	msg := cmd()
-	if seek, ok := msg.(seekEvent); ok {
+	if seek, ok := msg.(seekFinishEvent); ok {
 		r.handleSeek(seek.updateTime)
 	}
 }

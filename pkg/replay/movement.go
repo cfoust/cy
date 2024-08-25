@@ -26,6 +26,9 @@ func (r *Replay) resize(newViewport geom.Size) {
 	// Remove one row for our status line
 	newViewport.R = geom.Max(newViewport.R-1, 0)
 	r.viewport = newViewport
+	if r.movement == nil {
+		return
+	}
 	r.movement.Resize(newViewport)
 }
 

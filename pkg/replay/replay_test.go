@@ -1,6 +1,7 @@
 package replay
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -37,6 +38,7 @@ func createTestSession() []sessions.Event {
 
 func createTest(events []sessions.Event) (*Replay, func(msgs ...interface{})) {
 	var r = newReplay(
+		context.Background(),
 		player.FromEvents(events),
 		bind.NewEngine[bind.Action](),
 		bind.NewEngine[bind.Action](),

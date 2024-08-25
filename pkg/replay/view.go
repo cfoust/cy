@@ -137,7 +137,6 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	if r.isFlowMode() && r.isCopyMode() {
 		prefix := statusStyle.Render(statusText)
 		rightStyle := statusBarStyle.
-			Copy().
 			Width(size.C-lipgloss.Width(prefix)).
 			Padding(0, 1)
 
@@ -178,7 +177,6 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	leftSide := lipgloss.JoinHorizontal(lipgloss.Top,
 		status,
 		statusBarStyle.
-			Copy().
 			Padding(0, 1).
 			Render(
 				r.currentTime.Format(
@@ -200,7 +198,6 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 
 	progressBar = "[" + progressBar + "]"
 	progressBar = statusBarStyle.
-		Copy().
 		Render(progressBar)
 
 	statusBar := statusBarStyle.
@@ -220,11 +217,11 @@ func (r *Replay) renderInput() image.Image {
 
 	width := 20
 	common := r.render.NewStyle().Width(width)
-	inputStyle := common.Copy().
+	inputStyle := common.
 		Foreground(lipgloss.Color("15")).
 		Background(lipgloss.Color("8"))
 
-	promptStyle := common.Copy().
+	promptStyle := common.
 		Foreground(lipgloss.Color("8")).
 		Background(lipgloss.Color("15"))
 
@@ -235,7 +232,7 @@ func (r *Replay) renderInput() image.Image {
 
 	value := r.searchInput.Value()
 	if match := TIME_DELTA_REGEX.FindStringSubmatch(value); len(value) > 0 && match != nil {
-		promptStyle = common.Copy().
+		promptStyle = common.
 			Foreground(lipgloss.Color("15")).
 			Background(lipgloss.Color("#7768AE"))
 
@@ -259,7 +256,7 @@ func (r *Replay) renderInput() image.Image {
 			first,
 		)
 
-		progressStyle := inputStyle.Copy().
+		progressStyle := inputStyle.
 			Background(lipgloss.Color("#4D9DE0"))
 
 		filled := int((float64(percent) / 100) * float64(width))
@@ -283,6 +280,13 @@ func (r *Replay) View(state *tty.State) {
 	// Return nothing when View() is called before we've actually gotten
 	// the viewport
 	if r.viewport.R == 0 && r.viewport.C == 0 {
+		return
+	}
+
+	if r.isSeeking {
+		if r.seekState != nil {
+			tty.Copy(geom.Vec2{}, state, r.seekState)
+		}
 		return
 	}
 
@@ -325,10 +329,9 @@ func (r *Replay) View(state *tty.State) {
 		)
 	}
 
-	commands := r.Commands()
-
 	// Only used for development (for now)
 	if r.isFlowMode() && r.showCommands {
+		commands := r.Commands()
 		for _, command := range commands {
 			highlights = append(
 				highlights,

@@ -81,18 +81,18 @@ type Program struct {
 	// When testing, we need to be sure that all messages and commands
 	// have finished being processed and executed (respectively) before
 	// checking the state of the Model, among other things.
-	isTest           bool
+	isTest bool
 	// These let us keep track of how many messages and commands are in
 	// flight.
 	mu               deadlock.RWMutex
 	numMsgs, numCmds int
 	// This channel is used to signal when all messages and commands have
 	// been handled.
-	clear            chan struct{}
+	clear chan struct{}
 	// In testing we need to be able to ignore some messages (like cursor
 	// blinking) that always produce a new command, meaning they'll cause
 	// tests to run forever.
-	filter           func(tea.Msg) tea.Msg
+	filter func(tea.Msg) tea.Msg
 
 	msgs     chan tea.Msg
 	cmds     chan Cmd
@@ -280,6 +280,16 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 						p.Send(msg)
 					}
 				}()
+			case tea.WindowSizeMsg:
+				// In testing, we rely on WindowSizeMsg because
+				// then we can guarantee the order of
+				// execution.
+				if p.isTest {
+					p.renderer.resize(geom.Size{
+						C: msg.Width,
+						R: msg.Height,
+					})
+				}
 			}
 
 			var cmd Cmd

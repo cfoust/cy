@@ -6,17 +6,20 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/replay/motion"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions/search"
 	"github.com/cfoust/cy/pkg/taro"
+	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type Replay struct {
+	util.Lifetime
 	*player.Player
 
 	render               *taro.Renderer
@@ -31,6 +34,16 @@ type Replay struct {
 
 	// whether the player is seeking
 	isSeeking bool
+	// seeking progress is not shown until it's taken longer than 120ms
+	showSeek      bool
+	seekLifetime  *util.Lifetime
+	seekProgress  int
+	seekProgressc chan int
+	// Options cannot be applied until after the initial seek is complete.
+	seekOptions []Option
+	// While seeking, we cannot get the contents of the screen, so we use
+	// the state of the screen before we started.
+	seekState *tty.State
 
 	// the size of the client, but minus one row
 	// we don't want to obscure content
@@ -111,12 +124,17 @@ func (r *Replay) swapScreen() {
 }
 
 func (r *Replay) Init() tea.Cmd {
-	return textinput.Blink
+	return tea.Batch(
+		textinput.Blink,
+		r.gotoIndex(-1, -1),
+	)
 }
 
 func newReplay(
+	ctx context.Context,
 	player *player.Player,
 	timeBinds, copyBinds *bind.Engine[bind.Action],
+	options ...Option,
 ) *Replay {
 	searchInput := textinput.New()
 	searchInput.Focus()
@@ -131,6 +149,7 @@ func newReplay(
 	incrInput.Prompt = ""
 
 	m := &Replay{
+		Lifetime:       util.NewLifetime(ctx),
 		incr:           motion.NewIncremental(),
 		Player:         player,
 		render:         taro.NewRenderer(),
@@ -141,8 +160,8 @@ func newReplay(
 		copyBinds:      copyBinds,
 		searchProgress: make(chan int),
 		skipInactivity: true,
+		seekOptions:    options,
 	}
-	m.Update(m.gotoIndex(-1, -1)())
 	return m
 }
 
@@ -205,13 +224,12 @@ func New(
 	replayEngine := bind.Run(ctx, timeBinds)
 	copyEngine := bind.Run(ctx, copyBinds)
 	r := newReplay(
+		ctx,
 		player,
 		replayEngine,
 		copyEngine,
+		options...,
 	)
-	for _, option := range options {
-		option(r)
-	}
 	program := taro.New(ctx, r)
 
 	go pollBinds(ctx, program, replayEngine)

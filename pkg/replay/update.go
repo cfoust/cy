@@ -40,8 +40,29 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			option(r)
 		}
 		return r, nil
-	case seekEvent:
+	case seekProgressEvent:
+		if msg.progress == 100 {
+			return r, nil
+		}
+		return r, r.waitSeekProgress()
+	case seekShowEvent:
+		if !r.isSeeking {
+			return r, nil
+		}
+		r.showSeek = true
+		return r, nil
+	case seekFinishEvent:
 		r.handleSeek(msg.updateTime)
+
+		if r.seekOptions == nil {
+			return r, nil
+		}
+
+		for _, option := range r.seekOptions {
+			option(r)
+		}
+		r.seekOptions = nil
+
 		return r, nil
 	case ProgressEvent:
 		r.progressPercent = msg.Percent

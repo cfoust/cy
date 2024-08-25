@@ -7,6 +7,12 @@ import (
 	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
+const (
+	// SEEK_THRESHOLD is the amount of time that must pass before we show
+	// the progress of a seek.
+	SEEK_THRESHOLD = 120 * time.Millisecond
+)
+
 type SearchResultEvent struct {
 	isForward bool
 	origin    search.Address
