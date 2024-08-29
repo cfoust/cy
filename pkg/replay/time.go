@@ -13,6 +13,17 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// forceTimeEvent sets the time to the event at `index`. This is only used in
+// testing.
+type forceTimeEvent struct {
+	index int
+}
+
+type forceTimeDeltaEvent struct {
+	delta          time.Duration
+	skipInactivity bool
+}
+
 // seekProgressEvent is sent when the progress of an ongoing seek operation
 // changes.
 type seekProgressEvent struct {
@@ -170,7 +181,10 @@ func parseTimeDelta(delta []string) (result time.Duration) {
 	return
 }
 
-func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) tea.Cmd {
+func (r *Replay) setTimeDelta(
+	delta time.Duration,
+	skipInactivity bool,
+) tea.Cmd {
 	events := r.Events()
 	if len(events) == 0 {
 		return nil
@@ -245,14 +259,4 @@ func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) tea.Cmd 
 	}
 
 	return r.setIndex(currentIndex+1, -1, false)
-}
-
-// forceTimeDelta synchronously adjusts time by `delta`. Only used in tests.
-func (r *Replay) forceTimeDelta(delta time.Duration, skipInactivity bool) {
-	cmd := r.setTimeDelta(delta, skipInactivity)
-
-	msg := cmd()
-	if seek, ok := msg.(seekFinishEvent); ok {
-		r.handleSeek(seek.updateTime)
-	}
 }

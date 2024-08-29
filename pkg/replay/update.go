@@ -64,6 +64,10 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		r.options = nil
 
 		return r, nil
+	case forceTimeEvent:
+		return r, r.gotoIndex(msg.index, -1)
+	case forceTimeDeltaEvent:
+		return r, r.setTimeDelta(msg.delta, msg.skipInactivity)
 	case ProgressEvent:
 		r.progressPercent = msg.Percent
 		return r, r.waitProgress()

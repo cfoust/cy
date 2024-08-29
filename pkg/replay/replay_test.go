@@ -59,6 +59,8 @@ func createTest(events []sessions.Event) (*Replay, func(msgs ...interface{})) {
 			switch msg := msg.(type) {
 			case ActionType:
 				realMsg = ActionEvent{Type: msg}
+			case int:
+				realMsg = forceTimeEvent{index: msg}
 			}
 
 			test(realMsg)
@@ -105,8 +107,7 @@ func TestSearch(t *testing.T) {
 	require.Equal(t, 2, r.Location().Index)
 
 	// Ensure that the -1 rewriting works
-	r.forceIndex(2, -1)
-	i(ActionSearchReverse)
+	i(2, ActionSearchReverse)
 	require.Equal(t, 2, r.Location().Index)
 
 	// Now search backward
@@ -136,27 +137,38 @@ func TestTime(t *testing.T) {
 		Events()
 
 	r, i := createTest(e)
-	i(size)
-	r.forceIndex(0, -1)
+	i(size, 0)
 	require.Equal(t, e[0].Stamp, r.currentTime)
 
 	// Move into first text event
-	r.forceTimeDelta(delta, true)
+	i(forceTimeDeltaEvent{
+		delta:          delta,
+		skipInactivity: true,
+	})
 	require.Equal(t, 1, r.Location().Index)
 
 	// Play again, which should trigger a skip since the time is greater
 	// than IDLE_THRESHOLD
-	r.forceTimeDelta(delta, true)
+	i(forceTimeDeltaEvent{
+		delta:          delta,
+		skipInactivity: true,
+	})
 	require.Equal(t, 2, r.Location().Index)
 	require.Equal(t, e[2].Stamp, r.currentTime)
 
 	// Go backwards, which should bring us back to the previous event
-	r.forceTimeDelta(-delta, true)
+	i(forceTimeDeltaEvent{
+		delta:          -delta,
+		skipInactivity: true,
+	})
 	require.Equal(t, 1, r.Location().Index)
 	require.Equal(t, e[2].Stamp.Add(-delta), r.currentTime)
 
 	// Backwards again, which will skip inactivity back to 0
-	r.forceTimeDelta(-delta, true)
+	i(forceTimeDeltaEvent{
+		delta:          -delta,
+		skipInactivity: true,
+	})
 	require.Equal(t, 0, r.Location().Index)
 	require.Equal(t, e[0].Stamp, r.currentTime)
 }
@@ -171,15 +183,20 @@ func TestTimeBug(t *testing.T) {
 		Events()
 
 	r, i := createTest(e)
-	i(size)
-	r.forceIndex(0, -1)
+	i(size, 0)
 
 	// Simulate a jump forward
-	r.forceTimeDelta(5*time.Minute, false)
+	i(forceTimeDeltaEvent{
+		delta:          5 * time.Minute,
+		skipInactivity: false,
+	})
 	require.Equal(t, 2, r.Location().Index)
 	require.Equal(t, r.currentTime.Sub(e[0].Stamp), 5*time.Minute)
 	// And then a play
-	r.forceTimeDelta(time.Second, r.skipInactivity)
+	i(forceTimeDeltaEvent{
+		delta:          time.Second,
+		skipInactivity: r.skipInactivity,
+	})
 	require.Greater(t, r.currentTime.Sub(e[0].Stamp), 5*time.Minute)
 }
 
@@ -201,8 +218,7 @@ func TestTimeJump(t *testing.T) {
 
 func TestPrompt(t *testing.T) {
 	r, i := createTest(createTestSession())
-	i(geom.DEFAULT_SIZE)
-	r.forceIndex(0, -1)
+	i(geom.DEFAULT_SIZE, 0)
 	i(ActionSearchForward, "blah", ActionQuit)
 	require.Equal(t, r.mode, ModeTime)
 }
@@ -284,8 +300,7 @@ func TestJumpCommand(t *testing.T) {
 		)
 
 	r, i := createTest(s.Events())
-	i(geom.DEFAULT_SIZE)
-	r.forceIndex(0, -1)
+	i(geom.DEFAULT_SIZE, 0)
 
 	// Time mode
 	i(ActionCommandForward)
@@ -294,7 +309,7 @@ func TestJumpCommand(t *testing.T) {
 	require.Equal(t, 6, r.Location().Index)
 	i(ActionCommandBackward)
 	require.Equal(t, 3, r.Location().Index)
-	r.forceIndex(8, -1)
+	i(8)
 
 	WithCopyMode(r)
 
