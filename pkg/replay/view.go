@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -285,7 +286,27 @@ func (r *Replay) View(state *tty.State) {
 
 	if r.isSeeking {
 		if r.seekState != nil {
-			tty.Copy(geom.Vec2{}, state, r.seekState)
+			screen := r.seekState.screen
+			if screen == nil {
+				return
+			}
+
+			size := screen.Image.Size()
+			tty.Copy(
+				geom.Vec2{},
+				state,
+				screen,
+			)
+
+			if !r.showSeek {
+				return
+			}
+
+			for row := 0; row < size.R; row++ {
+				for col := 0; col < size.C; col++ {
+					state.Image[row][col].FG = emu.ANSIColor(7)
+				}
+			}
 		}
 		return
 	}

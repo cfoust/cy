@@ -27,11 +27,22 @@ type seekFinishEvent struct {
 	updateTime bool
 }
 
+type seekState struct {
+	util.Lifetime
+	percent  int
+	progress chan int
+	// While seeking, we cannot get the contents of the screen, so we use
+	// the state of the screen before we started.
+	screen *tty.State
+}
+
 func (r *Replay) handleSeek(updateTime bool) {
 	r.isSeeking = false
 	r.showSeek = false
-	r.seekLifetime.Cancel()
 	r.isSwapped = false
+
+	r.seekState.Cancel()
+	r.seekState = nil
 
 	events := r.Events()
 	location := r.Location()
@@ -46,11 +57,16 @@ func (r *Replay) handleSeek(updateTime bool) {
 
 // waitSeekProgress waits for the next progress event while seeking.
 func (r *Replay) waitSeekProgress() tea.Cmd {
+	seekState := r.seekState
+	if seekState == nil {
+		return nil
+	}
+
 	return func() tea.Msg {
 		select {
-		case <-r.seekLifetime.Ctx().Done():
+		case <-seekState.Ctx().Done():
 			return nil
-		case p := <-r.seekProgressc:
+		case p := <-seekState.progress:
 			return seekProgressEvent{
 				progress: p,
 			}
@@ -63,25 +79,26 @@ func (r *Replay) waitSeekProgress() tea.Cmd {
 func (r *Replay) setIndex(index, indexByte int, updateTime bool) tea.Cmd {
 	r.isSeeking = true
 	r.showSeek = false
-	r.seekProgress = 0
+	seekState := &seekState{
+		Lifetime: util.NewLifetime(r.Ctx()),
+		progress: make(chan int),
+	}
+	r.seekState = seekState
 
-	seekLifetime := util.NewLifetime(r.Ctx())
-	r.seekLifetime = &seekLifetime
-
-	r.seekState = nil
 	location := r.Location()
-	if r.movement != nil && location.Index != 0 && location.Offset != 0 {
+	if r.movement != nil && location.Index != 0 && location.Offset != 0 && !r.viewport.IsZero() {
 		viewport := tty.New(r.viewport)
 		r.movement.View(viewport, []movement.Highlight{})
-		r.seekState = viewport
+		seekState.screen = viewport
 	}
-
-	progress := make(chan int)
-	r.seekProgressc = progress
 
 	return tea.Batch(
 		func() tea.Msg {
-			r.GotoProgress(index, indexByte, progress)
+			r.GotoProgress(
+				index,
+				indexByte,
+				seekState.progress,
+			)
 
 			return seekFinishEvent{
 				updateTime: updateTime,

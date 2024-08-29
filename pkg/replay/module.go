@@ -6,7 +6,6 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/replay/motion"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/player"
@@ -32,18 +31,14 @@ type Replay struct {
 	// whether Replay will actually quit itself
 	preventExit bool
 
+	// Options cannot be applied until after the initial seek is complete.
+	options []Option
+
 	// whether the player is seeking
 	isSeeking bool
 	// seeking progress is not shown until it's taken longer than 120ms
-	showSeek      bool
-	seekLifetime  *util.Lifetime
-	seekProgress  int
-	seekProgressc chan int
-	// Options cannot be applied until after the initial seek is complete.
-	seekOptions []Option
-	// While seeking, we cannot get the contents of the screen, so we use
-	// the state of the screen before we started.
-	seekState *tty.State
+	showSeek bool
+	seekState *seekState
 
 	// the size of the client, but minus one row
 	// we don't want to obscure content
@@ -160,7 +155,7 @@ func newReplay(
 		copyBinds:      copyBinds,
 		searchProgress: make(chan int),
 		skipInactivity: true,
-		seekOptions:    options,
+		options:        options,
 	}
 	return m
 }
