@@ -27,18 +27,7 @@ func createBorg(path string) error {
 		s = s.Add(str)
 	}
 
-	w, err := sessions.Create(path)
-	if err != nil {
-		return err
-	}
-
-	for _, event := range s.Events() {
-		if err := w.Write(event); err != nil {
-			return err
-		}
-	}
-
-	return w.Close()
+	return s.WriteBorg(path)
 }
 
 func TestSearch(t *testing.T) {
