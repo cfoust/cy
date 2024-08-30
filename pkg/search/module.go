@@ -3,6 +3,9 @@ package search
 import (
 	"context"
 
+	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -13,6 +16,8 @@ type Search struct {
 	util.Lifetime
 	render         *taro.Renderer
 	initialRequest *Request
+	size           geom.Size
+	inner          geom.Rect
 
 	resultc chan fileResult
 
@@ -20,6 +25,11 @@ type Search struct {
 	searching         bool
 	searchLifetime    *util.Lifetime
 	pending, complete []fileResult
+
+	replay         mux.Screen
+	replayLifetime util.Lifetime
+
+	timeBinds, copyBinds *bind.BindScope
 }
 
 var _ taro.Model = (*Search)(nil)
@@ -33,41 +43,6 @@ func (s *Search) Init() tea.Cmd {
 	return cmd
 }
 
-func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case Request:
-		return s.Execute(msg)
-	case resultEvent:
-		s.pending[msg.fileResult.ID] = msg.fileResult
-
-		allDone := true
-		for _, result := range s.pending {
-			if result.Done {
-				continue
-			}
-			allDone = false
-		}
-
-		if !allDone {
-			return s, s.waitResult()
-		}
-
-		s.complete = make([]fileResult, len(s.pending))
-		copy(s.complete, s.pending)
-		s.pending = nil
-		s.cancelSearch()
-		return s, nil
-	case ActionEvent:
-		switch msg.Type {
-		case ActionCancel:
-			s.cancelSearch()
-			return s, nil
-		}
-	}
-
-	return s, nil
-}
-
 type Option func(*Search)
 
 func WithRequest(req Request) Option {
@@ -76,18 +51,24 @@ func WithRequest(req Request) Option {
 	}
 }
 
-func newSearch(ctx context.Context) *Search {
+func newSearch(
+	ctx context.Context,
+	timeBinds, copyBinds *bind.BindScope,
+) *Search {
 	return &Search{
-		Lifetime: util.NewLifetime(ctx),
-		render:   taro.NewRenderer(),
+		Lifetime:  util.NewLifetime(ctx),
+		render:    taro.NewRenderer(),
+		timeBinds: timeBinds,
+		copyBinds: copyBinds,
 	}
 }
 
 func New(
 	ctx context.Context,
+	timeBinds, copyBinds *bind.BindScope,
 	options ...Option,
 ) *taro.Program {
-	s := newSearch(ctx)
+	s := newSearch(ctx, timeBinds, copyBinds)
 
 	for _, option := range options {
 		option(s)

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
@@ -46,7 +47,11 @@ func TestSearch(t *testing.T) {
 		paths = append(paths, path)
 	}
 
-	s := newSearch(context.Background())
+	s := newSearch(
+		context.Background(),
+		bind.NewBindScope(nil),
+		bind.NewBindScope(nil),
+	)
 	test := taro.Test(s)
 
 	request := Request{
