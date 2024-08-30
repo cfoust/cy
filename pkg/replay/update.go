@@ -41,9 +41,14 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 		return r, nil
 	case seekProgressEvent:
+		if r.seekState != nil {
+			r.seekState.percent = msg.progress
+		}
+
 		if msg.progress == 100 {
 			return r, nil
 		}
+
 		return r, r.waitSeekProgress()
 	case seekShowEvent:
 		if !r.isSeeking {
@@ -68,6 +73,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return r, r.gotoIndex(msg.index, -1)
 	case forceTimeDeltaEvent:
 		return r, r.setTimeDelta(msg.delta, msg.skipInactivity)
+	case setDelayEvent:
+		r.seekDelay = msg.delay
+		return r, nil
 	case ProgressEvent:
 		r.progressPercent = msg.Percent
 		return r, r.waitProgress()

@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -19,9 +19,16 @@ type forceTimeEvent struct {
 	index int
 }
 
+// forceTimeDeltaEvent moves time by `delta`. This is only used in testing.
 type forceTimeDeltaEvent struct {
 	delta          time.Duration
 	skipInactivity bool
+}
+
+// setDelayEvent sets the amount of time to delay each progress update while
+// seeking. This is only used in stories.
+type setDelayEvent struct {
+	delay time.Duration
 }
 
 // seekProgressEvent is sent when the progress of an ongoing seek operation
@@ -78,6 +85,10 @@ func (r *Replay) waitSeekProgress() tea.Cmd {
 		case <-seekState.Ctx().Done():
 			return nil
 		case p := <-seekState.progress:
+			if r.seekDelay > 0 {
+				time.Sleep(r.seekDelay)
+			}
+
 			return seekProgressEvent{
 				progress: p,
 			}
@@ -88,20 +99,27 @@ func (r *Replay) waitSeekProgress() tea.Cmd {
 // Move the terminal back in time to the event at `index` and byte offset (if
 // the event is an OutputMessage) of `indexByte`.
 func (r *Replay) setIndex(index, indexByte int, updateTime bool) tea.Cmd {
-	r.isSeeking = true
-	r.showSeek = false
 	seekState := &seekState{
 		Lifetime: util.NewLifetime(r.Ctx()),
 		progress: make(chan int),
 	}
-	r.seekState = seekState
 
 	location := r.Location()
-	if r.movement != nil && location.Index != 0 && location.Offset != 0 && !r.viewport.IsZero() {
-		viewport := tty.New(r.viewport)
-		r.movement.View(viewport, []movement.Highlight{})
-		seekState.screen = viewport
+	viewport := tty.New(geom.Vec2{
+		R: r.viewport.R + 1,
+		C: r.viewport.C,
+	})
+	seekState.screen = viewport
+
+	if r.movement != nil && location.Index != 0 && !r.viewport.IsZero() {
+		r.View(viewport)
+	} else {
+		seekState.screen = nil
 	}
+
+	r.isSeeking = true
+	r.showSeek = false
+	r.seekState = seekState
 
 	return tea.Batch(
 		func() tea.Msg {

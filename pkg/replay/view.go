@@ -75,6 +75,25 @@ func (r *Replay) getCommand() (command detect.Command, ok bool) {
 	return
 }
 
+func (r *Replay) getLeftStatusStyle() lipgloss.Style {
+	statusBG := lipgloss.Color("#4D9DE0")
+	if r.isCopyMode() {
+		statusBG = lipgloss.Color("#E1BC29")
+
+		if r.isSelecting {
+			statusBG = lipgloss.Color("#3BB273")
+		}
+	}
+	if r.isPlaying {
+		statusBG = lipgloss.Color("#7768AE")
+	}
+
+	return r.render.NewStyle().
+		Foreground(lipgloss.Color("15")).
+		Background(statusBG).
+		Padding(0, 1)
+}
+
 func (r *Replay) drawStatusBar(state *tty.State) {
 	size := state.Image.Size()
 
@@ -83,29 +102,22 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		Background(lipgloss.Color("8"))
 
 	statusText := "⏵"
-	statusBG := lipgloss.Color("#4D9DE0")
 	if r.isCopyMode() {
 		statusText = "COPY"
-		statusBG = lipgloss.Color("#E1BC29")
 
 		if r.isSelecting {
 			statusText = "VISUAL"
-			statusBG = lipgloss.Color("#3BB273")
 		}
 	}
 	if r.isPlaying {
 		statusText = "⏸"
-		statusBG = lipgloss.Color("#7768AE")
 	}
 
 	if !r.isCopyMode() && r.playbackRate != 1 {
 		statusText += fmt.Sprintf(" %dx", r.playbackRate)
 	}
 
-	statusStyle := r.render.NewStyle().
-		Inherit(statusBarStyle).
-		Background(statusBG).
-		Padding(0, 1)
+	leftStatusStyle := r.getLeftStatusStyle()
 
 	if r.incr.IsActive() {
 		r.incrInput.Cursor.Style = r.render.NewStyle().
@@ -118,7 +130,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 			prefix = "?"
 		}
 
-		prefix = statusStyle.Render(prefix)
+		prefix = leftStatusStyle.Render(prefix)
 
 		input := r.incrInput.View()
 
@@ -135,16 +147,16 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		return
 	}
 
+	leftStatus := leftStatusStyle.Render(statusText)
 	if r.isFlowMode() && r.isCopyMode() {
-		prefix := statusStyle.Render(statusText)
 		rightStyle := statusBarStyle.
-			Width(size.C-lipgloss.Width(prefix)).
+			Width(size.C-lipgloss.Width(leftStatus)).
 			Padding(0, 1)
 
 		command, ok := r.getCommand()
 		if ok {
 			statusBar := lipgloss.JoinHorizontal(lipgloss.Left,
-				prefix,
+				leftStatus,
 				rightStyle.Render(command.Text),
 			)
 
@@ -160,7 +172,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 			state.Image,
 			size.R-1, 0,
 			lipgloss.JoinHorizontal(lipgloss.Left,
-				prefix,
+				leftStatus,
 				rightStyle.Render(""),
 			),
 		)
@@ -173,10 +185,8 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		return
 	}
 
-	status := statusStyle.Render(statusText)
-
 	leftSide := lipgloss.JoinHorizontal(lipgloss.Top,
-		status,
+		leftStatus,
 		statusBarStyle.
 			Padding(0, 1).
 			Render(
@@ -277,6 +287,56 @@ func (r *Replay) renderInput() image.Image {
 	return r.render.RenderImage(input)
 }
 
+func (r *Replay) renderSeek(state *tty.State) {
+	seekState := r.seekState
+
+	if seekState == nil {
+		return
+	}
+
+	size := r.bg.Size()
+	screen := seekState.screen
+	if screen != nil {
+		tty.Copy(
+			geom.Vec2{},
+			state,
+			screen,
+		)
+	} else {
+		image.Copy(
+			geom.Vec2{},
+			state.Image,
+			r.bg,
+		)
+	}
+
+	if !r.showSeek {
+		return
+	}
+
+	for row := 0; row < size.R; row++ {
+		for col := 0; col < size.C; col++ {
+			state.Image[row][col].FG = emu.ANSIColor(7)
+		}
+	}
+
+	percent := int((float64(seekState.percent) / 100.) * float64(size.C))
+	progressBar := ""
+	for i := 0; i < size.C; i++ {
+		if i <= percent {
+			progressBar += "█"
+		} else {
+			progressBar += "▒"
+		}
+	}
+
+	r.render.RenderAt(
+		state.Image,
+		state.Image.Size().R-1, 0,
+		progressBar,
+	)
+}
+
 func (r *Replay) View(state *tty.State) {
 	// Return nothing when View() is called before we've actually gotten
 	// the viewport
@@ -285,29 +345,7 @@ func (r *Replay) View(state *tty.State) {
 	}
 
 	if r.isSeeking {
-		if r.seekState != nil {
-			screen := r.seekState.screen
-			if screen == nil {
-				return
-			}
-
-			size := screen.Image.Size()
-			tty.Copy(
-				geom.Vec2{},
-				state,
-				screen,
-			)
-
-			if !r.showSeek {
-				return
-			}
-
-			for row := 0; row < size.R; row++ {
-				for col := 0; col < size.C; col++ {
-					state.Image[row][col].FG = emu.ANSIColor(7)
-				}
-			}
-		}
+		r.renderSeek(state)
 		return
 	}
 

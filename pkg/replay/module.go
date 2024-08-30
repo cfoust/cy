@@ -6,6 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/replay/motion"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/player"
@@ -37,8 +38,12 @@ type Replay struct {
 	// whether the player is seeking
 	isSeeking bool
 	// seeking progress is not shown until it's taken longer than 120ms
-	showSeek bool
+	showSeek  bool
 	seekState *seekState
+	// seekDelay is used in stories to simulate long operations.
+	seekDelay time.Duration
+	// The background image used when seeking from the beginning
+	bg image.Image
 
 	// the size of the client, but minus one row
 	// we don't want to obscure content

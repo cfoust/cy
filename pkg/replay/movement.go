@@ -1,7 +1,10 @@
 package replay
 
 import (
+	"math/rand"
+
 	"github.com/cfoust/cy/pkg/geom"
+	I "github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/replay/motion"
 	"github.com/cfoust/cy/pkg/replay/movement/flow"
 	"github.com/cfoust/cy/pkg/replay/movement/image"
@@ -26,6 +29,19 @@ func (r *Replay) resize(newViewport geom.Size) {
 	// Remove one row for our status line
 	newViewport.R = geom.Max(newViewport.R-1, 0)
 	r.viewport = newViewport
+
+	var char rune
+	r.bg = I.New(newViewport)
+	for row := 0; row < newViewport.R; row++ {
+		for col := 0; col < newViewport.C; col++ {
+			char = 'c'
+			if rand.Intn(2) == 0 {
+				char = 'y'
+			}
+			r.bg[row][col].Char = char
+		}
+	}
+
 	if r.movement == nil {
 		return
 	}
