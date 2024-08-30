@@ -310,7 +310,7 @@ func (r *Replay) renderSeek(state *tty.State) {
 		)
 	}
 
-	if !r.showSeek {
+	if !r.showSeek && screen != nil {
 		return
 	}
 
