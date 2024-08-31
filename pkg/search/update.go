@@ -72,6 +72,14 @@ func (s *Search) setSelected(index int) taro.Cmd {
 func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case taro.ScreenUpdate:
+		switch innerMsg := msg.Msg.(type) {
+		case bind.BindEvent:
+			return s, taro.Sequence(
+				s.emit(innerMsg),
+				msg.Wait(),
+			)
+		}
+
 		return s, msg.Wait()
 	case Request:
 		return s.Execute(msg)
@@ -148,5 +156,11 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 	}
 
+	replay := s.replay
+	if replay == nil {
+		return s, nil
+	}
+
+	replay.Send(msg)
 	return s, nil
 }

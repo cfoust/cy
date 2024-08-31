@@ -113,7 +113,18 @@ func (l *Loader) View(state *tty.State) {
 func (l *Loader) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case taro.ScreenUpdate:
-		return l, msg.Wait()
+		if msg.Msg == nil {
+			return l, msg.Wait()
+		}
+
+		return l, taro.Sequence(
+			func() taro.Msg {
+				return taro.PublishMsg{
+					Msg: msg.Msg,
+				}
+			},
+			msg.Wait(),
+		)
 	case tea.WindowSizeMsg:
 		l.size = geom.Size{
 			R: msg.Height,
