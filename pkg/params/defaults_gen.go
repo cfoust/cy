@@ -13,6 +13,7 @@ const (
 	ParamDataDirectory    = "data-directory"
 	ParamDefaultFrame     = "default-frame"
 	ParamDefaultShell     = "default-shell"
+	ParamNumSearchWorkers = "num-search-workers"
 	ParamRemovePaneOnExit = "remove-pane-on-exit"
 	ParamSkipInput        = "---skip-input"
 )
@@ -107,6 +108,24 @@ func (p *Parameters) SetDefaultShell(value string) {
 	p.set(ParamDefaultShell, value)
 }
 
+func (p *Parameters) NumSearchWorkers() int {
+	value, ok := p.Get(ParamNumSearchWorkers)
+	if !ok {
+		return defaults.NumSearchWorkers
+	}
+
+	realValue, ok := value.(int)
+	if !ok {
+		return defaults.NumSearchWorkers
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetNumSearchWorkers(value int) {
+	p.set(ParamNumSearchWorkers, value)
+}
+
 func (p *Parameters) RemovePaneOnExit() bool {
 	value, ok := p.Get(ParamRemovePaneOnExit)
 	if !ok {
@@ -154,6 +173,8 @@ func (p *Parameters) isDefault(key string) bool {
 	case ParamDefaultFrame:
 		return true
 	case ParamDefaultShell:
+		return true
+	case ParamNumSearchWorkers:
 		return true
 	case ParamRemovePaneOnExit:
 		return true
@@ -262,6 +283,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
+	case ParamNumSearchWorkers:
+		if !janetOk {
+			realValue, ok := value.(int)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamNumSearchWorkers, should be int")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated int
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :num-search-workers: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
 	case ParamRemovePaneOnExit:
 		if !janetOk {
 			realValue, ok := value.(bool)
@@ -323,6 +363,11 @@ func init() {
 			Name:      "default-shell",
 			Docstring: "The default shell with which to start panes. Defaults to the value\nof `$SHELL` on startup.",
 			Default:   defaults.DefaultShell,
+		},
+		{
+			Name:      "num-search-workers",
+			Docstring: "The number of goroutines to use for searching in .borg files.\nDefaults to the number of CPUs.",
+			Default:   defaults.NumSearchWorkers,
 		},
 		{
 			Name:      "remove-pane-on-exit",

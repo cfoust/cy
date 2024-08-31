@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
 	"sync/atomic"
 	"time"
 
@@ -70,6 +71,8 @@ type Cy struct {
 	timeBinds *bind.BindScope
 	// So does copy mode
 	copyBinds *bind.BindScope
+	// and search mode
+	searchBinds *bind.BindScope
 
 	clients []*Client
 
@@ -316,29 +319,32 @@ func (c *Cy) SocketName() string {
 func Start(ctx context.Context, options Options) (*Cy, error) {
 	timeBinds := bind.NewBindScope(nil)
 	copyBinds := bind.NewBindScope(nil)
+	searchBinds := bind.NewBindScope(nil)
 
 	defaults := params.New()
 	t := tree.NewTree(tree.WithParams(defaults.NewChild()))
 	cy := Cy{
-		Lifetime:  util.NewLifetime(ctx),
-		tree:      t,
-		muxServer: server.New(),
-		defaults:  defaults,
-		timeBinds: timeBinds,
-		copyBinds: copyBinds,
-		options:   options,
-		lastVisit: make(map[tree.NodeID]historyEvent),
-		lastWrite: make(map[tree.NodeID]historyEvent),
-		writes:    make(chan historyEvent),
-		visits:    make(chan historyEvent),
+		Lifetime:    util.NewLifetime(ctx),
+		tree:        t,
+		muxServer:   server.New(),
+		defaults:    defaults,
+		timeBinds:   timeBinds,
+		copyBinds:   copyBinds,
+		searchBinds: searchBinds,
+		options:     options,
+		lastVisit:   make(map[tree.NodeID]historyEvent),
+		lastWrite:   make(map[tree.NodeID]historyEvent),
+		writes:      make(chan historyEvent),
+		visits:      make(chan historyEvent),
 	}
 	cy.toast = NewToastLogger(cy.sendToast)
 
 	// Some parameter defaults are set at runtime
 	for key, value := range map[string]interface{}{
-		params.ParamDataDirectory: options.DataDir,
-		params.ParamDefaultShell:  options.Shell,
-		params.ParamSkipInput:     options.SkipInput,
+		params.ParamDataDirectory:    options.DataDir,
+		params.ParamDefaultShell:     options.Shell,
+		params.ParamSkipInput:        options.SkipInput,
+		params.ParamNumSearchWorkers: runtime.NumCPU(),
 	} {
 		err := defaults.Set(key, value)
 		if err != nil {
