@@ -2,7 +2,6 @@ package replay
 
 import (
 	"context"
-	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
@@ -31,7 +30,11 @@ func createStorySession() []sessions.Event {
 		Events()
 }
 
-func createStory(ctx context.Context, events []sessions.Event, msgs ...interface{}) mux.Screen {
+func createStory(
+	ctx context.Context,
+	events []sessions.Event,
+	msgs ...interface{},
+) mux.Screen {
 	replay := New(
 		ctx,
 		player.FromEvents(events),
@@ -260,7 +263,7 @@ func init() {
 
 	stories.Register("replay/time/seek", LongHistory, stories.Config{
 		Input: []interface{}{
-			setDelayEvent{delay: 20 * time.Millisecond},
+			//setDelayEvent{delay: 20 * time.Millisecond},
 			stories.Wait(stories.Some),
 			action(ActionEnd),
 			stories.Wait(stories.More),

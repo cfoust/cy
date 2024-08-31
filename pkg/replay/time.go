@@ -25,12 +25,6 @@ type forceTimeDeltaEvent struct {
 	skipInactivity bool
 }
 
-// setDelayEvent sets the amount of time to delay each progress update while
-// seeking. This is only used in stories.
-type setDelayEvent struct {
-	delay time.Duration
-}
-
 // seekProgressEvent is sent when the progress of an ongoing seek operation
 // changes.
 type seekProgressEvent struct {
@@ -71,6 +65,16 @@ func (r *Replay) handleSeek(updateTime bool) {
 
 	r.mode = ModeTime
 	r.initializeMovement()
+
+	if r.postSeekOptions == nil {
+		return
+	}
+
+	for _, option := range r.postSeekOptions {
+		option(r)
+	}
+
+	r.postSeekOptions = nil
 }
 
 // waitSeekProgress waits for the next progress event while seeking.
@@ -99,6 +103,10 @@ func (r *Replay) waitSeekProgress() tea.Cmd {
 // Move the terminal back in time to the event at `index` and byte offset (if
 // the event is an OutputMessage) of `indexByte`.
 func (r *Replay) setIndex(index, indexByte int, updateTime bool) tea.Cmd {
+	if r.isSeeking {
+		return nil
+	}
+
 	seekState := &seekState{
 		Lifetime: util.NewLifetime(r.Ctx()),
 		progress: make(chan int),
@@ -144,16 +152,6 @@ func (r *Replay) setIndex(index, indexByte int, updateTime bool) tea.Cmd {
 func (r *Replay) gotoIndex(index, indexByte int) tea.Cmd {
 	r.isPlaying = false
 	return r.setIndex(index, indexByte, true)
-}
-
-// Jump to an index without using a tea.Cmd. Only used in testing.
-func (r *Replay) forceIndex(index, indexByte int) {
-	cmd := r.gotoIndex(index, indexByte)
-
-	msg := cmd()
-	if seek, ok := msg.(seekFinishEvent); ok {
-		r.handleSeek(seek.updateTime)
-	}
 }
 
 func (r *Replay) scheduleUpdate() (taro.Model, tea.Cmd) {

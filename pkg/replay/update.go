@@ -59,23 +59,20 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case seekFinishEvent:
 		r.handleSeek(msg.updateTime)
 
-		if r.options == nil {
+		if r.postSeekOptions == nil {
 			return r, nil
 		}
 
-		for _, option := range r.options {
+		for _, option := range r.postSeekOptions {
 			option(r)
 		}
-		r.options = nil
+		r.postSeekOptions = nil
 
 		return r, nil
 	case forceTimeEvent:
 		return r, r.gotoIndex(msg.index, -1)
 	case forceTimeDeltaEvent:
 		return r, r.setTimeDelta(msg.delta, msg.skipInactivity)
-	case setDelayEvent:
-		r.seekDelay = msg.delay
-		return r, nil
 	case ProgressEvent:
 		r.progressPercent = msg.Percent
 		return r, r.waitProgress()

@@ -32,8 +32,11 @@ type Replay struct {
 	// whether Replay will actually quit itself
 	preventExit bool
 
+	// Run on Init(). Default is to seek to the end.
+	initialCmd tea.Cmd
+
 	// Options cannot be applied until after the initial seek is complete.
-	options []Option
+	postSeekOptions []Option
 
 	// whether the player is seeking
 	isSeeking bool
@@ -126,7 +129,7 @@ func (r *Replay) swapScreen() {
 func (r *Replay) Init() tea.Cmd {
 	return tea.Batch(
 		textinput.Blink,
-		r.gotoIndex(-1, -1),
+		r.initialCmd,
 	)
 }
 
@@ -148,7 +151,7 @@ func newReplay(
 	incrInput.Width = 20
 	incrInput.Prompt = ""
 
-	m := &Replay{
+	r := &Replay{
 		Lifetime:       util.NewLifetime(ctx),
 		incr:           motion.NewIncremental(),
 		Player:         player,
@@ -160,9 +163,14 @@ func newReplay(
 		copyBinds:      copyBinds,
 		searchProgress: make(chan int),
 		skipInactivity: true,
-		options:        options,
 	}
-	return m
+	r.initialCmd = r.gotoIndex(-1, -1)
+
+	for _, option := range options {
+		option(r)
+	}
+
+	return r
 }
 
 type Option func(r *Replay)
@@ -172,26 +180,46 @@ func WithNoQuit(r *Replay) {
 	r.preventExit = true
 }
 
+// withDelay adds a delay to every seek progress event. Only used for testing
+// loading states.
+func withDelay(delay time.Duration) Option {
+	return func(r *Replay) {
+		r.seekDelay = delay
+	}
+}
+
 // WithCopyMode puts Replay immediately into copy mode.
 func WithCopyMode(r *Replay) {
-	r.enterCopyMode()
+	r.postSeekOptions = append(r.postSeekOptions,
+		func(r *Replay) {
+			r.enterCopyMode()
+		},
+	)
 }
 
 // WithFlow swaps to flow mode, if possible.
 func WithFlow(r *Replay) {
-	if r.isFlowMode() {
-		return
-	}
+	r.postSeekOptions = append(r.postSeekOptions,
+		func(r *Replay) {
+			if r.isFlowMode() {
+				return
+			}
 
-	r.swapScreen()
+			r.swapScreen()
+		},
+	)
 }
 
 // WithLocation attempts to move the cursor to `location`, which is a point in
 // the reference frame of the Movement.
 func WithLocation(location geom.Vec2) Option {
 	return func(r *Replay) {
-		r.enterCopyMode()
-		r.movement.Goto(location)
+		r.postSeekOptions = append(r.postSeekOptions,
+			func(r *Replay) {
+				r.enterCopyMode()
+				r.movement.Goto(location)
+			},
+		)
 	}
 }
 

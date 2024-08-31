@@ -14,10 +14,10 @@ const (
 )
 
 type SearchResultEvent struct {
-	isForward bool
-	origin    search.Address
-	results   []search.SearchResult
-	err       error
+	Forward bool
+	Origin  search.Address
+	Results []search.SearchResult
+	err     error
 }
 
 type ActionType int
