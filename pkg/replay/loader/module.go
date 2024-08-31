@@ -113,6 +113,10 @@ func (l *Loader) View(state *tty.State) {
 func (l *Loader) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case taro.ScreenUpdate:
+		if msg.Screen != l.replay {
+			panic("unexpected screen update")
+		}
+
 		if msg.Msg == nil {
 			return l, msg.Wait()
 		}
@@ -135,6 +139,13 @@ func (l *Loader) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			l.replay.Resize(l.size)
 		}
 		return l, nil
+	case replay.ActionEvent, replay.PlaybackRateEvent, taro.KeyMsg, taro.MouseMsg:
+		if l.replay == nil {
+			return l, nil
+		}
+
+		l.replay.Send(msg)
+		return l, nil
 	case loadedEvent:
 		if msg.err != nil {
 			l.err = msg.err
@@ -146,10 +157,6 @@ func (l *Loader) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 		w := taro.NewWatcher(l.Ctx(), msg.replay)
 		return l, w.Wait()
-	}
-
-	if l.replay != nil {
-		l.replay.Send(msg)
 	}
 
 	return l, nil

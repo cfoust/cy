@@ -122,12 +122,23 @@ func TestPassthrough(t *testing.T) {
 	actions := make(chan bind.BindEvent)
 	go func() {
 		events := program.Subscribe(ctx)
+
+		gotEvent := false
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case event := <-events.Recv():
 				if action, ok := event.(bind.BindEvent); ok {
+					// There was a bug where we would get
+					// the same event over and over; this
+					// catches that, albeit in a naive
+					// way
+					if gotEvent {
+						t.Fatalf("duplicate event: %+v", action)
+					}
+
+					gotEvent = true
 					actions <- action
 				}
 			}

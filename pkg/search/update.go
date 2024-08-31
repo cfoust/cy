@@ -146,6 +146,12 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			replay.Send(msg)
 			return nil
 		}
+	case replay.ActionEvent, replay.PlaybackRateEvent:
+		if s.replay == nil {
+			return s, nil
+		}
+		s.replay.Send(msg)
+		return s, nil
 	case bind.BindEvent:
 		return s, s.emit(msg)
 	case ActionEvent:
@@ -156,11 +162,5 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 	}
 
-	replay := s.replay
-	if replay == nil {
-		return s, nil
-	}
-
-	replay.Send(msg)
 	return s, nil
 }
