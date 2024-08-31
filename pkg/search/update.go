@@ -44,13 +44,16 @@ func (s *Search) setSelected(index int) taro.Cmd {
 		s.replayLifetime.Cancel()
 	}
 
+	result := s.complete[s.selected]
+
 	s.replayLifetime = util.NewLifetime(s.Ctx())
 	r := loader.New(
 		s.replayLifetime.Ctx(),
-		s.complete[s.selected].File,
+		result.File,
 		s.timeBinds,
 		s.copyBinds,
 		replay.WithNoQuit,
+		replay.WithResults(result.Results),
 	)
 	r.Resize(s.inner.Size)
 	s.replay = r

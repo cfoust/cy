@@ -164,10 +164,13 @@ func newReplay(
 		searchProgress: make(chan int),
 		skipInactivity: true,
 	}
-	r.initialCmd = r.gotoIndex(-1, -1)
 
 	for _, option := range options {
 		option(r)
+	}
+
+	if r.initialCmd == nil {
+		r.initialCmd = r.gotoIndex(-1, -1)
 	}
 
 	return r
@@ -208,6 +211,17 @@ func WithFlow(r *Replay) {
 			r.swapScreen()
 		},
 	)
+}
+
+// WithResults provides existing search results to the Replay.
+func WithResults(results []search.SearchResult) Option {
+	return func(r *Replay) {
+		r.isWaiting = true
+		r.initialCmd = r.handleSearchResult(SearchResultEvent{
+			Forward: true,
+			Results: results,
+		})
+	}
 }
 
 // WithLocation attempts to move the cursor to `location`, which is a point in
