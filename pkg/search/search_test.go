@@ -47,13 +47,16 @@ func TestSearch(t *testing.T) {
 		paths = append(paths, path)
 	}
 
+	ctx := context.Background()
+	engine := bind.Run(ctx, bind.NewBindScope(nil))
 	s := newSearch(
-		context.Background(),
+		ctx,
+		engine,
 		bind.NewBindScope(nil),
 		bind.NewBindScope(nil),
 	)
-	test := taro.Test(s)
 
+	test := taro.Test(s)
 	request := Request{
 		Query:   "bar",
 		Files:   paths,

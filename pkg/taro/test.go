@@ -26,6 +26,9 @@ func testExecuteCommands(
 		if _, ok := msg.(cursor.BlinkMsg); ok {
 			return nil
 		}
+		if _, ok := msg.(ScreenUpdate); ok {
+			return nil
+		}
 		return msg
 	}
 

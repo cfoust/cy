@@ -29,6 +29,7 @@ type Search struct {
 	replay         mux.Screen
 	replayLifetime util.Lifetime
 
+	searchBinds          *bind.Engine[bind.Action]
 	timeBinds, copyBinds *bind.BindScope
 }
 
@@ -53,26 +54,43 @@ func WithRequest(req Request) Option {
 
 func newSearch(
 	ctx context.Context,
+	searchBinds *bind.Engine[bind.Action],
 	timeBinds, copyBinds *bind.BindScope,
 ) *Search {
 	return &Search{
-		Lifetime:  util.NewLifetime(ctx),
-		render:    taro.NewRenderer(),
-		timeBinds: timeBinds,
-		copyBinds: copyBinds,
+		Lifetime:    util.NewLifetime(ctx),
+		render:      taro.NewRenderer(),
+		searchBinds: searchBinds,
+		timeBinds:   timeBinds,
+		copyBinds:   copyBinds,
 	}
 }
 
 func New(
 	ctx context.Context,
-	timeBinds, copyBinds *bind.BindScope,
+	searchBinds, timeBinds, copyBinds *bind.BindScope,
 	options ...Option,
 ) *taro.Program {
-	s := newSearch(ctx, timeBinds, copyBinds)
+	engine := bind.Run(ctx, searchBinds)
+	s := newSearch(ctx, engine, timeBinds, copyBinds)
 
 	for _, option := range options {
 		option(s)
 	}
 
-	return taro.New(ctx, s)
+	program := taro.New(ctx, s)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-engine.Recv():
+				if bindEvent, ok := event.(bind.BindEvent); ok {
+					program.Send(bindEvent)
+				}
+			}
+		}
+	}()
+
+	return program
 }

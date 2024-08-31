@@ -65,6 +65,7 @@ var Load stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 		ctx,
 		bind.NewBindScope(nil),
 		bind.NewBindScope(nil),
+		bind.NewBindScope(nil),
 		WithRequest(Request{
 			Query:   "bar",
 			Files:   paths,

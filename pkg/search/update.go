@@ -1,6 +1,7 @@
 package search
 
 import (
+	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/replay/loader"
@@ -9,6 +10,14 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 )
+
+func (s *Search) emit(event bind.BindEvent) tea.Cmd {
+	return func() taro.Msg {
+		return taro.PublishMsg{
+			Msg: event,
+		}
+	}
+}
 
 func (s *Search) resize(size geom.Size) {
 	s.size = size
@@ -93,18 +102,50 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		s.pending = nil
 		s.cancelSearch()
 		return s, s.setSelected(0)
-	case ActionEvent:
-		switch msg.Type {
-		case ActionCancel:
-			s.cancelSearch()
-			return s, nil
-		}
 	case tea.WindowSizeMsg:
 		s.resize(geom.Size{
 			R: msg.Height,
 			C: msg.Width,
 		})
 		return s, nil
+	case taro.MouseMsg:
+		replay := s.replay
+		if replay == nil {
+			return s, nil
+		}
+
+		inner := s.inner
+
+		return s, func() tea.Msg {
+			replay.Send(taro.TranslateMouseMessage(
+				msg,
+				-inner.Position.C,
+				-inner.Position.R,
+			))
+			return nil
+		}
+	case taro.KeyMsg:
+		replay := s.replay
+		return s, func() tea.Msg {
+			if consumed := s.searchBinds.InputMessage(msg); consumed {
+				return nil
+			}
+
+			if replay == nil {
+				return nil
+			}
+
+			replay.Send(msg)
+			return nil
+		}
+	case bind.BindEvent:
+		return s, s.emit(msg)
+	case ActionEvent:
+		switch msg.Type {
+		case ActionCancel:
+			s.cancelSearch()
+			return s, nil
+		}
 	}
 
 	return s, nil
