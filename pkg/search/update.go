@@ -11,7 +11,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func (s *Search) emit(event bind.BindEvent) tea.Cmd {
+func (s *Search) emit(event tea.Msg) tea.Cmd {
 	return func() taro.Msg {
 		return taro.PublishMsg{
 			Msg: event,
@@ -73,7 +73,7 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case taro.ScreenUpdate:
 		switch innerMsg := msg.Msg.(type) {
-		case bind.BindEvent:
+		case bind.BindEvent, replay.CopyEvent:
 			return s, taro.Sequence(
 				s.emit(innerMsg),
 				msg.Wait(),

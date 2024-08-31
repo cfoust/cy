@@ -113,10 +113,6 @@ func (l *Loader) View(state *tty.State) {
 func (l *Loader) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case taro.ScreenUpdate:
-		if msg.Screen != l.replay {
-			panic("unexpected screen update")
-		}
-
 		if msg.Msg == nil {
 			return l, msg.Wait()
 		}
