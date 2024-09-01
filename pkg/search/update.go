@@ -84,32 +84,7 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case Request:
 		return s.Execute(msg)
 	case resultEvent:
-		s.pending[msg.fileResult.ID] = msg.fileResult
-
-		allDone := true
-		for _, result := range s.pending {
-			if result.Done {
-				continue
-			}
-			allDone = false
-		}
-
-		if !allDone {
-			return s, s.waitResult()
-		}
-
-		var complete []fileResult
-		for _, result := range s.pending {
-			if len(result.Results) == 0 {
-				continue
-			}
-			complete = append(complete, result)
-		}
-
-		s.complete = complete
-		s.pending = nil
-		s.cancelSearch()
-		return s, s.setSelected(0)
+		return s.handleResult(msg)
 	case tea.WindowSizeMsg:
 		s.resize(geom.Size{
 			R: msg.Height,

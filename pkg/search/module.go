@@ -21,10 +21,12 @@ type Search struct {
 
 	resultc chan fileResult
 
-	selected          int
-	searching         bool
-	searchLifetime    *util.Lifetime
-	pending, complete []fileResult
+	selected       int
+	searching      bool
+	searchLifetime *util.Lifetime
+
+	pendingQuery, query string
+	pending, complete   []fileResult
 
 	replay         mux.Screen
 	replayLifetime util.Lifetime

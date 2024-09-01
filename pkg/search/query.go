@@ -184,6 +184,37 @@ func (s *Search) waitResult() tea.Cmd {
 	}
 }
 
+func (s *Search) handleResult(event resultEvent) (taro.Model, tea.Cmd) {
+	s.pending[event.fileResult.ID] = event.fileResult
+
+	allDone := true
+	for _, result := range s.pending {
+		if result.Done {
+			continue
+		}
+		allDone = false
+	}
+
+	if !allDone {
+		return s, s.waitResult()
+	}
+
+	var complete []fileResult
+	for _, result := range s.pending {
+		if len(result.Results) == 0 {
+			continue
+		}
+		complete = append(complete, result)
+	}
+
+	s.complete = complete
+	s.query = s.pendingQuery
+	s.pendingQuery = ""
+	s.pending = nil
+	s.cancelSearch()
+	return s, s.setSelected(0)
+}
+
 func (s *Search) cancelSearch() {
 	if s.searchLifetime != nil {
 		s.searchLifetime.Cancel()
@@ -202,6 +233,7 @@ func (s *Search) Execute(request Request) (taro.Model, tea.Cmd) {
 	l := util.NewLifetime(s.Lifetime.Ctx())
 	s.searchLifetime = &l
 	s.searching = true
+	s.pendingQuery = request.Query
 
 	resultc := make(chan fileResult, len(request.Files))
 	jobs := make([]job, len(request.Files))

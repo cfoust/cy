@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/stories"
@@ -74,10 +75,51 @@ var Load stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	), nil
 }
 
+var Many stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
+	borg, err := createBorgFiles(5)
+	if err != nil {
+		return nil, err
+	}
+
+	var paths []string
+	for i := 0; i < 100; i++ {
+		paths = append(paths, borg...)
+	}
+
+	return New(
+		ctx,
+		bind.NewBindScope(nil),
+		bind.NewBindScope(nil),
+		bind.NewBindScope(nil),
+		WithRequest(Request{
+			Query:   "bar",
+			Files:   paths,
+			Workers: 3,
+		}),
+	), nil
+}
+
 func init() {
 	stories.Register(
 		"search/query",
 		Load,
+		stories.Config{},
+	)
+
+	stories.Register(
+		"search/query/small",
+		Many,
+		stories.Config{
+			Size: geom.Vec2{
+				R: 10,
+				C: 10,
+			},
+		},
+	)
+
+	stories.Register(
+		"search/query/big",
+		Many,
 		stories.Config{},
 	)
 }
