@@ -13,6 +13,7 @@
                    [prefix "F"] action/choose-frame
                    [prefix "p"] action/open-replay
                    [prefix "r"] action/reload-config
+                   [prefix "S"] action/search-borg
                    [prefix "P"] cy/paste)
 
 (key/bind-many-tag :root "panes"
