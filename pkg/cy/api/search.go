@@ -49,6 +49,14 @@ func (m *SearchModule) Cancel(context interface{}) error {
 	return m.sendAction(context, search.ActionCancel)
 }
 
+func (m *SearchModule) NextFile(context interface{}) error {
+	return m.sendAction(context, search.ActionNext)
+}
+
+func (m *SearchModule) PrevFile(context interface{}) error {
+	return m.sendAction(context, search.ActionPrev)
+}
+
 type SearchParams struct {
 	Files   []string
 	Workers *int

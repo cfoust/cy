@@ -212,6 +212,12 @@ func (s *Search) handleResult(event resultEvent) (taro.Model, tea.Cmd) {
 	s.pendingQuery = ""
 	s.pending = nil
 	s.cancelSearch()
+
+	if s.replay != nil {
+		s.replayLifetime.Cancel()
+		s.replay = nil
+	}
+
 	return s, s.setSelected(0)
 }
 

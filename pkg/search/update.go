@@ -40,14 +40,20 @@ func (s *Search) resize(size geom.Size) {
 }
 
 func (s *Search) setSelected(index int) taro.Cmd {
-	s.selected = geom.Max(
+	newIndex := geom.Max(
 		0,
 		geom.Clamp(index, 0, len(s.complete)-1),
 	)
 
-	if s.selected >= len(s.complete) || s.selected < 0 {
+	if newIndex >= len(s.complete) || newIndex < 0 {
 		return nil
 	}
+
+	if s.replay != nil && s.selected == newIndex {
+		return nil
+	}
+
+	s.selected = newIndex
 
 	if s.replay != nil {
 		s.replayLifetime.Cancel()
@@ -145,6 +151,34 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				})
 			}
 
+			return s, nil
+		case ActionNext, ActionPrev, ActionFirst, ActionLast:
+			if !s.haveResults() {
+				return s, nil
+			}
+
+			switch msg.Type {
+			case ActionNext:
+				next := s.selected + 1
+
+				if next >= len(s.complete) {
+					next = 0
+				}
+
+				return s, s.setSelected(next)
+			case ActionPrev:
+				next := s.selected - 1
+
+				if next < 0 {
+					next = len(s.complete) - 1
+				}
+
+				return s, s.setSelected(next)
+			case ActionFirst:
+				return s, s.setSelected(0)
+			case ActionLast:
+				return s, s.setSelected(len(s.complete) - 1)
+			}
 			return s, nil
 		}
 	}

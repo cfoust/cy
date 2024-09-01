@@ -50,18 +50,21 @@ func createTestFiles(t *testing.T) []string {
 	return paths
 }
 
-func TestSearch(t *testing.T) {
-	paths := createTestFiles(t)
-
+func createTest() *Search {
 	ctx := context.Background()
 	engine := bind.Run(ctx, bind.NewBindScope(nil))
-	s := newSearch(
+	return newSearch(
 		ctx,
 		engine,
 		bind.NewBindScope(nil),
 		bind.NewBindScope(nil),
 	)
+}
 
+func TestSearch(t *testing.T) {
+	s := createTest()
+
+	paths := createTestFiles(t)
 	test := taro.Test(s)
 	request := Request{
 		Query:   "bar",
@@ -153,4 +156,35 @@ func TestPassthrough(t *testing.T) {
 	}
 	event := <-actions
 	require.Equal(t, "foo", event.Action.Tag)
+}
+
+func TestSelected(t *testing.T) {
+	s := createTest()
+	paths := createTestFiles(t)
+
+	test := taro.Test(s)
+	request := Request{
+		Query:   "bar",
+		Files:   paths,
+		Workers: 3,
+	}
+	test(request)
+
+	test(ActionEvent{Type: ActionNext})
+	require.Equal(t, 1, s.selected)
+
+	test(ActionEvent{Type: ActionPrev})
+	require.Equal(t, 0, s.selected)
+
+	test(ActionEvent{Type: ActionLast})
+	require.Equal(t, 4, s.selected)
+
+	test(ActionEvent{Type: ActionFirst})
+	require.Equal(t, 0, s.selected)
+
+	test(ActionEvent{Type: ActionPrev})
+	require.Equal(t, 4, s.selected)
+
+	test(ActionEvent{Type: ActionNext})
+	require.Equal(t, 0, s.selected)
 }

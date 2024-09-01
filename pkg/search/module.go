@@ -46,6 +46,10 @@ func (s *Search) Init() tea.Cmd {
 	return cmd
 }
 
+func (s *Search) haveResults() bool {
+	return len(s.complete) > 0
+}
+
 type Option func(*Search)
 
 func WithRequest(req Request) Option {

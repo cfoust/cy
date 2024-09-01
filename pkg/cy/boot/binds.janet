@@ -167,6 +167,8 @@
 
 (key/bind-many-tag :search "general"
                    ["ctrl+c"] search/cancel
-                   ["esc"] search/cancel)
+                   ["esc"] search/cancel
+                   ["ctrl+n"] search/next-file
+                   ["ctrl+p"] search/prev-file)
 
 (merge-module root-env (curenv))
