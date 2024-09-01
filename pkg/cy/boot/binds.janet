@@ -165,4 +165,8 @@
                    ["t" [:re "."]] replay/jump-to-forward
                    ["T" [:re "."]] replay/jump-to-backward)
 
+(key/bind-many-tag :search "general"
+                   ["ctrl+c"] search/cancel
+                   ["esc"] search/cancel)
+
 (merge-module root-env (curenv))

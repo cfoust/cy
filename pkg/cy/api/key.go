@@ -10,8 +10,8 @@ import (
 )
 
 type KeyModule struct {
-	Tree                 *tree.Tree
-	TimeBinds, CopyBinds *bind.BindScope
+	Tree                              *tree.Tree
+	SearchBinds, TimeBinds, CopyBinds *bind.BindScope
 }
 
 type regexKey struct {
@@ -80,7 +80,12 @@ func (k *KeyModule) getScope(target *janet.Value) (*bind.BindScope, error) {
 		return k.CopyBinds, nil
 	}
 
-	return nil, fmt.Errorf("target must be one of :root, :time, :copy, or node ID")
+	err = target.Unmarshal(&KEYWORD_SEARCH)
+	if err == nil {
+		return k.SearchBinds, nil
+	}
+
+	return nil, fmt.Errorf("target must be one of :root, :time, :copy, :search, or node ID")
 }
 
 type BindParams struct {

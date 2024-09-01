@@ -73,3 +73,9 @@ Copy mode is entered from time mode by triggering any form of movement, whether 
 Movements in copy mode are intended to be as close to `vim` as possible, but many more will be added over time.
 
 {{keys copy motion}}
+
+## Search mode
+
+Search mode has its own binding scope.
+
+{{keys search general}}

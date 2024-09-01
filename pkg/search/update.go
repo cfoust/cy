@@ -157,7 +157,19 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case ActionEvent:
 		switch msg.Type {
 		case ActionCancel:
-			s.cancelSearch()
+			if s.searching {
+				s.cancelSearch()
+				return s, nil
+			}
+
+			// If these are the same key, we want to send cancel
+			// to Replay anyway
+			if s.replay != nil {
+				s.replay.Send(replay.ActionEvent{
+					Type: replay.ActionQuit,
+				})
+			}
+
 			return s, nil
 		}
 	}
