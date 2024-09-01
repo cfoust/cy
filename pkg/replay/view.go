@@ -76,7 +76,7 @@ func (r *Replay) getCommand() (command detect.Command, ok bool) {
 }
 
 func (r *Replay) getLeftStatusStyle() lipgloss.Style {
-	statusBG := lipgloss.Color("#4D9DE0")
+	statusBG := lipgloss.Color("4")
 	if r.isCopyMode() {
 		statusBG = lipgloss.Color("#E1BC29")
 

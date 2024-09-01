@@ -99,6 +99,25 @@ var Many stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	), nil
 }
 
+var Empty stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
+	paths, err := createBorgFiles(5)
+	if err != nil {
+		return nil, err
+	}
+
+	return New(
+		ctx,
+		bind.NewBindScope(nil),
+		bind.NewBindScope(nil),
+		bind.NewBindScope(nil),
+		WithRequest(Request{
+			Query:   "asdasdasd",
+			Files:   paths,
+			Workers: 3,
+		}),
+	), nil
+}
+
 func init() {
 	stories.Register(
 		"search/query",
@@ -115,6 +134,12 @@ func init() {
 				C: 10,
 			},
 		},
+	)
+
+	stories.Register(
+		"search/query/empty",
+		Empty,
+		stories.Config{},
 	)
 
 	stories.Register(

@@ -7,14 +7,19 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+func (s *Search) getBarStyle() lipgloss.Style {
+	return s.render.NewStyle().
+		Background(lipgloss.Color("4")).
+		Foreground(lipgloss.Color("15"))
+}
+
 const (
 	FILE_WAITING  = '_'
 	FILE_COMPLETE = '▒'
 	FILE_FOUND    = 'X'
 )
 
-func (s *Search) renderProgress(state *tty.State) {
-	state.CursorVisible = false
+func (s *Search) renderProgressBar(state *tty.State) {
 	size := state.Image.Size()
 	numFiles := len(s.pending)
 	numComplete := 0
@@ -35,13 +40,10 @@ func (s *Search) renderProgress(state *tty.State) {
 			s.pendingQuery,
 		))
 
+	emptyStyle := s.getBarStyle()
 	filledStyle := s.render.NewStyle().
-		Background(lipgloss.Color("15")).
-		Foreground(lipgloss.Color("4"))
-
-	emptyStyle := s.render.NewStyle().
-		Background(filledStyle.GetForeground()).
-		Foreground(filledStyle.GetBackground())
+		Background(emptyStyle.GetForeground()).
+		Foreground(emptyStyle.GetBackground())
 
 	// Calculate the bar the first time. This is done this way because we
 	// want to account for characters wider than a single cell
@@ -85,15 +87,65 @@ func (s *Search) renderProgress(state *tty.State) {
 	)
 }
 
+func (s *Search) renderStatusBar(
+	state *tty.State,
+	leftText, rightText string,
+) {
+	size := state.Image.Size()
+
+	barStyle := s.getBarStyle()
+
+	leftWidth := size.C - lipgloss.Width(rightText)
+	left := s.render.NewStyle().
+		Width(leftWidth).
+		MaxWidth(leftWidth).
+		Render(leftText)
+
+	s.render.RenderAt(
+		state.Image,
+		0, 0,
+		barStyle.Render(lipgloss.JoinHorizontal(
+			lipgloss.Left,
+			left,
+			rightText,
+		)),
+	)
+}
+
 func (s *Search) View(state *tty.State) {
+	state.CursorVisible = false
+
 	if s.searching {
-		s.renderProgress(state)
+		s.renderProgressBar(state)
+		return
+	}
+
+	// empty matches
+	if len(s.query) > 0 && len(s.complete) == 0 {
+		s.renderStatusBar(
+			state,
+			fmt.Sprintf(
+				"no matches found for '%s'",
+				s.query,
+			),
+			"",
+		)
 		return
 	}
 
 	if s.replay == nil {
 		return
 	}
+
+	s.renderStatusBar(
+		state,
+		s.complete[s.selected].File,
+		fmt.Sprintf(
+			"[%d/%d]",
+			s.selected+1,
+			len(s.complete),
+		),
+	)
 
 	tty.Copy(
 		s.inner.Position,
