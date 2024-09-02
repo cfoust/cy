@@ -188,3 +188,36 @@ func TestSelected(t *testing.T) {
 	test(ActionEvent{Type: ActionNext})
 	require.Equal(t, 0, s.selected)
 }
+
+func TestInput(t *testing.T) {
+	s := createTest()
+	paths := createTestFiles(t)
+
+	test := taro.Test(s)
+	request := Request{
+		Query:   "bar",
+		Files:   paths,
+		Workers: 3,
+	}
+	test(request)
+
+	// Full search flow
+	test(
+		ActionEvent{Type: ActionInput},
+		"test",
+	)
+	require.Equal(t, "test", s.input.Value())
+	test("enter")
+	require.Equal(t, 0, len(s.complete))
+
+	// Reset, cancel search
+	test(request)
+	test(
+		ActionEvent{Type: ActionInput},
+		"asd",
+		"ctrl+c",
+	)
+	require.False(t, s.inputing)
+	// should not change existing search
+	require.Equal(t, 5, len(s.complete))
+}

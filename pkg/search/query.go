@@ -240,6 +240,7 @@ func (s *Search) Execute(request Request) (taro.Model, tea.Cmd) {
 	s.searchLifetime = &l
 	s.searching = true
 	s.pendingQuery = request.Query
+	s.initialRequest = &request
 
 	resultc := make(chan fileResult, len(request.Files))
 	jobs := make([]job, len(request.Files))
