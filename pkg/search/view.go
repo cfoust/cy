@@ -4,7 +4,10 @@ import (
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/taro"
+
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 )
 
 func (s *Search) getBarStyle() lipgloss.Style {
@@ -19,6 +22,33 @@ const (
 	FILE_FOUND    = 'X'
 )
 
+// renderBar renders a status bar with a left and right side. The left side
+// will be truncated with an ellipsis if it does not fit in the area left of
+// the right side.
+func renderBar(
+	render *taro.Renderer,
+	left, right string,
+	width int,
+) string {
+	leftWidth := width - lipgloss.Width(right)
+	left = lipgloss.PlaceHorizontal(
+		leftWidth,
+		lipgloss.Left,
+		left,
+	)
+	left = ansi.Truncate(left, leftWidth, "…")
+	left = render.NewStyle().
+		MaxWidth(leftWidth).
+		MaxHeight(1).
+		Render(left)
+
+	return lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		left,
+		right,
+	)
+}
+
 func (s *Search) renderProgressBar(state *tty.State) {
 	size := state.Image.Size()
 	numFiles := len(s.pending)
@@ -29,33 +59,25 @@ func (s *Search) renderProgressBar(state *tty.State) {
 		}
 	}
 
-	right := fmt.Sprintf("[%d/%d]", numComplete, numFiles)
-
-	leftWidth := size.C - lipgloss.Width(right)
-	left := s.render.NewStyle().
-		Width(leftWidth).
-		MaxWidth(leftWidth).
-		Render(fmt.Sprintf(
+	bar := renderBar(
+		s.render,
+		fmt.Sprintf(
 			"searching: '%s'",
 			s.pendingQuery,
-		))
+		),
+		fmt.Sprintf("[%d/%d]", numComplete, numFiles),
+		size.C,
+	)
 
 	emptyStyle := s.getBarStyle()
 	filledStyle := s.render.NewStyle().
 		Background(emptyStyle.GetForeground()).
 		Foreground(emptyStyle.GetBackground())
 
-	// Calculate the bar the first time. This is done this way because we
-	// want to account for characters wider than a single cell
-	bar := lipgloss.JoinHorizontal(
-		lipgloss.Left,
-		left,
-		right,
-	)
-
 	percent := float64(numComplete) / float64(numFiles)
 	filledCells := int(percent * float64(size.C))
 
+	var left, right string
 	for i := len(bar); i >= 0; i-- {
 		if lipgloss.Width(bar[:i]) > filledCells {
 			continue
@@ -114,22 +136,15 @@ func (s *Search) renderStatusBar(
 	leftText, rightText string,
 ) {
 	size := state.Image.Size()
-
 	barStyle := s.getBarStyle()
-
-	leftWidth := size.C - lipgloss.Width(rightText)
-	left := s.render.NewStyle().
-		Width(leftWidth).
-		MaxWidth(leftWidth).
-		Render(leftText)
-
 	s.render.RenderAt(
 		state.Image,
 		0, 0,
-		barStyle.Render(lipgloss.JoinHorizontal(
-			lipgloss.Left,
-			left,
+		barStyle.Render(renderBar(
+			s.render,
+			leftText,
 			rightText,
+			size.C,
 		)),
 	)
 }

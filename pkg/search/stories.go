@@ -127,11 +127,11 @@ func init() {
 
 	stories.Register(
 		"search/query/small",
-		Many,
+		Load,
 		stories.Config{
 			Size: geom.Vec2{
-				R: 10,
-				C: 10,
+				R: 20,
+				C: 20,
 			},
 		},
 	)
