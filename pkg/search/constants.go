@@ -12,4 +12,5 @@ const (
 	ActionPrev
 	ActionFirst
 	ActionLast
+	ActionInput
 )

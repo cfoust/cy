@@ -87,6 +87,28 @@ func (s *Search) renderProgressBar(state *tty.State) {
 	)
 }
 
+func (s *Search) renderInput(state *tty.State) {
+	barStyle := s.getBarStyle()
+	s.input.Cursor.Style = s.render.NewStyle().
+		Background(lipgloss.Color("15"))
+	s.input.TextStyle = barStyle
+	s.input.Cursor.TextStyle = barStyle
+
+	prefix := barStyle.Render("~>")
+	input := s.input.View()
+
+	statusBar := lipgloss.JoinHorizontal(lipgloss.Left,
+		prefix,
+		input,
+	)
+
+	s.render.RenderAt(
+		state.Image,
+		0, 0,
+		statusBar,
+	)
+}
+
 func (s *Search) renderStatusBar(
 	state *tty.State,
 	leftText, rightText string,
@@ -133,19 +155,25 @@ func (s *Search) View(state *tty.State) {
 		return
 	}
 
+	if s.inputing {
+		s.renderInput(state)
+	}
+
 	if s.replay == nil {
 		return
 	}
 
-	s.renderStatusBar(
-		state,
-		s.complete[s.selected].File,
-		fmt.Sprintf(
-			"[%d/%d]",
-			s.selected+1,
-			len(s.complete),
-		),
-	)
+	if !s.inputing {
+		s.renderStatusBar(
+			state,
+			s.complete[s.selected].File,
+			fmt.Sprintf(
+				"[%d/%d]",
+				s.selected+1,
+				len(s.complete),
+			),
+		)
+	}
 
 	tty.Copy(
 		s.inner.Position,

@@ -49,12 +49,24 @@ func (m *SearchModule) Cancel(context interface{}) error {
 	return m.sendAction(context, search.ActionCancel)
 }
 
-func (m *SearchModule) NextFile(context interface{}) error {
+func (m *SearchModule) Next(context interface{}) error {
 	return m.sendAction(context, search.ActionNext)
 }
 
-func (m *SearchModule) PrevFile(context interface{}) error {
+func (m *SearchModule) Prev(context interface{}) error {
 	return m.sendAction(context, search.ActionPrev)
+}
+
+func (m *SearchModule) First(context interface{}) error {
+	return m.sendAction(context, search.ActionFirst)
+}
+
+func (m *SearchModule) Last(context interface{}) error {
+	return m.sendAction(context, search.ActionLast)
+}
+
+func (m *SearchModule) FocusInput(context interface{}) error {
+	return m.sendAction(context, search.ActionInput)
 }
 
 type SearchParams struct {

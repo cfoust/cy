@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -33,17 +34,24 @@ type Search struct {
 
 	searchBinds          *bind.Engine[bind.Action]
 	timeBinds, copyBinds *bind.BindScope
+
+	inputing bool
+	input    textinput.Model
 }
 
 var _ taro.Model = (*Search)(nil)
 
 func (s *Search) Init() tea.Cmd {
-	if s.initialRequest == nil {
-		return nil
+	cmds := []tea.Cmd{
+		textinput.Blink,
 	}
 
-	_, cmd := s.Execute(*s.initialRequest)
-	return cmd
+	if s.initialRequest != nil {
+		_, cmd := s.Execute(*s.initialRequest)
+		cmds = append(cmds, cmd)
+	}
+
+	return tea.Batch(cmds...)
 }
 
 func (s *Search) haveResults() bool {
@@ -63,12 +71,19 @@ func newSearch(
 	searchBinds *bind.Engine[bind.Action],
 	timeBinds, copyBinds *bind.BindScope,
 ) *Search {
+	input := textinput.New()
+	input.Focus()
+	input.CharLimit = 0
+	input.Width = 20
+	input.Prompt = ""
+
 	return &Search{
 		Lifetime:    util.NewLifetime(ctx),
 		render:      taro.NewRenderer(),
 		searchBinds: searchBinds,
 		timeBinds:   timeBinds,
 		copyBinds:   copyBinds,
+		input:       input,
 	}
 }
 
