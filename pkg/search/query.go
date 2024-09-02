@@ -236,6 +236,8 @@ func (s *Search) Execute(request Request) (taro.Model, tea.Cmd) {
 		return s, nil
 	}
 
+	request.Query = search.NormalizePattern(request.Query)
+
 	l := util.NewLifetime(s.Lifetime.Ctx())
 	s.searchLifetime = &l
 	s.searching = true

@@ -110,6 +110,17 @@ func createLookup(matches []Match) map[Address]Match {
 	return lookup
 }
 
+// NormalizePattern returns the given pattern if it's a valid regex,
+// otherwise it escapes all speical regex characters.
+func NormalizePattern(pattern string) string {
+	_, err := regexp.Compile(pattern)
+	if err == nil {
+		return pattern
+	}
+
+	return regexp.QuoteMeta(pattern)
+}
+
 func Search(events []sessions.Event, pattern string, progress chan<- int) (results []SearchResult, err error) {
 	if len(pattern) == 0 {
 		err = fmt.Errorf("pattern must be non-empty")

@@ -220,4 +220,11 @@ func TestInput(t *testing.T) {
 	require.False(t, s.inputing)
 	// should not change existing search
 	require.Equal(t, 5, len(s.complete))
+
+	// Non-regex
+	test(
+		ActionEvent{Type: ActionInput},
+		"asdasd[",
+		"enter",
+	)
 }

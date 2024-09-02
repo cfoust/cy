@@ -154,14 +154,20 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 			location := r.Location()
 			isForward := r.isForward
 
+			value = search.NormalizePattern(value)
+
 			return r, tea.Batch(
 				func() tea.Msg {
-					res, err := search.Search(events, value, r.searchProgress)
+					res, err := search.Search(
+						events,
+						value,
+						r.searchProgress,
+					)
 					return SearchResultEvent{
 						Forward: isForward,
-						Origin:    location,
-						Results:   res,
-						err:       err,
+						Origin:  location,
+						Results: res,
+						err:     err,
 					}
 				},
 				r.waitProgress(),
