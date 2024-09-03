@@ -154,14 +154,31 @@ func (r *Replay) gotoIndex(index, indexByte int) tea.Cmd {
 	return r.setIndex(index, indexByte, true)
 }
 
-func (r *Replay) scheduleUpdate() (taro.Model, tea.Cmd) {
-	since := time.Now()
-	return r, func() tea.Msg {
-		time.Sleep(time.Second / PLAYBACK_FPS)
-		return PlaybackEvent{
-			Since: since,
-		}
+func (r *Replay) timeStep(sinceLast time.Duration) tea.Cmd {
+	now := time.Now()
+
+	// Seeking can take a while, particularly when playing in reverse.
+	// This attempts to maintain the "accuracy" of the current frame by
+	// changing the amount of time we move by according to how long the
+	// last seek took.
+	step := PLAYBACK_TIME_STEP
+	if sinceLast > PLAYBACK_TIME_STEP {
+		step = sinceLast
 	}
+
+	delta := int64(step) * int64(r.playbackRate)
+
+	setCmd := r.setTimeDelta(
+		time.Duration(delta),
+		r.skipInactivity,
+	)
+
+	return taro.Sequence(
+		setCmd,
+		func() tea.Msg {
+			return frameDoneEvent{Start: now}
+		},
+	)
 }
 
 var (

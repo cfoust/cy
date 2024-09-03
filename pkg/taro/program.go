@@ -232,6 +232,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				continue
 			}
 
+			isSequence := false
 			// Handle special internal messages.
 			switch msg := msg.(type) {
 			case tea.QuitMsg:
@@ -254,6 +255,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				continue
 
 			case sequenceMsg:
+				isSequence = true
 				go func() {
 					// Execute commands one at a time, in order.
 					for _, cmd := range msg {
@@ -279,6 +281,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 						p.Send(msg)
 					}
+					p.dec(false)
 				}()
 			case tea.WindowSizeMsg:
 				// In testing, we rely on WindowSizeMsg because
@@ -305,7 +308,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				log.Debug().Msgf("%T: frame render time exceeded threshold (%+v)", p.initialModel, frameTime)
 			}
 
-			p.dec(false)
+			if !isSequence {
+				p.dec(false)
+			}
 		}
 	}
 }

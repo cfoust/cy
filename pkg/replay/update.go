@@ -82,20 +82,12 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.playbackRate = 1
 		}
 		return r, nil
-	case PlaybackEvent:
+	case frameDoneEvent:
 		if !r.isPlaying {
 			return r, nil
 		}
 
-		delta := int64(time.Now().Sub(msg.Since)) * int64(r.playbackRate)
-		_, update := r.scheduleUpdate()
-		return r, tea.Batch(
-			r.setTimeDelta(
-				time.Duration(delta),
-				r.skipInactivity,
-			),
-			update,
-		)
+		return r, r.timeStep(time.Now().Sub(msg.Start))
 	case tea.WindowSizeMsg:
 		// -3 for the " / " or " ? "
 		r.incrInput.Width = geom.Max(msg.Width-3, 0)
@@ -130,12 +122,12 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case ActionTimePlay:
 			r.isPlaying = !r.isPlaying
 
-			if r.isPlaying {
-				r.exitCopyMode()
-				return r.scheduleUpdate()
+			if !r.isPlaying {
+				return r, nil
 			}
 
-			return r, nil
+			r.exitCopyMode()
+			return r, r.timeStep(0)
 		}
 	case taro.KeyMsg:
 		// Clear out the "no matches" dialog

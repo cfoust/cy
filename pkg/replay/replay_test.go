@@ -379,3 +379,23 @@ func TestIncremental(t *testing.T) {
 	i(ActionSearchAgain)
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.movement.Cursor())
 }
+
+func TestPlayback(t *testing.T) {
+	size := geom.Size{R: 5, C: 10}
+	e := sim().
+		Add(size).
+		AddTime(0, "test").
+		AddTime(IDLE_THRESHOLD*2, "test").
+		AddTime(time.Second, "test").
+		Events()
+
+	r, i := createTest(e)
+	i(size, 0, ActionTimePlay)
+	require.Equal(t, 3, r.Location().Index)
+	require.False(t, r.isPlaying)
+
+	r.playbackRate = -1
+	i(ActionTimePlay)
+	require.Equal(t, 0, r.Location().Index)
+	require.False(t, r.isPlaying)
+}

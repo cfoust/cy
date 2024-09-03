@@ -16,12 +16,6 @@ func (s *Search) getBarStyle() lipgloss.Style {
 		Foreground(lipgloss.Color("15"))
 }
 
-const (
-	FILE_WAITING  = '_'
-	FILE_COMPLETE = '▒'
-	FILE_FOUND    = 'X'
-)
-
 // renderBar renders a status bar with a left and right side. The left side
 // will be truncated with an ellipsis if it does not fit in the area left of
 // the right side.

@@ -32,12 +32,13 @@ type PlaybackRateEvent struct {
 }
 
 const (
-	PLAYBACK_FPS   = 30
-	IDLE_THRESHOLD = time.Second
+	PLAYBACK_FPS       = 30
+	PLAYBACK_TIME_STEP = time.Second / PLAYBACK_FPS
+	IDLE_THRESHOLD     = time.Second
 )
 
-type PlaybackEvent struct {
-	Since time.Time
+type frameDoneEvent struct {
+	Start time.Time
 }
 
 type CopyEvent struct {
