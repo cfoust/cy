@@ -100,11 +100,6 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return r, r.handleSearchResult(msg)
 	}
 
-	// Don't allow user input while we're seeking
-	if r.isSeeking {
-		return r, nil
-	}
-
 	// TODO(cfoust): 11/10/23 this is actually wrong; if we do this,
 	// ActionQuit does not go through
 	if r.mode == ModeInput {
@@ -153,6 +148,11 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.mode = ModeCopy
 			return r, r.emit(msg)
 		}
+		return r, nil
+	}
+
+	// Don't allow user input while we're seeking
+	if r.isSeeking {
 		return r, nil
 	}
 
