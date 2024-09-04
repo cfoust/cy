@@ -48,6 +48,8 @@
 
   - [Modes](./replay-mode/modes.md)
 
+- [Search mode](./search-mode.md)
+
 - [Command detection](./command-detection.md)
 
 - [User input](./user-input.md)

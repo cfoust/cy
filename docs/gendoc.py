@@ -380,7 +380,7 @@ def transform_bind(
         ), None
 
     return handle_pattern(
-        re.compile(r"{{bind :(\w+) (([0-9a-zA-Z+-?;|\-\\\[\]]+\s*)+)}}"),
+        re.compile(r"{{bind :(\w+) (([0-9a-zA-Z+-?:;|\-\\\[\]]+\s*)+)}}"),
         handler,
     )
 

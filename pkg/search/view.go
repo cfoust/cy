@@ -151,8 +151,9 @@ func (s *Search) View(state *tty.State) {
 		return
 	}
 
-	// empty matches
-	if len(s.query) > 0 && len(s.complete) == 0 {
+	if s.inputing {
+		s.renderInput(state)
+	} else if len(s.query) > 0 && len(s.complete) == 0 {
 		s.renderStatusBar(
 			state,
 			fmt.Sprintf(
@@ -162,10 +163,6 @@ func (s *Search) View(state *tty.State) {
 			"",
 		)
 		return
-	}
-
-	if s.inputing {
-		s.renderInput(state)
 	}
 
 	if s.replay == nil {
