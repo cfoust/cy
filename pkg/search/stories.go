@@ -122,8 +122,7 @@ func init() {
 	stories.Register(
 		"search/query",
 		Load,
-		stories.Config{
-		},
+		stories.Config{},
 	)
 
 	stories.Register(
