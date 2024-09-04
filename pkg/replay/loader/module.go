@@ -2,7 +2,6 @@ package loader
 
 import (
 	"context"
-	"fmt"
 	"io"
 
 	"github.com/cfoust/cy/pkg/bind"
@@ -19,6 +18,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// Loader loads a .borg file from disk and opens its contents in a Replay.
 type Loader struct {
 	util.Lifetime
 	path   string
@@ -79,35 +79,61 @@ func (l *Loader) Init() tea.Cmd {
 }
 
 func (l *Loader) View(state *tty.State) {
+	if l.replay != nil {
+		tty.Copy(geom.Vec2{}, state, l.replay.State())
+		return
+	}
+
+	var boxContents string
+	var borderColor lipgloss.Color
+
+	width := geom.Min(state.Image.Size().C, 50)
+
 	if l.err != nil {
-		l.render.RenderAt(
-			state.Image,
-			0, 0,
-			lipgloss.Place(
-				geom.DEFAULT_SIZE.C,
-				geom.DEFAULT_SIZE.R,
-				lipgloss.Center, lipgloss.Center,
-				fmt.Sprintf("error: %s", l.err.Error()),
-			),
+		borderColor = lipgloss.Color("1")
+		boxContents = lipgloss.JoinVertical(
+			lipgloss.Left,
+			l.render.NewStyle().
+				Foreground(borderColor).
+				Bold(true).
+				Render("error"),
+			l.render.NewStyle().
+				Width(width).
+				Render(l.err.Error()),
 		)
-		return
+	} else if l.replay == nil {
+		borderColor = lipgloss.Color("4")
+		boxContents = lipgloss.JoinVertical(
+			lipgloss.Left,
+			l.render.NewStyle().
+				Foreground(borderColor).
+				Bold(true).
+				Render("opening .borg file..."),
+			l.render.NewStyle().
+				Width(width).
+				Render(l.path),
+		)
 	}
 
-	if l.replay == nil {
-		l.render.RenderAt(
-			state.Image,
-			0, 0,
-			lipgloss.Place(
-				geom.DEFAULT_SIZE.C,
-				geom.DEFAULT_SIZE.R,
-				lipgloss.Center, lipgloss.Center,
-				fmt.Sprintf("loading %s...", l.path),
-			),
-		)
-		return
-	}
+	boxStyle := l.render.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(borderColor).
+		BorderTop(true).
+		BorderLeft(true).
+		BorderRight(true).
+		BorderBottom(true)
 
-	tty.Copy(geom.Vec2{}, state, l.replay.State())
+	boxText := boxStyle.Render(boxContents)
+	l.render.RenderAt(
+		state.Image,
+		0, 0,
+		lipgloss.Place(
+			geom.DEFAULT_SIZE.C,
+			geom.DEFAULT_SIZE.R,
+			lipgloss.Center, lipgloss.Center,
+			boxText,
+		),
+	)
 }
 
 func (l *Loader) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
