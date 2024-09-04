@@ -131,3 +131,12 @@ var _ janet.Documented = (*StyleModule)(nil)
 func (s *StyleModule) Documentation() string {
 	return DOCS_STYLE
 }
+
+//go:embed docs-search.md
+var DOCS_SEARCH string
+
+var _ janet.Documented = (*SearchModule)(nil)
+
+func (s *SearchModule) Documentation() string {
+	return DOCS_SEARCH
+}
