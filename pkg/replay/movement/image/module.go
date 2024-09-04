@@ -5,6 +5,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/replay/movement"
+	"github.com/cfoust/cy/pkg/style"
 )
 
 type imageMovement struct {
@@ -456,7 +457,11 @@ func (i *imageMovement) View(
 		// In copy mode, leave behind a ghost cursor where the
 		// terminal's cursor is
 		if i.isInViewport(termCursor) {
-			image[termCursor.R][termCursor.C].BG = 8
+			style.GhostCursor(
+				state.Image,
+				termCursor.R,
+				termCursor.C,
+			)
 		}
 	} else {
 		state.Cursor = i.Terminal.Cursor()

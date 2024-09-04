@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	L "github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux"
@@ -93,7 +94,7 @@ func (p *Pane) State() *tty.State {
 	if !p.isAttached && state.CursorVisible {
 		cursor := state.Cursor
 		state.CursorVisible = false
-		state.Image[cursor.R][cursor.C].BG = 8
+		style.GhostCursor(state.Image, cursor.R, cursor.C)
 	}
 
 	return state

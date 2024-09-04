@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -88,7 +89,7 @@ func (f *Node) View(out *tty.State) {
 		// draw a ghost cursor
 		cursor := state.Cursor
 		if state.CursorVisible {
-			preview[cursor.R][cursor.C].BG = 8
+			style.GhostCursor(preview, cursor.R, cursor.C)
 		}
 		out.Image = preview
 		return

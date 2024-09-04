@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/replay/movement"
+	"github.com/cfoust/cy/pkg/style"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -103,7 +104,11 @@ func (f *flowMovement) View(
 		state.Cursor.Vec2 = f.cursor
 
 		if flow.CursorOK {
-			image[termCursor.R][termCursor.C].BG = 8
+			style.GhostCursor(
+				state.Image,
+				termCursor.R,
+				termCursor.C,
+			)
 		}
 	}
 
