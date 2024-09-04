@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
 	"sync/atomic"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay"
+	"github.com/cfoust/cy/pkg/replay/replayable"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/rs/zerolog"
@@ -69,6 +71,8 @@ type Cy struct {
 	timeBinds *bind.BindScope
 	// So does copy mode
 	copyBinds *bind.BindScope
+	// and search mode
+	searchBinds *bind.BindScope
 
 	clients []*Client
 
@@ -222,7 +226,7 @@ func (c *Cy) Output(node tree.NodeID, index int) ([]byte, error) {
 		return nil, fmt.Errorf("node %d is not a pane", node)
 	}
 
-	r, ok := pane.Screen().(*replay.Replayable)
+	r, ok := pane.Screen().(*replayable.Replayable)
 	if !ok {
 		return nil, fmt.Errorf("node %d was not a cmd", node)
 	}
@@ -315,29 +319,32 @@ func (c *Cy) SocketName() string {
 func Start(ctx context.Context, options Options) (*Cy, error) {
 	timeBinds := bind.NewBindScope(nil)
 	copyBinds := bind.NewBindScope(nil)
+	searchBinds := bind.NewBindScope(nil)
 
 	defaults := params.New()
 	t := tree.NewTree(tree.WithParams(defaults.NewChild()))
 	cy := Cy{
-		Lifetime:  util.NewLifetime(ctx),
-		tree:      t,
-		muxServer: server.New(),
-		defaults:  defaults,
-		timeBinds: timeBinds,
-		copyBinds: copyBinds,
-		options:   options,
-		lastVisit: make(map[tree.NodeID]historyEvent),
-		lastWrite: make(map[tree.NodeID]historyEvent),
-		writes:    make(chan historyEvent),
-		visits:    make(chan historyEvent),
+		Lifetime:    util.NewLifetime(ctx),
+		tree:        t,
+		muxServer:   server.New(),
+		defaults:    defaults,
+		timeBinds:   timeBinds,
+		copyBinds:   copyBinds,
+		searchBinds: searchBinds,
+		options:     options,
+		lastVisit:   make(map[tree.NodeID]historyEvent),
+		lastWrite:   make(map[tree.NodeID]historyEvent),
+		writes:      make(chan historyEvent),
+		visits:      make(chan historyEvent),
 	}
 	cy.toast = NewToastLogger(cy.sendToast)
 
 	// Some parameter defaults are set at runtime
 	for key, value := range map[string]interface{}{
-		params.ParamDataDirectory: options.DataDir,
-		params.ParamDefaultShell:  options.Shell,
-		params.ParamSkipInput:     options.SkipInput,
+		params.ParamDataDirectory:    options.DataDir,
+		params.ParamDefaultShell:     options.Shell,
+		params.ParamSkipInput:        options.SkipInput,
+		params.ParamNumSearchWorkers: runtime.NumCPU(),
 	} {
 		err := defaults.Set(key, value)
 		if err != nil {
@@ -351,7 +358,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	go cy.pollInteractions(cy.Ctx(), cy.lastVisit, cy.visits)
 
 	logs := stream.NewReader()
-	logScreen := replay.NewReplayable(
+	logScreen := replayable.New(
 		cy.Ctx(),
 		logs,
 		logs,

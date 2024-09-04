@@ -124,6 +124,22 @@ func (s *Simulator) Terminal() emu.Terminal {
 	return term
 }
 
+// WriteBorg writes the simulator's events to a borg file at the given path.
+func (s *Simulator) WriteBorg(path string) error {
+	w, err := Create(path)
+	if err != nil {
+		return err
+	}
+
+	for _, event := range s.Events() {
+		if err := w.Write(event); err != nil {
+			return err
+		}
+	}
+
+	return w.Close()
+}
+
 func NewSimulator() *Simulator {
 	info, _ := terminfo.Load("xterm-256color")
 	s := &Simulator{

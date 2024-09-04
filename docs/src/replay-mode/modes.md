@@ -16,9 +16,11 @@ Time mode is similar to a video player: you can pause, play (both forwards and b
 
 {{story cast replay/time-demo-search}}
 
-Time mode also allows you to search through the pane's history using regular expressions. In this way you can find all instances of a string if it ever appeared on the screen--even if it was subsequently cleared away. Note that _this is different from searching in the scrollback._ Searching in time mode will find matches that appeared on the screen at any point in time, including in full-screen applications such as `vim` or `htop`.
+Time mode also allows you to search through the pane's history using regular expressions or string literals. In this way you can find all instances of a string if it ever appeared on the screen--even if it was subsequently cleared away. Note that _this is different from searching in the scrollback._ Searching in time mode will find matches that appeared on the screen at any point in time, including in full-screen applications such as `vim` or `htop`.
 
-You can initiate a search by hitting {{bind :time /}} to search forward in time and {{bind :time ?}} to search backward (by default). Searching supports full regex patterns; you must escape any special characters with `\` if you wish to avoid this behavior.
+You can initiate a search by hitting {{bind :time /}} to search forward in time and {{bind :time ?}} to search backward (by default).
+
+If the query string you enter is not a valid regex, it will be interpreted as a string literal.
 
 The search bar also supports time expressions, which you can use to jump by a fixed amount of time. Time expressions are in the format `NdNhNmNs` where `N` is the number of that unit that you wish to move by. You will move in time _in the direction of your search_.
 

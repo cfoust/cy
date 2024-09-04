@@ -19,8 +19,8 @@ func (r *Replay) quit() (taro.Model, tea.Cmd) {
 	return r, tea.Quit
 }
 
-type applyOptions struct {
-	options []Option
+type ApplyOptionsEvent struct {
+	Options []Option
 }
 
 func (r *Replay) emit(event bind.BindEvent) tea.Cmd {
@@ -35,14 +35,44 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	viewport := r.viewport
 
 	switch msg := msg.(type) {
-	case applyOptions:
-		for _, option := range msg.options {
+	case ApplyOptionsEvent:
+		for _, option := range msg.Options {
 			option(r)
 		}
 		return r, nil
-	case seekEvent:
-		r.handleSeek(msg.updateTime)
+	case seekProgressEvent:
+		if r.seekState != nil {
+			r.seekState.percent = msg.progress
+		}
+
+		if msg.progress == 100 {
+			return r, nil
+		}
+
+		return r, r.waitSeekProgress()
+	case seekShowEvent:
+		if !r.isSeeking {
+			return r, nil
+		}
+		r.showSeek = true
 		return r, nil
+	case seekFinishEvent:
+		r.handleSeek(msg.updateTime)
+
+		if r.postSeekOptions == nil {
+			return r, nil
+		}
+
+		for _, option := range r.postSeekOptions {
+			option(r)
+		}
+		r.postSeekOptions = nil
+
+		return r, nil
+	case forceTimeEvent:
+		return r, r.gotoIndex(msg.index, -1)
+	case forceTimeDeltaEvent:
+		return r, r.setTimeDelta(msg.delta, msg.skipInactivity)
 	case ProgressEvent:
 		r.progressPercent = msg.Percent
 		return r, r.waitProgress()
@@ -52,20 +82,12 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.playbackRate = 1
 		}
 		return r, nil
-	case PlaybackEvent:
+	case frameDoneEvent:
 		if !r.isPlaying {
 			return r, nil
 		}
 
-		delta := int64(time.Now().Sub(msg.Since)) * int64(r.playbackRate)
-		_, update := r.scheduleUpdate()
-		return r, tea.Batch(
-			r.setTimeDelta(
-				time.Duration(delta),
-				r.skipInactivity,
-			),
-			update,
-		)
+		return r, r.timeStep(time.Now().Sub(msg.Start))
 	case tea.WindowSizeMsg:
 		// -3 for the " / " or " ? "
 		r.incrInput.Width = geom.Max(msg.Width-3, 0)
@@ -76,11 +98,6 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return r, nil
 	case SearchResultEvent:
 		return r, r.handleSearchResult(msg)
-	}
-
-	// Don't allow user input while we're seeking
-	if r.isSeeking {
-		return r, nil
 	}
 
 	// TODO(cfoust): 11/10/23 this is actually wrong; if we do this,
@@ -100,12 +117,12 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case ActionTimePlay:
 			r.isPlaying = !r.isPlaying
 
-			if r.isPlaying {
-				r.exitCopyMode()
-				return r.scheduleUpdate()
+			if !r.isPlaying {
+				return r, nil
 			}
 
-			return r, nil
+			r.exitCopyMode()
+			return r, r.timeStep(0)
 		}
 	case taro.KeyMsg:
 		// Clear out the "no matches" dialog
@@ -131,6 +148,11 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.mode = ModeCopy
 			return r, r.emit(msg)
 		}
+		return r, nil
+	}
+
+	// Don't allow user input while we're seeking
+	if r.isSeeking {
 		return r, nil
 	}
 

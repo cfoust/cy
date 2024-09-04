@@ -1,4 +1,4 @@
-package replay
+package replayable
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/player"
@@ -141,19 +142,19 @@ func (r *Replayable) Send(msg mux.Msg) {
 	r.terminal.Send(msg)
 }
 
-func (r *Replayable) EnterReplay(options ...Option) {
+func (r *Replayable) EnterReplay(options ...replay.Option) {
 	r.Lock()
 	defer r.Unlock()
 
 	if r.replay != nil {
 		// Invoking replay again with different options still applies
 		// them
-		r.replay.Send(applyOptions{options: options})
+		r.replay.Send(replay.ApplyOptionsEvent{Options: options})
 		return
 	}
 
 	r.player.Acquire()
-	replay := New(
+	replay := replay.New(
 		r.Ctx(),
 		r.player,
 		r.timeBinds,
@@ -185,7 +186,7 @@ func (r *Replayable) EnterReplay(options ...Option) {
 	}()
 }
 
-func NewReplayable(
+func New(
 	ctx context.Context,
 	cmd, stream mux.Stream,
 	timeBinds, copyBinds *bind.BindScope,

@@ -3,15 +3,14 @@ package api
 import (
 	_ "embed"
 	"fmt"
-	"io"
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/replay"
-	"github.com/cfoust/cy/pkg/replay/player"
-	"github.com/cfoust/cy/pkg/sessions"
+	"github.com/cfoust/cy/pkg/replay/loader"
+	"github.com/cfoust/cy/pkg/replay/replayable"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 )
@@ -271,28 +270,10 @@ func (m *ReplayModule) OpenFile(
 		return 0, err
 	}
 
-	reader, err := sessions.Open(path)
-	if err != nil {
-		return 0, err
-	}
-
-	events := make([]sessions.Event, 0)
-	for {
-		event, err := reader.Read()
-		if err == io.EOF || err == io.ErrUnexpectedEOF {
-			break
-		}
-		if err != nil {
-			return 0, err
-		}
-		events = append(events, event)
-	}
-
-	// TODO(cfoust): 03/04/24 open progress
 	ctx := m.Lifetime.Ctx()
-	replay := replay.New(
+	replay := loader.New(
 		ctx,
-		player.FromEvents(events),
+		path,
 		m.TimeBinds,
 		m.CopyBinds,
 		replay.WithNoQuit,
@@ -336,7 +317,7 @@ func (m *ReplayModule) Open(
 		))
 	}
 
-	r, ok := pane.Screen().(*replay.Replayable)
+	r, ok := pane.Screen().(*replayable.Replayable)
 	if !ok {
 		return fmt.Errorf("node not replayable")
 	}

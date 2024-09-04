@@ -6,17 +6,20 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/replay/motion"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions/search"
 	"github.com/cfoust/cy/pkg/taro"
+	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type Replay struct {
+	util.Lifetime
 	*player.Player
 
 	render               *taro.Renderer
@@ -29,8 +32,21 @@ type Replay struct {
 	// whether Replay will actually quit itself
 	preventExit bool
 
+	// Run on Init(). Default is to seek to the end.
+	initialCmd tea.Cmd
+
+	// Options cannot be applied until after the initial seek is complete.
+	postSeekOptions []Option
+
 	// whether the player is seeking
 	isSeeking bool
+	// seeking progress is not shown until it's taken longer than 120ms
+	showSeek  bool
+	seekState *seekState
+	// seekDelay is used in stories to simulate long operations.
+	seekDelay time.Duration
+	// The background image used when seeking from the beginning
+	bg image.Image
 
 	// the size of the client, but minus one row
 	// we don't want to obscure content
@@ -111,12 +127,17 @@ func (r *Replay) swapScreen() {
 }
 
 func (r *Replay) Init() tea.Cmd {
-	return textinput.Blink
+	return tea.Batch(
+		textinput.Blink,
+		r.initialCmd,
+	)
 }
 
 func newReplay(
+	ctx context.Context,
 	player *player.Player,
 	timeBinds, copyBinds *bind.Engine[bind.Action],
+	options ...Option,
 ) *Replay {
 	searchInput := textinput.New()
 	searchInput.Focus()
@@ -130,7 +151,8 @@ func newReplay(
 	incrInput.Width = 20
 	incrInput.Prompt = ""
 
-	m := &Replay{
+	r := &Replay{
+		Lifetime:       util.NewLifetime(ctx),
 		incr:           motion.NewIncremental(),
 		Player:         player,
 		render:         taro.NewRenderer(),
@@ -142,8 +164,16 @@ func newReplay(
 		searchProgress: make(chan int),
 		skipInactivity: true,
 	}
-	m.Update(m.gotoIndex(-1, -1)())
-	return m
+
+	for _, option := range options {
+		option(r)
+	}
+
+	if r.initialCmd == nil {
+		r.initialCmd = r.gotoIndex(-1, -1)
+	}
+
+	return r
 }
 
 type Option func(r *Replay)
@@ -153,26 +183,57 @@ func WithNoQuit(r *Replay) {
 	r.preventExit = true
 }
 
+// withDelay adds a delay to every seek progress event. Only used for testing
+// loading states.
+func withDelay(delay time.Duration) Option {
+	return func(r *Replay) {
+		r.seekDelay = delay
+	}
+}
+
 // WithCopyMode puts Replay immediately into copy mode.
 func WithCopyMode(r *Replay) {
-	r.enterCopyMode()
+	r.postSeekOptions = append(r.postSeekOptions,
+		func(r *Replay) {
+			r.enterCopyMode()
+		},
+	)
 }
 
 // WithFlow swaps to flow mode, if possible.
 func WithFlow(r *Replay) {
-	if r.isFlowMode() {
-		return
-	}
+	r.postSeekOptions = append(r.postSeekOptions,
+		func(r *Replay) {
+			if r.isFlowMode() {
+				return
+			}
 
-	r.swapScreen()
+			r.swapScreen()
+		},
+	)
+}
+
+// WithResults provides existing search results to the Replay.
+func WithResults(results []search.SearchResult) Option {
+	return func(r *Replay) {
+		r.isWaiting = true
+		r.initialCmd = r.handleSearchResult(SearchResultEvent{
+			Forward: true,
+			Results: results,
+		})
+	}
 }
 
 // WithLocation attempts to move the cursor to `location`, which is a point in
 // the reference frame of the Movement.
 func WithLocation(location geom.Vec2) Option {
 	return func(r *Replay) {
-		r.enterCopyMode()
-		r.movement.Goto(location)
+		r.postSeekOptions = append(r.postSeekOptions,
+			func(r *Replay) {
+				r.enterCopyMode()
+				r.movement.Goto(location)
+			},
+		)
 	}
 }
 
@@ -205,13 +266,12 @@ func New(
 	replayEngine := bind.Run(ctx, timeBinds)
 	copyEngine := bind.Run(ctx, copyBinds)
 	r := newReplay(
+		ctx,
 		player,
 		replayEngine,
 		copyEngine,
+		options...,
 	)
-	for _, option := range options {
-		option(r)
-	}
 	program := taro.New(ctx, r)
 
 	go pollBinds(ctx, program, replayEngine)

@@ -5,7 +5,13 @@ import (
 	P "github.com/cfoust/cy/pkg/io/protocol"
 )
 
-func (p *Player) Goto(index, offset int) {
+// GotoProgress is the same as Goto, but it allows for a progress channel to be
+// passed in. The channel will receive progress updates as the player moves
+// through the events.
+func (p *Player) GotoProgress(
+	index, offset int,
+	progress chan<- int,
+) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -31,6 +37,8 @@ func (p *Player) Goto(index, offset int) {
 		fromByte = -1
 	}
 
+	var oldProgress, newProgress int
+	distance := toIndex - fromIndex
 	for i := fromIndex; i <= toIndex; i++ {
 		event := p.events[i]
 		switch e := event.Message.(type) {
@@ -68,9 +76,33 @@ func (p *Player) Goto(index, offset int) {
 		case P.SizeMessage:
 			p.Terminal.Resize(e.Vec())
 		}
+
+		if progress == nil {
+			continue
+		}
+
+		newProgress = int(float64(i-fromIndex) / float64(distance) * 100)
+		if newProgress == oldProgress {
+			continue
+		}
+		progress <- newProgress
+		oldProgress = newProgress
+	}
+
+	if progress != nil {
+		close(progress)
 	}
 
 	p.location.Index = toIndex
 	p.location.Offset = toByte
 	return
+}
+
+// Goto moves the player to the specified event index and byte offset. If the
+// index and offset are before the current location, the player will reset the
+// terminal and start from the beginning, since there's no way to "rewind" a
+// terminal session. This means that playing backwards is very slow on long
+// sessions.
+func (p *Player) Goto(index, offset int) {
+	p.GotoProgress(index, offset, nil)
 }

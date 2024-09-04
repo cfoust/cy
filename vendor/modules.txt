@@ -65,7 +65,7 @@ github.com/charmbracelet/glamour/ansi
 ## explicit; go 1.18
 github.com/charmbracelet/lipgloss
 github.com/charmbracelet/lipgloss/table
-# github.com/charmbracelet/x/ansi v0.1.4
+# github.com/charmbracelet/x/ansi v0.2.3
 ## explicit; go 1.18
 github.com/charmbracelet/x/ansi
 github.com/charmbracelet/x/ansi/parser
@@ -202,8 +202,6 @@ golang.org/x/term
 # golang.org/x/text v0.13.0
 ## explicit; go 1.17
 golang.org/x/text/transform
-# gopkg.in/sevlyar/go-daemon.v0 v0.1.6
-## explicit
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3

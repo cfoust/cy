@@ -5,18 +5,56 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/taro"
+	"github.com/cfoust/cy/pkg/util"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type seekEvent struct {
+// forceTimeEvent sets the time to the event at `index`. This is only used in
+// testing.
+type forceTimeEvent struct {
+	index int
+}
+
+// forceTimeDeltaEvent moves time by `delta`. This is only used in testing.
+type forceTimeDeltaEvent struct {
+	delta          time.Duration
+	skipInactivity bool
+}
+
+// seekProgressEvent is sent when the progress of an ongoing seek operation
+// changes.
+type seekProgressEvent struct {
+	progress int
+}
+
+// seekShowEvent is sent when the UI should update to reflect a seek; if a seek
+// is short, we don't show anything.
+type seekShowEvent struct{}
+
+type seekFinishEvent struct {
 	updateTime bool
+}
+
+type seekState struct {
+	util.Lifetime
+	percent  int
+	progress chan int
+	// While seeking, we cannot get the contents of the screen, so we use
+	// the state of the screen before we started.
+	screen *tty.State
 }
 
 func (r *Replay) handleSeek(updateTime bool) {
 	r.isSeeking = false
+	r.showSeek = false
 	r.isSwapped = false
+
+	r.seekState.Cancel()
+	r.seekState = nil
 
 	events := r.Events()
 	location := r.Location()
@@ -27,18 +65,88 @@ func (r *Replay) handleSeek(updateTime bool) {
 
 	r.mode = ModeTime
 	r.initializeMovement()
+
+	if r.postSeekOptions == nil {
+		return
+	}
+
+	for _, option := range r.postSeekOptions {
+		option(r)
+	}
+
+	r.postSeekOptions = nil
+}
+
+// waitSeekProgress waits for the next progress event while seeking.
+func (r *Replay) waitSeekProgress() tea.Cmd {
+	seekState := r.seekState
+	if seekState == nil {
+		return nil
+	}
+
+	return func() tea.Msg {
+		select {
+		case <-seekState.Ctx().Done():
+			return nil
+		case p := <-seekState.progress:
+			if r.seekDelay > 0 {
+				time.Sleep(r.seekDelay)
+			}
+
+			return seekProgressEvent{
+				progress: p,
+			}
+		}
+	}
 }
 
 // Move the terminal back in time to the event at `index` and byte offset (if
 // the event is an OutputMessage) of `indexByte`.
 func (r *Replay) setIndex(index, indexByte int, updateTime bool) tea.Cmd {
-	r.isSeeking = true
-	return func() tea.Msg {
-		r.Goto(index, indexByte)
-		return seekEvent{
-			updateTime: updateTime,
-		}
+	if r.isSeeking {
+		return nil
 	}
+
+	seekState := &seekState{
+		Lifetime: util.NewLifetime(r.Ctx()),
+		progress: make(chan int),
+	}
+
+	location := r.Location()
+	viewport := tty.New(geom.Vec2{
+		R: r.viewport.R + 1,
+		C: r.viewport.C,
+	})
+	seekState.screen = viewport
+
+	if r.movement != nil && location.Index != 0 && !r.viewport.IsZero() {
+		r.View(viewport)
+	} else {
+		seekState.screen = nil
+	}
+
+	r.isSeeking = true
+	r.showSeek = false
+	r.seekState = seekState
+
+	return tea.Batch(
+		func() tea.Msg {
+			r.GotoProgress(
+				index,
+				indexByte,
+				seekState.progress,
+			)
+
+			return seekFinishEvent{
+				updateTime: updateTime,
+			}
+		},
+		r.waitSeekProgress(),
+		func() tea.Msg {
+			time.Sleep(SEEK_THRESHOLD)
+			return seekShowEvent{}
+		},
+	)
 }
 
 func (r *Replay) gotoIndex(index, indexByte int) tea.Cmd {
@@ -46,24 +154,31 @@ func (r *Replay) gotoIndex(index, indexByte int) tea.Cmd {
 	return r.setIndex(index, indexByte, true)
 }
 
-// Jump to an index without using a tea.Cmd. Only used in testing.
-func (r *Replay) forceIndex(index, indexByte int) {
-	cmd := r.gotoIndex(index, indexByte)
+func (r *Replay) timeStep(sinceLast time.Duration) tea.Cmd {
+	now := time.Now()
 
-	msg := cmd()
-	if seek, ok := msg.(seekEvent); ok {
-		r.handleSeek(seek.updateTime)
+	// Seeking can take a while, particularly when playing in reverse.
+	// This attempts to maintain the "accuracy" of the current frame by
+	// changing the amount of time we move by according to how long the
+	// last seek took.
+	step := PLAYBACK_TIME_STEP
+	if sinceLast > PLAYBACK_TIME_STEP {
+		step = sinceLast
 	}
-}
 
-func (r *Replay) scheduleUpdate() (taro.Model, tea.Cmd) {
-	since := time.Now()
-	return r, func() tea.Msg {
-		time.Sleep(time.Second / PLAYBACK_FPS)
-		return PlaybackEvent{
-			Since: since,
-		}
-	}
+	delta := int64(step) * int64(r.playbackRate)
+
+	setCmd := r.setTimeDelta(
+		time.Duration(delta),
+		r.skipInactivity,
+	)
+
+	return taro.Sequence(
+		setCmd,
+		func() tea.Msg {
+			return frameDoneEvent{Start: now}
+		},
+	)
 }
 
 var (
@@ -99,7 +214,10 @@ func parseTimeDelta(delta []string) (result time.Duration) {
 	return
 }
 
-func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) tea.Cmd {
+func (r *Replay) setTimeDelta(
+	delta time.Duration,
+	skipInactivity bool,
+) tea.Cmd {
 	events := r.Events()
 	if len(events) == 0 {
 		return nil
@@ -174,14 +292,4 @@ func (r *Replay) setTimeDelta(delta time.Duration, skipInactivity bool) tea.Cmd 
 	}
 
 	return r.setIndex(currentIndex+1, -1, false)
-}
-
-// forceTimeDelta synchronously adjusts time by `delta`. Only used in tests.
-func (r *Replay) forceTimeDelta(delta time.Duration, skipInactivity bool) {
-	cmd := r.setTimeDelta(delta, skipInactivity)
-
-	msg := cmd()
-	if seek, ok := msg.(seekEvent); ok {
-		r.handleSeek(seek.updateTime)
-	}
 }

@@ -109,14 +109,14 @@ func (r *Replay) handleSearchResult(msg SearchResultEvent) tea.Cmd {
 
 	// TODO(cfoust): 10/13/23 handle error
 
-	matches := msg.results
+	matches := msg.Results
 	r.matches = matches
 	if len(matches) == 0 {
 		r.isEmpty = true
 		return nil
 	}
 
-	r.isForward = msg.isForward
+	r.isForward = msg.Forward
 	return r.searchAgain(true)
 }
 
@@ -154,14 +154,20 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 			location := r.Location()
 			isForward := r.isForward
 
+			value = search.NormalizePattern(value)
+
 			return r, tea.Batch(
 				func() tea.Msg {
-					res, err := search.Search(events, value, r.searchProgress)
+					res, err := search.Search(
+						events,
+						value,
+						r.searchProgress,
+					)
 					return SearchResultEvent{
-						isForward: isForward,
-						origin:    location,
-						results:   res,
-						err:       err,
+						Forward: isForward,
+						Origin:  location,
+						Results: res,
+						err:     err,
 					}
 				},
 				r.waitProgress(),

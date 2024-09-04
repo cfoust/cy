@@ -7,11 +7,17 @@ import (
 	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
+const (
+	// SEEK_THRESHOLD is the amount of time that must pass before we show
+	// the progress of a seek.
+	SEEK_THRESHOLD = 120 * time.Millisecond
+)
+
 type SearchResultEvent struct {
-	isForward bool
-	origin    search.Address
-	results   []search.SearchResult
-	err       error
+	Forward bool
+	Origin  search.Address
+	Results []search.SearchResult
+	err     error
 }
 
 type ActionType int
@@ -26,12 +32,13 @@ type PlaybackRateEvent struct {
 }
 
 const (
-	PLAYBACK_FPS   = 30
-	IDLE_THRESHOLD = time.Second
+	PLAYBACK_FPS       = 30
+	PLAYBACK_TIME_STEP = time.Second / PLAYBACK_FPS
+	IDLE_THRESHOLD     = time.Second
 )
 
-type PlaybackEvent struct {
-	Since time.Time
+type frameDoneEvent struct {
+	Start time.Time
 }
 
 type CopyEvent struct {

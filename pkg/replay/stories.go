@@ -30,7 +30,11 @@ func createStorySession() []sessions.Event {
 		Events()
 }
 
-func createStory(ctx context.Context, events []sessions.Event, msgs ...interface{}) mux.Screen {
+func createStory(
+	ctx context.Context,
+	events []sessions.Event,
+	msgs ...interface{},
+) mux.Screen {
 	replay := New(
 		ctx,
 		player.FromEvents(events),
@@ -187,6 +191,19 @@ var IncrementalBackward stories.InitFunc = func(ctx context.Context) (mux.Screen
 	return replay, nil
 }
 
+var LongHistory stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
+	sim := sessions.NewSimulator().
+		Defaults()
+
+	for i := 0; i < 100; i++ {
+		sim.Add("Finally, code is a cultural resource, not trivial and only instrumental, but bound up in social change, aesthetic projects, and the relationship of people to computers. Instead of being dismissed as cryptic and irrelevant to human concerns such as art and user experience, code should be valued as text with machine and human meanings, something produced and operating within culture.\n")
+	}
+
+	replay := createStory(ctx, sim.Events())
+
+	return replay, nil
+}
+
 func action(event ActionType) ActionEvent {
 	return ActionEvent{
 		Type: event,
@@ -243,4 +260,25 @@ func init() {
 	stories.Register("replay/time/search-reverse", SearchTimeBackward, config)
 	stories.Register("replay/time/jump-backward", JumpBackward, config)
 	stories.Register("replay/time/search-empty", SearchEmpty, config)
+
+	stories.Register("replay/time/seek", LongHistory, stories.Config{
+		Input: []interface{}{
+			//setDelayEvent{delay: 20 * time.Millisecond},
+			stories.Wait(stories.Some),
+			action(ActionEnd),
+			stories.Wait(stories.More),
+			action(ActionTimeStepBack),
+			stories.Wait(stories.More),
+			action(ActionTimeStepBack),
+			stories.Wait(stories.More),
+			action(ActionTimeStepBack),
+			stories.Wait(stories.More),
+			action(ActionTimeStepBack),
+			stories.Wait(stories.More),
+			action(ActionTimeStepBack),
+			stories.Wait(stories.More),
+			action(ActionTimeStepBack),
+			stories.Wait(stories.More),
+		},
+	})
 }

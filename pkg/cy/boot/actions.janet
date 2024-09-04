@@ -345,3 +345,10 @@ For example:
   action/trace
   "Save a trace to cy's socket directory."
   (cy/trace))
+
+(key/action
+  action/search-borg
+  "Search all recorded .borg files for a pattern."
+  (as?-> (input/text "search: recorded sessions") _
+         (search/new (group/mkdir :root "/search") _)
+         (pane/attach _)))

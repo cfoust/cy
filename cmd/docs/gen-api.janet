@@ -52,3 +52,4 @@
 (each binding (key/get :root) (handle-binding "root" binding))
 (each binding (key/get :time) (handle-binding "time" binding))
 (each binding (key/get :copy) (handle-binding "copy" binding))
+(each binding (key/get :search) (handle-binding "search" binding))

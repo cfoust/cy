@@ -8,7 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	T "github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
-	"github.com/cfoust/cy/pkg/replay"
+	"github.com/cfoust/cy/pkg/replay/replayable"
 
 	"github.com/stretchr/testify/require"
 )
@@ -109,7 +109,7 @@ func TestDefaultShell(t *testing.T) {
 	pane, ok := node.(*T.Pane)
 	require.True(t, ok)
 
-	r, ok := pane.Screen().(*replay.Replayable)
+	r, ok := pane.Screen().(*replayable.Replayable)
 	require.True(t, ok)
 
 	cmd, ok := r.Cmd().(*stream.Cmd)

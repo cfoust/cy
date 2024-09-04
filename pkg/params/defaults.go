@@ -44,6 +44,9 @@ type defaultParams struct {
 	// to that node will be removed. This makes cy's layout functionality
 	// work a bit more like tmux.
 	RemovePaneOnExit bool
+	// The number of goroutines to use for searching in .borg files.
+	// Defaults to the number of CPUs.
+	NumSearchWorkers int
 	// Whether to avoid blocking on (input/*) calls. Just for testing.
 	skipInput bool
 }
