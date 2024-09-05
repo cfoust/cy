@@ -6,6 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/replay"
@@ -84,10 +85,13 @@ func (l *Loader) View(state *tty.State) {
 		return
 	}
 
+	state.CursorVisible = false
+
 	var boxContents string
 	var borderColor lipgloss.Color
 
-	width := geom.Min(state.Image.Size().C, 50)
+	size := state.Image.Size()
+	width := geom.Min(size.C, 50)
 
 	if l.err != nil {
 		borderColor = lipgloss.Color("1")
@@ -124,16 +128,16 @@ func (l *Loader) View(state *tty.State) {
 		BorderBottom(true)
 
 	boxText := boxStyle.Render(boxContents)
+	boxSize := taro.GetSize(boxText)
+
+	box := image.New(boxSize)
 	l.render.RenderAt(
-		state.Image,
-		0, 0,
-		lipgloss.Place(
-			geom.DEFAULT_SIZE.C,
-			geom.DEFAULT_SIZE.R,
-			lipgloss.Center, lipgloss.Center,
-			boxText,
-		),
+		box,
+		0,
+		0,
+		boxText,
 	)
+	image.Copy(size.Center(boxSize), state.Image, box)
 }
 
 func (l *Loader) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
