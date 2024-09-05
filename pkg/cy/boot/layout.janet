@@ -531,9 +531,11 @@ For example, when moving vertically upwards, for a vertical split node this func
      (key/action
        ,name
        ,docstring
-       (def path (,cmd/path (,pane/current)))
+       (def [ok path] (protect (cmd/path (pane/current))))
        (def shells (,group/mkdir :root "/shells"))
-       (def shell (,cmd/new shells :path path :name (,path/base path)))
+       (def shell (,cmd/new shells
+                            :path (if ok path nil)
+                            :name (,path/base path)))
        (,layout/set
          (,transformer
            (,layout/get)
