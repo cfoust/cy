@@ -52,8 +52,11 @@ func (p *Player) GotoProgress(
 		}
 	}
 
+	isBeginning := fromIndex == 0 && fromByte == 0
 	// Going back in time; must start over
-	if toIndex < fromIndex || (toIndex == fromIndex && toByte < fromByte) {
+	isBefore := toIndex < fromIndex || (toIndex == fromIndex && toByte < fromByte)
+
+	if isBefore || isBeginning {
 		p.resetTerminal()
 		fromIndex = 0
 		fromByte = -1
@@ -67,22 +70,26 @@ func (p *Player) GotoProgress(
 		case P.OutputMessage:
 			data := e.Data
 
-			if len(data) > 0 {
-				if fromIndex == toIndex {
-					data = data[fromByte+1 : toByte+1]
-				} else if fromIndex == i {
-					data = data[fromByte+1:]
-				} else if toIndex == i {
-					data = data[:toByte+1]
-				}
+			if len(data) == 0 {
+				continue
 			}
 
-			if len(data) > 0 {
-				// Need to clear dirty state before every write
-				// so that the detector works
-				p.Terminal.Changes().Reset()
-				p.Terminal.Parse(data)
+			if fromIndex == toIndex {
+				data = data[fromByte+1 : toByte+1]
+			} else if fromIndex == i {
+				data = data[fromByte+1:]
+			} else if toIndex == i {
+				data = data[:toByte+1]
 			}
+
+			if len(data) == 0 {
+				continue
+			}
+
+			// Need to clear dirty state before every write
+			// so that the detector works
+			p.Terminal.Changes().Reset()
+			p.Terminal.Parse(data)
 
 			if i >= p.nextDetect {
 				p.detector.Detect(p.Terminal, p.events)
