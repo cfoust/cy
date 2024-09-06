@@ -314,8 +314,9 @@ func (r *Replay) renderSeek(state *tty.State) {
 		return
 	}
 
-	for row := 0; row < size.R; row++ {
-		for col := 0; col < size.C; col++ {
+	stateSize := state.Image.Size()
+	for row := 0; row < stateSize.R; row++ {
+		for col := 0; col < stateSize.C; col++ {
 			state.Image[row][col].FG = emu.ANSIColor(7)
 		}
 	}
