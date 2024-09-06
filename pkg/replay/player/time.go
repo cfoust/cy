@@ -15,6 +15,12 @@ func (p *Player) GotoProgress(
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
+	defer func() {
+		if progress != nil {
+			close(progress)
+		}
+	}()
+
 	numEvents := len(p.events)
 	if numEvents == 0 {
 		return
@@ -30,6 +36,22 @@ func (p *Player) GotoProgress(
 	fromByte := p.location.Offset
 	toByte := offset
 
+	// Resolve toByte to an actual byte offset
+	switch e := p.events[toIndex].Message.(type) {
+	case P.OutputMessage:
+		if toByte < 0 {
+			toByte += len(e.Data)
+		}
+		toByte = geom.Clamp(toByte, 0, len(e.Data)-1)
+		if fromIndex == toIndex && fromByte == toByte {
+			return
+		}
+	case P.SizeMessage:
+		if fromIndex == toIndex {
+			return
+		}
+	}
+
 	// Going back in time; must start over
 	if toIndex < fromIndex || (toIndex == fromIndex && toByte < fromByte) {
 		p.resetTerminal()
@@ -44,13 +66,6 @@ func (p *Player) GotoProgress(
 		switch e := event.Message.(type) {
 		case P.OutputMessage:
 			data := e.Data
-
-			if toIndex == i {
-				if toByte < 0 {
-					toByte += len(data)
-				}
-				toByte = geom.Clamp(toByte, 0, len(data)-1)
-			}
 
 			if len(data) > 0 {
 				if fromIndex == toIndex {
@@ -87,10 +102,6 @@ func (p *Player) GotoProgress(
 		}
 		progress <- newProgress
 		oldProgress = newProgress
-	}
-
-	if progress != nil {
-		close(progress)
 	}
 
 	p.location.Index = toIndex
