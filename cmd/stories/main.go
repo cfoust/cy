@@ -10,7 +10,6 @@ import (
 
 	"github.com/cfoust/cy/pkg/anim"
 	_ "github.com/cfoust/cy/pkg/cy"
-	_ "github.com/cfoust/cy/pkg/search"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
