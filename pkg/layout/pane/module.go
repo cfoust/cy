@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	L "github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux"
@@ -13,6 +12,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/params"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
