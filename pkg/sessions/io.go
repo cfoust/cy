@@ -3,6 +3,7 @@ package sessions
 import (
 	"compress/gzip"
 	"fmt"
+	"io"
 	"os"
 
 	P "github.com/cfoust/cy/pkg/io/protocol"
@@ -23,9 +24,38 @@ type SessionWriter interface {
 	Close() error
 }
 
+type flushWriter struct {
+	gz           *gzip.Writer
+	bytesWritten int
+}
+
+var _ io.Writer = (*flushWriter)(nil)
+
+const (
+	// GZIP_BUFFER_SIZE is the number of bytes to write before flushing
+	// to disk. Terminal sessions are surprisingly small, so flushing
+	// every 128k feels safe, but we may need to play with this.
+	GZIP_BUFFER_SIZE = 128 * 1024
+)
+
+func (f *flushWriter) Write(p []byte) (n int, err error) {
+	n, err = f.gz.Write(p)
+	f.bytesWritten += n
+
+	if f.bytesWritten > GZIP_BUFFER_SIZE {
+		if err := f.gz.Flush(); err != nil {
+			return 0, err
+		}
+		f.bytesWritten = 0
+	}
+
+	return
+}
+
 type sessionWriter struct {
 	file    *os.File
 	gz      *gzip.Writer
+	flush   *flushWriter
 	handle  *codec.MsgpackHandle
 	encoder *codec.Encoder
 }
@@ -54,10 +84,6 @@ func (s *sessionWriter) Write(event Event) error {
 }
 
 func (s *sessionWriter) Close() error {
-	if err := s.gz.Flush(); err != nil {
-		return err
-	}
-
 	if err := s.gz.Close(); err != nil {
 		return err
 	}
@@ -73,11 +99,13 @@ func Create(filename string) (SessionWriter, error) {
 
 	handle := new(codec.MsgpackHandle)
 	gz := gzip.NewWriter(f)
-	encoder := codec.NewEncoder(gz, handle)
+	flush := &flushWriter{gz: gz}
+	encoder := codec.NewEncoder(flush, handle)
 
 	writer := sessionWriter{
 		handle:  handle,
 		gz:      gz,
+		flush:   flush,
 		encoder: encoder,
 		file:    f,
 	}
