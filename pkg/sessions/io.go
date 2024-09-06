@@ -54,6 +54,10 @@ func (s *sessionWriter) Write(event Event) error {
 }
 
 func (s *sessionWriter) Close() error {
+	if err := s.gz.Flush(); err != nil {
+		return err
+	}
+
 	if err := s.gz.Close(); err != nil {
 		return err
 	}
@@ -81,6 +85,10 @@ func Create(filename string) (SessionWriter, error) {
 	if err := encoder.Encode(header{
 		Version: SESSION_FILE_VERSION,
 	}); err != nil {
+		return nil, err
+	}
+
+	if err := gz.Flush(); err != nil {
 		return nil, err
 	}
 
@@ -143,7 +151,7 @@ func Open(filename string) (SessionReader, error) {
 	handle := new(codec.MsgpackHandle)
 	gz, err := gzip.NewReader(f)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gzip error: %w", err)
 	}
 	decoder := codec.NewDecoder(gz, handle)
 
@@ -157,7 +165,7 @@ func Open(filename string) (SessionReader, error) {
 	var h header
 	err = decoder.Decode(&h)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not decode header: %w", err)
 	}
 
 	if h.Version != SESSION_FILE_VERSION {
