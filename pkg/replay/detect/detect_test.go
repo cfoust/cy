@@ -22,7 +22,12 @@ func promptTest(
 		Add(setup...).
 		Events()
 
-	d := New()
+	reported := make([]Command, 0)
+	handler := func(c Command) {
+		reported = append(reported, c)
+	}
+
+	d := New(WithHandler(handler))
 	term := emu.New()
 	term.Changes().SetHooks([]string{CY_HOOK})
 	for i := 0; i < len(events); i++ {
@@ -38,6 +43,10 @@ func promptTest(
 
 	require.True(t, d.havePrompt)
 	require.Equal(t, commands, d.Commands(term, events))
+
+	if d.commands != nil {
+		require.Equal(t, d.commands, reported)
+	}
 }
 
 func promptSingle(

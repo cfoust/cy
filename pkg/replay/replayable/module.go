@@ -190,6 +190,7 @@ func New(
 	ctx context.Context,
 	cmd, stream mux.Stream,
 	timeBinds, copyBinds *bind.BindScope,
+	options ...detect.Option,
 ) *Replayable {
 	lifetime := util.NewLifetime(ctx)
 	r := &Replayable{
@@ -199,7 +200,7 @@ func New(
 		copyBinds:       copyBinds,
 		cmd:             cmd,
 		stream:          stream,
-		player:          player.New(),
+		player:          player.New(options...),
 	}
 	r.terminal = S.NewTerminal(
 		lifetime.Ctx(),

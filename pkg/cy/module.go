@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/cy/cmd"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/events"
 	"github.com/cfoust/cy/pkg/janet"
@@ -306,6 +307,8 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 				client.buffer = event.Text
 			case bind.BindEvent:
 				go client.runAction(event)
+			case cmd.CommandEvent:
+				// TODO(cfoust): 09/07/24 write to DB
 			}
 
 		}

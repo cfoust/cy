@@ -165,8 +165,8 @@ func (p *Player) Preview(
 	)
 }
 
-func New() *Player {
-	p := &Player{detector: detect.New()}
+func New(options ...detect.Option) *Player {
+	p := &Player{detector: detect.New(options...)}
 	p.resetTerminal()
 	return p
 }

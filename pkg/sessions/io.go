@@ -21,6 +21,7 @@ type header struct {
 
 type SessionWriter interface {
 	Write(event Event) error
+	Flush() error
 	Close() error
 }
 
@@ -58,6 +59,10 @@ type sessionWriter struct {
 	flush   *flushWriter
 	handle  *codec.MsgpackHandle
 	encoder *codec.Encoder
+}
+
+func (s *sessionWriter) Flush() error {
+	return s.gz.Flush()
 }
 
 func (s *sessionWriter) Write(event Event) error {

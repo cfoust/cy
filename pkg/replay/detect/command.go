@@ -39,3 +39,5 @@ func (c Command) InputStart() geom.Vec2 {
 
 	return c.Input[0].From
 }
+
+type CommandHandler func(Command)

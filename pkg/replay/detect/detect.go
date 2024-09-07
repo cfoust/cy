@@ -70,6 +70,10 @@ func (d *Detector) Detect(
 		return
 	}
 
+	if d.handler != nil {
+		d.handler(command)
+	}
+
 	d.commands = append(d.commands, command)
 }
 

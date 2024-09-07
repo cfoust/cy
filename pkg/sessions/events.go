@@ -111,6 +111,7 @@ func NewMemoryRecorder() *MemoryRecorder {
 // A FileRecorder writes incoming events to a file.
 type FileRecorder struct {
 	eventc chan Event
+	flushc chan struct{}
 }
 
 var _ EventHandler = (*FileRecorder)(nil)
@@ -120,9 +121,15 @@ func (f *FileRecorder) Process(event Event) error {
 	return nil
 }
 
+func (f *FileRecorder) Flush() error {
+	f.flushc <- struct{}{}
+	return nil
+}
+
 func NewFileRecorder(ctx context.Context, filename string) (*FileRecorder, error) {
 	f := &FileRecorder{
 		eventc: make(chan Event, 100),
+		flushc: make(chan struct{}),
 	}
 
 	w, err := Create(filename)
@@ -130,15 +137,15 @@ func NewFileRecorder(ctx context.Context, filename string) (*FileRecorder, error
 		return nil, err
 	}
 
-	f.eventc = make(chan Event, 100)
-
 	go func() {
 		defer w.Close()
 		for {
+			// TODO(cfoust): 09/19/23 error handling
 			select {
 			case event := <-f.eventc:
-				// TODO(cfoust): 09/19/23 error handling
 				w.Write(event)
+			case <-f.flushc:
+				w.Flush()
 			case <-ctx.Done():
 				return
 			}

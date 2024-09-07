@@ -6,9 +6,18 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/replayable"
 	"github.com/cfoust/cy/pkg/sessions"
 )
+
+// CommandEvent is published when a command running in a pane completes
+// execution.
+type CommandEvent struct {
+	detect.Command
+	Borg string
+	Cwd  string
+}
 
 func New(
 	ctx context.Context,
@@ -42,11 +51,28 @@ func New(
 		return nil, err
 	}
 
-	return replayable.New(
+	var r *replayable.Replayable
+	handler := func(c detect.Command) {
+		// Flush the .borg to disk so that other cy servers can read it
+		// if necessary
+		recorder.Flush()
+
+		// TODO get path from OSC 7 before getting from cmd
+		cwd, _ := cmd.Path()
+		r.Publish(CommandEvent{
+			Command: c,
+			Borg:    borgPath,
+			Cwd:     cwd,
+		})
+	}
+
+	r = replayable.New(
 		ctx,
 		cmd,
 		sessions.NewEventStream(cmd, recorder),
 		timeBinds,
 		copyBinds,
-	), nil
+		detect.WithHandler(handler),
+	)
+	return r, nil
 }

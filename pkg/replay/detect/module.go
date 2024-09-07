@@ -15,14 +15,13 @@ const (
 )
 
 type Detector struct {
-	mu deadlock.RWMutex
-
+	mu       deadlock.RWMutex
 	commands []Command
 	// If we have ever detected a prompt
 	havePrompt bool
-
-	from   geom.Vec2
-	fromID emu.WriteID
+	from       geom.Vec2
+	fromID     emu.WriteID
+	handler    CommandHandler
 }
 
 func (d *Detector) getLine(
@@ -105,6 +104,20 @@ func (d *Detector) Commands(
 	return commands
 }
 
-func New() *Detector {
-	return &Detector{}
+type Option func(*Detector)
+
+func WithHandler(c CommandHandler) Option {
+	return func(d *Detector) {
+		d.handler = c
+	}
+}
+
+func New(options ...Option) *Detector {
+	d := &Detector{}
+
+	for _, opt := range options {
+		opt(d)
+	}
+
+	return d
 }
