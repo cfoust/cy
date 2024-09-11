@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
-	"github.com/cfoust/cy/pkg/cy/cmd"
+	"github.com/cfoust/cy/pkg/cmd"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/events"
 	"github.com/cfoust/cy/pkg/janet"
@@ -286,6 +286,21 @@ func (c *Cy) InferClient(node tree.NodeID) (client *Client, found bool) {
 	return c.getClient(write.Client)
 }
 
+func (c *Cy) handleCommand(id tree.NodeID, event cmd.CommandEvent) error {
+	node, ok := c.tree.NodeById(id)
+	if !ok {
+		return fmt.Errorf("node %d not found", id)
+	}
+
+	dataDirectory := node.Params().DataDirectory()
+	// Recording is disabled
+	if len(dataDirectory) == 0 {
+		return nil
+	}
+
+	return nil
+}
+
 func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 	for {
 		select {
@@ -308,7 +323,16 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 			case bind.BindEvent:
 				go client.runAction(event)
 			case cmd.CommandEvent:
-				// TODO(cfoust): 09/07/24 write to DB
+				err := c.handleCommand(nodeEvent.Id, event)
+				if err == nil {
+					continue
+				}
+
+				c.log.
+					Error().
+					Err(err).Msg(
+					"error handling command",
+				)
 			}
 
 		}
