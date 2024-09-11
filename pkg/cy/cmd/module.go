@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
 	C "github.com/cfoust/cy/pkg/cmd"
@@ -53,9 +54,10 @@ func New(
 		// TODO get path from OSC 7 before getting from cmd
 		cwd, _ := cmd.Path()
 		r.Publish(C.CommandEvent{
-			Command: c,
-			Borg:    borgPath,
-			Cwd:     cwd,
+			Timestamp: time.Now(),
+			Command:   c,
+			Borg:      borgPath,
+			Cwd:       cwd,
 		})
 	}
 

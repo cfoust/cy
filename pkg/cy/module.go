@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"runtime"
 	"sync/atomic"
 	"time"
@@ -298,7 +299,24 @@ func (c *Cy) handleCommand(id tree.NodeID, event cmd.CommandEvent) error {
 		return nil
 	}
 
-	return nil
+	dbPath := path.Join(dataDirectory, "cmd.db")
+	var db *cmd.DB
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		db, err = cmd.Create(dbPath)
+		if err != nil {
+			return err
+		}
+	} else {
+		db, err = cmd.Open(dbPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	return db.CreateCommand(
+		c.Ctx(),
+		event,
+	)
 }
 
 func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
