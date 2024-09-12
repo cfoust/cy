@@ -26,6 +26,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 			Tree:      c.tree,
 			TimeBinds: c.timeBinds,
 			CopyBinds: c.copyBinds,
+			Store:     c.cmdStore,
 		},
 		"cy":     &CyModule{cy: c},
 		"exec":   &api.ExecModule{Server: c},

@@ -21,6 +21,10 @@ ORDER BY timestamp ASC;
 SELECT * FROM sessions
 ORDER BY path;
 
+-- name: GetSession :one
+SELECT id FROM sessions
+WHERE path = ?;
+
 -- name: CreateSession :one
 INSERT INTO sessions (path)
 VALUES (?)

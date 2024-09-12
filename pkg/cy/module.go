@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path"
 	"runtime"
 	"sync/atomic"
 	"time"
@@ -56,6 +55,8 @@ type Cy struct {
 	util.Lifetime
 	deadlock.RWMutex
 	*janet.VM
+
+	cmdStore *cmd.Store
 
 	nextClientID atomic.Int32
 
@@ -287,38 +288,6 @@ func (c *Cy) InferClient(node tree.NodeID) (client *Client, found bool) {
 	return c.getClient(write.Client)
 }
 
-func (c *Cy) handleCommand(id tree.NodeID, event cmd.CommandEvent) error {
-	node, ok := c.tree.NodeById(id)
-	if !ok {
-		return fmt.Errorf("node %d not found", id)
-	}
-
-	dataDirectory := node.Params().DataDirectory()
-	// Recording is disabled
-	if len(dataDirectory) == 0 {
-		return nil
-	}
-
-	dbPath := path.Join(dataDirectory, "cmd.db")
-	var db *cmd.DB
-	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		db, err = cmd.Create(dbPath)
-		if err != nil {
-			return err
-		}
-	} else {
-		db, err = cmd.Open(dbPath)
-		if err != nil {
-			return err
-		}
-	}
-
-	return db.CreateCommand(
-		c.Ctx(),
-		event,
-	)
-}
-
 func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 	for {
 		select {
@@ -341,7 +310,10 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 			case bind.BindEvent:
 				go client.runAction(event)
 			case cmd.CommandEvent:
-				err := c.handleCommand(nodeEvent.Id, event)
+				err := c.cmdStore.SaveCommand(
+					c.Ctx(),
+					event,
+				)
 				if err == nil {
 					continue
 				}
@@ -370,17 +342,18 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	t := tree.NewTree(tree.WithParams(defaults.NewChild()))
 	cy := Cy{
 		Lifetime:    util.NewLifetime(ctx),
-		tree:        t,
-		muxServer:   server.New(),
-		defaults:    defaults,
-		timeBinds:   timeBinds,
+		cmdStore:    cmd.NewStore(),
 		copyBinds:   copyBinds,
-		searchBinds: searchBinds,
-		options:     options,
+		defaults:    defaults,
 		lastVisit:   make(map[tree.NodeID]historyEvent),
 		lastWrite:   make(map[tree.NodeID]historyEvent),
-		writes:      make(chan historyEvent),
+		muxServer:   server.New(),
+		options:     options,
+		searchBinds: searchBinds,
+		timeBinds:   timeBinds,
+		tree:        t,
 		visits:      make(chan historyEvent),
+		writes:      make(chan historyEvent),
 	}
 	cy.toast = NewToastLogger(cy.sendToast)
 

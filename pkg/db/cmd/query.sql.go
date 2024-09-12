@@ -94,6 +94,18 @@ func (q *Queries) CreateSession(ctx context.Context, path string) (int64, error)
 	return id, err
 }
 
+const getSession = `-- name: GetSession :one
+SELECT id FROM sessions
+WHERE path = ?
+`
+
+func (q *Queries) GetSession(ctx context.Context, path string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getSession, path)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const listCommands = `-- name: ListCommands :many
 SELECT command.id,
        command.timestamp,

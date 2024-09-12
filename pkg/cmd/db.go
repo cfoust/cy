@@ -45,9 +45,12 @@ func (db *DB) CreateCommand(
 		return fmt.Errorf("borg file name cannot be empty")
 	}
 
-	sessionId, err := queries.CreateSession(ctx, c.Borg)
+	sessionId, err := queries.GetSession(ctx, c.Borg)
 	if err != nil {
-		return err
+		sessionId, err = queries.CreateSession(ctx, c.Borg)
+		if err != nil {
+			return fmt.Errorf("error creating session: %w", err)
+		}
 	}
 
 	commandId, err := queries.CreateCommand(
@@ -63,7 +66,7 @@ func (db *DB) CreateCommand(
 		},
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating command: %w", err)
 	}
 
 	for _, input := range c.Input {
@@ -79,7 +82,7 @@ func (db *DB) CreateCommand(
 			},
 		)
 		if err != nil {
-			return err
+			return fmt.Errorf("error creating input selection: %w", err)
 		}
 	}
 
@@ -95,11 +98,11 @@ func (db *DB) CreateCommand(
 		},
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating output selection: %w", err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return err
+		return fmt.Errorf("error committing transaction: %w", err)
 	}
 
 	return err

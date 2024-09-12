@@ -1,9 +1,11 @@
 package api
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/bind"
+	C "github.com/cfoust/cy/pkg/cmd"
 	"github.com/cfoust/cy/pkg/cy/cmd"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -21,8 +23,13 @@ type CmdParams struct {
 	Restart bool
 }
 
+type CommandStore interface {
+	QueryCommands(context.Context) ([]C.CommandEvent, error)
+}
+
 type CmdModule struct {
 	Server               Server
+	Store                CommandStore
 	Lifetime             util.Lifetime
 	Tree                 *tree.Tree
 	TimeBinds, CopyBinds *bind.BindScope
@@ -124,4 +131,8 @@ func (c *CmdModule) Commands(id *janet.Value) (*[]detect.Command, error) {
 
 	commands := r.Commands()
 	return &commands, nil
+}
+
+func (c *CmdModule) Query() ([]C.CommandEvent, error) {
+	return c.Store.QueryCommands(c.Lifetime.Ctx())
 }
