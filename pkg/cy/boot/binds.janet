@@ -7,6 +7,7 @@
   (param/set :root key value))
 
 (key/bind-many-tag :root "general"
+                   [prefix "ctrl+r"] action/ctrl-r
                    [prefix "ctrl+p"] action/command-palette
                    [prefix "q"] action/kill-server
                    [prefix "d"] action/detach

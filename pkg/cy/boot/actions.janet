@@ -320,6 +320,22 @@ For example:
              :location (((cmd :input) 0) :from)))))
 
 (key/action
+  action/ctrl-r
+  "Find a recent command and insert it into the current shell."
+  (as?-> (cmd/query) _
+         (map |(let [{:borg borg
+                      :cwd cwd
+                      :command {:text text
+                                :input input}} $]
+                 [[(string/replace-all "\n" "↵" text) cwd]
+                  {:type :replay
+                   :path borg
+                   :focus ((input 0) :from)
+                   :alt-screen false}
+                  text]) _)
+         (input/find _ :prompt "search: command")))
+
+(key/action
   action/recall-command
   "Recall the output of a command to the current shell."
   (as?-> (group/leaves :root) _
