@@ -19,6 +19,35 @@ const (
 	DB_NAME = "cmd.db"
 )
 
+// OpenDatabases looks for cmd.db in all of the provided data directories and
+// opens them if they exist. This method does not create new databases.
+func (s *Store) OpenDatabases(dirs []string) error {
+	for _, dir := range dirs {
+		dbPath := path.Join(dir, DB_NAME)
+		if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+			continue
+		}
+
+		s.RLock()
+		_, ok := s.dbs[dbPath]
+		s.RUnlock()
+		if ok {
+			continue
+		}
+
+		db, err := Open(dbPath)
+		if err != nil {
+			return err
+		}
+
+		s.Lock()
+		s.dbs[dbPath] = db
+		s.Unlock()
+	}
+
+	return nil
+}
+
 // QueryCommands queries commands across all open command databases.
 func (s *Store) QueryCommands(ctx context.Context) ([]CommandEvent, error) {
 	dbs := make([]*DB, 0, len(s.dbs))
@@ -53,6 +82,7 @@ func (s *Store) SaveCommand(ctx context.Context, c CommandEvent) error {
 		return db.CreateCommand(ctx, c)
 	}
 
+	// TODO(cfoust): 09/13/24 normalize borg path
 	// TODO(cfoust): 09/12/24 create lock file before creating db
 	// TODO(cfoust): 09/12/24 index existing .borg files
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {

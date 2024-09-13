@@ -24,6 +24,7 @@ type CmdParams struct {
 }
 
 type CommandStore interface {
+	OpenDatabases([]string) error
 	QueryCommands(context.Context) ([]C.CommandEvent, error)
 }
 
@@ -134,5 +135,24 @@ func (c *CmdModule) Commands(id *janet.Value) (*[]detect.Command, error) {
 }
 
 func (c *CmdModule) Query() ([]C.CommandEvent, error) {
+	// We need to aggregate all of the data directories to which _all_
+	// panes could be recording and open any existing databases there
+	// before querying. The command dataabase is otherwise opened only on
+	// demand when a command is stored.
+	dataDirs := make(map[string]struct{})
+	for _, leaf := range c.Tree.Leaves() {
+		dataDirs[leaf.Params().DataDirectory()] = struct{}{}
+	}
+
+	dirs := make([]string, 0, len(dataDirs))
+	for dir := range dataDirs {
+		dirs = append(dirs, dir)
+	}
+
+	err := c.Store.OpenDatabases(dirs)
+	if err != nil {
+		return nil, err
+	}
+
 	return c.Store.QueryCommands(c.Lifetime.Ctx())
 }
