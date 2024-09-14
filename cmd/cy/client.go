@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
+	I "github.com/cfoust/cy/pkg/io"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 	"github.com/cfoust/cy/pkg/mux"
@@ -191,9 +192,9 @@ func connect(socketPath string, shouldStart bool) (Connection, error) {
 
 		if !locked {
 			lockPath = getLockPath(socketPath)
-			lockFd, err = getLock(lockPath)
+			lockFd, err = I.Lock(lockPath)
 			if err != nil {
-				if err == ErrorLockFailed {
+				if err == I.ErrorLockFailed {
 					continue
 				}
 

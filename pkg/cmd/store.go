@@ -4,6 +4,9 @@ import (
 	"context"
 	"os"
 	"path"
+	"time"
+
+	"github.com/cfoust/cy/pkg/io"
 
 	"github.com/sasha-s/go-deadlock"
 )
@@ -78,6 +81,36 @@ func (s *Store) QueryCommands(ctx context.Context) ([]CommandEvent, error) {
 	return allCommands, nil
 }
 
+// openDatabase creates a new command database at the given path. To avoid
+// conflicts between multiple instances of cy, a lock file is created before
+// the database is created.
+func openDatabase(dbPath string) (*DB, error) {
+	lockPath := dbPath + ".lock"
+	for {
+		if _, err := os.Stat(dbPath); !os.IsNotExist(err) {
+			return Open(dbPath)
+		}
+
+		// DB does not exist, create lock file
+		lock, err := io.Lock(lockPath)
+		if err != nil {
+			if err == io.ErrorLockFailed {
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+
+			return nil, err
+		}
+
+		defer func() {
+			lock.Close()
+			os.Remove(lockPath)
+		}()
+
+		return Create(dbPath)
+	}
+}
+
 // SaveCommand stores a command in the command database adjacent to its borg
 // file.
 func (s *Store) SaveCommand(ctx context.Context, c CommandEvent) error {
@@ -94,17 +127,9 @@ func (s *Store) SaveCommand(ctx context.Context, c CommandEvent) error {
 	// Make .borg path relative to db
 	c.Borg = path.Base(c.Borg)
 
-	// TODO(cfoust): 09/12/24 create lock file before creating db
-	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		db, err = Create(dbPath)
-		if err != nil {
-			return err
-		}
-	} else {
-		db, err = Open(dbPath)
-		if err != nil {
-			return err
-		}
+	db, err := openDatabase(dbPath)
+	if err != nil {
+		return err
 	}
 
 	s.Lock()

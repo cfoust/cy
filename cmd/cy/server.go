@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
-	"syscall"
 
 	"github.com/cfoust/cy/pkg/cy"
 	"github.com/cfoust/cy/pkg/geom"
@@ -16,24 +14,8 @@ import (
 	"github.com/sevlyar/go-daemon"
 )
 
-var ErrorLockFailed = fmt.Errorf("failed to lock file")
-
 func getLockPath(socketPath string) string {
 	return socketPath + ".lock"
-}
-
-func getLock(lockPath string) (*os.File, error) {
-	fd, err := os.OpenFile(lockPath, os.O_WRONLY|os.O_CREATE, 0600)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := syscall.Flock(int(fd.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
-		fd.Close()
-		return nil, ErrorLockFailed
-	}
-
-	return fd, nil
 }
 
 type Server struct {
