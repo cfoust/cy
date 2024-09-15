@@ -110,14 +110,6 @@ func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
 		if title != "" {
 			t.setTitle(title)
 		}
-	case 4: // color set
-		if len(s.args) < 3 {
-			break
-		}
-
-		c := s.argString(2, "")
-		p = &c
-		fallthrough
 	case 7:
 		t.directory = s.argString(1, "")
 	case 10:
@@ -162,6 +154,14 @@ func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
 	// } else {
 	// 	// TODO: redraw
 	// }
+	case 4: // color set
+		if len(s.args) < 3 {
+			break
+		}
+
+		c := s.argString(2, "")
+		p = &c
+		fallthrough
 	case 104: // color reset
 		j := -1
 		if len(s.args) > 1 {
