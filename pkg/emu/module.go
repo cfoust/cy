@@ -266,6 +266,11 @@ type View interface {
 	// Title represents the title of the console window.
 	Title() string
 
+	// Directory represents the working directory of the console as specified by
+	// OSC-7. For more information see:
+	// https://gitlab.freedesktop.org/terminal-wg/specifications/-/issues/20
+	Directory() string
+
 	// Cell returns the glyph containing the character code, foreground color, and
 	// background color at position (x, y) relative to the top left of the terminal.
 	Cell(x, y int) Glyph

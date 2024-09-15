@@ -89,9 +89,112 @@ func (t *State) Hook(params []int64, intermediates []byte, ignore bool, r rune) 
 }
 
 func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
-	// TODO(cfoust): 08/10/23 do we care about operating system commands?
-	// I can only find one reference to them here: https://vt100.net/docs/vt510-rm/chapter4.html
-	//fmt.Printf("[OscDispatch] params=%v, bellTerminated=%v\n", params, bellTerminated)
+	if len(params) == 0 {
+		return
+	}
+
+	args := make([]string, 0)
+	for _, arg := range params {
+		args = append(args, string(arg))
+	}
+
+	s := strEscape{
+		typ:  rune(params[0][0]),
+		args: args,
+	}
+
+	var p *string
+	switch d := s.arg(0, 0); d {
+	case 0, 1, 2:
+		title := s.argString(1, "")
+		if title != "" {
+			t.setTitle(title)
+		}
+	case 4: // color set
+		if len(s.args) < 3 {
+			break
+		}
+
+		c := s.argString(2, "")
+		p = &c
+		fallthrough
+	case 7:
+		t.directory = s.argString(1, "")
+	case 10:
+		if len(s.args) < 2 {
+			break
+		}
+
+		c := s.argString(1, "")
+		p := &c
+		if p != nil && *p == "?" {
+			t.oscColorResponse(DefaultFG, 10)
+		} else if err := t.setColorName(DefaultFG, p); err != nil {
+			t.logf("invalid foreground color: %s\n", maybe(p))
+		} else {
+			// TODO: redraw
+		}
+	case 11:
+		if len(s.args) < 2 {
+			break
+		}
+
+		c := s.argString(1, "")
+		p := &c
+		if p != nil && *p == "?" {
+			t.oscColorResponse(DefaultBG, 11)
+		} else if err := t.setColorName(DefaultBG, p); err != nil {
+			t.logf("invalid cursor color: %s\n", maybe(p))
+		} else {
+			// TODO: redraw
+		}
+	// case 12:
+	// if len(s.args) < 2 {
+	// 	break
+	// }
+
+	// c := s.argString(1, "")
+	// p := &c
+	// if p != nil && *p == "?" {
+	// 	t.oscColorResponse(int(DefaultCursor), 12)
+	// } else if err := t.setColorName(int(DefaultCursor), p); err != nil {
+	// 	t.logf("invalid background color: %s\n", p)
+	// } else {
+	// 	// TODO: redraw
+	// }
+	case 104: // color reset
+		j := -1
+		if len(s.args) > 1 {
+			j = s.arg(1, 0)
+		}
+		if p != nil && *p == "?" { // report
+			t.osc4ColorResponse(XTermColor(j))
+		} else if err := t.setColorName(XTermColor(j), p); err != nil {
+			if !(d == 104 && len(s.args) <= 1) {
+				t.logf("invalid color j=%d, p=%s\n", j, maybe(p))
+			}
+		} else {
+			// TODO: redraw
+		}
+	default:
+		t.logf("unknown OSC command %d\n", d)
+		// TODO: s.dump()
+	}
+
+	// TODO(cfoust): 09/15/24 handle this?
+	//case 'k': // old title set compatibility
+	//title := s.argString(0, "")
+	//if title != "" {
+	//t.setTitle(title)
+	//}
+	//default:
+	//// TODO: Ignore these codes instead of complain?
+	//// 'P': // DSC - device control string
+	//// '_': // APC - application program command
+	//// '^': // PM - privacy message
+
+	//t.logf("unhandled STR sequence '%c'\n", s.typ)
+	//// t.str.dump()
 }
 
 func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r rune) {

@@ -52,6 +52,7 @@ type State struct {
 	csi           csiEscape
 	tabs          []bool
 	title         string
+	directory     string
 	colorOverride map[Color]Color
 
 	dirty *Dirty
@@ -140,6 +141,13 @@ func (t *State) Title() string {
 	t.RLock()
 	defer t.RUnlock()
 	return t.title
+}
+
+// Directory returns the string most recently specified by OSC-7.
+func (t *State) Directory() string {
+	t.RLock()
+	defer t.RUnlock()
+	return t.directory
 }
 
 /*
