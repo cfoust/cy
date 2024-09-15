@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -362,6 +363,19 @@ func TestVM(t *testing.T) {
 			err = v.Unmarshal(&customAfter)
 			require.NoError(t, err)
 			require.Equal(t, customBefore.Number, customAfter.Number)
+		}
+
+		// Time
+		{
+			now := time.Now()
+			v, err := vm.Marshal(now)
+			require.NoError(t, err)
+
+			var after time.Time
+			err = v.Unmarshal(&after)
+			require.NoError(t, err)
+			require.Equal(t, now.Unix(), after.Unix())
+			require.Equal(t, now.Location(), after.Location())
 		}
 	})
 

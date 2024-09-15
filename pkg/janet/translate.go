@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 	"unsafe"
 
 	"github.com/iancoleman/strcase"
@@ -168,6 +169,10 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 		}
 
 		return v.marshal(value.Elem().Interface())
+	}
+
+	if ts, ok := item.(time.Time); ok {
+		return v.marshal(janetFromTime(ts))
 	}
 
 	switch type_.Kind() {
@@ -356,6 +361,17 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 		return err
 	}
 
+	if _, ok := dest.(*time.Time); ok {
+		var ts janetTimestamp
+		err := v.unmarshal(source, &ts)
+		if err != nil {
+			return err
+		}
+
+		value.Elem().Set(reflect.ValueOf(janetToTime(ts)))
+		return nil
+	}
+
 	type_ = type_.Elem()
 	value = value.Elem()
 
@@ -364,6 +380,7 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 		if err := assertType(source, C.JANET_NUMBER); err != nil {
 			return err
 		}
+
 		unwrapped := C.janet_unwrap_integer(source)
 		value.SetInt(int64(unwrapped))
 	case reflect.Float64:
