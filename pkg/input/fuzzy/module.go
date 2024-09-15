@@ -67,6 +67,8 @@ type Fuzzy struct {
 	client          *server.Client
 	preview         mux.Screen
 	previewLifetime util.Lifetime
+
+	floatingWidth int
 }
 
 var _ taro.Model = (*Fuzzy)(nil)
@@ -199,6 +201,7 @@ func WithInitial(initial image.Image) Setting {
 	}
 }
 
+// WithAnimation provides a specific animation to render in the background.
 func WithAnimation(initial image.Image, creator anim.Creator) Setting {
 	return func(ctx context.Context, f *Fuzzy) {
 		f.initial = initial
@@ -211,9 +214,16 @@ func WithAnimation(initial image.Image, creator anim.Creator) Setting {
 	}
 }
 
-// Don't allow Fuzzy to quit.
+// WithSticky makes it so Fuzzy cannot be quit by the user.
 func WithSticky(ctx context.Context, f *Fuzzy) {
 	f.isSticky = true
+}
+
+// WithWidth sets the width of the Fuzzy window, if not full screen.
+func WithWidth(width int) Setting {
+	return func(ctx context.Context, f *Fuzzy) {
+		f.floatingWidth = geom.Max(1, width)
+	}
 }
 
 // If both of these are provided, Fuzzy can show previews for panes.
@@ -278,12 +288,13 @@ func newFuzzy(
 	ti.Prompt = ""
 
 	f := &Fuzzy{
-		Lifetime:  util.NewLifetime(ctx),
-		render:    taro.NewRenderer(),
-		options:   options,
-		selected:  0,
-		textInput: ti,
-		isUp:      true,
+		Lifetime:      util.NewLifetime(ctx),
+		render:        taro.NewRenderer(),
+		options:       options,
+		selected:      0,
+		textInput:     ti,
+		isUp:          true,
+		floatingWidth: 50,
 	}
 
 	for _, setting := range settings {

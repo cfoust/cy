@@ -14,6 +14,7 @@ This function supports a range of named parameters that adjust its functionality
 - `:headers` ([]string): Provide a title for each column. This mostly used for filtering tabular data.
 - `:prompt` (string): The text that will be shown beneath the search window.
 - `:reverse` (boolean): Display from the top of the screen (rather than the bottom.)
+- `:width` (int): Set the width of the match window (if not in full screen mode.)
 
 # doc: Text
 

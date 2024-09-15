@@ -330,13 +330,17 @@ For example:
                                 :input input}} $]
                  [[(string/replace-all "\n" "↵" text)
                    (time/format ts time/format/date-time)
-                   cwd]
+                   cwd
+                   "db"]
                   {:type :replay
                    :path borg
                    :focus ((input 0) :from)
                    :alt-screen false}
                   text]) _)
-         (input/find _ :prompt "search: command")))
+         (input/find _ :prompt "search: ctrl-r"
+                     :width 80
+                     :headers ["command" "timestamp" "directory" "source"])
+         (pane/send-keys (pane/current) @[_])))
 
 (key/action
   action/recall-command

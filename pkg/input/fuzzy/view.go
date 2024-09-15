@@ -276,7 +276,7 @@ func (f *Fuzzy) View(state *tty.State) {
 		Position: f.location,
 		Size: geom.Vec2{
 			R: screenSize.R - f.location.R,
-			C: 50,
+			C: f.floatingWidth,
 		},
 	}
 

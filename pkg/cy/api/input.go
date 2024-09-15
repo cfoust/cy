@@ -28,6 +28,7 @@ type FuzzyParams struct {
 	CaseSensitive bool
 	Animated      *bool
 	Headers       *[]string
+	Width         *int
 }
 
 func (i *InputModule) Find(
@@ -71,6 +72,13 @@ func (i *InputModule) Find(
 				state.Image.Size(),
 			),
 		)
+
+		if params.Width != nil {
+			settings = append(
+				settings,
+				fuzzy.WithWidth(*params.Width),
+			)
+		}
 	}
 
 	if params.Reverse {
