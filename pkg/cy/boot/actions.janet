@@ -325,9 +325,12 @@ For example:
   (as?-> (cmd/query) _
          (map |(let [{:borg borg
                       :cwd cwd
+                      :timestamp ts
                       :command {:text text
                                 :input input}} $]
-                 [[(string/replace-all "\n" "↵" text) cwd]
+                 [[(string/replace-all "\n" "↵" text)
+                   (time/format ts time/format/date-time)
+                   cwd]
                   {:type :replay
                    :path borg
                    :focus ((input 0) :from)

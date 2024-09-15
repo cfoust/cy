@@ -68,8 +68,8 @@ func (s *Store) QueryCommands(ctx context.Context) ([]CommandEvent, error) {
 		}
 
 		// Make .borg path absolute
-		for _, command := range commands {
-			command.Borg = path.Join(
+		for i, command := range commands {
+			commands[i].Borg = path.Join(
 				path.Dir(dbPath),
 				command.Borg,
 			)
@@ -120,12 +120,12 @@ func (s *Store) SaveCommand(ctx context.Context, c CommandEvent) error {
 	db, ok := s.dbs[dbPath]
 	s.RUnlock()
 
+	// Make .borg path relative to db
+	c.Borg = path.Base(c.Borg)
+
 	if ok {
 		return db.CreateCommand(ctx, c)
 	}
-
-	// Make .borg path relative to db
-	c.Borg = path.Base(c.Borg)
 
 	db, err := openDatabase(dbPath)
 	if err != nil {

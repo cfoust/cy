@@ -61,12 +61,12 @@ Time values are structs with the following properties:
  :month 9
  :month-day 15
  :seconds 31
- :utc false # used only for formatting; if false, uses local TZ
+ :utc false # if false, properties are in local time
  :week-day 0
  :year 2024
  :year-day 259}
 ```
 
-For specifics on the range of the values, consult the documentation for Go's [time package](https://pkg.go.dev/time), such as for [time.Weekday()](https://pkg.go.dev/time#Time.Weekday).
+For specifics on the range of each scalar property, consult the documentation for Go's [time package](https://pkg.go.dev/time), such as for [time.Weekday()](https://pkg.go.dev/time#Time.Weekday).
 
 {{gendoc api}}
