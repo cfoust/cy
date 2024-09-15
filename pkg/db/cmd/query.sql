@@ -1,6 +1,7 @@
 -- name: ListCommands :many
 SELECT command.id,
-       command.timestamp,
+       command.executed_at,
+       command.completed_at,
        session.path,
        command.text,
        command.directory,
@@ -15,7 +16,7 @@ SELECT command.id,
 FROM commands command
   INNER JOIN sessions session ON command.session = session.id
   INNER JOIN selections selection ON command.id = selection.command
-ORDER BY timestamp ASC;
+ORDER BY executed_at ASC;
 
 -- name: ListSessions :many
 SELECT * FROM sessions
@@ -52,12 +53,13 @@ INSERT INTO selections (
 
 -- name: CreateCommand :one
 INSERT INTO commands (
-  timestamp,
+  executed_at,
+  completed_at,
   session,
   text,
   directory,
   prompted,
   executed,
   completed
-) VALUES (?, ?, ?, ?, ?, ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 RETURNING id;

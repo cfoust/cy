@@ -12,30 +12,33 @@ import (
 
 const createCommand = `-- name: CreateCommand :one
 INSERT INTO commands (
-  timestamp,
+  executed_at,
+  completed_at,
   session,
   text,
   directory,
   prompted,
   executed,
   completed
-) VALUES (?, ?, ?, ?, ?, ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 RETURNING id
 `
 
 type CreateCommandParams struct {
-	Timestamp time.Time
-	Session   int64
-	Text      string
-	Directory string
-	Prompted  int64
-	Executed  int64
-	Completed int64
+	ExecutedAt  time.Time
+	CompletedAt time.Time
+	Session     int64
+	Text        string
+	Directory   string
+	Prompted    int64
+	Executed    int64
+	Completed   int64
 }
 
 func (q *Queries) CreateCommand(ctx context.Context, arg CreateCommandParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, createCommand,
-		arg.Timestamp,
+		arg.ExecutedAt,
+		arg.CompletedAt,
 		arg.Session,
 		arg.Text,
 		arg.Directory,
@@ -108,7 +111,8 @@ func (q *Queries) GetSession(ctx context.Context, path string) (int64, error) {
 
 const listCommands = `-- name: ListCommands :many
 SELECT command.id,
-       command.timestamp,
+       command.executed_at,
+       command.completed_at,
        session.path,
        command.text,
        command.directory,
@@ -123,23 +127,24 @@ SELECT command.id,
 FROM commands command
   INNER JOIN sessions session ON command.session = session.id
   INNER JOIN selections selection ON command.id = selection.command
-ORDER BY timestamp ASC
+ORDER BY executed_at ASC
 `
 
 type ListCommandsRow struct {
-	ID        int64
-	Timestamp time.Time
-	Path      string
-	Text      string
-	Directory string
-	Prompted  int64
-	Executed  int64
-	Completed int64
-	Input     bool
-	FromRow   int64
-	FromCol   int64
-	ToRow     int64
-	ToCol     int64
+	ID          int64
+	ExecutedAt  time.Time
+	CompletedAt time.Time
+	Path        string
+	Text        string
+	Directory   string
+	Prompted    int64
+	Executed    int64
+	Completed   int64
+	Input       bool
+	FromRow     int64
+	FromCol     int64
+	ToRow       int64
+	ToCol       int64
 }
 
 func (q *Queries) ListCommands(ctx context.Context) ([]ListCommandsRow, error) {
@@ -153,7 +158,8 @@ func (q *Queries) ListCommands(ctx context.Context) ([]ListCommandsRow, error) {
 		var i ListCommandsRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.Timestamp,
+			&i.ExecutedAt,
+			&i.CompletedAt,
 			&i.Path,
 			&i.Text,
 			&i.Directory,

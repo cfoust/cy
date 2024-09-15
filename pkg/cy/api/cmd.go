@@ -154,5 +154,17 @@ func (c *CmdModule) Query() ([]C.CommandEvent, error) {
 		return nil, err
 	}
 
-	return c.Store.QueryCommands(c.Lifetime.Ctx())
+	commands, err := c.Store.QueryCommands(c.Lifetime.Ctx())
+	if err != nil {
+		return nil, err
+	}
+
+	// All timestamps returned by the database are in UTC, so we need to
+	// convert to the "local" timezone
+	for i, command := range commands {
+		commands[i].ExecutedAt = command.ExecutedAt.Local()
+		commands[i].CompletedAt = command.CompletedAt.Local()
+	}
+
+	return commands, nil
 }

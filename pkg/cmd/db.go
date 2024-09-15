@@ -56,13 +56,14 @@ func (db *DB) CreateCommand(
 	commandId, err := queries.CreateCommand(
 		ctx,
 		cmd.CreateCommandParams{
-			Timestamp: c.Timestamp,
-			Session:   sessionId,
-			Text:      c.Text,
-			Directory: c.Cwd,
-			Prompted:  int64(c.Prompted),
-			Executed:  int64(c.Executed),
-			Completed: int64(c.Completed),
+			Session:     sessionId,
+			Text:        c.Text,
+			Directory:   c.Directory,
+			Prompted:    int64(c.Prompted),
+			Executed:    int64(c.Executed),
+			Completed:   int64(c.Completed),
+			ExecutedAt:  c.ExecutedAt,
+			CompletedAt: c.CompletedAt,
 		},
 	)
 	if err != nil {
@@ -120,14 +121,15 @@ func commandRowsToEvents(rows []cmd.ListCommandsRow) (events []CommandEvent) {
 		if int(row.ID) != id {
 			id = int(row.ID)
 			events = append(events, CommandEvent{
-				Timestamp: row.Timestamp,
-				Borg:      row.Path,
-				Cwd:       row.Directory,
+				Borg: row.Path,
 				Command: detect.Command{
-					Text:      row.Text,
-					Prompted:  int(row.Prompted),
-					Executed:  int(row.Executed),
-					Completed: int(row.Completed),
+					ExecutedAt:  row.ExecutedAt.UTC(),
+					CompletedAt: row.CompletedAt.UTC(),
+					Text:        row.Text,
+					Prompted:    int(row.Prompted),
+					Executed:    int(row.Executed),
+					Completed:   int(row.Completed),
+					Directory:   row.Directory,
 				},
 			})
 			last = len(events) - 1

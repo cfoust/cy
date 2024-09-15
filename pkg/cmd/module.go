@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"time"
-
 	"github.com/cfoust/cy/pkg/replay/detect"
 )
 
@@ -10,7 +8,5 @@ import (
 // execution.
 type CommandEvent struct {
 	detect.Command
-	Timestamp time.Time
-	Borg      string
-	Cwd       string
+	Borg string
 }

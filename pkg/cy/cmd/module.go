@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
 	C "github.com/cfoust/cy/pkg/cmd"
@@ -51,13 +50,17 @@ func New(
 		// it if necessary
 		recorder.Flush()
 
-		// TODO get path from OSC 7 before getting from cmd
-		cwd, _ := cmd.Path()
+		// If the directory was never set with OSC-7, just grab the
+		// current working directory from the process (which is
+		// imperfect, since it won't work over SSH or in tmux)
+		if len(c.Directory) == 0 {
+			cwd, _ := cmd.Path()
+			c.Directory = cwd
+		}
+
 		r.Publish(C.CommandEvent{
-			Timestamp: time.Now(),
-			Command:   c,
-			Borg:      borgPath,
-			Cwd:       cwd,
+			Command: c,
+			Borg:    borgPath,
 		})
 	}
 

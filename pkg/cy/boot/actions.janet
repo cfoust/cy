@@ -324,9 +324,9 @@ For example:
   "Find a recent command and insert it into the current shell."
   (as?-> (cmd/query) _
          (map |(let [{:borg borg
-                      :cwd cwd
-                      :timestamp ts
                       :command {:text text
+                                :directory cwd
+                                :executed-at ts
                                 :input input}} $]
                  [[(string/replace-all "\n" "↵" text)
                    (time/format ts time/format/date-time)

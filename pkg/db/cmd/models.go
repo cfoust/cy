@@ -9,14 +9,15 @@ import (
 )
 
 type Command struct {
-	ID        int64
-	Timestamp time.Time
-	Session   int64
-	Text      string
-	Directory string
-	Prompted  int64
-	Executed  int64
-	Completed int64
+	ID          int64
+	ExecutedAt  time.Time
+	CompletedAt time.Time
+	Session     int64
+	Text        string
+	Directory   string
+	Prompted    int64
+	Executed    int64
+	Completed   int64
 }
 
 type Selection struct {

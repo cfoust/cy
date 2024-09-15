@@ -7,7 +7,9 @@ CREATE TABLE sessions (
 CREATE TABLE commands (
   id   INTEGER PRIMARY KEY,
   -- When the command was executed
-  timestamp  DATETIME NOT NULL,
+  executed_at  DATETIME NOT NULL,
+  -- When the command was completed
+  completed_at  DATETIME NOT NULL,
   -- The borg file this command originated from
   session  INTEGER NOT NULL,
   -- The command that was executed

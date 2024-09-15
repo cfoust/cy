@@ -43,16 +43,17 @@ func createTestCommand(text string) CommandEvent {
 			From: geom.Vec2{R: 3, C: 3},
 			To:   geom.Vec2{R: 4, C: 4},
 		},
-		Prompted:  1,
-		Executed:  2,
-		Completed: 3,
+		Prompted:    1,
+		Executed:    2,
+		ExecutedAt:  time.Now().UTC(),
+		Completed:   3,
+		CompletedAt: time.Now().UTC(),
+		Directory:   "/tmp",
 	}
 
 	return CommandEvent{
-		Timestamp: time.Now(),
-		Command:   command,
-		Borg:      "foo.borg",
-		Cwd:       "/tmp",
+		Command: command,
+		Borg:    "foo.borg",
 	}
 }
 
