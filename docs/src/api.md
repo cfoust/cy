@@ -47,4 +47,26 @@ Many API functions have a parameter of type `NodeID`, which can be one of two va
 - `:root` which is a short way of referring to `cy`'s top-level group.
 - An integer that refers to a node in `cy`'s [node tree](/groups-and-panes.md#the-node-tree). You cannot infer these yourself, but they are returned from API functions like {{api pane/current}} and {{api group/children}}.
 
+#### Time
+
+The `(time/*)` family of functions works with `Time` values, which are similar (but not identical) to the value returned by Janet's built-in `(os/date)` function.
+
+Time values are structs with the following properties:
+
+```janet
+{:dst false # unused, just to mimic (os/date)
+ :hours 10
+ :milliseconds 624
+ :minutes 15
+ :month 9
+ :month-day 15
+ :seconds 31
+ :utc false # used only for formatting; if false, uses local TZ
+ :week-day 0
+ :year 2024
+ :year-day 259}
+```
+
+For specifics on the range of the values, consult the documentation for Go's [time package](https://pkg.go.dev/time), such as for [time.Weekday()](https://pkg.go.dev/time#Time.Weekday).
+
 {{gendoc api}}

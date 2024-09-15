@@ -140,3 +140,12 @@ var _ janet.Documented = (*SearchModule)(nil)
 func (s *SearchModule) Documentation() string {
 	return DOCS_SEARCH
 }
+
+//go:embed docs-time.md
+var DOCS_TIME string
+
+var _ janet.Documented = (*TimeModule)(nil)
+
+func (t *TimeModule) Documentation() string {
+	return DOCS_TIME
+}
