@@ -2,6 +2,7 @@ package detect
 
 import (
 	"testing"
+	"time"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
@@ -17,10 +18,14 @@ func promptTest(
 	commands []Command,
 	setup ...interface{},
 ) {
-	events := sessions.NewSimulator().
-		Defaults().
-		Add(setup...).
-		Events()
+	s := sessions.NewSimulator().
+		Defaults()
+
+	for _, event := range setup {
+		s.AddTime(time.Second, event)
+	}
+
+	events := s.Events()
 
 	reported := make([]Command, 0)
 	handler := func(c Command) {
@@ -39,6 +44,15 @@ func promptTest(
 		case P.SizeMessage:
 			term.Resize(e.Vec())
 		}
+	}
+
+	// This seems silly, but ExecutedAt and CompletedAt are straightforward
+	// copies of the time stamps at each index and not worth testing
+	// individually
+	var zero time.Time
+	for i, command := range commands {
+		commands[i].ExecutedAt = zero.Add(time.Duration(command.Executed-1) * time.Second)
+		commands[i].CompletedAt = zero.Add(time.Duration(command.Completed-1) * time.Second)
 	}
 
 	require.True(t, d.havePrompt)
@@ -291,5 +305,112 @@ func TestPendingMulti(t *testing.T) {
 		"> ", "\n",
 		"> ", "baz\n",
 		"output\n",
+	)
+}
+
+func TestDirectory(t *testing.T) {
+	promptSingle(
+		t,
+		Command{
+			Directory: "test",
+			Text:      "command",
+			Input: []search.Selection{
+				{
+					From: geom.Vec2{R: 0, C: 2},
+					To:   geom.Vec2{R: 0, C: 9},
+				},
+			},
+			Output: search.Selection{
+				From: geom.Vec2{R: 1, C: 0},
+				To:   geom.Vec2{R: 3, C: 3},
+			},
+			promptedWrite: 3,
+			Prompted:      3,
+			Executed:      4,
+			Completed:     7,
+		},
+		// set the directory with OSC-7
+		"\033]7;test\033\\",
+		TEST_PROMPT, "command\n",
+		"foo\n",
+		"bar\n",
+		"baz\n",
+		TEST_PROMPT,
+	)
+}
+
+func TestDirectoryChange(t *testing.T) {
+	promptTest(
+		t,
+		[]Command{
+			{
+				Directory: "test",
+				Text:      "command",
+				Input: []search.Selection{
+					{
+						From: geom.Vec2{R: 0, C: 2},
+						To:   geom.Vec2{R: 0, C: 9},
+					},
+				},
+				Output: search.Selection{
+					From: geom.Vec2{R: 1, C: 0},
+					To:   geom.Vec2{R: 1, C: 3},
+				},
+				promptedWrite: 3,
+				Prompted:      3,
+				Executed:      4,
+				Completed:     5,
+			},
+			{
+				// still test, since dir didn't change until
+				// after command executed
+				Directory: "test",
+				Text:      "command",
+				Input: []search.Selection{
+					{
+						From: geom.Vec2{R: 2, C: 2},
+						To:   geom.Vec2{R: 2, C: 9},
+					},
+				},
+				Output: search.Selection{
+					From: geom.Vec2{R: 3, C: 0},
+					To:   geom.Vec2{R: 3, C: 3},
+				},
+				promptedWrite: 6,
+				Prompted:      6,
+				Executed:      7,
+				Completed:     9,
+			},
+			{
+				Directory: "test2",
+				Text:      "command",
+				Input: []search.Selection{
+					{
+						From: geom.Vec2{R: 4, C: 2},
+						To:   geom.Vec2{R: 4, C: 9},
+					},
+				},
+				Output: search.Selection{
+					From: geom.Vec2{R: 5, C: 0},
+					To:   geom.Vec2{R: 5, C: 3},
+				},
+				promptedWrite: 10,
+				Prompted:      10,
+				Executed:      11,
+				Completed:     12,
+			},
+		},
+		// set dir before first
+		"\033]7;test\033\\",
+		TEST_PROMPT, "command\n",
+		"foo\n",
+		TEST_PROMPT, "command\n",
+		// set dir during the second
+		"\033]7;test2\033\\",
+		"foo\n",
+		// occurred in test2
+		TEST_PROMPT, "command\n",
+		"foo\n",
+		TEST_PROMPT,
 	)
 }

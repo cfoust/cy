@@ -22,6 +22,9 @@ type Detector struct {
 	from       geom.Vec2
 	fromID     emu.WriteID
 	handler    CommandHandler
+
+	// The directory as provided by OSC-7 at the last prompt
+	lastDir string
 }
 
 func (d *Detector) getLine(

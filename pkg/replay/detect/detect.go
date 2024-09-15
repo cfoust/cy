@@ -27,6 +27,10 @@ func (d *Detector) Detect(
 		return
 	}
 
+	oldDir := d.lastDir
+	newDir := term.Directory()
+	d.lastDir = newDir
+
 	to, ok := flow.Coord(dirty.Print.Vec2)
 	if !ok {
 		return
@@ -63,6 +67,7 @@ func (d *Detector) Detect(
 		return
 	}
 
+	command.Directory = oldDir
 	command.Completed = nextPromptIndex - 1
 
 	ok = d.completeCommand(term, events, &command)
@@ -121,6 +126,7 @@ func (d *Detector) completeCommand(
 	}
 
 	command.Executed, ok = d.getIndex(events, inputID)
+	command.ExecutedAt = events[command.Executed].Stamp
 	if !ok {
 		return
 	}
@@ -128,6 +134,7 @@ func (d *Detector) completeCommand(
 	// If there's no output, the command.Completed might not be correct, we
 	// want to bound it by command.Executed
 	command.Completed = geom.Max(command.Executed, command.Completed)
+	command.CompletedAt = events[command.Completed].Stamp
 
 	ok = true
 	return

@@ -1,12 +1,18 @@
 package detect
 
 import (
+	"time"
+
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
 type Command struct {
+	// The directory in which this command was executed, as provided by
+	// OSC-7
+	Directory string
+
 	// The human-readable representation of this command as it appeared
 	// originally.
 	Text string
@@ -30,6 +36,11 @@ type Command struct {
 	Executed int
 	// The event at which the command finished executing (its output ended)
 	Completed int
+
+	// The time at which this command was executed
+	ExecutedAt time.Time
+	// The time at which this command finished executing
+	CompletedAt time.Time
 }
 
 func (c Command) InputStart() geom.Vec2 {
