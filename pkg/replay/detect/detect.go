@@ -155,6 +155,7 @@ func (d *Detector) getCommand(
 	}
 
 	// Ignore prompts "canceled" by pressing ctrl+c
+	// TODO(cfoust): 09/15/24 handle this in multiline commands, too
 	if strings.HasSuffix(first.String(), "^C") {
 		return
 	}
