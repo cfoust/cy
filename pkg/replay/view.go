@@ -352,6 +352,9 @@ func (r *Replay) View(state *tty.State) {
 
 	highlights := r.getSearchHighlights()
 
+	// Add in highlights provided with WithHighlights
+	highlights = append(highlights, r.providedHighlights...)
+
 	// Show the selection state
 	////////////////////////////
 	if r.isCopyMode() && r.isSelecting {

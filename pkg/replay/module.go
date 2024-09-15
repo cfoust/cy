@@ -38,6 +38,9 @@ type Replay struct {
 	// Options cannot be applied until after the initial seek is complete.
 	postSeekOptions []Option
 
+	// Highlights provided on creation with WithHighlights
+	providedHighlights []movement.Highlight
+
 	// whether the player is seeking
 	isSeeking bool
 	// seeking progress is not shown until it's taken longer than 120ms
@@ -198,6 +201,13 @@ func WithCopyMode(r *Replay) {
 			r.enterCopyMode()
 		},
 	)
+}
+
+// WithHighlights provides highlights to apply to the screen on creation.
+func WithHighlights(highlights []movement.Highlight) Option {
+	return func(r *Replay) {
+		r.providedHighlights = highlights
+	}
 }
 
 // WithFlow swaps to flow mode, if possible.

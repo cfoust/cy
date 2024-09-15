@@ -332,6 +332,7 @@ For example:
            {:type :replay
             :path borg
             :focus ((input 0) :from)
+            :highlights @[(input 0)]
             :alt-screen false}
            text]) (cmd/query)))
 
