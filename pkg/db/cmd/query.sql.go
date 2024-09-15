@@ -127,7 +127,7 @@ SELECT command.id,
 FROM commands command
   INNER JOIN sessions session ON command.session = session.id
   INNER JOIN selections selection ON command.id = selection.command
-ORDER BY executed_at ASC
+ORDER BY executed_at DESC
 `
 
 type ListCommandsRow struct {

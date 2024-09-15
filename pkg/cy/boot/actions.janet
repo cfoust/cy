@@ -319,26 +319,49 @@ For example:
              :main true
              :location (((cmd :input) 0) :from)))))
 
+(defn- ctrl-r-get-db-commands []
+  (map |(let [{:borg borg
+               :command {:text text
+                         :directory cwd
+                         :executed-at ts
+                         :input input}} $]
+          [[(string/replace-all "\n" "↵" text)
+            (time/format ts time/format/date-time)
+            cwd
+            "db"]
+           {:type :replay
+            :path borg
+            :focus ((input 0) :from)
+            :alt-screen false}
+           text]) (cmd/query)))
+
+(defn- ctrl-r-get-pane-commands [id]
+  (var [ok commands] (protect (cmd/commands id)))
+  (if (not ok) (set commands @[]))
+  (default commands @[])
+  (map |(let [{:text text
+               :input input
+               :directory cwd
+               :executed-at ts} $]
+          [[(string/replace-all "\n" "↵" text)
+            (time/format ts time/format/date-time)
+            cwd
+            "pane"]
+           {:type :scrollback
+            :focus ((input 0) :from)
+            :highlights @[(input 0)]
+            :id id}
+           text])
+       (reverse commands)))
+
 (key/action
   action/ctrl-r
   "Find a recent command and insert it into the current shell."
-  (as?-> (cmd/query) _
-         (map |(let [{:borg borg
-                      :command {:text text
-                                :directory cwd
-                                :executed-at ts
-                                :input input}} $]
-                 [[(string/replace-all "\n" "↵" text)
-                   (time/format ts time/format/date-time)
-                   cwd
-                   "db"]
-                  {:type :replay
-                   :path borg
-                   :focus ((input 0) :from)
-                   :alt-screen false}
-                  text]) _)
+  (as?-> (array/concat @[]
+                       (ctrl-r-get-pane-commands (pane/current))
+                       (ctrl-r-get-db-commands)) _
          (input/find _ :prompt "search: ctrl-r"
-                     :width 80
+                     :full true
                      :headers ["command" "timestamp" "directory" "source"])
          (pane/send-keys (pane/current) @[_])))
 
