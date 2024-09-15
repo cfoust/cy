@@ -414,3 +414,12 @@ func TestDirectoryChange(t *testing.T) {
 		TEST_PROMPT,
 	)
 }
+
+func TestIgnored(t *testing.T) {
+	promptTest(
+		t,
+		[]Command{},
+		TEST_PROMPT, "command^C\n",
+		TEST_PROMPT,
+	)
+}

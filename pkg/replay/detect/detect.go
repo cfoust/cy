@@ -1,6 +1,8 @@
 package detect
 
 import (
+	"strings"
+
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/sessions"
@@ -149,6 +151,11 @@ func (d *Detector) getCommand(
 	// If there's nothing beyond the prompt, we ignore the command
 	first, lineOk := d.getLine(term, from.R)
 	if !lineOk || from.C+1 >= len(first) {
+		return
+	}
+
+	// Ignore prompts "canceled" by pressing ctrl+c
+	if strings.HasSuffix(first.String(), "^C") {
 		return
 	}
 
