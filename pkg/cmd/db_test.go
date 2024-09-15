@@ -28,14 +28,11 @@ func openDB() (*DB, error) {
 	return newDB(db), nil
 }
 
-func TestCommandCreate(t *testing.T) {
-	db, err := openDB()
-	require.NoError(t, err)
-	defer db.Close()
-
-	ctx := context.Background()
+// createTestCommand creates a CommandEvent with the provided text. The other
+// fields are set to placeholder values.
+func createTestCommand(text string) CommandEvent {
 	command := detect.Command{
-		Text: "ls",
+		Text: text,
 		Input: []search.Selection{
 			{
 				From: geom.Vec2{R: 1, C: 1},
@@ -51,31 +48,34 @@ func TestCommandCreate(t *testing.T) {
 		Completed: 3,
 	}
 
-	err = db.CreateCommand(
-		ctx,
-		CommandEvent{
-			Timestamp: time.Now(),
-			Command:   command,
-			Borg:      "foo.borg",
-			Cwd:       "/tmp",
-		},
-	)
+	return CommandEvent{
+		Timestamp: time.Now(),
+		Command:   command,
+		Borg:      "foo.borg",
+		Cwd:       "/tmp",
+	}
+}
+
+func TestCommandCreate(t *testing.T) {
+	db, err := openDB()
+	require.NoError(t, err)
+	defer db.Close()
+
+	ctx := context.Background()
+
+	c1 := createTestCommand("ls")
+	c2 := createTestCommand("ls")
+	c2.Borg = "foo2.borg"
+
+	err = db.CreateCommand(ctx, c1)
 	require.NoError(t, err)
 
-	err = db.CreateCommand(
-		ctx,
-		CommandEvent{
-			Timestamp: time.Now(),
-			Command:   command,
-			Borg:      "foo2.borg",
-			Cwd:       "/tmp",
-		},
-	)
+	err = db.CreateCommand(ctx, c2)
 	require.NoError(t, err)
 
 	commands, err := db.ListCommands(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 2, len(commands))
-	require.Equal(t, command, commands[0].Command)
-	require.Equal(t, command, commands[1].Command)
+	require.Equal(t, c1.Command, commands[0].Command)
+	require.Equal(t, c2.Command, commands[1].Command)
 }
