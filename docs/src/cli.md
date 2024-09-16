@@ -71,7 +71,7 @@ The `janet` format prints the `(yield)`ed value as a valid Janet expression. Thi
 
 ### recall
 
-> For this to work, you must have [enabled command detection](/command-detection.md#enabling-command-detection) and `cy` must be installed on your system (ie available in your `$PATH`.)
+> For this to work, you must have [enabled command detection](/command-history.md#enabling-command-detection) and `cy` must be installed on your system (ie available in your `$PATH`.)
 
 `cy recall <reference>` prints the output of a command run in `cy` to standard output. In other words, if you run a command and later need to filter its output or pipe it to a file, you can do so without rerunning the command. `<reference>` is an identifier for a command run in `cy`.
 

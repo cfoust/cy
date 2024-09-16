@@ -40,6 +40,31 @@ Examples of valid colors:
 "0" # ANSI 16
 ```
 
+#### Command
+
+{{api cmd/query}} and {{api/commands}} return Commands, which are structs that look like this:
+
+```janet
+# ignore
+{:text "echo 'Hello, World!'" # The command that was run
+ :directory "/some/dir"
+ # When the command started executing
+ :executed-at {} # Time
+ # When it finished
+ :completed-at {} # Time
+ # These three properties only have internal meaning for now
+ :prompted 23
+ :executed 26
+ :completed 52
+ :pending false
+ # Input and output are Selections, which can currently only be passed to
+ # input/find previews. Refer to the standard library.
+ :input @[{:from (97 6)
+           :to (97 7)}]
+ :output {:from (98 0)
+          :to (98 42)}}
+```
+
 #### NodeID
 
 Many API functions have a parameter of type `NodeID`, which can be one of two values:

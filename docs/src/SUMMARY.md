@@ -12,17 +12,17 @@
 
 - [Starting cy](./quick-start/starting-cy.md)
 
-- [Changing the layout](./quick-start/the-layout.md)
-
 - [Entering replay mode](./quick-start/replay-mode.md)
 
 - [Creating a shell](./quick-start/new-shells.md)
 
-- [Creating a project](./quick-start/new-projects.md)
-
 - [Switching panes](./quick-start/switching.md)
 
+- [Creating a project](./quick-start/new-projects.md)
+
 - [Using the command palette](./quick-start/command-palette.md)
+
+- [Changing the layout](./quick-start/the-layout.md)
 
 # User guide
 
@@ -36,6 +36,20 @@
 
 - [Parameters](./parameters.md)
 
+- [Replay mode](./replay-mode.md)
+
+  - [Modes](./replay-mode/modes.md)
+
+- [Command history](./command-history.md)
+
+  - [ctrl+r](./command-history/ctrl+r.md)
+
+  - [Switching panes](./command-history/switching-panes.md)
+
+  - [Replay mode](./command-history/replay-mode.md)
+
+- [Search mode](./search-mode.md)
+
 - [Layouts](./layouts.md)
 
   - [Nodes](./layouts/nodes.md)
@@ -44,17 +58,10 @@
 
   - [Text styling](./layouts/styling.md)
 
-- [Replay mode](./replay-mode.md)
-
-  - [Modes](./replay-mode/modes.md)
-
-- [Search mode](./search-mode.md)
-
-- [Command detection](./command-detection.md)
-
 - [User input](./user-input.md)
 
   - [Fuzzy finding](./user-input/fuzzy-finding.md)
+
   - [Text](./user-input/text.md)
 
 - [Notifications](./notifications.md)
