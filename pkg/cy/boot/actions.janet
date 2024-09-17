@@ -356,6 +356,7 @@ For example:
 (def- ctrlr-input-options
   [:height 10
    :full true
+   :animated false
    :headers ["command" "timestamp" "directory" "source"]])
 
 (defn- ctrl-r-get-db-commands []

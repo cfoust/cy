@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -261,6 +262,13 @@ func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
 func (f *Fuzzy) View(state *tty.State) {
 	if f.anim != nil {
 		tty.Copy(geom.Vec2{}, state, f.anim.State())
+	} else {
+		size := state.Image.Size()
+		for row := 0; row < size.R; row++ {
+			for col := 0; col < size.C; col++ {
+				state.Image[row][col].Mode |= emu.AttrTransparent
+			}
+		}
 	}
 
 	if f.haveMoved {
@@ -307,13 +315,19 @@ func (f *Fuzzy) View(state *tty.State) {
 	if !f.isInline || windowBounds.Position.C < 0 || windowBounds.Position.R < 0 {
 		windowBounds.Size = screenSize
 		windowBounds.Position = geom.Vec2{}
-	}
 
-	if f.desiredSize.R > 0 {
-		windowBounds.Size.R = geom.Min(
-			f.desiredSize.R,
-			windowBounds.Size.R,
-		)
+		if f.desiredSize.R > 0 {
+			windowBounds.Size.R = geom.Min(
+				f.desiredSize.R,
+				windowBounds.Size.R,
+			)
+		}
+
+		windowBounds.Position.R = 0
+
+		if f.isUp {
+			windowBounds.Position.R = screenSize.R - windowBounds.Size.R
+		}
 	}
 
 	f.textInput.Width = windowBounds.Size.C - 2
