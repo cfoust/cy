@@ -2,7 +2,7 @@
 
 {{story cast cy/replay}}
 
-One of `cy`'s main features is the ability to record, play back, and search through everything that happens in your terminal sessions. You can invoke **replay mode** at any time by typing the key sequence {{bind :root ctrl+a p}} by default or by scrolling up with the mouse if the pane is connected to a shell.
+Using **replay mode** you can record, play back, and search through everything that happens in your terminal sessions. You can invoke replay mode at any time by typing the key sequence {{bind :root ctrl+a p}} by default or by scrolling up with the mouse if the pane is connected to a shell.
 
 ## Recording to disk
 

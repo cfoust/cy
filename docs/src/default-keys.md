@@ -76,6 +76,6 @@ Movements in copy mode are intended to be as close to `vim` as possible, but man
 
 ## Search mode
 
-Search mode has its own binding scope.
+Search mode has its own binding scope, `:search`.
 
 {{keys search general}}

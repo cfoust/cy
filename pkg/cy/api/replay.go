@@ -262,7 +262,6 @@ func (m *ReplayModule) BigWordEndBackward(context interface{}) error {
 }
 
 type OpenBorgParams struct {
-	Path       string
 	AltScreen  *bool
 	Focus      *geom.Vec2
 	Highlights *[]search.Selection

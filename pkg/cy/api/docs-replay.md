@@ -120,15 +120,25 @@ Jump to the cell before `char` after the cursor on the current line.
 
 # doc: Open
 
-(replay/open id)
+(replay/open id &named copy focus alt-screen)
 
 Enter replay mode for pane `id` (which is a [NodeID](/api.md#nodeid)).
 
+This function supports a range of named parameters that adjust its functionality:
+
+- `:alt-screen` (boolean): If `true`, attempt to swap to the terminal's alt screen.
+- `:focus` (vec2): A coordinate in the reference frame of the terminal. These cannot be derived from scratch; typically this comes from a [Command](/api.md#command).
+
 # doc: OpenFile
 
-(replay/open-file group path)
+(replay/open-file group path &named focus alt-screen highlights)
 
 Open the `.borg` file found at `path` in a new replay window in `group`.
+
+This function supports a range of named parameters that adjust its functionality:
+
+- `:focus` and `:alt-screen` from {{api replay/open}}
+- `:highlights` (selection): Just like `:focus`, but is a struct with `:from` and `:to` fields. For the time being, this is not practical to derive by hand. See examples from the standard library.
 
 For example:
 
