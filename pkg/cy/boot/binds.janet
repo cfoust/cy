@@ -23,6 +23,7 @@
                    [prefix "x"] action/remove-current-pane
                    [prefix "X"] action/kill-current-pane
                    [prefix "C"] action/jump-command
+                   [prefix "f"] action/jump-history-command
                    [prefix ":"] action/jump-screen-lines
                    [prefix "j"] action/new-shell
                    [prefix "n"] action/new-project

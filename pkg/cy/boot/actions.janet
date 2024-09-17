@@ -282,7 +282,7 @@ For example:
   (as?-> (path/glob (path/join [(param/get :data-directory) "*.borg"])) _
          (map |(tuple $ {:type :replay :path $} $) _)
          (input/find _ :prompt "search: log file")
-         (replay/open-file :root _)
+         (replay/open-file (group/mkdir :root "/borg") _)
          (pane/attach _)))
 
 (defn- get-pane-commands [id result-func]
@@ -312,59 +312,12 @@ For example:
   (as?-> (group/leaves :root) _
          (mapcat |(get-pane-commands $ (fn [index cmd] [$ cmd])) _)
          (input/find _ :prompt "search: command")
-         (let [[id cmd] _]
+         (let [[id {:input [{:from from}]}] _]
            (pane/attach id)
            (replay/open
              id
-             :main true
-             :location (((cmd :input) 0) :from)))))
-
-(defn- ctrl-r-get-db-commands []
-  (map |(let [{:borg borg
-               :command {:text text
-                         :directory cwd
-                         :executed-at ts
-                         :input input}} $]
-          [[(string/replace-all "\n" "↵" text)
-            (time/format ts time/format/date-time)
-            cwd
-            "db"]
-           {:type :replay
-            :path borg
-            :focus ((input 0) :from)
-            :highlights @[(input 0)]
-            :alt-screen false}
-           text]) (cmd/query)))
-
-(defn- ctrl-r-get-pane-commands [id]
-  (var [ok commands] (protect (cmd/commands id)))
-  (if (not ok) (set commands @[]))
-  (default commands @[])
-  (map |(let [{:text text
-               :input input
-               :directory cwd
-               :executed-at ts} $]
-          [[(string/replace-all "\n" "↵" text)
-            (time/format ts time/format/date-time)
-            cwd
-            "pane"]
-           {:type :scrollback
-            :focus ((input 0) :from)
-            :highlights @[(input 0)]
-            :id id}
-           text])
-       (reverse commands)))
-
-(key/action
-  action/ctrl-r
-  "Find a recent command and insert it into the current shell."
-  (as?-> (array/concat @[]
-                       (ctrl-r-get-pane-commands (pane/current))
-                       (ctrl-r-get-db-commands)) _
-         (input/find _ :prompt "search: ctrl-r"
-                     :full true
-                     :headers ["command" "timestamp" "directory" "source"])
-         (pane/send-keys (pane/current) @[_])))
+             :alt-screen false
+             :focus from))))
 
 (key/action
   action/recall-command
@@ -398,4 +351,69 @@ For example:
   "Search all recorded .borg files for a pattern."
   (as?-> (input/text "search: recorded sessions") _
          (search/new (group/mkdir :root "/search") _)
+         (pane/attach _)))
+
+(defn- ctrl-r-get-db-commands []
+  (map |(let [{:borg borg
+               :command {:text text
+                         :directory cwd
+                         :executed-at ts
+                         :input input}} $
+              {:command cmd} $]
+          [[(string/replace-all "\n" "↵" text)
+            (time/format ts time/format/date-time)
+            cwd
+            "db"]
+           {:type :replay
+            :path borg
+            :focus ((input 0) :from)
+            :highlights @[(input 0)]
+            :alt-screen false}
+           $]) (cmd/query)))
+
+(defn- ctrl-r-get-pane-commands [id]
+  (var [ok commands] (protect (cmd/commands id)))
+  (if (not ok) (set commands @[]))
+  (default commands @[])
+  (map |(let [{:text text
+               :input input
+               :directory cwd
+               :executed-at ts} $]
+          [[(string/replace-all "\n" "↵" text)
+            (time/format ts time/format/date-time)
+            cwd
+            "pane"]
+           {:type :scrollback
+            :focus ((input 0) :from)
+            :highlights @[(input 0)]
+            :id id}
+           {:command $}])
+       (reverse commands)))
+
+(key/action
+  action/ctrl-r
+  "Find a recent command and insert it into the current shell."
+  (as?-> (array/concat @[]
+                       (ctrl-r-get-pane-commands (pane/current))
+                       (ctrl-r-get-db-commands)) _
+         (input/find _ :prompt "search: ctrl-r"
+                     :full true
+                     :headers ["command" "timestamp" "directory" "source"])
+         (let [{:command {:text text}} _]
+           (pane/send-keys (pane/current) @[text]))))
+
+(key/action
+  action/jump-history-command
+  "Find a command and open its .borg file."
+  (as?-> (ctrl-r-get-db-commands) _
+         (input/find _ :prompt "search: command (borg)"
+                     :full true
+                     :headers ["command" "timestamp" "directory" "source"])
+         (let [{:borg borg
+                :command {:input [{:from input}]}} _]
+           (replay/open-file
+             (group/mkdir :root "/borg")
+             borg
+             :focus input
+             :alt-screen false))
          (pane/attach _)))

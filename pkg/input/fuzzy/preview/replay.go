@@ -22,49 +22,62 @@ type ReplayType struct {
 	Highlights *[]search.Selection
 }
 
-func NewReplay(
-	ctx context.Context,
-	args ReplayType,
-) mux.Screen {
-	var options []replay.Option
-
-	if args.AltScreen != nil && !*args.AltScreen {
+func ParamsToReplayOptions(
+	altScreen *bool,
+	focus *geom.Vec2,
+	highlights *[]search.Selection,
+) (options []replay.Option) {
+	if altScreen != nil && !*altScreen {
 		options = append(
 			options,
 			replay.WithFlow,
 		)
 	}
 
-	if args.Focus != nil {
+	if focus != nil {
 		options = append(
 			options,
-			replay.WithLocation(*args.Focus),
+			replay.WithLocation(*focus),
 		)
 	}
 
-	if args.Highlights != nil {
-		highlights := make([]movement.Highlight, 0, len(*args.Highlights))
-		render := taro.NewRenderer()
-		fgColor := render.ConvertLipgloss(lipgloss.Color("1"))
-		bgColor := render.ConvertLipgloss(lipgloss.Color("14"))
+	if highlights == nil {
+		return
+	}
 
-		for _, highlight := range *args.Highlights {
-			highlights = append(
-				highlights,
-				movement.Highlight{
-					From: highlight.From,
-					To:   highlight.To,
-					FG:   fgColor,
-					BG:   bgColor,
-				},
-			)
-		}
+	fixedHighlights := make([]movement.Highlight, 0, len(*highlights))
+	render := taro.NewRenderer()
+	fgColor := render.ConvertLipgloss(lipgloss.Color("1"))
+	bgColor := render.ConvertLipgloss(lipgloss.Color("14"))
 
-		options = append(
-			options,
-			replay.WithHighlights(highlights),
+	for _, highlight := range *highlights {
+		fixedHighlights = append(
+			fixedHighlights,
+			movement.Highlight{
+				From: highlight.From,
+				To:   highlight.To,
+				FG:   fgColor,
+				BG:   bgColor,
+			},
 		)
 	}
+
+	options = append(
+		options,
+		replay.WithHighlights(fixedHighlights),
+	)
+	return
+}
+
+func NewReplay(
+	ctx context.Context,
+	args ReplayType,
+) mux.Screen {
+	options := ParamsToReplayOptions(
+		args.AltScreen,
+		args.Focus,
+		args.Highlights,
+	)
 
 	return loader.New(
 		ctx,

@@ -6,11 +6,13 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/input/fuzzy/preview"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/replay/loader"
 	"github.com/cfoust/cy/pkg/replay/replayable"
+	"github.com/cfoust/cy/pkg/sessions/search"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 )
@@ -259,16 +261,33 @@ func (m *ReplayModule) BigWordEndBackward(context interface{}) error {
 	return m.sendAction(context, replay.ActionBigWordEndBackward)
 }
 
+type OpenBorgParams struct {
+	Path       string
+	AltScreen  *bool
+	Focus      *geom.Vec2
+	Highlights *[]search.Selection
+}
+
 func (m *ReplayModule) OpenFile(
 	groupId *janet.Value,
 	path string,
+	named *janet.Named[OpenBorgParams],
 ) (tree.NodeID, error) {
 	defer groupId.Free()
+
+	params := named.Values()
 
 	group, err := resolveGroup(m.Tree, groupId)
 	if err != nil {
 		return 0, err
 	}
+
+	options := preview.ParamsToReplayOptions(
+		params.AltScreen,
+		params.Focus,
+		params.Highlights,
+	)
+	options = append(options, replay.WithNoQuit)
 
 	ctx := m.Lifetime.Ctx()
 	replay := loader.New(
@@ -276,7 +295,7 @@ func (m *ReplayModule) OpenFile(
 		path,
 		m.TimeBinds,
 		m.CopyBinds,
-		replay.WithNoQuit,
+		options...,
 	)
 
 	pane := group.NewPane(ctx, replay)
@@ -284,9 +303,9 @@ func (m *ReplayModule) OpenFile(
 }
 
 type ReplayParams struct {
-	Main     bool
-	Copy     bool
-	Location *geom.Vec2
+	Copy      bool
+	AltScreen *bool
+	Focus     *geom.Vec2
 }
 
 func (m *ReplayModule) Open(
@@ -300,21 +319,15 @@ func (m *ReplayModule) Open(
 		return err
 	}
 
-	var options []replay.Option
-
 	params := named.Values()
-	if params.Main {
-		options = append(options, replay.WithFlow)
-	}
+	options := preview.ParamsToReplayOptions(
+		params.AltScreen,
+		params.Focus,
+		nil,
+	)
 
 	if params.Copy {
 		options = append(options, replay.WithCopyMode)
-	}
-
-	if params.Location != nil {
-		options = append(options, replay.WithLocation(
-			*params.Location,
-		))
 	}
 
 	r, ok := pane.Screen().(*replayable.Replayable)
