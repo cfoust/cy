@@ -353,6 +353,11 @@ For example:
          (search/new (group/mkdir :root "/search") _)
          (pane/attach _)))
 
+(def- ctrlr-input-options
+  [:height 10
+   :full true
+   :headers ["command" "timestamp" "directory" "source"]])
+
 (defn- ctrl-r-get-db-commands []
   (map |(let [{:borg borg
                :command {:text text
@@ -397,8 +402,7 @@ For example:
                        (ctrl-r-get-pane-commands (pane/current))
                        (ctrl-r-get-db-commands)) _
          (input/find _ :prompt "search: ctrl-r"
-                     :full true
-                     :headers ["command" "timestamp" "directory" "source"])
+                     ;ctrlr-input-options)
          (let [{:command {:text text}} _]
            (pane/send-keys (pane/current) @[text]))))
 
@@ -407,8 +411,7 @@ For example:
   "Find a command and open its .borg file."
   (as?-> (ctrl-r-get-db-commands) _
          (input/find _ :prompt "search: command (borg)"
-                     :full true
-                     :headers ["command" "timestamp" "directory" "source"])
+                     ;ctrlr-input-options)
          (let [{:borg borg
                 :command {:input [{:from input}]}} _]
            (replay/open-file

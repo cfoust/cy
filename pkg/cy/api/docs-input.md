@@ -15,6 +15,7 @@ This function supports a range of named parameters that adjust its functionality
 - `:prompt` (string): The text that will be shown beneath the search window.
 - `:reverse` (boolean): Display from the top of the screen (rather than the bottom.)
 - `:width` (int): Set the width of the match window (if not in full screen mode.)
+- `:height` (int): Set the maximum height of the match window. This applies bth in full screen and floating mode.
 
 # doc: Text
 

@@ -11,7 +11,7 @@ This metadata is stored in an SQLite database called `cmd.db` (in your [:data-di
 
 It uses this information to provide a range of functionality:
 
-- [A replacement for <kbd>ctrl+r</kbd>](/command-history/ctrl+r.md) that lets you see the context of all of the commands you have ever run
+- [A replacement for <kbd>ctrl+r</kbd>](/command-history/ctrl+r.md) that lets you see the context of a command when it was executed
 - [Quick shortcuts for jumping to the output of a command](/command-history/switching-panes.md), both in an existing shell session and one that was previously recorded
 - Additional [features in replay mode](/command-history/replay-mode.md) for jumping between commands
 

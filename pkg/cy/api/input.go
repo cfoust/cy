@@ -29,6 +29,7 @@ type FuzzyParams struct {
 	Animated      *bool
 	Headers       *[]string
 	Width         *int
+	Height        *int
 }
 
 func (i *InputModule) Find(
@@ -72,13 +73,23 @@ func (i *InputModule) Find(
 				state.Image.Size(),
 			),
 		)
+	}
+
+	if params.Width != nil || params.Height != nil {
+		size := geom.Size{}
 
 		if params.Width != nil {
-			settings = append(
-				settings,
-				fuzzy.WithWidth(*params.Width),
-			)
+			size.C = *params.Width
 		}
+
+		if params.Height != nil {
+			size.R = *params.Height
+		}
+
+		settings = append(
+			settings,
+			fuzzy.WithSize(size),
+		)
 	}
 
 	if params.Reverse {

@@ -68,7 +68,7 @@ type Fuzzy struct {
 	preview         mux.Screen
 	previewLifetime util.Lifetime
 
-	floatingWidth int
+	desiredSize geom.Size
 }
 
 var _ taro.Model = (*Fuzzy)(nil)
@@ -219,10 +219,18 @@ func WithSticky(ctx context.Context, f *Fuzzy) {
 	f.isSticky = true
 }
 
-// WithWidth sets the width of the Fuzzy window, if not full screen.
-func WithWidth(width int) Setting {
+// WithSize sets the desired size of the Fuzzy window. The width is only used
+// if Fuzzy is not in full screen mode. A value of zero for either property
+// implies no constraints.
+func WithSize(size geom.Size) Setting {
 	return func(ctx context.Context, f *Fuzzy) {
-		f.floatingWidth = geom.Max(1, width)
+		if size.R != 0 {
+			f.desiredSize.R = geom.Max(size.R, 1)
+		}
+
+		if size.C != 0 {
+			f.desiredSize.C = geom.Max(size.C, 1)
+		}
 	}
 }
 
@@ -288,13 +296,15 @@ func newFuzzy(
 	ti.Prompt = ""
 
 	f := &Fuzzy{
-		Lifetime:      util.NewLifetime(ctx),
-		render:        taro.NewRenderer(),
-		options:       options,
-		selected:      0,
-		textInput:     ti,
-		isUp:          true,
-		floatingWidth: 50,
+		Lifetime:  util.NewLifetime(ctx),
+		render:    taro.NewRenderer(),
+		options:   options,
+		selected:  0,
+		textInput: ti,
+		isUp:      true,
+		desiredSize: geom.Size{
+			C: 50,
+		},
 	}
 
 	for _, setting := range settings {

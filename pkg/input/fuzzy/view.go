@@ -276,7 +276,7 @@ func (f *Fuzzy) View(state *tty.State) {
 		Position: f.location,
 		Size: geom.Vec2{
 			R: screenSize.R - f.location.R,
-			C: f.floatingWidth,
+			C: f.desiredSize.C,
 		},
 	}
 
@@ -286,6 +286,13 @@ func (f *Fuzzy) View(state *tty.State) {
 			C: f.location.C,
 		}
 		windowBounds.Size.R = f.location.R
+	}
+
+	if f.desiredSize.R > 0 {
+		windowBounds.Size.R = geom.Min(
+			f.desiredSize.R,
+			windowBounds.Size.R,
+		)
 	}
 
 	bottomRight := windowBounds.BottomRight()
@@ -300,6 +307,13 @@ func (f *Fuzzy) View(state *tty.State) {
 	if !f.isInline || windowBounds.Position.C < 0 || windowBounds.Position.R < 0 {
 		windowBounds.Size = screenSize
 		windowBounds.Position = geom.Vec2{}
+	}
+
+	if f.desiredSize.R > 0 {
+		windowBounds.Size.R = geom.Min(
+			f.desiredSize.R,
+			windowBounds.Size.R,
+		)
 	}
 
 	f.textInput.Width = windowBounds.Size.C - 2
