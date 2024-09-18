@@ -73,6 +73,7 @@ func (s *Search) setSelected(index int) taro.Cmd {
 		s.copyBinds,
 		replay.WithNoQuit,
 		replay.WithResults(result.Results),
+		replay.WithParams(s.params),
 	)
 	r.Resize(s.inner.Size)
 	s.replay = r

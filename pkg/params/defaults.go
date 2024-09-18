@@ -75,6 +75,11 @@ type defaultParams struct {
 	ReplayStatusBarFg *style.Color
 	// The background [color](/api.md#color) of the status bar in replay mode.
 	ReplayStatusBarBg *style.Color
+
+	// The foreground [color](/api.md#color) of the status bar in search mode.
+	SearchStatusBarFg *style.Color
+	// The background [color](/api.md#color) of the status bar in search mode.
+	SearchStatusBarBg *style.Color
 }
 
 var (
@@ -92,5 +97,8 @@ var (
 		ReplayVisualFg:    style.NewColor("10"),
 		ReplayStatusBarFg: style.NewColor("15"),
 		ReplayStatusBarBg: style.NewColor("8"),
+
+		SearchStatusBarFg: style.NewColor("15"),
+		SearchStatusBarBg: style.NewColor("4"),
 	}
 )

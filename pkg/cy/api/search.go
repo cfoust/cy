@@ -117,6 +117,7 @@ func (m *SearchModule) New(
 			Files:   files,
 			Workers: numWorkers,
 		}),
+		search.WithParams(group.Params()),
 	)
 
 	pane := group.NewPane(ctx, s)

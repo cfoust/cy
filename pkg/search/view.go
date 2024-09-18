@@ -12,8 +12,8 @@ import (
 
 func (s *Search) getBarStyle() lipgloss.Style {
 	return s.render.NewStyle().
-		Background(lipgloss.Color("4")).
-		Foreground(lipgloss.Color("15"))
+		Background(s.params.SearchStatusBarBg()).
+		Foreground(s.params.SearchStatusBarFg())
 }
 
 // renderBar renders a status bar with a left and right side. The left side
@@ -106,7 +106,7 @@ func (s *Search) renderProgressBar(state *tty.State) {
 func (s *Search) renderInput(state *tty.State) {
 	barStyle := s.getBarStyle()
 	s.input.Cursor.Style = s.render.NewStyle().
-		Background(lipgloss.Color("15"))
+		Background(s.params.SearchStatusBarFg())
 	s.input.TextStyle = barStyle
 	s.input.Cursor.TextStyle = barStyle
 

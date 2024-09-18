@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -15,6 +16,7 @@ import (
 
 type Search struct {
 	util.Lifetime
+	params         *params.Parameters
 	render         *taro.Renderer
 	initialRequest *Request
 	size           geom.Size
@@ -66,6 +68,13 @@ func WithRequest(req Request) Option {
 	}
 }
 
+// WithParams provides parameters this Replay will use for rendering.
+func WithParams(params *params.Parameters) Option {
+	return func(s *Search) {
+		s.params = params
+	}
+}
+
 func newSearch(
 	ctx context.Context,
 	searchBinds *bind.Engine[bind.Action],
@@ -79,6 +88,7 @@ func newSearch(
 
 	return &Search{
 		Lifetime:    util.NewLifetime(ctx),
+		params:      params.New(),
 		render:      taro.NewRenderer(),
 		searchBinds: searchBinds,
 		timeBinds:   timeBinds,

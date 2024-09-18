@@ -22,6 +22,8 @@ const (
 	ParamReplayStatusBarFg = "replay-status-bar-fg"
 	ParamReplayTimeFg      = "replay-time-fg"
 	ParamReplayVisualFg    = "replay-visual-fg"
+	ParamSearchStatusBarBg = "search-status-bar-bg"
+	ParamSearchStatusBarFg = "search-status-bar-fg"
 	ParamSkipInput         = "---skip-input"
 	ParamTimestampFormat   = "timestamp-format"
 )
@@ -260,6 +262,42 @@ func (p *Parameters) SetReplayVisualFg(value *style.Color) {
 	p.set(ParamReplayVisualFg, value)
 }
 
+func (p *Parameters) SearchStatusBarBg() *style.Color {
+	value, ok := p.Get(ParamSearchStatusBarBg)
+	if !ok {
+		return defaults.SearchStatusBarBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.SearchStatusBarBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetSearchStatusBarBg(value *style.Color) {
+	p.set(ParamSearchStatusBarBg, value)
+}
+
+func (p *Parameters) SearchStatusBarFg() *style.Color {
+	value, ok := p.Get(ParamSearchStatusBarFg)
+	if !ok {
+		return defaults.SearchStatusBarFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.SearchStatusBarFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetSearchStatusBarFg(value *style.Color) {
+	p.set(ParamSearchStatusBarFg, value)
+}
+
 func (p *Parameters) SkipInput() bool {
 	value, ok := p.Get(ParamSkipInput)
 	if !ok {
@@ -324,6 +362,10 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamReplayVisualFg:
 		return true
+	case ParamSearchStatusBarBg:
+		return true
+	case ParamSearchStatusBarFg:
+		return true
 	case ParamSkipInput:
 		return true
 	case ParamTimestampFormat:
@@ -361,6 +403,10 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.ReplayTimeFg, true
 	case ParamReplayVisualFg:
 		return defaults.ReplayVisualFg, true
+	case ParamSearchStatusBarBg:
+		return defaults.SearchStatusBarBg, true
+	case ParamSearchStatusBarFg:
+		return defaults.SearchStatusBarFg, true
 	case ParamSkipInput:
 		return defaults.skipInput, true
 	case ParamTimestampFormat:
@@ -620,6 +666,44 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
+	case ParamSearchStatusBarBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamSearchStatusBarBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :search-status-bar-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamSearchStatusBarFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamSearchStatusBarFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :search-status-bar-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
 	case ParamSkipInput:
 		if !janetOk {
 			realValue, ok := value.(bool)
@@ -721,6 +805,16 @@ func init() {
 			Name:      "replay-visual-fg",
 			Docstring: "The [color](/api.md#color) used to represent visual mode.",
 			Default:   defaults.ReplayVisualFg,
+		},
+		{
+			Name:      "search-status-bar-bg",
+			Docstring: "The background [color](/api.md#color) of the status bar in search mode.",
+			Default:   defaults.SearchStatusBarBg,
+		},
+		{
+			Name:      "search-status-bar-fg",
+			Docstring: "The foreground [color](/api.md#color) of the status bar in search mode.",
+			Default:   defaults.SearchStatusBarFg,
 		},
 		{
 			Name:      "timestamp-format",
