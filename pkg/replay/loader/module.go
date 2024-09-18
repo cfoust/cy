@@ -95,8 +95,10 @@ func (l *Loader) View(state *tty.State) {
 	size := state.Image.Size()
 	width := geom.Min(size.C, 50)
 
+	p := l.params
+
 	if l.err != nil {
-		borderColor = lipgloss.Color("1")
+		borderColor = p.ColorError().Color
 		boxContents = lipgloss.JoinVertical(
 			lipgloss.Left,
 			l.render.NewStyle().
@@ -108,7 +110,7 @@ func (l *Loader) View(state *tty.State) {
 				Render(l.err.Error()),
 		)
 	} else if l.replay == nil {
-		borderColor = lipgloss.Color("4")
+		borderColor = p.ColorInfo().Color
 		boxContents = lipgloss.JoinVertical(
 			lipgloss.Left,
 			l.render.NewStyle().

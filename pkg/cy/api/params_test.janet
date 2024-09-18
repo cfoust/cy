@@ -28,3 +28,9 @@
 
 (test "nil if doesn't exist"
       (assert (= nil (param/get :foo))))
+
+(test "param/set-many"
+      (param/set-many :root
+                      :test 1
+                      :test2 2)
+      (assert (= 2 (param/get :test2))))

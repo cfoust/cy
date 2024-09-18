@@ -52,6 +52,29 @@ For example:
                  (def [binding func] $)
                  (tuple 'key/bind scope binding func :tag tag)) _)))
 
+(defmacro param/set-many
+  ````Set many params at once with the same target.
+
+For example:
+```janet
+(param/set-many :root
+               :replay-play-bg "#ff0000"
+               :replay-time-bg "#00ff00")
+```
+````
+  [target & body]
+
+  (when (not (= (% (length body) 2) 0))
+    (error "param/set-many requires an even number of arguments"))
+
+  (as?-> body _
+         (length _)
+         (range 0 _ 2)
+         (map |(tuple ;(array/slice body $ (+ $ 2))) _)
+         (map |(do
+                 (def [key value] $)
+                 (tuple 'param/set target key value)) _)))
+
 (key/action
   action/command-palette
   "Open the command palette."

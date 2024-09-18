@@ -8,6 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	T "github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay/replayable"
 
 	"github.com/stretchr/testify/require"
@@ -51,7 +52,7 @@ func TestScopes(t *testing.T) {
 		stream.CmdOptions{
 			Command: "/bin/bash",
 		},
-		"",
+		params.New(),
 		server.timeBinds,
 		server.copyBinds,
 	)
