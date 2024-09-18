@@ -58,21 +58,22 @@ type defaultParams struct {
 	/////////////////
 
 	// The format for all timestamps shown in cy. This uses Go's
-	// time.Layout format described here: https://pkg.go.dev/time#Layout.
+	// time.Layout format described
+	// [here](https://pkg.go.dev/time#Layout).
 	TimestampFormat string
 
-	// The color used to represent time mode.
+	// The [color](/api.md#color) used to represent time mode.
 	ReplayTimeFg *style.Color
-	// The color used in time mode when the player is playing.
+	// The [color](/api.md#color) used in time mode when the player is playing.
 	ReplayPlayFg *style.Color
-	// The color used to represent copy mode.
+	// The [color](/api.md#color) used to represent copy mode.
 	ReplayCopyFg *style.Color
-	// The color used to represent visual mode.
+	// The [color](/api.md#color) used to represent visual mode.
 	ReplayVisualFg *style.Color
 
-	// The foreground color of the status bar in replay mode.
+	// The foreground [color](/api.md#color) of the status bar in replay mode.
 	ReplayStatusBarFg *style.Color
-	// The background color of the status bar in replay mode.
+	// The background [color](/api.md#color) of the status bar in replay mode.
 	ReplayStatusBarBg *style.Color
 }
 

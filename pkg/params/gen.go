@@ -109,6 +109,15 @@ func (p *Parameters) isDefault(key string) bool {
 	return false
 }
 
+func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
+	switch key {
+{{range .}}case {{.Constant}}:
+		return defaults.{{.Field}}, true
+{{end}}
+	}
+	return nil, false
+}
+
 func (p *Parameters) setDefault(key string, value interface{}) error {
 		janetValue, janetOk := value.(*janet.Value)
 	switch key {

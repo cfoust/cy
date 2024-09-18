@@ -360,6 +360,7 @@ For example:
    :headers ["command" "timestamp" "directory" "source"]])
 
 (defn- ctrl-r-get-db-commands []
+  (def format (param/get :timestamp-format))
   (map |(let [{:borg borg
                :command {:text text
                          :directory cwd
@@ -367,7 +368,7 @@ For example:
                          :input input}} $
               {:command cmd} $]
           [[(string/replace-all "\n" "↵" text)
-            (time/format ts time/format/date-time)
+            (time/format ts format)
             cwd
             "db"]
            {:type :replay
@@ -378,6 +379,7 @@ For example:
            $]) (cmd/query)))
 
 (defn- ctrl-r-get-pane-commands [id]
+  (def format (param/get :timestamp-format))
   (var [ok commands] (protect (cmd/commands id)))
   (if (not ok) (set commands @[]))
   (default commands @[])
@@ -386,7 +388,7 @@ For example:
                :directory cwd
                :executed-at ts} $]
           [[(string/replace-all "\n" "↵" text)
-            (time/format ts time/format/date-time)
+            (time/format ts format)
             cwd
             "pane"]
            {:type :scrollback

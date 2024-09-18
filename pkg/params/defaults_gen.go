@@ -333,6 +333,43 @@ func (p *Parameters) isDefault(key string) bool {
 	return false
 }
 
+func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
+	switch key {
+	case ParamAnimate:
+		return defaults.Animate, true
+	case ParamAnimations:
+		return defaults.Animations, true
+	case ParamDataDirectory:
+		return defaults.DataDirectory, true
+	case ParamDefaultFrame:
+		return defaults.DefaultFrame, true
+	case ParamDefaultShell:
+		return defaults.DefaultShell, true
+	case ParamNumSearchWorkers:
+		return defaults.NumSearchWorkers, true
+	case ParamRemovePaneOnExit:
+		return defaults.RemovePaneOnExit, true
+	case ParamReplayCopyFg:
+		return defaults.ReplayCopyFg, true
+	case ParamReplayPlayFg:
+		return defaults.ReplayPlayFg, true
+	case ParamReplayStatusBarBg:
+		return defaults.ReplayStatusBarBg, true
+	case ParamReplayStatusBarFg:
+		return defaults.ReplayStatusBarFg, true
+	case ParamReplayTimeFg:
+		return defaults.ReplayTimeFg, true
+	case ParamReplayVisualFg:
+		return defaults.ReplayVisualFg, true
+	case ParamSkipInput:
+		return defaults.skipInput, true
+	case ParamTimestampFormat:
+		return defaults.TimestampFormat, true
+
+	}
+	return nil, false
+}
+
 func (p *Parameters) setDefault(key string, value interface{}) error {
 	janetValue, janetOk := value.(*janet.Value)
 	switch key {
@@ -657,37 +694,37 @@ func init() {
 		},
 		{
 			Name:      "replay-copy-fg",
-			Docstring: "The color used to represent copy mode.",
+			Docstring: "The [color](/api.md#color) used to represent copy mode.",
 			Default:   defaults.ReplayCopyFg,
 		},
 		{
 			Name:      "replay-play-fg",
-			Docstring: "The color used in time mode when the player is playing.",
+			Docstring: "The [color](/api.md#color) used in time mode when the player is playing.",
 			Default:   defaults.ReplayPlayFg,
 		},
 		{
 			Name:      "replay-status-bar-bg",
-			Docstring: "The background color of the status bar in replay mode.",
+			Docstring: "The background [color](/api.md#color) of the status bar in replay mode.",
 			Default:   defaults.ReplayStatusBarBg,
 		},
 		{
 			Name:      "replay-status-bar-fg",
-			Docstring: "The foreground color of the status bar in replay mode.",
+			Docstring: "The foreground [color](/api.md#color) of the status bar in replay mode.",
 			Default:   defaults.ReplayStatusBarFg,
 		},
 		{
 			Name:      "replay-time-fg",
-			Docstring: "The color used to represent time mode.",
+			Docstring: "The [color](/api.md#color) used to represent time mode.",
 			Default:   defaults.ReplayTimeFg,
 		},
 		{
 			Name:      "replay-visual-fg",
-			Docstring: "The color used to represent visual mode.",
+			Docstring: "The [color](/api.md#color) used to represent visual mode.",
 			Default:   defaults.ReplayVisualFg,
 		},
 		{
 			Name:      "timestamp-format",
-			Docstring: "The format for all timestamps shown in cy. This uses Go's\ntime.Layout format described here: https://pkg.go.dev/time#Layout.",
+			Docstring: "The format for all timestamps shown in cy. This uses Go's\ntime.Layout format described\n[here](https://pkg.go.dev/time#Layout).",
 			Default:   defaults.TimestampFormat,
 		},
 	}

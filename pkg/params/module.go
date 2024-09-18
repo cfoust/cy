@@ -51,7 +51,7 @@ func (p *Parameters) Get(key string) (value interface{}, ok bool) {
 		current = parent
 	}
 
-	return nil, false
+	return p.getDefault(key)
 }
 
 func (p *Parameters) NewChild() *Parameters {
