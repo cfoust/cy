@@ -77,6 +77,19 @@ func TestCommandCreate(t *testing.T) {
 	commands, err := db.ListCommands(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 2, len(commands))
+
+	// zero out timestamps for comparison. this is because time.Time's
+	// internal representation is not stable across
+	// serialization/deserialization
+	c1.ExecutedAt = time.Time{}
+	c1.CompletedAt = time.Time{}
+	c2.ExecutedAt = time.Time{}
+	c2.CompletedAt = time.Time{}
+	for i := range commands {
+		commands[i].ExecutedAt = time.Time{}
+		commands[i].CompletedAt = time.Time{}
+	}
+
 	require.Equal(t, c1.Command, commands[0].Command)
 	require.Equal(t, c2.Command, commands[1].Command)
 }
