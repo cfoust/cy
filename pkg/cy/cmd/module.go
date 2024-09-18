@@ -50,14 +50,6 @@ func New(
 		// it if necessary
 		recorder.Flush()
 
-		// If the directory was never set with OSC-7, just grab the
-		// current working directory from the process (which is
-		// imperfect, since it won't work over SSH or in tmux)
-		if len(c.Directory) == 0 {
-			cwd, _ := cmd.Path()
-			c.Directory = cwd
-		}
-
 		r.Publish(C.CommandEvent{
 			Command: c,
 			Borg:    borgPath,
@@ -71,6 +63,10 @@ func New(
 		timeBinds,
 		copyBinds,
 		detect.WithHandler(handler),
+		detect.WithDirectoryProvider(func() string {
+			cwd, _ := cmd.Path()
+			return cwd
+		}),
 	)
 	return r, nil
 }

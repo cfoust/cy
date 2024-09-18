@@ -31,6 +31,13 @@ func (d *Detector) Detect(
 
 	oldDir := d.lastDir
 	newDir := term.Directory()
+
+	// Defaults to OSC-7, if available, otherwise tries to use other
+	// method
+	if len(newDir) == 0 && d.getDirectory != nil {
+		newDir = d.getDirectory()
+	}
+
 	d.lastDir = newDir
 
 	to, ok := flow.Coord(dirty.Print.Vec2)

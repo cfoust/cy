@@ -18,10 +18,11 @@ type Detector struct {
 	mu       deadlock.RWMutex
 	commands []Command
 	// If we have ever detected a prompt
-	havePrompt bool
-	from       geom.Vec2
-	fromID     emu.WriteID
-	handler    CommandHandler
+	havePrompt   bool
+	from         geom.Vec2
+	fromID       emu.WriteID
+	handler      CommandHandler
+	getDirectory DirectoryProvider
 
 	// The directory as provided by OSC-7 at the last prompt
 	lastDir string
@@ -109,9 +110,21 @@ func (d *Detector) Commands(
 
 type Option func(*Detector)
 
+// WithHandler allows you to provide a callback that will be invoked whenever
+// a command finishes executing.
 func WithHandler(c CommandHandler) Option {
 	return func(d *Detector) {
 		d.handler = c
+	}
+}
+
+type DirectoryProvider func() string
+
+// WithDirectoryProvider provides a function that will be called to get the
+// current directory of the process attached to the terminal.
+func WithDirectoryProvider(c DirectoryProvider) Option {
+	return func(d *Detector) {
+		d.getDirectory = c
 	}
 }
 

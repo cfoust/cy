@@ -16,6 +16,7 @@ import (
 func promptTest(
 	t *testing.T,
 	commands []Command,
+	options []Option,
 	setup ...interface{},
 ) {
 	s := sessions.NewSimulator().
@@ -32,7 +33,9 @@ func promptTest(
 		reported = append(reported, c)
 	}
 
-	d := New(WithHandler(handler))
+	options = append(options, WithHandler(handler))
+
+	d := New(options...)
 	term := emu.New()
 	term.Changes().SetHooks([]string{CY_HOOK})
 	for i := 0; i < len(events); i++ {
@@ -68,7 +71,7 @@ func promptSingle(
 	command Command,
 	setup ...interface{},
 ) {
-	promptTest(t, []Command{command}, setup...)
+	promptTest(t, []Command{command}, []Option{}, setup...)
 }
 
 func TestSimple(t *testing.T) {
@@ -138,6 +141,7 @@ func TestTwo(t *testing.T) {
 				Completed:     7,
 			},
 		},
+		[]Option{},
 		TEST_PROMPT, "command\n",
 		"foo\n",
 		TEST_PROMPT, "command\n",
@@ -400,6 +404,7 @@ func TestDirectoryChange(t *testing.T) {
 				Completed:     12,
 			},
 		},
+		[]Option{},
 		// set dir before first
 		"\033]7;test\033\\",
 		TEST_PROMPT, "command\n",
@@ -419,7 +424,47 @@ func TestIgnored(t *testing.T) {
 	promptTest(
 		t,
 		[]Command{},
+		[]Option{},
 		TEST_PROMPT, "command^C\n",
+		TEST_PROMPT,
+	)
+}
+
+func TestDirectoryProvider(t *testing.T) {
+	var options = []Option{
+		WithDirectoryProvider(func() string {
+			return "foobar"
+		}),
+	}
+
+	promptTest(
+		t,
+		[]Command{
+			{
+				Directory: "foobar",
+				Text:      "command",
+				Input: []search.Selection{
+					{
+						From: geom.Vec2{R: 0, C: 2},
+						To:   geom.Vec2{R: 0, C: 9},
+					},
+				},
+				Output: search.Selection{
+					From: geom.Vec2{R: 1, C: 0},
+					To:   geom.Vec2{R: 3, C: 3},
+				},
+				promptedWrite: 3,
+				Prompted:      3,
+				Executed:      4,
+				Completed:     7,
+			},
+		},
+		options,
+		"",
+		TEST_PROMPT, "command\n",
+		"foo\n",
+		"bar\n",
+		"baz\n",
 		TEST_PROMPT,
 	)
 }
