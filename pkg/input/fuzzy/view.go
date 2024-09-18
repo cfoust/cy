@@ -47,9 +47,10 @@ func (f *Fuzzy) renderPreview(state *tty.State) {
 	})
 	image.Copy(previewPos, state.Image, contents)
 
+	p := f.params
 	border := f.render.NewStyle().
-		Border(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("#874BFD")).
+		Border(p.InputPreviewBorder().Border).
+		BorderForeground(p.InputPreviewBorderFg()).
 		BorderTop(true).
 		BorderLeft(true).
 		BorderRight(true).
@@ -74,13 +75,14 @@ func (f *Fuzzy) renderOptions(
 	// table
 	prompt = prompt.Width(0)
 
+	p := f.params
 	rowStyle := f.render.NewStyle()
 	inactive := rowStyle.
-		Background(lipgloss.Color("#968C83")).
-		Foreground(lipgloss.Color("#20111B"))
+		Background(p.InputFindInactiveBg()).
+		Foreground(p.InputFindInactiveFg())
 	active := rowStyle.
-		Background(lipgloss.Color("#E8E3DF")).
-		Foreground(lipgloss.Color("#20111B"))
+		Background(p.InputFindActiveBg()).
+		Foreground(p.InputFindActiveFg())
 
 	var rows [][]string
 
@@ -196,10 +198,11 @@ func (f *Fuzzy) renderPrompt(prompt lipgloss.Style) string {
 }
 
 func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
+	p := f.params
 	commonStyle := f.render.NewStyle().Width(size.C)
 	promptStyle := commonStyle.
-		Background(lipgloss.Color("#EAA549")).
-		Foreground(lipgloss.Color("#20111B"))
+		Background(p.InputPromptBg()).
+		Foreground(p.InputPromptFg())
 
 	// TODO(cfoust): 07/20/24 handle this more gracefully
 	if size.R < 2 {
@@ -225,10 +228,10 @@ func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
 		Render("~>")
 
 	inputStyle := f.render.NewStyle().
-		Background(lipgloss.Color("#20111B")).
-		Foreground(lipgloss.Color("#D5CCBA"))
+		Background(p.InputPromptFg()).
+		Foreground(p.InputFindActiveBg())
 	f.textInput.Cursor.Style = f.render.NewStyle().
-		Background(lipgloss.Color("#E8E3DF"))
+		Background(p.InputFindActiveBg())
 	f.textInput.TextStyle = inputStyle
 	f.textInput.Cursor.TextStyle = inputStyle
 

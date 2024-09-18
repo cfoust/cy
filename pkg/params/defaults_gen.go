@@ -17,6 +17,14 @@ const (
 	ParamDataDirectory            = "data-directory"
 	ParamDefaultFrame             = "default-frame"
 	ParamDefaultShell             = "default-shell"
+	ParamInputFindActiveBg        = "input-find-active-bg"
+	ParamInputFindActiveFg        = "input-find-active-fg"
+	ParamInputFindInactiveBg      = "input-find-inactive-bg"
+	ParamInputFindInactiveFg      = "input-find-inactive-fg"
+	ParamInputPreviewBorder       = "input-preview-border"
+	ParamInputPreviewBorderFg     = "input-preview-border-fg"
+	ParamInputPromptBg            = "input-prompt-bg"
+	ParamInputPromptFg            = "input-prompt-fg"
 	ParamNumSearchWorkers         = "num-search-workers"
 	ParamRemovePaneOnExit         = "remove-pane-on-exit"
 	ParamReplayCopyFg             = "replay-copy-fg"
@@ -181,6 +189,150 @@ func (p *Parameters) DefaultShell() string {
 
 func (p *Parameters) SetDefaultShell(value string) {
 	p.set(ParamDefaultShell, value)
+}
+
+func (p *Parameters) InputFindActiveBg() *style.Color {
+	value, ok := p.Get(ParamInputFindActiveBg)
+	if !ok {
+		return defaults.InputFindActiveBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputFindActiveBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputFindActiveBg(value *style.Color) {
+	p.set(ParamInputFindActiveBg, value)
+}
+
+func (p *Parameters) InputFindActiveFg() *style.Color {
+	value, ok := p.Get(ParamInputFindActiveFg)
+	if !ok {
+		return defaults.InputFindActiveFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputFindActiveFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputFindActiveFg(value *style.Color) {
+	p.set(ParamInputFindActiveFg, value)
+}
+
+func (p *Parameters) InputFindInactiveBg() *style.Color {
+	value, ok := p.Get(ParamInputFindInactiveBg)
+	if !ok {
+		return defaults.InputFindInactiveBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputFindInactiveBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputFindInactiveBg(value *style.Color) {
+	p.set(ParamInputFindInactiveBg, value)
+}
+
+func (p *Parameters) InputFindInactiveFg() *style.Color {
+	value, ok := p.Get(ParamInputFindInactiveFg)
+	if !ok {
+		return defaults.InputFindInactiveFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputFindInactiveFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputFindInactiveFg(value *style.Color) {
+	p.set(ParamInputFindInactiveFg, value)
+}
+
+func (p *Parameters) InputPreviewBorder() *style.Border {
+	value, ok := p.Get(ParamInputPreviewBorder)
+	if !ok {
+		return defaults.InputPreviewBorder
+	}
+
+	realValue, ok := value.(*style.Border)
+	if !ok {
+		return defaults.InputPreviewBorder
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputPreviewBorder(value *style.Border) {
+	p.set(ParamInputPreviewBorder, value)
+}
+
+func (p *Parameters) InputPreviewBorderFg() *style.Color {
+	value, ok := p.Get(ParamInputPreviewBorderFg)
+	if !ok {
+		return defaults.InputPreviewBorderFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputPreviewBorderFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputPreviewBorderFg(value *style.Color) {
+	p.set(ParamInputPreviewBorderFg, value)
+}
+
+func (p *Parameters) InputPromptBg() *style.Color {
+	value, ok := p.Get(ParamInputPromptBg)
+	if !ok {
+		return defaults.InputPromptBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputPromptBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputPromptBg(value *style.Color) {
+	p.set(ParamInputPromptBg, value)
+}
+
+func (p *Parameters) InputPromptFg() *style.Color {
+	value, ok := p.Get(ParamInputPromptFg)
+	if !ok {
+		return defaults.InputPromptFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputPromptFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputPromptFg(value *style.Color) {
+	p.set(ParamInputPromptFg, value)
 }
 
 func (p *Parameters) NumSearchWorkers() int {
@@ -561,6 +713,22 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamDefaultShell:
 		return true
+	case ParamInputFindActiveBg:
+		return true
+	case ParamInputFindActiveFg:
+		return true
+	case ParamInputFindInactiveBg:
+		return true
+	case ParamInputFindInactiveFg:
+		return true
+	case ParamInputPreviewBorder:
+		return true
+	case ParamInputPreviewBorderFg:
+		return true
+	case ParamInputPromptBg:
+		return true
+	case ParamInputPromptFg:
+		return true
 	case ParamNumSearchWorkers:
 		return true
 	case ParamRemovePaneOnExit:
@@ -624,6 +792,22 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.DefaultFrame, true
 	case ParamDefaultShell:
 		return defaults.DefaultShell, true
+	case ParamInputFindActiveBg:
+		return defaults.InputFindActiveBg, true
+	case ParamInputFindActiveFg:
+		return defaults.InputFindActiveFg, true
+	case ParamInputFindInactiveBg:
+		return defaults.InputFindInactiveBg, true
+	case ParamInputFindInactiveFg:
+		return defaults.InputFindInactiveFg, true
+	case ParamInputPreviewBorder:
+		return defaults.InputPreviewBorder, true
+	case ParamInputPreviewBorderFg:
+		return defaults.InputPreviewBorderFg, true
+	case ParamInputPromptBg:
+		return defaults.InputPromptBg, true
+	case ParamInputPromptFg:
+		return defaults.InputPromptFg, true
 	case ParamNumSearchWorkers:
 		return defaults.NumSearchWorkers, true
 	case ParamRemovePaneOnExit:
@@ -820,6 +1004,158 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		if err != nil {
 			janetValue.Free()
 			return fmt.Errorf("invalid value for :default-shell: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputFindActiveBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputFindActiveBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-find-active-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputFindActiveFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputFindActiveFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-find-active-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputFindInactiveBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputFindInactiveBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-find-inactive-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputFindInactiveFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputFindInactiveFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-find-inactive-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputPreviewBorder:
+		if !janetOk {
+			realValue, ok := value.(*style.Border)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputPreviewBorder, should be *style.Border")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Border
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-preview-border: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputPreviewBorderFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputPreviewBorderFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-preview-border-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputPromptBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputPromptBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-prompt-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputPromptFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputPromptFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-prompt-fg: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -1242,6 +1578,46 @@ func init() {
 			Name:      "default-shell",
 			Docstring: "The default shell with which to start panes. Defaults to the value\nof `$SHELL` on startup.",
 			Default:   defaults.DefaultShell,
+		},
+		{
+			Name:      "input-find-active-bg",
+			Docstring: "The background [color](/api.md#color) of the active row in (input/find).",
+			Default:   defaults.InputFindActiveBg,
+		},
+		{
+			Name:      "input-find-active-fg",
+			Docstring: "The foreground [color](/api.md#color) of the active row in (input/find).",
+			Default:   defaults.InputFindActiveFg,
+		},
+		{
+			Name:      "input-find-inactive-bg",
+			Docstring: "The background [color](/api.md#color) of the inactive row in (input/find).",
+			Default:   defaults.InputFindInactiveBg,
+		},
+		{
+			Name:      "input-find-inactive-fg",
+			Docstring: "The foreground [color](/api.md#color) of the inactive row in (input/find).",
+			Default:   defaults.InputFindInactiveFg,
+		},
+		{
+			Name:      "input-preview-border",
+			Docstring: "The border style of the preview border in (input/find).",
+			Default:   defaults.InputPreviewBorder,
+		},
+		{
+			Name:      "input-preview-border-fg",
+			Docstring: "The [color](/api.md#color) of the preview border in (input/find).",
+			Default:   defaults.InputPreviewBorderFg,
+		},
+		{
+			Name:      "input-prompt-bg",
+			Docstring: "The background [color](/api.md#color) of the input prompt in\n(input/*) functions.",
+			Default:   defaults.InputPromptBg,
+		},
+		{
+			Name:      "input-prompt-fg",
+			Docstring: "The foreground [color](/api.md#color) of the input prompt in\n(input/*) functions.",
+			Default:   defaults.InputPromptFg,
 		},
 		{
 			Name:      "num-search-workers",

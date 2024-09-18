@@ -69,6 +69,25 @@ type defaultParams struct {
 	// [here](https://pkg.go.dev/time#Layout).
 	TimestampFormat string
 
+	// The [color](/api.md#color) of the preview border in (input/find).
+	InputPreviewBorderFg *style.Color
+	// The border style of the preview border in (input/find).
+	InputPreviewBorder *style.Border
+	// The foreground [color](/api.md#color) of the input prompt in
+	// (input/*) functions.
+	InputPromptFg *style.Color
+	// The background [color](/api.md#color) of the input prompt in
+	// (input/*) functions.
+	InputPromptBg *style.Color
+	// The foreground [color](/api.md#color) of the active row in (input/find).
+	InputFindActiveFg *style.Color
+	// The background [color](/api.md#color) of the active row in (input/find).
+	InputFindActiveBg *style.Color
+	// The foreground [color](/api.md#color) of the inactive row in (input/find).
+	InputFindInactiveFg *style.Color
+	// The background [color](/api.md#color) of the inactive row in (input/find).
+	InputFindInactiveBg *style.Color
+
 	// The [color](/api.md#color) used to represent time mode.
 	ReplayTimeFg *style.Color
 	// The [color](/api.md#color) used in time mode when the player is playing.
@@ -120,6 +139,14 @@ var (
 		ColorError: style.NewColor("1"),
 
 		TimestampFormat:          time.DateTime,
+		InputPreviewBorderFg:     style.NewColor("5"),
+		InputPreviewBorder:       &style.Borders[0],
+		InputPromptFg:            style.NewColor("0"),
+		InputPromptBg:            style.NewColor("3"),
+		InputFindActiveFg:        style.NewColor("0"),
+		InputFindActiveBg:        style.NewColor("15"),
+		InputFindInactiveFg:      style.NewColor("0"),
+		InputFindInactiveBg:      style.NewColor("7"),
 		ReplayTimeFg:             style.NewColor("4"),
 		ReplayPlayFg:             style.NewColor("12"),
 		ReplayCopyFg:             style.NewColor("3"),
