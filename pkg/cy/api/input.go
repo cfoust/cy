@@ -62,6 +62,7 @@ func (i *InputModule) Find(
 		fuzzy.WithPrompt(params.Prompt),
 		fuzzy.WithInitial(initial),
 		fuzzy.WithCaseSensitive(params.CaseSensitive),
+		fuzzy.WithParams(client.Params()),
 	}
 
 	if !params.Full {

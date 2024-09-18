@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/build"
 	"go/doc"
@@ -71,6 +72,7 @@ import (
     "fmt"
 
     "github.com/cfoust/cy/pkg/janet"
+    "github.com/cfoust/cy/pkg/style"
 )
 
 const (
@@ -150,6 +152,21 @@ func init() {
 
 `
 
+func getTypeName(expr ast.Expr) string {
+	switch typeNode := expr.(type) {
+	case *ast.StarExpr:
+		return "*" + getTypeName(typeNode.X)
+	case *ast.Ident:
+		return typeNode.Name
+	case *ast.ArrayType:
+		return "[]" + getTypeName(typeNode.Elt)
+	case *ast.SelectorExpr:
+		return getTypeName(typeNode.X) + "." + getTypeName(typeNode.Sel)
+	}
+
+	panic("unsupported node: " + fmt.Sprintf("%+T", expr))
+}
+
 func main() {
 	pkg, err := build.ImportDir(".", build.ImportComment)
 	if err != nil {
@@ -186,18 +203,13 @@ func main() {
 
 			for _, field := range structType.Fields.List {
 				name := field.Names[0].Name
-
-				var type_ string
-				switch typeNode := field.Type.(type) {
-				case *ast.Ident:
-					type_ = typeNode.Name
-				case *ast.ArrayType:
-					type_ = "[]" + typeNode.Elt.(*ast.Ident).Name
-				}
+				type_ := getTypeName(field.Type)
 
 				var docs []string
-				for _, comment := range field.Doc.List {
-					docs = append(docs, normalizeComment(comment)...)
+				if field.Doc != nil {
+					for _, comment := range field.Doc.List {
+						docs = append(docs, normalizeComment(comment)...)
+					}
 				}
 
 				firstChar := rune(name[0])

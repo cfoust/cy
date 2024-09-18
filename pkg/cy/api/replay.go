@@ -286,7 +286,11 @@ func (m *ReplayModule) OpenFile(
 		params.Focus,
 		params.Highlights,
 	)
-	options = append(options, replay.WithNoQuit)
+
+	options = append(options,
+		replay.WithNoQuit,
+		replay.WithParams(group.Params()),
+	)
 
 	ctx := m.Lifetime.Ctx()
 	replay := loader.New(
@@ -294,7 +298,6 @@ func (m *ReplayModule) OpenFile(
 		path,
 		m.TimeBinds,
 		m.CopyBinds,
-		options...,
 	)
 
 	pane := group.NewPane(ctx, replay)
@@ -324,6 +327,8 @@ func (m *ReplayModule) Open(
 		params.Focus,
 		nil,
 	)
+
+	options = append(options, replay.WithParams(pane.Params()))
 
 	if params.Copy {
 		options = append(options, replay.WithCopyMode)

@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/params"
 )
 
 func New(
@@ -15,13 +16,14 @@ func New(
 	client *server.Client,
 	muxServer *server.Server,
 	initial image.Image,
+	params *params.Parameters,
 	args interface{},
 ) mux.Screen {
 	switch args := args.(type) {
 	case NodeType:
 		return NewNode(ctx, tree, client, args)
 	case ReplayType:
-		return NewReplay(ctx, args)
+		return NewReplay(ctx, params, args)
 	case TextType:
 		return NewText(ctx, args)
 	case ScrollbackType:

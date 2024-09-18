@@ -10,6 +10,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -19,7 +20,8 @@ import (
 
 type Fuzzy struct {
 	util.Lifetime
-	anim *taro.Program
+	anim   *taro.Program
+	params *params.Parameters
 
 	// The initial state of the screen before fuzzy was started.
 	initial image.Image
@@ -171,6 +173,7 @@ func (f *Fuzzy) getPreview() mux.Screen {
 		f.client,
 		f.server,
 		f.initial.Clone(),
+		f.params,
 		option.Preview,
 	)
 	if p == nil {
@@ -277,6 +280,13 @@ func WithHeaders(headers ...string) Setting {
 	}
 }
 
+// WithParams provides parameters this Fuzzy will use for rendering.
+func WithParams(params *params.Parameters) Setting {
+	return func(ctx context.Context, f *Fuzzy) {
+		f.params = params
+	}
+}
+
 // WithCaseSensitive determines whether the matching algorithm will be
 // case-sensitive.
 func WithCaseSensitive(value bool) Setting {
@@ -305,6 +315,7 @@ func newFuzzy(
 		desiredSize: geom.Size{
 			C: 50,
 		},
+		params: params.New(),
 	}
 
 	for _, setting := range settings {

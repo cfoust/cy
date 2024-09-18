@@ -5,17 +5,25 @@ import (
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/style"
 )
 
 const (
-	ParamAnimate          = "animate"
-	ParamAnimations       = "animations"
-	ParamDataDirectory    = "data-directory"
-	ParamDefaultFrame     = "default-frame"
-	ParamDefaultShell     = "default-shell"
-	ParamNumSearchWorkers = "num-search-workers"
-	ParamRemovePaneOnExit = "remove-pane-on-exit"
-	ParamSkipInput        = "---skip-input"
+	ParamAnimate           = "animate"
+	ParamAnimations        = "animations"
+	ParamDataDirectory     = "data-directory"
+	ParamDefaultFrame      = "default-frame"
+	ParamDefaultShell      = "default-shell"
+	ParamNumSearchWorkers  = "num-search-workers"
+	ParamRemovePaneOnExit  = "remove-pane-on-exit"
+	ParamReplayCopyFg      = "replay-copy-fg"
+	ParamReplayPlayFg      = "replay-play-fg"
+	ParamReplayStatusBarBg = "replay-status-bar-bg"
+	ParamReplayStatusBarFg = "replay-status-bar-fg"
+	ParamReplayTimeFg      = "replay-time-fg"
+	ParamReplayVisualFg    = "replay-visual-fg"
+	ParamSkipInput         = "---skip-input"
+	ParamTimestampFormat   = "timestamp-format"
 )
 
 func (p *Parameters) Animate() bool {
@@ -144,6 +152,114 @@ func (p *Parameters) SetRemovePaneOnExit(value bool) {
 	p.set(ParamRemovePaneOnExit, value)
 }
 
+func (p *Parameters) ReplayCopyFg() *style.Color {
+	value, ok := p.Get(ParamReplayCopyFg)
+	if !ok {
+		return defaults.ReplayCopyFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayCopyFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayCopyFg(value *style.Color) {
+	p.set(ParamReplayCopyFg, value)
+}
+
+func (p *Parameters) ReplayPlayFg() *style.Color {
+	value, ok := p.Get(ParamReplayPlayFg)
+	if !ok {
+		return defaults.ReplayPlayFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayPlayFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayPlayFg(value *style.Color) {
+	p.set(ParamReplayPlayFg, value)
+}
+
+func (p *Parameters) ReplayStatusBarBg() *style.Color {
+	value, ok := p.Get(ParamReplayStatusBarBg)
+	if !ok {
+		return defaults.ReplayStatusBarBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayStatusBarBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayStatusBarBg(value *style.Color) {
+	p.set(ParamReplayStatusBarBg, value)
+}
+
+func (p *Parameters) ReplayStatusBarFg() *style.Color {
+	value, ok := p.Get(ParamReplayStatusBarFg)
+	if !ok {
+		return defaults.ReplayStatusBarFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayStatusBarFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayStatusBarFg(value *style.Color) {
+	p.set(ParamReplayStatusBarFg, value)
+}
+
+func (p *Parameters) ReplayTimeFg() *style.Color {
+	value, ok := p.Get(ParamReplayTimeFg)
+	if !ok {
+		return defaults.ReplayTimeFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayTimeFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayTimeFg(value *style.Color) {
+	p.set(ParamReplayTimeFg, value)
+}
+
+func (p *Parameters) ReplayVisualFg() *style.Color {
+	value, ok := p.Get(ParamReplayVisualFg)
+	if !ok {
+		return defaults.ReplayVisualFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayVisualFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayVisualFg(value *style.Color) {
+	p.set(ParamReplayVisualFg, value)
+}
+
 func (p *Parameters) SkipInput() bool {
 	value, ok := p.Get(ParamSkipInput)
 	if !ok {
@@ -162,6 +278,24 @@ func (p *Parameters) SetSkipInput(value bool) {
 	p.set(ParamSkipInput, value)
 }
 
+func (p *Parameters) TimestampFormat() string {
+	value, ok := p.Get(ParamTimestampFormat)
+	if !ok {
+		return defaults.TimestampFormat
+	}
+
+	realValue, ok := value.(string)
+	if !ok {
+		return defaults.TimestampFormat
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetTimestampFormat(value string) {
+	p.set(ParamTimestampFormat, value)
+}
+
 func (p *Parameters) isDefault(key string) bool {
 	switch key {
 	case ParamAnimate:
@@ -178,7 +312,21 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamRemovePaneOnExit:
 		return true
+	case ParamReplayCopyFg:
+		return true
+	case ParamReplayPlayFg:
+		return true
+	case ParamReplayStatusBarBg:
+		return true
+	case ParamReplayStatusBarFg:
+		return true
+	case ParamReplayTimeFg:
+		return true
+	case ParamReplayVisualFg:
+		return true
 	case ParamSkipInput:
+		return true
+	case ParamTimestampFormat:
 		return true
 
 	}
@@ -321,6 +469,120 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
+	case ParamReplayCopyFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayCopyFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-copy-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayPlayFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayPlayFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-play-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayStatusBarBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayStatusBarBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-status-bar-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayStatusBarFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayStatusBarFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-status-bar-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayTimeFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayTimeFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-time-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayVisualFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayVisualFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-visual-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
 	case ParamSkipInput:
 		if !janetOk {
 			realValue, ok := value.(bool)
@@ -332,6 +594,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		}
 
 		return fmt.Errorf(":---skip-input is a protected parameter")
+
+	case ParamTimestampFormat:
+		if !janetOk {
+			realValue, ok := value.(string)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamTimestampFormat, should be string")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated string
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :timestamp-format: %s", err)
+		}
+		p.set(key, translated)
+		return nil
 
 	}
 	return nil
@@ -373,6 +654,41 @@ func init() {
 			Name:      "remove-pane-on-exit",
 			Docstring: "If this is `true`, when a pane's process exits or its node is killed\n(such as with {{api tree/kill}}), the portion of the layout related\nto that node will be removed. This makes cy's layout functionality\nwork a bit more like tmux.",
 			Default:   defaults.RemovePaneOnExit,
+		},
+		{
+			Name:      "replay-copy-fg",
+			Docstring: "The color used to represent copy mode.",
+			Default:   defaults.ReplayCopyFg,
+		},
+		{
+			Name:      "replay-play-fg",
+			Docstring: "The color used in time mode when the player is playing.",
+			Default:   defaults.ReplayPlayFg,
+		},
+		{
+			Name:      "replay-status-bar-bg",
+			Docstring: "The background color of the status bar in replay mode.",
+			Default:   defaults.ReplayStatusBarBg,
+		},
+		{
+			Name:      "replay-status-bar-fg",
+			Docstring: "The foreground color of the status bar in replay mode.",
+			Default:   defaults.ReplayStatusBarFg,
+		},
+		{
+			Name:      "replay-time-fg",
+			Docstring: "The color used to represent time mode.",
+			Default:   defaults.ReplayTimeFg,
+		},
+		{
+			Name:      "replay-visual-fg",
+			Docstring: "The color used to represent visual mode.",
+			Default:   defaults.ReplayVisualFg,
+		},
+		{
+			Name:      "timestamp-format",
+			Docstring: "The format for all timestamps shown in cy. This uses Go's\ntime.Layout format described here: https://pkg.go.dev/time#Layout.",
+			Default:   defaults.TimestampFormat,
 		},
 	}
 }

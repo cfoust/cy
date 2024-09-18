@@ -72,13 +72,13 @@ func (f *Fuzzy) renderOptions(
 ) string {
 	// the prompt otherwise comes with a fixed size, which messes with the
 	// table
-	prompt = prompt.Copy().Width(0)
+	prompt = prompt.Width(0)
 
 	rowStyle := f.render.NewStyle()
-	inactive := rowStyle.Copy().
+	inactive := rowStyle.
 		Background(lipgloss.Color("#968C83")).
 		Foreground(lipgloss.Color("#20111B"))
-	active := rowStyle.Copy().
+	active := rowStyle.
 		Background(lipgloss.Color("#E8E3DF")).
 		Foreground(lipgloss.Color("#20111B"))
 
@@ -197,7 +197,7 @@ func (f *Fuzzy) renderPrompt(prompt lipgloss.Style) string {
 
 func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
 	commonStyle := f.render.NewStyle().Width(size.C)
-	promptStyle := commonStyle.Copy().
+	promptStyle := commonStyle.
 		Background(lipgloss.Color("#EAA549")).
 		Foreground(lipgloss.Color("#20111B"))
 

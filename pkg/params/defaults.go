@@ -2,6 +2,9 @@ package params
 
 import (
 	"sort"
+	"time"
+
+	"github.com/cfoust/cy/pkg/style"
 )
 
 type DefaultParam struct {
@@ -49,6 +52,28 @@ type defaultParams struct {
 	NumSearchWorkers int
 	// Whether to avoid blocking on (input/*) calls. Just for testing.
 	skipInput bool
+
+	/////////////////
+	// THEME SETTINGS
+	/////////////////
+
+	// The format for all timestamps shown in cy. This uses Go's
+	// time.Layout format described here: https://pkg.go.dev/time#Layout.
+	TimestampFormat string
+
+	// The color used to represent time mode.
+	ReplayTimeFg *style.Color
+	// The color used in time mode when the player is playing.
+	ReplayPlayFg *style.Color
+	// The color used to represent copy mode.
+	ReplayCopyFg *style.Color
+	// The color used to represent visual mode.
+	ReplayVisualFg *style.Color
+
+	// The foreground color of the status bar in replay mode.
+	ReplayStatusBarFg *style.Color
+	// The background color of the status bar in replay mode.
+	ReplayStatusBarBg *style.Color
 }
 
 var (
@@ -58,5 +83,13 @@ var (
 		DefaultFrame:  "",
 		DefaultShell:  "/bin/bash",
 		skipInput:     false,
+
+		TimestampFormat:   time.DateTime,
+		ReplayTimeFg:      style.NewColor("4"),
+		ReplayPlayFg:      style.NewColor("12"),
+		ReplayCopyFg:      style.NewColor("3"),
+		ReplayVisualFg:    style.NewColor("10"),
+		ReplayStatusBarFg: style.NewColor("15"),
+		ReplayStatusBarBg: style.NewColor("8"),
 	}
 )

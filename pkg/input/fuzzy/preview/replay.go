@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/replay/loader"
 	"github.com/cfoust/cy/pkg/replay/movement"
@@ -71,12 +72,18 @@ func ParamsToReplayOptions(
 
 func NewReplay(
 	ctx context.Context,
+	params *params.Parameters,
 	args ReplayType,
 ) mux.Screen {
 	options := ParamsToReplayOptions(
 		args.AltScreen,
 		args.Focus,
 		args.Highlights,
+	)
+
+	options = append(
+		options,
+		replay.WithParams(params),
 	)
 
 	return loader.New(

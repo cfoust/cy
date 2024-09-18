@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay/motion"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/player"
@@ -21,6 +22,7 @@ import (
 type Replay struct {
 	util.Lifetime
 	*player.Player
+	params *params.Parameters
 
 	render               *taro.Renderer
 	timeBinds, copyBinds *bind.Engine[bind.Action]
@@ -166,6 +168,7 @@ func newReplay(
 		copyBinds:      copyBinds,
 		searchProgress: make(chan int),
 		skipInactivity: true,
+		params:         params.New(),
 	}
 
 	for _, option := range options {
@@ -244,6 +247,13 @@ func WithLocation(location geom.Vec2) Option {
 				r.movement.Goto(location)
 			},
 		)
+	}
+}
+
+// WithParams provides parameters this Replay will use for rendering.
+func WithParams(params *params.Parameters) Option {
+	return func(r *Replay) {
+		r.params = params
 	}
 }
 

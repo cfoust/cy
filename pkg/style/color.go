@@ -49,3 +49,7 @@ func (c *Color) Emu() emu.Color {
 
 	return emu.DefaultFG
 }
+
+func NewColor(c string) *Color {
+	return &Color{Color: lipgloss.Color(c)}
+}

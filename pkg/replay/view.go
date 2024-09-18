@@ -2,7 +2,6 @@ package replay
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
@@ -76,30 +75,33 @@ func (r *Replay) getCommand() (command detect.Command, ok bool) {
 }
 
 func (r *Replay) getLeftStatusStyle() lipgloss.Style {
-	statusBG := lipgloss.Color("4")
+	p := r.params
+
+	statusBG := p.ReplayTimeFg()
 	if r.isCopyMode() {
-		statusBG = lipgloss.Color("#E1BC29")
+		statusBG = p.ReplayCopyFg()
 
 		if r.isSelecting {
-			statusBG = lipgloss.Color("#3BB273")
+			statusBG = p.ReplayVisualFg()
 		}
 	}
 	if r.isPlaying {
-		statusBG = lipgloss.Color("#7768AE")
+		statusBG = p.ReplayPlayFg()
 	}
 
 	return r.render.NewStyle().
-		Foreground(lipgloss.Color("15")).
+		Foreground(p.ReplayStatusBarFg()).
 		Background(statusBG).
 		Padding(0, 1)
 }
 
 func (r *Replay) drawStatusBar(state *tty.State) {
+	p := r.params
 	size := state.Image.Size()
 
 	statusBarStyle := r.render.NewStyle().
-		Foreground(lipgloss.Color("15")).
-		Background(lipgloss.Color("8"))
+		Foreground(r.params.ReplayStatusBarFg()).
+		Background(r.params.ReplayStatusBarBg())
 
 	statusText := "⏵"
 	if r.isCopyMode() {
@@ -121,7 +123,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 
 	if r.incr.IsActive() {
 		r.incrInput.Cursor.Style = r.render.NewStyle().
-			Background(lipgloss.Color("15"))
+			Background(p.ReplayStatusBarFg())
 		r.incrInput.TextStyle = statusBarStyle
 		r.incrInput.Cursor.TextStyle = statusBarStyle
 
@@ -185,15 +187,12 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		return
 	}
 
+	timestamp := r.currentTime.Format(r.params.TimestampFormat())
 	leftSide := lipgloss.JoinHorizontal(lipgloss.Top,
 		leftStatus,
 		statusBarStyle.
 			Padding(0, 1).
-			Render(
-				r.currentTime.Format(
-					time.RFC3339,
-				),
-			),
+			Render(timestamp),
 	)
 
 	progressWidth := size.C - lipgloss.Width(leftSide) - 3
@@ -223,18 +222,22 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 }
 
 func (r *Replay) renderInput() image.Image {
+	p := r.params
 	r.searchInput.Cursor.Style = r.render.NewStyle().
-		Background(lipgloss.Color("15"))
+		Background(p.ReplayStatusBarFg())
+
+	statusFg := p.ReplayStatusBarFg()
+	statusBg := p.ReplayStatusBarBg()
 
 	width := 20
 	common := r.render.NewStyle().Width(width)
 	inputStyle := common.
-		Foreground(lipgloss.Color("15")).
-		Background(lipgloss.Color("8"))
+		Foreground(statusFg).
+		Background(statusBg)
 
 	promptStyle := common.
-		Foreground(lipgloss.Color("8")).
-		Background(lipgloss.Color("15"))
+		Foreground(statusBg).
+		Background(statusFg)
 
 	prompt := "search-forward"
 	if !r.isForward {
@@ -244,8 +247,8 @@ func (r *Replay) renderInput() image.Image {
 	value := r.searchInput.Value()
 	if match := TIME_DELTA_REGEX.FindStringSubmatch(value); len(value) > 0 && match != nil {
 		promptStyle = common.
-			Foreground(lipgloss.Color("15")).
-			Background(lipgloss.Color("#7768AE"))
+			Foreground(statusFg).
+			Background(p.ReplayTimeFg())
 
 		prompt = "jump-forward"
 		if !r.isForward {
@@ -268,7 +271,7 @@ func (r *Replay) renderInput() image.Image {
 		)
 
 		progressStyle := inputStyle.
-			Background(lipgloss.Color("#4D9DE0"))
+			Background(p.ReplayTimeFg())
 
 		filled := int((float64(percent) / 100) * float64(width))
 
