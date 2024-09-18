@@ -299,6 +299,7 @@ func (m *ReplayModule) OpenFile(
 		m.TimeBinds,
 		m.CopyBinds,
 		path,
+		options...,
 	)
 
 	pane := group.NewPane(ctx, replay)
