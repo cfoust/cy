@@ -66,7 +66,7 @@ func getParams() (params []Param, err error) {
 	err = vm.Execute(context.Background(), `
 (handler (fn [param]
 	(def {:name name :docstring doc :default default} param)
-	(register name doc (string/format "%n" default) (string (type default)))
+	(register name doc (if (string? default) (string "\"" default "\"") (string/format "%n" default)) (string (type default)))
 	))
 `)
 	if err != nil {
