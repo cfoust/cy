@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
@@ -24,6 +25,7 @@ type Replayable struct {
 	util.Lifetime
 	deadlock.RWMutex
 	*mux.UpdatePublisher
+	params *params.Parameters
 
 	size        geom.Size
 	cmd, stream mux.Stream
@@ -68,7 +70,12 @@ func (r *Replayable) Preview(
 	r.RLock()
 	size := r.size
 	r.RUnlock()
-	return r.player.Preview(size, location, highlights)
+	return r.player.Preview(
+		r.params,
+		size,
+		location,
+		highlights,
+	)
 }
 
 func (r *Replayable) isReplayMode() bool {
@@ -188,6 +195,7 @@ func (r *Replayable) EnterReplay(options ...replay.Option) {
 
 func New(
 	ctx context.Context,
+	params *params.Parameters,
 	cmd, stream mux.Stream,
 	timeBinds, copyBinds *bind.BindScope,
 	options ...detect.Option,
@@ -196,6 +204,7 @@ func New(
 	r := &Replayable{
 		Lifetime:        lifetime,
 		UpdatePublisher: mux.NewPublisher(),
+		params:          params,
 		timeBinds:       timeBinds,
 		copyBinds:       copyBinds,
 		cmd:             cmd,

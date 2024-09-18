@@ -295,7 +295,10 @@ func (c *Client) initialize(options ClientOptions) error {
 		)
 	}
 
-	c.toaster = toasts.New(c.Ctx())
+	c.toaster = toasts.New(
+		c.Ctx(),
+		c.params,
+	)
 	c.toast = NewToastLogger(c.sendToast)
 	c.outerLayers.NewLayer(
 		c.Ctx(),

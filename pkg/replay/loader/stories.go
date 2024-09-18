@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/stories"
 )
@@ -35,9 +36,10 @@ var Load stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 
 	return New(
 		ctx,
+		params.New(),
+		bind.NewBindScope(nil),
+		bind.NewBindScope(nil),
 		STORY_BORG_FILE,
-		bind.NewBindScope(nil),
-		bind.NewBindScope(nil),
 	), nil
 }
 

@@ -295,9 +295,10 @@ func (m *ReplayModule) OpenFile(
 	ctx := m.Lifetime.Ctx()
 	replay := loader.New(
 		ctx,
-		path,
+		group.Params(),
 		m.TimeBinds,
 		m.CopyBinds,
+		path,
 	)
 
 	pane := group.NewPane(ctx, replay)

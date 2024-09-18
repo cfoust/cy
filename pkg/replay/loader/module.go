@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
@@ -24,6 +25,7 @@ type Loader struct {
 	util.Lifetime
 	path   string
 	render *taro.Renderer
+	params *params.Parameters
 	replay *taro.Program
 	err    error
 	size   geom.Vec2
@@ -190,14 +192,16 @@ func (l *Loader) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 func New(
 	ctx context.Context,
-	path string,
+	params *params.Parameters,
 	timeBinds, copyBinds *bind.BindScope,
+	path string,
 	options ...replay.Option,
 ) mux.Screen {
 	l := util.NewLifetime(ctx)
 	return taro.New(l.Ctx(), &Loader{
 		Lifetime:  l,
 		render:    taro.NewRenderer(),
+		params:    params,
 		path:      path,
 		options:   options,
 		timeBinds: timeBinds,

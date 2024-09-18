@@ -103,16 +103,16 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		Foreground(r.params.ReplayStatusBarFg()).
 		Background(r.params.ReplayStatusBarBg())
 
-	statusText := "⏵"
+	statusText := p.ReplayTextTimeMode()
 	if r.isCopyMode() {
-		statusText = "COPY"
+		statusText = p.ReplayTextCopyMode()
 
 		if r.isSelecting {
-			statusText = "VISUAL"
+			statusText = p.ReplayTextVisualMode()
 		}
 	}
 	if r.isPlaying {
-		statusText = "⏸"
+		statusText = p.ReplayTextPlayMode()
 	}
 
 	if !r.isCopyMode() && r.playbackRate != 1 {
@@ -358,6 +358,8 @@ func (r *Replay) View(state *tty.State) {
 	// Add in highlights provided with WithHighlights
 	highlights = append(highlights, r.providedHighlights...)
 
+	p := r.params
+
 	// Show the selection state
 	////////////////////////////
 	if r.isCopyMode() && r.isSelecting {
@@ -367,10 +369,10 @@ func (r *Replay) View(state *tty.State) {
 				From: r.selectStart,
 				To:   r.movement.Cursor(),
 				FG: r.render.ConvertLipgloss(
-					lipgloss.Color("9"),
+					p.ReplaySelectionFg().Color,
 				),
 				BG: r.render.ConvertLipgloss(
-					lipgloss.Color("240"),
+					p.ReplaySelectionBg().Color,
 				),
 			},
 		)
@@ -434,7 +436,7 @@ func (r *Replay) View(state *tty.State) {
 	// Draw the terminal state
 	///////////////////////////
 	viewport := tty.New(r.viewport)
-	r.movement.View(viewport, highlights)
+	r.movement.View(r.params, viewport, highlights)
 	tty.Copy(geom.Vec2{}, state, viewport)
 	state.CursorVisible = true
 

@@ -7,6 +7,7 @@ import (
 	C "github.com/cfoust/cy/pkg/cmd"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/replayable"
 	"github.com/cfoust/cy/pkg/sessions"
@@ -15,7 +16,7 @@ import (
 func New(
 	ctx context.Context,
 	options stream.CmdOptions,
-	dataDir string,
+	params *params.Parameters,
 	timeBinds, copyBinds *bind.BindScope,
 ) (*replayable.Replayable, error) {
 	cmd, err := stream.NewCmd(ctx, options, geom.DEFAULT_SIZE)
@@ -23,9 +24,12 @@ func New(
 		return nil, err
 	}
 
+	dataDir := params.DataDirectory()
+
 	if len(dataDir) == 0 {
 		replayable := replayable.New(
 			ctx,
+			params,
 			cmd,
 			cmd,
 			timeBinds,
@@ -58,6 +62,7 @@ func New(
 
 	r = replayable.New(
 		ctx,
+		params,
 		cmd,
 		sessions.NewEventStream(cmd, recorder),
 		timeBinds,

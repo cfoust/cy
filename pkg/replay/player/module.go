@@ -5,6 +5,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	P "github.com/cfoust/cy/pkg/io/protocol"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/movement/flow"
@@ -133,6 +134,7 @@ func (p *Player) Commands() []detect.Command {
 // passed to the Flow renderer. Returns nil if the player is "in use", which is
 // only used by replay mode to jump back in time.
 func (p *Player) Preview(
+	params *params.Parameters,
 	viewport, location geom.Vec2,
 	highlights []movement.Highlight,
 ) *tty.State {
@@ -158,6 +160,7 @@ func (p *Player) Preview(
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return flow.PreviewFlow(
+		params,
 		p,
 		viewport,
 		location,

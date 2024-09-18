@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/params"
 
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +24,11 @@ func TestHighlight(
 	}
 
 	state := tty.New(size)
-	m.View(state, highlights)
+	m.View(
+		params.New(),
+		state,
+		highlights,
+	)
 	image := state.Image
 
 	for row := range lines {

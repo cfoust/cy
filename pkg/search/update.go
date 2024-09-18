@@ -68,9 +68,10 @@ func (s *Search) setSelected(index int) taro.Cmd {
 	s.replayLifetime = util.NewLifetime(s.Ctx())
 	r := loader.New(
 		s.replayLifetime.Ctx(),
-		result.File,
+		s.params,
 		s.timeBinds,
 		s.copyBinds,
+		result.File,
 		replay.WithNoQuit,
 		replay.WithResults(result.Results),
 		replay.WithParams(s.params),

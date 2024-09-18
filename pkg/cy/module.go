@@ -378,6 +378,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	logs := stream.NewReader()
 	logScreen := replayable.New(
 		cy.Ctx(),
+		defaults,
 		logs,
 		logs,
 		timeBinds,

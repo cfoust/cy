@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/style"
 
@@ -65,6 +66,7 @@ func (f *flowMovement) highlightRow(
 }
 
 func (f *flowMovement) View(
+	params *params.Parameters,
 	state *tty.State,
 	highlights []movement.Highlight,
 ) {
@@ -136,8 +138,8 @@ func (f *flowMovement) View(
 	// Renders "[1/N]" text in the top-right corner that looks just like
 	// tmux's copy mode, but works on physical lines instead.
 	offsetStyle := f.render.NewStyle().
-		Foreground(lipgloss.Color("9")).
-		Background(lipgloss.Color("240"))
+		Foreground(params.ReplaySelectionFg()).
+		Background(params.ReplaySelectionBg())
 
 	r.RenderAt(
 		state.Image,
@@ -156,6 +158,7 @@ func (f *flowMovement) View(
 }
 
 func PreviewFlow(
+	params *params.Parameters,
 	terminal emu.Terminal,
 	size, location geom.Vec2,
 	highlights []movement.Highlight,
@@ -163,6 +166,6 @@ func PreviewFlow(
 	image := tty.New(size)
 	flow := New(terminal, size).(*flowMovement)
 	flow.Goto(location)
-	flow.View(image, highlights)
+	flow.View(params, image, highlights)
 	return image
 }

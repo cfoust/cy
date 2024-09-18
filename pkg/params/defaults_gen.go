@@ -9,23 +9,34 @@ import (
 )
 
 const (
-	ParamAnimate           = "animate"
-	ParamAnimations        = "animations"
-	ParamDataDirectory     = "data-directory"
-	ParamDefaultFrame      = "default-frame"
-	ParamDefaultShell      = "default-shell"
-	ParamNumSearchWorkers  = "num-search-workers"
-	ParamRemovePaneOnExit  = "remove-pane-on-exit"
-	ParamReplayCopyFg      = "replay-copy-fg"
-	ParamReplayPlayFg      = "replay-play-fg"
-	ParamReplayStatusBarBg = "replay-status-bar-bg"
-	ParamReplayStatusBarFg = "replay-status-bar-fg"
-	ParamReplayTimeFg      = "replay-time-fg"
-	ParamReplayVisualFg    = "replay-visual-fg"
-	ParamSearchStatusBarBg = "search-status-bar-bg"
-	ParamSearchStatusBarFg = "search-status-bar-fg"
-	ParamSkipInput         = "---skip-input"
-	ParamTimestampFormat   = "timestamp-format"
+	ParamAnimate                  = "animate"
+	ParamAnimations               = "animations"
+	ParamColorError               = "color-error"
+	ParamColorInfo                = "color-info"
+	ParamColorWarn                = "color-warn"
+	ParamDataDirectory            = "data-directory"
+	ParamDefaultFrame             = "default-frame"
+	ParamDefaultShell             = "default-shell"
+	ParamNumSearchWorkers         = "num-search-workers"
+	ParamRemovePaneOnExit         = "remove-pane-on-exit"
+	ParamReplayCopyFg             = "replay-copy-fg"
+	ParamReplayPlayFg             = "replay-play-fg"
+	ParamReplaySelectionBg        = "replay-selection-bg"
+	ParamReplaySelectionFg        = "replay-selection-fg"
+	ParamReplayStatusBarBg        = "replay-status-bar-bg"
+	ParamReplayStatusBarFg        = "replay-status-bar-fg"
+	ParamReplayTextCopyMode       = "replay-text-copy-mode"
+	ParamReplayTextPlayMode       = "replay-text-play-mode"
+	ParamReplayTextTimeMode       = "replay-text-time-mode"
+	ParamReplayTextVisualMode     = "replay-text-visual-mode"
+	ParamReplayTimeFg             = "replay-time-fg"
+	ParamReplayVisualFg           = "replay-visual-fg"
+	ParamSearchStatusBarBg        = "search-status-bar-bg"
+	ParamSearchStatusBarFg        = "search-status-bar-fg"
+	ParamSearchTextNoMatchesFound = "search-text-no-matches-found"
+	ParamSearchTextSearching      = "search-text-searching"
+	ParamSkipInput                = "---skip-input"
+	ParamTimestampFormat          = "timestamp-format"
 )
 
 func (p *Parameters) Animate() bool {
@@ -62,6 +73,60 @@ func (p *Parameters) Animations() []string {
 
 func (p *Parameters) SetAnimations(value []string) {
 	p.set(ParamAnimations, value)
+}
+
+func (p *Parameters) ColorError() *style.Color {
+	value, ok := p.Get(ParamColorError)
+	if !ok {
+		return defaults.ColorError
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ColorError
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetColorError(value *style.Color) {
+	p.set(ParamColorError, value)
+}
+
+func (p *Parameters) ColorInfo() *style.Color {
+	value, ok := p.Get(ParamColorInfo)
+	if !ok {
+		return defaults.ColorInfo
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ColorInfo
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetColorInfo(value *style.Color) {
+	p.set(ParamColorInfo, value)
+}
+
+func (p *Parameters) ColorWarn() *style.Color {
+	value, ok := p.Get(ParamColorWarn)
+	if !ok {
+		return defaults.ColorWarn
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ColorWarn
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetColorWarn(value *style.Color) {
+	p.set(ParamColorWarn, value)
 }
 
 func (p *Parameters) DataDirectory() string {
@@ -190,6 +255,42 @@ func (p *Parameters) SetReplayPlayFg(value *style.Color) {
 	p.set(ParamReplayPlayFg, value)
 }
 
+func (p *Parameters) ReplaySelectionBg() *style.Color {
+	value, ok := p.Get(ParamReplaySelectionBg)
+	if !ok {
+		return defaults.ReplaySelectionBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplaySelectionBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplaySelectionBg(value *style.Color) {
+	p.set(ParamReplaySelectionBg, value)
+}
+
+func (p *Parameters) ReplaySelectionFg() *style.Color {
+	value, ok := p.Get(ParamReplaySelectionFg)
+	if !ok {
+		return defaults.ReplaySelectionFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplaySelectionFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplaySelectionFg(value *style.Color) {
+	p.set(ParamReplaySelectionFg, value)
+}
+
 func (p *Parameters) ReplayStatusBarBg() *style.Color {
 	value, ok := p.Get(ParamReplayStatusBarBg)
 	if !ok {
@@ -224,6 +325,78 @@ func (p *Parameters) ReplayStatusBarFg() *style.Color {
 
 func (p *Parameters) SetReplayStatusBarFg(value *style.Color) {
 	p.set(ParamReplayStatusBarFg, value)
+}
+
+func (p *Parameters) ReplayTextCopyMode() string {
+	value, ok := p.Get(ParamReplayTextCopyMode)
+	if !ok {
+		return defaults.ReplayTextCopyMode
+	}
+
+	realValue, ok := value.(string)
+	if !ok {
+		return defaults.ReplayTextCopyMode
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayTextCopyMode(value string) {
+	p.set(ParamReplayTextCopyMode, value)
+}
+
+func (p *Parameters) ReplayTextPlayMode() string {
+	value, ok := p.Get(ParamReplayTextPlayMode)
+	if !ok {
+		return defaults.ReplayTextPlayMode
+	}
+
+	realValue, ok := value.(string)
+	if !ok {
+		return defaults.ReplayTextPlayMode
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayTextPlayMode(value string) {
+	p.set(ParamReplayTextPlayMode, value)
+}
+
+func (p *Parameters) ReplayTextTimeMode() string {
+	value, ok := p.Get(ParamReplayTextTimeMode)
+	if !ok {
+		return defaults.ReplayTextTimeMode
+	}
+
+	realValue, ok := value.(string)
+	if !ok {
+		return defaults.ReplayTextTimeMode
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayTextTimeMode(value string) {
+	p.set(ParamReplayTextTimeMode, value)
+}
+
+func (p *Parameters) ReplayTextVisualMode() string {
+	value, ok := p.Get(ParamReplayTextVisualMode)
+	if !ok {
+		return defaults.ReplayTextVisualMode
+	}
+
+	realValue, ok := value.(string)
+	if !ok {
+		return defaults.ReplayTextVisualMode
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayTextVisualMode(value string) {
+	p.set(ParamReplayTextVisualMode, value)
 }
 
 func (p *Parameters) ReplayTimeFg() *style.Color {
@@ -298,6 +471,42 @@ func (p *Parameters) SetSearchStatusBarFg(value *style.Color) {
 	p.set(ParamSearchStatusBarFg, value)
 }
 
+func (p *Parameters) SearchTextNoMatchesFound() string {
+	value, ok := p.Get(ParamSearchTextNoMatchesFound)
+	if !ok {
+		return defaults.SearchTextNoMatchesFound
+	}
+
+	realValue, ok := value.(string)
+	if !ok {
+		return defaults.SearchTextNoMatchesFound
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetSearchTextNoMatchesFound(value string) {
+	p.set(ParamSearchTextNoMatchesFound, value)
+}
+
+func (p *Parameters) SearchTextSearching() string {
+	value, ok := p.Get(ParamSearchTextSearching)
+	if !ok {
+		return defaults.SearchTextSearching
+	}
+
+	realValue, ok := value.(string)
+	if !ok {
+		return defaults.SearchTextSearching
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetSearchTextSearching(value string) {
+	p.set(ParamSearchTextSearching, value)
+}
+
 func (p *Parameters) SkipInput() bool {
 	value, ok := p.Get(ParamSkipInput)
 	if !ok {
@@ -340,6 +549,12 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamAnimations:
 		return true
+	case ParamColorError:
+		return true
+	case ParamColorInfo:
+		return true
+	case ParamColorWarn:
+		return true
 	case ParamDataDirectory:
 		return true
 	case ParamDefaultFrame:
@@ -354,9 +569,21 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamReplayPlayFg:
 		return true
+	case ParamReplaySelectionBg:
+		return true
+	case ParamReplaySelectionFg:
+		return true
 	case ParamReplayStatusBarBg:
 		return true
 	case ParamReplayStatusBarFg:
+		return true
+	case ParamReplayTextCopyMode:
+		return true
+	case ParamReplayTextPlayMode:
+		return true
+	case ParamReplayTextTimeMode:
+		return true
+	case ParamReplayTextVisualMode:
 		return true
 	case ParamReplayTimeFg:
 		return true
@@ -365,6 +592,10 @@ func (p *Parameters) isDefault(key string) bool {
 	case ParamSearchStatusBarBg:
 		return true
 	case ParamSearchStatusBarFg:
+		return true
+	case ParamSearchTextNoMatchesFound:
+		return true
+	case ParamSearchTextSearching:
 		return true
 	case ParamSkipInput:
 		return true
@@ -381,6 +612,12 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.Animate, true
 	case ParamAnimations:
 		return defaults.Animations, true
+	case ParamColorError:
+		return defaults.ColorError, true
+	case ParamColorInfo:
+		return defaults.ColorInfo, true
+	case ParamColorWarn:
+		return defaults.ColorWarn, true
 	case ParamDataDirectory:
 		return defaults.DataDirectory, true
 	case ParamDefaultFrame:
@@ -395,10 +632,22 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.ReplayCopyFg, true
 	case ParamReplayPlayFg:
 		return defaults.ReplayPlayFg, true
+	case ParamReplaySelectionBg:
+		return defaults.ReplaySelectionBg, true
+	case ParamReplaySelectionFg:
+		return defaults.ReplaySelectionFg, true
 	case ParamReplayStatusBarBg:
 		return defaults.ReplayStatusBarBg, true
 	case ParamReplayStatusBarFg:
 		return defaults.ReplayStatusBarFg, true
+	case ParamReplayTextCopyMode:
+		return defaults.ReplayTextCopyMode, true
+	case ParamReplayTextPlayMode:
+		return defaults.ReplayTextPlayMode, true
+	case ParamReplayTextTimeMode:
+		return defaults.ReplayTextTimeMode, true
+	case ParamReplayTextVisualMode:
+		return defaults.ReplayTextVisualMode, true
 	case ParamReplayTimeFg:
 		return defaults.ReplayTimeFg, true
 	case ParamReplayVisualFg:
@@ -407,6 +656,10 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.SearchStatusBarBg, true
 	case ParamSearchStatusBarFg:
 		return defaults.SearchStatusBarFg, true
+	case ParamSearchTextNoMatchesFound:
+		return defaults.SearchTextNoMatchesFound, true
+	case ParamSearchTextSearching:
+		return defaults.SearchTextSearching, true
 	case ParamSkipInput:
 		return defaults.skipInput, true
 	case ParamTimestampFormat:
@@ -453,6 +706,63 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		if err != nil {
 			janetValue.Free()
 			return fmt.Errorf("invalid value for :animations: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamColorError:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamColorError, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :color-error: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamColorInfo:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamColorInfo, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :color-info: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamColorWarn:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamColorWarn, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :color-warn: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -590,6 +900,44 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
+	case ParamReplaySelectionBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplaySelectionBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-selection-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplaySelectionFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplaySelectionFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-selection-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
 	case ParamReplayStatusBarBg:
 		if !janetOk {
 			realValue, ok := value.(*style.Color)
@@ -624,6 +972,82 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		if err != nil {
 			janetValue.Free()
 			return fmt.Errorf("invalid value for :replay-status-bar-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayTextCopyMode:
+		if !janetOk {
+			realValue, ok := value.(string)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayTextCopyMode, should be string")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated string
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-text-copy-mode: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayTextPlayMode:
+		if !janetOk {
+			realValue, ok := value.(string)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayTextPlayMode, should be string")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated string
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-text-play-mode: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayTextTimeMode:
+		if !janetOk {
+			realValue, ok := value.(string)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayTextTimeMode, should be string")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated string
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-text-time-mode: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayTextVisualMode:
+		if !janetOk {
+			realValue, ok := value.(string)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayTextVisualMode, should be string")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated string
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-text-visual-mode: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -704,6 +1128,44 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
+	case ParamSearchTextNoMatchesFound:
+		if !janetOk {
+			realValue, ok := value.(string)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamSearchTextNoMatchesFound, should be string")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated string
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :search-text-no-matches-found: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamSearchTextSearching:
+		if !janetOk {
+			realValue, ok := value.(string)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamSearchTextSearching, should be string")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated string
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :search-text-searching: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
 	case ParamSkipInput:
 		if !janetOk {
 			realValue, ok := value.(bool)
@@ -752,6 +1214,21 @@ func init() {
 			Default:   defaults.Animations,
 		},
 		{
+			Name:      "color-error",
+			Docstring: "The [color](/api.md#color) used for error messages.",
+			Default:   defaults.ColorError,
+		},
+		{
+			Name:      "color-info",
+			Docstring: "The [color](/api.md#color) used for info messages.",
+			Default:   defaults.ColorInfo,
+		},
+		{
+			Name:      "color-warn",
+			Docstring: "The [color](/api.md#color) used for warning messages.",
+			Default:   defaults.ColorWarn,
+		},
+		{
 			Name:      "data-directory",
 			Docstring: "The directory in which .borg files will be saved. This is [inferred\non startup](/replay-mode.md#recording-to-disk). If\nset to an empty string, recording to disk is disabled.",
 			Default:   defaults.DataDirectory,
@@ -787,6 +1264,16 @@ func init() {
 			Default:   defaults.ReplayPlayFg,
 		},
 		{
+			Name:      "replay-selection-bg",
+			Docstring: "The background [color](/api.md#color) for selections in replay mode.",
+			Default:   defaults.ReplaySelectionBg,
+		},
+		{
+			Name:      "replay-selection-fg",
+			Docstring: "The foreground [color](/api.md#color) for selections in replay mode.",
+			Default:   defaults.ReplaySelectionFg,
+		},
+		{
 			Name:      "replay-status-bar-bg",
 			Docstring: "The background [color](/api.md#color) of the status bar in replay mode.",
 			Default:   defaults.ReplayStatusBarBg,
@@ -795,6 +1282,26 @@ func init() {
 			Name:      "replay-status-bar-fg",
 			Docstring: "The foreground [color](/api.md#color) of the status bar in replay mode.",
 			Default:   defaults.ReplayStatusBarFg,
+		},
+		{
+			Name:      "replay-text-copy-mode",
+			Docstring: "The text shown in the status bar when in copy mode.",
+			Default:   defaults.ReplayTextCopyMode,
+		},
+		{
+			Name:      "replay-text-play-mode",
+			Docstring: "The text shown in the status bar when playing.",
+			Default:   defaults.ReplayTextPlayMode,
+		},
+		{
+			Name:      "replay-text-time-mode",
+			Docstring: "The text shown in the status bar when in time mode.",
+			Default:   defaults.ReplayTextTimeMode,
+		},
+		{
+			Name:      "replay-text-visual-mode",
+			Docstring: "The text shown in the status bar when in visual mode.",
+			Default:   defaults.ReplayTextVisualMode,
 		},
 		{
 			Name:      "replay-time-fg",
@@ -815,6 +1322,16 @@ func init() {
 			Name:      "search-status-bar-fg",
 			Docstring: "The foreground [color](/api.md#color) of the status bar in search mode.",
 			Default:   defaults.SearchStatusBarFg,
+		},
+		{
+			Name:      "search-text-no-matches-found",
+			Docstring: "The text shown in the status bar when no matches are found.",
+			Default:   defaults.SearchTextNoMatchesFound,
+		},
+		{
+			Name:      "search-text-searching",
+			Docstring: "The text shown in the status bar when searching.",
+			Default:   defaults.SearchTextSearching,
 		},
 		{
 			Name:      "timestamp-format",

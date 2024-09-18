@@ -6,6 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -28,6 +29,7 @@ type Toast struct {
 type popToast struct{}
 
 type Toaster struct {
+	params *params.Parameters
 	render *taro.Renderer
 
 	toasts []Toast
@@ -81,24 +83,29 @@ func (t *Toaster) View(state *tty.State) {
 		BorderBackground(lipgloss.Color("0")).
 		Width(width)
 
+	p := t.params
+
 	var blocks []string
 	var style lipgloss.Style
 	for _, toast := range t.toasts {
-		style = border.Copy()
+		style = border
 		// asciinema can't handle high-intensity colors? (8-15)
 		switch toast.Level {
 		case ToastLevelError:
+			color := p.ColorError()
 			style = border.
-				BorderForeground(lipgloss.Color("1")).
-				Foreground(lipgloss.Color("1"))
+				BorderForeground(color).
+				Foreground(color)
 		case ToastLevelWarn:
+			color := p.ColorWarn()
 			style = border.
-				BorderForeground(lipgloss.Color("3")).
-				Foreground(lipgloss.Color("3"))
+				BorderForeground(color).
+				Foreground(color)
 		case ToastLevelInfo:
+			color := p.ColorInfo()
 			style = border.
-				BorderForeground(lipgloss.Color("6")).
-				Foreground(lipgloss.Color("6"))
+				BorderForeground(color).
+				Foreground(color)
 		}
 
 		blocks = append(blocks, style.Render(toast.Message))
@@ -111,8 +118,12 @@ func (t *Toaster) View(state *tty.State) {
 	)
 }
 
-func New(ctx context.Context) *taro.Program {
+func New(
+	ctx context.Context,
+	params *params.Parameters,
+) *taro.Program {
 	return taro.New(ctx, &Toaster{
+		params: params,
 		render: taro.NewRenderer(),
 	})
 }

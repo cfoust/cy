@@ -53,10 +53,11 @@ func (s *Search) renderProgressBar(state *tty.State) {
 		}
 	}
 
+	p := s.params
 	bar := renderBar(
 		s.render,
 		fmt.Sprintf(
-			"searching: '%s'",
+			p.SearchTextSearching()+": '%s'",
 			s.pendingQuery,
 		),
 		fmt.Sprintf("[%d/%d]", numComplete, numFiles),
@@ -151,13 +152,14 @@ func (s *Search) View(state *tty.State) {
 		return
 	}
 
+	p := s.params
 	if s.inputing {
 		s.renderInput(state)
 	} else if len(s.query) > 0 && len(s.complete) == 0 {
 		s.renderStatusBar(
 			state,
 			fmt.Sprintf(
-				"no matches found for '%s'",
+				p.SearchTextNoMatchesFound()+" '%s'",
 				s.query,
 			),
 			"",

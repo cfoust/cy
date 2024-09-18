@@ -57,6 +57,13 @@ type defaultParams struct {
 	// THEME SETTINGS
 	/////////////////
 
+	// The [color](/api.md#color) used for info messages.
+	ColorInfo *style.Color
+	// The [color](/api.md#color) used for warning messages.
+	ColorWarn *style.Color
+	// The [color](/api.md#color) used for error messages.
+	ColorError *style.Color
+
 	// The format for all timestamps shown in cy. This uses Go's
 	// time.Layout format described
 	// [here](https://pkg.go.dev/time#Layout).
@@ -71,6 +78,20 @@ type defaultParams struct {
 	// The [color](/api.md#color) used to represent visual mode.
 	ReplayVisualFg *style.Color
 
+	// The foreground [color](/api.md#color) for selections in replay mode.
+	ReplaySelectionFg *style.Color
+	// The background [color](/api.md#color) for selections in replay mode.
+	ReplaySelectionBg *style.Color
+
+	// The text shown in the status bar when in time mode.
+	ReplayTextTimeMode string
+	// The text shown in the status bar when playing.
+	ReplayTextPlayMode string
+	// The text shown in the status bar when in copy mode.
+	ReplayTextCopyMode string
+	// The text shown in the status bar when in visual mode.
+	ReplayTextVisualMode string
+
 	// The foreground [color](/api.md#color) of the status bar in replay mode.
 	ReplayStatusBarFg *style.Color
 	// The background [color](/api.md#color) of the status bar in replay mode.
@@ -80,6 +101,10 @@ type defaultParams struct {
 	SearchStatusBarFg *style.Color
 	// The background [color](/api.md#color) of the status bar in search mode.
 	SearchStatusBarBg *style.Color
+	// The text shown in the status bar when searching.
+	SearchTextSearching string
+	// The text shown in the status bar when no matches are found.
+	SearchTextNoMatchesFound string
 }
 
 var (
@@ -90,15 +115,26 @@ var (
 		DefaultShell:  "/bin/bash",
 		skipInput:     false,
 
-		TimestampFormat:   time.DateTime,
-		ReplayTimeFg:      style.NewColor("4"),
-		ReplayPlayFg:      style.NewColor("12"),
-		ReplayCopyFg:      style.NewColor("3"),
-		ReplayVisualFg:    style.NewColor("10"),
-		ReplayStatusBarFg: style.NewColor("15"),
-		ReplayStatusBarBg: style.NewColor("8"),
+		ColorInfo:  style.NewColor("6"),
+		ColorWarn:  style.NewColor("3"),
+		ColorError: style.NewColor("1"),
 
-		SearchStatusBarFg: style.NewColor("15"),
-		SearchStatusBarBg: style.NewColor("4"),
+		TimestampFormat:          time.DateTime,
+		ReplayTimeFg:             style.NewColor("4"),
+		ReplayPlayFg:             style.NewColor("12"),
+		ReplayCopyFg:             style.NewColor("3"),
+		ReplayVisualFg:           style.NewColor("10"),
+		ReplayStatusBarFg:        style.NewColor("15"),
+		ReplayStatusBarBg:        style.NewColor("8"),
+		ReplaySelectionFg:        style.NewColor("9"),
+		ReplaySelectionBg:        style.NewColor("8"),
+		ReplayTextTimeMode:       "⏵",
+		ReplayTextPlayMode:       "⏸",
+		ReplayTextCopyMode:       "COPY",
+		ReplayTextVisualMode:     "VISUAL",
+		SearchStatusBarFg:        style.NewColor("15"),
+		SearchStatusBarBg:        style.NewColor("4"),
+		SearchTextSearching:      "searching",
+		SearchTextNoMatchesFound: "no matches found for",
 	}
 )

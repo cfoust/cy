@@ -4,6 +4,7 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/style"
 )
@@ -391,6 +392,7 @@ func (i *imageMovement) highlightRow(
 }
 
 func (i *imageMovement) View(
+	params *params.Parameters,
 	state *tty.State,
 	highlights []movement.Highlight,
 ) {

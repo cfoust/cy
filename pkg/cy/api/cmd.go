@@ -74,7 +74,7 @@ func (c *CmdModule) New(
 				),
 			},
 		},
-		group.Params().DataDirectory(),
+		group.Params(),
 		c.TimeBinds,
 		c.CopyBinds,
 	)
