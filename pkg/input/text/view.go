@@ -20,10 +20,11 @@ func (t *Text) renderPrompt(prompt lipgloss.Style) string {
 }
 
 func (t *Text) renderInputWindow(size geom.Size) image.Image {
+	p := t.params
 	commonStyle := t.render.NewStyle().Width(size.C)
-	promptStyle := commonStyle.Copy().
-		Background(lipgloss.Color("#EAA549")).
-		Foreground(lipgloss.Color("#20111B"))
+	promptStyle := commonStyle.
+		Background(p.InputPromptBg()).
+		Foreground(p.InputPromptFg())
 
 	promptStyle.GetBackground()
 	arrow := t.render.NewStyle().
@@ -32,10 +33,10 @@ func (t *Text) renderInputWindow(size geom.Size) image.Image {
 		Render("~>")
 
 	inputStyle := t.render.NewStyle().
-		Background(lipgloss.Color("#20111B")).
-		Foreground(lipgloss.Color("#D5CCBA"))
+		Background(p.InputPromptFg()).
+		Foreground(p.InputFindActiveBg())
 	t.textInput.Cursor.Style = t.render.NewStyle().
-		Background(lipgloss.Color("#E8E3DF"))
+		Background(p.InputFindActiveBg())
 	t.textInput.TextStyle = inputStyle
 	t.textInput.Cursor.TextStyle = inputStyle
 

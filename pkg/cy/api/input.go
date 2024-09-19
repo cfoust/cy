@@ -195,6 +195,7 @@ func (i *InputModule) Text(
 			geom.Vec2{R: cursor.R, C: cursor.C},
 			state.Image.Size(),
 		),
+		text.WithParams(client.Params()),
 	}
 
 	if !params.Full {

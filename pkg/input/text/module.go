@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -15,7 +16,8 @@ import (
 
 type Text struct {
 	util.Lifetime
-	anim *taro.Program
+	anim   *taro.Program
+	params *params.Parameters
 
 	result chan<- interface{}
 	size   geom.Vec2
@@ -122,6 +124,13 @@ func WithPlaceholder(placeholder string) Setting {
 func WithPreset(preset string) Setting {
 	return func(ctx context.Context, t *Text) {
 		t.textInput.SetValue(preset)
+	}
+}
+
+// WithParams provides parameters this Text will use for rendering.
+func WithParams(params *params.Parameters) Setting {
+	return func(ctx context.Context, t *Text) {
+		t.params = params
 	}
 }
 
