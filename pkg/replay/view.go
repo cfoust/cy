@@ -77,21 +77,25 @@ func (r *Replay) getCommand() (command detect.Command, ok bool) {
 func (r *Replay) getLeftStatusStyle() lipgloss.Style {
 	p := r.params
 
-	statusBG := p.ReplayTimeFg()
+	statusFg := p.ReplayTimeFg()
+	statusBg := p.ReplayTimeBg()
 	if r.isCopyMode() {
-		statusBG = p.ReplayCopyFg()
+		statusFg = p.ReplayCopyFg()
+		statusBg = p.ReplayCopyBg()
 
 		if r.isSelecting {
-			statusBG = p.ReplayVisualFg()
+			statusFg = p.ReplayVisualFg()
+			statusBg = p.ReplayVisualBg()
 		}
 	}
 	if r.isPlaying {
-		statusBG = p.ReplayPlayFg()
+		statusFg = p.ReplayPlayFg()
+		statusBg = p.ReplayPlayBg()
 	}
 
 	return r.render.NewStyle().
-		Foreground(p.ReplayStatusBarFg()).
-		Background(statusBG).
+		Foreground(statusFg).
+		Background(statusBg).
 		Padding(0, 1)
 }
 
@@ -388,10 +392,10 @@ func (r *Replay) View(state *tty.State) {
 					C: highlight.C1 - 1,
 				},
 				FG: r.render.ConvertLipgloss(
-					lipgloss.Color("0"),
+					p.ReplayIncrementalFg().Color,
 				),
 				BG: r.render.ConvertLipgloss(
-					lipgloss.Color("3"),
+					p.ReplayIncrementalBg().Color,
 				),
 			},
 		)

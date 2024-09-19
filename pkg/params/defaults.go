@@ -88,19 +88,31 @@ type defaultParams struct {
 	// The background [color](/api.md#color) of the inactive row in (input/find).
 	InputFindInactiveBg *style.Color
 
-	// The [color](/api.md#color) used to represent time mode.
+	// The foreground [color](/api.md#color) used to represent time mode.
 	ReplayTimeFg *style.Color
-	// The [color](/api.md#color) used in time mode when the player is playing.
+	// The [color](/api.md#color) used to represent time mode.
+	ReplayTimeBg *style.Color
+	// The foreground [color](/api.md#color) used in time mode when the player is playing.
 	ReplayPlayFg *style.Color
-	// The [color](/api.md#color) used to represent copy mode.
+	// The [color](/api.md#color) used in time mode when the player is playing.
+	ReplayPlayBg *style.Color
+	// The foreground [color](/api.md#color) used in time mode when the player is playing.
 	ReplayCopyFg *style.Color
-	// The [color](/api.md#color) used to represent visual mode.
+	// The [color](/api.md#color) used to represent copy mode.
+	ReplayCopyBg *style.Color
+	// The foreground [color](/api.md#color) used in time mode when the player is playing.
 	ReplayVisualFg *style.Color
+	// The [color](/api.md#color) used to represent visual mode.
+	ReplayVisualBg *style.Color
 
 	// The foreground [color](/api.md#color) for selections in replay mode.
 	ReplaySelectionFg *style.Color
 	// The background [color](/api.md#color) for selections in replay mode.
 	ReplaySelectionBg *style.Color
+	// The foreground [color](/api.md#color) for incremental search in replay mode.
+	ReplayIncrementalFg *style.Color
+	// The background [color](/api.md#color) for incremental search in replay mode.
+	ReplayIncrementalBg *style.Color
 
 	// The text shown in the status bar when in time mode.
 	ReplayTextTimeMode string
@@ -147,14 +159,20 @@ var (
 		InputFindActiveBg:        style.NewColor("15"),
 		InputFindInactiveFg:      style.NewColor("0"),
 		InputFindInactiveBg:      style.NewColor("7"),
-		ReplayTimeFg:             style.NewColor("4"),
-		ReplayPlayFg:             style.NewColor("12"),
-		ReplayCopyFg:             style.NewColor("3"),
-		ReplayVisualFg:           style.NewColor("10"),
+		ReplayTimeFg:             style.NewColor("15"),
+		ReplayTimeBg:             style.NewColor("4"),
+		ReplayPlayFg:             style.NewColor("15"),
+		ReplayPlayBg:             style.NewColor("12"),
+		ReplayCopyFg:             style.NewColor("0"),
+		ReplayCopyBg:             style.NewColor("3"),
+		ReplayVisualFg:           style.NewColor("0"),
+		ReplayVisualBg:           style.NewColor("10"),
 		ReplayStatusBarFg:        style.NewColor("15"),
 		ReplayStatusBarBg:        style.NewColor("8"),
 		ReplaySelectionFg:        style.NewColor("9"),
 		ReplaySelectionBg:        style.NewColor("8"),
+		ReplayIncrementalFg:      style.NewColor("0"),
+		ReplayIncrementalBg:      style.NewColor("3"),
 		ReplayTextTimeMode:       "⏵",
 		ReplayTextPlayMode:       "⏸",
 		ReplayTextCopyMode:       "COPY",

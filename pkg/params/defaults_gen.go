@@ -27,7 +27,11 @@ const (
 	ParamInputPromptFg            = "input-prompt-fg"
 	ParamNumSearchWorkers         = "num-search-workers"
 	ParamRemovePaneOnExit         = "remove-pane-on-exit"
+	ParamReplayCopyBg             = "replay-copy-bg"
 	ParamReplayCopyFg             = "replay-copy-fg"
+	ParamReplayIncrementalBg      = "replay-incremental-bg"
+	ParamReplayIncrementalFg      = "replay-incremental-fg"
+	ParamReplayPlayBg             = "replay-play-bg"
 	ParamReplayPlayFg             = "replay-play-fg"
 	ParamReplaySelectionBg        = "replay-selection-bg"
 	ParamReplaySelectionFg        = "replay-selection-fg"
@@ -37,7 +41,9 @@ const (
 	ParamReplayTextPlayMode       = "replay-text-play-mode"
 	ParamReplayTextTimeMode       = "replay-text-time-mode"
 	ParamReplayTextVisualMode     = "replay-text-visual-mode"
+	ParamReplayTimeBg             = "replay-time-bg"
 	ParamReplayTimeFg             = "replay-time-fg"
+	ParamReplayVisualBg           = "replay-visual-bg"
 	ParamReplayVisualFg           = "replay-visual-fg"
 	ParamSearchStatusBarBg        = "search-status-bar-bg"
 	ParamSearchStatusBarFg        = "search-status-bar-fg"
@@ -371,6 +377,24 @@ func (p *Parameters) SetRemovePaneOnExit(value bool) {
 	p.set(ParamRemovePaneOnExit, value)
 }
 
+func (p *Parameters) ReplayCopyBg() *style.Color {
+	value, ok := p.Get(ParamReplayCopyBg)
+	if !ok {
+		return defaults.ReplayCopyBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayCopyBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayCopyBg(value *style.Color) {
+	p.set(ParamReplayCopyBg, value)
+}
+
 func (p *Parameters) ReplayCopyFg() *style.Color {
 	value, ok := p.Get(ParamReplayCopyFg)
 	if !ok {
@@ -387,6 +411,60 @@ func (p *Parameters) ReplayCopyFg() *style.Color {
 
 func (p *Parameters) SetReplayCopyFg(value *style.Color) {
 	p.set(ParamReplayCopyFg, value)
+}
+
+func (p *Parameters) ReplayIncrementalBg() *style.Color {
+	value, ok := p.Get(ParamReplayIncrementalBg)
+	if !ok {
+		return defaults.ReplayIncrementalBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayIncrementalBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayIncrementalBg(value *style.Color) {
+	p.set(ParamReplayIncrementalBg, value)
+}
+
+func (p *Parameters) ReplayIncrementalFg() *style.Color {
+	value, ok := p.Get(ParamReplayIncrementalFg)
+	if !ok {
+		return defaults.ReplayIncrementalFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayIncrementalFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayIncrementalFg(value *style.Color) {
+	p.set(ParamReplayIncrementalFg, value)
+}
+
+func (p *Parameters) ReplayPlayBg() *style.Color {
+	value, ok := p.Get(ParamReplayPlayBg)
+	if !ok {
+		return defaults.ReplayPlayBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayPlayBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayPlayBg(value *style.Color) {
+	p.set(ParamReplayPlayBg, value)
 }
 
 func (p *Parameters) ReplayPlayFg() *style.Color {
@@ -551,6 +629,24 @@ func (p *Parameters) SetReplayTextVisualMode(value string) {
 	p.set(ParamReplayTextVisualMode, value)
 }
 
+func (p *Parameters) ReplayTimeBg() *style.Color {
+	value, ok := p.Get(ParamReplayTimeBg)
+	if !ok {
+		return defaults.ReplayTimeBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayTimeBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayTimeBg(value *style.Color) {
+	p.set(ParamReplayTimeBg, value)
+}
+
 func (p *Parameters) ReplayTimeFg() *style.Color {
 	value, ok := p.Get(ParamReplayTimeFg)
 	if !ok {
@@ -567,6 +663,24 @@ func (p *Parameters) ReplayTimeFg() *style.Color {
 
 func (p *Parameters) SetReplayTimeFg(value *style.Color) {
 	p.set(ParamReplayTimeFg, value)
+}
+
+func (p *Parameters) ReplayVisualBg() *style.Color {
+	value, ok := p.Get(ParamReplayVisualBg)
+	if !ok {
+		return defaults.ReplayVisualBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayVisualBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayVisualBg(value *style.Color) {
+	p.set(ParamReplayVisualBg, value)
 }
 
 func (p *Parameters) ReplayVisualFg() *style.Color {
@@ -733,7 +847,15 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamRemovePaneOnExit:
 		return true
+	case ParamReplayCopyBg:
+		return true
 	case ParamReplayCopyFg:
+		return true
+	case ParamReplayIncrementalBg:
+		return true
+	case ParamReplayIncrementalFg:
+		return true
+	case ParamReplayPlayBg:
 		return true
 	case ParamReplayPlayFg:
 		return true
@@ -753,7 +875,11 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamReplayTextVisualMode:
 		return true
+	case ParamReplayTimeBg:
+		return true
 	case ParamReplayTimeFg:
+		return true
+	case ParamReplayVisualBg:
 		return true
 	case ParamReplayVisualFg:
 		return true
@@ -812,8 +938,16 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.NumSearchWorkers, true
 	case ParamRemovePaneOnExit:
 		return defaults.RemovePaneOnExit, true
+	case ParamReplayCopyBg:
+		return defaults.ReplayCopyBg, true
 	case ParamReplayCopyFg:
 		return defaults.ReplayCopyFg, true
+	case ParamReplayIncrementalBg:
+		return defaults.ReplayIncrementalBg, true
+	case ParamReplayIncrementalFg:
+		return defaults.ReplayIncrementalFg, true
+	case ParamReplayPlayBg:
+		return defaults.ReplayPlayBg, true
 	case ParamReplayPlayFg:
 		return defaults.ReplayPlayFg, true
 	case ParamReplaySelectionBg:
@@ -832,8 +966,12 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.ReplayTextTimeMode, true
 	case ParamReplayTextVisualMode:
 		return defaults.ReplayTextVisualMode, true
+	case ParamReplayTimeBg:
+		return defaults.ReplayTimeBg, true
 	case ParamReplayTimeFg:
 		return defaults.ReplayTimeFg, true
+	case ParamReplayVisualBg:
+		return defaults.ReplayVisualBg, true
 	case ParamReplayVisualFg:
 		return defaults.ReplayVisualFg, true
 	case ParamSearchStatusBarBg:
@@ -1198,6 +1336,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
+	case ParamReplayCopyBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayCopyBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-copy-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
 	case ParamReplayCopyFg:
 		if !janetOk {
 			realValue, ok := value.(*style.Color)
@@ -1213,6 +1370,63 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		if err != nil {
 			janetValue.Free()
 			return fmt.Errorf("invalid value for :replay-copy-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayIncrementalBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayIncrementalBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-incremental-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayIncrementalFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayIncrementalFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-incremental-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayPlayBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayPlayBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-play-bg: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -1388,6 +1602,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
+	case ParamReplayTimeBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayTimeBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-time-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
 	case ParamReplayTimeFg:
 		if !janetOk {
 			realValue, ok := value.(*style.Color)
@@ -1403,6 +1636,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		if err != nil {
 			janetValue.Free()
 			return fmt.Errorf("invalid value for :replay-time-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayVisualBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayVisualBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-visual-bg: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -1630,13 +1882,33 @@ func init() {
 			Default:   defaults.RemovePaneOnExit,
 		},
 		{
-			Name:      "replay-copy-fg",
+			Name:      "replay-copy-bg",
 			Docstring: "The [color](/api.md#color) used to represent copy mode.",
+			Default:   defaults.ReplayCopyBg,
+		},
+		{
+			Name:      "replay-copy-fg",
+			Docstring: "The foreground [color](/api.md#color) used in time mode when the player is playing.",
 			Default:   defaults.ReplayCopyFg,
 		},
 		{
-			Name:      "replay-play-fg",
+			Name:      "replay-incremental-bg",
+			Docstring: "The background [color](/api.md#color) for incremental search in replay mode.",
+			Default:   defaults.ReplayIncrementalBg,
+		},
+		{
+			Name:      "replay-incremental-fg",
+			Docstring: "The foreground [color](/api.md#color) for incremental search in replay mode.",
+			Default:   defaults.ReplayIncrementalFg,
+		},
+		{
+			Name:      "replay-play-bg",
 			Docstring: "The [color](/api.md#color) used in time mode when the player is playing.",
+			Default:   defaults.ReplayPlayBg,
+		},
+		{
+			Name:      "replay-play-fg",
+			Docstring: "The foreground [color](/api.md#color) used in time mode when the player is playing.",
 			Default:   defaults.ReplayPlayFg,
 		},
 		{
@@ -1680,13 +1952,23 @@ func init() {
 			Default:   defaults.ReplayTextVisualMode,
 		},
 		{
-			Name:      "replay-time-fg",
+			Name:      "replay-time-bg",
 			Docstring: "The [color](/api.md#color) used to represent time mode.",
+			Default:   defaults.ReplayTimeBg,
+		},
+		{
+			Name:      "replay-time-fg",
+			Docstring: "The foreground [color](/api.md#color) used to represent time mode.",
 			Default:   defaults.ReplayTimeFg,
 		},
 		{
-			Name:      "replay-visual-fg",
+			Name:      "replay-visual-bg",
 			Docstring: "The [color](/api.md#color) used to represent visual mode.",
+			Default:   defaults.ReplayVisualBg,
+		},
+		{
+			Name:      "replay-visual-fg",
+			Docstring: "The foreground [color](/api.md#color) used in time mode when the player is playing.",
 			Default:   defaults.ReplayVisualFg,
 		},
 		{
