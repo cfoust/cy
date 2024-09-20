@@ -20,10 +20,21 @@ func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 		return
 	}
 
-	fgColor := r.render.ConvertLipgloss(lipgloss.Color("1"))
-	bgColor := r.render.ConvertLipgloss(lipgloss.Color("14"))
-	bgSelectedColor := r.render.ConvertLipgloss(lipgloss.Color("13"))
+	p := r.params
+	activeFg := r.render.ConvertLipgloss(
+		p.ReplayMatchActiveFg().Color,
+	)
+	activeBg := r.render.ConvertLipgloss(
+		p.ReplayMatchActiveBg().Color,
+	)
+	inactiveFg := r.render.ConvertLipgloss(
+		p.ReplayMatchInactiveFg().Color,
+	)
+	inactiveBg := r.render.ConvertLipgloss(
+		p.ReplayMatchInactiveBg().Color,
+	)
 
+	var fg, bg emu.Color
 	location := r.Location()
 	for _, match := range matches {
 		// This match is not on the screen
@@ -31,9 +42,12 @@ func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 			continue
 		}
 
-		bg := bgColor
 		if location.Equal(match.Begin) {
-			bg = bgSelectedColor
+			fg = activeFg
+			bg = activeBg
+		} else {
+			fg = inactiveFg
+			bg = inactiveBg
 		}
 
 		for _, appearance := range match.Appearances {
@@ -47,7 +61,7 @@ func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 					Screen: true,
 					From:   appearance.From,
 					To:     appearance.To,
-					FG:     fgColor,
+					FG:     fg,
 					BG:     bg,
 				},
 			)

@@ -113,6 +113,14 @@ type defaultParams struct {
 	ReplayIncrementalFg *style.Color
 	// The background [color](/api.md#color) for incremental search in replay mode.
 	ReplayIncrementalBg *style.Color
+	// The foreground [color](/api.md#color) for the current search match in replay mode.
+	ReplayMatchActiveFg *style.Color
+	// The background [color](/api.md#color) for the current search match in replay mode.
+	ReplayMatchActiveBg *style.Color
+	// The foreground [color](/api.md#color) for search matches in replay mode.
+	ReplayMatchInactiveFg *style.Color
+	// The background [color](/api.md#color) for search matches in replay mode.
+	ReplayMatchInactiveBg *style.Color
 
 	// The text shown in the status bar when in time mode.
 	ReplayTextTimeMode string
@@ -173,6 +181,10 @@ var (
 		ReplaySelectionBg:        style.NewColor("8"),
 		ReplayIncrementalFg:      style.NewColor("0"),
 		ReplayIncrementalBg:      style.NewColor("3"),
+		ReplayMatchActiveFg:      style.NewColor("1"),
+		ReplayMatchActiveBg:      style.NewColor("13"),
+		ReplayMatchInactiveFg:    style.NewColor("1"),
+		ReplayMatchInactiveBg:    style.NewColor("14"),
 		ReplayTextTimeMode:       "⏵",
 		ReplayTextPlayMode:       "⏸",
 		ReplayTextCopyMode:       "COPY",

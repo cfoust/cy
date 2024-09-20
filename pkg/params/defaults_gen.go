@@ -31,6 +31,10 @@ const (
 	ParamReplayCopyFg             = "replay-copy-fg"
 	ParamReplayIncrementalBg      = "replay-incremental-bg"
 	ParamReplayIncrementalFg      = "replay-incremental-fg"
+	ParamReplayMatchActiveBg      = "replay-match-active-bg"
+	ParamReplayMatchActiveFg      = "replay-match-active-fg"
+	ParamReplayMatchInactiveBg    = "replay-match-inactive-bg"
+	ParamReplayMatchInactiveFg    = "replay-match-inactive-fg"
 	ParamReplayPlayBg             = "replay-play-bg"
 	ParamReplayPlayFg             = "replay-play-fg"
 	ParamReplaySelectionBg        = "replay-selection-bg"
@@ -449,6 +453,78 @@ func (p *Parameters) SetReplayIncrementalFg(value *style.Color) {
 	p.set(ParamReplayIncrementalFg, value)
 }
 
+func (p *Parameters) ReplayMatchActiveBg() *style.Color {
+	value, ok := p.Get(ParamReplayMatchActiveBg)
+	if !ok {
+		return defaults.ReplayMatchActiveBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayMatchActiveBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayMatchActiveBg(value *style.Color) {
+	p.set(ParamReplayMatchActiveBg, value)
+}
+
+func (p *Parameters) ReplayMatchActiveFg() *style.Color {
+	value, ok := p.Get(ParamReplayMatchActiveFg)
+	if !ok {
+		return defaults.ReplayMatchActiveFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayMatchActiveFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayMatchActiveFg(value *style.Color) {
+	p.set(ParamReplayMatchActiveFg, value)
+}
+
+func (p *Parameters) ReplayMatchInactiveBg() *style.Color {
+	value, ok := p.Get(ParamReplayMatchInactiveBg)
+	if !ok {
+		return defaults.ReplayMatchInactiveBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayMatchInactiveBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayMatchInactiveBg(value *style.Color) {
+	p.set(ParamReplayMatchInactiveBg, value)
+}
+
+func (p *Parameters) ReplayMatchInactiveFg() *style.Color {
+	value, ok := p.Get(ParamReplayMatchInactiveFg)
+	if !ok {
+		return defaults.ReplayMatchInactiveFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.ReplayMatchInactiveFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayMatchInactiveFg(value *style.Color) {
+	p.set(ParamReplayMatchInactiveFg, value)
+}
+
 func (p *Parameters) ReplayPlayBg() *style.Color {
 	value, ok := p.Get(ParamReplayPlayBg)
 	if !ok {
@@ -855,6 +931,14 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamReplayIncrementalFg:
 		return true
+	case ParamReplayMatchActiveBg:
+		return true
+	case ParamReplayMatchActiveFg:
+		return true
+	case ParamReplayMatchInactiveBg:
+		return true
+	case ParamReplayMatchInactiveFg:
+		return true
 	case ParamReplayPlayBg:
 		return true
 	case ParamReplayPlayFg:
@@ -946,6 +1030,14 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.ReplayIncrementalBg, true
 	case ParamReplayIncrementalFg:
 		return defaults.ReplayIncrementalFg, true
+	case ParamReplayMatchActiveBg:
+		return defaults.ReplayMatchActiveBg, true
+	case ParamReplayMatchActiveFg:
+		return defaults.ReplayMatchActiveFg, true
+	case ParamReplayMatchInactiveBg:
+		return defaults.ReplayMatchInactiveBg, true
+	case ParamReplayMatchInactiveFg:
+		return defaults.ReplayMatchInactiveFg, true
 	case ParamReplayPlayBg:
 		return defaults.ReplayPlayBg, true
 	case ParamReplayPlayFg:
@@ -1408,6 +1500,82 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		if err != nil {
 			janetValue.Free()
 			return fmt.Errorf("invalid value for :replay-incremental-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayMatchActiveBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayMatchActiveBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-match-active-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayMatchActiveFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayMatchActiveFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-match-active-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayMatchInactiveBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayMatchInactiveBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-match-inactive-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamReplayMatchInactiveFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayMatchInactiveFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-match-inactive-fg: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -1900,6 +2068,26 @@ func init() {
 			Name:      "replay-incremental-fg",
 			Docstring: "The foreground [color](/api.md#color) for incremental search in replay mode.",
 			Default:   defaults.ReplayIncrementalFg,
+		},
+		{
+			Name:      "replay-match-active-bg",
+			Docstring: "The background [color](/api.md#color) for the current search match in replay mode.",
+			Default:   defaults.ReplayMatchActiveBg,
+		},
+		{
+			Name:      "replay-match-active-fg",
+			Docstring: "The foreground [color](/api.md#color) for the current search match in replay mode.",
+			Default:   defaults.ReplayMatchActiveFg,
+		},
+		{
+			Name:      "replay-match-inactive-bg",
+			Docstring: "The background [color](/api.md#color) for search matches in replay mode.",
+			Default:   defaults.ReplayMatchInactiveBg,
+		},
+		{
+			Name:      "replay-match-inactive-fg",
+			Docstring: "The foreground [color](/api.md#color) for search matches in replay mode.",
+			Default:   defaults.ReplayMatchInactiveFg,
 		},
 		{
 			Name:      "replay-play-bg",
