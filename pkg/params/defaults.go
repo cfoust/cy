@@ -144,6 +144,8 @@ type defaultParams struct {
 	SearchTextSearching string
 	// The text shown in the status bar when no matches are found.
 	SearchTextNoMatchesFound string
+	// The text shown when a terminal session exits.
+	TerminalTextExited string
 }
 
 var (
@@ -193,5 +195,6 @@ var (
 		SearchStatusBarBg:        style.NewColor("4"),
 		SearchTextSearching:      "searching",
 		SearchTextNoMatchesFound: "no matches found for",
+		TerminalTextExited:       "exited",
 	}
 )

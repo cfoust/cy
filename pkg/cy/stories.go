@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/layout/split"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/stories"
 )
 
@@ -39,6 +40,7 @@ func createStoryClient(ctx context.Context, cy *Cy) (client *Client, screen mux.
 		ctx,
 		client,
 		geom.DEFAULT_SIZE,
+		params.New(),
 		emu.WithoutHistory,
 	)
 

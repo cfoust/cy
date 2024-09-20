@@ -54,6 +54,7 @@ const (
 	ParamSearchTextNoMatchesFound = "search-text-no-matches-found"
 	ParamSearchTextSearching      = "search-text-searching"
 	ParamSkipInput                = "---skip-input"
+	ParamTerminalTextExited       = "terminal-text-exited"
 	ParamTimestampFormat          = "timestamp-format"
 )
 
@@ -867,6 +868,24 @@ func (p *Parameters) SetSkipInput(value bool) {
 	p.set(ParamSkipInput, value)
 }
 
+func (p *Parameters) TerminalTextExited() string {
+	value, ok := p.Get(ParamTerminalTextExited)
+	if !ok {
+		return defaults.TerminalTextExited
+	}
+
+	realValue, ok := value.(string)
+	if !ok {
+		return defaults.TerminalTextExited
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetTerminalTextExited(value string) {
+	p.set(ParamTerminalTextExited, value)
+}
+
 func (p *Parameters) TimestampFormat() string {
 	value, ok := p.Get(ParamTimestampFormat)
 	if !ok {
@@ -977,6 +996,8 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamSkipInput:
 		return true
+	case ParamTerminalTextExited:
+		return true
 	case ParamTimestampFormat:
 		return true
 
@@ -1076,6 +1097,8 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.SearchTextSearching, true
 	case ParamSkipInput:
 		return defaults.skipInput, true
+	case ParamTerminalTextExited:
+		return defaults.TerminalTextExited, true
 	case ParamTimestampFormat:
 		return defaults.TimestampFormat, true
 
@@ -1934,6 +1957,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 
 		return fmt.Errorf(":---skip-input is a protected parameter")
 
+	case ParamTerminalTextExited:
+		if !janetOk {
+			realValue, ok := value.(string)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamTerminalTextExited, should be string")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated string
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :terminal-text-exited: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
 	case ParamTimestampFormat:
 		if !janetOk {
 			realValue, ok := value.(string)
@@ -2178,6 +2220,11 @@ func init() {
 			Name:      "search-text-searching",
 			Docstring: "The text shown in the status bar when searching.",
 			Default:   defaults.SearchTextSearching,
+		},
+		{
+			Name:      "terminal-text-exited",
+			Docstring: "The text shown when a terminal session exits.",
+			Default:   defaults.TerminalTextExited,
 		},
 		{
 			Name:      "timestamp-format",

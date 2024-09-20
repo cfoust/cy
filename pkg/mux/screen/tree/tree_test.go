@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/stream"
+	"github.com/cfoust/cy/pkg/params"
 
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +21,12 @@ func TestRoot(t *testing.T) {
 func emptyPane(g *Group) *Pane {
 	return g.NewPane(
 		context.Background(),
-		screen.NewTerminal(context.Background(), stream.NewReader(), geom.DEFAULT_SIZE),
+		screen.NewTerminal(
+			context.Background(),
+			stream.NewReader(),
+			geom.DEFAULT_SIZE,
+			params.New(),
+		),
 	)
 }
 

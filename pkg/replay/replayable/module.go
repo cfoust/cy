@@ -215,6 +215,7 @@ func New(
 		lifetime.Ctx(),
 		sessions.NewEventStream(stream, r.player),
 		geom.DEFAULT_SIZE,
+		params,
 		emu.WithoutHistory,
 	)
 

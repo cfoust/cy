@@ -10,6 +10,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/charmbracelet/lipgloss"
@@ -25,6 +26,7 @@ type Terminal struct {
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 	render *taro.Renderer
+	params *params.Parameters
 
 	terminal  emu.Terminal
 	stream    Stream
@@ -54,19 +56,19 @@ func (t *Terminal) State() *tty.State {
 		return state
 	}
 
-	message := "exited"
-
+	p := t.params
+	message := p.TerminalTextExited()
 	offsetStyle := t.render.NewStyle().
-		Foreground(lipgloss.Color("10")).
-		Background(lipgloss.Color("240"))
+		Foreground(p.ColorInfo()).
+		Background(lipgloss.Color("8"))
 
 	if realError, ok := exitError.(*exec.ExitError); ok {
 		offsetStyle = t.render.NewStyle().
-			Foreground(lipgloss.Color("9")).
-			Background(lipgloss.Color("240"))
+			Foreground(p.ColorError()).
+			Background(lipgloss.Color("8"))
 
 		message = fmt.Sprintf(
-			"exited (%d)",
+			message+" (%d)",
 			realError.ExitCode(),
 		)
 	}
@@ -164,6 +166,7 @@ func NewTerminal(
 	ctx context.Context,
 	stream Stream,
 	size Size,
+	params *params.Parameters,
 	options ...emu.TerminalOption,
 ) *Terminal {
 	options = append(options,
@@ -176,6 +179,7 @@ func NewTerminal(
 		terminal:        emu.New(options...),
 		stream:          stream,
 		render:          taro.NewRenderer(),
+		params:          params,
 	}
 
 	go func() {
