@@ -36,6 +36,8 @@
 
 - [Parameters](./parameters.md)
 
+    - [Themes](./parameters/themes.md)
+
 - [Replay mode](./replay-mode.md)
 
   - [Modes](./replay-mode/modes.md)

@@ -15,6 +15,8 @@ For example:
 (msg/toast :error "this shows up in red")
 ```
 
+You can configure the colors used for toasts with the [`color-*`](/default-parameters.md#color-error) family of parameters.
+
 This code would show toasts that look like this:
 
 {{story static toasts --width 60 --height 15}}

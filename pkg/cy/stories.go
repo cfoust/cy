@@ -916,4 +916,6 @@ func init() {
 		`)
 		return screen, err
 	}, stories.Config{})
+
+	stories.Register("theme", initTheme, stories.Config{})
 }
