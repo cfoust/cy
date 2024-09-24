@@ -1,6 +1,6 @@
 # Starting cy
 
-To start `cy` after installation, just run `cy` without any arguments. If a `cy` server is not already running, this command will start one.
+To start `cy` after installation, just run `cy` without any arguments. If a `cy` server is not already running, `cy` will start one.
 
 {{story png splash}}
 

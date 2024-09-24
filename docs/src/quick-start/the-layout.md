@@ -32,7 +32,7 @@ After creating a few, you can move between them using directional keys:
 - {{bind :root ctrl+a tab}} to move to the next tab
 - {{bind :root ctrl+a shift+tab}} to move to the previous tab
 
-### Removing layout nodes
+### Removing panes
 
 You can also remove panes from your layout with {{bind :root ctrl+a x}}. However, it is important to note that unlike in other terminal multiplexers, removing a pane from your layout does not kill it; you can still attach to it again, such as by using {{bind :root ctrl+a ;}}. To remove it from your layout and kill the underlying process, you can use {{bind :root ctrl+a X}}.
 

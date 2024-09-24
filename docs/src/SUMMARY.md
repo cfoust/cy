@@ -12,9 +12,9 @@
 
 - [Starting cy](./quick-start/starting-cy.md)
 
-- [Entering replay mode](./quick-start/replay-mode.md)
-
 - [Creating a shell](./quick-start/new-shells.md)
+
+- [Entering replay mode](./quick-start/replay-mode.md)
 
 - [Switching panes](./quick-start/switching.md)
 
