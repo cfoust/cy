@@ -40,7 +40,7 @@
                    [prefix "t"] action/new-tab
                    [prefix "tab"] action/next-tab
                    [prefix "shift+tab"] action/prev-tab
-                   [prefix "R"] action/set-tab-name
+                   [prefix "R"] action/rename-tab
                    [prefix "left"] action/move-left
                    [prefix "right"] action/move-right
                    [prefix "up"] action/move-up

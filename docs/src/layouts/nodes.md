@@ -231,7 +231,7 @@ There are some important constraints on the `:tabs` property:
 ### Actions
 
 - {{api action/new-tab}}
-- {{api action/set-tab-name}}
+- {{api action/rename-tab}}
 - {{api action/next-tab}}
 - {{api action/prev-tab}}
 
