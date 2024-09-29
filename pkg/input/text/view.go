@@ -1,6 +1,7 @@
 package text
 
 import (
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -72,6 +73,13 @@ func (t *Text) renderInputWindow(size geom.Size) image.Image {
 func (t *Text) View(state *tty.State) {
 	if t.anim != nil {
 		tty.Copy(geom.Vec2{}, state, t.anim.State())
+	} else {
+		size := state.Image.Size()
+		for row := 0; row < size.R; row++ {
+			for col := 0; col < size.C; col++ {
+				state.Image[row][col].Mode |= emu.AttrTransparent
+			}
+		}
 	}
 
 	// the text input provides its own cursor
