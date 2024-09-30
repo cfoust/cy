@@ -102,6 +102,10 @@ func isValidType(type_ reflect.Type) bool {
 			return true
 		}
 
+		if isMarshalable(type_) && isUnmarshalable(type_) {
+			return true
+		}
+
 		return false
 	case reflect.Struct:
 		value := reflect.New(type_).Elem()
