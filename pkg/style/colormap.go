@@ -12,6 +12,10 @@ type ColorMap struct {
 	mapping map[lipgloss.Color]lipgloss.Color
 }
 
+func NewColorMap(mapping map[lipgloss.Color]lipgloss.Color) *ColorMap {
+	return &ColorMap{mapping: mapping}
+}
+
 var _ janet.Unmarshalable = (*ColorMap)(nil)
 
 func (c *ColorMap) UnmarshalJanet(value *janet.Value) (err error) {
