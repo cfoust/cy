@@ -661,17 +661,17 @@ func init() {
 	}, stories.Config{
 		Input: []interface{}{
 			stories.Wait(stories.Some),
-			stories.Type("ctrl+a", "N"),
+			stories.Type("ctrl+a", "tab"),
 			stories.Wait(stories.Some),
-			stories.Type("ctrl+a", "N"),
+			stories.Type("ctrl+a", "tab"),
 			stories.Wait(stories.Some),
-			stories.Type("ctrl+a", "N"),
+			stories.Type("ctrl+a", "tab"),
 			stories.Wait(stories.Some),
-			stories.Type("ctrl+a", "P"),
+			stories.Type("ctrl+a", "shift+tab"),
 			stories.Wait(stories.Some),
-			stories.Type("ctrl+a", "P"),
+			stories.Type("ctrl+a", "shift+tab"),
 			stories.Wait(stories.Some),
-			stories.Type("ctrl+a", "P"),
+			stories.Type("ctrl+a", "shift+tab"),
 		},
 	})
 
