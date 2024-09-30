@@ -29,7 +29,7 @@ For example:
 
 Some API functions, such as {{api style/render}}, accept colors as input. `cy` supports True Color colors specified in hexadecimal along with ANSI 16 and ANSI-256 colors. Under the hood, `cy` uses [charmbracelet/lipgloss](https://github.com/charmbracelet/lipgloss?tab=readme-ov-file#colors) and thus supports its color references.
 
-You can read more about color support in terminal emiulators [here](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#color-codes).
+You can read more about color support in terminal emulators [here](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#color-codes).
 
 Examples of valid colors:
 
