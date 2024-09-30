@@ -1,6 +1,6 @@
 # User input
 
-{{story cast input --width 60 --height 20}}
+{{story cast input}}
 
 > The above uses both fuzzy finding and freeform text input.
 

@@ -409,7 +409,7 @@ func init() {
 			stories.Wait(stories.Some),
 			stories.Type("ctrl+a", "ctrl+p"),
 			stories.Wait(stories.Some),
-			stories.Type("Rename"),
+			stories.Type("action/rename-pane"),
 			stories.Wait(stories.Some),
 			stories.Type("enter"),
 			stories.Wait(stories.Some),
