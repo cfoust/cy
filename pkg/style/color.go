@@ -36,8 +36,8 @@ func (c *Color) MarshalJanet() interface{} {
 	return string(c.Color)
 }
 
-func (c *Color) Emu() emu.Color {
-	switch c := renderer.ColorProfile().Color(string(c.Color)).(type) {
+func lipglossToEmu(l lipgloss.Color) emu.Color {
+	switch c := renderer.ColorProfile().Color(string(l)).(type) {
 	case termenv.ANSIColor:
 		return emu.ANSIColor(int(c))
 	case termenv.ANSI256Color:
@@ -48,6 +48,10 @@ func (c *Color) Emu() emu.Color {
 	}
 
 	return emu.DefaultFG
+}
+
+func (c *Color) Emu() emu.Color {
+	return lipglossToEmu(c.Color)
 }
 
 func NewColor(c string) *Color {

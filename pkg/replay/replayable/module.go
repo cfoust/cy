@@ -91,7 +91,9 @@ func (r *Replayable) State() *tty.State {
 		currentScreen = r.replay
 	}
 
-	return currentScreen.State()
+	state := currentScreen.State()
+	r.params.ColorMap().Apply(state.Image)
+	return state
 }
 
 func (r *Replayable) Resize(size geom.Size) error {
