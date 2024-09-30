@@ -70,6 +70,7 @@ type TestValue struct {
 	Ints   [6]int
 	Bools  []bool
 	Buffer []byte
+	Map    map[string]int
 }
 
 func TestVM(t *testing.T) {
@@ -317,6 +318,9 @@ func TestVM(t *testing.T) {
 				},
 				Bools:  bools,
 				Buffer: buffer,
+				Map: map[string]int{
+					"test": 2,
+				},
 			}
 			cmp(t, vm, structValue)
 

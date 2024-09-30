@@ -276,6 +276,29 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 			C.janet_array_push(array, value_)
 		}
 		result = C.janet_wrap_array(array)
+	case reflect.Map:
+		mapKeys := value.MapKeys()
+		table := C.janet_table(C.int(len(mapKeys)))
+
+		for _, key := range mapKeys {
+			keyValue, keyErr := v.marshal(key.Interface())
+			if keyErr != nil {
+				err = keyErr
+				return
+			}
+
+			valueValue, valueErr := v.marshal(
+				value.MapIndex(key).Interface(),
+			)
+			if valueErr != nil {
+				err = valueErr
+				return
+			}
+
+			C.janet_table_put(table, keyValue, valueValue)
+		}
+
+		result = C.janet_wrap_table(table)
 	default:
 		err = fmt.Errorf("unimplemented type: %s", type_.String())
 		return
@@ -563,7 +586,10 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 		slice := reflect.MakeSlice(type_, 0, 0)
 
 		for i := 0; i < int(haveElements); i++ {
-			value_ := C.janet_get(source, C.janet_wrap_integer(C.int(i)))
+			value_ := C.janet_get(
+				source,
+				C.janet_wrap_integer(C.int(i)),
+			)
 			entry := reflect.New(element)
 			err := v.unmarshal(value_, entry.Interface())
 			if err != nil {
@@ -573,6 +599,45 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 		}
 
 		value.Set(slice)
+	case reflect.Map:
+		if err := assertType(
+			source,
+			C.JANET_TABLE,
+			C.JANET_STRUCT,
+		); err != nil {
+			return err
+		}
+
+		newMap := reflect.MakeMap(type_)
+		keyType := type_.Key()
+		valueType := type_.Elem()
+
+		var kvs, kv *C.JanetKV
+		var length, capacity C.int32_t
+		C.janet_dictionary_view(source, &kvs, &length, &capacity)
+		for {
+			kv = C.janet_dictionary_next(kvs, capacity, kv)
+			if kv == nil {
+				break
+			}
+
+			key := reflect.New(keyType)
+			value := reflect.New(valueType)
+
+			err := v.unmarshal(kv.key, key.Interface())
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal map key: %s", err.Error())
+			}
+
+			err = v.unmarshal(kv.value, value.Interface())
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal map value: %s", err.Error())
+			}
+
+			newMap.SetMapIndex(key.Elem(), value.Elem())
+		}
+		value.Set(newMap)
+		return nil
 	default:
 		return fmt.Errorf("unimplemented type: %s (%s)", type_.String(), type_.Kind().String())
 	}
