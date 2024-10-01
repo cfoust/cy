@@ -446,3 +446,22 @@ For example:
              :focus input
              :alt-screen false))
          (pane/attach _)))
+
+(key/action
+  action/set-pane-colors
+  "Set the color map for the current pane."
+  (def current (pane/current))
+  (if (not current) (break))
+
+  (as?-> (color-maps/get-all) _
+         (map |(let [{:id id
+                      :name name
+                      :map scheme} $]
+                 [[id name]
+                  {:type :node
+                   :id current
+                   :color-map scheme}
+                  scheme])
+              _)
+         (input/find _ :prompt "color map: pane")
+         (param/set current :color-map _)))

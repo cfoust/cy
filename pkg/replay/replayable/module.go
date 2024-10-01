@@ -15,6 +15,7 @@ import (
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -37,6 +38,8 @@ type Replayable struct {
 }
 
 var _ mux.Screen = (*Replayable)(nil)
+
+var _ style.Unfiltered = (*Replayable)(nil)
 
 func (r *Replayable) Kill() {
 	r.Cancel()
@@ -85,15 +88,23 @@ func (r *Replayable) isReplayMode() bool {
 	return showReplay
 }
 
-func (r *Replayable) State() *tty.State {
+func (r *Replayable) getState() *tty.State {
 	var currentScreen mux.Screen = r.terminal
 	if r.isReplayMode() {
 		currentScreen = r.replay
 	}
 
-	state := currentScreen.State()
+	return currentScreen.State()
+}
+
+func (r *Replayable) State() *tty.State {
+	state := r.getState()
 	r.params.ColorMap().Apply(state.Image)
 	return state
+}
+
+func (r *Replayable) UnfilteredState() *tty.State {
+	return r.getState()
 }
 
 func (r *Replayable) Resize(size geom.Size) error {

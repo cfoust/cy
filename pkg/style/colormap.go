@@ -3,10 +3,17 @@ package style
 import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/image"
+	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/janet"
 
 	"github.com/charmbracelet/lipgloss"
 )
+
+// Unfiltered allows Screens to return their original visual state unaltered
+// by a color map.
+type Unfiltered interface {
+	UnfilteredState() *tty.State
+}
 
 type ColorMap struct {
 	mapping map[lipgloss.Color]lipgloss.Color

@@ -18,7 +18,8 @@ import (
 )
 
 type NodeType struct {
-	Id tree.NodeID
+	Id       tree.NodeID
+	ColorMap *style.ColorMap
 }
 
 type Node struct {
@@ -27,6 +28,7 @@ type Node struct {
 	render     *taro.Renderer
 	tree       *tree.Tree
 	client     *server.Client
+	colorMap   *style.ColorMap
 	isAttached bool
 }
 
@@ -81,33 +83,45 @@ func (n *Node) Update(msg taro.Msg) (taro.Model, taro.Cmd) {
 }
 
 func (f *Node) View(out *tty.State) {
-	if f.isAttached {
-		state := f.client.State()
-		preview := image.New(state.Image.Size())
-		image.Copy(geom.Vec2{}, preview, state.Image)
-
-		// draw a ghost cursor
-		cursor := state.Cursor
-		if state.CursorVisible {
-			style.GhostCursor(preview, cursor.R, cursor.C)
-		}
+	if !f.isAttached {
+		preview := image.New(geom.DEFAULT_SIZE)
+		f.render.RenderAt(
+			preview,
+			0, 0,
+			lipgloss.Place(
+				geom.DEFAULT_SIZE.C,
+				geom.DEFAULT_SIZE.R,
+				lipgloss.Center, lipgloss.Center,
+				"attaching to pane",
+			),
+		)
 		out.Image = preview
 		return
 	}
 
-	preview := image.New(geom.DEFAULT_SIZE)
-	f.render.RenderAt(
-		preview,
-		0, 0,
-		lipgloss.Place(
-			geom.DEFAULT_SIZE.C,
-			geom.DEFAULT_SIZE.R,
-			lipgloss.Center, lipgloss.Center,
-			"attaching to pane",
-		),
-	)
+	isFiltered := f.colorMap != nil
 
+	var state *tty.State
+	if isFiltered {
+		state = f.client.UnfilteredState()
+	} else {
+		state = f.client.State()
+	}
+
+	preview := image.New(state.Image.Size())
+	image.Copy(geom.Vec2{}, preview, state.Image)
+
+	// draw a ghost cursor
+	cursor := state.Cursor
+	if state.CursorVisible {
+		style.GhostCursor(preview, cursor.R, cursor.C)
+	}
 	out.Image = preview
+	if !isFiltered {
+		return
+	}
+
+	f.colorMap.Apply(out.Image)
 	return
 }
 
@@ -124,5 +138,6 @@ func NewNode(
 		NodeType: args,
 		tree:     tree,
 		client:   client,
+		colorMap: args.ColorMap,
 	})
 }

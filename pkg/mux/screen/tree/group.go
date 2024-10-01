@@ -67,14 +67,17 @@ func (g *Group) Leaves() []Node {
 
 // NewPaneCreator is the same as NewPane, but it gives you the NodeID before
 // the Node is created and a function to call with the final Screen.
-func (g *Group) NewPaneCreator(ctx context.Context) (NodeID, func(screen mux.Screen) *Pane) {
+func (g *Group) NewPaneCreator(ctx context.Context) (
+	Node,
+	func(screen mux.Screen) *Pane,
+) {
 	p := &Pane{Lifetime: util.NewLifetime(ctx)}
 	metadata := g.tree.newMetadata(p)
+	metadata.params = g.params.NewChild()
 	p.metaData = metadata
 
-	return p.Id(), func(screen mux.Screen) *Pane {
+	return p, func(screen mux.Screen) *Pane {
 		p.screen = screen
-		metadata.params = g.params.NewChild()
 		g.addNode(p)
 
 		go func() {
