@@ -116,13 +116,12 @@ func (f *Node) View(out *tty.State) {
 	if state.CursorVisible {
 		style.GhostCursor(preview, cursor.R, cursor.C)
 	}
-	out.Image = preview
-	if !isFiltered {
-		return
+
+	if isFiltered {
+		f.colorMap.Apply(preview)
 	}
 
-	f.colorMap.Apply(out.Image)
-	return
+	out.Image = preview
 }
 
 func NewNode(

@@ -146,6 +146,7 @@ func (s *Search) renderStatusBar(
 
 func (s *Search) View(state *tty.State) {
 	state.CursorVisible = false
+	defer s.params.ColorMap().Apply(state.Image)
 
 	if s.searching {
 		s.renderProgressBar(state)

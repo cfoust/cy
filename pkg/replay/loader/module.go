@@ -82,8 +82,11 @@ func (l *Loader) Init() tea.Cmd {
 }
 
 func (l *Loader) View(state *tty.State) {
+	defer l.params.ColorMap().Apply(state.Image)
+
 	if l.replay != nil {
-		tty.Copy(geom.Vec2{}, state, l.replay.State())
+		replayState := l.replay.State()
+		tty.Copy(geom.Vec2{}, state, replayState)
 		return
 	}
 

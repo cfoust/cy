@@ -281,6 +281,9 @@ func (m *ReplayModule) OpenFile(
 		return 0, err
 	}
 
+	ctx := m.Lifetime.Ctx()
+	node, create := group.NewPaneCreator(ctx)
+
 	options := preview.ParamsToReplayOptions(
 		params.AltScreen,
 		params.Focus,
@@ -289,20 +292,19 @@ func (m *ReplayModule) OpenFile(
 
 	options = append(options,
 		replay.WithNoQuit,
-		replay.WithParams(group.Params()),
+		replay.WithParams(node.Params()),
 	)
 
-	ctx := m.Lifetime.Ctx()
 	replay := loader.New(
 		ctx,
-		group.Params(),
+		node.Params(),
 		m.TimeBinds,
 		m.CopyBinds,
 		path,
 		options...,
 	)
 
-	pane := group.NewPane(ctx, replay)
+	pane := create(replay)
 	return pane.Id(), nil
 }
 

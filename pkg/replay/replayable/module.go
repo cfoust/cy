@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
@@ -99,7 +100,10 @@ func (r *Replayable) getState() *tty.State {
 
 func (r *Replayable) State() *tty.State {
 	state := r.getState()
-	r.params.ColorMap().Apply(state.Image)
+	newImage := image.New(state.Image.Size())
+	image.Copy(geom.Vec2{}, newImage, state.Image)
+	r.params.ColorMap().Apply(newImage)
+	state.Image = newImage
 	return state
 }
 
