@@ -16,6 +16,11 @@
   (param/set-many target
                   :color-map (scheme :map)
                   :color-map-id id))
+(defn
+  color-maps/get-id
+  "Get the ID of the color map of the target node."
+  [target]
+  (param/get :color-map-id :target target))
 
 (key/action
   action/set-pane-colors
@@ -33,5 +38,17 @@
                    :color-map scheme}
                   id])
               _)
-         (input/find _ :prompt "color map: pane")
+         (input/find _
+                     :height 10
+                     :full true
+                     :prompt "color map: pane")
          (color-maps/set current _)))
+
+(key/action
+  action/show-color-map
+  "Send a toast with the ID of the current color map."
+  (def current (pane/current))
+  (if (not current) (break))
+  (def color-map (param/get :color-map-id :target current))
+  (if (not color-map) (break))
+  (msg/toast :info (string "color map: " (string ":" color-map))))

@@ -43,4 +43,4 @@ Anyone who has tried to do anything sophisticated with `tmux` runs into a famili
 1. `tmux`'s configuration language is hacky and primitive, which makes it hard to do anything interesting without running an external command.
 2. Its key binding system is limited.
 
-`cy` allows you to bind arbitrary sequences of keys to [Janet](https://janet-lang.org/) functions. It even supports binding [regexes](/keybindings.md#regexes), matches for which will be passed to the function you provide. You can also create bindings and settings that are in effect only when attached to a [specific pane or group of panes](/groups-and-panes.md#groups).
+`cy` allows you to bind arbitrary sequences of keys to [Janet](https://janet-lang.org/) functions. It even supports binding [regexes](/keybindings.md#regexes), matches for which will be passed to the function you provide. You can also create bindings and settings that are in effect only when attached to a [specific pane or group of panes](/groups-and-panes.md#groups). You can even set color schemes on a [per-pane basis](/parameters/colors.md#color-maps).

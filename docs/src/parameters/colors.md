@@ -35,8 +35,6 @@ In `cy`, this works by using a color map to translate those ANSI colors to RGB t
 
 Like any other parameter, the [`:color-map`](/default-parameters.md#color-map) parameter can be set on a per-pane or per-group basis.
 
-`cy` comes with several hundred built-in color maps from the [tinted-theming project](https://github.com/tinted-theming/home). You can see a gallery of them [here](https://tinted-theming.github.io/base16-gallery/) and access them using the {{api color-maps/get-all}} function.
-
 The important distinction between a color map and a color scheme is that color maps in `cy` allow you to map _any_ color to _any other color_, not just the 16 ANSI colors as is the case with traditional terminal emulators. For example, if a program you use insists on hard-coding ANSI256 or RGB colors, you can swap them to something else:
 
 ```janet
@@ -46,6 +44,33 @@ The important distinction between a color map and a color scheme is that color m
   # Map ANSI 256 -> ANSI 1
   "123" "1"})
 ```
+
+`cy` comes with several hundred built-in color maps from the [tinted-theming project](https://github.com/tinted-theming/home). You can see a gallery of them [here](https://tinted-theming.github.io/base16-gallery/). Every built-in color map is identified by a unique keyword ID such as `:google-dark`.
+
+#### API
+
+The API has several functions for working with the built-in color maps:
+
+- {{api color-maps/get-all}}: Get all of the color maps.
+- {{api color-maps/get}}: Get a color map by its ID.
+- {{api color-maps/set}}: Set the color map for a pane or group using a color map ID. This also sets the `:color-map-id` parameter for the node, which is a convention (but not a requirement) used for built-in color maps.
+- {{api color-maps/get-id}}: Get the value of the `:color-map-id` parameter for the given node.
+
+The inheritance behavior of parameters can be used to apply a color map to entire groups of panes and also override the color map defined by an ancestor group. For example, consider the following Janet code:
+
+```janet
+# All panes by default will use the built in atelier-forest-light color map
+(color-maps/set :root :atelier-forest-light)
+# All shells (created by (shell/new)) will use a different scheme. Since
+# /shells is a child of :root (a.k.a /), its :color-map will take precedence.
+(color-maps/set (group/mkdir :root "/shells") :atelier-estuary)
+```
+
+#### Actions
+
+Using the {{api action/set-pane-colors}} action you can quickly set the color map for a particular pane:
+
+{{story cast color-maps}}
 
 ### Built-in UI
 
