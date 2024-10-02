@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
@@ -15,6 +16,7 @@ import (
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -37,6 +39,8 @@ type Replayable struct {
 }
 
 var _ mux.Screen = (*Replayable)(nil)
+
+var _ style.Unfiltered = (*Replayable)(nil)
 
 func (r *Replayable) Kill() {
 	r.Cancel()
@@ -85,13 +89,26 @@ func (r *Replayable) isReplayMode() bool {
 	return showReplay
 }
 
-func (r *Replayable) State() *tty.State {
+func (r *Replayable) getState() *tty.State {
 	var currentScreen mux.Screen = r.terminal
 	if r.isReplayMode() {
 		currentScreen = r.replay
 	}
 
 	return currentScreen.State()
+}
+
+func (r *Replayable) State() *tty.State {
+	state := r.getState()
+	newImage := image.New(state.Image.Size())
+	image.Copy(geom.Vec2{}, newImage, state.Image)
+	r.params.ColorMap().Apply(newImage)
+	state.Image = newImage
+	return state
+}
+
+func (r *Replayable) UnfilteredState() *tty.State {
+	return r.getState()
 }
 
 func (r *Replayable) Resize(size geom.Size) error {

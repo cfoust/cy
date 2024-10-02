@@ -34,3 +34,7 @@
                       :test 1
                       :test2 2)
       (assert (= 2 (param/get :test2))))
+
+(test "color map"
+      (param/set :root :color-map {"0" "#ff0000"})
+      (assert (deep= @{"0" "#ff0000"} (param/get :color-map))))

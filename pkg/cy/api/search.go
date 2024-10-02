@@ -107,6 +107,8 @@ func (m *SearchModule) New(
 	}
 
 	ctx := m.Lifetime.Ctx()
+	node, create := group.NewPaneCreator(ctx)
+
 	s := search.New(
 		ctx,
 		m.SearchBinds,
@@ -117,9 +119,9 @@ func (m *SearchModule) New(
 			Files:   files,
 			Workers: numWorkers,
 		}),
-		search.WithParams(group.Params()),
+		search.WithParams(node.Params()),
 	)
 
-	pane := group.NewPane(ctx, s)
+	pane := create(s)
 	return pane.Id(), nil
 }

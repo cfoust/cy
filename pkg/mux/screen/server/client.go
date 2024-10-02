@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/sasha-s/go-deadlock"
@@ -23,7 +24,9 @@ type Client struct {
 
 var _ mux.Screen = (*Client)(nil)
 
-func (c *Client) State() *tty.State {
+var _ style.Unfiltered = (*Client)(nil)
+
+func (c *Client) getState(isUnfiltered bool) *tty.State {
 	c.RLock()
 	screen := c.screen
 	size := c.size
@@ -33,7 +36,13 @@ func (c *Client) State() *tty.State {
 		return tty.New(size)
 	}
 
-	state := screen.State()
+	var state *tty.State
+	if unfiltered, ok := screen.(style.Unfiltered); ok && isUnfiltered {
+		state = unfiltered.UnfilteredState()
+	} else {
+		state = screen.State()
+	}
+
 	if size.IsZero() {
 		return state
 	}
@@ -73,6 +82,14 @@ func (c *Client) State() *tty.State {
 	}
 
 	return out
+}
+
+func (c *Client) UnfilteredState() *tty.State {
+	return c.getState(true)
+}
+
+func (c *Client) State() *tty.State {
+	return c.getState(false)
 }
 
 func (c *Client) Attachment() *util.Lifetime {

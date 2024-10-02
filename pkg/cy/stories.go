@@ -918,4 +918,28 @@ func init() {
 	}, stories.Config{})
 
 	stories.Register("theme", initTheme, stories.Config{})
+
+	stories.Register("color-maps", initNoFrame, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "ctrl+p"),
+			stories.Wait(stories.More),
+			stories.Type("action/set-pane-colors"),
+			stories.Wait(stories.Some),
+			stories.Type("enter"),
+			stories.Wait(stories.Some),
+			stories.Type("up"),
+			stories.Wait(stories.ABit),
+			stories.Type("up"),
+			stories.Wait(stories.ABit),
+			stories.Type("up"),
+			stories.Wait(stories.ABit),
+			stories.Type("up"),
+			stories.Wait(stories.ABit),
+			stories.Type("up"),
+			stories.Wait(stories.ABit),
+			stories.Type("enter"),
+			stories.Wait(stories.ALot),
+		},
+	})
 }

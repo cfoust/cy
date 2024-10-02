@@ -13,6 +13,7 @@ const (
 	ParamAnimations               = "animations"
 	ParamColorError               = "color-error"
 	ParamColorInfo                = "color-info"
+	ParamColorMap                 = "color-map"
 	ParamColorWarn                = "color-warn"
 	ParamDataDirectory            = "data-directory"
 	ParamDefaultFrame             = "default-frame"
@@ -128,6 +129,24 @@ func (p *Parameters) ColorInfo() *style.Color {
 
 func (p *Parameters) SetColorInfo(value *style.Color) {
 	p.set(ParamColorInfo, value)
+}
+
+func (p *Parameters) ColorMap() *style.ColorMap {
+	value, ok := p.Get(ParamColorMap)
+	if !ok {
+		return defaults.ColorMap
+	}
+
+	realValue, ok := value.(*style.ColorMap)
+	if !ok {
+		return defaults.ColorMap
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetColorMap(value *style.ColorMap) {
+	p.set(ParamColorMap, value)
 }
 
 func (p *Parameters) ColorWarn() *style.Color {
@@ -914,6 +933,8 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamColorInfo:
 		return true
+	case ParamColorMap:
+		return true
 	case ParamColorWarn:
 		return true
 	case ParamDataDirectory:
@@ -1015,6 +1036,8 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.ColorError, true
 	case ParamColorInfo:
 		return defaults.ColorInfo, true
+	case ParamColorMap:
+		return defaults.ColorMap, true
 	case ParamColorWarn:
 		return defaults.ColorWarn, true
 	case ParamDataDirectory:
@@ -1181,6 +1204,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		if err != nil {
 			janetValue.Free()
 			return fmt.Errorf("invalid value for :color-info: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamColorMap:
+		if !janetOk {
+			realValue, ok := value.(*style.ColorMap)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamColorMap, should be *style.ColorMap")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.ColorMap
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :color-map: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -2020,6 +2062,11 @@ func init() {
 			Name:      "color-info",
 			Docstring: "The [color](/api.md#color) used for info messages.",
 			Default:   defaults.ColorInfo,
+		},
+		{
+			Name:      "color-map",
+			Docstring: "The [color map](/api.md#color-map) used to translate the colors\nused for rendering a pane.",
+			Default:   defaults.ColorMap,
 		},
 		{
 			Name:      "color-warn",

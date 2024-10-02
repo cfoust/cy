@@ -57,6 +57,10 @@ type defaultParams struct {
 	// THEME SETTINGS
 	/////////////////
 
+	// The [color map](/api.md#color-map) used to translate the colors
+	// used for rendering a pane.
+	ColorMap *style.ColorMap
+
 	// The [color](/api.md#color) used for info messages.
 	ColorInfo *style.Color
 	// The [color](/api.md#color) used for warning messages.
@@ -155,6 +159,8 @@ var (
 		DefaultFrame:  "",
 		DefaultShell:  "/bin/bash",
 		skipInput:     false,
+
+		ColorMap: &style.ColorMap{},
 
 		ColorInfo:  style.NewColor("6"),
 		ColorWarn:  style.NewColor("3"),

@@ -40,6 +40,33 @@ Examples of valid colors:
 "0" # ANSI 16
 ```
 
+#### Color map
+
+A color map is a mapping from one [color](/api.md#color) to another. They can represented by Janet structs or tables:
+
+```janet
+# The "zenburn" color map
+# This maps the default 16 ANSI colors to hand-picked RGB colors
+@{"0" "#383838"
+  "1" "#dca3a3"
+  "2" "#5f7f5f"
+  "3" "#e0cf9f"
+  "4" "#7cb8bb"
+  "5" "#dc8cc3"
+  "6" "#93e0e3"
+  "7" "#dcdccc"
+  "8" "#6f6f6f"
+  "9" "#dfaf8f"
+  "10" "#404040"
+  "11" "#606060"
+  "12" "#808080"
+  "13" "#c0c0c0"
+  "14" "#000000"
+  "15" "#ffffff"}
+```
+
+For more information about color maps, see the [relevant section](/parameters/colors.md#color-maps) in the parameters chapter.
+
 #### Command
 
 {{api cmd/query}} and {{api/commands}} return Commands, which are structs that look like this:

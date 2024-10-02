@@ -70,11 +70,11 @@ func (c *CmdModule) New(
 				"CY": fmt.Sprintf(
 					"%s:%d",
 					c.Server.SocketName(),
-					id,
+					id.Id(),
 				),
 			},
 		},
-		group.Params(),
+		id.Params(),
 		c.TimeBinds,
 		c.CopyBinds,
 	)
