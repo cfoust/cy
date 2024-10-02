@@ -109,7 +109,7 @@ func (r Rect) BottomRight() Vec2 {
 }
 
 var DEFAULT_SIZE = Vec2{
-	R: 26,
+	R: 24,
 	C: 80,
 }
 
