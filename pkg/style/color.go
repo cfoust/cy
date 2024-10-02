@@ -43,7 +43,7 @@ func lipglossToEmu(l lipgloss.Color) emu.Color {
 	case termenv.ANSI256Color:
 		return emu.XTermColor(int(c))
 	case termenv.RGBColor:
-		r, g, b, _ := termenv.ConvertToRGB(c).RGBA()
+		r, g, b := termenv.ConvertToRGB(c).RGB255()
 		return emu.RGBColor(int(r), int(g), int(b))
 	}
 
