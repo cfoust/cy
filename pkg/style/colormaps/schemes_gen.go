@@ -2,6 +2,7 @@
 package colormaps
 
 import (
+	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/style"
 
 	"github.com/charmbracelet/lipgloss"
@@ -12,7 +13,7 @@ var Schemes []Scheme
 func init() {
 	Schemes = []Scheme{
 		{
-			ID:   "3024",
+			ID:   janet.Keyword("3024"),
 			Name: "3024",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -37,7 +38,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "apathy",
+			ID:   janet.Keyword("apathy"),
 			Name: "Apathy",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -62,7 +63,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "apprentice",
+			ID:   janet.Keyword("apprentice"),
 			Name: "Apprentice",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -87,7 +88,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "ashes",
+			ID:   janet.Keyword("ashes"),
 			Name: "Ashes",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -112,7 +113,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-cave",
+			ID:   janet.Keyword("atelier-cave"),
 			Name: "Atelier Cave",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -137,7 +138,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-cave-light",
+			ID:   janet.Keyword("atelier-cave-light"),
 			Name: "Atelier Cave Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -162,7 +163,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-dune",
+			ID:   janet.Keyword("atelier-dune"),
 			Name: "Atelier Dune",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -187,7 +188,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-dune-light",
+			ID:   janet.Keyword("atelier-dune-light"),
 			Name: "Atelier Dune Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -212,7 +213,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-estuary",
+			ID:   janet.Keyword("atelier-estuary"),
 			Name: "Atelier Estuary",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -237,7 +238,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-estuary-light",
+			ID:   janet.Keyword("atelier-estuary-light"),
 			Name: "Atelier Estuary Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -262,7 +263,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-forest",
+			ID:   janet.Keyword("atelier-forest"),
 			Name: "Atelier Forest",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -287,7 +288,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-forest-light",
+			ID:   janet.Keyword("atelier-forest-light"),
 			Name: "Atelier Forest Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -312,7 +313,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-heath",
+			ID:   janet.Keyword("atelier-heath"),
 			Name: "Atelier Heath",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -337,7 +338,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-heath-light",
+			ID:   janet.Keyword("atelier-heath-light"),
 			Name: "Atelier Heath Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -362,7 +363,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-lakeside",
+			ID:   janet.Keyword("atelier-lakeside"),
 			Name: "Atelier Lakeside",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -387,7 +388,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-lakeside-light",
+			ID:   janet.Keyword("atelier-lakeside-light"),
 			Name: "Atelier Lakeside Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -412,7 +413,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-plateau",
+			ID:   janet.Keyword("atelier-plateau"),
 			Name: "Atelier Plateau",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -437,7 +438,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-plateau-light",
+			ID:   janet.Keyword("atelier-plateau-light"),
 			Name: "Atelier Plateau Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -462,7 +463,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-savanna",
+			ID:   janet.Keyword("atelier-savanna"),
 			Name: "Atelier Savanna",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -487,7 +488,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-savanna-light",
+			ID:   janet.Keyword("atelier-savanna-light"),
 			Name: "Atelier Savanna Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -512,7 +513,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-seaside",
+			ID:   janet.Keyword("atelier-seaside"),
 			Name: "Atelier Seaside",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -537,7 +538,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-seaside-light",
+			ID:   janet.Keyword("atelier-seaside-light"),
 			Name: "Atelier Seaside Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -562,7 +563,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-sulphurpool",
+			ID:   janet.Keyword("atelier-sulphurpool"),
 			Name: "Atelier Sulphurpool",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -587,7 +588,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atelier-sulphurpool-light",
+			ID:   janet.Keyword("atelier-sulphurpool-light"),
 			Name: "Atelier Sulphurpool Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -612,7 +613,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "atlas",
+			ID:   janet.Keyword("atlas"),
 			Name: "Atlas",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -637,7 +638,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "ayu-dark",
+			ID:   janet.Keyword("ayu-dark"),
 			Name: "Ayu Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -662,7 +663,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "ayu-light",
+			ID:   janet.Keyword("ayu-light"),
 			Name: "Ayu Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -687,7 +688,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "ayu-mirage",
+			ID:   janet.Keyword("ayu-mirage"),
 			Name: "Ayu Mirage",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -712,7 +713,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "aztec",
+			ID:   janet.Keyword("aztec"),
 			Name: "Aztec",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -737,7 +738,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "bespin",
+			ID:   janet.Keyword("bespin"),
 			Name: "Bespin",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -762,7 +763,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "black-metal",
+			ID:   janet.Keyword("black-metal"),
 			Name: "Black Metal",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -787,7 +788,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "black-metal-bathory",
+			ID:   janet.Keyword("black-metal-bathory"),
 			Name: "Black Metal (Bathory)",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -812,7 +813,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "black-metal-burzum",
+			ID:   janet.Keyword("black-metal-burzum"),
 			Name: "Black Metal (Burzum)",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -837,7 +838,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "black-metal-dark-funeral",
+			ID:   janet.Keyword("black-metal-dark-funeral"),
 			Name: "Black Metal (Dark Funeral)",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -862,7 +863,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "black-metal-gorgoroth",
+			ID:   janet.Keyword("black-metal-gorgoroth"),
 			Name: "Black Metal (Gorgoroth)",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -887,7 +888,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "black-metal-immortal",
+			ID:   janet.Keyword("black-metal-immortal"),
 			Name: "Black Metal (Immortal)",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -912,7 +913,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "black-metal-khold",
+			ID:   janet.Keyword("black-metal-khold"),
 			Name: "Black Metal (Khold)",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -937,7 +938,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "black-metal-marduk",
+			ID:   janet.Keyword("black-metal-marduk"),
 			Name: "Black Metal (Marduk)",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -962,7 +963,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "black-metal-mayhem",
+			ID:   janet.Keyword("black-metal-mayhem"),
 			Name: "Black Metal (Mayhem)",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -987,7 +988,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "black-metal-nile",
+			ID:   janet.Keyword("black-metal-nile"),
 			Name: "Black Metal (Nile)",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1012,7 +1013,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "black-metal-venom",
+			ID:   janet.Keyword("black-metal-venom"),
 			Name: "Black Metal (Venom)",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1037,7 +1038,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "blueforest",
+			ID:   janet.Keyword("blueforest"),
 			Name: "Blue Forest",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1062,7 +1063,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "blueish",
+			ID:   janet.Keyword("blueish"),
 			Name: "Blueish",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1087,7 +1088,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "brewer",
+			ID:   janet.Keyword("brewer"),
 			Name: "Brewer",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1112,7 +1113,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "bright",
+			ID:   janet.Keyword("bright"),
 			Name: "Bright",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1137,7 +1138,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "brogrammer",
+			ID:   janet.Keyword("brogrammer"),
 			Name: "Brogrammer",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1162,7 +1163,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "brushtrees",
+			ID:   janet.Keyword("brushtrees"),
 			Name: "Brush Trees",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1187,7 +1188,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "brushtrees-dark",
+			ID:   janet.Keyword("brushtrees-dark"),
 			Name: "Brush Trees Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1212,7 +1213,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "caroline",
+			ID:   janet.Keyword("caroline"),
 			Name: "caroline",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1237,7 +1238,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "catppuccin-frappe",
+			ID:   janet.Keyword("catppuccin-frappe"),
 			Name: "Catppuccin Frappe",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1262,7 +1263,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "catppuccin-latte",
+			ID:   janet.Keyword("catppuccin-latte"),
 			Name: "Catppuccin Latte",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1287,7 +1288,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "catppuccin-macchiato",
+			ID:   janet.Keyword("catppuccin-macchiato"),
 			Name: "Catppuccin Macchiato",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1312,7 +1313,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "catppuccin-mocha",
+			ID:   janet.Keyword("catppuccin-mocha"),
 			Name: "Catppuccin Mocha",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1337,7 +1338,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "chalk",
+			ID:   janet.Keyword("chalk"),
 			Name: "Chalk",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1362,7 +1363,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "circus",
+			ID:   janet.Keyword("circus"),
 			Name: "Circus",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1387,7 +1388,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "classic-dark",
+			ID:   janet.Keyword("classic-dark"),
 			Name: "Classic Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1412,7 +1413,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "classic-light",
+			ID:   janet.Keyword("classic-light"),
 			Name: "Classic Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1437,7 +1438,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "codeschool",
+			ID:   janet.Keyword("codeschool"),
 			Name: "Codeschool",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1462,7 +1463,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "colors",
+			ID:   janet.Keyword("colors"),
 			Name: "Colors",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1487,7 +1488,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "cupcake",
+			ID:   janet.Keyword("cupcake"),
 			Name: "Cupcake",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1512,7 +1513,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "cupertino",
+			ID:   janet.Keyword("cupertino"),
 			Name: "Cupertino",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1537,7 +1538,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "da-one-black",
+			ID:   janet.Keyword("da-one-black"),
 			Name: "Da One Black",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1562,7 +1563,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "da-one-gray",
+			ID:   janet.Keyword("da-one-gray"),
 			Name: "Da One Gray",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1587,7 +1588,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "da-one-ocean",
+			ID:   janet.Keyword("da-one-ocean"),
 			Name: "Da One Ocean",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1612,7 +1613,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "da-one-paper",
+			ID:   janet.Keyword("da-one-paper"),
 			Name: "Da One Paper",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1637,7 +1638,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "da-one-sea",
+			ID:   janet.Keyword("da-one-sea"),
 			Name: "Da One Sea",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1662,7 +1663,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "da-one-white",
+			ID:   janet.Keyword("da-one-white"),
 			Name: "Da One White",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1687,7 +1688,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "danqing",
+			ID:   janet.Keyword("danqing"),
 			Name: "DanQing",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1712,7 +1713,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "danqing-light",
+			ID:   janet.Keyword("danqing-light"),
 			Name: "DanQing Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1737,7 +1738,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "darcula",
+			ID:   janet.Keyword("darcula"),
 			Name: "Darcula",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1762,7 +1763,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "darkmoss",
+			ID:   janet.Keyword("darkmoss"),
 			Name: "darkmoss",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1787,7 +1788,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "darktooth",
+			ID:   janet.Keyword("darktooth"),
 			Name: "Darktooth",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1812,7 +1813,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "darkviolet",
+			ID:   janet.Keyword("darkviolet"),
 			Name: "Dark Violet",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1837,7 +1838,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "decaf",
+			ID:   janet.Keyword("decaf"),
 			Name: "Decaf",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1862,7 +1863,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "deep-oceanic-next",
+			ID:   janet.Keyword("deep-oceanic-next"),
 			Name: "Deep Oceanic Next",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1887,7 +1888,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "default-dark",
+			ID:   janet.Keyword("default-dark"),
 			Name: "Default Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1912,7 +1913,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "default-light",
+			ID:   janet.Keyword("default-light"),
 			Name: "Default Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1937,7 +1938,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "dirtysea",
+			ID:   janet.Keyword("dirtysea"),
 			Name: "dirtysea",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1962,7 +1963,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "dracula",
+			ID:   janet.Keyword("dracula"),
 			Name: "Dracula",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -1987,7 +1988,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "edge-dark",
+			ID:   janet.Keyword("edge-dark"),
 			Name: "Edge Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2012,7 +2013,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "edge-light",
+			ID:   janet.Keyword("edge-light"),
 			Name: "Edge Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2037,7 +2038,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "eighties",
+			ID:   janet.Keyword("eighties"),
 			Name: "Eighties",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2062,7 +2063,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "embers",
+			ID:   janet.Keyword("embers"),
 			Name: "Embers",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2087,7 +2088,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "embers-light",
+			ID:   janet.Keyword("embers-light"),
 			Name: "Embers Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2112,7 +2113,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "emil",
+			ID:   janet.Keyword("emil"),
 			Name: "emil",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2137,7 +2138,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "equilibrium-dark",
+			ID:   janet.Keyword("equilibrium-dark"),
 			Name: "Equilibrium Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2162,7 +2163,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "equilibrium-gray-dark",
+			ID:   janet.Keyword("equilibrium-gray-dark"),
 			Name: "Equilibrium Gray Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2187,7 +2188,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "equilibrium-gray-light",
+			ID:   janet.Keyword("equilibrium-gray-light"),
 			Name: "Equilibrium Gray Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2212,7 +2213,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "equilibrium-light",
+			ID:   janet.Keyword("equilibrium-light"),
 			Name: "Equilibrium Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2237,7 +2238,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "eris",
+			ID:   janet.Keyword("eris"),
 			Name: "eris",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2262,7 +2263,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "espresso",
+			ID:   janet.Keyword("espresso"),
 			Name: "Espresso",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2287,7 +2288,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "eva",
+			ID:   janet.Keyword("eva"),
 			Name: "Eva",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2312,7 +2313,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "eva-dim",
+			ID:   janet.Keyword("eva-dim"),
 			Name: "Eva Dim",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2337,7 +2338,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "evenok-dark",
+			ID:   janet.Keyword("evenok-dark"),
 			Name: "Evenok Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2362,7 +2363,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "everforest",
+			ID:   janet.Keyword("everforest"),
 			Name: "Everforest",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2387,7 +2388,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "everforest-dark-hard",
+			ID:   janet.Keyword("everforest-dark-hard"),
 			Name: "Everforest Dark Hard",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2412,7 +2413,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "flat",
+			ID:   janet.Keyword("flat"),
 			Name: "Flat",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2437,7 +2438,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "framer",
+			ID:   janet.Keyword("framer"),
 			Name: "Framer",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2462,7 +2463,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "fruit-soda",
+			ID:   janet.Keyword("fruit-soda"),
 			Name: "Fruit Soda",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2487,7 +2488,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gigavolt",
+			ID:   janet.Keyword("gigavolt"),
 			Name: "Gigavolt",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2512,7 +2513,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "github",
+			ID:   janet.Keyword("github"),
 			Name: "Github",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2537,7 +2538,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "google-dark",
+			ID:   janet.Keyword("google-dark"),
 			Name: "Google Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2562,7 +2563,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "google-light",
+			ID:   janet.Keyword("google-light"),
 			Name: "Google Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2587,7 +2588,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gotham",
+			ID:   janet.Keyword("gotham"),
 			Name: "Gotham",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2612,7 +2613,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "grayscale-dark",
+			ID:   janet.Keyword("grayscale-dark"),
 			Name: "Grayscale Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2637,7 +2638,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "grayscale-light",
+			ID:   janet.Keyword("grayscale-light"),
 			Name: "Grayscale Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2662,7 +2663,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "greenscreen",
+			ID:   janet.Keyword("greenscreen"),
 			Name: "Green Screen",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2687,7 +2688,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gruber",
+			ID:   janet.Keyword("gruber"),
 			Name: "Gruber",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2712,7 +2713,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gruvbox-dark-hard",
+			ID:   janet.Keyword("gruvbox-dark-hard"),
 			Name: "Gruvbox dark, hard",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2737,7 +2738,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gruvbox-dark-medium",
+			ID:   janet.Keyword("gruvbox-dark-medium"),
 			Name: "Gruvbox dark, medium",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2762,7 +2763,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gruvbox-dark-pale",
+			ID:   janet.Keyword("gruvbox-dark-pale"),
 			Name: "Gruvbox dark, pale",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2787,7 +2788,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gruvbox-dark-soft",
+			ID:   janet.Keyword("gruvbox-dark-soft"),
 			Name: "Gruvbox dark, soft",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2812,7 +2813,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gruvbox-light-hard",
+			ID:   janet.Keyword("gruvbox-light-hard"),
 			Name: "Gruvbox light, hard",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2837,7 +2838,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gruvbox-light-medium",
+			ID:   janet.Keyword("gruvbox-light-medium"),
 			Name: "Gruvbox light, medium",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2862,7 +2863,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gruvbox-light-soft",
+			ID:   janet.Keyword("gruvbox-light-soft"),
 			Name: "Gruvbox light, soft",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2887,7 +2888,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gruvbox-material-dark-hard",
+			ID:   janet.Keyword("gruvbox-material-dark-hard"),
 			Name: "Gruvbox Material Dark, Hard",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2912,7 +2913,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gruvbox-material-dark-medium",
+			ID:   janet.Keyword("gruvbox-material-dark-medium"),
 			Name: "Gruvbox Material Dark, Medium",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2937,7 +2938,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gruvbox-material-dark-soft",
+			ID:   janet.Keyword("gruvbox-material-dark-soft"),
 			Name: "Gruvbox Material Dark, Soft",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2962,7 +2963,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gruvbox-material-light-hard",
+			ID:   janet.Keyword("gruvbox-material-light-hard"),
 			Name: "Gruvbox Material Light, Hard",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -2987,7 +2988,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gruvbox-material-light-medium",
+			ID:   janet.Keyword("gruvbox-material-light-medium"),
 			Name: "Gruvbox Material Light, Medium",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3012,7 +3013,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "gruvbox-material-light-soft",
+			ID:   janet.Keyword("gruvbox-material-light-soft"),
 			Name: "Gruvbox Material Light, Soft",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3037,7 +3038,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "hardcore",
+			ID:   janet.Keyword("hardcore"),
 			Name: "Hardcore",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3062,7 +3063,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "harmonic16-dark",
+			ID:   janet.Keyword("harmonic16-dark"),
 			Name: "Harmonic16 Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3087,7 +3088,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "harmonic16-light",
+			ID:   janet.Keyword("harmonic16-light"),
 			Name: "Harmonic16 Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3112,7 +3113,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "heetch",
+			ID:   janet.Keyword("heetch"),
 			Name: "Heetch Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3137,7 +3138,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "heetch-light",
+			ID:   janet.Keyword("heetch-light"),
 			Name: "Heetch Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3162,7 +3163,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "helios",
+			ID:   janet.Keyword("helios"),
 			Name: "Helios",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3187,7 +3188,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "hopscotch",
+			ID:   janet.Keyword("hopscotch"),
 			Name: "Hopscotch",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3212,7 +3213,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "horizon-dark",
+			ID:   janet.Keyword("horizon-dark"),
 			Name: "Horizon Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3237,7 +3238,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "horizon-light",
+			ID:   janet.Keyword("horizon-light"),
 			Name: "Horizon Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3262,7 +3263,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "horizon-terminal-dark",
+			ID:   janet.Keyword("horizon-terminal-dark"),
 			Name: "Horizon Terminal Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3287,7 +3288,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "horizon-terminal-light",
+			ID:   janet.Keyword("horizon-terminal-light"),
 			Name: "Horizon Terminal Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3312,7 +3313,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "humanoid-dark",
+			ID:   janet.Keyword("humanoid-dark"),
 			Name: "Humanoid dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3337,7 +3338,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "humanoid-light",
+			ID:   janet.Keyword("humanoid-light"),
 			Name: "Humanoid light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3362,7 +3363,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "ia-dark",
+			ID:   janet.Keyword("ia-dark"),
 			Name: "iA Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3387,7 +3388,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "ia-light",
+			ID:   janet.Keyword("ia-light"),
 			Name: "iA Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3412,7 +3413,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "icy",
+			ID:   janet.Keyword("icy"),
 			Name: "Icy Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3437,7 +3438,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "irblack",
+			ID:   janet.Keyword("irblack"),
 			Name: "IR Black",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3462,7 +3463,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "isotope",
+			ID:   janet.Keyword("isotope"),
 			Name: "Isotope",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3487,7 +3488,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "jabuti",
+			ID:   janet.Keyword("jabuti"),
 			Name: "Jabuti",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3512,7 +3513,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "kanagawa",
+			ID:   janet.Keyword("kanagawa"),
 			Name: "Kanagawa",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3537,7 +3538,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "katy",
+			ID:   janet.Keyword("katy"),
 			Name: "Katy",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3562,7 +3563,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "kimber",
+			ID:   janet.Keyword("kimber"),
 			Name: "Kimber",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3587,7 +3588,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "lime",
+			ID:   janet.Keyword("lime"),
 			Name: "lime",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3612,7 +3613,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "macintosh",
+			ID:   janet.Keyword("macintosh"),
 			Name: "Macintosh",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3637,7 +3638,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "marrakesh",
+			ID:   janet.Keyword("marrakesh"),
 			Name: "Marrakesh",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3662,7 +3663,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "materia",
+			ID:   janet.Keyword("materia"),
 			Name: "Materia",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3687,7 +3688,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "material",
+			ID:   janet.Keyword("material"),
 			Name: "Material",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3712,7 +3713,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "material-darker",
+			ID:   janet.Keyword("material-darker"),
 			Name: "Material Darker",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3737,7 +3738,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "material-lighter",
+			ID:   janet.Keyword("material-lighter"),
 			Name: "Material Lighter",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3762,7 +3763,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "material-palenight",
+			ID:   janet.Keyword("material-palenight"),
 			Name: "Material Palenight",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3787,7 +3788,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "material-vivid",
+			ID:   janet.Keyword("material-vivid"),
 			Name: "Material Vivid",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3812,7 +3813,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "measured-dark",
+			ID:   janet.Keyword("measured-dark"),
 			Name: "Measured Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3837,7 +3838,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "measured-light",
+			ID:   janet.Keyword("measured-light"),
 			Name: "Measured Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3862,7 +3863,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "mellow-purple",
+			ID:   janet.Keyword("mellow-purple"),
 			Name: "Mellow Purple",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3887,7 +3888,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "mexico-light",
+			ID:   janet.Keyword("mexico-light"),
 			Name: "Mexico Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3912,7 +3913,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "mocha",
+			ID:   janet.Keyword("mocha"),
 			Name: "Mocha",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3937,7 +3938,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "monokai",
+			ID:   janet.Keyword("monokai"),
 			Name: "Monokai",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3962,7 +3963,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "moonlight",
+			ID:   janet.Keyword("moonlight"),
 			Name: "Moonlight",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -3987,7 +3988,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "mountain",
+			ID:   janet.Keyword("mountain"),
 			Name: "Mountain",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4012,7 +4013,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "nebula",
+			ID:   janet.Keyword("nebula"),
 			Name: "Nebula",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4037,7 +4038,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "nord",
+			ID:   janet.Keyword("nord"),
 			Name: "Nord",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4062,7 +4063,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "nord-light",
+			ID:   janet.Keyword("nord-light"),
 			Name: "Nord Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4087,7 +4088,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "nova",
+			ID:   janet.Keyword("nova"),
 			Name: "Nova",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4112,7 +4113,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "ocean",
+			ID:   janet.Keyword("ocean"),
 			Name: "Ocean",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4137,7 +4138,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "oceanicnext",
+			ID:   janet.Keyword("oceanicnext"),
 			Name: "OceanicNext",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4162,7 +4163,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "one-light",
+			ID:   janet.Keyword("one-light"),
 			Name: "One Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4187,7 +4188,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "onedark",
+			ID:   janet.Keyword("onedark"),
 			Name: "OneDark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4212,7 +4213,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "onedark-dark",
+			ID:   janet.Keyword("onedark-dark"),
 			Name: "OneDark Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4237,7 +4238,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "outrun-dark",
+			ID:   janet.Keyword("outrun-dark"),
 			Name: "Outrun Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4262,7 +4263,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "oxocarbon-dark",
+			ID:   janet.Keyword("oxocarbon-dark"),
 			Name: "Oxocarbon Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4287,7 +4288,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "oxocarbon-light",
+			ID:   janet.Keyword("oxocarbon-light"),
 			Name: "Oxocarbon Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4312,7 +4313,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "pandora",
+			ID:   janet.Keyword("pandora"),
 			Name: "pandora",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4337,7 +4338,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "papercolor-dark",
+			ID:   janet.Keyword("papercolor-dark"),
 			Name: "PaperColor Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4362,7 +4363,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "papercolor-light",
+			ID:   janet.Keyword("papercolor-light"),
 			Name: "PaperColor Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4387,7 +4388,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "paraiso",
+			ID:   janet.Keyword("paraiso"),
 			Name: "Paraiso",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4412,7 +4413,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "pasque",
+			ID:   janet.Keyword("pasque"),
 			Name: "Pasque",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4437,7 +4438,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "phd",
+			ID:   janet.Keyword("phd"),
 			Name: "PhD",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4462,7 +4463,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "pico",
+			ID:   janet.Keyword("pico"),
 			Name: "Pico",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4487,7 +4488,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "pinky",
+			ID:   janet.Keyword("pinky"),
 			Name: "pinky",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4512,7 +4513,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "pop",
+			ID:   janet.Keyword("pop"),
 			Name: "Pop",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4537,7 +4538,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "porple",
+			ID:   janet.Keyword("porple"),
 			Name: "Porple",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4562,7 +4563,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "precious-dark-eleven",
+			ID:   janet.Keyword("precious-dark-eleven"),
 			Name: "Precious Dark Eleven",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4587,7 +4588,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "precious-dark-fifteen",
+			ID:   janet.Keyword("precious-dark-fifteen"),
 			Name: "Precious Dark Fifteen",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4612,7 +4613,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "precious-light-warm",
+			ID:   janet.Keyword("precious-light-warm"),
 			Name: "Precious Light Warm",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4637,7 +4638,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "precious-light-white",
+			ID:   janet.Keyword("precious-light-white"),
 			Name: "Precious Light White",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4662,7 +4663,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "primer-dark",
+			ID:   janet.Keyword("primer-dark"),
 			Name: "Primer Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4687,7 +4688,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "primer-dark-dimmed",
+			ID:   janet.Keyword("primer-dark-dimmed"),
 			Name: "Primer Dark Dimmed",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4712,7 +4713,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "primer-light",
+			ID:   janet.Keyword("primer-light"),
 			Name: "Primer Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4737,7 +4738,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "purpledream",
+			ID:   janet.Keyword("purpledream"),
 			Name: "Purpledream",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4762,7 +4763,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "qualia",
+			ID:   janet.Keyword("qualia"),
 			Name: "Qualia",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4787,7 +4788,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "railscasts",
+			ID:   janet.Keyword("railscasts"),
 			Name: "Railscasts",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4812,7 +4813,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "rebecca",
+			ID:   janet.Keyword("rebecca"),
 			Name: "Rebecca",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4837,7 +4838,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "rose-pine",
+			ID:   janet.Keyword("rose-pine"),
 			Name: "Rosé Pine",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4862,7 +4863,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "rose-pine-dawn",
+			ID:   janet.Keyword("rose-pine-dawn"),
 			Name: "Rosé Pine Dawn",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4887,7 +4888,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "rose-pine-moon",
+			ID:   janet.Keyword("rose-pine-moon"),
 			Name: "Rosé Pine Moon",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4912,7 +4913,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "saga",
+			ID:   janet.Keyword("saga"),
 			Name: "SAGA",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4937,7 +4938,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "sagelight",
+			ID:   janet.Keyword("sagelight"),
 			Name: "Sagelight",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4962,7 +4963,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "sakura",
+			ID:   janet.Keyword("sakura"),
 			Name: "Sakura",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -4987,7 +4988,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "sandcastle",
+			ID:   janet.Keyword("sandcastle"),
 			Name: "Sandcastle",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5012,7 +5013,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "selenized-black",
+			ID:   janet.Keyword("selenized-black"),
 			Name: "selenized-black",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5037,7 +5038,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "selenized-dark",
+			ID:   janet.Keyword("selenized-dark"),
 			Name: "selenized-dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5062,7 +5063,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "selenized-light",
+			ID:   janet.Keyword("selenized-light"),
 			Name: "selenized-light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5087,7 +5088,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "selenized-white",
+			ID:   janet.Keyword("selenized-white"),
 			Name: "selenized-white",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5112,7 +5113,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "seti",
+			ID:   janet.Keyword("seti"),
 			Name: "Seti UI",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5137,7 +5138,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "shades-of-purple",
+			ID:   janet.Keyword("shades-of-purple"),
 			Name: "Shades of Purple",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5162,7 +5163,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "shadesmear-dark",
+			ID:   janet.Keyword("shadesmear-dark"),
 			Name: "ShadeSmear Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5187,7 +5188,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "shadesmear-light",
+			ID:   janet.Keyword("shadesmear-light"),
 			Name: "ShadeSmear Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5212,7 +5213,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "shapeshifter",
+			ID:   janet.Keyword("shapeshifter"),
 			Name: "Shapeshifter",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5237,7 +5238,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "silk-dark",
+			ID:   janet.Keyword("silk-dark"),
 			Name: "Silk Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5262,7 +5263,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "silk-light",
+			ID:   janet.Keyword("silk-light"),
 			Name: "Silk Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5287,7 +5288,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "snazzy",
+			ID:   janet.Keyword("snazzy"),
 			Name: "Snazzy",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5312,7 +5313,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "solarflare",
+			ID:   janet.Keyword("solarflare"),
 			Name: "Solar Flare",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5337,7 +5338,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "solarflare-light",
+			ID:   janet.Keyword("solarflare-light"),
 			Name: "Solar Flare Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5362,7 +5363,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "solarized-dark",
+			ID:   janet.Keyword("solarized-dark"),
 			Name: "Solarized Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5387,7 +5388,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "solarized-light",
+			ID:   janet.Keyword("solarized-light"),
 			Name: "Solarized Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5412,7 +5413,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "spaceduck",
+			ID:   janet.Keyword("spaceduck"),
 			Name: "Spaceduck",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5437,7 +5438,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "spacemacs",
+			ID:   janet.Keyword("spacemacs"),
 			Name: "Spacemacs",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5462,7 +5463,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "sparky",
+			ID:   janet.Keyword("sparky"),
 			Name: "Sparky",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5487,7 +5488,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "standardized-dark",
+			ID:   janet.Keyword("standardized-dark"),
 			Name: "standardized-dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5512,7 +5513,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "standardized-light",
+			ID:   janet.Keyword("standardized-light"),
 			Name: "standardized-light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5537,7 +5538,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "stella",
+			ID:   janet.Keyword("stella"),
 			Name: "Stella",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5562,7 +5563,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "still-alive",
+			ID:   janet.Keyword("still-alive"),
 			Name: "Still Alive",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5587,7 +5588,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "summercamp",
+			ID:   janet.Keyword("summercamp"),
 			Name: "summercamp",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5612,7 +5613,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "summerfruit-dark",
+			ID:   janet.Keyword("summerfruit-dark"),
 			Name: "Summerfruit Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5637,7 +5638,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "summerfruit-light",
+			ID:   janet.Keyword("summerfruit-light"),
 			Name: "Summerfruit Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5662,7 +5663,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "synth-midnight-dark",
+			ID:   janet.Keyword("synth-midnight-dark"),
 			Name: "Synth Midnight Terminal Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5687,7 +5688,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "synth-midnight-light",
+			ID:   janet.Keyword("synth-midnight-light"),
 			Name: "Synth Midnight Terminal Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5712,7 +5713,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tango",
+			ID:   janet.Keyword("tango"),
 			Name: "Tango",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5737,7 +5738,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tarot",
+			ID:   janet.Keyword("tarot"),
 			Name: "tarot",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5762,7 +5763,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tender",
+			ID:   janet.Keyword("tender"),
 			Name: "tender",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5787,7 +5788,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "terracotta",
+			ID:   janet.Keyword("terracotta"),
 			Name: "Terracotta",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5812,7 +5813,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "terracotta-dark",
+			ID:   janet.Keyword("terracotta-dark"),
 			Name: "Terracotta Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5837,7 +5838,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tokyo-city-dark",
+			ID:   janet.Keyword("tokyo-city-dark"),
 			Name: "Tokyo City Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5862,7 +5863,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tokyo-city-light",
+			ID:   janet.Keyword("tokyo-city-light"),
 			Name: "Tokyo City Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5887,7 +5888,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tokyo-city-terminal-dark",
+			ID:   janet.Keyword("tokyo-city-terminal-dark"),
 			Name: "Tokyo City Terminal Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5912,7 +5913,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tokyo-city-terminal-light",
+			ID:   janet.Keyword("tokyo-city-terminal-light"),
 			Name: "Tokyo City Terminal Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5937,7 +5938,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tokyo-night-dark",
+			ID:   janet.Keyword("tokyo-night-dark"),
 			Name: "Tokyo Night Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5962,7 +5963,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tokyo-night-light",
+			ID:   janet.Keyword("tokyo-night-light"),
 			Name: "Tokyo Night Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -5987,7 +5988,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tokyo-night-moon",
+			ID:   janet.Keyword("tokyo-night-moon"),
 			Name: "Tokyo Night Moon",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6012,7 +6013,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tokyo-night-storm",
+			ID:   janet.Keyword("tokyo-night-storm"),
 			Name: "Tokyo Night Storm",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6037,7 +6038,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tokyo-night-terminal-dark",
+			ID:   janet.Keyword("tokyo-night-terminal-dark"),
 			Name: "Tokyo Night Terminal Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6062,7 +6063,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tokyo-night-terminal-light",
+			ID:   janet.Keyword("tokyo-night-terminal-light"),
 			Name: "Tokyo Night Terminal Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6087,7 +6088,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tokyo-night-terminal-storm",
+			ID:   janet.Keyword("tokyo-night-terminal-storm"),
 			Name: "Tokyo Night Terminal Storm",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6112,7 +6113,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tokyodark",
+			ID:   janet.Keyword("tokyodark"),
 			Name: "Tokyodark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6137,7 +6138,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tokyodark-terminal",
+			ID:   janet.Keyword("tokyodark-terminal"),
 			Name: "Tokyodark Terminal",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6162,7 +6163,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tomorrow",
+			ID:   janet.Keyword("tomorrow"),
 			Name: "Tomorrow",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6187,7 +6188,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tomorrow-night",
+			ID:   janet.Keyword("tomorrow-night"),
 			Name: "Tomorrow Night",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6212,7 +6213,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tomorrow-night-eighties",
+			ID:   janet.Keyword("tomorrow-night-eighties"),
 			Name: "Tomorrow Night Eighties",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6237,7 +6238,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "tube",
+			ID:   janet.Keyword("tube"),
 			Name: "London Tube",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6262,7 +6263,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "twilight",
+			ID:   janet.Keyword("twilight"),
 			Name: "Twilight",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6287,7 +6288,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "unikitty-dark",
+			ID:   janet.Keyword("unikitty-dark"),
 			Name: "Unikitty Dark",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6312,7 +6313,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "unikitty-light",
+			ID:   janet.Keyword("unikitty-light"),
 			Name: "Unikitty Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6337,7 +6338,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "unikitty-reversible",
+			ID:   janet.Keyword("unikitty-reversible"),
 			Name: "Unikitty Reversible",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6362,7 +6363,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "uwunicorn",
+			ID:   janet.Keyword("uwunicorn"),
 			Name: "UwUnicorn",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6387,7 +6388,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "vesper",
+			ID:   janet.Keyword("vesper"),
 			Name: "Vesper",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6412,7 +6413,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "vice",
+			ID:   janet.Keyword("vice"),
 			Name: "vice",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6437,7 +6438,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "vulcan",
+			ID:   janet.Keyword("vulcan"),
 			Name: "vulcan",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6462,7 +6463,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "windows-10",
+			ID:   janet.Keyword("windows-10"),
 			Name: "Windows 10",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6487,7 +6488,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "windows-10-light",
+			ID:   janet.Keyword("windows-10-light"),
 			Name: "Windows 10 Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6512,7 +6513,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "windows-95",
+			ID:   janet.Keyword("windows-95"),
 			Name: "Windows 95",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6537,7 +6538,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "windows-95-light",
+			ID:   janet.Keyword("windows-95-light"),
 			Name: "Windows 95 Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6562,7 +6563,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "windows-highcontrast",
+			ID:   janet.Keyword("windows-highcontrast"),
 			Name: "Windows High Contrast",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6587,7 +6588,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "windows-highcontrast-light",
+			ID:   janet.Keyword("windows-highcontrast-light"),
 			Name: "Windows High Contrast Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6612,7 +6613,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "windows-nt",
+			ID:   janet.Keyword("windows-nt"),
 			Name: "Windows NT",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6637,7 +6638,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "windows-nt-light",
+			ID:   janet.Keyword("windows-nt-light"),
 			Name: "Windows NT Light",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6662,7 +6663,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "woodland",
+			ID:   janet.Keyword("woodland"),
 			Name: "Woodland",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6687,7 +6688,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "xcode-dusk",
+			ID:   janet.Keyword("xcode-dusk"),
 			Name: "XCode Dusk",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6712,7 +6713,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "zenbones",
+			ID:   janet.Keyword("zenbones"),
 			Name: "Zenbones",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal
@@ -6737,7 +6738,7 @@ func init() {
 			}),
 		},
 		{
-			ID:   "zenburn",
+			ID:   janet.Keyword("zenburn"),
 			Name: "Zenburn",
 			Map: style.NewColorMap(map[lipgloss.Color]lipgloss.Color{
 				// normal

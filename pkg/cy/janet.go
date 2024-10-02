@@ -76,6 +76,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 		"time.janet",
 		"actions.janet",
 		"style.janet",
+		"colors.janet",
 		"layout.janet",
 		"binds.janet",
 	}

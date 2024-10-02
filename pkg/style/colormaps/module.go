@@ -1,13 +1,14 @@
 package colormaps
 
 import (
+	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/style"
 )
 
 //go:generate go run gen.go
 
 type Scheme struct {
-	ID   string
+	ID   janet.Keyword
 	Name string
 	Map  *style.ColorMap
 }
