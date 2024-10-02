@@ -2065,7 +2065,7 @@ func init() {
 		},
 		{
 			Name:      "color-map",
-			Docstring: "The color map.",
+			Docstring: "The [color map](/api.md#color-map) used to translate the colors\nused for rendering a pane.",
 			Default:   defaults.ColorMap,
 		},
 		{

@@ -149,3 +149,12 @@ var _ janet.Documented = (*TimeModule)(nil)
 func (t *TimeModule) Documentation() string {
 	return DOCS_TIME
 }
+
+//go:embed docs-colormaps.md
+var DOCS_COLORMAPS string
+
+var _ janet.Documented = (*TimeModule)(nil)
+
+func (t *ColorMapsModule) Documentation() string {
+	return DOCS_COLORMAPS
+}

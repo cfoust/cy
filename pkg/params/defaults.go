@@ -57,7 +57,8 @@ type defaultParams struct {
 	// THEME SETTINGS
 	/////////////////
 
-	// The color map.
+	// The [color map](/api.md#color-map) used to translate the colors
+	// used for rendering a pane.
 	ColorMap *style.ColorMap
 
 	// The [color](/api.md#color) used for info messages.
