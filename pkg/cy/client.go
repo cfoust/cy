@@ -198,9 +198,18 @@ func (c *Client) pollEvents() {
 }
 
 func (c *Client) Node() tree.Node {
-	c.RLock()
-	defer c.RUnlock()
-	return c.node
+	l := c.layoutEngine.Get()
+	nodeID := layout.Attached(l)
+	if nodeID == nil {
+		return nil
+	}
+
+	node, ok := c.cy.tree.NodeById(*nodeID)
+	if !ok {
+		return nil
+	}
+
+	return node
 }
 
 func (c *Client) OuterLayers() *screen.Layers {
