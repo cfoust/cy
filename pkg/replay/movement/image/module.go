@@ -7,6 +7,8 @@ import (
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/style"
+
+	"github.com/rs/zerolog/log"
 )
 
 type imageMovement struct {
@@ -101,9 +103,11 @@ func (i *imageMovement) setOffset(offset geom.Vec2) {
 	cursor := i.viewportToTerm(i.cursor)
 	i.offset = offset.Clamp(i.minOffset, i.maxOffset)
 	i.cursor = i.termToViewport(cursor)
+	log.Info().Msgf("setOffset: %v (%v)", offset, i.offset)
 }
 
 func (i *imageMovement) setOffsetY(offset int) {
+	log.Info().Msgf("setOffsetY %+v", offset)
 	i.setOffset(geom.Vec2{
 		R: offset,
 		C: i.offset.C,
@@ -111,6 +115,7 @@ func (i *imageMovement) setOffsetY(offset int) {
 }
 
 func (i *imageMovement) setOffsetX(offset int) {
+	log.Info().Msgf("setOffsetX %+v", offset)
 	i.setOffset(geom.Vec2{
 		R: i.offset.R,
 		C: offset,
@@ -165,6 +170,7 @@ func (i *imageMovement) ScrollYDelta(delta int) {
 // Calculate the bounds of `{min,max}Offset` and ensure `offset` falls between them.
 func (i *imageMovement) recalculateViewport() {
 	termSize := i.Terminal.Size()
+	log.Info().Msgf("recalculateViewport %+v", i.viewport)
 	i.minOffset = geom.Vec2{
 		R: -len(i.History()),
 		C: 0, // always, but for clarity
@@ -175,6 +181,7 @@ func (i *imageMovement) recalculateViewport() {
 	}
 	i.setOffsetY(i.offset.R)
 	i.setOffsetX(i.offset.C)
+	log.Info().Msgf("recalculateViewport (offset) %+v", i.offset)
 }
 
 func (i *imageMovement) setScrollX(offset int) {
@@ -232,8 +239,7 @@ func (i *imageMovement) ReadString(start, end geom.Vec2) (result string) {
 func (i *imageMovement) Resize(size geom.Vec2) {
 	i.viewport = size
 	i.recalculateViewport()
-	i.setOffsetY(-1)
-	i.centerPoint(i.cursor)
+	i.centerPoint(i.viewportToTerm(i.cursor))
 }
 
 func (i *imageMovement) MoveCursorX(delta int) {
