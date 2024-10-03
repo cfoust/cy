@@ -526,7 +526,7 @@ For example, when moving vertically upwards, for a vertical split node this func
 
 (key/action
   action/kill-pane
-  "Kill the process of the current pane."
+  "Kill the process of the current pane, but do not detach from it."
   (cmd/kill (pane/current)))
 
 (key/action
