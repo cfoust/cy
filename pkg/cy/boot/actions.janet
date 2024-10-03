@@ -9,9 +9,9 @@ In a similar way to other modern applications, cy has a command palette (invoked
 ````
   [name docstring & body]
   (def func-name (string name))
+  (put actions func-name [docstring name])
   ~(upscope
-     (defn ,name ,docstring [] ,;body)
-     (,put actions ,func-name [,docstring ,name])))
+     (defn ,name ,docstring [] ,;body)))
 
 (defmacro key/bind-many
   ````Bind many bindings at once in the same scope.
@@ -74,6 +74,12 @@ For example:
          (map |(do
                  (def [key value] $)
                  (tuple 'param/set target key value)) _)))
+
+(defn
+  key/get-actions
+  "Get all registered actions."
+  []
+  (table/clone actions))
 
 (key/action
   action/command-palette
@@ -446,3 +452,5 @@ For example:
              :focus input
              :alt-screen false))
          (pane/attach _)))
+
+(merge-module root-env (curenv))

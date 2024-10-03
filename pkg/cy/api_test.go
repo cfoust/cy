@@ -1,6 +1,7 @@
 package cy
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -90,4 +91,39 @@ func TestAPI(t *testing.T) {
 	}
 
 	t.Errorf("%d API test(s) failed", len(failures))
+}
+
+// Test importing another Janet file from a config file. The API should still
+// work.
+func TestImport(t *testing.T) {
+	server, _, err := NewTestServer()
+	require.NoError(t, err)
+
+	d := t.TempDir()
+	mainFile := filepath.Join(d, "main.janet")
+
+	{
+		f, err := os.Create(mainFile)
+		require.NoError(t, err)
+		f.WriteString(`(import "./imported")`)
+	}
+
+	imported := filepath.Join(d, "imported.janet")
+	{
+		f, err := os.Create(imported)
+		require.NoError(t, err)
+		f.WriteString(`
+		(param/set :root :test 1)
+		(key/action action/test "" (pp "hello"))
+		`)
+	}
+
+	err = server.ExecuteFile(server.Ctx(), mainFile)
+	require.NoError(t, err)
+
+	err = server.Execute(server.Ctx(), `
+(assert (= 1 (param/get :test :target :root)))
+(assert (get (key/get-actions) "action/test"))
+`)
+	require.NoError(t, err)
 }
