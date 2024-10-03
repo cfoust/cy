@@ -38,10 +38,12 @@ func main() {
 			panic(err)
 		}
 
+		call := janet.CallBytes(buffer[:n])
+		call.Options.UpdateEnv = false
 		_, err = server.ExecuteCall(
 			context.Background(),
 			client,
-			janet.CallBytes(buffer[:n]),
+			call,
 		)
 		client.Cancel()
 		if err != nil {
