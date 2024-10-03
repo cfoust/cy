@@ -105,7 +105,7 @@ You define new actions using the {{api key/action}} macro. Here is an example fr
   "kill the current pane"
   # All subsequent forms comprise the body of the action, or the lines of code
   # that will be executed when it is invoked
-  (tree/kill (pane/current)))
+  (tree/rm (pane/current)))
 
 (key/bind :root ["ctrl+b" "b"] cy/kill-current-pane)
 ```

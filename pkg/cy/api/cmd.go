@@ -117,6 +117,28 @@ func (c *CmdModule) Path(id *janet.Value) (*string, error) {
 	return &path, nil
 }
 
+func (c *CmdModule) Kill(id *janet.Value) error {
+	defer id.Free()
+
+	pane, err := resolvePane(c.Tree, id)
+	if err != nil {
+		return err
+	}
+
+	r, ok := pane.Screen().(*replayable.Replayable)
+	if !ok {
+		return fmt.Errorf("pane was not a cmd")
+	}
+
+	cmd, ok := r.Cmd().(*stream.Cmd)
+	if !ok {
+		return fmt.Errorf("pane was not a cmd")
+	}
+
+	cmd.Kill()
+	return nil
+}
+
 func (c *CmdModule) Commands(id *janet.Value) (*[]detect.Command, error) {
 	defer id.Free()
 

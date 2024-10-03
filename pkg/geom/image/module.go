@@ -64,7 +64,9 @@ func (i Image) Clear(region geom.Rect) {
 }
 
 func Capture(view emu.View) Image {
-	return view.Screen()
+	image := New(view.Size())
+	Copy(geom.Vec2{}, image, view.Screen())
+	return image
 }
 
 func copyFunc(skip func(emu.Glyph) bool) func(pos geom.Vec2, dst, src Image) {

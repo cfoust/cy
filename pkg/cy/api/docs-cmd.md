@@ -31,3 +31,9 @@ Get the commands executed in a particular pane. Returns an array of [Commands](/
 # doc: Query
 
 Query all of the commands stored in the [commmand database](/command-history.md).
+
+# doc: Kill
+
+(cmd/kill target)
+
+Kill the pane specified by target. `target` is a [NodeID](/api.md#nodeid).

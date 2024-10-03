@@ -102,7 +102,7 @@ func (t *Tree) RemoveNode(id NodeID) error {
 
 	if node.Protected() {
 		return fmt.Errorf(
-			"node %s cannot be killed",
+			"node %s cannot be removed",
 			node.Name(),
 		)
 	}

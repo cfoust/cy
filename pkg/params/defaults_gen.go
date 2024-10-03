@@ -2135,7 +2135,7 @@ func init() {
 		},
 		{
 			Name:      "remove-pane-on-exit",
-			Docstring: "If this is `true`, when a pane's process exits or its node is killed\n(such as with {{api tree/kill}}), the portion of the layout related\nto that node will be removed. This makes cy's layout functionality\nwork a bit more like tmux.",
+			Docstring: "If this is `true`, when a pane's process exits or its node is killed\n(such as with {{api cmd/kill}}), the portion of the layout related\nto that node will be removed. This makes cy's layout functionality\nwork a bit more like tmux.",
 			Default:   defaults.RemovePaneOnExit,
 		},
 		{

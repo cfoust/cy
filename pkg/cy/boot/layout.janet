@@ -512,17 +512,37 @@ For example, when moving vertically upwards, for a vertical split node this func
   (layout/assoc layout parent-path new-parent))
 
 (key/action
-  action/remove-current-pane
+  action/remove-layout-pane
   "Remove the current pane from the layout."
   (layout/set (layout/remove-attached (layout/get))))
 
 (key/action
-  action/kill-current-pane
-  "Kill the pane and remove it from the layout."
+  action/kill-layout-pane
+  "Remove the current pane from the layout and the node tree."
   (def layout (layout/get))
   (def {:id id} (layout/path layout (layout/attach-path layout)))
   (layout/set (layout/remove-attached layout))
-  (if (not (nil? id)) (tree/kill id)))
+  (if (not (nil? id)) (tree/rm id)))
+
+(key/action
+  action/kill-pane
+  "Kill the process of the current pane."
+  (cmd/kill (pane/current)))
+
+(key/action
+  action/kill-and-reattach
+  `Remove the current pane from the node tree and attach to a new one.
+
+  A new shell will be created if the current pane is the last one in the layout.`
+  (def id (pane/current))
+  (if (nil? id) (break))
+  (def head (or
+              (find |(and
+                       (not (= id $))
+                       (not (= (tree/path $) "/logs"))) (group/leaves :root))
+              (shell/new)))
+  (pane/attach head)
+  (tree/rm id))
 
 (defmacro-
   pane-creator

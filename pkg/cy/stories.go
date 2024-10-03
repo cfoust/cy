@@ -568,7 +568,7 @@ func init() {
 		client.execute(`
 (def cmd (cmd/new :root))
 (layout/set {:type :pane :id cmd :attached true})
-(tree/kill cmd)
+(tree/rm cmd)
 		`)
 		return screen, err
 	}, stories.Config{})

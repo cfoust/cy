@@ -146,7 +146,7 @@ func (p *Pane) attach(
 	client := p.server.AddClient(ctx, p.size)
 	client.Attach(ctx, pane.Screen())
 
-	// When the tree node is removed (ie by (tree/kill)) we need to tell
+	// When the tree node is removed (ie by (tree/rm)) we need to tell
 	// the layout engine to remove the reference to that NodeID from the
 	// config for this pane.
 	go func() {

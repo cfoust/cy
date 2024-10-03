@@ -34,9 +34,9 @@ Get the path of `node`, which is a [NodeID](/api.md#nodeid).
 
 Get the [NodeID](/api.md#nodeid) for the parent of `node`. If `node` is `:root`, return `(tree/parent)` returns `nil`.
 
-# doc: Kill
+# doc: Rm
 
-(tree/kill node)
+(tree/rm node)
 
 Remove the `node` and all of its child nodes. This will halt execution of any descendant panes. `node` is a [NodeID](/api.md#nodeid).
 

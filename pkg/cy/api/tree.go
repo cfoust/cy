@@ -103,7 +103,7 @@ func (t *TreeModule) Parent(id *janet.Value) (*tree.NodeID, error) {
 	return &parentId, nil
 }
 
-func (t *TreeModule) Kill(id *janet.Value) error {
+func (t *TreeModule) Rm(id *janet.Value) error {
 	defer id.Free()
 
 	node, err := resolveNode(t.Tree, id)

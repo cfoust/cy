@@ -29,7 +29,7 @@
       (pane/history-forward)
       (assert (= (pane/current) cmd3))
 
-      (tree/kill cmd2)
+      (tree/rm cmd2)
       (pane/history-backward)
       (assert (= (pane/current) cmd1))
 
