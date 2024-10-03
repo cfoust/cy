@@ -250,15 +250,6 @@ func (i *imageMovement) MoveCursorY(delta int) {
 	i.moveCursorDelta(geom.Vec2{R: delta})
 }
 
-////func (i *imageMovement) Jump(needle string, isForward bool, isTo bool) {
-////oldPos := i.viewportToTerm(i.cursor)
-////line := i.getLine(oldPos.R)
-////i.moveCursor(geom.Vec2{
-////R: oldPos.R,
-////C: calculateJump(line, needle, isForward, isTo, oldPos.C),
-////})
-////}
-
 // For a point that is off the screen, find the closest point that can be used
 // as the start or end point of a selection.
 func anchorToScreen(size geom.Vec2, v geom.Vec2) geom.Vec2 {
