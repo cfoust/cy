@@ -1,5 +1,11 @@
 (def- actions @{})
 
+(defn-
+  key/register-action
+  "Register an action."
+  [name docstring func]
+  (put actions name [docstring func]))
+
 (defmacro key/action
   ````Register an action. Equivalent to the Janet built-in `(defn)`, but requires a docstring.
 
@@ -9,9 +15,9 @@ In a similar way to other modern applications, cy has a command palette (invoked
 ````
   [name docstring & body]
   (def func-name (string name))
-  (put actions func-name [docstring name])
   ~(upscope
-     (defn ,name ,docstring [] ,;body)))
+     (defn ,name ,docstring [] ,;body)
+     (,key/register-action ,func-name ,docstring ,name)))
 
 (defmacro key/bind-many
   ````Bind many bindings at once in the same scope.
