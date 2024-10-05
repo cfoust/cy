@@ -100,7 +100,9 @@ For example:
                               (get x :sequence)
                               (string/join x " ")
                               (string " " x " ")))
-         (tuple [desc name (string sequence)] func))
+         (tuple [(get (string/split "\n" desc) 0)
+                 name
+                 (string sequence)] func))
       (pairs actions)))
 
   (as?-> bound-actions _
