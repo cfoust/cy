@@ -34,7 +34,7 @@ After creating a few, you can move between them using directional keys:
 
 ### Removing panes
 
-You can also remove panes from your layout with {{bind :root ctrl+a X}}. However, it is important to note that unlike in other terminal multiplexers, removing a pane from your layout does not kill it; you can still attach to it again, such as by using {{bind :root ctrl+a ;}}. To kill the underlying process of pane and swap to a new one, you can use {{bind :root ctrl+a x}}.
+You can also remove panes from your layout with {{bind :root ctrl+a X}}. However, it is important to note that unlike in other terminal multiplexers, removing a pane from your layout does not kill it; you can still attach to it again, such as by using {{bind :root ctrl+a ;}}. To kill the underlying process of a pane and swap to a new one, you can use {{bind :root ctrl+a x}}.
 
 ### Margins
 
