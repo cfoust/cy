@@ -97,6 +97,10 @@ func (c *Cy) ExecuteJanet(path string) error {
 	return c.ExecuteFile(c.Ctx(), path)
 }
 
+func (c *Cy) Tree() *tree.Tree {
+	return c.tree
+}
+
 func (c *Cy) ExecuteOnBehalf(
 	ctx context.Context,
 	node tree.NodeID,

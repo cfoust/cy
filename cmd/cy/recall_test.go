@@ -43,6 +43,20 @@ func TestParse(t *testing.T) {
 				Index:  -1,
 			},
 		},
+		{
+			Value: "test.borg:0",
+			Expected: &Reference{
+				Borg:  "test.borg",
+				Index: 0,
+			},
+		},
+		{
+			Value: "test.borg:-1",
+			Expected: &Reference{
+				Borg:  "test.borg",
+				Index: -1,
+			},
+		},
 	} {
 		ref, err := parseReference(test.Value)
 		if test.Expected == nil {

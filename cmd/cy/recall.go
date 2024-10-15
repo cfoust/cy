@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
+
+	"github.com/cfoust/cy/pkg/cy"
 )
 
 var (
@@ -16,9 +20,12 @@ var (
 	// node) are derived from the environment.
 	ABSOLUTE_REFERENCE = regexp.MustCompile("^(?P<node>\\d+):(?P<index>-?\\d+)$")
 	RELATIVE_REFERENCE = regexp.MustCompile("^(?P<index>-?\\d+)$")
+	// Borg references are used to refer to commands stored in a borg file.
+	BORG_REFERENCE = regexp.MustCompile("^(?P<file>.+[.]borg):(?P<index>-?\\d+)$")
 )
 
 type Reference struct {
+	Borg   string
 	Socket string
 	Node   int
 	Index  int
@@ -27,6 +34,18 @@ type Reference struct {
 // parseReference interprets a reference string and returns a normalized
 // Reference.
 func parseReference(value string) (*Reference, error) {
+	if match := BORG_REFERENCE.FindStringSubmatch(value); match != nil {
+		index, err := strconv.Atoi(match[BORG_REFERENCE.SubexpIndex("index")])
+		if err != nil {
+			return nil, err
+		}
+
+		return &Reference{
+			Borg:  match[BORG_REFERENCE.SubexpIndex("file")],
+			Index: index,
+		}, nil
+	}
+
 	if match := FULL_REFERENCE.FindStringSubmatch(value); match != nil {
 		node, err := strconv.Atoi(match[FULL_REFERENCE.SubexpIndex("node")])
 		if err != nil {
@@ -85,10 +104,57 @@ func parseReference(value string) (*Reference, error) {
 	return nil, fmt.Errorf("invalid reference: %s", value)
 }
 
+func resolveBorgPath(file string) (string, error) {
+	if filepath.IsAbs(file) {
+		return file, nil
+	}
+
+	// Check if file exists relative to current directory
+	if _, err := os.Stat(file); err == nil {
+		return file, nil
+	}
+
+	// Otherwise we need to start a cy server to check in the user's
+	// :data-directory
+	cy, err := cy.Start(context.Background(), cy.Options{
+		Config:  cy.FindConfig(),
+		DataDir: cy.FindDataDir(),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	dataDir := cy.
+		Tree().
+		Root().
+		Params().
+		DataDirectory()
+
+	return filepath.Join(dataDir, file), nil
+}
+
+func recallBorg(reference *Reference) error {
+	path, err := resolveBorgPath(reference.Borg)
+	if err != nil {
+		return err
+	}
+
+	// Check if file exists
+	if _, err := os.Stat(path); err != nil {
+		return fmt.Errorf("borg file not found: %s", path)
+	}
+
+	return nil
+}
+
 func recallCommand(reference string) error {
 	ref, err := parseReference(reference)
 	if err != nil {
 		return err
+	}
+
+	if len(ref.Borg) > 0 {
+		return recallBorg(ref)
 	}
 
 	socketName := ref.Socket
