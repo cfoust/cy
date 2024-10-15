@@ -207,3 +207,25 @@ func Open(filename string) (SessionReader, error) {
 
 	return &reader, nil
 }
+
+// Read reads all of the Events from a .borg file.
+func Read(filename string) ([]Event, error) {
+	reader, err := Open(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	events := make([]Event, 0)
+	for {
+		event, err := reader.Read()
+		if err == io.EOF || err == io.ErrUnexpectedEOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+
+	return events, nil
+}

@@ -63,8 +63,8 @@ func (r *Replayable) Commands() []detect.Command {
 	return r.player.Commands()
 }
 
-func (r *Replayable) Output(start, end int) (data []byte, ok bool) {
-	return r.player.Output(start, end)
+func (r *Replayable) Output(index int) (data []byte, ok bool) {
+	return r.player.Output(index)
 }
 
 func (r *Replayable) Preview(

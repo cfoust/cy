@@ -61,8 +61,8 @@ func (p *Player) Release() {
 	}
 }
 
-// Output gets all of the output written in the range [start, end).
-func (p *Player) Output(start, end int) (data []byte, ok bool) {
+// selectBytes gets all of the output written in the range [start, end).
+func (p *Player) selectBytes(start, end int) (data []byte, ok bool) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
@@ -91,6 +91,38 @@ func (p *Player) Output(start, end int) (data []byte, ok bool) {
 	}
 
 	return
+}
+
+// Output gets the output of the command at the given index.
+func (p *Player) Output(index int) (data []byte, ok bool) {
+	commands := p.Commands()
+
+	// Skip pending command
+	if index < 0 && len(commands) > 0 && commands[len(commands)-1].Pending {
+		index--
+	}
+
+	if index < 0 {
+		index = len(commands) + index
+	}
+
+	if index < 0 || index >= len(commands) {
+		return nil, false
+	}
+
+	command := commands[index]
+	data, ok = p.selectBytes(command.Executed+1, command.Completed+1)
+	if !ok {
+		return nil, false
+	}
+
+	// Skip the newline produced when the user originally executed the
+	// command
+	if len(data) > 1 && data[0] == '\r' && data[1] == '\n' {
+		data = data[2:]
+	}
+
+	return data, true
 }
 
 func (p *Player) Events() []sessions.Event {

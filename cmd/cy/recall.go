@@ -9,6 +9,8 @@ import (
 	"strconv"
 
 	"github.com/cfoust/cy/pkg/cy"
+	"github.com/cfoust/cy/pkg/replay/player"
+	"github.com/cfoust/cy/pkg/sessions"
 )
 
 var (
@@ -144,7 +146,19 @@ func recallBorg(reference *Reference) error {
 		return fmt.Errorf("borg file not found: %s", path)
 	}
 
-	return nil
+	events, err := sessions.Read(path)
+	if err != nil {
+		return err
+	}
+
+	player := player.FromEvents(events)
+	data, ok := player.Output(reference.Index)
+	if !ok {
+		return fmt.Errorf("command not found or no output available")
+	}
+
+	_, err = os.Stdout.Write(data)
+	return err
 }
 
 func recallCommand(reference string) error {

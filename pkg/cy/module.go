@@ -238,36 +238,9 @@ func (c *Cy) Output(node tree.NodeID, index int) ([]byte, error) {
 		return nil, fmt.Errorf("node %d was not a cmd", node)
 	}
 
-	commands := r.Commands()
-
-	original := index
-
-	// Skip pending command
-	if index < 0 && len(commands) > 0 && commands[len(commands)-1].Pending {
-		index--
-	}
-
-	if index < 0 {
-		index = len(commands) + index
-	}
-
-	if index < 0 || index >= len(commands) {
-		return nil, fmt.Errorf(
-			"index %d out of range",
-			original,
-		)
-	}
-
-	command := commands[index]
-	data, ok := r.Output(command.Executed+1, command.Completed+1)
+	data, ok := r.Output(index)
 	if !ok {
 		return nil, fmt.Errorf("no output")
-	}
-
-	// Skip the newline produced when the user originally executed the
-	// command
-	if len(data) > 1 && data[0] == '\r' && data[1] == '\n' {
-		data = data[2:]
 	}
 
 	return data, nil

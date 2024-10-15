@@ -2,7 +2,6 @@ package loader
 
 import (
 	"context"
-	"io"
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
@@ -44,25 +43,11 @@ type loadedEvent struct {
 func (l *Loader) Init() tea.Cmd {
 	size := l.size
 	return func() tea.Msg {
-		reader, err := sessions.Open(l.path)
+		events, err := sessions.Read(l.path)
 		if err != nil {
 			return loadedEvent{
 				err: err,
 			}
-		}
-
-		events := make([]sessions.Event, 0)
-		for {
-			event, err := reader.Read()
-			if err == io.EOF || err == io.ErrUnexpectedEOF {
-				break
-			}
-			if err != nil {
-				return loadedEvent{
-					err: err,
-				}
-			}
-			events = append(events, event)
 		}
 
 		ctx := l.Lifetime.Ctx()
