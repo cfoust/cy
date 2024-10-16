@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/cfoust/cy/pkg/cy"
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
 )
@@ -23,14 +24,19 @@ var (
 	ABSOLUTE_REFERENCE = regexp.MustCompile("^(?P<node>\\d+):(?P<index>-?\\d+)$")
 	RELATIVE_REFERENCE = regexp.MustCompile("^(?P<index>-?\\d+)$")
 	// Borg references are used to refer to commands stored in a borg file.
-	BORG_REFERENCE = regexp.MustCompile("^(?P<file>.+[.]borg):(?P<index>-?\\d+)$")
+	BORG_REFERENCE = regexp.MustCompile("^(?P<file>.+[.]borg):(?P<prompted>@?)(?P<index>-?\\d+)$")
 )
 
 type Reference struct {
-	Borg   string
 	Socket string
 	Node   int
 	Index  int
+
+	// If non-empty, the path to a borg file.
+	Borg string
+	// Whether Index refers to the index of a command's "prompted" event.
+	// This is used to specify command references unambiguously.
+	Prompted bool
 }
 
 // parseReference interprets a reference string and returns a normalized
@@ -42,9 +48,15 @@ func parseReference(value string) (*Reference, error) {
 			return nil, err
 		}
 
+		prompted := match[BORG_REFERENCE.SubexpIndex("prompted")] == "@"
+		if prompted {
+			index = geom.Max(index, 0)
+		}
+
 		return &Reference{
-			Borg:  match[BORG_REFERENCE.SubexpIndex("file")],
-			Index: index,
+			Borg:     match[BORG_REFERENCE.SubexpIndex("file")],
+			Index:    index,
+			Prompted: prompted,
 		}, nil
 	}
 
@@ -152,7 +164,27 @@ func recallBorg(reference *Reference) error {
 	}
 
 	player := player.FromEvents(events)
-	data, ok := player.Output(reference.Index)
+
+	found := false
+	index := reference.Index
+	if reference.Prompted {
+		for i, command := range player.Commands() {
+			if command.Prompted == index {
+				index = i
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return fmt.Errorf(
+				"command with id %d not found",
+				reference.Index,
+			)
+		}
+	}
+
+	data, ok := player.Output(index)
 	if !ok {
 		return fmt.Errorf("command not found or no output available")
 	}

@@ -461,4 +461,16 @@ For example:
              :alt-screen false))
          (pane/attach _)))
 
+(key/action
+  action/recall-history-command
+  "Recall a command from .borg history."
+  (as?-> (ctrl-r-get-db-commands) _
+         (input/find _ :prompt "search: recall (borg)"
+                     ;ctrlr-input-options)
+         (let [{:borg borg
+                :command {:prompted prompted}} _]
+           (pane/send-keys
+             (pane/current)
+             @[(string "cy " borg ":@" prompted)]))))
+
 (merge-module root-env (curenv))
