@@ -204,3 +204,4 @@ func NewStatic[T any](value T) *Prop[T] {
 type String = Prop[string]
 type Color = Prop[*style.Color]
 type Border = Prop[*style.Border]
+type ColorMap = Prop[*style.ColorMap]

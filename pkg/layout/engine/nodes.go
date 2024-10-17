@@ -7,6 +7,7 @@ import (
 	L "github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/layout/bar"
 	"github.com/cfoust/cy/pkg/layout/borders"
+	"github.com/cfoust/cy/pkg/layout/colormap"
 	"github.com/cfoust/cy/pkg/layout/margins"
 	"github.com/cfoust/cy/pkg/layout/pane"
 	"github.com/cfoust/cy/pkg/layout/split"
@@ -42,6 +43,8 @@ func (l *LayoutEngine) createNode(
 		err = l.createTabs(node, config)
 	case L.BarType:
 		err = l.createBar(node, config)
+	case L.ColorMapType:
+		err = l.createColorMap(node, config)
 	default:
 		err = fmt.Errorf("unimplemented screen")
 	}
@@ -149,6 +152,13 @@ func (l *LayoutEngine) updateNode(
 			},
 		)
 	case L.BarType:
+		updates = append(updates,
+			updateNode{
+				Config: node.Node,
+				Node:   current.Children[0],
+			},
+		)
+	case L.ColorMapType:
 		updates = append(updates,
 			updateNode{
 				Config: node.Node,
@@ -314,6 +324,28 @@ func (l *LayoutEngine) createBar(
 	return nil
 }
 
+func (l *LayoutEngine) createColorMap(
+	node *screenNode,
+	config L.ColorMapType,
+) error {
+	innerNode, err := l.createNode(
+		node.Ctx(),
+		config.Node,
+	)
+	if err != nil {
+		return err
+	}
+
+	colormap := colormap.New(
+		node.Ctx(),
+		innerNode.Screen,
+	)
+
+	node.Screen = colormap
+	node.Children = []*screenNode{innerNode}
+	return nil
+}
+
 // applyNodeChange replaces the configuration of the target node with
 // newConfig. This is only used to allow nodes to change their own
 // configurations in response to user input (for now, just mouse events.)
@@ -373,6 +405,14 @@ func applyNodeChange(
 			return currentConfig
 		}
 	case L.BarType:
+		currentConfig.Node = applyNodeChange(
+			current.Children[0],
+			target,
+			currentConfig.Node,
+			newConfig,
+		)
+		return currentConfig
+	case L.ColorMapType:
 		currentConfig.Node = applyNodeChange(
 			current.Children[0],
 			target,

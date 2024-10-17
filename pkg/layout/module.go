@@ -47,6 +47,11 @@ type BorderType struct {
 	Node        NodeType
 }
 
+type ColorMapType struct {
+	Map  *prop.ColorMap
+	Node NodeType
+}
+
 type Tab struct {
 	Active bool
 	Name   string
@@ -114,20 +119,18 @@ func getPaneType(tree NodeType) (panes []PaneType) {
 	case SplitType:
 		panes = append(panes, getPaneType(node.A)...)
 		panes = append(panes, getPaneType(node.B)...)
-		return
 	case MarginsType:
 		panes = append(panes, getPaneType(node.Node)...)
-		return
 	case BorderType:
 		panes = append(panes, getPaneType(node.Node)...)
-		return
 	case BarType:
 		panes = append(panes, getPaneType(node.Node)...)
-		return
 	case TabsType:
 		for _, tab := range node.Tabs {
 			panes = append(panes, getPaneType(tab.Node)...)
 		}
+    case ColorMapType:
+		panes = append(panes, getPaneType(node.Node)...)
 	}
 	return
 }
@@ -151,6 +154,8 @@ func getNumLeaves(node NodeType) int {
 			result += getNumLeaves(tab.Node)
 		}
 		return result
+	case ColorMapType:
+		return getNumLeaves(node.Node)
 	}
 	return 0
 }
@@ -189,6 +194,10 @@ func Copy(node NodeType) NodeType {
 		}
 		copied.Tabs = newTabs
 		return copied
+	case ColorMapType:
+		copied := node
+		copied.Node = Copy(node.Node)
+		return node
 	}
 
 	return node
@@ -219,6 +228,9 @@ func AttachFirst(node NodeType) NodeType {
 			}
 			node.Tabs[i].Node = AttachFirst(tab.Node)
 		}
+		return node
+	case ColorMapType:
+		node.Node = AttachFirst(node.Node)
 		return node
 	}
 
@@ -283,6 +295,9 @@ func RemoveAttached(node NodeType) NodeType {
 		newNode := node
 		newNode.Tabs = newTabs
 		return newNode
+	case ColorMapType:
+		node.Node = RemoveAttached(node.Node)
+		return node
 	}
 
 	return node
@@ -309,6 +324,8 @@ func IsAttached(tree NodeType) bool {
 			}
 		}
 		return false
+	case ColorMapType:
+		return IsAttached(node.Node)
 	}
 	return false
 }
@@ -336,6 +353,9 @@ func Detach(node NodeType) NodeType {
 		for i, tab := range node.Tabs {
 			node.Tabs[i].Node = Detach(tab.Node)
 		}
+		return node
+	case ColorMapType:
+		node.Node = Detach(node.Node)
 		return node
 	}
 
@@ -372,6 +392,9 @@ func attach(node NodeType, id tree.NodeID) NodeType {
 		for i, tab := range node.Tabs {
 			node.Tabs[i].Node = attach(tab.Node, id)
 		}
+		return node
+	case ColorMapType:
+		node.Node = attach(node.Node, id)
 		return node
 	}
 
@@ -412,6 +435,8 @@ func getAttached(node NodeType) *tree.NodeID {
 			}
 		}
 		return nil
+	case ColorMapType:
+		return getAttached(node.Node)
 	}
 
 	return nil
@@ -480,6 +505,8 @@ func validateNodes(node NodeType) error {
 		}
 
 		return nil
+	case ColorMapType:
+		return validateNodes(node.Node)
 	}
 
 	return nil

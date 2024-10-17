@@ -75,6 +75,25 @@
 
       (expect-error (layout/set layout)))
 
+(test "color-map"
+      (def layout
+        (layout/new
+          (color-map
+            @{}
+            (attach))))
+
+      (layout/set layout)
+      (assert (deep= (layout/get) layout)))
+
+(test "invalid color-map"
+      (def layout
+        (layout/new
+          (color-map
+            ""
+            (attach))))
+
+      (expect-error (layout/set layout)))
+
 (test "tab actions"
       (action/new-tab)
       (action/new-tab)
