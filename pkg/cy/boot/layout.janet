@@ -46,7 +46,8 @@ For example:
     (or
       (layout/type? :margins node)
       (layout/type? :bar node)
-      (layout/type? :borders node)) @[[:node]]
+      (layout/type? :borders node)
+      (layout/type? :color-map node)) @[[:node]]
     @[]))
 
 (defn
@@ -168,6 +169,14 @@ For example:
    :text text
    :bottom bottom})
 
+(defn
+  layout/color-map
+  ```Convenience function for creating a new :color-map node.```
+  [map node]
+  {:type :color-map
+   :map map
+   :node node})
+
 (defmacro
   layout/new
   ```Macro for quickly creating layouts. layout/new replaces shorthand versions of node creation functions with their longform versions and also includes a few abbreviations that do not exist elsewhere in the API.
@@ -184,6 +193,7 @@ Supported short forms:
 * tab: A :tab inside of a :tabs node.
 * active-tab: A :tab with :active=true inside of a :tabs node.
 * bar: A :bar node.
+* color-map: A :color-map node.
 
 See [the layouts chapter](/layouts.md#api) for more information.
   ```
@@ -209,6 +219,7 @@ See [the layouts chapter](/layouts.md#api) for more information.
      (def tab ,layout/tab)
      (def active-tab ,active-tab)
      (def bar ,layout/bar)
+     (def color-map ,layout/color-map)
      ,body))
 
 (defn
