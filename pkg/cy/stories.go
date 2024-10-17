@@ -837,7 +837,7 @@ func init() {
 			stories.Type("ctrl+a", "H"),
 			stories.Wait(stories.Some),
 		},
-    })
+	})
 
 	stories.Register("layout/bar/bad", func(ctx context.Context) (
 		mux.Screen,

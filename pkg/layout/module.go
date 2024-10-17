@@ -129,7 +129,7 @@ func getPaneType(tree NodeType) (panes []PaneType) {
 		for _, tab := range node.Tabs {
 			panes = append(panes, getPaneType(tab.Node)...)
 		}
-    case ColorMapType:
+	case ColorMapType:
 		panes = append(panes, getPaneType(node.Node)...)
 	}
 	return
