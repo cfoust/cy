@@ -10,12 +10,13 @@ import (
 )
 
 var (
-	KEYWORD_PANE    = janet.Keyword("pane")
-	KEYWORD_SPLIT   = janet.Keyword("split")
-	KEYWORD_MARGINS = janet.Keyword("margins")
-	KEYWORD_BORDERS = janet.Keyword("borders")
-	KEYWORD_TABS    = janet.Keyword("tabs")
-	KEYWORD_BAR     = janet.Keyword("bar")
+	KEYWORD_PANE     = janet.Keyword("pane")
+	KEYWORD_SPLIT    = janet.Keyword("split")
+	KEYWORD_MARGINS  = janet.Keyword("margins")
+	KEYWORD_BORDERS  = janet.Keyword("borders")
+	KEYWORD_TABS     = janet.Keyword("tabs")
+	KEYWORD_BAR      = janet.Keyword("bar")
+	KEYWORD_COLORMAP = janet.Keyword("color-map")
 
 	defaultBorder = prop.NewStatic(&style.DefaultBorder)
 )
@@ -274,6 +275,35 @@ func unmarshalNode(value *janet.Value) (NodeType, error) {
 		}
 
 		return type_, nil
+	case KEYWORD_COLORMAP:
+		type colormapArgs struct {
+			Map  *prop.ColorMap
+			Node *janet.Value
+		}
+
+		args := colormapArgs{}
+		err = value.Unmarshal(&args)
+		if err != nil {
+			return nil, err
+		}
+
+		node, err := unmarshalNode(args.Node)
+		if err != nil {
+			return nil, err
+		}
+
+		if args.Map == nil {
+			return nil, fmt.Errorf(
+				":color-map node missing :map",
+			)
+		}
+
+		type_ := ColorMapType{
+			Map:  args.Map,
+			Node: node,
+		}
+
+		return type_, nil
 	}
 
 	return nil, fmt.Errorf("invalid node type: %s", n.Type)
@@ -415,6 +445,16 @@ func marshalNode(node NodeType) interface{} {
 			Text:   node.Text,
 			Bottom: node.Bottom,
 			Node:   marshalNode(node.Node),
+		}
+	case ColorMapType:
+		return struct {
+			Type janet.Keyword
+			Map  *prop.ColorMap
+			Node interface{}
+		}{
+			Type: KEYWORD_COLORMAP,
+			Map:  node.Map,
+			Node: marshalNode(node.Node),
 		}
 	}
 	return nil

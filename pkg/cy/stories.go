@@ -790,6 +790,55 @@ func init() {
 		return screen, err
 	}, stories.Config{})
 
+	stories.Register("layout/colormap", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		err = client.execute(`
+(def cmd1 (shell/new))
+(layout/set (layout/new
+              (color-map
+                (fn [layout]
+                  (def node (layout/attach-id layout))
+                  (if
+                    (nil? node) @{"0" "#ff0000"}
+                    @{"0" "#f00000"}))
+                (attach :id cmd1))))
+
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(defn
+  theme [layout]
+  (def node (layout/attach-id layout))
+  (if
+    (nil? node) @{"0" "#ff0000"}
+    @{"0" "#0000ff"}))
+
+(layout/set (layout/new
+              (split
+                (color-map
+                  theme
+                  (attach :id cmd1))
+                (color-map
+                  theme
+                  (pane :id cmd2)))))
+		`)
+		return screen, err
+	}, stories.Config{
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "L"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "H"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "L"),
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "H"),
+			stories.Wait(stories.Some),
+		},
+	})
+
 	stories.Register("layout/bar/bad", func(ctx context.Context) (
 		mux.Screen,
 		error,
