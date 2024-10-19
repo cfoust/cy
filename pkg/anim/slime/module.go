@@ -10,7 +10,7 @@ import (
 const (
 	WIDTH      int = 400
 	HEIGHT     int = 400
-	NUM_AGENTS     = 1
+	NUM_AGENTS     = 1500
 	DECAY          = 0.9
 	MIN_CHEM       = 0.0001
 	ASPECT         = 0.5017144097222223
@@ -21,8 +21,12 @@ const (
 	AGT_ANGLE  = 45 * math.Pi / 180
 	DEPOSIT    = 1
 
-	OOB     = ' '
-	TEXTURE = "  ``^@..„v0"
+	OOB = ' '
+)
+
+var (
+	TEXTURE0 = []rune("  ``^@")
+	TEXTURE1 = []rune(" ..„v0")
 )
 
 type Vec2 struct {
@@ -49,20 +53,26 @@ type Agent struct {
 	scatter bool
 }
 
-func (a *Agent) Sense(m float64, chem []float32) float64 {
+func (a *Agent) Sense(m float64, chem []float64) float64 {
 	senseVec := a.Dir.Rot(m * SENS_ANGLE).MulN(SENS_DIST)
 	pos := Vec2{math.Floor(a.Pos.X + senseVec.X), math.Floor(a.Pos.Y + senseVec.Y)}
 	if !bounded(pos) {
 		return -1
 	}
-	sensed := chem[int(pos.Y)*HEIGHT+int(pos.X)]
+
+	idx := int(pos.Y)*HEIGHT + int(pos.X)
+	if idx < 0 || idx >= len(chem) {
+		return -1
+	}
+
+	sensed := chem[idx]
 	if a.scatter {
 		return 1 - float64(sensed)
 	}
 	return float64(sensed)
 }
 
-func (a *Agent) React(chem []float32) {
+func (a *Agent) React(chem []float64) {
 	forwardChem := a.Sense(0, chem)
 	leftChem := a.Sense(-1, chem)
 	rightChem := a.Sense(1, chem)
@@ -88,7 +98,7 @@ func (a *Agent) React(chem []float32) {
 	a.Pos = a.Pos.Add(a.Dir.MulN(AGT_SPEED))
 }
 
-func (a *Agent) Deposit(chem []float32) {
+func (a *Agent) Deposit(chem []float64) {
 	x := int(math.Floor(a.Pos.X))
 	y := int(math.Floor(a.Pos.Y))
 	idx := y*HEIGHT + x
@@ -96,7 +106,7 @@ func (a *Agent) Deposit(chem []float32) {
 		return
 	}
 
-	chem[idx] = float32(math.Min(1, float64(chem[idx])+DEPOSIT))
+	chem[idx] = float64(math.Min(1, float64(chem[idx])+DEPOSIT))
 }
 
 func bounded(vec Vec2) bool {
@@ -104,8 +114,8 @@ func bounded(vec Vec2) bool {
 	return ((vec.X-r)*(vec.X-r)+(vec.Y-r)*(vec.Y-r) <= r*r)
 }
 
-func blur(row, col int, data []float32) float32 {
-	sum := float32(0)
+func blur(row, col int, data []float64) float64 {
+	sum := float64(0)
 	for dy := -1; dy <= 1; dy++ {
 		for dx := -1; dx <= 1; dx++ {
 			idx := (row+dy)*HEIGHT + col + dx
@@ -132,8 +142,8 @@ type Simulator struct {
 	frame     int
 	rows      int
 	cols      int
-	chem      []float32
-	wip       []float32
+	chem      []float64
+	wip       []float64
 	agents    []Agent
 	viewScale Vec2
 	viewFocus Vec2
@@ -247,16 +257,16 @@ func (s *Simulator) renderCell(row, col int) rune {
 	val = math.Pow(val, 1.0/3.0)
 
 	// Convert to texture character
-	texRow := (col + row) % len(TEXTURE)
-	texCol := int(math.Ceil(val * float64(len(TEXTURE)-1)))
-	idx := texRow*len(TEXTURE) + texCol
-	if idx < 0 || idx >= len(TEXTURE) {
-		return OOB
+	texRow := (col + row) % 2
+	texCol := int(math.Ceil(val * float64(len(TEXTURE0)-1)))
+	var char rune
+	if texRow == 0 {
+		char = rune(TEXTURE0[texCol])
+	} else {
+		char = rune(TEXTURE1[texCol])
 	}
 
-	//char := TEXTURE[texRow*len(TEXTURE)+texCol]
-	//return rune(char)
-	return 'a'
+	return rune(char)
 }
 
 func (s *Simulator) Render(out image.Image) {
@@ -269,8 +279,8 @@ func (s *Simulator) Render(out image.Image) {
 }
 
 func New(rows, cols int, agents []Agent) *Simulator {
-	chem := make([]float32, HEIGHT*WIDTH)
-	wip := make([]float32, HEIGHT*WIDTH)
+	chem := make([]float64, HEIGHT*WIDTH)
+	wip := make([]float64, HEIGHT*WIDTH)
 
 	agents = make([]Agent, NUM_AGENTS)
 	for i := 0; i < NUM_AGENTS; i++ {
