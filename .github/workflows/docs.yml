@@ -37,9 +37,9 @@ jobs:
 
       - uses: charmbracelet/vhs-action@v2
 
-      - name: Install vim
-        # This is used for the "cy/project" story
-        run: sudo apt-get install -qqy vim
+      - name: Install vim and htop
+        # For the "cy/project" story and "layout/dynamic/color-map" story
+        run: sudo apt-get install -qqy vim htop
 
       - name: Build
         run: >

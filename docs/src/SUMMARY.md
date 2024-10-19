@@ -58,6 +58,7 @@
 
     - [Bar](./layouts/nodes/bar.md)
     - [Borders](./layouts/nodes/borders.md)
+    - [Color map](./layouts/nodes/color-map.md)
     - [Margins](./layouts/nodes/margins.md)
     - [Pane](./layouts/nodes/pane.md)
     - [Split](./layouts/nodes/split.md)
