@@ -182,18 +182,18 @@ For example:
   ```Macro for quickly creating layouts. layout/new replaces shorthand versions of node creation functions with their longform versions and also includes a few abbreviations that do not exist elsewhere in the API.
 
 Supported short forms:
-* pane: A detached :pane node.
-* attach: An attached :pane node.
-* split: A :split node.
-* hsplit: A :split node with :vertical=false.
-* vsplit: A :split node with :vertical=true.
-* borders: A :borders node.
-* margins: A :margins node.
-* tabs: A :tabs node.
-* tab: A :tab inside of a :tabs node.
 * active-tab: A :tab with :active=true inside of a :tabs node.
+* attach: An attached :pane node.
 * bar: A :bar node.
+* borders: A :borders node.
 * color-map: A :color-map node.
+* hsplit: A :split node with :vertical=false.
+* margins: A :margins node.
+* pane: A detached :pane node.
+* split: A :split node.
+* tab: A :tab inside of a :tabs node.
+* tabs: A :tabs node.
+* vsplit: A :split node with :vertical=true.
 
 See [the layouts chapter](/layouts.md#api) for more information.
   ```
