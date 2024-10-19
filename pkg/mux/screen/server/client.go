@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/style"
+	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/sasha-s/go-deadlock"
@@ -17,9 +18,16 @@ type Client struct {
 	*mux.UpdatePublisher
 
 	server     *Server
-	size       mux.Size
 	screen     mux.Screen
 	attachment *util.Lifetime
+
+	// The size of this client's screen. If the size is zero, the client
+	// does not impose its size on the underlying screen. This is useful
+	// for previews.
+	size geom.Vec2
+	// The location on the screen where the underlying screen was last
+	// rendered.
+	lastLocation geom.Vec2
 }
 
 var _ mux.Screen = (*Client)(nil)
@@ -30,7 +38,7 @@ func (c *Client) getState(isUnfiltered bool) *tty.State {
 	c.RLock()
 	screen := c.screen
 	size := c.size
-	defer c.RUnlock()
+	c.RUnlock()
 
 	if screen == nil {
 		return tty.New(size)
@@ -65,8 +73,13 @@ func (c *Client) getState(isUnfiltered bool) *tty.State {
 		}
 	}
 
+	centered := size.Center(stateSize)
+	c.Lock()
+	c.lastLocation = centered
+	c.Unlock()
+
 	tty.Copy(
-		size.Center(stateSize),
+		centered,
 		out,
 		state,
 	)
@@ -104,7 +117,15 @@ func (c *Client) Send(msg mux.Msg) {
 		return
 	}
 
-	screen.Send(msg)
+	c.RLock()
+	lastLocation := c.lastLocation
+	c.RUnlock()
+
+	screen.Send(taro.TranslateMouseMessage(
+		msg,
+		-lastLocation.C,
+		-lastLocation.R,
+	))
 }
 
 func (c *Client) Kill() {
