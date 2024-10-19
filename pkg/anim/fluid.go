@@ -3,7 +3,7 @@ package anim
 import (
 	"time"
 
-	"github.com/cfoust/cy/pkg/fluid"
+	"github.com/cfoust/cy/pkg/anim/fluid"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 )
