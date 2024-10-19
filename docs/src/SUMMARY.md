@@ -56,9 +56,14 @@
 
   - [Nodes](./layouts/nodes.md)
 
-  - [Borders](./layouts/borders.md)
+    - [Bar](./layouts/nodes/bar.md)
+    - [Borders](./layouts/nodes/borders.md)
+    - [Margins](./layouts/nodes/margins.md)
+    - [Pane](./layouts/nodes/pane.md)
+    - [Split](./layouts/nodes/split.md)
+    - [Tabs](./layouts/nodes/tabs.md)
 
-  - [Text styling](./layouts/styling.md)
+  - [Appearance](./layouts/appearance.md)
 
 - [User input](./user-input.md)
 
