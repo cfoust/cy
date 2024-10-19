@@ -150,6 +150,17 @@ func (c *Cy) reloadConfig() error {
 	return c.loadConfig()
 }
 
+// RerenderClients triggers a rerender of all clients.
+func (c *Cy) RerenderClients() {
+	c.RLock()
+	defer c.RUnlock()
+
+	clients := c.clients
+	for _, client := range clients {
+		client.layoutEngine.Notify()
+	}
+}
+
 // Get the first pane that another client is attached to or return nil if there
 // are no other clients.
 func (c *Cy) getFirstClientPane(except *Client) tree.Node {

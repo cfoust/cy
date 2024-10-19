@@ -7,7 +7,8 @@ import (
 )
 
 type ParamModule struct {
-	Tree *tree.Tree
+	Tree   *tree.Tree
+	Server Server
 }
 
 // haha
@@ -89,5 +90,14 @@ func (p *ParamModule) Set(
 		params = node.Params()
 	}
 
-	return params.Set(string(keyword), value)
+	err = params.Set(string(keyword), value)
+	if err != nil {
+		return err
+	}
+
+	// Many params affect rendering; we need to cause a rerender right
+	// away to ensure all client screens remain accurate.
+	// TODO(cfoust): 10/20/24 maybe this should be under the layout engine so it's throttled?
+	p.Server.RerenderClients()
+	return nil
 }

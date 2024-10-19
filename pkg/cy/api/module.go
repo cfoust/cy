@@ -32,6 +32,7 @@ type Server interface {
 	SocketName() string
 	ExecuteJanet(path string) error
 	Log(level zerolog.Level, message string)
+	RerenderClients()
 }
 
 func getClient(context interface{}) (Client, error) {
