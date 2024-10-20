@@ -1,3 +1,19 @@
+/**
+This code was ported from https://play.ertdfgcvb.xyz/#/src/contributed/slime_dish
+
+The original header was as follows:
+@author zspotter
+(IG @zzz_desu, TW @zspotter)
+@title  Slime Dish
+@desc   Low-res physarum slime mold simulation
+
+🔍  Tap and hold to magnify.
+
+With inspiration from:
+- https://sagejenson.com/physarum
+- https://uwe-repository.worktribe.com/output/980579
+- http://www.tech-algorithm.com/articles/nearest-neighbor-image-scaling
+*/
 package slime
 
 import (
