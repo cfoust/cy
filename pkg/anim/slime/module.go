@@ -1,4 +1,5 @@
-/**
+/*
+*
 This code was ported from https://play.ertdfgcvb.xyz/#/src/contributed/slime_dish
 
 The original header was as follows:
