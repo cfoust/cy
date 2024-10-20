@@ -63,15 +63,15 @@ Sleep 1s
 Screenshot {filename}
 """
     elif filename.endswith(".cast"):
+        env = os.environ.copy()
+        env["TERM"] = "xterm-256color"
+        env["EDITOR"] = "/usr/bin/vim"
+
         subprocess.check_call(
             f"./storybook --cast {filename} -s {command}",
             shell=True,
             stdout=subprocess.DEVNULL,
-            env={
-                "TERM": "xterm-256color",
-                "EDITOR": "/usr/bin/vim",
-                "PS1": r" \[\e[0;31m\]▸▸▹\[\e[0m\] \[\e[0;31m\]\[\e[0m\]\[\033[00m\]",
-            },
+            env=env,
             timeout=60,
         )
         return

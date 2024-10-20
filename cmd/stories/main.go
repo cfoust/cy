@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -173,7 +172,7 @@ func main() {
 
 	// The recorder only stores data on Read() calls, so we need to drain
 	// it
-	go func() { _, _ = io.Copy(ioutil.Discard, stream) }()
+	go func() { _, _ = io.Copy(io.Discard, stream) }()
 	stream.Resize(size)
 	<-screen.Ctx().Done()
 
