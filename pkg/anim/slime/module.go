@@ -134,8 +134,8 @@ func randCircle() Vec2 {
 }
 
 type Cursor struct {
-	pressed bool
-	x, y    float64
+	Pressed bool
+	X, Y    float64
 }
 
 type Simulator struct {
@@ -151,7 +151,7 @@ type Simulator struct {
 
 func (s *Simulator) updateView(cursor Cursor) {
 	var targetScale Vec2
-	if cursor.pressed {
+	if cursor.Pressed {
 		// Zoom in for detailed view
 		targetScale = Vec2{Y: 1 / ASPECT, X: 1}
 	} else if float64(s.rows)/ASPECT < float64(s.cols) {
@@ -173,8 +173,8 @@ func (s *Simulator) updateView(cursor Cursor) {
 	s.viewScale.X += 0.1 * (targetScale.X - s.viewScale.X)
 
 	var targetFocus Vec2
-	if cursor.pressed {
-		targetFocus = Vec2{Y: cursor.y / float64(s.rows), X: cursor.x / float64(s.cols)}
+	if cursor.Pressed {
+		targetFocus = Vec2{Y: cursor.Y / float64(s.rows), X: cursor.X / float64(s.cols)}
 	} else {
 		targetFocus = Vec2{Y: 0.5, X: 0.5}
 	}
@@ -278,11 +278,11 @@ func (s *Simulator) Render(out image.Image) {
 	}
 }
 
-func New(rows, cols int, agents []Agent) *Simulator {
+func New(rows, cols int) *Simulator {
 	chem := make([]float64, HEIGHT*WIDTH)
 	wip := make([]float64, HEIGHT*WIDTH)
 
-	agents = make([]Agent, NUM_AGENTS)
+	agents := make([]Agent, NUM_AGENTS)
 	for i := 0; i < NUM_AGENTS; i++ {
 		agents[i] = Agent{
 			Pos: randCircle().

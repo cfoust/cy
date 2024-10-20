@@ -2,7 +2,6 @@ package anim
 
 import (
 	"math"
-	"math/rand"
 	"time"
 
 	"github.com/cfoust/cy/pkg/anim/slime"
@@ -10,6 +9,7 @@ import (
 )
 
 type Slime struct {
+	frame   int
 	last    time.Duration
 	sim     *slime.Simulator
 	start   image.Image
@@ -22,29 +22,7 @@ func (f *Slime) Init(start image.Image) {
 	f.start = start
 
 	size := start.Size()
-
-	var agents []slime.Agent
-	for row := 0; row < size.R; row++ {
-		for col := 0; col < size.C; col++ {
-			if start[row][col].IsEmpty() {
-				continue
-			}
-			agents = append(agents, slime.Agent{
-				Pos: slime.Vec2{
-					X: float64(col),
-					Y: float64(row),
-				},
-				Dir: slime.Vec2{X: 1, Y: 0}.
-					Rot(rand.Float64() * 2 * math.Pi),
-			})
-		}
-	}
-
-	f.sim = slime.New(
-		size.R,
-		size.C,
-		agents,
-	)
+	f.sim = slime.New(size.R, size.C)
 }
 
 func (f *Slime) Update(delta time.Duration) image.Image {
@@ -54,11 +32,19 @@ func (f *Slime) Update(delta time.Duration) image.Image {
 
 	f.last = delta
 
-	f.sim.Step(slime.Cursor{})
-
 	size := f.start.Size()
+	cursor := slime.Cursor{}
+	if math.Sin(float64(f.frame)/50) > 0.6 {
+		cursor.Pressed = true
+		cursor.X = float64(size.C) / 2
+		cursor.Y = float64(size.R) / 2
+	}
+
+	f.sim.Step(cursor)
+
 	f.current = image.New(size)
 	f.sim.Render(f.current)
+	f.frame++
 	return f.current
 }
 
