@@ -9,11 +9,12 @@ import (
 )
 
 type Slime struct {
-	frame   int
-	last    time.Duration
-	sim     *slime.Simulator
-	start   image.Image
-	current image.Image
+	frame     int
+	zoomFrame int
+	last      time.Duration
+	sim       *slime.Simulator
+	start     image.Image
+	current   image.Image
 }
 
 var _ Animation = (*Slime)(nil)
@@ -34,10 +35,24 @@ func (f *Slime) Update(delta time.Duration) image.Image {
 
 	size := f.start.Size()
 	cursor := slime.Cursor{}
-	if math.Sin(float64(f.frame)/50) > 0.6 {
+
+	// This determines how often we zoom
+	zoom := math.Sin(float64(f.frame) / 80)
+	if zoom > 0.3 {
+		if f.zoomFrame == 0 {
+			f.zoomFrame = f.frame
+		}
+
 		cursor.Pressed = true
-		cursor.X = float64(size.C) / 2
-		cursor.Y = float64(size.R) / 2
+
+		// Choose a location to zoom in on
+		zoomX := math.Cos(float64(f.zoomFrame)/180) * float64(size.C/4)
+		zoomY := math.Sin(float64(f.zoomFrame)/180) * float64(size.R/4)
+
+		cursor.X = float64(size.C)/2 + zoomX
+		cursor.Y = float64(size.R)/2 + zoomY
+	} else {
+		f.zoomFrame = 0
 	}
 
 	f.sim.Step(cursor)
