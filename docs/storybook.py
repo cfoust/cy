@@ -72,6 +72,7 @@ Screenshot {filename}
                 "EDITOR": "/usr/bin/vim",
                 "PS1": r" \[\e[0;31m\]▸▸▹\[\e[0m\] \[\e[0;31m\]\[\e[0m\]\[\033[00m\]",
             },
+            timeout=60,
         )
         return
 
