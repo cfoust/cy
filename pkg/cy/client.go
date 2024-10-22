@@ -354,8 +354,30 @@ func (c *Client) findNewPane() error {
 		return c.Attach(clientNode)
 	}
 
+	// If there are no other panes, we have to create one. This defaults
+	// to the working directory the user provided on startup.
+	cwd := c.cy.options.Cwd
+	if cwd == "" {
+		return c.execute(`(shell/attach)`)
+	}
+
+	out, err := c.cy.ExecuteCall(
+		c.Ctx(),
+		nil,
+		janet.CallString(`(yield shell/attach)`),
+	)
+	if err != nil {
+		return err
+	}
+
+	var attach *janet.Function
+	err = out.Yield.Unmarshal(&attach)
+	if err != nil {
+		return err
+	}
+
 	// Otherwise just create a new shell and attach to it
-	return c.execute(`(shell/attach)`)
+	return attach.CallContext(c.Ctx(), c, cwd)
 }
 
 func (c *Client) GetLayout() layout.Layout {
