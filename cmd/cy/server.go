@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/cfoust/cy/pkg/cy"
 	"github.com/cfoust/cy/pkg/geom"
@@ -132,12 +133,18 @@ func (s *Server) HandleWSClient(conn Connection) {
 }
 
 func serve(path string) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
 	cy, err := cy.Start(context.Background(), cy.Options{
 		SocketPath: path,
 		SocketName: CLI.Socket,
 		Config:     cy.FindConfig(),
 		DataDir:    cy.FindDataDir(),
 		Shell:      getShell(),
+		Cwd:        cwd,
 	})
 	if err != nil {
 		return err

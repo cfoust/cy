@@ -43,6 +43,9 @@ type Options struct {
 	SocketPath string
 	// The name of the socket (before calculating the real path.)
 	SocketName string
+	// The current working directory where the first shell will start.
+	// If not set, defaults to $HOME.
+	Cwd string
 }
 
 type historyEvent struct {
