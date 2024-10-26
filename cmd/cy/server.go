@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/cfoust/cy/pkg/clipboard"
 	"github.com/cfoust/cy/pkg/cy"
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
@@ -132,12 +133,18 @@ func (s *Server) HandleWSClient(conn Connection) {
 }
 
 func serve(path string) error {
+	clipboard, err := clipboard.NewSystemClipboard()
+	if err != nil {
+		return err
+	}
+
 	cy, err := cy.Start(context.Background(), cy.Options{
 		SocketPath: path,
 		SocketName: CLI.Socket,
 		Config:     cy.FindConfig(),
 		DataDir:    cy.FindDataDir(),
 		Shell:      getShell(),
+		Clipboard:  clipboard,
 	})
 	if err != nil {
 		return err
