@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/clipboard"
 	"github.com/cfoust/cy/pkg/cmd"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/events"
@@ -43,6 +44,7 @@ type Options struct {
 	SocketPath string
 	// The name of the socket (before calculating the real path.)
 	SocketName string
+	Clipboard  clipboard.Clipboard
 }
 
 type historyEvent struct {
@@ -345,6 +347,11 @@ func (c *Cy) SocketName() string {
 }
 
 func Start(ctx context.Context, options Options) (*Cy, error) {
+	if options.Clipboard == nil {
+		// provide one for testing
+		options.Clipboard = &clipboard.MemoryClipboard{}
+	}
+
 	timeBinds := bind.NewBindScope(nil)
 	copyBinds := bind.NewBindScope(nil)
 	searchBinds := bind.NewBindScope(nil)
