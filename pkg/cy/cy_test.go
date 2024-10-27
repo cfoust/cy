@@ -119,3 +119,36 @@ func TestDefaultShell(t *testing.T) {
 	options := cmd.Options()
 	require.Equal(t, "/bin/zsh", options.Command)
 }
+
+func TestCwd(t *testing.T) {
+	dir := t.TempDir()
+	ctx := context.Background()
+	cy, err := Start(ctx, Options{
+		Shell: "/bin/zsh",
+		Cwd:   dir,
+	})
+	require.NoError(t, err)
+
+	client, err := cy.NewClient(ctx, ClientOptions{
+		Env: map[string]string{
+			"TERM": "xterm-256color",
+		},
+		Size: geom.DEFAULT_SIZE,
+	})
+	require.NoError(t, err)
+
+	node := client.Node()
+	require.NotNil(t, node)
+
+	pane, ok := node.(*T.Pane)
+	require.True(t, ok)
+
+	r, ok := pane.Screen().(*replayable.Replayable)
+	require.True(t, ok)
+
+	cmd, ok := r.Cmd().(*stream.Cmd)
+	require.True(t, ok)
+
+	options := cmd.Options()
+	require.Equal(t, dir, options.Directory)
+}

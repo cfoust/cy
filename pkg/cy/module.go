@@ -44,7 +44,11 @@ type Options struct {
 	SocketPath string
 	// The name of the socket (before calculating the real path.)
 	SocketName string
+  // The Clipboard that will be used by (clipboard/set) and (clipboard/get).
 	Clipboard  clipboard.Clipboard
+	// The current working directory where the first shell will start.
+	// If not set, defaults to $HOME.
+	Cwd string
 }
 
 type historyEvent struct {
