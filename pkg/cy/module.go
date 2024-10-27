@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/clipboard"
 	"github.com/cfoust/cy/pkg/cmd"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/events"
@@ -43,6 +44,8 @@ type Options struct {
 	SocketPath string
 	// The name of the socket (before calculating the real path.)
 	SocketName string
+  // The Clipboard that will be used by (clipboard/set) and (clipboard/get).
+	Clipboard  clipboard.Clipboard
 	// The current working directory where the first shell will start.
 	// If not set, defaults to $HOME.
 	Cwd string
@@ -348,6 +351,11 @@ func (c *Cy) SocketName() string {
 }
 
 func Start(ctx context.Context, options Options) (*Cy, error) {
+	if options.Clipboard == nil {
+		// provide one for testing
+		options.Clipboard = &clipboard.MemoryClipboard{}
+	}
+
 	timeBinds := bind.NewBindScope(nil)
 	copyBinds := bind.NewBindScope(nil)
 	searchBinds := bind.NewBindScope(nil)

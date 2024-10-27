@@ -20,6 +20,9 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 	}
 
 	modules := map[string]interface{}{
+		"clipboard": &api.ClipboardModule{
+			Clipboard: c.options.Clipboard,
+		},
 		"cmd": &api.CmdModule{
 			Server:    c,
 			Lifetime:  util.NewLifetime(c.Ctx()),
