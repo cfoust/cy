@@ -227,7 +227,7 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 		t.moveTo(t.cur.C, t.cur.R+c.maxarg(0, 1))
 	case 'c': // DA - device attributes
 		if c.arg(0, 0) == 0 {
-			// TODO: write vt102 id
+			t.w.Write([]byte("\033[?6c"))
 		}
 	case 'C', 'a': // CUF, HPR - cursor <n> forward
 		t.moveTo(t.cur.C+c.maxarg(0, 1), t.cur.R)
