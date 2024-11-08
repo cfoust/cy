@@ -159,11 +159,11 @@ func (t *ColorMapsModule) Documentation() string {
 	return DOCS_COLORMAPS
 }
 
-//go:embed docs-clipboard.md
-var DOCS_CLIPBOARD string
+//go:embed docs-register.md
+var DOCS_REGISTER string
 
-var _ janet.Documented = (*ClipboardModule)(nil)
+var _ janet.Documented = (*RegisterModule)(nil)
 
-func (c *ClipboardModule) Documentation() string {
-	return DOCS_CLIPBOARD
+func (c *RegisterModule) Documentation() string {
+	return DOCS_REGISTER
 }

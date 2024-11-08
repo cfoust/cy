@@ -44,8 +44,8 @@ type Options struct {
 	SocketPath string
 	// The name of the socket (before calculating the real path.)
 	SocketName string
-  // The Clipboard that will be used by (clipboard/set) and (clipboard/get).
-	Clipboard  clipboard.Clipboard
+	// The Clipboard that will be used by (clipboard/set) and (clipboard/get).
+	Clipboard clipboard.Clipboard
 	// The current working directory where the first shell will start.
 	// If not set, defaults to $HOME.
 	Cwd string
@@ -61,6 +61,7 @@ type Cy struct {
 	util.Lifetime
 	deadlock.RWMutex
 	*janet.VM
+	registers *memoryRegisters
 
 	cmdStore *cmd.Store
 
@@ -323,7 +324,20 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 
 			switch event := nodeEvent.Event.(type) {
 			case replay.CopyEvent:
-				client.buffer = event.Text
+				err := c.registers.Set(
+					event.Register,
+					event.Text,
+				)
+
+				if err == nil {
+					continue
+				}
+
+				c.log.
+					Error().
+					Err(err).Msg(
+					"error copying to clipboard",
+				)
 			case bind.BindEvent:
 				go client.runAction(event)
 			case cmd.CommandEvent:
@@ -364,6 +378,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	t := tree.NewTree(tree.WithParams(defaults.NewChild()))
 	cy := Cy{
 		Lifetime:    util.NewLifetime(ctx),
+		registers:   newMemoryRegisters(options.Clipboard),
 		cmdStore:    cmd.NewStore(),
 		copyBinds:   copyBinds,
 		defaults:    defaults,

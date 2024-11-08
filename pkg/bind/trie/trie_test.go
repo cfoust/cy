@@ -118,3 +118,29 @@ func TestRegex(t *testing.T) {
 	})
 	require.Equal(t, false, matched)
 }
+
+func TestMultipleRegex(t *testing.T) {
+	trie := New[int](nil)
+	trie.Set([]interface{}{
+		re("[abc]"),
+		"t",
+	}, 2)
+	trie.Set([]interface{}{
+		re("[abc]"),
+		"j",
+	}, 3)
+
+	_, re, matched := trie.Get([]string{
+		"a",
+		"t",
+	})
+	require.Equal(t, []string{"a"}, re)
+	require.Equal(t, true, matched)
+
+	_, _, matched = trie.Get([]string{
+		"a",
+		"j",
+	})
+	require.Equal(t, []string{"a"}, re)
+	require.Equal(t, true, matched)
+}

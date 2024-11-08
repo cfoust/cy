@@ -157,6 +157,8 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
+	case CopyEvent:
+		return r.handleCopy(msg.Register)
 	case taro.MouseMsg:
 		switch msg.Button {
 		case taro.MouseWheelUp:
@@ -265,8 +267,6 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 			r.isSelecting = true
 			r.selectStart = r.movement.Cursor()
-		case ActionCopy:
-			return r.handleCopy()
 		case ActionJumpReverse, ActionJumpAgain:
 			if len(r.jumpChar) == 0 {
 				return r, nil
