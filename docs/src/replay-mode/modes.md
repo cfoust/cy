@@ -43,3 +43,15 @@ Copy mode also allows you to swap between the terminal's main and alt screens us
 #### Visual mode
 
 Visual mode is initiated when you press {{bind :copy v}} (by default). It works almost exactly like `vim`'s visual mode does; after you have some selected some text, you can yank it into your buffer with {{bind :copy y}} and paste it elsewhere with {{bind :root ctrl+a P}}.
+
+#### Registers
+
+In `cy`, you can copy text to and paste text from **registers**. This system works almost identically to registers in `vim`. Each register is identified by a string key (e.g. `"a"`) and can store a string value. The bindings described in the section above ({{bind :copy y}} and {{bind :root ctrl+a P}}) copy and paste from the `""` register. The system clipboard (if available) is accessible using a special register, `"+"`.
+
+By default, `cy` lets you copy to and paste from a range of registers that mimic those found in `vim`. In visual mode you can copy text into a register using `" [a-zA-Z0-9+] y`. For example, hitting <kbd>"</kbd> <kbd>a</kbd> <kbd>y</kbd> copies the current selection into register `"a"`. Elsewhere in `cy` you can paste from `"a"` by hitting <kbd>ctrl+a</kbd> <kbd>"</kbd> <kbd>a</kbd> <kbd>p</kbd>.
+
+The state of registers in `cy` is **global, not per-client.** This means that after one client yanks into a register, all connected clients can paste from that register. The contents of registers are lost when the `cy` server exits, however. This may change in the future.
+
+You can access these registers programmatically using the `register/*` family of API functions such as {{api register/get}} and {{api register/set}}.
+
+For convenience, `cy` also provides {{api clipboard/get}} and {{api clipboard/set}} to quickly access the system clipboard from Janet. These functions just read and write from the special `"+"` register.
