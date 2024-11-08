@@ -42,7 +42,8 @@ type frameDoneEvent struct {
 }
 
 type CopyEvent struct {
-	Text string
+	Register string
+	Text     string
 }
 
 type Mode uint8

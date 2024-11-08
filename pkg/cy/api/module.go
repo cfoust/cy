@@ -45,3 +45,9 @@ func getClient(context interface{}) (Client, error) {
 
 	return client, nil
 }
+
+type Registers interface {
+	Set(register string, text string) error
+	Get(register string) (string, error)
+	GetAll() (map[string]string, error)
+}

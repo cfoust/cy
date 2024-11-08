@@ -127,16 +127,31 @@ func (c *CyModule) Trace(user interface{}) error {
 	return nil
 }
 
-func (c *CyModule) Paste(user interface{}) {
+func (c *CyModule) Paste(user interface{}, register string) error {
 	client, ok := user.(*Client)
 	if !ok {
-		return
+		return fmt.Errorf("no user")
 	}
 
-	buffer := client.buffer
-	if len(buffer) == 0 {
-		return
+	if register != "+" {
+		buffer := client.buffer
+		if len(buffer) == 0 {
+			return nil
+		}
+
+		client.binds.Input([]byte(buffer))
+		return nil
 	}
 
-	client.binds.Input([]byte(buffer))
+	// + reads from the system clipboard instead
+	data, err := c.cy.options.Clipboard.Read()
+	if err != nil {
+		return fmt.Errorf(
+			"failed to read system clipboard: %w",
+			err,
+		)
+	}
+
+	client.binds.Input([]byte(data))
+	return nil
 }

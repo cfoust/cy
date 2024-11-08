@@ -15,7 +15,8 @@
                    [prefix "p"] action/open-replay
                    [prefix "r"] action/reload-config
                    [prefix "S"] action/search-borg
-                   [prefix "P"] cy/paste)
+                   [prefix "\"" [:re "[a-zA-Z0-9+]"] "p"] register/insert
+                   [prefix "P"] action/paste)
 
 (key/bind-many-tag :root "panes"
                    [prefix "ctrl+i"] pane/history-forward
@@ -108,7 +109,9 @@
 
 (key/bind-many-tag :copy "general"
                    ["v"] replay/select
-                   ["y"] replay/copy)
+                   ["y"] replay/copy-default
+                   ["\"" "+" "y"] replay/copy-clipboard
+                   ["\"" [:re "[a-zA-Z0-9]"] "y"] replay/copy)
 
 (key/bind-many-tag :copy "motion"
                    ["g" "g"] replay/beginning

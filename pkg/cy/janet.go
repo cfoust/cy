@@ -20,8 +20,8 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 	}
 
 	modules := map[string]interface{}{
-		"clipboard": &api.ClipboardModule{
-			Clipboard: c.options.Clipboard,
+		"register": &api.RegisterModule{
+			Registers: c.registers,
 		},
 		"cmd": &api.CmdModule{
 			Server:    c,
@@ -84,6 +84,8 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 		"style.janet",
 		"colors.janet",
 		"layout.janet",
+		"register.janet",
+		"replay.janet",
 		"binds.janet",
 	}
 
