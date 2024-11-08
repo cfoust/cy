@@ -1,6 +1,8 @@
 package player
 
 import (
+	"context"
+
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -182,4 +184,23 @@ func FromEvents(events []sessions.Event) *Player {
 	}
 
 	return player
+}
+
+// FromEventsContext creates a Player from the given events, but stops if the
+// context is cancelled.
+func FromEventsContext(
+	ctx context.Context,
+	events []sessions.Event,
+) (*Player, error) {
+	player := New()
+
+	for _, event := range events {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+
+		player.Process(event)
+	}
+
+	return player, nil
 }

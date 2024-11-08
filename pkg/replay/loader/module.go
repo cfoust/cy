@@ -51,8 +51,16 @@ func (l *Loader) Init() tea.Cmd {
 			}
 		}
 
+		ctx := l.Lifetime.Ctx()
+
 		events := make([]sessions.Event, 0)
 		for {
+			if ctx.Err() != nil {
+				return loadedEvent{
+					err: ctx.Err(),
+				}
+			}
+
 			event, err := reader.Read()
 			if err == io.EOF || err == io.ErrUnexpectedEOF {
 				break
@@ -65,10 +73,16 @@ func (l *Loader) Init() tea.Cmd {
 			events = append(events, event)
 		}
 
-		ctx := l.Lifetime.Ctx()
+		p, err := player.FromEventsContext(ctx, events)
+		if err != nil {
+			return loadedEvent{
+				err: err,
+			}
+		}
+
 		replay := replay.New(
 			ctx,
-			player.FromEvents(events),
+			p,
 			l.timeBinds,
 			l.copyBinds,
 			l.options...,
