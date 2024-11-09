@@ -12,7 +12,6 @@ import (
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 
-	"github.com/rs/zerolog/log"
 	"github.com/sevlyar/go-daemon"
 )
 
@@ -165,12 +164,14 @@ func serve(path string) error {
 func startServer(path string) error {
 	cntxt := &daemon.Context{
 		LogFileName: fmt.Sprintf("%s.log", path),
-		PidFileName: fmt.Sprintf("%s.pid", path),
 	}
 
 	_, err := cntxt.Reborn()
 	if err != nil {
-		log.Panic().Err(err).Msg("failed to daemonize")
+		return fmt.Errorf(
+			"failed to daemonize: %s",
+			err,
+		)
 	}
 
 	return nil
