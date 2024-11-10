@@ -30,10 +30,11 @@ func makeBuffer(size int) []emu.Glyph {
 }
 
 type Reform struct {
-	in       image.Image
-	out      image.Image
-	duration time.Duration
-	words    []word
+	in          image.Image
+	out         image.Image
+	duration    time.Duration
+	words       []word
+	lastReverse bool
 }
 
 var _ Animation = (*Reform)(nil)
@@ -94,8 +95,22 @@ func getRandomCharacter(isXOnly bool) rune {
 
 func (r *Reform) Update(delta time.Duration) image.Image {
 	cycle := (delta / r.duration)
-	reverse := (cycle % 2) == 0
+	reverse := (cycle % 2) == 1
+
 	randomCharChance := 0.8
+	if reverse {
+		randomCharChance = 0.1
+	}
+
+	if reverse != r.lastReverse {
+		for _, w := range r.words {
+			for col := 0; col < w.col1-w.col0; col++ {
+				w.buffer[col].Char = ' '
+			}
+		}
+	}
+
+	r.lastReverse = reverse
 
 	// Pause at the end of each cycle
 	pauseFactor := 0.2
@@ -115,7 +130,12 @@ func (r *Reform) Update(delta time.Duration) image.Image {
 
 	for _, w := range r.words {
 		length := w.col1 - w.col0
-		charsToShow := int(float64(length) * math.Abs(easedProgress))
+		wordProgress := float64(length) * math.Abs(easedProgress)
+		charsToShow := int(math.Floor(wordProgress))
+		if reverse {
+			charsToShow = int(math.Floor(wordProgress))
+		}
+
 		randomReplaceRange := int(2 * (0.5 - math.Abs(easedProgress-0.5)) * float64(length))
 
 		// Update the temporary text with new characters
@@ -133,8 +153,8 @@ func (r *Reform) Update(delta time.Duration) image.Image {
 		}
 
 		if reverse {
-			numRandom := geom.Max(0, charsToShow-1-randomReplaceRange)
-			numReal := geom.Max(0, charsToShow-1)
+			numRandom := geom.Max(0, charsToShow-randomReplaceRange)
+			numReal := geom.Max(0, charsToShow)
 
 			// In reverse the order goes: empty, random, real
 			for col := 0; col < length; col++ {
