@@ -22,6 +22,8 @@ const (
 	PANEL_WIDTH   = 32
 )
 
+var TRACK_TITLE = []rune("Episode 1337: cy, the time traveling terminal multiplexer • ")
+
 type word struct {
 	row    int
 	col0   int
@@ -37,9 +39,9 @@ func makeBuffer(size int) []emu.Glyph {
 	return buffer
 }
 
-// Reform was inspired by the loading animation on
+// MFP was inspired by the loading animation on
 // https://musicforprogramming.net/.
-type Reform struct {
+type MFP struct {
 	in, bg, out image.Image
 	// Pre-rendered formatted text (to avoid rendering on every frame)
 	header, footer image.Image
@@ -50,9 +52,9 @@ type Reform struct {
 	lastReverse    bool
 }
 
-var _ Animation = (*Reform)(nil)
+var _ Animation = (*MFP)(nil)
 
-func (r *Reform) Init(start image.Image) {
+func (r *MFP) Init(start image.Image) {
 	r.render = taro.NewRenderer()
 	r.in = start.Clone()
 	r.bg = start
@@ -240,7 +242,7 @@ func getRandomCharacter(isXOnly bool) rune {
 	return rune(specialChars[rand.Intn(len(specialChars))])
 }
 
-func (r *Reform) drawBackground(delta time.Duration) {
+func (r *MFP) drawBackground(delta time.Duration) {
 	cycle := (delta / r.duration)
 	reverse := (cycle % 2) == 1
 
@@ -260,7 +262,7 @@ func (r *Reform) drawBackground(delta time.Duration) {
 	r.lastReverse = reverse
 
 	// Pause at the end of each cycle
-	pauseFactor := 0.2
+	pauseFactor := 0.8
 	pauseLength := time.Duration(float64(r.duration) * pauseFactor)
 	progress := float64(float64(delta-(cycle*r.duration))) / float64(r.duration-pauseLength)
 
@@ -357,7 +359,7 @@ var (
 	VISUALIZER_3 = []rune("_.-•:*^º'                       ")
 )
 
-func (r *Reform) drawVisualizer(delta time.Duration) {
+func (r *MFP) drawVisualizer(delta time.Duration) {
 	time := delta.Seconds()
 	var offset int
 	var factor float64
@@ -372,12 +374,18 @@ func (r *Reform) drawVisualizer(delta time.Duration) {
 	}
 }
 
-func (r *Reform) Update(delta time.Duration) image.Image {
+func (r *MFP) Update(delta time.Duration) image.Image {
 	r.drawBackground(delta)
 	image.Copy(geom.Vec2{}, r.out, r.bg)
 
 	colOffset := 1
 	rowOffset := 1
+
+	for row := 0; row < r.out.Size().R; row++ {
+		for col := 0; col < geom.Min(r.out.Size().C-1, PANEL_WIDTH+colOffset); col++ {
+			r.out[row][col].Char = ' '
+		}
+	}
 
 	image.Copy(geom.Vec2{
 		R: rowOffset,
@@ -391,7 +399,15 @@ func (r *Reform) Update(delta time.Duration) image.Image {
 		C: colOffset,
 	}, r.out, r.visualizer)
 
-	footerRow := visualRow + VISUAL_HEIGHT
+	titleIndex := int(delta.Milliseconds() / 500)
+	for col := 0; col < PANEL_WIDTH; col++ {
+		cellRow := visualRow + VISUAL_HEIGHT
+		cellCol := col + colOffset
+		r.out[cellRow][cellCol].Char = TRACK_TITLE[(col+titleIndex)%len(TRACK_TITLE)]
+		r.out[cellRow][cellCol].FG = emu.ANSIColor(8)
+	}
+
+	footerRow := visualRow + VISUAL_HEIGHT + 1
 	image.Copy(geom.Vec2{
 		R: footerRow,
 		C: colOffset,
@@ -409,9 +425,9 @@ func (r *Reform) Update(delta time.Duration) image.Image {
 }
 
 func init() {
-	registerAnimation("reform", func() Animation {
-		return &Reform{
-			duration: time.Second + time.Millisecond*500,
+	registerAnimation("musicforprogramming", func() Animation {
+		return &MFP{
+			duration: 5 * time.Second,
 		}
 	})
 }
