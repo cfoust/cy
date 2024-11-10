@@ -25,18 +25,29 @@ type Renderer struct {
 	term emu.Terminal
 }
 
-// RenderAt renders the given string at (row, col) in `state`.
-func (r *Renderer) RenderAt(state image.Image, row, col int, value string) {
+// RenderAtSize renders the given string at (row, col) in `state` with a
+// fixed terminal size.
+func (r *Renderer) RenderAtSize(
+	state image.Image,
+	row, col int,
+	rows, cols int,
+	value string,
+) {
 	term := emu.New()
 	term.Write([]byte(emu.LineFeedMode)) // set CRLF mode
-	newCols := lipgloss.Width(value)
-	newRows := lipgloss.Height(value)
-	term.Resize(geom.Size{C: newCols, R: newRows})
+	term.Resize(geom.Size{C: cols, R: rows})
 	r.info.Fprintf(term, terminfo.ClearScreen)
 	r.info.Fprintf(term, terminfo.CursorHome)
 	term.Write([]byte(value))
 
 	image.Compose(geom.Vec2{R: row, C: col}, state, term.Screen())
+}
+
+// RenderAt renders the given string at (row, col) in `state`.
+func (r *Renderer) RenderAt(state image.Image, row, col int, value string) {
+	newCols := lipgloss.Width(value)
+	newRows := lipgloss.Height(value)
+	r.RenderAtSize(state, row, col, newRows, newCols, value)
 }
 
 func (r *Renderer) RenderImage(value string) image.Image {

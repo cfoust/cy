@@ -8,10 +8,16 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
+	"github.com/cfoust/cy/pkg/taro"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 const (
-	REFORM_CHARS = "—~±§|[].+$^@*()•x%!?#"
+	REFORM_CHARS  = "—~±§|[].+$^@*()•x%!?#"
+	HEADER_HEIGHT = 6
+	FOOTER_HEIGHT = 12
+	PANEL_WIDTH   = 32
 )
 
 type word struct {
@@ -29,21 +35,27 @@ func makeBuffer(size int) []emu.Glyph {
 	return buffer
 }
 
-// Reform was inspired by the loading animation on https://musicforprogramming.net/.
+// Reform was inspired by the loading animation on
+// https://musicforprogramming.net/.
 type Reform struct {
-	in          image.Image
-	out         image.Image
-	duration    time.Duration
-	words       []word
-	lastReverse bool
+	in, bg, out image.Image
+	// Pre-rendered formatted text (to avoid rendering on every frame)
+	header, footer image.Image
+	duration       time.Duration
+	words          []word
+	render         *taro.Renderer
+	lastReverse    bool
 }
 
 var _ Animation = (*Reform)(nil)
 
 func (r *Reform) Init(start image.Image) {
+	r.render = taro.NewRenderer()
 	r.in = start.Clone()
-	r.out = start
+	r.bg = start
+	r.out = image.New(start.Size())
 
+	// Find all of the sequences of non-blank characters
 	for row := 0; row < start.Size().R; row++ {
 		var col0 int = -1
 		var first emu.Glyph
@@ -83,6 +95,124 @@ func (r *Reform) Init(start image.Image) {
 			buffer: makeBuffer(start.Size().C - col0),
 		})
 	}
+
+	re := r.render
+
+	// Pre-render the header and footer
+	r.header = image.New(geom.Vec2{
+		R: HEADER_HEIGHT,
+		C: PANEL_WIDTH,
+	})
+
+	re.RenderAt(
+		r.header,
+		0, 0,
+		re.NewStyle().
+			Foreground(lipgloss.Color("8")).
+			Render("// musicforprogramming.net\n"),
+	)
+
+	headerText := "" +
+		re.NewStyle().
+			Foreground(lipgloss.Color("4")).
+			Render("function") +
+		" " +
+		re.NewStyle().
+			Foreground(lipgloss.Color("2")).
+			Render("musicFor") +
+		"(" +
+		re.NewStyle().
+			Foreground(lipgloss.Color("3")).
+			Italic(true).
+			Render("task") +
+		" = " +
+		re.NewStyle().
+			Foreground(lipgloss.Color("3")).
+			Render("'programming'") +
+		") { " +
+		re.NewStyle().
+			Foreground(lipgloss.Color("5")).
+			Render("return") +
+		" " +
+		re.NewStyle().
+			Foreground(lipgloss.Color("13")).
+			Render("`A series of mixes intended for listening while ") +
+		re.NewStyle().
+			Foreground(lipgloss.Color("3")).
+			Render("${") +
+		re.NewStyle().
+			Foreground(lipgloss.Color("15")).
+			Render("task") +
+		re.NewStyle().
+			Foreground(lipgloss.Color("3")).
+			Render("} ") +
+		re.NewStyle().
+			Foreground(lipgloss.Color("13")).
+			Render("to focus the brain and inspire the mind.`") +
+		"; }"
+
+	re.RenderAtSize(
+		r.header,
+		1, 0,
+		HEADER_HEIGHT, PANEL_WIDTH,
+		headerText,
+	)
+
+	r.footer = image.New(geom.Vec2{
+		R: FOOTER_HEIGHT,
+		C: PANEL_WIDTH,
+	})
+
+	footerText := "" +
+		re.NewStyle().
+			Foreground(lipgloss.Color("2")).
+			Render("[prev] [-30] [stop] [+30] [next]") +
+		"\n" +
+		re.NewStyle().
+			Foreground(lipgloss.Color("8")).
+			Render("00:00:00 ") +
+		re.NewStyle().
+			Foreground(lipgloss.Color("13")).
+			Render("[v+] ") +
+		re.NewStyle().
+			Foreground(lipgloss.Color("8")).
+			Render("100% ") +
+		re.NewStyle().
+			Foreground(lipgloss.Color("13")).
+			Render("[v-] [random]") +
+		"\n" +
+		"\n" +
+		re.NewStyle().
+			Foreground(lipgloss.Color("4")).
+			Render("[About] [Credits] [RSS]") +
+		"\n" +
+		re.NewStyle().
+			Foreground(lipgloss.Color("9")).
+			Render("[Patreon] [YouTube]") +
+		"\n" +
+		re.NewStyle().
+			Foreground(lipgloss.Color("5")).
+			Render("[folder.jpg] [Enterprise]") +
+		"\n" +
+		re.NewStyle().
+			Foreground(lipgloss.Color("13")).
+			Render("[Invert] [Fullscreen]") +
+		"\n" +
+		"\n" +
+		re.NewStyle().
+			Foreground(lipgloss.Color("8")).
+			Render(`// 72 episodes
+// 1254 tracks
+// 103 hours
+// 57 minutes
+// 11 seconds`)
+
+	re.RenderAtSize(
+		r.footer,
+		0, 0,
+		FOOTER_HEIGHT, PANEL_WIDTH,
+		footerText,
+	)
 }
 
 // getRandomCharacter returns a random character from a predefined set.
@@ -94,7 +224,7 @@ func getRandomCharacter(isXOnly bool) rune {
 	return rune(specialChars[rand.Intn(len(specialChars))])
 }
 
-func (r *Reform) Update(delta time.Duration) image.Image {
+func (r *Reform) drawBackground(delta time.Duration) image.Image {
 	cycle := (delta / r.duration)
 	reverse := (cycle % 2) == 1
 
@@ -160,16 +290,16 @@ func (r *Reform) Update(delta time.Duration) image.Image {
 			// In reverse the order goes: empty, random, real
 			for col := 0; col < length; col++ {
 				if col < numRandom {
-					r.out[w.row][w.col0+col].Char = ' '
+					r.bg[w.row][w.col0+col].Char = ' '
 					continue
 				}
 
 				if col < numReal {
-					r.out[w.row][w.col0+col].Char = w.buffer[col].Char
+					r.bg[w.row][w.col0+col].Char = w.buffer[col].Char
 					continue
 				}
 
-				r.out[w.row][w.col0+col].Char = r.in[w.row][w.col0+col].Char
+				r.bg[w.row][w.col0+col].Char = r.in[w.row][w.col0+col].Char
 			}
 			continue
 		}
@@ -179,18 +309,35 @@ func (r *Reform) Update(delta time.Duration) image.Image {
 		// Otherwise the order goes: real, random, empty
 		for col := 0; col < length; col++ {
 			if col < charsToShow {
-				r.out[w.row][w.col0+col].Char = r.in[w.row][w.col0+col].Char
+				r.bg[w.row][w.col0+col].Char = r.in[w.row][w.col0+col].Char
 				continue
 			}
 
 			if col < numRandom {
-				r.out[w.row][w.col0+col].Char = w.buffer[col].Char
+				r.bg[w.row][w.col0+col].Char = w.buffer[col].Char
 				continue
 			}
 
-			r.out[w.row][w.col0+col].Char = ' '
+			r.bg[w.row][w.col0+col].Char = ' '
 		}
 	}
+
+	image.Copy(geom.Vec2{}, r.out, r.bg)
+	return r.bg
+}
+
+func (r *Reform) Update(delta time.Duration) image.Image {
+	r.drawBackground(delta)
+
+	image.Copy(geom.Vec2{
+		R: 1,
+		C: 1,
+	}, r.out, r.header)
+
+	image.Copy(geom.Vec2{
+		R: 1 + HEADER_HEIGHT,
+		C: 1,
+	}, r.out, r.footer)
 
 	return r.out
 }
