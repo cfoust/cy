@@ -3,7 +3,6 @@ package emu
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"github.com/cfoust/cy/pkg/geom"
 
@@ -97,6 +96,11 @@ func (g Glyph) Width() int {
 
 func (g Glyph) Equal(other Glyph) bool {
 	return g.Char == other.Char && g.Mode == other.Mode && g.FG == other.FG && g.BG == other.BG
+}
+
+// SameAttrs reports whether the two glyphs have the same visual attributes.
+func (g Glyph) SameAttrs(other Glyph) bool {
+	return g.Mode == other.Mode && g.FG == other.FG && g.BG == other.BG
 }
 
 func EmptyGlyph() Glyph {
@@ -355,7 +359,7 @@ var WithoutHistory TerminalOption = func(info *TerminalInfo) {
 // New returns a new virtual terminal emulator.
 func New(opts ...TerminalOption) Terminal {
 	info := TerminalInfo{
-		w:    ioutil.Discard,
+		w:    io.Discard,
 		cols: geom.DEFAULT_SIZE.C,
 		rows: geom.DEFAULT_SIZE.R,
 	}
