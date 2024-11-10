@@ -29,6 +29,7 @@ func makeBuffer(size int) []emu.Glyph {
 	return buffer
 }
 
+// Reform was inspired by the loading animation on https://musicforprogramming.net/.
 type Reform struct {
 	in          image.Image
 	out         image.Image
@@ -195,7 +196,7 @@ func (r *Reform) Update(delta time.Duration) image.Image {
 }
 
 func init() {
-	registerAnimation("mfp-reform", func() Animation {
+	registerAnimation("reform", func() Animation {
 		return &Reform{
 			duration: time.Second + time.Millisecond*500,
 		}
