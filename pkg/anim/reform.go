@@ -1,6 +1,7 @@
 package anim
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"time"
@@ -16,6 +17,7 @@ import (
 const (
 	REFORM_CHARS  = "—~±§|[].+$^@*()•x%!?#"
 	HEADER_HEIGHT = 6
+	VISUAL_HEIGHT = 4
 	FOOTER_HEIGHT = 12
 	PANEL_WIDTH   = 32
 )
@@ -41,6 +43,7 @@ type Reform struct {
 	in, bg, out image.Image
 	// Pre-rendered formatted text (to avoid rendering on every frame)
 	header, footer image.Image
+	visualizer     image.Image
 	duration       time.Duration
 	words          []word
 	render         *taro.Renderer
@@ -213,6 +216,19 @@ func (r *Reform) Init(start image.Image) {
 		FOOTER_HEIGHT, PANEL_WIDTH,
 		footerText,
 	)
+
+	// Initialize the visualizer
+	r.visualizer = image.New(geom.Vec2{
+		R: VISUAL_HEIGHT,
+		C: PANEL_WIDTH,
+	})
+
+	for col := 0; col < PANEL_WIDTH; col++ {
+		r.visualizer[0][col].FG = emu.ANSIColor(5)
+		r.visualizer[1][col].FG = emu.ANSIColor(9)
+		r.visualizer[2][col].FG = emu.ANSIColor(11)
+		r.visualizer[3][col].FG = emu.ANSIColor(2)
+	}
 }
 
 // getRandomCharacter returns a random character from a predefined set.
@@ -224,7 +240,7 @@ func getRandomCharacter(isXOnly bool) rune {
 	return rune(specialChars[rand.Intn(len(specialChars))])
 }
 
-func (r *Reform) drawBackground(delta time.Duration) image.Image {
+func (r *Reform) drawBackground(delta time.Duration) {
 	cycle := (delta / r.duration)
 	reverse := (cycle % 2) == 1
 
@@ -321,23 +337,73 @@ func (r *Reform) drawBackground(delta time.Duration) image.Image {
 			r.bg[w.row][w.col0+col].Char = ' '
 		}
 	}
+}
 
-	image.Copy(geom.Vec2{}, r.out, r.bg)
-	return r.bg
+func formatDuration(duration time.Duration) string {
+	seconds := int(duration.Seconds())
+	hours := seconds / 3600
+	minutes := (seconds % 3600) / 60
+	seconds = seconds % 60
+	return fmt.Sprintf(
+		"%02d:%02d:%02d",
+		hours, minutes, seconds,
+	)
+}
+
+var (
+	VISUALIZER_0 = []rune("                       _.-•:*^º'")
+	VISUALIZER_1 = []rune("               _.-•:*^º'        ")
+	VISUALIZER_2 = []rune("       _.-•:*^º'                ")
+	VISUALIZER_3 = []rune("_.-•:*^º'                       ")
+)
+
+func (r *Reform) drawVisualizer(delta time.Duration) {
+	time := delta.Seconds()
+	var offset int
+	var factor float64
+	for col := 0; col < PANEL_WIDTH; col++ {
+		factor = (math.Sin(time*float64(col+1)*0.1) + 1) / 2
+		offset = int(factor * 32)
+		offset = geom.Clamp(offset, 0, 32)
+		r.visualizer[0][col].Char = VISUALIZER_0[offset%len(VISUALIZER_0)]
+		r.visualizer[1][col].Char = VISUALIZER_1[offset%len(VISUALIZER_1)]
+		r.visualizer[2][col].Char = VISUALIZER_2[offset%len(VISUALIZER_2)]
+		r.visualizer[3][col].Char = VISUALIZER_3[offset%len(VISUALIZER_3)]
+	}
 }
 
 func (r *Reform) Update(delta time.Duration) image.Image {
 	r.drawBackground(delta)
+	image.Copy(geom.Vec2{}, r.out, r.bg)
+
+	colOffset := 1
+	rowOffset := 1
 
 	image.Copy(geom.Vec2{
-		R: 1,
-		C: 1,
+		R: rowOffset,
+		C: colOffset,
 	}, r.out, r.header)
 
+	visualRow := HEADER_HEIGHT + rowOffset
+	r.drawVisualizer(delta)
 	image.Copy(geom.Vec2{
-		R: 1 + HEADER_HEIGHT,
-		C: 1,
+		R: visualRow,
+		C: colOffset,
+	}, r.out, r.visualizer)
+
+	footerRow := visualRow + VISUAL_HEIGHT
+	image.Copy(geom.Vec2{
+		R: footerRow,
+		C: colOffset,
 	}, r.out, r.footer)
+
+	r.render.RenderAt(
+		r.out,
+		footerRow, colOffset,
+		r.render.NewStyle().
+			Foreground(lipgloss.Color("8")).
+			Render(formatDuration(delta)),
+	)
 
 	return r.out
 }
