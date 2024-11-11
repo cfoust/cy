@@ -1,9 +1,10 @@
-package anim
+package cos
 
 import (
 	"math"
 	"time"
 
+	"github.com/cfoust/cy/pkg/anim/meta"
 	"github.com/cfoust/cy/pkg/geom/image"
 )
 
@@ -12,7 +13,7 @@ type Cos struct {
 	out image.Image
 }
 
-var _ Animation = (*Cos)(nil)
+var _ meta.Animation = (*Cos)(nil)
 
 func (cos *Cos) Init(start image.Image) {
 	cos.in = start.Clone()
@@ -37,7 +38,4 @@ func (cos *Cos) Update(delta time.Duration) image.Image {
 }
 
 func init() {
-	registerAnimation("cos", func() Animation {
-		return &Cos{}
-	})
 }

@@ -1,21 +1,21 @@
-package anim
+package fluid
 
 import (
 	"time"
 
-	"github.com/cfoust/cy/pkg/anim/fluid"
+	"github.com/cfoust/cy/pkg/anim/meta"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 )
 
 type Fluid struct {
 	last    time.Duration
-	sim     *fluid.Simulator
+	sim     *Simulator
 	start   image.Image
 	current image.Image
 }
 
-var _ Animation = (*Fluid)(nil)
+var _ meta.Animation = (*Fluid)(nil)
 
 const (
 	POSITION_FACTOR = 10
@@ -26,13 +26,13 @@ func (f *Fluid) Init(start image.Image) {
 
 	size := start.Size()
 
-	var particles []fluid.Particle
+	var particles []Particle
 	for row := 0; row < size.R; row++ {
 		for col := 0; col < size.C; col++ {
 			if start[row][col].IsEmpty() {
 				continue
 			}
-			particles = append(particles, fluid.NewParticle(
+			particles = append(particles, NewParticle(
 				float64(col)*POSITION_FACTOR,
 				float64(row)*POSITION_FACTOR,
 				0,
@@ -41,7 +41,7 @@ func (f *Fluid) Init(start image.Image) {
 		}
 	}
 
-	f.sim = fluid.New(
+	f.sim = New(
 		float64(size.C)*POSITION_FACTOR,
 		float64(size.R)*POSITION_FACTOR,
 		particles,
@@ -66,7 +66,7 @@ func (f *Fluid) Update(delta time.Duration) image.Image {
 	i := f.current
 	particles := f.sim.Particles()
 
-	var particle fluid.Particle
+	var particle Particle
 	var index, destRow, destCol int
 	for row := 0; row < size.R; row++ {
 		for col := 0; col < size.C; col++ {
@@ -95,10 +95,4 @@ func (f *Fluid) Update(delta time.Duration) image.Image {
 	}
 
 	return i
-}
-
-func init() {
-	registerAnimation("fluid", func() Animation {
-		return &Fluid{}
-	})
 }

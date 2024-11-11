@@ -1,8 +1,9 @@
-package anim
+package conway
 
 import (
 	"time"
 
+	"github.com/cfoust/cy/pkg/anim/meta"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/image"
 )
@@ -12,7 +13,7 @@ type Conway struct {
 	image image.Image
 }
 
-var _ Animation = (*Conway)(nil)
+var _ meta.Animation = (*Conway)(nil)
 
 func (c *Conway) Init(start image.Image) {
 	c.image = start.Clone()
@@ -93,10 +94,4 @@ func (c *Conway) Update(delta time.Duration) image.Image {
 
 	c.image = next
 	return c.image
-}
-
-func init() {
-	registerAnimation("conway", func() Animation {
-		return &Conway{}
-	})
 }

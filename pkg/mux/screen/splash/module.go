@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/anim"
+	"github.com/cfoust/cy/pkg/anim/midjo"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
@@ -106,7 +107,12 @@ func New(ctx context.Context, size geom.Size, shouldAnimate bool) *taro.Program 
 	var bg mux.Screen
 	initial := generateBackground(render, size.Scalar(2))
 	if shouldAnimate {
-		bg = anim.NewAnimator(lifetime.Ctx(), &anim.Midjo{}, initial, 23)
+		bg = anim.NewAnimator(
+			lifetime.Ctx(),
+			&midjo.Midjo{},
+			initial,
+			23,
+		)
 	} else {
 		bg = frames.NewFramer(
 			ctx,

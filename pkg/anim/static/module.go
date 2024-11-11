@@ -1,10 +1,11 @@
-package anim
+package static
 
 import (
 	"math/rand"
 	"time"
 	"unicode/utf8"
 
+	"github.com/cfoust/cy/pkg/anim/meta"
 	"github.com/cfoust/cy/pkg/geom/image"
 )
 
@@ -12,7 +13,7 @@ type Static struct {
 	in image.Image
 }
 
-var _ Animation = (*Static)(nil)
+var _ meta.Animation = (*Static)(nil)
 
 var BRAILLE = func() (runes []rune) {
 	bytes := []byte{226, 161, 0}

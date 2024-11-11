@@ -1,10 +1,15 @@
-package anim
+package collapse
 
 import (
 	"time"
 
+	"github.com/cfoust/cy/pkg/anim/meta"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/image"
+)
+
+const (
+	TICKS_PER_SECOND = 10
 )
 
 type Collapse struct {
@@ -12,7 +17,7 @@ type Collapse struct {
 	current image.Image
 }
 
-var _ Animation = (*Collapse)(nil)
+var _ meta.Animation = (*Collapse)(nil)
 
 func (c *Collapse) Init(start image.Image) {
 	c.current = start
@@ -44,10 +49,4 @@ func (c *Collapse) Update(delta time.Duration) image.Image {
 	}
 
 	return c.current
-}
-
-func init() {
-	registerAnimation("collapse", func() Animation {
-		return &Collapse{}
-	})
 }

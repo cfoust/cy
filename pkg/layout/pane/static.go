@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/anim"
+	"github.com/cfoust/cy/pkg/anim/static"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
@@ -46,7 +47,7 @@ func (s *Static) resetScreen(size geom.Vec2) taro.Cmd {
 	if s.shouldAnimate {
 		bg = anim.NewAnimator(
 			s.Ctx(),
-			&anim.Static{},
+			&static.Static{},
 			initial,
 			1,
 		)

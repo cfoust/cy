@@ -1,4 +1,4 @@
-package anim
+package musicforprogramming
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/cfoust/cy/pkg/anim/meta"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
@@ -52,7 +53,7 @@ type MFP struct {
 	lastReverse    bool
 }
 
-var _ Animation = (*MFP)(nil)
+var _ meta.Animation = (*MFP)(nil)
 
 func (r *MFP) Init(start image.Image) {
 	r.render = taro.NewRenderer()
@@ -424,10 +425,8 @@ func (r *MFP) Update(delta time.Duration) image.Image {
 	return r.out
 }
 
-func init() {
-	registerAnimation("musicforprogramming", func() Animation {
-		return &MFP{
-			duration: 5 * time.Second,
-		}
-	})
+func New() *MFP {
+	return &MFP{
+		duration: 5 * time.Second,
+	}
 }

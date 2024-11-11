@@ -1,10 +1,10 @@
-package anim
+package slime
 
 import (
 	"math"
 	"time"
 
-	"github.com/cfoust/cy/pkg/anim/slime"
+	"github.com/cfoust/cy/pkg/anim/meta"
 	"github.com/cfoust/cy/pkg/geom/image"
 )
 
@@ -12,18 +12,18 @@ type Slime struct {
 	frame     int
 	zoomFrame int
 	last      time.Duration
-	sim       *slime.Simulator
+	sim       *Simulator
 	start     image.Image
 	current   image.Image
 }
 
-var _ Animation = (*Slime)(nil)
+var _ meta.Animation = (*Slime)(nil)
 
 func (f *Slime) Init(start image.Image) {
 	f.start = start
 
 	size := start.Size()
-	f.sim = slime.New(size.R, size.C)
+	f.sim = New(size.R, size.C)
 }
 
 func (f *Slime) Update(delta time.Duration) image.Image {
@@ -34,7 +34,7 @@ func (f *Slime) Update(delta time.Duration) image.Image {
 	f.last = delta
 
 	size := f.start.Size()
-	cursor := slime.Cursor{}
+	cursor := Cursor{}
 
 	// This determines how often we zoom
 	zoom := math.Sin(float64(f.frame) / 80)
@@ -61,10 +61,4 @@ func (f *Slime) Update(delta time.Duration) image.Image {
 	f.sim.Render(f.current)
 	f.frame++
 	return f.current
-}
-
-func init() {
-	registerAnimation("slime", func() Animation {
-		return &Slime{}
-	})
 }

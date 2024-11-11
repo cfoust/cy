@@ -1,9 +1,10 @@
-package anim
+package midjo
 
 import (
 	"math"
 	"time"
 
+	"github.com/cfoust/cy/pkg/anim/meta"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/image"
 )
@@ -13,7 +14,7 @@ type Midjo struct {
 	out image.Image
 }
 
-var _ Animation = (*Midjo)(nil)
+var _ meta.Animation = (*Midjo)(nil)
 
 func (m *Midjo) Init(start image.Image) {
 	m.in = start.Clone()
@@ -43,10 +44,4 @@ func (mid *Midjo) Update(delta time.Duration) image.Image {
 		}
 	}
 	return mid.out
-}
-
-func init() {
-	registerAnimation("midjo", func() Animation {
-		return &Midjo{}
-	})
 }

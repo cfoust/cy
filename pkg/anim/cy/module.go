@@ -1,9 +1,10 @@
-package anim
+package cy
 
 import (
 	"time"
 	"unicode"
 
+	"github.com/cfoust/cy/pkg/anim/meta"
 	"github.com/cfoust/cy/pkg/geom/image"
 )
 
@@ -11,7 +12,7 @@ type Cyform struct {
 	start image.Image
 }
 
-var _ Animation = (*Cyform)(nil)
+var _ meta.Animation = (*Cyform)(nil)
 
 func (c *Cyform) Init(start image.Image) {
 	c.start = start
@@ -50,10 +51,4 @@ func (c *Cyform) Update(delta time.Duration) image.Image {
 	}
 
 	return c.start
-}
-
-func init() {
-	registerAnimation("cy", func() Animation {
-		return &Cyform{}
-	})
 }

@@ -1,12 +1,10 @@
-package anim
+package meta
 
 import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/geom/image"
 )
-
-const DEFAULT_FPS = 30
 
 type Animation interface {
 	Init(image.Image)
@@ -15,8 +13,3 @@ type Animation interface {
 
 type Creator func() Animation
 
-var Animations = map[string]Creator{}
-
-func registerAnimation(name string, animation Creator) {
-	Animations[name] = animation
-}
