@@ -376,14 +376,16 @@ func (r *MFP) drawVisualizer(delta time.Duration) {
 }
 
 func (r *MFP) Update(delta time.Duration) image.Image {
+	size := r.out.Size()
+
 	r.drawBackground(delta)
 	image.Copy(geom.Vec2{}, r.out, r.bg)
 
 	colOffset := 1
 	rowOffset := 1
 
-	for row := 0; row < r.out.Size().R; row++ {
-		for col := 0; col < geom.Min(r.out.Size().C-1, PANEL_WIDTH+colOffset); col++ {
+	for row := 0; row < size.R; row++ {
+		for col := 0; col < geom.Min(size.C-1, PANEL_WIDTH+colOffset); col++ {
 			r.out[row][col].Char = ' '
 		}
 	}
@@ -404,6 +406,11 @@ func (r *MFP) Update(delta time.Duration) image.Image {
 	for col := 0; col < PANEL_WIDTH; col++ {
 		cellRow := visualRow + VISUAL_HEIGHT
 		cellCol := col + colOffset
+
+		if cellRow >= size.R || cellCol >= size.C {
+			continue
+		}
+
 		r.out[cellRow][cellCol].Char = TRACK_TITLE[(col+titleIndex)%len(TRACK_TITLE)]
 		r.out[cellRow][cellCol].FG = emu.ANSIColor(8)
 	}
