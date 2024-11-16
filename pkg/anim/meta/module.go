@@ -12,4 +12,3 @@ type Animation interface {
 }
 
 type Creator func() Animation
-
