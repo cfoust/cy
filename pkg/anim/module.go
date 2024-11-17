@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/anim/meta"
 	"github.com/cfoust/cy/pkg/anim/midjo"
 	"github.com/cfoust/cy/pkg/anim/musicforprogramming"
+	"github.com/cfoust/cy/pkg/anim/perlin"
 	"github.com/cfoust/cy/pkg/anim/slime"
 )
 
@@ -38,6 +39,9 @@ func init() {
 	})
 	registerAnimation("fluid", func() Animation {
 		return &fluid.Fluid{}
+	})
+	registerAnimation("perlin", func() Animation {
+		return perlin.New()
 	})
 	registerAnimation("midjo", func() Animation {
 		return &midjo.Midjo{}
