@@ -90,6 +90,8 @@
 
 # Developer guide
 
+- [Contributing](./contributing.md)
+
 - [Roadmap](./roadmap.md)
 
 - [Architecture](./architecture.md)
