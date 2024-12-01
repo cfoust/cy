@@ -212,7 +212,7 @@ findNew:
 		isLast := false
 
 		for col := 0; col < numChars; col++ {
-			newCursor.location.C = line.C0 + col
+			newCursor.location.C = newOffset
 			newCursor.cursor.C = col
 
 			// The cursor is within the line (not at the end)

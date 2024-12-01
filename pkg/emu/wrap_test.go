@@ -299,6 +299,51 @@ func TestTranslateCursor(t *testing.T) {
 		Cursor{Vec2: geom.Vec2{R: 2, C: 1}, State: cursorWrapNext},
 		"foobar",
 	)
+
+	// Correct location across lines
+	{
+		term := New()
+		term.Resize(geom.Size{R: 3, C: 5})
+		term.Write([]byte(LineFeedMode))
+		term.Write([]byte("fooba"))
+		term.Write([]byte("rbaz"))
+
+		cursor := term.Cursor()
+		require.Equal(t, geom.Vec2{R: 1, C: 4}, cursor.Vec2)
+
+		lines := term.Screen()
+
+		physical := []physicalLine{
+			{
+				{R: 0, C0: 0, C1: 5},
+				{R: 1, C0: 0, C1: 4},
+			},
+			{
+				{R: 2, C0: 0, C1: 0},
+			},
+		}
+
+		newCursor := translateCursor(
+			lines, lines,
+			physical, physical,
+			cursor,
+			5,
+		)
+		require.True(
+			t,
+			newCursor.isEnd,
+		)
+		require.Equal(
+			t,
+			geom.Vec2{R: 1, C: 4},
+			newCursor.cursor.Vec2,
+		)
+		require.Equal(
+			t,
+			geom.Vec2{R: 0, C: 8},
+			newCursor.location,
+		)
+	}
 }
 
 // Double-width characters cannot occupy the last column in a row. Instead, we
