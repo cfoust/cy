@@ -39,7 +39,7 @@ jobs:
 
       - name: Install vim and htop
         # For the "cy/project" story and "layout/dynamic/color-map" story
-        run: sudo apt-get install -qqy vim htop
+        run: sudo apt-get update && sudo apt-get install -qqy vim htop
 
       - name: Build
         run: >
