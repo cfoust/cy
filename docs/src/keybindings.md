@@ -51,6 +51,9 @@ Here are some valid key sequences:
 ["ctrl+a" "a"]
 ["ctrl+a" "ж"] # unicode is OK
 [" " "l"]
+# You can also prepend alt+, as expected
+["alt+ctrl+a"]
+["alt+o"]
 ```
 
 It is important to note that `cy` **does not send partial sequences to the current pane**. In other words, defining a sequence that begins with `" "` means that you will no longer be able to type the space character.
@@ -132,16 +135,3 @@ It is sometimes convenient to change the activation sequence for many bindings a
 ```
 
 Similarly, you may also delete keybindings with {{api key/unbind}}.
-
-## About <kbd>alt</kbd>
-
-You may prepend `alt+` to any [specifier](/preset-keys.md) to require the <kbd>alt</kbd> key to be held. For example, `ctrl+a` becomes `alt+ctrl+a`.
-
-<kbd>alt</kbd> can also be used to bind sequences like <kbd>alt+m</kbd>, but
-it's a little counterintuitive:
-
-```janet
-(key/bind :root ["alt" "m"] action/next-pane)
-```
-
-This is because your terminal emulator does not actually send a single, unambiguous byte sequence for `alt+` key combinations.

@@ -19,7 +19,23 @@ func TestKeysToMsg(t *testing.T) {
 			Type: KeyCtrlA,
 			Alt:  true,
 		},
-	}, KeysToMsg("test", "ctrl+a", "alt+ctrl+a"))
+		{
+			Type:  KeyRunes,
+			Runes: []rune("o"),
+			Alt:   true,
+		},
+		{
+			Type:  KeyRunes,
+			Runes: []rune("й"),
+			Alt:   true,
+		},
+	}, KeysToMsg(
+		"test",
+		"ctrl+a",
+		"alt+ctrl+a",
+		"alt+o",
+		"alt+й",
+	))
 }
 
 func TestKeysToBytes(t *testing.T) {
@@ -34,20 +50,62 @@ func TestKeysToBytes(t *testing.T) {
 		{
 			Type: keyETX,
 		},
+		{
+			Type: keyESC,
+		},
+		{
+			Type: keyESC,
+			Alt:  true,
+		},
+		{
+			Type:  KeyRunes,
+			Runes: []rune("a"),
+			Alt:   true,
+		},
 	}
 
-	bytes, err := KeysToBytes(keys...)
-	assert.NoError(t, err)
+	for _, key := range keys {
+		bytes, err := KeysToBytes(key)
+		assert.NoError(t, err)
 
-	parsed := make([]KeyMsg, 0)
-	for i, w := 0, 0; i < len(bytes); i += w {
-		var msg Msg
-		w, msg = DetectOneMsg(bytes[i:])
-		if key, ok := msg.(KeyMsg); ok {
-			parsed = append(parsed, key)
+		parsed := make([]KeyMsg, 0)
+		for i, w := 0, 0; i < len(bytes); i += w {
+			var msg Msg
+			w, msg = DetectOneMsg(bytes[i:])
+			if key, ok := msg.(KeyMsg); ok {
+				parsed = append(parsed, key)
+			}
 		}
+		assert.Equal(t, []KeyMsg{key}, parsed)
 	}
-	assert.Equal(t, keys, parsed)
+}
+
+func TestDetect(t *testing.T) {
+	type testCase struct {
+		input []byte
+		msg   Msg
+	}
+	cases := []testCase{
+		{
+			input: []byte("\x1b"),
+			msg: KeyMsg{
+				Type: KeyEscape,
+			},
+		},
+		{
+			input: []byte("\x1bo"),
+			msg: KeyMsg{
+				Type:  KeyRunes,
+				Runes: []rune("o"),
+				Alt:   true,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		_, msg := DetectOneMsg(c.input)
+		assert.Equal(t, c.msg, msg)
+	}
 }
 
 func testMouseInput(t *testing.T, input string) {

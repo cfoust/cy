@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind/trie"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/rs/zerolog/log"
 )
 
 type KeyModule struct {
@@ -38,8 +39,6 @@ func getKeySequence(value *janet.Value) (result []interface{}, err error) {
 			switch str {
 			case "ctrl+i":
 				str = "tab"
-			case "alt":
-				str = "esc"
 			}
 
 			result = append(result, str)
@@ -111,6 +110,8 @@ func (k *KeyModule) Bind(
 	if err != nil {
 		return err
 	}
+
+	log.Info().Msgf("%+v", translated)
 
 	scope.Set(
 		translated,

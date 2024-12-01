@@ -162,6 +162,7 @@ func KeysToMsg(keys ...string) (msgs []KeyMsg) {
 		msgs = append(msgs, KeyMsg{
 			Type:  KeyRunes,
 			Runes: []rune(key),
+			Alt:   alt,
 		})
 	}
 	return
@@ -173,6 +174,10 @@ func KeysToBytes(keys ...KeyMsg) (data []byte, err error) {
 		case KeySpace:
 			data = append(data, []byte(" ")...)
 		case KeyRunes:
+			if key.Alt {
+				data = append(data, '\x1b')
+			}
+
 			data = append(data, []byte(string(key.Runes))...)
 		default:
 			if seq, ok := inverseSequences[keyLookup{
@@ -180,6 +185,13 @@ func KeysToBytes(keys ...KeyMsg) (data []byte, err error) {
 				Alt:  key.Alt,
 			}]; ok {
 				data = append(data, []byte(seq)...)
+				continue
+			}
+
+			// ESC is also used to indicate an alt+ key sequence,
+			// so we can't just use a predefined sequence.
+			if key.Type == keyESC {
+				data = append(data, '\x1b')
 				continue
 			}
 
