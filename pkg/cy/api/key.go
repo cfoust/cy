@@ -7,7 +7,6 @@ import (
 	"github.com/cfoust/cy/pkg/bind/trie"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
-	"github.com/rs/zerolog/log"
 )
 
 type KeyModule struct {
@@ -110,8 +109,6 @@ func (k *KeyModule) Bind(
 	if err != nil {
 		return err
 	}
-
-	log.Info().Msgf("%+v", translated)
 
 	scope.Set(
 		translated,
