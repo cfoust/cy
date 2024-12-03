@@ -112,8 +112,8 @@ func (t *Tree) RemoveNode(id NodeID) error {
 		return nil
 	}
 
-	parent := path[len(path)-2]
-	parent.(*Group).removeNode(node)
+	parent := path[len(path)-2].(*Group)
+	parent.removeNode(node)
 
 	t.Lock()
 	delete(t.nodes, id)
@@ -123,6 +123,10 @@ func (t *Tree) RemoveNode(id NodeID) error {
 	case *Pane:
 		node.Screen().Kill()
 		node.Cancel()
+		if len(parent.children) == 0 && len(path) > 2 {
+			parentOfParent := path[len(path) - 3]  
+			parentOfParent.(*Group).removeNode(parent)
+		}
 	case *Group:
 		for _, child := range node.children {
 			t.RemoveNode(child.Id())

@@ -62,6 +62,15 @@ func TestRemoveNode(t *testing.T) {
 	tree.RemoveNode(child.Id())
 	require.Equal(t, 2, len(tree.Leaves()))
 	require.Equal(t, 2, len(g.Children()))
+	require.Equal(t, 1, len(tree.Root().Children()))
+
+	for _, child := range g.Children() {
+		tree.RemoveNode(child.Id())
+	}
+
+	require.Equal(t, 0, len(g.Children()))
+	require.Equal(t, 0, len(tree.Leaves()))
+	require.Equal(t, 0, len(tree.Root().Children()))
 }
 
 func TestRemoveRoot(t *testing.T) {
