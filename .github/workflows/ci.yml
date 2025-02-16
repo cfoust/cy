@@ -19,7 +19,7 @@ jobs:
 
       - name: Install zsh
         # This is used for the TestDefaultShell test
-        run: sudo apt-get install -qqy zsh
+        run: sudo apt-get install -qqy zsh libx11-dev
 
       - name: Generate and format code
         run: |
