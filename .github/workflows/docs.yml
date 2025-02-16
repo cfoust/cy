@@ -39,7 +39,7 @@ jobs:
 
       - name: Install vim and htop
         # For the "cy/project" story and "layout/dynamic/color-map" story
-        run: >
+        run: |
           sudo apt-get update
           sudo apt-get install -qqy vim htop libx11-dev
 
