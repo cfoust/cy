@@ -336,17 +336,9 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 		t.restoreCursor(false)
 	case 'q': // DECSCUSR - set cursor style
 		style := CursorStyleBlock
-		switch c.arg(0, 0) {
-		case 2:
-			style = CursorStyleSteadyBlock
-		case 3:
-			style = CursorStyleUnderline
-		case 4:
-			style = CursorStyleBlinkUnderline
-		case 5:
-			style = CursorStyleBar
-		case 6:
-			style = CursorStyleBlinkBar
+		val := c.arg(0, 0);
+		if 0 < val && val <= 6 {
+			style = CursorStyle(val)
 		}
 		t.cur.Style = style
 	case 't': // XTWINOPS - window manipulation (ignored)

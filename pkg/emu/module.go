@@ -221,11 +221,12 @@ type CursorStyle int
 
 const (
 	CursorStyleBlock CursorStyle = iota
+	CursorStyleBlinkBlock
 	CursorStyleSteadyBlock
-	CursorStyleUnderline
 	CursorStyleBlinkUnderline
-	CursorStyleBar
+	CursorStyleUnderline
 	CursorStyleBlinkBar
+	CursorStyleBar
 )
 
 type Cursor struct {
