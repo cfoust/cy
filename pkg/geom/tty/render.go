@@ -129,7 +129,7 @@ func Swap(
 	info.Fprintf(data, terminfo.CursorAddress, srcCursor.R, srcCursor.C)
 
 	if dstCursor.Style != srcCursor.Style {
-		fmt.Fprintf(data, "\x1b[%d q", int(srcCursor.Style)+1)
+		fmt.Fprintf(data, "\x1b[%d q", int(srcCursor.Style))
 	}
 
 	// This is wasteful, we shouldn't have to include this on every frame
