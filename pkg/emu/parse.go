@@ -336,7 +336,7 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 		t.restoreCursor(false)
 	case 'q': // DECSCUSR - set cursor style
 		style := CursorStyleBlock
-		val := c.arg(0, 0);
+		val := c.arg(0, 0)
 		if 0 < val && val <= 6 {
 			style = CursorStyle(val)
 		}
