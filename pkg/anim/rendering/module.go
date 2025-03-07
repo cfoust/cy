@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	TICKS_PER_SECOND = 10
+	TICKS_PER_SECOND = 30
 )
 
 type LineTest struct {
