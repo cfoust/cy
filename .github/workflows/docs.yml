@@ -59,6 +59,7 @@ jobs:
         run: |
           git clone https://github.com/charmbracelet/vhs.git
           cd vhs
+          git checkout 5fd3e351f336734f73aa4dd53669f7727897cb5a
           go mod tidy
           go build -o ../vhs-bin .
           cd ..
