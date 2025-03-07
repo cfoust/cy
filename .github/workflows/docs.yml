@@ -35,13 +35,13 @@ jobs:
         with:
           go-version: "1.23"
 
-      - uses: charmbracelet/vhs-action@v2
-
       - name: Install vim and htop
         # For the "cy/project" story and "layout/dynamic/color-map" story
         run: |
           sudo apt-get update
-          sudo apt-get install -qqy vim htop libx11-dev
+          sudo apt-get install -qqy vim htop libx11-dev ffmpeg
+
+      - uses: charmbracelet/vhs-action@v2
 
       - name: Build
         run: >
