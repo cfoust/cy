@@ -35,13 +35,22 @@ jobs:
         with:
           go-version: "1.23"
 
+      - name: Install vhs
+        run: |
+          # Install ttyd from https://github.com/tsl0922/ttyd/releases
+          curl -L -o /usr/local/bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.x86_64 && chmod +x /usr/local/bin/ttyd
+
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
+          sudo apt update
+          sudo apt install vhs ffmpeg
+
       - name: Install vim and htop
         # For the "cy/project" story and "layout/dynamic/color-map" story
         run: |
           sudo apt-get update
-          sudo apt-get install -qqy vim htop libx11-dev ffmpeg
-
-      - uses: charmbracelet/vhs-action@v2
+          sudo apt-get install -qqy vim htop libx11-dev
 
       - name: Build
         run: >
