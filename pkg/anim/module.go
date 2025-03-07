@@ -11,6 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/anim/musicforprogramming"
 	"github.com/cfoust/cy/pkg/anim/perlin"
 	"github.com/cfoust/cy/pkg/anim/slime"
+	"github.com/cfoust/cy/pkg/anim/rendering"
 )
 
 const DEFAULT_FPS = 30
@@ -51,5 +52,8 @@ func init() {
 	})
 	registerAnimation("slime", func() Animation {
 		return &slime.Slime{}
+	})
+	registerAnimation("lines", func() Animation {
+		return &rendering.LineTest{}
 	})
 }

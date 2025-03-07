@@ -86,6 +86,9 @@ github.com/davecgh/go-spew/spew
 ## explicit
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
+# github.com/go-gl/mathgl v1.2.0
+## explicit; go 1.11
+github.com/go-gl/mathgl/mgl32
 # github.com/gorilla/css v1.0.0
 ## explicit
 github.com/gorilla/css/scanner
