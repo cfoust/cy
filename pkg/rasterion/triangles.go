@@ -3,7 +3,6 @@ package rasterion
 import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/geom/image"
 
 	gl "github.com/go-gl/mathgl/mgl32"
 )
@@ -43,7 +42,7 @@ func max(vals ...float32) float32 {
 }
 
 // triangleArea computes the signed area of the given triangle.
-func triangleArea(v0, v1, v2 gl.Vec2) float32 {
+func triangleArea(v0, v1, v2 gl.Vec3) float32 {
 	return .5 * ((v1[1]-v0[1])*(v1[0]+v0[0]) + (v2[1]-v1[1])*(v2[0]+v1[0]) + (v0[1]-v2[1])*(v0[0]+v2[0]))
 }
 
@@ -53,15 +52,11 @@ var StaticShader = func(uv gl.Vec3) emu.Glyph {
 	return c
 }
 
-func Triangle(
-	i image.Image,
+func (b *Buffer) Triangle(
 	s Shader,
-	v0, v1, v2 gl.Vec2,
+	v0, v1, v2 gl.Vec3,
 ) {
-	size := i.Size()
-	if size.IsZero() {
-		return
-	}
+	size := b.i.Size()
 
 	// First compute the bounding box for the triangle in screen space
 	var (
@@ -87,10 +82,16 @@ func Triangle(
 	}
 
 	var (
-		totalArea          = triangleArea(v0, v1, v2)
-		p                  gl.Vec2
-		alpha, beta, gamma float32
+		totalArea = triangleArea(v0, v1, v2)
+		p, bary   gl.Vec3
+		z         = gl.Vec3{v0[2], v1[2], v2[2]}
 	)
+
+	// Backface culling
+	if totalArea < 0 {
+		return
+	}
+
 	for row := boundMini.R; row <= boundMaxi.R; row++ {
 		for col := boundMini.C; col <= boundMaxi.C; col++ {
 			// Center the point in the cell
@@ -98,16 +99,25 @@ func Triangle(
 			p[1] = float32(row) + 0.5
 
 			// Barymetric coordinates
-			alpha = triangleArea(p, v1, v2) / totalArea
-			beta = triangleArea(p, v2, v0) / totalArea
-			gamma = triangleArea(p, v0, v1) / totalArea
+			bary[0] = triangleArea(p, v1, v2) / totalArea
+			bary[1] = triangleArea(p, v2, v0) / totalArea
+			bary[2] = triangleArea(p, v0, v1) / totalArea
 
-			// negative => point not in triangle
-			if alpha < 0 || beta < 0 || gamma < 0 {
+			// Negative => point not in triangle
+			if bary[0] < 0 || bary[1] < 0 || bary[2] < 0 {
 				continue
 			}
 
-			i[row][col] = s(gl.Vec3{alpha, beta, gamma})
+			// Interpolate Z-value
+			p[2] = z.Dot(bary)
+
+			// Depth
+			if p[2] < b.getZ(row, col) {
+				continue
+			}
+
+			b.i[row][col] = s(bary)
+			b.setZ(row, col, p[2])
 		}
 	}
 }
