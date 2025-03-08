@@ -15,20 +15,25 @@ type Camera struct {
 
 type Context struct {
 	Camera
-	i image.Image
-	z []float32
+	i     image.Image
+	z     []float32
+	width int
 }
 
 func allocZ(size geom.Size) []float32 {
 	return make([]float32, size.R*size.C)
 }
 
+func (c *Context) getIndex(row, col int) int {
+	return col + row*c.width
+}
+
 func (c *Context) getZ(row, col int) float32 {
-	return c.z[row*col]
+	return c.z[c.getIndex(row, col)]
 }
 
 func (c *Context) setZ(row, col int, value float32) {
-	c.z[row*col] = value
+	c.z[c.getIndex(row, col)] = value
 }
 
 func (c *Context) Image() image.Image {
@@ -42,7 +47,7 @@ func (c *Context) Clear() {
 	for row := 0; row < size.R; row++ {
 		for col := 0; col < size.C; col++ {
 			c.i[row][col] = e
-			c.z[row*col] = gl.InfNeg
+			c.z[c.getIndex(row, col)] = gl.InfNeg
 		}
 	}
 }
@@ -61,8 +66,9 @@ func (c *Context) Transform(in gl.Vec3) gl.Vec3 {
 func New(size geom.Size) *Context {
 	i := image.New(size)
 	return &Context{
-		i: i,
-		z: allocZ(size),
+		i:     i,
+		z:     allocZ(size),
+		width: size.C,
 		Camera: Camera{
 			Projection: gl.Perspective(
 				gl.DegToRad(45.0),

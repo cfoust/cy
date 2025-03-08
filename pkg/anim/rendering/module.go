@@ -84,7 +84,6 @@ func (c *LineTest) Update(delta time.Duration) image.Image {
 			r.Transform(gl.Vec3{start, size, 0}),
 			r.Transform(gl.Vec3{start, 0, 0}),
 		)
-
 	}
 
 	return current
