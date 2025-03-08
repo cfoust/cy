@@ -65,9 +65,9 @@ func (c *Context) Triangle(s Shader, v0, v1, v2 gl.Vec3) {
 		clamp    = boundMin
 	)
 	boundMin[0] = max(0, min(boundMin[0], v0[0], v1[0], v2[0]))
-	boundMin[1] = max(0, min(boundMin[1], v1[1], v1[1], v2[1]))
+	boundMin[1] = max(0, min(boundMin[1], v0[1], v1[1], v2[1]))
 	boundMax[0] = min(clamp[0], max(boundMax[0], v0[0], v1[0], v2[0]))
-	boundMax[1] = min(clamp[1], max(boundMax[1], v1[1], v1[1], v2[1]))
+	boundMax[1] = min(clamp[1], max(boundMax[1], v0[1], v1[1], v2[1]))
 
 	boundMini := geom.Vec2{
 		R: int(boundMin[1]),
