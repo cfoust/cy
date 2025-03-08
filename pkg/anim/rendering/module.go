@@ -17,16 +17,16 @@ const (
 )
 
 type LineTest struct {
-	start  time.Time
-	last   time.Duration
-	buffer *R.Buffer
+	start time.Time
+	last  time.Duration
+	rCtx  *R.Context
 }
 
 var _ meta.Animation = (*LineTest)(nil)
 
 func (c *LineTest) Init(start image.Image) {
 	c.start = time.Now()
-	c.buffer = R.New(start.Size())
+	c.rCtx = R.New(start.Size())
 }
 
 var shader R.Shader = func(uv gl.Vec3) emu.Glyph {
@@ -41,27 +41,51 @@ var shader R.Shader = func(uv gl.Vec3) emu.Glyph {
 }
 
 func (c *LineTest) Update(delta time.Duration) image.Image {
-	current := c.buffer.Image()
+	current := c.rCtx.Image()
 	if (delta - c.last) < (time.Second / TICKS_PER_SECOND) {
 		return current
 	}
 
 	c.last = delta
 
-	size := current.Size()
-	c.buffer.Clear()
-
 	t := time.Now().Sub(c.start).Seconds()
 
-	c.buffer.Triangle(
-		shader,
-		gl.Vec3{},
-		gl.Vec3{float32(size.C), 0},
-		gl.Vec3{
-			float32(((math.Cos(t) + 1) / 2) * float64(size.C)),
-			float32(size.R),
-		},
+	r := c.rCtx
+	r.Camera.View = gl.LookAtV(
+		gl.Vec3{0, 0, (float32(math.Sin(t)+1.)/2. * 5.) + .5},
+		gl.Vec3{0, 0, 0},
+		gl.Vec3{0, 1, 0},
 	)
+	r.Camera.View = gl.LookAtV(
+		gl.Vec3{(float32(math.Sin(t))/2. * 5.) + .5, 3, 3},
+		gl.Vec3{0, 0, 0},
+		gl.Vec3{0, 1, 0},
+	)
+	r.Clear()
+
+	for _, loc := range []struct{
+		Start, Size float32
+	}{
+		{0, 1},
+		{2, 1},
+		{-2, 1},
+	} {
+		start, size := loc.Start, loc.Size
+		r.Triangle(
+			shader,
+			r.Transform(gl.Vec3{start, 0, 0}),
+			r.Transform(gl.Vec3{start+size, 0, 0}),
+			r.Transform(gl.Vec3{start+size, size, 0}),
+		)
+
+		r.Triangle(
+			shader,
+			r.Transform(gl.Vec3{start+size, size, 0}),
+			r.Transform(gl.Vec3{start, size, 0}),
+			r.Transform(gl.Vec3{start, 0, 0}),
+		)
+
+	}
 
 	return current
 }

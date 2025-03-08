@@ -52,11 +52,8 @@ var StaticShader = func(uv gl.Vec3) emu.Glyph {
 	return c
 }
 
-func (b *Buffer) Triangle(
-	s Shader,
-	v0, v1, v2 gl.Vec3,
-) {
-	size := b.i.Size()
+func (c *Context) Triangle(s Shader, v0, v1, v2 gl.Vec3) {
+	size := c.i.Size()
 
 	// First compute the bounding box for the triangle in screen space
 	var (
@@ -112,12 +109,45 @@ func (b *Buffer) Triangle(
 			p[2] = z.Dot(bary)
 
 			// Depth
-			if p[2] < b.getZ(row, col) {
+			if p[2] < c.getZ(row, col) {
 				continue
 			}
 
-			b.i[row][col] = s(bary)
-			b.setZ(row, col, p[2])
+			c.i[size.R-1-row][col] = s(bary)
+			c.setZ(row, col, p[2])
 		}
+	}
+}
+
+func (c *Context) Triangles(s Shader, faces [][3]gl.Vec3) {
+	for _, face := range faces {
+		c.Triangle(s, face[0], face[1], face[2])
+	}
+}
+
+func (c *Context) TriangleStrip(s Shader, vertices []gl.Vec3) {
+	if len(vertices) < 3 {
+		return
+	}
+
+	for i := 0; i <= len(vertices) - 3; i++ {
+		// To maintain winding order
+		// See https://www.khronos.org/opengl/wiki/Primitive
+		if (i % 2) == 1 {
+			c.Triangle(
+				s,
+				vertices[i+1],
+				vertices[i],
+				vertices[i+2],
+			)
+			continue
+		}
+
+		c.Triangle(
+			s,
+			vertices[i],
+			vertices[i+1],
+			vertices[i+2],
+		)
 	}
 }
