@@ -63,6 +63,12 @@ func (c *Context) Transform(in gl.Vec3) gl.Vec3 {
 	)
 }
 
+const (
+	// terminal cells are taller than they are wide, so we have to correct
+	// the vertical aspect ratio
+	aspect = 0.5017144097222223
+)
+
 func New(size geom.Size) *Context {
 	i := image.New(size)
 	return &Context{
@@ -72,7 +78,7 @@ func New(size geom.Size) *Context {
 		Camera: Camera{
 			Projection: gl.Perspective(
 				gl.DegToRad(45.0),
-				float32(size.C)/float32(size.R),
+				float32(size.C)/(float32(size.R) / aspect),
 				0.1,
 				10.0,
 			),
