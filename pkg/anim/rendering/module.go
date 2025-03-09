@@ -14,12 +14,31 @@ import (
 
 const (
 	TICKS_PER_SECOND = 30
+	distance = 5
 )
+
+var cube = []gl.Vec3{
+	{-1, 1, 1},   // Front-top-left
+	{1, 1, 1},    // Front-top-right
+	{-1, -1, 1},  // Front-bottom-left
+	{1, -1, 1},   // Front-bottom-right
+	{1, -1, -1},  // Back-bottom-right
+	{1, 1, 1},    // Front-top-right
+	{1, 1, -1},   // Back-top-right
+	{-1, 1, 1},   // Front-top-left
+	{-1, 1, -1},  // Back-top-left
+	{-1, -1, 1},  // Front-bottom-left
+	{-1, -1, -1}, // Back-bottom-left
+	{1, -1, -1},  // Back-bottom-right
+	{-1, 1, -1},  // Back-top-left
+	{1, 1, -1},   // Back-top-right
+}
 
 type LineTest struct {
 	start time.Time
 	last  time.Duration
 	rCtx  *R.Context
+	verts []gl.Vec3
 }
 
 var _ meta.Animation = (*LineTest)(nil)
@@ -27,6 +46,7 @@ var _ meta.Animation = (*LineTest)(nil)
 func (c *LineTest) Init(start image.Image) {
 	c.start = time.Now()
 	c.rCtx = R.New(start.Size())
+	c.verts = make([]gl.Vec3, len(cube))
 }
 
 var shader R.Shader = func(uv gl.Vec3) emu.Glyph {
@@ -52,39 +72,21 @@ func (c *LineTest) Update(delta time.Duration) image.Image {
 
 	r := c.rCtx
 	r.Camera.View = gl.LookAtV(
-		gl.Vec3{0, 0, (float32(math.Sin(t)+1.)/2. * 5.) + .5},
-		gl.Vec3{0, 0, 0},
-		gl.Vec3{0, 1, 0},
-	)
-	r.Camera.View = gl.LookAtV(
-		gl.Vec3{(float32(math.Sin(t))/2. * 5.) + .5, 3, 3},
+		gl.Vec3{
+			(float32(math.Cos(t) * distance)),
+			distance,
+			(float32(math.Sin(t) * distance)),
+		},
 		gl.Vec3{0, 0, 0},
 		gl.Vec3{0, 1, 0},
 	)
 	r.Clear()
 
-	for _, loc := range []struct{
-		Start, Size float32
-	}{
-		{0, 1},
-		{2, 1},
-		{-2, 1},
-	} {
-		start, size := loc.Start, loc.Size
-		r.Triangle(
-			shader,
-			r.Transform(gl.Vec3{start, 0, 0}),
-			r.Transform(gl.Vec3{start+size, 0, 0}),
-			r.Transform(gl.Vec3{start+size, size, 0}),
-		)
-
-		r.Triangle(
-			shader,
-			r.Transform(gl.Vec3{start+size, size, 0}),
-			r.Transform(gl.Vec3{start, size, 0}),
-			r.Transform(gl.Vec3{start, 0, 0}),
-		)
+	for i, vert := range cube {
+		c.verts[i] = r.Transform(vert)
 	}
+
+	r.TriangleStrip(shader, c.verts)
 
 	return current
 }

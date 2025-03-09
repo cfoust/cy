@@ -130,10 +130,11 @@ func (c *Context) TriangleStrip(s Shader, vertices []gl.Vec3) {
 		return
 	}
 
-	for i := 0; i <= len(vertices) - 3; i++ {
+	for i := 0; i <= len(vertices)-3; i++ {
 		// To maintain winding order
 		// See https://www.khronos.org/opengl/wiki/Primitive
-		if (i % 2) == 1 {
+		// TODO(cfoust): 03/09/25 fix winding order
+		if (i % 2) == 0 {
 			c.Triangle(
 				s,
 				vertices[i+1],
