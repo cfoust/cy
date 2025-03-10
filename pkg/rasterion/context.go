@@ -52,7 +52,7 @@ func (c *Context) Clear() {
 	}
 }
 
-func (c *Context) Transform(in gl.Vec3) gl.Vec3 {
+func (c *Context) Project(in gl.Vec3) gl.Vec3 {
 	size := c.i.Size()
 	return gl.Project(
 		in,
@@ -63,9 +63,19 @@ func (c *Context) Transform(in gl.Vec3) gl.Vec3 {
 	)
 }
 
+func (c *Context) UnProject(in gl.Vec3) (gl.Vec3, error) {
+	size := c.i.Size()
+	return gl.UnProject(
+		in,
+		c.View,
+		c.Projection,
+		0, 0,
+		size.C, size.R,
+	)
+}
+
 const (
-	// terminal cells are taller than they are wide, so we have to correct
-	// the vertical aspect ratio
+	// this corrects for the fact that terminal cells are not squares
 	aspect = 0.5017144097222223
 )
 
