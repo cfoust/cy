@@ -8,11 +8,7 @@ import (
 )
 
 type VertexShader interface {
-	Vertex(
-		camera *Camera,
-		i0, i1, i2 int,
-		v0, v1, v2 gl.Vec3,
-	) (o0, o1, o2 gl.Vec4)
+	Vertex(camera *Camera, face, index int, vertex gl.Vec3) gl.Vec4
 }
 
 type DefaultVertexShader struct{}
@@ -20,14 +16,9 @@ type DefaultVertexShader struct{}
 var _ VertexShader = (*DefaultVertexShader)(nil)
 
 func (v DefaultVertexShader) Vertex(
-	camera *Camera,
-	i0, i1, i2 int,
-	v0, v1, v2 gl.Vec3,
-) (o0, o1, o2 gl.Vec4) {
-	o0 = camera.Transform(v0)
-	o1 = camera.Transform(v1)
-	o2 = camera.Transform(v2)
-	return
+	camera *Camera, face, index int, vertex gl.Vec3,
+) gl.Vec4 {
+	return camera.Transform(vertex)
 }
 
 type TransformShader struct {
@@ -41,14 +32,9 @@ func (t TransformShader) Transform(v gl.Vec3) gl.Vec4 {
 }
 
 func (t TransformShader) Vertex(
-	camera *Camera,
-	i0, i1, i2 int,
-	v0, v1, v2 gl.Vec3,
-) (o0, o1, o2 gl.Vec4) {
-	o0 = camera.Transform(t.Transform(v0).Vec3())
-	o1 = camera.Transform(t.Transform(v1).Vec3())
-	o2 = camera.Transform(t.Transform(v2).Vec3())
-	return
+	camera *Camera, face, index int, vertex gl.Vec3,
+) gl.Vec4 {
+	return camera.Transform(t.Transform(vertex).Vec3())
 }
 
 type FragmentShader interface {
@@ -69,9 +55,9 @@ func InterpolateVec2(bary gl.Vec3, v0, v1, v2 gl.Vec2) gl.Vec2 {
 	return v0.Add(v1).Add(v2)
 }
 
-// Texture samples a texture at the given coordinate. The members of `uv`
+// Sample2D samples a texture at the given coordinate. The members of `uv`
 // should be in the range [0..1].
-func Texture(texture image.Image, uv gl.Vec2) emu.Glyph {
+func Sample2D(texture image.Image, uv gl.Vec2) emu.Glyph {
 	size := texture.Size()
 
 	if size.C == 0 || size.R == 0 {

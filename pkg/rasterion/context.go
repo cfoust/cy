@@ -53,7 +53,7 @@ func (c *Context) Clear() {
 	for row := 0; row < size.R; row++ {
 		for col := 0; col < size.C; col++ {
 			c.i[row][col] = e
-			c.z[c.getIndex(row, col)] = gl.InfNeg
+			c.z[c.getIndex(row, col)] = gl.InfPos
 		}
 	}
 }

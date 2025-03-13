@@ -90,16 +90,14 @@ func normalizeDeviceCoordinates(v gl.Vec4) gl.Vec4 {
 
 func (c *Context) triangle(
 	s Shader,
-	i0, i1, i2 int,
+	face, i0, i1, i2 int,
 	w0, w1, w2 gl.Vec3,
 ) {
 	size := c.i.Size()
 
-	v0, v1, v2 := s.Vertex(
-		c.camera,
-		i0, i1, i2,
-		w0, w1, w2,
-	)
+	v0 := s.Vertex(c.camera, face, 0, w0)
+	v1 := s.Vertex(c.camera, face, 1, w1)
+	v2 := s.Vertex(c.camera, face, 2, w2)
 
 	var (
 		oneOverZ = gl.Vec3{
@@ -195,7 +193,9 @@ func (c *Context) triangle(
 			p[3] = w.Dot(baryClip)
 
 			// Depth
-			if p[2] < c.getZ(row, col) {
+			// TODO(cfoust): 03/13/25 this seems weird, did we
+			// invert this somewhere?
+			if p[2] > c.getZ(row, col) {
 				continue
 			}
 
@@ -213,7 +213,7 @@ func (c *Context) triangle(
 func (c *Context) Triangle(s Shader, v0, v1, v2 gl.Vec3) {
 	c.triangle(
 		s,
-		0, 1, 2,
+		0, 0, 1, 2,
 		v0, v1, v2,
 	)
 }
@@ -224,11 +224,11 @@ func (c *Context) Triangles(
 	faces [][3]int,
 ) {
 	var i0, i1, i2 int
-	for _, face := range faces {
-		i0, i1, i2 = face[0], face[1], face[2]
+	for face, faceVerts := range faces {
+		i0, i1, i2 = faceVerts[0], faceVerts[1], faceVerts[2]
 		c.triangle(
 			s,
-			i0, i1, i2,
+			face, i0, i1, i2,
 			verts[i0], verts[i1], verts[i2],
 		)
 	}
@@ -246,7 +246,7 @@ func (c *Context) TriangleStrip(s Shader, vertices []gl.Vec3) {
 		if (i % 2) == 0 {
 			c.triangle(
 				s,
-				i+1, i, i+2,
+				i, i+1, i, i+2,
 				vertices[i+1],
 				vertices[i],
 				vertices[i+2],
@@ -256,7 +256,7 @@ func (c *Context) TriangleStrip(s Shader, vertices []gl.Vec3) {
 
 		c.triangle(
 			s,
-			i, i+1, i+2,
+			i, i, i+1, i+2,
 			vertices[i],
 			vertices[i+1],
 			vertices[i+2],
