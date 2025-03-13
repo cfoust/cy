@@ -1,13 +1,13 @@
 package rasterion
 
 import (
+	"math"
+
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 
 	gl "github.com/go-gl/mathgl/mgl32"
 )
-
-type Shader func(uv gl.Vec3) emu.Glyph
 
 func min(vals ...float32) float32 {
 	if len(vals) == 0 {
@@ -42,7 +42,7 @@ func max(vals ...float32) float32 {
 }
 
 // triangleArea computes the signed area of the given triangle.
-func triangleArea(v0, v1, v2 gl.Vec3) float32 {
+func triangleArea(v0, v1, v2 gl.Vec2) float32 {
 	return .5 * ((v1[1]-v0[1])*(v1[0]+v0[0]) + (v2[1]-v1[1])*(v2[0]+v1[0]) + (v0[1]-v2[1])*(v0[0]+v2[0]))
 }
 
@@ -52,8 +52,76 @@ var StaticShader = func(uv gl.Vec3) emu.Glyph {
 	return c
 }
 
-func (c *Context) Triangle(s Shader, v0, v1, v2 gl.Vec3) {
+func barycentric(v0, v1, v2, P gl.Vec2) gl.Vec3 {
+	var (
+		s0 = gl.Vec3{
+			v2[0] - v0[0],
+			v1[0] - v0[0],
+			v0[0] - P[0],
+		}
+		s1 = gl.Vec3{
+			v2[1] - v0[1],
+			v1[1] - v0[1],
+			v0[1] - P[1],
+		}
+		u = s0.Cross(s1)
+	)
+
+	if math.Abs(float64(u[2])) < 1e-2 {
+		return gl.Vec3{-1, 1, 1}
+	}
+
+	return gl.Vec3{
+		1 - (u[0]+u[1])/u[2],
+		u[1] / u[2],
+		u[0] / u[2],
+	}
+}
+
+func normalizeDeviceCoordinates(v gl.Vec4) gl.Vec4 {
+	v[3] = 1 / v[3]
+
+	for i := 0; i < 3; i++ {
+		v[i] *= v[3]
+	}
+
+	return v
+}
+
+func (c *Context) triangle(
+	s Shader,
+	i0, i1, i2 int,
+	w0, w1, w2 gl.Vec3,
+) {
 	size := c.i.Size()
+
+	v0, v1, v2 := s.Vertex(
+		c.camera,
+		i0, i1, i2,
+		w0, w1, w2,
+	)
+
+	var (
+		oneOverZ = gl.Vec3{
+			1 / v0[2],
+			1 / v1[2],
+			1 / v2[2],
+		}
+		viewport = gl.Vec2{
+			float32(size.C),
+			float32(size.R),
+		}
+		v = []gl.Vec4{v0, v1, v2}
+	)
+
+	for i := 0; i < 3; i++ {
+		v[i] = normalizeDeviceCoordinates(v[i])
+
+		// Convert to window coordinates
+		for j := 0; j < 2; j++ {
+			v[i][j] = viewport[j] * 0.5 * (v[i][j] + 1.0)
+		}
+	}
 
 	// First compute the bounding box for the triangle in screen space
 	var (
@@ -64,10 +132,10 @@ func (c *Context) Triangle(s Shader, v0, v1, v2 gl.Vec3) {
 		boundMax = gl.Vec2{}
 		clamp    = boundMin
 	)
-	boundMin[0] = max(0, min(boundMin[0], v0[0], v1[0], v2[0]))
-	boundMin[1] = max(0, min(boundMin[1], v0[1], v1[1], v2[1]))
-	boundMax[0] = min(clamp[0], max(boundMax[0], v0[0], v1[0], v2[0]))
-	boundMax[1] = min(clamp[1], max(boundMax[1], v0[1], v1[1], v2[1]))
+	boundMin[0] = max(0, min(boundMin[0], v[0][0], v[1][0], v[2][0]))
+	boundMin[1] = max(0, min(boundMin[1], v[0][1], v[1][1], v[2][1]))
+	boundMax[0] = min(clamp[0], max(boundMax[0], v[0][0], v[1][0], v[2][0]))
+	boundMax[1] = min(clamp[1], max(boundMax[1], v[0][1], v[1][1], v[2][1]))
 
 	boundMini := geom.Vec2{
 		R: int(boundMin[1]),
@@ -79,9 +147,15 @@ func (c *Context) Triangle(s Shader, v0, v1, v2 gl.Vec3) {
 	}
 
 	var (
-		totalArea = triangleArea(v0, v1, v2)
-		p, bary   gl.Vec3
-		z         = gl.Vec3{v0[2], v1[2], v2[2]}
+		totalArea = triangleArea(
+			v[0].Vec2(),
+			v[1].Vec2(),
+			v[2].Vec2(),
+		)
+		p          gl.Vec4
+		baryScreen gl.Vec3
+		z          = gl.Vec3{v[0][2], v[1][2], v[2][2]}
+		w          = gl.Vec3{v[0][3], v[1][3], v[2][3]}
 	)
 
 	// Backface culling
@@ -95,33 +169,67 @@ func (c *Context) Triangle(s Shader, v0, v1, v2 gl.Vec3) {
 			p[0] = float32(col) + 0.5
 			p[1] = float32(row) + 0.5
 
-			// Barymetric coordinates
-			bary[0] = triangleArea(p, v1, v2) / totalArea
-			bary[1] = triangleArea(p, v2, v0) / totalArea
-			bary[2] = triangleArea(p, v0, v1) / totalArea
+			// Barycentric coordinates
+			baryScreen = barycentric(
+				v[0].Vec2(),
+				v[1].Vec2(),
+				v[2].Vec2(),
+				p.Vec2(),
+			)
 
 			// Negative => point not in triangle
-			if bary[0] < 0 || bary[1] < 0 || bary[2] < 0 {
+			if baryScreen[0] < 0 || baryScreen[1] < 0 || baryScreen[2] < 0 {
 				continue
 			}
 
-			// Interpolate Z-value
-			p[2] = z.Dot(bary)
+			invZ := baryScreen[0]*oneOverZ[0] + baryScreen[1]*oneOverZ[1] + baryScreen[2]*oneOverZ[2]
+			baryClip := gl.Vec3{
+				baryScreen[0] * oneOverZ[0] / invZ,
+				baryScreen[1] * oneOverZ[1] / invZ,
+				baryScreen[2] * oneOverZ[2] / invZ,
+			}
+
+			// Interpolate Z- and W-values
+			p[2] = z.Dot(baryClip)
+			p[3] = w.Dot(baryClip)
 
 			// Depth
 			if p[2] < c.getZ(row, col) {
 				continue
 			}
 
-			c.i[size.R-1-row][col] = s(bary)
+			char, discard := s.Fragment(i0, i1, i2, baryClip)
+			if discard {
+				continue
+			}
+
+			c.i[size.R-1-row][col] = char
 			c.setZ(row, col, p[2])
 		}
 	}
 }
 
-func (c *Context) Triangles(s Shader, faces [][3]gl.Vec3) {
+func (c *Context) Triangle(s Shader, v0, v1, v2 gl.Vec3) {
+	c.triangle(
+		s,
+		0, 1, 2,
+		v0, v1, v2,
+	)
+}
+
+func (c *Context) Triangles(
+	s Shader,
+	verts []gl.Vec3,
+	faces [][3]int,
+) {
+	var i0, i1, i2 int
 	for _, face := range faces {
-		c.Triangle(s, face[0], face[1], face[2])
+		i0, i1, i2 = face[0], face[1], face[2]
+		c.triangle(
+			s,
+			i0, i1, i2,
+			verts[i0], verts[i1], verts[i2],
+		)
 	}
 }
 
@@ -135,8 +243,9 @@ func (c *Context) TriangleStrip(s Shader, vertices []gl.Vec3) {
 		// See https://www.khronos.org/opengl/wiki/Primitive
 		// TODO(cfoust): 03/09/25 fix winding order
 		if (i % 2) == 0 {
-			c.Triangle(
+			c.triangle(
 				s,
+				i+1, i, i+2,
 				vertices[i+1],
 				vertices[i],
 				vertices[i+2],
@@ -144,8 +253,9 @@ func (c *Context) TriangleStrip(s Shader, vertices []gl.Vec3) {
 			continue
 		}
 
-		c.Triangle(
+		c.triangle(
 			s,
+			i, i+1, i+2,
 			vertices[i],
 			vertices[i+1],
 			vertices[i+2],

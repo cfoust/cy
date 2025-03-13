@@ -8,24 +8,23 @@ import (
 	gl "github.com/go-gl/mathgl/mgl32"
 )
 
-type Camera struct {
-	View       gl.Mat4
-	Projection gl.Mat4
-}
-
 type Context struct {
-	Camera
-	i     image.Image
-	z     []float32
-	width int
+	camera *Camera
+	i      image.Image
+	z      []float32
+	size   geom.Vec2
 }
 
 func allocZ(size geom.Size) []float32 {
 	return make([]float32, size.R*size.C)
 }
 
+func (c *Context) Camera() *Camera {
+	return c.camera
+}
+
 func (c *Context) getIndex(row, col int) int {
-	return col + row*c.width
+	return col + row*c.size.C
 }
 
 func (c *Context) getZ(row, col int) float32 {
@@ -40,6 +39,13 @@ func (c *Context) Image() image.Image {
 	return c.i
 }
 
+func (c *Context) Resize(size geom.Vec2) {
+	c.i = image.New(size)
+	c.camera = NewCamera(size)
+	c.z = allocZ(size)
+	c.size = size
+}
+
 func (c *Context) Clear() {
 	e := emu.EmptyGlyph()
 	size := c.i.Size()
@@ -52,51 +58,12 @@ func (c *Context) Clear() {
 	}
 }
 
-func (c *Context) Project(in gl.Vec3) gl.Vec3 {
-	size := c.i.Size()
-	return gl.Project(
-		in,
-		c.View,
-		c.Projection,
-		0, 0,
-		size.C, size.R,
-	)
-}
-
-func (c *Context) UnProject(in gl.Vec3) (gl.Vec3, error) {
-	size := c.i.Size()
-	return gl.UnProject(
-		in,
-		c.View,
-		c.Projection,
-		0, 0,
-		size.C, size.R,
-	)
-}
-
-const (
-	// this corrects for the fact that terminal cells are not squares
-	aspect = 0.5017144097222223
-)
-
 func New(size geom.Size) *Context {
-	i := image.New(size)
-	return &Context{
-		i:     i,
-		z:     allocZ(size),
-		width: size.C,
-		Camera: Camera{
-			Projection: gl.Perspective(
-				gl.DegToRad(45.0),
-				float32(size.C)/(float32(size.R) / aspect),
-				0.1,
-				10.0,
-			),
-			View: gl.LookAtV(
-				gl.Vec3{0, 0, 5},
-				gl.Vec3{0, 0, 0},
-				gl.Vec3{0, 1, 0},
-			),
-		},
-	}
+	c := &Context{}
+	c.Resize(size)
+	return c
+}
+
+type Drawable interface {
+	Draw(c *Context)
 }

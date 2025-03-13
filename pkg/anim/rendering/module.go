@@ -10,31 +10,12 @@ import (
 	R "github.com/cfoust/cy/pkg/rasterion"
 
 	gl "github.com/go-gl/mathgl/mgl32"
-	"github.com/rs/zerolog/log"
 )
 
 const (
 	TICKS_PER_SECOND = 30
 	distance         = 0.1
 )
-
-// https://stackoverflow.com/a/46016469
-var cube = []gl.Vec3{
-	{-1, 1, 1},   // Front-top-left
-	{1, 1, 1},    // Front-top-right
-	{-1, -1, 1},  // Front-bottom-left
-	{1, -1, 1},   // Front-bottom-right
-	{1, -1, -1},  // Back-bottom-right
-	{1, 1, 1},    // Front-top-right
-	{1, 1, -1},   // Back-top-right
-	{-1, 1, 1},   // Front-top-left
-	{-1, 1, -1},  // Back-top-left
-	{-1, -1, 1},  // Front-bottom-left
-	{-1, -1, -1}, // Back-bottom-left
-	{1, -1, -1},  // Back-bottom-right
-	{-1, 1, -1},  // Back-top-left
-	{1, 1, -1},   // Back-top-right
-}
 
 func LinePlaneIntersection(
 	planePoint,
@@ -58,12 +39,51 @@ func LinePlaneIntersection(
 	return intersection, true
 }
 
+var screenVerts = []gl.Vec3{
+	{-1, 1, -1}, // Back-top-left
+	{1, 1, -1},  // Back-top-right
+	{-1, 1, 1},  // Front-top-left
+	{1, 1, 1},   // Front-top-right
+}
+
+var screenUvs = []gl.Vec2{
+	{0, 0},
+	{1.0, 0},
+	{0.0, 1.0},
+	{1.0, 1.0},
+}
+
+var screenFaces = [][3]int{
+	{2, 1, 0},
+	{1, 2, 3},
+}
+
+type topShader struct {
+	R.TransformShader
+	texture image.Image
+}
+
+var _ R.Shader = (*topShader)(nil)
+
+func (s *topShader) Fragment(
+	i0, i1, i2 int,
+	bary gl.Vec3,
+) (glyph emu.Glyph, discard bool) {
+	m := gl.Mat2x3FromCols(
+		screenUvs[i0],
+		screenUvs[i1],
+		screenUvs[i2],
+	)
+	uv := m.Mul3x1(bary)
+	glyph = R.Texture(s.texture, uv)
+	return
+}
+
 type LineTest struct {
 	start time.Time
 	last  time.Duration
 	rCtx  *R.Context
-	verts []gl.Vec3
-	model gl.Mat4
+	top   *topShader
 }
 
 var _ meta.Animation = (*LineTest)(nil)
@@ -72,9 +92,9 @@ func (c *LineTest) Init(start image.Image) {
 	c.start = time.Now()
 	r := R.New(start.Size())
 	c.rCtx = r
-	c.verts = make([]gl.Vec3, len(cube))
 
-	r.Camera.View = gl.LookAtV(
+	camera := r.Camera()
+	camera.View = gl.LookAtV(
 		gl.Vec3{0, 5., 0},
 		gl.Vec3{0, 0, 0},
 		gl.Vec3{0, 0, -1.},
@@ -85,32 +105,23 @@ func (c *LineTest) Init(start image.Image) {
 		float32(size.C),
 		float32(size.R),
 	}
-	a, _ := r.UnProject(screenPoint.Vec3(1.0))
-	b, _ := r.UnProject(screenPoint.Vec3(0.9))
-	p, ok := LinePlaneIntersection(
+	a, _ := camera.UnProject(screenPoint.Vec3(1.0))
+	b, _ := camera.UnProject(screenPoint.Vec3(0.9))
+	p, _ := LinePlaneIntersection(
 		gl.Vec3{0, 1, 0},
 		gl.Vec3{0, 1, 0},
 		a,
 		b.Sub(a),
 	)
-	log.Info().Msgf("%+v %+v", p, ok)
 
-	c.model = gl.Scale3D(
+	c.top = &topShader{
+		texture: start,
+	}
+	c.top.M = gl.Scale3D(
 		float32(math.Abs(float64(p[0]))),
-		0.5,
+		1.0,
 		float32(math.Abs(float64(p[2]))),
 	)
-}
-
-var shader R.Shader = func(uv gl.Vec3) emu.Glyph {
-	c := emu.EmptyGlyph()
-	c.Char = '*'
-	c.FG = emu.RGBColor(
-		int(uv[0]*255),
-		int(uv[1]*255),
-		int(uv[2]*255),
-	)
-	return c
 }
 
 func lerp(t, a, b float64) float64 {
@@ -126,10 +137,11 @@ func (c *LineTest) Update(delta time.Duration) image.Image {
 	c.last = delta
 
 	t := time.Now().Sub(c.start).Seconds() / 3
-
 	r := c.rCtx
 	d := math.Min(lerp(t/5.0, 0, 5.0), 5.0)
-	r.Camera.View = gl.LookAtV(
+	camera := r.Camera()
+
+	camera.View = gl.LookAtV(
 		gl.Vec3{
 			(float32(math.Sin(t) * d)),
 			5.,
@@ -140,13 +152,7 @@ func (c *LineTest) Update(delta time.Duration) image.Image {
 	)
 	r.Clear()
 
-	for i, vert := range cube {
-		vert = c.model.Mul4x1(vert.Vec4(1)).Vec3()
-		vert = gl.Translate3D(0, 1, 0).Mul4x1(vert.Vec4(1)).Vec3()
-		c.verts[i] = r.Project(vert)
-	}
-
-	r.TriangleStrip(shader, c.verts)
+	r.Triangles(c.top, screenVerts, screenFaces)
 
 	return current
 }
