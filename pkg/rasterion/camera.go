@@ -21,11 +21,9 @@ func (c *Camera) Viewport() geom.Vec2 {
 }
 
 func (c *Camera) Transform(in gl.Vec3) gl.Vec4 {
-	obj4 := in.Vec4(1)
-	vpp := c.Projection.Mul4(c.View).Mul4x1(obj4)
-	// Store depth in w
-	vpp[3] = vpp[2]
-	return vpp
+	return c.Projection.
+		Mul4(c.View).
+		Mul4x1(in.Vec4(1))
 }
 
 // Project transforms the given point in screen-space into world-space.

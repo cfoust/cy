@@ -182,6 +182,7 @@ func (c *Context) triangle(
 				continue
 			}
 
+			// Perform perspective correction on barycentric coords
 			invZ := baryScreen[0]*oneOverZ[0] + baryScreen[1]*oneOverZ[1] + baryScreen[2]*oneOverZ[2]
 			baryClip := gl.Vec3{
 				baryScreen[0] * oneOverZ[0] / invZ,
