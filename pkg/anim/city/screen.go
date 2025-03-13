@@ -9,10 +9,10 @@ import (
 )
 
 var screenVerts = []gl.Vec3{
-	{-1, 1, -1}, // Back-top-left
-	{1, 1, -1},  // Back-top-right
-	{-1, 1, 1},  // Front-top-left
-	{1, 1, 1},   // Front-top-right
+	{-1, 0, -1}, // Back-top-left
+	{1, 0, -1},  // Back-top-right
+	{-1, 0, 1},  // Front-top-left
+	{1, 0, 1},   // Front-top-right
 }
 
 var screenUvs = []gl.Vec2{
@@ -45,7 +45,7 @@ func (s *screenShader) Fragment(
 		screenUvs[i2],
 	)
 	uv := m.Mul3x1(bary)
-	glyph = R.Texture(s.texture, uv)
+	glyph = R.Sample2D(s.texture, uv)
 	return
 }
 

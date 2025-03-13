@@ -39,10 +39,11 @@ func LinePlaneIntersection(
 }
 
 type City struct {
-	start  time.Time
-	last   time.Duration
-	rCtx   *R.Context
-	screen *screenShader
+	start    time.Time
+	last     time.Duration
+	rCtx     *R.Context
+	screen   *screenShader
+	building *buildingShader
 }
 
 var _ meta.Animation = (*City)(nil)
@@ -81,6 +82,8 @@ func (c *City) Init(start image.Image) {
 		1.0,
 		float32(math.Abs(float64(p[2]))),
 	)
+
+	c.building = &buildingShader{}
 }
 
 func lerp(t, a, b float64) float64 {
@@ -96,6 +99,7 @@ func (c *City) Update(delta time.Duration) image.Image {
 	c.last = delta
 
 	t := time.Now().Sub(c.start).Seconds() / 3
+	t += 5
 	r := c.rCtx
 	d := math.Min(lerp(t/5.0, 0, 5.0), 5.0)
 	camera := r.Camera()
@@ -112,6 +116,10 @@ func (c *City) Update(delta time.Duration) image.Image {
 	r.Clear()
 
 	c.screen.Draw(r)
+	c.building.Size[0] = 0.25
+	c.building.Size[1] = 1
+	c.building.Position[0] = 3
+	c.building.Draw(r)
 
 	return current
 }
