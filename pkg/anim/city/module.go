@@ -1,11 +1,10 @@
-package rendering
+package city
 
 import (
 	"math"
 	"time"
 
 	"github.com/cfoust/cy/pkg/anim/meta"
-	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/image"
 	R "github.com/cfoust/cy/pkg/rasterion"
 
@@ -39,56 +38,16 @@ func LinePlaneIntersection(
 	return intersection, true
 }
 
-var screenVerts = []gl.Vec3{
-	{-1, 1, -1}, // Back-top-left
-	{1, 1, -1},  // Back-top-right
-	{-1, 1, 1},  // Front-top-left
-	{1, 1, 1},   // Front-top-right
+type City struct {
+	start  time.Time
+	last   time.Duration
+	rCtx   *R.Context
+	screen *screenShader
 }
 
-var screenUvs = []gl.Vec2{
-	{0, 0},
-	{1.0, 0},
-	{0.0, 1.0},
-	{1.0, 1.0},
-}
+var _ meta.Animation = (*City)(nil)
 
-var screenFaces = [][3]int{
-	{2, 1, 0},
-	{1, 2, 3},
-}
-
-type topShader struct {
-	R.TransformShader
-	texture image.Image
-}
-
-var _ R.Shader = (*topShader)(nil)
-
-func (s *topShader) Fragment(
-	i0, i1, i2 int,
-	bary gl.Vec3,
-) (glyph emu.Glyph, discard bool) {
-	m := gl.Mat2x3FromCols(
-		screenUvs[i0],
-		screenUvs[i1],
-		screenUvs[i2],
-	)
-	uv := m.Mul3x1(bary)
-	glyph = R.Texture(s.texture, uv)
-	return
-}
-
-type LineTest struct {
-	start time.Time
-	last  time.Duration
-	rCtx  *R.Context
-	top   *topShader
-}
-
-var _ meta.Animation = (*LineTest)(nil)
-
-func (c *LineTest) Init(start image.Image) {
+func (c *City) Init(start image.Image) {
 	c.start = time.Now()
 	r := R.New(start.Size())
 	c.rCtx = r
@@ -108,16 +67,16 @@ func (c *LineTest) Init(start image.Image) {
 	a, _ := camera.UnProject(screenPoint.Vec3(1.0))
 	b, _ := camera.UnProject(screenPoint.Vec3(0.9))
 	p, _ := LinePlaneIntersection(
-		gl.Vec3{0, 1, 0},
+		gl.Vec3{0, 0, 0},
 		gl.Vec3{0, 1, 0},
 		a,
 		b.Sub(a),
 	)
 
-	c.top = &topShader{
+	c.screen = &screenShader{
 		texture: start,
 	}
-	c.top.M = gl.Scale3D(
+	c.screen.M = gl.Scale3D(
 		float32(math.Abs(float64(p[0]))),
 		1.0,
 		float32(math.Abs(float64(p[2]))),
@@ -128,7 +87,7 @@ func lerp(t, a, b float64) float64 {
 	return a + t*(b-a)
 }
 
-func (c *LineTest) Update(delta time.Duration) image.Image {
+func (c *City) Update(delta time.Duration) image.Image {
 	current := c.rCtx.Image()
 	if (delta - c.last) < (time.Second / TICKS_PER_SECOND) {
 		return current
@@ -152,7 +111,7 @@ func (c *LineTest) Update(delta time.Duration) image.Image {
 	)
 	r.Clear()
 
-	r.Triangles(c.top, screenVerts, screenFaces)
+	c.screen.Draw(r)
 
 	return current
 }

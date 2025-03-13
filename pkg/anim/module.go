@@ -1,6 +1,7 @@
 package anim
 
 import (
+	"github.com/cfoust/cy/pkg/anim/city"
 	"github.com/cfoust/cy/pkg/anim/collapse"
 	"github.com/cfoust/cy/pkg/anim/conway"
 	"github.com/cfoust/cy/pkg/anim/cos"
@@ -11,7 +12,6 @@ import (
 	"github.com/cfoust/cy/pkg/anim/musicforprogramming"
 	"github.com/cfoust/cy/pkg/anim/perlin"
 	"github.com/cfoust/cy/pkg/anim/slime"
-	"github.com/cfoust/cy/pkg/anim/rendering"
 )
 
 const DEFAULT_FPS = 30
@@ -26,6 +26,9 @@ func registerAnimation(name string, animation Creator) {
 }
 
 func init() {
+	registerAnimation("city", func() Animation {
+		return &city.City{}
+	})
 	registerAnimation("collapse", func() Animation {
 		return &collapse.Collapse{}
 	})
@@ -52,8 +55,5 @@ func init() {
 	})
 	registerAnimation("slime", func() Animation {
 		return &slime.Slime{}
-	})
-	registerAnimation("lines", func() Animation {
-		return &rendering.LineTest{}
 	})
 }
