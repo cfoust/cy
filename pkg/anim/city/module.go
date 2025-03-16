@@ -2,6 +2,7 @@ package city
 
 import (
 	"math"
+	"math/rand"
 	"time"
 
 	"github.com/cfoust/cy/pkg/anim/meta"
@@ -47,6 +48,9 @@ type City struct {
 
 	buildingSize float32
 	screenBounds R.Rect
+
+	seed int64
+	rand *rand.Rand
 }
 
 var _ meta.Animation = (*City)(nil)
@@ -113,6 +117,9 @@ func (c *City) Init(start image.Image) {
 	c.building = &buildingShader{
 		Size: gl.Vec2{buildingSize, 0.5},
 	}
+
+	c.seed = int64(rand.Int())
+	c.rand = rand.New(rand.NewSource(c.seed))
 }
 
 func lerp(t, a, b float64) float64 {
@@ -154,6 +161,7 @@ func (c *City) Update(delta time.Duration) image.Image {
 		gridRows = float32(gridSize / (buildingSize + buildingGap))
 	)
 
+	c.rand.Seed(c.seed)
 	var pos gl.Vec3
 	var bounds = R.Rect{
 		Size: gl.Vec2{buildingSize, buildingSize},
@@ -171,6 +179,7 @@ func (c *City) Update(delta time.Duration) image.Image {
 				continue
 			}
 
+			c.building.Type = c.rand.Intn(6)
 			c.building.Position = pos
 			c.building.Draw(r)
 		}
