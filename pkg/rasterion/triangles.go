@@ -219,8 +219,6 @@ func (c *Context) triangle(
 			p[3] = w.Dot(baryClip)
 
 			// Depth
-			// TODO(cfoust): 03/13/25 this seems weird, did we
-			// invert this somewhere?
 			if p[2] > c.getZ(row, col) {
 				continue
 			}
