@@ -44,9 +44,19 @@ type City struct {
 	rCtx     *R.Context
 	screen   *screenShader
 	building *buildingShader
+
+	buildingSize float32
+	screenBounds R.Rect
 }
 
 var _ meta.Animation = (*City)(nil)
+
+const (
+	buildingSize = 0.5
+	buildingGap  = 0.4
+	gridSize     = 16.
+	halfGridSize = gridSize / 2
+)
 
 func (c *City) Init(start image.Image) {
 	c.start = time.Now()
@@ -61,12 +71,18 @@ func (c *City) Init(start image.Image) {
 	)
 
 	size := start.Size()
+	// Point in screen space we want to sample at
 	screenPoint := gl.Vec2{
 		float32(size.C),
 		float32(size.R),
 	}
+
+	// Get two points a, b that differ only in depth to create a line
+	// pointing at ground
 	a, _ := camera.UnProject(screenPoint.Vec3(1.0))
 	b, _ := camera.UnProject(screenPoint.Vec3(0.9))
+
+	// Find the point on the ground plane
 	p, _ := LinePlaneIntersection(
 		gl.Vec3{0, 0, 0},
 		gl.Vec3{0, 1, 0},
@@ -74,16 +90,29 @@ func (c *City) Init(start image.Image) {
 		b.Sub(a),
 	)
 
+	// Half the size of the screen in world space
+	var (
+		screenWidth  = float32(math.Abs(float64(p[0])))
+		screenHeight = float32(math.Abs(float64(p[2])))
+	)
 	c.screen = &screenShader{
 		texture: start,
 	}
-	c.screen.M = gl.Scale3D(
-		float32(math.Abs(float64(p[0]))),
-		1.0,
-		float32(math.Abs(float64(p[2]))),
-	)
+	screenMatrix := gl.Scale3D(screenWidth, 1.0, screenHeight)
+	c.screen.M = screenMatrix
 
-	c.building = &buildingShader{}
+	topLeft := screenMatrix.
+		Mul4x1(screenVerts[0].Vec4(1)).
+		Vec3()
+
+	c.screenBounds = R.Rect{
+		Pos:  gl.Vec2{topLeft[0], topLeft[2]},
+		Size: gl.Vec2{screenWidth * 2, screenHeight * 2},
+	}
+
+	c.building = &buildingShader{
+		Size: gl.Vec2{buildingSize, 0.5},
+	}
 }
 
 func lerp(t, a, b float64) float64 {
@@ -99,7 +128,6 @@ func (c *City) Update(delta time.Duration) image.Image {
 	c.last = delta
 
 	t := time.Now().Sub(c.start).Seconds() / 3
-	t += 5
 	r := c.rCtx
 	d := math.Min(lerp(t/5.0, 0, 5.0), 5.0)
 	camera := r.Camera()
@@ -116,10 +144,37 @@ func (c *City) Update(delta time.Duration) image.Image {
 	r.Clear()
 
 	c.screen.Draw(r)
-	c.building.Size[0] = 0.25
-	c.building.Size[1] = 1
-	c.building.Position[0] = 3
-	c.building.Draw(r)
+
+	var (
+		origin = gl.Vec3{
+			-1 * halfGridSize,
+			0,
+			-1 * halfGridSize,
+		}
+		gridRows = float32(gridSize / (buildingSize + buildingGap))
+	)
+
+	var pos gl.Vec3
+	var bounds = R.Rect{
+		Size: gl.Vec2{buildingSize, buildingSize},
+	}
+	for row := 0; row < int(gridRows); row++ {
+		for col := 0; col < int(gridRows); col++ {
+			pos = origin.Add(gl.Vec3{
+				float32(row) * (buildingSize + buildingGap),
+				0,
+				float32(col) * (buildingSize + buildingGap),
+			})
+
+			bounds.Pos = gl.Vec2{pos[0], pos[2]}
+			if c.screenBounds.Overlaps(bounds) {
+				continue
+			}
+
+			c.building.Position = pos
+			c.building.Draw(r)
+		}
+	}
 
 	return current
 }

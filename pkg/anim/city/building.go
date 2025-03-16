@@ -29,8 +29,9 @@ var buildingFaces = [][3]int{
 }
 
 type buildingShader struct {
-	face           int
-	Position, Size gl.Vec2
+	face     int
+	Position gl.Vec3
+	Size     gl.Vec2
 }
 
 var _ R.Shader = (*buildingShader)(nil)
@@ -42,16 +43,16 @@ func (b *buildingShader) Vertex(
 	out = vertex.Vec4(1)
 	// This could be cleaned up but it's easier to understand this way
 	// > Scale the flat (ie on xz plane) mesh to correct size
-	out = gl.Scale3D(b.Size[0], 1, b.Size[1]).Mul4x1(out)
+	out = gl.Scale3D(b.Size[0]/2, 1, b.Size[1]).Mul4x1(out)
 	// > Orient it along the xy plane instead
 	out = gl.HomogRotate3DX(math.Pi / 2).Mul4x1(out)
 	// > Move the face outwards
-	out = gl.Translate3D(0, 0, b.Size[0]).Mul4x1(out)
+	out = gl.Translate3D(0, 0, b.Size[0]/2).Mul4x1(out)
 	// > Rotate it to its destination around y axis
 	out = gl.HomogRotate3DY(float32(b.face) * math.Pi / 2).Mul4x1(out)
 	// > Move the whole object to destination in world space
 	out = gl.
-		Translate3D(b.Position[0], b.Size[1], b.Position[1]).
+		Translate3D(b.Position[0], b.Size[1], b.Position[2]).
 		Mul4x1(out)
 	return camera.Transform(out.Vec3())
 }
@@ -61,7 +62,8 @@ func (b *buildingShader) Fragment(
 	bary gl.Vec3,
 ) (glyph emu.Glyph, discard bool) {
 	glyph = emu.EmptyGlyph()
-	glyph.BG = emu.ANSIColor(1)
+	glyph.Char = '⡀'
+	glyph.FG = emu.LightYellow
 	return
 }
 

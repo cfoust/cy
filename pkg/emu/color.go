@@ -16,7 +16,7 @@ const (
 	colorXterm uint32 = 0xff
 )
 
-// Color maps to the ANSI colors [0, 16) and the xterm colors [16, 256).
+// Color maps to the ANSI colors [0, 16) and the xterm colors [0, 256).
 type Color uint32
 
 func ANSIColor(color int) Color {
@@ -32,23 +32,23 @@ func RGBColor(r, g, b int) Color {
 }
 
 // ANSI color values
-const (
-	Black Color = iota
-	Red
-	Green
-	Yellow
-	Blue
-	Magenta
-	Cyan
-	LightGrey
-	DarkGrey
-	LightRed
-	LightGreen
-	LightYellow
-	LightBlue
-	LightMagenta
-	LightCyan
-	White
+var (
+	Black        Color = ANSIColor(0)
+	Red          Color = ANSIColor(1)
+	Green        Color = ANSIColor(2)
+	Yellow       Color = ANSIColor(3)
+	Blue         Color = ANSIColor(4)
+	Magenta      Color = ANSIColor(5)
+	Cyan         Color = ANSIColor(6)
+	LightGrey    Color = ANSIColor(7)
+	DarkGrey     Color = ANSIColor(8)
+	LightRed     Color = ANSIColor(9)
+	LightGreen   Color = ANSIColor(10)
+	LightYellow  Color = ANSIColor(11)
+	LightBlue    Color = ANSIColor(12)
+	LightMagenta Color = ANSIColor(13)
+	LightCyan    Color = ANSIColor(14)
+	White        Color = ANSIColor(15)
 )
 
 // Default colors are potentially distinct to allow for special behavior.

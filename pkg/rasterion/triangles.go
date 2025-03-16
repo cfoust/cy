@@ -14,7 +14,7 @@ func min(vals ...float32) float32 {
 		return 0
 	}
 
-	var value = gl.MaxValue
+	var value = gl.InfPos
 	for _, v := range vals {
 		if v > value {
 			continue
@@ -30,7 +30,7 @@ func max(vals ...float32) float32 {
 		return 0
 	}
 
-	var value = gl.MinValue
+	var value = gl.InfNeg
 	for _, v := range vals {
 		if v < value {
 			continue
@@ -119,21 +119,47 @@ func (c *Context) triangle(
 		for j := 0; j < 2; j++ {
 			v[i][j] = viewport[j] * 0.5 * (v[i][j] + 1.0)
 		}
+
+		// Do not draw triangles with vertices behind the camera
+		if v[i][2] < 0 || v[i][3] < 0 {
+			return
+		}
 	}
 
 	// First compute the bounding box for the triangle in screen space
 	var (
 		boundMin = gl.Vec2{
+			gl.InfPos,
+			gl.InfPos,
+		}
+		boundMax = gl.Vec2{
+			gl.InfNeg,
+			gl.InfNeg,
+		}
+		clamp = gl.Vec2{
 			float32(size.C - 1),
 			float32(size.R - 1),
 		}
-		boundMax = gl.Vec2{}
-		clamp    = boundMin
 	)
-	boundMin[0] = max(0, min(boundMin[0], v[0][0], v[1][0], v[2][0]))
-	boundMin[1] = max(0, min(boundMin[1], v[0][1], v[1][1], v[2][1]))
-	boundMax[0] = min(clamp[0], max(boundMax[0], v[0][0], v[1][0], v[2][0]))
-	boundMax[1] = min(clamp[1], max(boundMax[1], v[0][1], v[1][1], v[2][1]))
+	boundMin[0] = min(v[0][0], v[1][0], v[2][0])
+	boundMin[1] = min(v[0][1], v[1][1], v[2][1])
+	boundMax[0] = max(boundMax[0], v[0][0], v[1][0], v[2][0])
+	boundMax[1] = max(boundMax[1], v[0][1], v[1][1], v[2][1])
+
+	// Exclude triangles that are not on the screen
+	if boundMax[0] < 0 || boundMin[0] > clamp[0] {
+		return
+	}
+
+	if boundMax[1] < 0 || boundMin[1] > clamp[1] {
+		return
+	}
+
+	boundMin[0] = max(boundMin[0], 0.)
+	boundMin[1] = max(boundMin[1], 0.)
+
+	boundMax[0] = min(boundMax[0], clamp[0])
+	boundMax[1] = min(boundMax[1], clamp[1])
 
 	boundMini := geom.Vec2{
 		R: int(boundMin[1]),
