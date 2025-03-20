@@ -29,8 +29,8 @@ func (l *lineShader) Fragment(
 	glyph = emu.EmptyGlyph()
 	glyph.Char = '#'
 	glyph.FG = emu.RGBColor(
-		int((1-t) * 255),
-		0,
+		int((1-t)*255),
+		int((t)*255),
 		0,
 	)
 	return
@@ -42,10 +42,15 @@ var sinLine Drawing = func(c *R.Context, delta time.Duration) {
 	t := delta.Seconds()
 	c.Line(
 		s,
-		gl.Vec3{},
+		gl.Vec3{0, 0, 1},
 		gl.Vec3{
 			float32(math.Cos(t)),
 			float32(math.Sin(t)),
+			1,
 		},
 	)
+}
+
+func init() {
+	registerStory("lines/sweep", sinLine)
 }
