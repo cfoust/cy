@@ -44,6 +44,53 @@ type FragmentShader interface {
 	) (glyph emu.Glyph, discard bool)
 }
 
+type DefaultFragmentShader struct{}
+
+var _ FragmentShader = (*DefaultFragmentShader)(nil)
+
+func (f DefaultFragmentShader) Fragment(
+	i0, i1, i2 int,
+	bary gl.Vec3,
+) (glyph emu.Glyph, discard bool) {
+	glyph = emu.EmptyGlyph()
+	glyph.Char = '#'
+	return
+}
+
+type Shader interface {
+	VertexShader
+	FragmentShader
+}
+
+type LineFragmentShader interface {
+	Fragment(
+		i0, i1 int,
+		v0, v1 gl.Vec3,
+		e0, e1 bool,
+		t float32,
+	) (glyph emu.Glyph, discard bool)
+}
+
+type DefaultLineFragmentShader struct{}
+
+var _ LineFragmentShader = (*DefaultLineFragmentShader)(nil)
+
+func (f DefaultLineFragmentShader) Fragment(
+	i0, i1 int,
+	v0, v1 gl.Vec3,
+	e0, e1 bool,
+	t float32,
+) (glyph emu.Glyph, discard bool) {
+	glyph = emu.EmptyGlyph()
+	glyph.Char = '#'
+	return
+}
+
+type LineShader interface {
+	VertexShader
+	LineFragmentShader
+}
+
 func Interpolate(bary gl.Vec3, v0, v1, v2 float32) float32 {
 	return bary[0]*v0 + bary[1]*v1 + bary[2]*v2
 }
@@ -75,9 +122,4 @@ func Sample2D(texture image.Image, uv gl.Vec2) emu.Glyph {
 	}
 
 	return texture[row][col]
-}
-
-type Shader interface {
-	VertexShader
-	FragmentShader
 }
