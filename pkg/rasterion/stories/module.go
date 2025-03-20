@@ -40,24 +40,17 @@ func createStory(drawing Drawing) stories.InitFunc {
 		animator := anim.NewAnimator(
 			ctx,
 			&Drawer{drawing: drawing},
-			image.New(geom.DEFAULT_SIZE),
+			image.New(geom.DEFAULT_SIZE.Scalar(2)),
 			anim.DEFAULT_FPS,
 		)
 		return animator, nil
 	}
 }
 
-var drawings = map[string]Drawing{
-	"lines": sinLine,
-}
-
-func init() {
-
-	for name, drawing := range drawings {
-		stories.Register(
-			"rasterion/"+name,
-			createStory(drawing),
-			stories.Config{},
-		)
-	}
+func registerStory(name string, drawing Drawing) {
+	stories.Register(
+		"rasterion/"+name,
+		createStory(drawing),
+		stories.Config{},
+	)
 }
