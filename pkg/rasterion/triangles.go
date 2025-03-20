@@ -88,43 +88,50 @@ func normalizeDeviceCoordinates(v gl.Vec4) gl.Vec4 {
 	return v
 }
 
+func (c *Context) transformPoint(
+	s VertexShader,
+	viewport gl.Vec2,
+	face, index int,
+	point gl.Vec3,
+) (transformed, window gl.Vec4, behind bool) {
+	transformed = s.Vertex(c.camera, face, index, point)
+
+	// First transform to NDC
+	window = normalizeDeviceCoordinates(transformed)
+
+	// Then convert to window coordinates
+	for j := 0; j < 2; j++ {
+		window[j] = viewport[j] * 0.5 * (window[j] + 1.0)
+	}
+
+	behind = window.Z() < 0 || window.W() < 0
+	return
+}
+
 func (c *Context) triangle(
 	s Shader,
 	face, i0, i1, i2 int,
-	w0, w1, w2 gl.Vec3,
+	p0, p1, p2 gl.Vec3,
 ) {
-	size := c.i.Size()
-
-	v0 := s.Vertex(c.camera, face, 0, w0)
-	v1 := s.Vertex(c.camera, face, 1, w1)
-	v2 := s.Vertex(c.camera, face, 2, w2)
-
 	var (
-		oneOverZ = gl.Vec3{
-			1 / v0[2],
-			1 / v1[2],
-			1 / v2[2],
-		}
+		size     = c.i.Size()
 		viewport = gl.Vec2{
 			float32(size.C),
 			float32(size.R),
 		}
-		v = []gl.Vec4{v0, v1, v2}
+		v0, w0, b0 = c.transformPoint(s, viewport, face, 0, p0)
+		v1, w1, b1 = c.transformPoint(s, viewport, face, 1, p1)
+		v2, w2, b2 = c.transformPoint(s, viewport, face, 2, p2)
 	)
 
-	for i := 0; i < 3; i++ {
-		v[i] = normalizeDeviceCoordinates(v[i])
-
-		// Convert to window coordinates
-		for j := 0; j < 2; j++ {
-			v[i][j] = viewport[j] * 0.5 * (v[i][j] + 1.0)
-		}
-
-		// Do not draw triangles with vertices behind the camera
-		if v[i][2] < 0 || v[i][3] < 0 {
-			return
-		}
+	// Do not draw triangles behind the camera
+	if b0 || b1 || b2 {
+		return
 	}
+
+	var (
+		v = []gl.Vec4{w0, w1, w2}
+	)
 
 	// First compute the bounding box for the triangle in screen space
 	var (
@@ -176,6 +183,11 @@ func (c *Context) triangle(
 			v[1].Vec2(),
 			v[2].Vec2(),
 		)
+		oneOverZ = gl.Vec3{
+			1 / v0[2],
+			1 / v1[2],
+			1 / v2[2],
+		}
 		p          gl.Vec4
 		baryScreen gl.Vec3
 		z          = gl.Vec3{v[0][2], v[1][2], v[2][2]}
