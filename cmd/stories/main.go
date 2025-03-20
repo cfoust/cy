@@ -14,6 +14,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/stream/cli"
 	"github.com/cfoust/cy/pkg/mux/stream/renderer"
+	_ "github.com/cfoust/cy/pkg/rasterion/stories"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/stories"
 	"github.com/cfoust/cy/pkg/stories/ui"
