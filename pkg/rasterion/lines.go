@@ -28,35 +28,23 @@ func (c *Context) line(
 		return
 	}
 
-	var (
-		boundMin = gl.Vec2{
-			min(w0[0], w1[0]),
-			min(w0[1], w1[1]),
-		}
-		boundMax = gl.Vec2{
-			max(w0[0], w1[0]),
-			max(w0[1], w1[1]),
-		}
-		clamp = gl.Vec2{
+	screen0, screen1, onScreen, _ := Rect{
+		Size: gl.Vec2{
 			float32(size.C - 1),
 			float32(size.R - 1),
-		}
-	)
+		},
+	}.Intersections(w0.Vec2(), w1.Vec2())
 
 	// Exclude lines that are not on the screen
-	if boundMax[0] < 0 || boundMin[0] > clamp[0] {
-		return
-	}
-
-	if boundMax[1] < 0 || boundMin[1] > clamp[1] {
+	if !onScreen {
 		return
 	}
 
 	var (
-		x0       = int(gl.Clamp(w0[0], 0, clamp[0]))
-		y0       = int(gl.Clamp(w0[1], 0, clamp[1]))
-		x1       = int(gl.Clamp(w1[0], 0, clamp[0]))
-		y1       = int(gl.Clamp(w1[1], 0, clamp[1]))
+		x0       = int(screen0[0])
+		y0       = int(screen0[1])
+		x1       = int(screen1[0])
+		y1       = int(screen1[1])
 		oneOverZ = gl.Vec3{
 			1 / v0[2],
 			1 / v1[2],
@@ -106,9 +94,6 @@ func (c *Context) line(
 		// Correct for perspective
 		invZ = (1-t)*oneOverZ[0] + t*oneOverZ[1]
 		t = (1 - t) * oneOverZ[0] / invZ
-
-		for i := 0; i < 4; i++ {
-		}
 
 		glyph, discard = s.Fragment(
 			i0, i1,
