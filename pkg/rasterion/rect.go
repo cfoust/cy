@@ -127,29 +127,38 @@ func (r Rect) Intersections(p0, p1 gl.Vec2) (
 			continue
 		}
 
-		if r.Contains(p0) && has1 {
+		// It intersects both
+		if has0 && has1 {
+			// Otherwise we have both
 			intersects = true
-			numIntersections = 1
-			i0 = p0
+			numIntersections = 2
+
+			// If original line has opposite direction, swap
+			if i1.Sub(i0).Dot(ray) < 0 {
+				i0, i1 = i1, i0
+			}
 			return
 		}
 
-		if r.Contains(p1) && has0 {
-			intersects = true
-			numIntersections = 1
-			i1 = p1
-			return
-		}
-
-		// If only one of these is true, it's probably a different pair
-		// of sides
-		if !has0 || !has1 {
+		// It must just intersect one, but if neither point is inside
+		// the rect, it can't be this pair of sides
+		if !r.Contains(p0) && !r.Contains(p1) {
 			continue
 		}
 
-		// Otherwise we have both
 		intersects = true
-		numIntersections = 2
+		numIntersections = 1
+
+		// Store the intersection in i1
+		if has0 {
+			i1 = i0
+		}
+
+		// Store the inner point in i0
+		i0 = p0
+		if r.Contains(p1) {
+			i0 = p1
+		}
 
 		// If original line has opposite direction, swap
 		if i1.Sub(i0).Dot(ray) < 0 {

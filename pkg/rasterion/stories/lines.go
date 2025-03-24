@@ -43,8 +43,8 @@ var sinLine Drawing = func(c *R.Context, delta time.Duration) {
 		s,
 		gl.Vec3{0, 0, 1},
 		gl.Vec3{
-			float32(math.Cos(t)),
-			float32(math.Sin(t)),
+			2 * float32(math.Cos(t)),
+			2 * float32(math.Sin(t)),
 			1,
 		},
 	)
