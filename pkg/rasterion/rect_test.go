@@ -34,6 +34,16 @@ func TestIntersections(t *testing.T) {
 		require.False(t, ok)
 	}
 
+	// Completely inside rect
+	{
+		_, _, ok, num := r.Intersections(
+			gl.Vec2{},
+			gl.Vec2{},
+		)
+		require.True(t, ok)
+		require.Equal(t, 0, num)
+	}
+
 	// Straddles square
 	{
 		i0, i1, ok, num := r.Intersections(
@@ -56,6 +66,20 @@ func TestIntersections(t *testing.T) {
 		require.Equal(t, 1, num)
 		require.Equal(t, gl.Vec2{0, 0}, i0)
 		require.Equal(t, gl.Vec2{0, 0.5}, i1)
+	}
+
+	// Start point inside II
+	{
+		i0, i1, ok, num := Rect{
+			Size: gl.Vec2{1, 1},
+		}.Intersections(
+			gl.Vec2{0.5, 0.5},
+			gl.Vec2{0.5, -1},
+		)
+		require.True(t, ok)
+		require.Equal(t, 1, num)
+		require.Equal(t, gl.Vec2{0.5, 0.5}, i0)
+		require.Equal(t, gl.Vec2{0.5, 0}, i1)
 	}
 
 	// End point inside
