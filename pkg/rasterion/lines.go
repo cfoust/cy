@@ -69,8 +69,6 @@ func (c *Context) line(
 		p       gl.Vec4
 		glyph   emu.Glyph
 		discard bool
-		isStart bool
-		isEnd   bool
 		t       float32
 		invZ    float32
 	)
@@ -80,8 +78,6 @@ func (c *Context) line(
 	if length == 0 {
 		return
 	}
-
-	isStart = true
 
 	dx := geom.Abs(x1 - x0)
 	dy := geom.Abs(y1 - y0)
@@ -97,8 +93,6 @@ func (c *Context) line(
 	err := dx - dy
 
 	for {
-		isEnd = x0 == x1 && y0 == y1
-
 		// Center the point in the cell
 		p[0] = float32(x0) + 0.5
 		p[1] = float32(y0) + 0.5
@@ -113,21 +107,22 @@ func (c *Context) line(
 		invZ = (1-t)*oneOverZ[0] + t*oneOverZ[1]
 		t = (1 - t) * oneOverZ[0] / invZ
 
+		for i := 0; i < 4; i++ {
+		}
+
 		glyph, discard = s.Fragment(
 			i0, i1,
 			gl.Vec3{}, gl.Vec3{},
-			isStart, isEnd, t,
+			t,
 		)
 
 		if !discard {
 			image[y0][x0] = glyph
 		}
 
-		if isEnd {
+		if x0 == x1 && y0 == y1 {
 			break
 		}
-
-		isStart = false
 
 		e2 := 2 * err
 		if e2 > -dy {
