@@ -23,7 +23,6 @@ func (l *lineShader) Vertex(
 func (l *lineShader) Fragment(
 	i0, i1 int,
 	v0, v1 gl.Vec3,
-	e0, e1 bool,
 	t float32,
 ) (glyph emu.Glyph, discard bool) {
 	glyph = emu.EmptyGlyph()
