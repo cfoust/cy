@@ -78,7 +78,7 @@ func IntersectLine(p0, p1, p2, p3 gl.Vec2) (
 
 var intersectionChecks = [][2]int{
 	// LR, TR, RB, BL, LT, TB
-	{3, 1}, {0, 1}, {1, 2}, {2, 3}, {0, 2},
+	{3, 1}, {0, 1}, {1, 2}, {2, 3}, {3, 0}, {0, 2},
 }
 
 func (r Rect) Intersections(p0, p1 gl.Vec2) (
