@@ -144,6 +144,7 @@ func (c *Context) line(
 		in1 = clampVector(in1, 0, 1)
 
 		glyph, discard = s.Fragment(
+			p.Vec2(),
 			i0, i1,
 			in0.Vec3(1), in1.Vec3(1),
 			t,

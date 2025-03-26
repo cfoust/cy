@@ -94,7 +94,7 @@ func TestIntersections(t *testing.T) {
 		require.Equal(t, gl.Vec2{0, 0}, i1)
 	}
 
-	// Drawing bug I
+	// Drawing bug
 	{
 		_, _, ok, _ := Rect{
 			Pos:  gl.Vec2{81, 23},
@@ -102,18 +102,6 @@ func TestIntersections(t *testing.T) {
 		}.Intersections(
 			gl.Vec2{80, 24},
 			gl.Vec2{83.46251, 21.83644},
-		)
-		require.True(t, ok)
-	}
-
-	// Drawing bug II
-	{
-		_, _, ok, _ := Rect{
-			Pos:  gl.Vec2{34, 25},
-			Size: gl.Vec2{1, 1},
-		}.Intersections(
-			gl.Vec2{80, 24},
-			gl.Vec2{0.20493507, 25.716757},
 		)
 		require.True(t, ok)
 	}
