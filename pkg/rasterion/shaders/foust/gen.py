@@ -40,7 +40,6 @@ def render_glyph(
     # Align glyph with baseline
     y_offset = (render_size[0] - (baseline + face.glyph.bitmap_top))
     x_offset = (render_size[1] - glyph_w) // 2  # Center horizontally
-    print(char, render_size, baseline, face.glyph.bitmap_top)
 
     # Insert the glyph into the fixed canvas (only if it has width/height)
     fixed_canvas[y_offset:y_offset+glyph_h, x_offset:x_offset+glyph_w] = \
@@ -99,17 +98,21 @@ def compute_occupancies(
         dtype=np.uint8,
     )
 
+    grids = []
+
     for i, symbol in enumerate(symbols):
         y_offset = (i // num_columns) * max_height
         x_offset = ((i % num_columns) * max_width * 2)
 
-        _, bitmap, occupancy = render_glyph(
+        grid, bitmap, occupancy = render_glyph(
             face,
             symbol,
             (8, 8),
             size,
             max_descent,
         )
+
+        grids.append((symbol, grid))
 
         out_canvas[y_offset:y_offset+max_height, x_offset:x_offset+max_width] = \
             bitmap
@@ -120,26 +123,42 @@ def compute_occupancies(
         ] = \
             occupancy
 
-    plot_grid(out_canvas)
+    # plot_grid(out_canvas)
+    return grids
+
+def grid_to_uint64(grid):
+    value = int(0)
+    for i, row in enumerate(grid):
+        for j, cell in enumerate(row):
+            if cell == 0: continue
+            value |= 1 << ((i * 8) + j)
+    return value
 
 
 symbols = [
     # "Standard" common characters
-    ',', '_', '-', '"', ']', '[', '}', '{', 'v', 'V',
-    '<', '>', '\'',
-
+    ',', '"',
     # Light box-drawing characters
-    '─', '│', '┌', '┐', '└', '┘', '├', '┤', '┬', '┴', '┼',
-    '╭', '╮', '╯', '╰', '╱', '╲', '╳',
+    '─', '│', '╱', '╲', '¯', '_', '\'',
+    '┌', '┐', '└', '┘', '├', '┤', '┬', '┴', '┼',
+    '╭', '╮', '╯', '╰', '╱', '╲',
+    # ']', '[', '}', '{', 'v', 'V',
+    # '<', '>',
+    #  '\\', '/',
 
-    # Legacy computing symbols
-    # '🯐', '🯑', '🯒', '🯓', '🯔', '🯕', '🯖', '🯗', '🯘', '🯙', '🯚',
-    # '🯛', '🯜', '🯝', '🯞', '🯟',
-    # '🯠', '🯡', '🯢', '🯣',
-    # '🭱','🭲','🭳','🭴','🭵',
 ]
 
 face = freetype.Face("./CozetteVector.ttf")
 face.set_char_size(128 * 64)  # Set font size in p
 
-compute_occupancies(face, symbols)
+with open('./symbols.go', 'w') as f:
+    f.write("package foust\n\n")
+
+    f.write("var foustSymbols = []foustSymbol{\n")
+    for symbol, grid in compute_occupancies(face, symbols):
+        symbol = symbol.replace('\'', '\\\'')
+        if symbol == '\\':
+            symbol = '\\' + '\\'
+
+        f.write(f"   {{'{symbol}', {grid_to_uint64(grid)}}},\n")
+    f.write("}")
