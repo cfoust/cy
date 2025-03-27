@@ -123,8 +123,7 @@ def compute_occupancies(
         ] = \
             occupancy
 
-    # plot_grid(out_canvas)
-    return grids
+    return out_canvas, grids
 
 def grid_to_uint64(grid):
     value = int(0)
@@ -137,15 +136,15 @@ def grid_to_uint64(grid):
 
 symbols = [
     # "Standard" common characters
-    ',', '"',
+    ']', '[', '}', '{', 'v', 'V',
+    '<', '>', ',', '"', '=', '@',
+    '^', '`', '«', '»',
     # Light box-drawing characters
     '─', '│', '╱', '╲', '¯', '_', '\'',
     '┌', '┐', '└', '┘', '├', '┤', '┬', '┴', '┼',
     '╭', '╮', '╯', '╰', '╱', '╲',
-    # ']', '[', '}', '{', 'v', 'V',
-    # '<', '>',
-    #  '\\', '/',
-
+    # Unicode weirdness
+    '˺', '⌈', '⌉',
 ]
 
 face = freetype.Face("./CozetteVector.ttf")
@@ -155,10 +154,13 @@ with open('./symbols.go', 'w') as f:
     f.write("package foust\n\n")
 
     f.write("var foustSymbols = []foustSymbol{\n")
-    for symbol, grid in compute_occupancies(face, symbols):
+    canvas, grids = compute_occupancies(face, symbols)
+    for symbol, grid in grids:
         symbol = symbol.replace('\'', '\\\'')
         if symbol == '\\':
             symbol = '\\' + '\\'
 
         f.write(f"   {{'{symbol}', {grid_to_uint64(grid)}}},\n")
     f.write("}")
+
+    plot_grid(canvas)
