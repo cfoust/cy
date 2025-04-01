@@ -7,7 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	R "github.com/cfoust/cy/pkg/rasterion"
-	"github.com/cfoust/cy/pkg/rasterion/shaders/foust"
+	"github.com/cfoust/cy/pkg/rasterion/shaders/subcell"
 
 	gl "github.com/go-gl/mathgl/mgl32"
 )
@@ -27,9 +27,9 @@ type lineShader struct{}
 var _ R.LineFragmentShader = (*lineShader)(nil)
 
 func (l *lineShader) Fragment(
-	gl_FragCoord gl.Vec2,
+	gl_FragCoord gl.Vec3,
 	i0, i1 int,
-	v0, v1 gl.Vec3,
+	v0, v1 gl.Vec2,
 	t float32,
 ) (glyph emu.Glyph, discard bool) {
 	glyph = emu.EmptyGlyph()
@@ -60,30 +60,33 @@ var sinLine Drawing = func(c *R.Context, delta time.Duration) {
 	)
 }
 
-var foustShader = &struct {
+var subcellShader = &struct {
 	*noVertexShader
-	*foust.FoustShader
+	*subcell.Shader
 }{
-	FoustShader: foust.NewFoustShader(geom.DEFAULT_SIZE),
+	Shader: subcell.New(
+		geom.DEFAULT_SIZE,
+		sinShader,
+	),
 }
 
-var foustLine Drawing = func(c *R.Context, delta time.Duration) {
+var subcellLine Drawing = func(c *R.Context, delta time.Duration) {
 	size := c.Image().Size()
-	if foustShader.Size() != size {
-		foustShader.Resize(size)
+	if subcellShader.Size() != size {
+		subcellShader.Resize(size)
 	}
 
-	foustShader.Clear()
+	subcellShader.Clear()
 
 	t := delta.Seconds() / 5
 	for i := 0; i < 5; i++ {
 		advance := float64(i) * 0.1
 		c.Line(
-			foustShader,
+			subcellShader,
 			gl.Vec3{0, 0, 1},
 			gl.Vec3{
-				1 * float32(math.Cos(t + advance)),
-				1 * float32(math.Sin(t + advance)),
+				1 * float32(math.Cos(t+advance)),
+				1 * float32(math.Sin(t+advance)),
 				1,
 			},
 		)
@@ -92,5 +95,5 @@ var foustLine Drawing = func(c *R.Context, delta time.Duration) {
 
 func init() {
 	registerStory("lines/sweep", sinLine)
-	registerStory("lines/foust", foustLine)
+	registerStory("lines/subcell", subcellLine)
 }
