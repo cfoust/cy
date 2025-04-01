@@ -1,4 +1,4 @@
-package foust
+package subcell
 
 import (
 	"github.com/cfoust/cy/pkg/geom"
@@ -6,7 +6,7 @@ import (
 	gl "github.com/go-gl/mathgl/mgl32"
 )
 
-type foustCell uint64
+type gridCell uint64
 
 func getBitOffset(row, col int) int {
 	row = geom.Clamp(row, 0, 7)
@@ -14,22 +14,22 @@ func getBitOffset(row, col int) int {
 	return ((row * 8) + col)
 }
 
-func (c foustCell) Set(row, col int, value bool) foustCell {
+func (c gridCell) Set(row, col int, value bool) gridCell {
 	var bit uint64
 	if value {
 		bit = 1
 	}
 
 	offset := getBitOffset(row, col)
-	return foustCell(uint64(c) | (bit << offset))
+	return gridCell(uint64(c) | (bit << offset))
 }
 
-func (c foustCell) Get(row, col int) bool {
+func (c gridCell) Get(row, col int) bool {
 	offset := getBitOffset(row, col)
 	return ((uint64(c) >> offset) & uint64(1)) == 1
 }
 
-func (c foustCell) String() (result string) {
+func (c gridCell) String() (result string) {
 	for row := 0; row < foustSize; row++ {
 		for col := 0; col < foustSize; col++ {
 			if c.Get(row, col) {
@@ -53,7 +53,7 @@ func uvToCoord(value float32) int {
 	return geom.Clamp(int(value*foustSize), 0, foustSize-1)
 }
 
-func (c foustCell) Draw(v0, v1 gl.Vec2) (value foustCell) {
+func (c gridCell) Draw(v0, v1 gl.Vec2) (value gridCell) {
 	value = c
 
 	var (
@@ -101,7 +101,7 @@ func (c foustCell) Draw(v0, v1 gl.Vec2) (value foustCell) {
 	return value
 }
 
-func (c foustCell) Query() (r rune) {
+func (c gridCell) Query() (r rune) {
 	r = ' '
 
 	var (
@@ -111,7 +111,7 @@ func (c foustCell) Query() (r rune) {
 		value       = uint64(c)
 	)
 
-	for i, s := range foustSymbols {
+	for i, s := range symbols {
 		diff = value ^ uint64(s.Cell)
 		count = 0
 		for j := 0; j < 64; j++ {
@@ -127,7 +127,7 @@ func (c foustCell) Query() (r rune) {
 	}
 
 	if minIndex != -1 {
-		return foustSymbols[minIndex].Rune
+		return symbols[minIndex].Rune
 	}
 
 	return

@@ -108,49 +108,61 @@ func (c *Context) line(
 		)
 
 		// Correct for perspective
-		invZ = (1-t)*oneOverZ[0] + t*oneOverZ[1]
-		t = (1 - t) * oneOverZ[0] / invZ
+		invZ = t*oneOverZ[0] + (1-t)*oneOverZ[1]
+		t = t * oneOverZ[0] / invZ
 
-		// We provide the fragment shader with the intersections of the
-		// line we're drawing with the current cell expressed as two
-		// vectors in the coordinate frame of the cell. The components
-		// of these vectors are between [0, 1].
-		in0, in1, intersects, _ = cell.Intersections(w0_2, w1_2)
+		// Finally, calculate Z
+		p[2] = t*w0[2] + (1-t)*w1[2]
 
-		// Most of the time the line we're drawing intersects with the
-		// cell the Bresenham algorithm is drawing.
-		if intersects {
-			in0 = in0.Sub(cell.Pos)
-			in1 = in1.Sub(cell.Pos)
-		} else {
-			// But when it doesn't intersect, which can happen, we
-			// pretend that the cell is closer to the line than it
-			// actually is.
-			nearest := w1.
-				Sub(w0).
-				Mul(1 - t).
-				Add(w0).
-				Vec2()
-			// TODO(cfoust): 03/25/25 allow user to configure fuzziness
-			in0, in1, _, _ = Rect{
-				Pos:  nearest,
-				Size: gl.Vec2{1, 1},
-			}.Intersections(w0_2, w1_2)
-			in0 = in0.Sub(nearest)
-			in1 = in1.Sub(nearest)
-		}
+		if p[2] < c.getZ(y0, x0) {
+			// We provide the fragment shader with the
+			// intersections of the line we're drawing with the
+			// current cell expressed as two vectors in the
+			// coordinate frame of the cell. The components of
+			// these vectors are between [0, 1].
+			in0, in1, intersects, _ = cell.Intersections(
+				w0_2,
+				w1_2,
+			)
 
-		in0 = clampVector(in0, 0, 1)
-		in1 = clampVector(in1, 0, 1)
+			// Most of the time the line we're drawing intersects
+			// with the cell the Bresenham algorithm is drawing.
+			if intersects {
+				in0 = in0.Sub(cell.Pos)
+				in1 = in1.Sub(cell.Pos)
+			} else {
+				// But when it doesn't intersect, which can
+				// happen, we pretend that the cell is closer
+				// to the line than it actually is.
+				nearest := w1.
+					Sub(w0).
+					Mul(1 - t).
+					Add(w0).
+					Vec2()
+				// TODO(cfoust): 03/25/25 allow user to
+				// configure fuzziness
+				in0, in1, _, _ = Rect{
+					Pos:  nearest,
+					Size: gl.Vec2{1, 1},
+				}.Intersections(w0_2, w1_2)
+				in0 = in0.Sub(nearest)
+				in1 = in1.Sub(nearest)
+			}
 
-		glyph, discard = s.Fragment(
-			p.Vec2(),
-			i0, i1,
-			in0.Vec3(1), in1.Vec3(1),
-			t,
-		)
-		if !discard {
-			image[y0][x0] = glyph
+			in0 = clampVector(in0, 0, 1)
+			in1 = clampVector(in1, 0, 1)
+
+			glyph, discard = s.Fragment(
+				p.Vec3(),
+				i0, i1,
+				in0, in1,
+				t,
+			)
+
+			if !discard {
+				image[y0][x0] = glyph
+				c.setZ(y0, x0, p[2])
+			}
 		}
 
 		if x0 == x1 && y0 == y1 {
