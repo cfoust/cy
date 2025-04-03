@@ -137,11 +137,6 @@ func TestEmpty(t *testing.T) {
 	i(ActionSearchAgain)
 }
 
-//func TestEmpty(t *testing.T) {
-	//_, i := createTest([]sessions.Event{})
-	//i(geom.DEFAULT_SIZE, 0, ActionTimePlay)
-//}
-
 func TestTime(t *testing.T) {
 	delta := time.Second / PLAYBACK_FPS
 	size := geom.Size{R: 5, C: 10}
@@ -410,4 +405,3 @@ func TestPlayback(t *testing.T) {
 	require.Equal(t, 0, r.Location().Index)
 	require.False(t, r.isPlaying)
 }
-
