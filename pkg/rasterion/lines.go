@@ -18,7 +18,7 @@ func clampVector(v gl.Vec2, low, high float32) gl.Vec2 {
 // line draws a line on the bitmap using Bresenham's algorithm.
 func (c *Context) line(
 	s LineShader,
-	i0, i1 int,
+	segment, i0, i1 int,
 	p0, p1 gl.Vec3,
 ) {
 	var (
@@ -28,10 +28,18 @@ func (c *Context) line(
 			float32(size.C),
 			float32(size.R),
 		}
-		v0, w0, b0 = c.transformPoint(s, viewport, 0, 0, p0)
-		v1, w1, b1 = c.transformPoint(s, viewport, 0, 1, p1)
-		w0_2       = w0.Vec2()
-		w1_2       = w1.Vec2()
+		v0, w0, b0 = c.transformPoint(
+			s,
+			viewport,
+			segment, i0, p0,
+		)
+		v1, w1, b1 = c.transformPoint(
+			s,
+			viewport,
+			segment, i1, p1,
+		)
+		w0_2 = w0.Vec2()
+		w1_2 = w1.Vec2()
 	)
 
 	if b0 || b1 {
@@ -158,7 +166,6 @@ func (c *Context) line(
 				in0, in1,
 				t,
 			)
-
 			if !discard {
 				image[y0][x0] = glyph
 				c.setZ(y0, x0, p[2])
@@ -181,6 +188,24 @@ func (c *Context) line(
 	}
 }
 
+// Line draws a line in world space from v0 to v1 using the given shader.
 func (c *Context) Line(s LineShader, v0, v1 gl.Vec3) {
-	c.line(s, 0, 1, v0, v1)
+	c.line(s, 0, 0, 1, v0, v1)
+}
+
+// Lines draws multiple line segments in world space using the given shader.
+func (c *Context) Lines(
+	s LineShader,
+	verts []gl.Vec3,
+	segments [][2]int,
+) {
+	var i0, i1 int
+	for segment, segmentVerts := range segments {
+		i0, i1 = segmentVerts[0], segmentVerts[1]
+		c.line(
+			s,
+			segment, i0, i1,
+			verts[i0], verts[i1],
+		)
+	}
 }
