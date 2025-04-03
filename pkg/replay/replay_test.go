@@ -125,11 +125,22 @@ func TestSearch(t *testing.T) {
 }
 
 func TestEmpty(t *testing.T) {
-	s := sim().Add(geom.Size{R: 5, C: 10})
-	_, i := createTest(s.Events())
-	i(geom.Size{R: 3, C: 10}, ActionCursorDown)
+	_, i := createTest([]sessions.Event{})
 	// should not panic
+	i(
+		geom.Size{R: 3, C: 10},
+	)
+	i(forceTimeDeltaEvent{
+		delta:          0,
+		skipInactivity: true,
+	})
+	i(ActionSearchAgain)
 }
+
+//func TestEmpty(t *testing.T) {
+	//_, i := createTest([]sessions.Event{})
+	//i(geom.DEFAULT_SIZE, 0, ActionTimePlay)
+//}
 
 func TestTime(t *testing.T) {
 	delta := time.Second / PLAYBACK_FPS
@@ -399,3 +410,4 @@ func TestPlayback(t *testing.T) {
 	require.Equal(t, 0, r.Location().Index)
 	require.False(t, r.isPlaying)
 }
+
