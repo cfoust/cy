@@ -52,19 +52,16 @@ func (r *Replay) handleSeek(updateTime bool) {
 	r.isSeeking = false
 	r.showSeek = false
 	r.isSwapped = false
-
 	r.seekState.Cancel()
 	r.seekState = nil
-
-	events := r.Events()
-	location := r.Location()
-
-	if updateTime {
-		r.currentTime = events[location.Index].Stamp
-	}
-
 	r.mode = ModeTime
 	r.initializeMovement()
+
+	events := r.Events()
+	index := r.Location().Index
+	if updateTime && index >= 0 && len(events) > 0 {
+		r.currentTime = events[index].Stamp
+	}
 
 	if r.postSeekOptions == nil {
 		return

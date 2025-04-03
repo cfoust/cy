@@ -1,6 +1,7 @@
 package anim
 
 import (
+	"github.com/cfoust/cy/pkg/anim/city"
 	"github.com/cfoust/cy/pkg/anim/collapse"
 	"github.com/cfoust/cy/pkg/anim/conway"
 	"github.com/cfoust/cy/pkg/anim/cos"
@@ -25,6 +26,9 @@ func registerAnimation(name string, animation Creator) {
 }
 
 func init() {
+	registerAnimation("city", func() Animation {
+		return &city.City{}
+	})
 	registerAnimation("collapse", func() Animation {
 		return &collapse.Collapse{}
 	})
