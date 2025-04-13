@@ -1,3 +1,7 @@
+(test "tuple"
+      (assert (= (input/find @[["test" 2] ["test" 3]]) 2))
+      (assert (= (input/find @[["test" "2"] ["test" "3"]]) "2")))
+
 (test "frame"
       (input/find @[["test" {:type :frame :name "big-hex"} 2]]))
 
