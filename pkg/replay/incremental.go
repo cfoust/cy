@@ -30,7 +30,7 @@ func (r *Replay) handleIncrementalInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 	if key, ok := msg.(taro.KeyMsg); ok {
 		inputMsg = key.ToTea()
 	}
-	r.incrInput, cmd = r.incrInput.Update(inputMsg)
-	r.incr.Pattern(r.movement, r.incrInput.Value())
+	r.input, cmd = r.input.Update(inputMsg)
+	r.incr.Pattern(r.movement, r.input.Value())
 	return r, cmd
 }

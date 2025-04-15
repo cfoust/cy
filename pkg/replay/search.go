@@ -135,8 +135,8 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.mode = ModeTime
 			return r, nil
 		case taro.KeyEnter:
-			value := r.searchInput.Value()
-			r.searchInput.Reset()
+			value := r.input.Value()
+			r.input.Reset()
 			r.mode = ModeTime
 			r.progressPercent = 0
 
@@ -179,6 +179,6 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 	if key, ok := msg.(taro.KeyMsg); ok {
 		inputMsg = key.ToTea()
 	}
-	r.searchInput, cmd = r.searchInput.Update(inputMsg)
+	r.input, cmd = r.input.Update(inputMsg)
 	return r, cmd
 }
