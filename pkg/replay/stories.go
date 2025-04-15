@@ -33,14 +33,22 @@ func createStorySession() []sessions.Event {
 func createStory(
 	ctx context.Context,
 	events []sessions.Event,
-	msgs ...interface{},
+	msgs ...any,
 ) mux.Screen {
-	replay := New(
+	replayEngine := bind.Run(ctx, bind.NewBindScope(nil))
+	copyEngine := bind.Run(ctx, bind.NewBindScope(nil))
+	r := newReplay(
 		ctx,
 		player.FromEvents(events),
-		bind.NewBindScope(nil),
-		bind.NewBindScope(nil),
+		replayEngine,
+		copyEngine,
 	)
+
+	test := taro.Test(r)
+	test(tea.WindowSizeMsg{
+		Width:  geom.DEFAULT_SIZE.C,
+		Height: geom.DEFAULT_SIZE.R,
+	})
 
 	var realMsg tea.Msg
 	for _, msg := range msgs {
@@ -54,10 +62,13 @@ func createStory(
 				realMsg = keyMsgs[0]
 			}
 		}
-		replay.Send(realMsg)
+		test(realMsg)
 	}
 
-	return replay
+	program := taro.Existing(ctx, r)
+	go pollBinds(ctx, program, replayEngine)
+	go pollBinds(ctx, program, copyEngine)
+	return program
 }
 
 var SearchTimeForward stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
@@ -195,7 +206,7 @@ var LongHistory stories.InitFunc = func(ctx context.Context) (mux.Screen, error)
 	sim := sessions.NewSimulator().
 		Defaults()
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		sim.Add("Finally, code is a cultural resource, not trivial and only instrumental, but bound up in social change, aesthetic projects, and the relationship of people to computers. Instead of being dismissed as cryptic and irrelevant to human concerns such as art and user experience, code should be valued as text with machine and human meanings, something produced and operating within culture.\n")
 	}
 
@@ -219,7 +230,7 @@ func init() {
 		Incremental,
 		stories.Config{
 			Size: geom.DEFAULT_SIZE,
-			Input: []interface{}{
+			Input: []any{
 				stories.Wait(stories.Some),
 				stories.Type("century"),
 				stories.Wait(stories.Some),
@@ -262,7 +273,7 @@ func init() {
 	stories.Register("replay/time/search-empty", SearchEmpty, config)
 
 	stories.Register("replay/time/seek", LongHistory, stories.Config{
-		Input: []interface{}{
+		Input: []any{
 			//setDelayEvent{delay: 20 * time.Millisecond},
 			stories.Wait(stories.Some),
 			action(ActionEnd),

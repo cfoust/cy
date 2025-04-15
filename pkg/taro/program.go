@@ -82,6 +82,10 @@ type Program struct {
 	// have finished being processed and executed (respectively) before
 	// checking the state of the Model, among other things.
 	isTest bool
+
+	// In stories we want to be able to run a model that has already been initialized.
+	skipInit bool
+
 	// These let us keep track of how many messages and commands are in
 	// flight.
 	mu               deadlock.RWMutex
@@ -379,7 +383,7 @@ func (p *Program) Run() (Model, error) {
 
 	// Initialize the program.
 	model := p.initialModel
-	if !p.isTest {
+	if !p.isTest && !p.skipInit {
 		if initCmd := model.Init(); initCmd != nil {
 			ch := make(chan struct{})
 			handlers.add(ch)
@@ -526,6 +530,17 @@ func New(ctx context.Context, model Model) *Program {
 
 	return p
 }
+
+func Existing(ctx context.Context, model Model) *Program {
+	p := NewProgram(ctx, model)
+
+	p.skipInit = true
+
+	go p.Run()
+
+	return p
+}
+
 
 type renderer struct {
 	deadlock.RWMutex
