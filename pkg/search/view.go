@@ -69,32 +69,10 @@ func (s *Search) renderProgressBar(state *tty.State) {
 		Background(emptyStyle.GetForeground()).
 		Foreground(emptyStyle.GetBackground())
 
-	percent := float64(numComplete) / float64(numFiles)
-	filledCells := int(percent * float64(size.C))
-
-	var left, right string
-	for i := len(bar); i >= 0; i-- {
-		if lipgloss.Width(bar[:i]) > filledCells {
-			continue
-		}
-
-		left = bar[:i]
-		if i == len(bar) {
-			right = ""
-		} else {
-			right = bar[i:]
-		}
-
-		left = filledStyle.Render(left)
-		right = emptyStyle.Render(right)
-		break
-	}
-
-	// Reconstitute the status bar
-	bar = lipgloss.JoinHorizontal(
-		lipgloss.Left,
-		left,
-		right,
+	bar = taro.Progress(
+		filledStyle, emptyStyle,
+		bar,
+		float64(numComplete)/float64(numFiles),
 	)
 
 	s.render.RenderAt(

@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
+	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -273,8 +274,29 @@ func (r *Replay) renderSearch(
 	r.input.Cursor.TextStyle = statusBarStyle
 
 	if r.isWaiting {
-		//percent := r.progressPercent
-		prompt = "searching..."
+		emptyStyle := r.render.NewStyle().
+			Foreground(p.ReplayTimeFg()).
+			Background(p.ReplayTimeBg())
+		filledStyle := r.render.NewStyle().
+			Background(emptyStyle.GetForeground()).
+			Foreground(emptyStyle.GetBackground())
+
+		percent := float64(r.progressPercent) / 100
+		r.render.RenderAt(
+			state.Image,
+			size.R-1, 0,
+			taro.Progress(
+				filledStyle,
+				emptyStyle,
+				lipgloss.PlaceHorizontal(
+					size.C,
+					lipgloss.Left,
+					"searching...",
+				),
+				percent,
+			),
+		)
+		return
 	} else if r.isEmpty {
 		prompt = "no matches found"
 	} else {
