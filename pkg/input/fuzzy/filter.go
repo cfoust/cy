@@ -18,10 +18,10 @@ type Match struct {
 type Option struct {
 	Text    string
 	Columns []string
-	Preview interface{}
+	Preview any
 	Chars   *util.Chars
 	Match   *Match
-	Result  interface{}
+	Result  any
 }
 
 func (o *Option) setText(text string) {
@@ -48,7 +48,7 @@ type tripleInput struct {
 	Value *janet.Value
 }
 
-func NewOption(text string, result interface{}) Option {
+func NewOption(text string, result any) Option {
 	chars := util.ToChars([]byte(text))
 	return Option{
 		Text:   text,
@@ -57,14 +57,23 @@ func NewOption(text string, result interface{}) Option {
 	}
 }
 
-// The displayed text of an option can consist of either a string or a
-// tuple/array of strings, which is used when filtering on a table.
-func unmarshalText(input *janet.Value, option *Option) error {
+func unmarshalString(input *janet.Value, option *Option) error {
 	var str string
 	err := input.Unmarshal(&str)
+	if err != nil {
+		return err
+	}
+
+	option.setText(str)
+	option.Result = str
+	return nil
+}
+
+// unmarshalText unmarshals the displayed text of an option, which can consist of either a string or a
+// tuple/array of strings.
+func unmarshalText(input *janet.Value, option *Option) error {
+	err := unmarshalString(input, option)
 	if err == nil {
-		option.setText(str)
-		option.Result = str
 		return nil
 	}
 
@@ -82,7 +91,7 @@ func unmarshalText(input *janet.Value, option *Option) error {
 
 // Unmarshal a single Option from a Janet value.
 func unmarshalOption(input *janet.Value) (result Option, err error) {
-	err = unmarshalText(input, &result)
+	err = unmarshalString(input, &result)
 	if err == nil {
 		return
 	}
