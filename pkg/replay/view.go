@@ -236,17 +236,17 @@ func (r *Replay) renderIncremental(
 	r.input.TextStyle = statusBarStyle
 	r.input.Cursor.TextStyle = statusBarStyle
 
-	prefix := "/"
+	prompt := "/"
 	if !r.incr.IsForward() {
-		prefix = "?"
+		prompt = "?"
 	}
 
-	prefix = leftStatusStyle.Render(prefix)
+	prompt = leftStatusStyle.Render(prompt)
 
 	input := r.input.View()
 
 	statusBar := lipgloss.JoinHorizontal(lipgloss.Left,
-		prefix,
+		prompt,
 		input,
 	)
 
@@ -300,8 +300,9 @@ func (r *Replay) renderSearch(
 	} else if r.isEmpty {
 		prompt = "no matches found"
 	} else {
+		prompt = "/"
 		if !r.isForward {
-			prompt = "search-backward"
+			prompt = "?"
 		}
 
 		value := r.input.Value()

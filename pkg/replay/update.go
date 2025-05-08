@@ -235,6 +235,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.mode = ModeInput
 			r.isForward = msg.Type == ActionSearchForward
 			r.input.Reset()
+			return r, nil
 		case ActionTimeStepBack:
 			return r, r.gotoIndex(r.Location().Index-1, -1)
 		case ActionTimeStepForward:
