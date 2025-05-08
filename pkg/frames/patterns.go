@@ -65,7 +65,7 @@ func createPattern(pattern, signature string, offsetR, offsetC int) Frame {
 // included as they appeared.
 
 var HiveThick = createPattern(`
- \__/ 
+ \__/
 _/  \_`, "", 0, 0)
 
 var Zigzag = createPattern(`
@@ -84,16 +84,16 @@ var Wallpaper = createPattern(`
 /|/ \|\ `, "PS", 0, 0)
 
 var BigHex = createPattern(`
-     /  \    
+     /  \
 __/        \_
-  \        / 
+  \        /
      \__/    `, "", 0, 0)
 
 var Puzzle = createPattern(`
-     _    
-   _( )_| 
+     _
+   _( )_|
  _|     _|
-(_   _ (_ 
+(_   _ (_
  |__( )_|_
  |_     |_
   _) _   _
@@ -109,7 +109,7 @@ var Hive = createPattern(`
 \_/`, "", 0, 0)
 
 var Cross = createPattern(`
- X 
+ X
 / \
 \ /`, "", 0, 0)
 
@@ -121,10 +121,10 @@ var Squares = createPattern(`
 
 var Tiles = createPattern(`
 \  \--
- \__\ 
+ \__\
 __\  \
 \  \__
- \__\ 
+ \__\
 __\  \`, "", 0, 0)
 
 var Stars = createPattern(`
@@ -134,7 +134,7 @@ _/\_
 / _/`, "", 0, 0)
 
 var Cheerios = createPattern(`
- / __ \ 
+ / __ \
 / /  \ \
 \ \__/ /
  \____/`, "", 0, 0)
@@ -156,6 +156,6 @@ func init() {
 	registerFrame("squares", Squares)
 	registerFrame("stars", Stars)
 	registerFrame("tiles", Tiles)
-	registerFrame("wallpaper", CrossStitch)
+	registerFrame("wallpaper", Wallpaper)
 	registerFrame("zigzag", Zigzag)
 }
