@@ -541,7 +541,6 @@ func Existing(ctx context.Context, model Model) *Program {
 	return p
 }
 
-
 type renderer struct {
 	deadlock.RWMutex
 	state *tty.State
