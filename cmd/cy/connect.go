@@ -13,6 +13,12 @@ import (
 
 // connectCommand is the entrypoint for the connect command.
 func connectCommand() error {
+	if _, _, haveContext := getContext(); haveContext {
+		return fmt.Errorf(
+			"cy should be nested with care, unset $CY to force",
+		)
+	}
+
 	var socketPath string
 
 	label, err := getSocketPath(CLI.Socket)
