@@ -85,11 +85,11 @@ type Replay struct {
 	isForward bool
 	isWaiting bool
 	// Whether no matches came back
-	isEmpty                bool
-	searchProgress         chan int
-	progressPercent        int
-	searchInput, incrInput textinput.Model
-	matches                []search.SearchResult
+	isEmpty         bool
+	searchProgress  chan int
+	progressPercent int
+	input           textinput.Model
+	matches         []search.SearchResult
 
 	incr *motion.Incremental
 
@@ -110,14 +110,6 @@ func (r *Replay) isCopyMode() bool {
 func (r *Replay) enterCopyMode() {
 	r.mode = ModeCopy
 	r.movement.Snap()
-}
-
-func (r *Replay) getTerminalCursor() geom.Vec2 {
-	cursor := r.Cursor()
-	return geom.Vec2{
-		R: cursor.R,
-		C: cursor.C,
-	}
 }
 
 func (r *Replay) swapScreen() {
@@ -144,25 +136,18 @@ func newReplay(
 	timeBinds, copyBinds *bind.Engine[bind.Action],
 	options ...Option,
 ) *Replay {
-	searchInput := textinput.New()
-	searchInput.Focus()
-	searchInput.CharLimit = 20
-	searchInput.Width = 20
-	searchInput.Prompt = ""
-
-	incrInput := textinput.New()
-	incrInput.Focus()
-	incrInput.CharLimit = 0
-	incrInput.Width = 20
-	incrInput.Prompt = ""
+	input := textinput.New()
+	input.Focus()
+	input.CharLimit = 0
+	input.Width = 20
+	input.Prompt = ""
 
 	r := &Replay{
 		Lifetime:       util.NewLifetime(ctx),
 		incr:           motion.NewIncremental(),
 		Player:         player,
 		render:         taro.NewRenderer(),
-		searchInput:    searchInput,
-		incrInput:      incrInput,
+		input:          input,
 		playbackRate:   1,
 		timeBinds:      timeBinds,
 		copyBinds:      copyBinds,
@@ -187,14 +172,6 @@ type Option func(r *Replay)
 // WithNoQuit makes it so Replay will never exit.
 func WithNoQuit(r *Replay) {
 	r.preventExit = true
-}
-
-// withDelay adds a delay to every seek progress event. Only used for testing
-// loading states.
-func withDelay(delay time.Duration) Option {
-	return func(r *Replay) {
-		r.seekDelay = delay
-	}
 }
 
 // WithCopyMode puts Replay immediately into copy mode.

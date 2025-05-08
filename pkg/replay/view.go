@@ -9,8 +9,8 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
+	"github.com/cfoust/cy/pkg/taro"
 
-	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -140,30 +140,12 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	leftStatusStyle := r.getLeftStatusStyle()
 
 	if r.incr.IsActive() {
-		r.incrInput.Cursor.Style = r.render.NewStyle().
-			Background(p.ReplayStatusBarFg())
-		r.incrInput.TextStyle = statusBarStyle
-		r.incrInput.Cursor.TextStyle = statusBarStyle
+		r.renderIncremental(state, statusBarStyle)
+		return
+	}
 
-		prefix := "/"
-		if !r.incr.IsForward() {
-			prefix = "?"
-		}
-
-		prefix = leftStatusStyle.Render(prefix)
-
-		input := r.incrInput.View()
-
-		statusBar := lipgloss.JoinHorizontal(lipgloss.Left,
-			prefix,
-			input,
-		)
-
-		r.render.RenderAt(
-			state.Image,
-			size.R-1, 0,
-			statusBar,
-		)
+	if r.mode == ModeInput || r.isWaiting || r.isEmpty {
+		r.renderSearch(state, statusBarStyle)
 		return
 	}
 
@@ -239,73 +221,113 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	r.render.RenderAt(state.Image, size.R-1, 0, statusBar)
 }
 
-func (r *Replay) renderInput() image.Image {
-	p := r.params
-	r.searchInput.Cursor.Style = r.render.NewStyle().
+func (r *Replay) renderIncremental(
+	state *tty.State,
+	statusBarStyle lipgloss.Style,
+) {
+	var (
+		p               = r.params
+		size            = state.Image.Size()
+		leftStatusStyle = r.getLeftStatusStyle()
+	)
+
+	r.input.Cursor.Style = r.render.NewStyle().
 		Background(p.ReplayStatusBarFg())
+	r.input.TextStyle = statusBarStyle
+	r.input.Cursor.TextStyle = statusBarStyle
 
-	statusFg := p.ReplayStatusBarFg()
-	statusBg := p.ReplayStatusBarBg()
-
-	width := 20
-	common := r.render.NewStyle().Width(width)
-	inputStyle := common.
-		Foreground(statusFg).
-		Background(statusBg)
-
-	promptStyle := common.
-		Foreground(statusBg).
-		Background(statusFg)
-
-	prompt := "search-forward"
-	if !r.isForward {
-		prompt = "search-backward"
+	prompt := "/"
+	if !r.incr.IsForward() {
+		prompt = "?"
 	}
 
-	value := r.searchInput.Value()
-	if match := TIME_DELTA_REGEX.FindStringSubmatch(value); len(value) > 0 && match != nil {
-		promptStyle = common.
-			Foreground(statusFg).
-			Background(p.ReplayTimeFg())
+	prompt = leftStatusStyle.Render(prompt)
 
-		prompt = "jump-forward"
+	input := r.input.View()
+
+	statusBar := lipgloss.JoinHorizontal(lipgloss.Left,
+		prompt,
+		input,
+	)
+
+	r.render.RenderAt(
+		state.Image,
+		size.R-1, 0,
+		statusBar,
+	)
+}
+
+func (r *Replay) renderSearch(
+	state *tty.State,
+	statusBarStyle lipgloss.Style,
+) {
+	var (
+		p               = r.params
+		size            = state.Image.Size()
+		prompt          = "search-forward"
+		leftStatusStyle = r.getLeftStatusStyle()
+	)
+
+	r.input.Cursor.Style = r.render.NewStyle().
+		Background(p.ReplayStatusBarFg())
+	r.input.TextStyle = statusBarStyle
+	r.input.Cursor.TextStyle = statusBarStyle
+
+	if r.isWaiting {
+		emptyStyle := r.render.NewStyle().
+			Foreground(p.ReplayTimeFg()).
+			Background(p.ReplayTimeBg())
+		filledStyle := r.render.NewStyle().
+			Background(emptyStyle.GetForeground()).
+			Foreground(emptyStyle.GetBackground())
+
+		percent := float64(r.progressPercent) / 100
+		r.render.RenderAt(
+			state.Image,
+			size.R-1, 0,
+			taro.Progress(
+				filledStyle,
+				emptyStyle,
+				lipgloss.PlaceHorizontal(
+					size.C,
+					lipgloss.Left,
+					"searching...",
+				),
+				percent,
+			),
+		)
+		return
+	} else if r.isEmpty {
+		prompt = "no matches found"
+	} else {
+		prompt = "/"
 		if !r.isForward {
-			prompt = "jump-backward"
+			prompt = "?"
+		}
+
+		value := r.input.Value()
+		if match := TIME_DELTA_REGEX.FindStringSubmatch(value); len(value) > 0 && match != nil {
+			prompt = "jump-forward"
+			if !r.isForward {
+				prompt = "jump-backward"
+			}
 		}
 	}
 
-	input := inputStyle.Render(r.searchInput.View())
+	prompt = leftStatusStyle.Render(prompt)
 
-	if r.isWaiting {
-		percent := r.progressPercent
+	input := r.input.View()
 
-		spin := spinner.Dot
-		first := spin.Frames[percent%len(spin.Frames)]
-		left := "searching..."
-		prompt = left + lipgloss.PlaceHorizontal(
-			width-len(left),
-			lipgloss.Right,
-			first,
-		)
-
-		progressStyle := inputStyle.
-			Background(p.ReplayTimeFg())
-
-		filled := int((float64(percent) / 100) * float64(width))
-
-		input = progressStyle.Width(filled).Render("") + inputStyle.Width(width-filled).Render("")
-	} else if r.isEmpty {
-		prompt = "no matches found"
-	}
-
-	prompt = promptStyle.Render(prompt)
-
-	input = lipgloss.JoinVertical(
-		lipgloss.Left,
-		input,
+	statusBar := lipgloss.JoinHorizontal(lipgloss.Left,
 		prompt,
+		input,
 	)
-	return r.render.RenderImage(input)
+
+	r.render.RenderAt(
+		state.Image,
+		size.R-1, 0,
+		statusBar,
+	)
 }
 
 func (r *Replay) renderSeek(state *tty.State) {
@@ -466,30 +488,7 @@ func (r *Replay) View(state *tty.State) {
 	///////////////////////////
 	r.drawStatusBar(state)
 
-	if r.incr.IsActive() {
+	if r.incr.IsActive() || r.mode == ModeInput {
 		state.CursorVisible = false
-		return
 	}
-
-	// Render text input
-	/////////////////////////////
-	if r.mode != ModeInput && !r.isWaiting && !r.isEmpty {
-		return
-	}
-
-	// hide the cursor when typing in the search bar (it has its own)
-	state.CursorVisible = false
-
-	size := state.Image.Size()
-	input := r.renderInput()
-	inputSize := input.Size()
-	image.Copy(
-		geom.Vec2{
-			// -1 for the status bar
-			R: geom.Clamp(state.Cursor.R, 0, size.R-inputSize.R-1),
-			C: geom.Clamp(state.Cursor.C, 0, size.C-inputSize.C),
-		},
-		state.Image,
-		input,
-	)
 }

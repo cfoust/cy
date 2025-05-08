@@ -33,14 +33,24 @@ func createStorySession() []sessions.Event {
 func createStory(
 	ctx context.Context,
 	events []sessions.Event,
-	msgs ...interface{},
-) mux.Screen {
-	replay := New(
+	msgs ...any,
+) (*Replay, func() mux.Screen) {
+	replayEngine := bind.Run(ctx, bind.NewBindScope(nil))
+	copyEngine := bind.Run(ctx, bind.NewBindScope(nil))
+	r := newReplay(
 		ctx,
 		player.FromEvents(events),
-		bind.NewBindScope(nil),
-		bind.NewBindScope(nil),
+		replayEngine,
+		copyEngine,
 	)
+
+	r.searchProgress = nil
+
+	test := taro.Test(r)
+	test(tea.WindowSizeMsg{
+		Width:  geom.DEFAULT_SIZE.C,
+		Height: geom.DEFAULT_SIZE.R,
+	})
 
 	var realMsg tea.Msg
 	for _, msg := range msgs {
@@ -54,93 +64,79 @@ func createStory(
 				realMsg = keyMsgs[0]
 			}
 		}
-		replay.Send(realMsg)
+		test(realMsg)
 	}
 
-	return replay
+	r.searchProgress = make(chan int)
+
+	return r, func() mux.Screen {
+		program := taro.Existing(ctx, r)
+		go pollBinds(ctx, program, replayEngine)
+		go pollBinds(ctx, program, copyEngine)
+		return program
+	}
+
 }
 
-var SearchTimeForward stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	replay := createStory(
-		ctx,
-		createStorySession(),
-		ActionSearchForward,
-		"query",
-	)
+func createTrivialStory(msgs ...any) stories.InitFunc {
+	return func(ctx context.Context) (mux.Screen, error) {
+		_, run := createStory(
+			ctx,
+			createStorySession(),
+			msgs...,
+		)
 
-	return replay, nil
+		return run(), nil
+	}
 }
 
-var Searching stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	replay := createStory(
-		ctx,
-		createStorySession(),
-		ActionSearchForward,
-		"query",
-		"enter",
-	)
+var SearchTimeForward stories.InitFunc = createTrivialStory(
+	ActionSearchForward,
+	"query",
+)
 
-	return replay, nil
-}
+var Searching stories.InitFunc = createTrivialStory(
+	ActionSearchForward,
+	"query",
+	"enter",
+)
 
 var SearchProgress stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	replay := createStory(
+	r, run := createStory(
 		ctx,
 		createStorySession(),
 		ActionSearchForward,
 		"query",
 		"enter",
-		ProgressEvent{Percent: 60},
 	)
 
-	return replay, nil
+	r.isWaiting = true
+	r.progressPercent = 50
+
+	return run(), nil
 }
 
-var JumpForward stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	replay := createStory(
-		ctx,
-		createStorySession(),
-		ActionSearchForward,
-		"3m",
-	)
+var JumpForward stories.InitFunc = createTrivialStory(
+	ActionSearchForward,
+	"3m",
+)
 
-	return replay, nil
-}
+var JumpBackward stories.InitFunc = createTrivialStory(
+	ActionSearchBackward,
+	"3m",
+)
 
-var JumpBackward stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	replay := createStory(
-		ctx,
-		createStorySession(),
-		ActionSearchBackward,
-		"3m",
-	)
+var SearchTimeBackward stories.InitFunc = createTrivialStory(
+	ActionSearchBackward,
+	"query",
+)
 
-	return replay, nil
-}
-
-var SearchTimeBackward stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	replay := createStory(
-		ctx,
-		createStorySession(),
-		ActionSearchBackward,
-		"query",
-	)
-
-	return replay, nil
-}
-
-var SearchEmpty stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	replay := createStory(
-		ctx,
-		createStorySession(),
-		ActionBeginning,
-		ActionSearchForward,
-		"asdf",
-		"enter",
-	)
-
-	return replay, nil
-}
+var SearchEmpty = createTrivialStory(
+	ActionBeginning,
+	ActionSearchForward,
+	"asdf",
+	"enter",
+)
 
 func createIncrementalSession() []sessions.Event {
 	return sessions.NewSimulator().
@@ -154,7 +150,7 @@ func createIncrementalSession() []sessions.Event {
 }
 
 var Incremental stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	replay := createStory(
+	_, run := createStory(
 		ctx,
 		createIncrementalSession(),
 		ActionCursorUp,
@@ -162,11 +158,11 @@ var Incremental stories.InitFunc = func(ctx context.Context) (mux.Screen, error)
 		ActionSearchForward,
 	)
 
-	return replay, nil
+	return run(), nil
 }
 
 var IncrementalForward stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	replay := createStory(
+	_, run := createStory(
 		ctx,
 		createIncrementalSession(),
 		ActionCursorUp,
@@ -175,11 +171,11 @@ var IncrementalForward stories.InitFunc = func(ctx context.Context) (mux.Screen,
 		"century",
 	)
 
-	return replay, nil
+	return run(), nil
 }
 
 var IncrementalBackward stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
-	replay := createStory(
+	_, run := createStory(
 		ctx,
 		createIncrementalSession(),
 		ActionCursorUp,
@@ -188,20 +184,20 @@ var IncrementalBackward stories.InitFunc = func(ctx context.Context) (mux.Screen
 		"century",
 	)
 
-	return replay, nil
+	return run(), nil
 }
 
 var LongHistory stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	sim := sessions.NewSimulator().
 		Defaults()
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		sim.Add("Finally, code is a cultural resource, not trivial and only instrumental, but bound up in social change, aesthetic projects, and the relationship of people to computers. Instead of being dismissed as cryptic and irrelevant to human concerns such as art and user experience, code should be valued as text with machine and human meanings, something produced and operating within culture.\n")
 	}
 
-	replay := createStory(ctx, sim.Events())
+	_, run := createStory(ctx, sim.Events())
 
-	return replay, nil
+	return run(), nil
 }
 
 func action(event ActionType) ActionEvent {
@@ -219,7 +215,7 @@ func init() {
 		Incremental,
 		stories.Config{
 			Size: geom.DEFAULT_SIZE,
-			Input: []interface{}{
+			Input: []any{
 				stories.Wait(stories.Some),
 				stories.Type("century"),
 				stories.Wait(stories.Some),
@@ -262,7 +258,7 @@ func init() {
 	stories.Register("replay/time/search-empty", SearchEmpty, config)
 
 	stories.Register("replay/time/seek", LongHistory, stories.Config{
-		Input: []interface{}{
+		Input: []any{
 			//setDelayEvent{delay: 20 * time.Millisecond},
 			stories.Wait(stories.Some),
 			action(ActionEnd),

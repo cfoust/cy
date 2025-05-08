@@ -80,3 +80,43 @@ func NewRenderer() *Renderer {
 		Renderer: renderer,
 	}
 }
+
+// Progress applies a lipgloss.Style to a percentage of the input text.
+func Progress(
+	filledStyle, emptyStyle lipgloss.Style,
+	text string,
+	percent float64,
+) string {
+	if percent < 0 {
+		percent = 0
+	}
+	if percent > 1 {
+		percent = 1
+	}
+
+	filledCells := int(percent * float64(lipgloss.Width(text)))
+
+	var left, right string
+	for i := len(text); i >= 0; i-- {
+		if lipgloss.Width(text[:i]) > filledCells {
+			continue
+		}
+
+		left = text[:i]
+		if i == len(text) {
+			right = ""
+		} else {
+			right = text[i:]
+		}
+
+		left = filledStyle.Render(left)
+		right = emptyStyle.Render(right)
+		break
+	}
+
+	return lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		left,
+		right,
+	)
+}

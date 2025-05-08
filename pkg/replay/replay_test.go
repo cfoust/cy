@@ -49,8 +49,7 @@ func createTest(
 	)
 
 	// If we don't do this, the cursor blink causes tests to hang forever
-	r.searchInput.Cursor.SetMode(cursor.CursorHide)
-	r.incrInput.Cursor.SetMode(cursor.CursorHide)
+	r.input.Cursor.SetMode(cursor.CursorHide)
 
 	var m taro.Model = r
 

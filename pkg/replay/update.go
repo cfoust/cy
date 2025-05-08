@@ -90,7 +90,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return r, r.timeStep(time.Now().Sub(msg.Start))
 	case tea.WindowSizeMsg:
 		// -3 for the " / " or " ? "
-		r.incrInput.Width = geom.Max(msg.Width-3, 0)
+		r.input.Width = geom.Max(msg.Width-3, 0)
 		r.resize(geom.Size{
 			R: msg.Height,
 			C: msg.Width,
@@ -220,7 +220,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			)
 		case ActionSearchForward, ActionSearchBackward:
 			if r.isCopyMode() {
-				r.incrInput.Reset()
+				r.input.Reset()
 				r.incr.Start(
 					r.movement,
 					msg.Type == ActionSearchForward,
@@ -234,7 +234,8 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 			r.mode = ModeInput
 			r.isForward = msg.Type == ActionSearchForward
-			r.searchInput.Reset()
+			r.input.Reset()
+			return r, nil
 		case ActionTimeStepBack:
 			return r, r.gotoIndex(r.Location().Index-1, -1)
 		case ActionTimeStepForward:
