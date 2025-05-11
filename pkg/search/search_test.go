@@ -9,6 +9,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
 
@@ -120,9 +121,10 @@ func TestPassthrough(t *testing.T) {
 	program := taro.New(ctx, s)
 
 	// Reinitialize the replay watcher manually
-	program.Send(taro.NewWatcher(ctx, s.replay).Wait()())
+	program.Send(taro.NewWatcher(ctx, s.loader).Wait()())
 
 	actions := make(chan bind.BindEvent)
+	copies := make(chan replay.CopyEvent)
 	go func() {
 		events := program.Subscribe(ctx)
 
@@ -144,6 +146,10 @@ func TestPassthrough(t *testing.T) {
 					gotEvent = true
 					actions <- action
 				}
+
+				if _copy, ok := event.(replay.CopyEvent); ok {
+					copies <- _copy
+				}
 			}
 		}
 	}()
@@ -156,6 +162,18 @@ func TestPassthrough(t *testing.T) {
 	}
 	event := <-actions
 	require.Equal(t, "foo", event.Action.Tag)
+
+	program.Send(replay.ActionEvent{Type: replay.ActionCursorLeft})
+	program.Send(replay.ActionEvent{Type: replay.ActionSelect})
+	program.Send(replay.CopyEvent{})
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+	select {
+	case _copy := <-copies:
+		require.Equal(t, "r", _copy.Text)
+	case <-ctx.Done():
+		t.Fatalf("timeout waiting for copy")
+	}
 }
 
 func TestSelected(t *testing.T) {

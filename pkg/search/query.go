@@ -213,9 +213,9 @@ func (s *Search) handleResult(event resultEvent) (taro.Model, tea.Cmd) {
 	s.pending = nil
 	s.cancelSearch()
 
-	if s.replay != nil {
-		s.replayLifetime.Cancel()
-		s.replay = nil
+	if s.loader != nil {
+		s.loaderLifetime.Cancel()
+		s.loader = nil
 	}
 
 	return s, s.setSelected(0)

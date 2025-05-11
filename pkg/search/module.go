@@ -31,8 +31,8 @@ type Search struct {
 	pendingQuery, query string
 	pending, complete   []fileResult
 
-	replay         mux.Screen
-	replayLifetime util.Lifetime
+	loader         mux.Screen
+	loaderLifetime util.Lifetime
 
 	searchBinds          *bind.Engine[bind.Action]
 	timeBinds, copyBinds *bind.BindScope

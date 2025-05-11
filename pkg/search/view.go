@@ -146,7 +146,7 @@ func (s *Search) View(state *tty.State) {
 		return
 	}
 
-	if s.replay == nil {
+	if s.loader == nil {
 		return
 	}
 
@@ -165,6 +165,6 @@ func (s *Search) View(state *tty.State) {
 	tty.Copy(
 		s.inner.Position,
 		state,
-		s.replay.State(),
+		s.loader.State(),
 	)
 }

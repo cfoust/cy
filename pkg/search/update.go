@@ -36,11 +36,11 @@ func (s *Search) resize(size geom.Size) {
 	// -2 for ~>
 	s.input.Width = geom.Max(size.C-2, 0)
 
-	if s.replay == nil {
+	if s.loader == nil {
 		return
 	}
 
-	s.replay.Resize(s.inner.Size)
+	s.loader.Resize(s.inner.Size)
 }
 
 func (s *Search) setSelected(index int) taro.Cmd {
@@ -53,21 +53,21 @@ func (s *Search) setSelected(index int) taro.Cmd {
 		return nil
 	}
 
-	if s.replay != nil && s.selected == newIndex {
+	if s.loader != nil && s.selected == newIndex {
 		return nil
 	}
 
 	s.selected = newIndex
 
-	if s.replay != nil {
-		s.replayLifetime.Cancel()
+	if s.loader != nil {
+		s.loaderLifetime.Cancel()
 	}
 
 	result := s.complete[s.selected]
 
-	s.replayLifetime = util.NewLifetime(s.Ctx())
+	s.loaderLifetime = util.NewLifetime(s.Ctx())
 	r := loader.New(
-		s.replayLifetime.Ctx(),
+		s.loaderLifetime.Ctx(),
 		s.params,
 		s.timeBinds,
 		s.copyBinds,
@@ -77,8 +77,8 @@ func (s *Search) setSelected(index int) taro.Cmd {
 		replay.WithParams(s.params),
 	)
 	r.Resize(s.inner.Size)
-	s.replay = r
-	return taro.NewWatcher(s.replayLifetime.Ctx(), r).Wait()
+	s.loader = r
+	return taro.NewWatcher(s.loaderLifetime.Ctx(), r).Wait()
 }
 
 func (s *Search) handleInput(msg tea.Msg) (taro.Model, tea.Cmd) {
@@ -118,6 +118,14 @@ func (s *Search) handleInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case replay.CopyEvent:
+		replay := s.loader
+		if replay == nil {
+			return s, nil
+		}
+
+		replay.Send(msg)
+		return s, nil
 	case taro.ScreenUpdate:
 		switch innerMsg := msg.Msg.(type) {
 		case bind.BindEvent, replay.CopyEvent:
@@ -139,7 +147,7 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		})
 		return s, nil
 	case taro.MouseMsg:
-		replay := s.replay
+		replay := s.loader
 		if replay == nil {
 			return s, nil
 		}
@@ -155,10 +163,10 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return nil
 		}
 	case replay.ActionEvent, replay.PlaybackRateEvent:
-		if s.replay == nil {
+		if s.loader == nil {
 			return s, nil
 		}
-		s.replay.Send(msg)
+		s.loader.Send(msg)
 		return s, nil
 	case bind.BindEvent:
 		return s, s.emit(msg)
@@ -171,7 +179,7 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	// The messages below only make sense when we're not inputing
 	switch msg := msg.(type) {
 	case taro.KeyMsg:
-		replay := s.replay
+		replay := s.loader
 		return s, func() tea.Msg {
 			if consumed := s.searchBinds.InputMessage(msg); consumed {
 				return nil
@@ -198,8 +206,8 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 			// If these are the same key, we want to send cancel
 			// to Replay anyway
-			if s.replay != nil {
-				s.replay.Send(replay.ActionEvent{
+			if s.loader != nil {
+				s.loader.Send(replay.ActionEvent{
 					Type: replay.ActionQuit,
 				})
 			}

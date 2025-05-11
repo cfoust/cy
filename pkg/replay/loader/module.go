@@ -186,7 +186,7 @@ func (l *Loader) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			l.replay.Resize(l.size)
 		}
 		return l, nil
-	case replay.ActionEvent, replay.PlaybackRateEvent, taro.KeyMsg, taro.MouseMsg:
+	case replay.CopyEvent, replay.ActionEvent, replay.PlaybackRateEvent, taro.KeyMsg, taro.MouseMsg:
 		if l.replay == nil {
 			return l, nil
 		}
