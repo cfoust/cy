@@ -25,7 +25,12 @@ Download the latest version of `cy` on [the releases page](https://github.com/cf
 ```bash
 git clone git@github.com:cfoust/cy.git
 cd cy
-go install ./cmd/cy/.
+
+# if you have just installed: (https://github.com/casey/just)
+just install
+
+# Otherwise
+go install ./cmd/cy/...
 ```
 
 ## Terminal emulators

@@ -8,6 +8,8 @@ Most new code should have tests. It should also pass `cy`'s continuous integrati
 
 To hack on `cy`, you only need a recent [Go toolchain](https://go.dev/doc/install) and a clone of [the cy repository](https://github.com/cfoust/cy).
 
+For convenience, `cy` provides a configuration file for [just](https://github.com/casey/just), so you can execute commands like `just build`, `just lint`, `just test`, and `just run` and they will work as expected.
+
 You can build and run `cy` from source with the following command. This is convenient for testing small changes.
 
 ```bash
