@@ -135,7 +135,7 @@ func (t *Terminal) Send(msg mux.Msg) {
 				return
 			}
 			input = msg.Bytes()
-		case emu.ModeMouseMotion:
+		case emu.ModeMouseMotion, emu.ModeMouseMany:
 			input = msg.Bytes()
 		case 0:
 			return
