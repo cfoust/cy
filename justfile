@@ -7,7 +7,7 @@ install:
 test:
   go test ./pkg/... ./cmd/...
 
-lint:
+format:
   go fmt ./pkg/... ./cmd/...
 
 run:
