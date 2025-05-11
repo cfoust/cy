@@ -5,6 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/style"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -102,6 +103,17 @@ type Layout struct {
 
 func New(node NodeType) Layout {
 	return Layout{Root: node}
+}
+
+// Default returns the default layout.
+func Default() Layout {
+	return New(MarginsType{
+		Cols:   80,
+		Border: prop.NewStatic(&style.DefaultBorder),
+		Node: PaneType{
+			Attached: true,
+		},
+	})
 }
 
 type NodeChangeEvent struct {

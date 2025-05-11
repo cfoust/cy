@@ -710,33 +710,37 @@ For example, when moving vertically upwards, for a vertical split node this func
   "Clear out the layout."
   (layout/set {:type :pane :attached true}))
 
+(var- last-margins nil)
+(defn-
+  toggle-margins
+  ```Toggle the outermost margins in the layout, preserving the node's other properties between toggles.```
+  [cols rows]
+  (def layout (layout/get))
+  (def path (layout/attach-path layout))
+  (def margins-path (layout/find-last layout path |(layout/type? :margins $)))
+  (layout/set (if (not (nil? margins-path))
+                (do
+                  (def existing (layout/path layout margins-path))
+                  (set last-margins existing)
+                  (def {:node node} existing)
+                  (layout/assoc layout margins-path node))
+                (do
+                  (def target (struct/to-table (or
+                                                 last-margins
+                                                 {:type :margins
+                                                  :rows rows
+                                                  :cols cols})))
+                  (put target :node layout)
+                  (table/to-struct target)))))
+
 (key/action
   action/toggle-margins
   "Toggle the screen's margins."
-  (def layout (layout/get))
-  (def path (layout/attach-path layout))
-  (def margins-path (layout/find-last layout path |(layout/type? :margins $)))
-  (layout/set (if (not (nil? margins-path))
-                (do
-                  (def {:node node} (layout/path layout margins-path))
-                  (layout/assoc layout margins-path node))
-                {:type :margins :node layout :cols 80 :rows 0})))
+  (toggle-margins 80 0))
 
-(key/action
-  action/margins-80
-  "Toggle the screen's margins."
-  (def layout (layout/get))
-  (def path (layout/attach-path layout))
-  (def margins-path (layout/find-last layout path |(layout/type? :margins $)))
-  (layout/set (if (not (nil? margins-path))
-                (do
-                  (def {:node node} (layout/path layout margins-path))
-                  (layout/assoc layout margins-path node))
-                {:type :margins :node layout :cols 80 :rows 0})))
-
-(key/action
-  action/margins-80
-  "Set margins size to 80 columns."
+(defn-
+  set-margins
+  [cols rows]
   (def layout (layout/get))
   (def path (layout/attach-path layout))
   (def margins-path (layout/find-last layout path |(layout/type? :margins $)))
@@ -746,23 +750,18 @@ For example, when moving vertically upwards, for a vertical split node this func
                   (layout/assoc
                     layout
                     margins-path
-                    {:type :margins :node node :cols 80 :rows 0}))
-                {:type :margins :node layout :cols 80 :rows 0})))
+                    {:type :margins :node node :cols cols :rows rows}))
+                {:type :margins :node layout :cols cols :rows rows})))
+
+(key/action
+  action/margins-80
+  "Set margins to 80 columns."
+  (set-margins 80 0))
 
 (key/action
   action/margins-160
-  "Set size to 160 columns."
-  (def layout (layout/get))
-  (def path (layout/attach-path layout))
-  (def margins-path (layout/find-last layout path |(layout/type? :margins $)))
-  (layout/set (if (not (nil? margins-path))
-                (do
-                  (def {:node node} (layout/path layout margins-path))
-                  (layout/assoc
-                    layout
-                    margins-path
-                    {:type :margins :node node :cols 160 :rows 0}))
-                {:type :margins :node layout :cols 160 :rows 0})))
+  "Set margins to 160 columns."
+  (set-margins 160 0))
 
 (key/action
   action/margins-smaller

@@ -148,6 +148,7 @@
                        :percent 26
                        :a {:type :pane :attached true}
                        :b {:type :pane}})))
+
 (test ":margins"
       (layout/set
         {:type :margins
@@ -457,3 +458,16 @@
                 (layout/new
                   (tabs
                     @[(active-tab "tab" (attach :id 2))])))))
+
+(test "margins actions"
+      (layout/set
+        {:type :margins
+         :cols 20
+         :rows 0
+         :border :rounded
+         :node {:type :pane :attached true}})
+
+      (action/toggle-margins)
+      (action/toggle-margins)
+      (def {:border borders} (layout/get))
+      (assert (= borders :rounded)))

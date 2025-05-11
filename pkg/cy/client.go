@@ -258,12 +258,7 @@ func (c *Client) initialize(options ClientOptions) error {
 		engine.WithLogger(c.cy.log),
 	)
 
-	err = c.layoutEngine.Set(layout.New(layout.MarginsType{
-		Cols: 80,
-		Node: layout.PaneType{
-			Attached: true,
-		},
-	}))
+	err = c.layoutEngine.Set(layout.Default())
 	if err != nil {
 		return err
 	}
