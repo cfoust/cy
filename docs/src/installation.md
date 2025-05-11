@@ -30,4 +30,4 @@ go install ./cmd/cy/.
 
 ## Terminal emulators
 
-It is recommended that you use [alacritty](https://alacritty.org/index.html) to run `cy`. alacritty is the fastest terminal emulator around and it will make `cy` that much more pleasant to use. However, `cy` has been tested extensively in [iTerm](https://iterm2.com/index.html) and [kitty](https://sw.kovidgoyal.net/kitty/); your mileage may vary.
+It is recommended that you use [kitty](https://sw.kovidgoyal.net/kitty/) to run `cy`. However, `cy` has also been tested extensively in [iTerm](https://iterm2.com/index.html); your mileage may vary.
