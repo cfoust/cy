@@ -197,13 +197,6 @@ func (l *Margins) getInner(outer geom.Size) geom.Rect {
 		C: geom.Max(getSize(outer.C, factor.C), 1),
 	}
 
-	if value, ok := l.config.Border.GetPreset(); ok && !value.None() {
-		inner.C = geom.Max(
-			inner.C-2,
-			1,
-		)
-	}
-
 	return geom.Rect{
 		Position: outer.Center(inner),
 		Size:     inner,
