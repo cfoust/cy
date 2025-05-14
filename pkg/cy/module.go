@@ -129,18 +129,19 @@ func (c *Cy) Log(level zerolog.Level, message string) {
 func (c *Cy) loadConfig() error {
 	err := c.ExecuteFile(c.Ctx(), c.options.Config)
 
-	// We want to make a lot of noise if this fails for some reason, even
-	// if this is being called in user code
-	if err != nil {
-		c.log.Error().Err(err).Msg("failed to execute config")
-		message := fmt.Sprintf(
-			"an error occurred while loading %s: %s",
-			c.options.Config,
-			err.Error(),
-		)
-		c.toast.Error(message)
+	if err == nil {
+		return nil
 	}
 
+	// We want to make a lot of noise if this fails for some reason, even
+	// if this is being called in user code
+	c.log.Error().Err(err).Msg("failed to execute config")
+	message := fmt.Sprintf(
+		"an error occurred while loading %s: %s",
+		c.options.Config,
+		err.Error(),
+	)
+	c.toast.Error(message)
 	return err
 }
 
@@ -154,7 +155,18 @@ func (c *Cy) reloadConfig() error {
 	c.options.Config = path
 	c.Unlock()
 
-	return c.loadConfig()
+	err := c.loadConfig()
+	if err != nil {
+		return err
+	}
+
+	message := fmt.Sprintf(
+		"reloaded config: %s",
+		c.options.Config,
+	)
+	c.log.Info().Msg(message)
+	c.toast.Info(message)
+	return nil
 }
 
 // RerenderClients triggers a rerender of all clients.
