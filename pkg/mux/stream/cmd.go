@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"time"
 
 	"github.com/cfoust/cy/pkg/util"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/sasha-s/go-deadlock"
+	"github.com/xo/terminfo"
 )
 
 type CmdOptions struct {
@@ -106,7 +108,13 @@ func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 		cmd.Env = append(
 			os.Environ(),
 			// TODO(cfoust): 08/08/23 this is complicated
-			"TERM=xterm-256color",
+			fmt.Sprintf("TERM=%s", TERM),
+			// Old ncurses applications don't fall back to the
+			// default terminfo location if they can't find
+			// terminfo for the current terminal, they just
+			// break, so we need to inject the correct TERMINFO
+			// for xterm-256color
+			fmt.Sprintf("TERMINFO=%s", TERMINFO_LOCATION),
 		)
 
 		for key, value := range options.Env {
@@ -351,4 +359,17 @@ func NewCmd(ctx context.Context, options CmdOptions, size Size) (*Cmd, error) {
 	}
 
 	return &cmd, nil
+}
+
+const TERM = "xterm-256color"
+
+var TERMINFO_LOCATION = ""
+
+func init() {
+	info, err := terminfo.Load(TERM)
+	if err != nil {
+		return
+	}
+
+	TERMINFO_LOCATION = path.Clean(path.Join(info.File, "..", ".."))
 }
