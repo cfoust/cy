@@ -121,7 +121,26 @@
       (do
         (def {:tabs tabs} (layout/get))
         (def {:active active} (tabs 3))
-        (assert active)))
+        (assert active))
+
+      (action/close-tab)
+      (do
+        (def {:tabs tabs} (layout/get))
+        (def {:active active} (tabs 2))
+        (assert active))
+      (action/close-tab)
+      (action/close-tab)
+
+      # One tab left
+      (do
+        (def {:tabs tabs} (layout/get))
+        (def {:active active} (tabs 0))
+        (assert active))
+
+      (action/close-tab)
+      # Zero, should just be node
+      (def {:type node-type} (layout/get))
+      (assert (= node-type :margins)))
 
 (test ":split"
       (layout/set

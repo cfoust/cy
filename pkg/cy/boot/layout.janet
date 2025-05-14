@@ -901,4 +901,48 @@ For example, when moving vertically upwards, for a vertical split node this func
   "Switch to the previous tab."
   (switch-tab-delta -1))
 
+(key/action
+  action/close-tab
+  "Close the current tab."
+  (def layout (layout/get))
+  (def tabs-path (layout/find-last
+                   layout
+                   (layout/attach-path layout)
+                   |(layout/type? :tabs $)))
+  (if (nil? tabs-path) (break))
+
+  (def detached (layout/detach layout))
+  (def tabs-node (layout/path detached tabs-path))
+  (if
+    (= (length (tabs-node :tabs)) 1)
+    (do
+      (def {:tabs [{:node node}]} (layout/path layout tabs-path))
+      (layout/set (layout/assoc detached tabs-path node))
+      (break)))
+
+  (def [_ active-index] (find
+                          |((layout/path tabs-node (array/slice $ 0 2)) :active)
+                          (layout/successors tabs-node)))
+
+  (def {:tabs existing-tabs} tabs-node)
+  (def new-num-tabs (- (length existing-tabs) 1))
+  (def new-index (min active-index (- new-num-tabs 1)))
+
+  (def new-layout
+    (layout/assoc
+      detached
+      tabs-path
+      (assoc tabs-node :tabs
+             (->>
+               (pairs existing-tabs)
+               # Remove the old tab
+               (filter |(not= active-index ($ 0)))
+               (map |(if (= new-index ($ 0))
+                       (as?-> ($ 1) _
+                              (assoc _ :active true)
+                              (assoc _ :node (layout/attach-first (_ :node))))
+                       (assoc ($ 1) :active false)))))))
+
+  (layout/set new-layout))
+
 (merge-module root-env (curenv))
