@@ -1,6 +1,6 @@
 # Groups and panes
 
-`cy` contains a simple abstraction for isolating settings and functionality to a particular set of panes. This is referred to as **the node tree** which consists of **panes** and **groups**.
+`cy` calls open terminal sessions **panes** and stores them in a tree that behaves like a filesystem. This is referred to as **the node tree** which consists of **panes** and **groups**. The node tree is a simple abstraction for organizing panes and isolating settings and functionality to particular subsets of them.
 
 ## Panes
 
@@ -27,7 +27,7 @@ The {{api group/mkdir}} function creates a group at the provided path (if it doe
 
 ## The node tree
 
-The combination of groups and panes in cy form a tree that is similar to a filesystem. For example, a `cy` session may end up with a structure that looks like this:
+A `cy` session may end up with a structure that looks like this:
 
 ```
 / (the root group, which has no name)
@@ -47,12 +47,13 @@ Instead, each node is permanently assigned a unique identifier (which is just an
 
 `cy`'s flexibility comes from the way key bindings and parameters interact:
 
-- **Key bindings** are inherited down the tree, but can be overridden by descendant groups.
-- **Parameters** work the same way: {{api param/get}} will get the value of a parameter from the closest parent group that defines it.
+- **Key bindings** are inherited down the tree, but can be overridden by descendant groups and panes.
+- **Parameters** work the same way: {{api param/get}} will get the value of a parameter from the closest parent group or pane that defines it.
 
 Imagine that you are attached to `/my-project/group-2/pane-3` in the example above:
 
 - If `/my-project` defines a binding with the sequence <kbd>ctrl+a</kbd><kbd>b</kbd> and `/my-project/group-2` also defines one that begins with <kbd>ctrl+a</kbd>, the latter will take precedence.
 - If `/my-project` defines a value for a parameter `:some-parameter` and `/my-project/group-2` does not, `(param/get :some-parameter)` will retrieve the value from `/my-project`.
+- If the pane `/my-project/group-2/pane-3` defines a key binding, it can only be triggered when attached to that pane.
 
 One of `cy`'s goals is for everything to be configured solely with key bindings and parameters; in this way `cy` can have completely different behavior depending on the environment and project.

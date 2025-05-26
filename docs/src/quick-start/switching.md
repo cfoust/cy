@@ -4,7 +4,7 @@
 
 `cy` allows you to quickly jump between panes using a built-in fuzzy finder. Try it out by hitting {{bind :root ctrl+a ;}}, which presents you with a list of all of the running panes.
 
-The controls should be familiar to you if you have ever used a fuzzy finder:
+The controls should be familiar to you if you have ever used [fzf](https://github.com/junegunn/fzf):
 
 - Typing filters the list.
 - Use <kbd>ctrl+j</kbd> and <kbd>ctrl+k</kbd> (or the arrow keys) to move up and down.
@@ -17,4 +17,4 @@ The controls should be familiar to you if you have ever used a fuzzy finder:
 - {{bind :root ctrl+a l}}: Jump to a shell based on its current working directory.
 - {{bind :root ctrl+a :}}: Jump to a pane by fuzzy-finding lines on the screen.
 
-As you can tell, swapping to a new pane does not affect the existence of panes that are no longer on the screen.
+Swapping to a new pane does not close panes that are no longer on the screen.

@@ -102,15 +102,16 @@ You define new actions using the {{api key/action}} macro. Here is an example fr
 (key/action
   # The identifier to which this action will be bound
   # This is never shown in the UI
-  cy/kill-current-pane
+  action/remove-layout-pane
   # The docstring
   # The user uses this to find the action you define
-  "kill the current pane"
+  "Remove the current pane from the layout."
   # All subsequent forms comprise the body of the action, or the lines of code
   # that will be executed when it is invoked
-  (tree/rm (pane/current)))
+  (layout/set (layout/remove-attached (layout/get))))
 
-(key/bind :root ["ctrl+b" "b"] cy/kill-current-pane)
+# You bind existing actions like this
+(key/bind :root ["ctrl+b" "b"] action/remove-layout-pane)
 ```
 
 {{api key/action}} actually just invokes Janet's `(defn)` macro under the hood. This means that actions are just ordinary Janet functions that happen to be registered with `cy`. {{api key/action}} exists so that you can clearly identify to the user the functionality your plugin provides.

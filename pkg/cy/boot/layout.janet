@@ -523,11 +523,6 @@ For example, when moving vertically upwards, for a vertical split node this func
   (layout/assoc layout parent-path new-parent))
 
 (key/action
-  action/remove-layout-pane
-  "Remove the current pane from the layout."
-  (layout/set (layout/remove-attached (layout/get))))
-
-(key/action
   action/kill-layout-pane
   "Remove the current pane from the layout and the node tree."
   (def layout (layout/get))
@@ -539,6 +534,11 @@ For example, when moving vertically upwards, for a vertical split node this func
   action/kill-pane
   "Kill the process of the current pane, but do not detach from it."
   (cmd/kill (pane/current)))
+
+(key/action
+  action/remove-layout-pane
+  "Remove the current pane from the layout."
+  (layout/set (layout/remove-attached (layout/get))))
 
 (key/action
   action/kill-and-reattach

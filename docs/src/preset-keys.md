@@ -2,8 +2,6 @@
 
 Key specifiers are strings that have a special meaning to functions like {{api key/bind}}. They are a shorthand for the arcane byte sequences actually sent by your terminal when you enter these key combinations.
 
-> **Want to bind the <kbd>alt</kbd> key?** [Read this.](/keybindings.md#about-alt)
-
 `cy` defines the following key specifiers:
 
 | Specifier               | Notes                           |

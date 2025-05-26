@@ -63,7 +63,7 @@ The Janet code executed in `cy` can be executed in two different contexts:
 - **The context of the server:** This is the context in which your configuration file is run, because when the `cy` server starts up, there are no clients.
 - **The context of a client:** When a client invokes an [action](/keybindings.md#actions) or types a keybinding sequence, the executed Janet code can see what client ran the action and respond appropriately.
 
-Because of this, _some API functionality can only be used in a keybinding or action._ This is because some kinds of state, such as the state that `(viewport/*)` family of functions uses to work, only makes sense in the context of a user.
+Because of this, _some API functionality can only be used in a keybinding or action._ This is because some kinds of state, such as the state that `(layout/*)` family of functions uses to work, only makes sense in the context of a user.
 
 This is a confusing aspect of `cy` that I plan to improve over time, such as by letting you execute custom code in the context of a client whenever one connects.
 

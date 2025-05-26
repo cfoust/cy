@@ -1,6 +1,6 @@
 # Parameters
 
-`cy` has a key-value store referred to as **parameters**. In addition to being available for use from Janet for arbitrary purposes, parameters are also the primary means of configuring `cy`'s behavior.
+`cy` has a key-value store referred to as **parameters**. In addition to being available for use from Janet for arbitrary purposes, parameters are also the primary means of configuring the behavior of `cy`'s built-in interfaces.
 
 Parameters are set with {{api param/set}} and retrieved with {{api param/get}}:
 

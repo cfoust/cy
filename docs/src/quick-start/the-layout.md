@@ -6,7 +6,9 @@ By default, `cy` centers the pane and fills the rest of the horizontal space wit
 
 {{story png placeholder}}
 
-`cy` refers to the configuration of the content shown on your screen as the [**layout**](/layouts.md). Unlike `tmux`, every client on the `cy` server has their own layout that can be configured independently of other clients. The layout shown above has a single pane that has its horizontal sized fixed to 80 columns.
+`cy` refers to the configuration of the content shown on your screen as the [**layout**](/layouts.md). Unlike `tmux`, every client on the `cy` server has their own layout that can be configured independently of other clients. In other words, only panes are shared between clients, their presentation is not.
+
+The layout shown above has a single pane that has its horizontal size fixed to 80 columns.
 
 ### Panes and splits
 
@@ -31,10 +33,11 @@ After creating a few, you can move between them using directional keys:
 - {{bind :root ctrl+a R}} to rename the current tab
 - {{bind :root ctrl+a tab}} to move to the next tab
 - {{bind :root ctrl+a shift+tab}} to move to the previous tab
+- {{api action/close-tab}} to close the current tab
 
 ### Removing panes
 
-You can also remove panes from your layout with {{bind :root ctrl+a X}}. However, it is important to note that unlike in other terminal multiplexers, removing a pane from your layout does not kill it; you can still attach to it again, such as by using {{bind :root ctrl+a ;}}. To kill the underlying process of a pane and swap to a new one, you can use {{bind :root ctrl+a x}}.
+You can visually remove panes from your layout with {{bind :root ctrl+a x}}. However, it is important to note that unlike in other terminal multiplexers, removing a pane from your layout does not kill it; you can still attach to it again, such as by using {{bind :root ctrl+a ;}}. In `cy`'s lexicon, the pane is still in your node tree. To remove a pane both from the node tree and the layout, you can use {{bind :root ctrl+a X}}.
 
 ### Margins
 

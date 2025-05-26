@@ -18,15 +18,15 @@ I started writing `cy` because I felt like terminal multiplexers had stagnated. 
 
 If you use `tmux`, you might be familiar with `copy-mode`, which allows you to view lines from [the scrollback buffer](https://unix.stackexchange.com/q/145050). This is nice when you're using a program like `bash`, where you issue commands that produce static output.
 
-But by definition, `copy-mode` ceases to be useful when you use a program with any interactivity, such as `vim`: you only see the most recent state of the screen, and certainly cannot see what it used to look like.
+However, `copy-mode` ceases to be useful when you use interactive programs such as `vim`: you only see the most recent state of the screen, and certainly cannot see what it used to look like.
 
-`cy` solves this problem by recording all of your terminal sessions. In [replay mode](/replay-mode.md) you can seek, play back, and search through the history of a pane--regardless of the application that was running in it. `cy` [saves these recordings to disk](/replay-mode.md#recording-to-disk) and allows you to open them later at your leisure. You can also quickly search through all of the sessions you have recorded using [search mode](/search-mode.md).
+`cy` solves this problem by recording everything that occurs in your terminal sessions. In [replay mode](/replay-mode.md) you can seek, play back, and search through the history of a pane--regardless of the application that was running in it. `cy` [saves these recordings to disk](/replay-mode.md#recording-to-disk) and allows you to open them later at your leisure. You can also quickly search through all of the sessions you have recorded using [search mode](/search-mode.md).
 
 > _This sounds like it would be a lot, but it isn't: after many hundreds of hours of work in the terminal, all of my recordings occupy a total of 200MB (!) on disk._
 
-After [enabling command detection](/command-history.md#installation), `cy` provides an [augmented version of ctrl-r](/command-history/ctrl+r.md) (the command history function common in shells) with which you can see the output of every command you have ever run, in addition to inserting commands from the past into your current shell.
+After [enabling command detection](/command-history.md#installation), `cy` provides an [augmented version of ctrl-r](/command-history/ctrl+r.md) (the command history function common in shells) with which you can see the output of every command you have ever run, in addition to letting you insert commands from the past into your current shell.
 
-Without trying it for yourself, it's hard to appreciate just how useful it is to be able to go back in time to replay everything you've seen or done in the terminal. `cy` aims to augment your memory in a way that other programs cannot.
+Without trying it for yourself, it's hard to appreciate just how useful it is to be able to go back in time to replay everything you've seen or done in the terminal. `cy` augments your memory in a way that other programs cannot.
 
 ## Interface
 
