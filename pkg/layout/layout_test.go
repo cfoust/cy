@@ -7,54 +7,54 @@ import (
 )
 
 func TestValidate(t *testing.T) {
-	require.Error(t, ValidateTree(SplitType{
-		A: PaneType{
+	require.Error(t, ValidateTree(&SplitNode{
+		A: &PaneNode{
 			Attached: true,
 		},
-		B: PaneType{
+		B: &PaneNode{
 			Attached: true,
 		},
 	}))
-	require.Error(t, ValidateTree(SplitType{
-		A: PaneType{},
-		B: PaneType{},
+	require.Error(t, ValidateTree(&SplitNode{
+		A: &PaneNode{},
+		B: &PaneNode{},
 	}))
-	require.NoError(t, ValidateTree(SplitType{
-		A: PaneType{
+	require.NoError(t, ValidateTree(&SplitNode{
+		A: &PaneNode{
 			Attached: true,
 		},
-		B: PaneType{},
+		B: &PaneNode{},
 	}))
-	require.Error(t, ValidateTree(TabsType{
+	require.Error(t, ValidateTree(&TabsNode{
 		Tabs: []Tab{},
 	}))
-	require.Error(t, ValidateTree(TabsType{
+	require.Error(t, ValidateTree(&TabsNode{
 		Tabs: []Tab{
 			{},
 		},
 	}))
-	require.NoError(t, ValidateTree(TabsType{
+	require.NoError(t, ValidateTree(&TabsNode{
 		Tabs: []Tab{
 			{
 				Name:   "foo",
 				Active: true,
-				Node: PaneType{
+				Node: &PaneNode{
 					Attached: true,
 				},
 			},
 		},
 	}))
-	require.Error(t, ValidateTree(TabsType{
+	require.Error(t, ValidateTree(&TabsNode{
 		Tabs: []Tab{
 			{
 				Name:   "foo",
 				Active: true,
 				// The inner node has no active tab
-				Node: TabsType{
+				Node: &TabsNode{
 					Tabs: []Tab{
 						{
 							Active: false,
-							Node: PaneType{
+							Node: &PaneNode{
 								Attached: true,
 							},
 						},
@@ -66,22 +66,22 @@ func TestValidate(t *testing.T) {
 }
 
 func TestAttachFirst(t *testing.T) {
-	require.Equal(t, TabsType{
+	require.Equal(t, &TabsNode{
 		Tabs: []Tab{
 			{
 				Name:   "foo",
 				Active: true,
-				Node: PaneType{
+				Node: &PaneNode{
 					Attached: true,
 				},
 			},
 		},
-	}, AttachFirst(TabsType{
+	}, AttachFirst(&TabsNode{
 		Tabs: []Tab{
 			{
 				Name:   "foo",
 				Active: true,
-				Node: PaneType{
+				Node: &PaneNode{
 					Attached: false,
 				},
 			},

@@ -51,6 +51,10 @@ func (n *BordersNode) Clone() Node {
 }
 
 func (n *BordersNode) Validate() error {
+	if n.Node == nil {
+		return ErrChildNil
+	}
+
 	return n.Node.Validate()
 }
 
@@ -64,13 +68,13 @@ func (n *BordersNode) MarshalJanet() interface{} {
 		BorderBg    *prop.Color
 		Node        interface{}
 	}{
-		Type:        KEYWORD_BORDERS,
+		Type:        NodeKeywordBorders,
 		Title:       n.Title,
 		TitleBottom: n.TitleBottom,
 		Border:      n.Border,
 		BorderFg:    n.BorderFg,
 		BorderBg:    n.BorderBg,
-		Node:        marshalNode(n.Node),
+		Node:        n.Node.MarshalJanet(),
 	}
 }
 

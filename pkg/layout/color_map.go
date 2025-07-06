@@ -46,6 +46,10 @@ func (n *ColorMapNode) Clone() Node {
 }
 
 func (n *ColorMapNode) Validate() error {
+	if n.Node == nil {
+		return ErrChildNil
+	}
+
 	return n.Node.Validate()
 }
 
@@ -55,9 +59,9 @@ func (n *ColorMapNode) MarshalJanet() interface{} {
 		Map  *prop.ColorMap
 		Node interface{}
 	}{
-		Type: KEYWORD_COLORMAP,
+		Type: NodeKeywordColorMap,
 		Map:  n.Map,
-		Node: marshalNode(n.Node),
+		Node: n.Node.MarshalJanet(),
 	}
 }
 

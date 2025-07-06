@@ -1,8 +1,12 @@
 package layout
 
 import (
+	"errors"
+
 	"github.com/cfoust/cy/pkg/janet"
 )
+
+var ErrChildNil = errors.New("child nodes cannot be nil")
 
 type NodeType int
 
@@ -15,8 +19,4 @@ type Node interface {
 	Validate() error
 	MarshalJanet() interface{}
 	UnmarshalJanet(*janet.Value) (Node, error)
-}
-
-type JanetIO interface {
-	Type() string
 }
