@@ -1,31 +1,118 @@
-package bar
+package layout
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	L "github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/sasha-s/go-deadlock"
 )
 
+type BarNode struct {
+	Text   *prop.String
+	Bottom bool
+	Node   Node
+}
+
+var _ Node = (*BarNode)(nil)
+
+func (n *BarNode) Type() NodeType {
+	return NodeTypeBar
+}
+
+func (n *BarNode) IsAttached() bool {
+	return n.Node.IsAttached()
+}
+
+func (n *BarNode) Children() (nodes []Node) {
+	return []Node{n.Node}
+}
+
+func (n *BarNode) SetChild(index int, node Node) {
+	if index == 0 {
+		n.Node = node
+	}
+}
+
+func (n *BarNode) Clone() Node {
+	cloned := &(*n)
+	cloned.Node = n.Node.Clone()
+	return cloned
+}
+
+func (n *BarNode) Validate() error {
+	return n.Node.Validate()
+}
+
+func (n *BarNode) MarshalJanet() interface{} {
+	return struct {
+		Type   janet.Keyword
+		Text   *prop.String
+		Bottom bool
+		Node   interface{}
+	}{
+		Type:   KEYWORD_BAR,
+		Text:   n.Text,
+		Bottom: n.Bottom,
+		Node:   marshalNode(n.Node),
+	}
+}
+
+func (n *BarNode) UnmarshalJanet(value *janet.Value) (Node, error) {
+	type barArgs struct {
+		Text   *prop.String
+		Bottom *bool
+		Node   *janet.Value
+	}
+	args := barArgs{}
+	err := value.Unmarshal(&args)
+	if err != nil {
+		return nil, err
+	}
+
+	node, err := unmarshalNode(args.Node)
+	if err != nil {
+		return nil, err
+	}
+
+	if args.Text == nil {
+		return nil, fmt.Errorf(
+			":bar node missing :text",
+		)
+	}
+
+	type_ := BarNode{
+		Node: node,
+		Text: args.Text,
+	}
+
+	if args.Bottom != nil {
+		type_.Bottom = *args.Bottom
+	}
+
+	return &type_, nil
+}
+
 type Bar struct {
-	*L.Computable
+	*Computable
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 	render     *taro.Renderer
 	screen     mux.Screen
 	size       geom.Size
 	inner, bar geom.Rect
-	config     L.BarType
+	config     *BarNode
 }
 
 var _ mux.Screen = (*Bar)(nil)
-var _ L.Reusable = (*Bar)(nil)
+var _ Reusable = (*Bar)(nil)
 
 func (t *Bar) Kill() {
 	t.screen.Kill()
@@ -45,7 +132,7 @@ func (b *Bar) State() *tty.State {
 	state := tty.New(size)
 
 	var barState string
-	layout := L.New(config.Node)
+	layout := New(config.Node)
 	if value, ok := config.Text.Get(
 		b.Ctx(),
 		b.Context.Context(),
@@ -83,8 +170,8 @@ func (b *Bar) State() *tty.State {
 	return state
 }
 
-func (b *Bar) Apply(node L.NodeType) (bool, error) {
-	config, ok := node.(L.BarType)
+func (b *Bar) Apply(node Node) (bool, error) {
+	config, ok := node.(*BarNode)
 	if !ok {
 		return false, nil
 	}
@@ -161,7 +248,7 @@ func (b *Bar) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-updates.Recv():
-			if _, ok := event.(L.NodeChangeEvent); ok {
+			if _, ok := event.(NodeChangeEvent); ok {
 				continue
 			}
 			b.Publish(event)
@@ -169,11 +256,11 @@ func (b *Bar) poll(ctx context.Context) {
 	}
 }
 
-func New(
+func NewBar(
 	ctx context.Context,
 	screen mux.Screen,
 ) *Bar {
-	c := L.NewComputable(ctx)
+	c := NewComputable(ctx)
 	bar := &Bar{
 		Computable:      c,
 		UpdatePublisher: mux.NewPublisher(),

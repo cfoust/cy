@@ -1,4 +1,4 @@
-package margins
+package layout
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	L "github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
@@ -17,12 +17,116 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
+type MarginsNode struct {
+	Cols     int
+	Rows     int
+	Frame    *string
+	Border   *prop.Border
+	BorderFg *prop.Color
+	BorderBg *prop.Color
+	Node     Node
+}
+
+var _ Node = (*MarginsNode)(nil)
+
+func (n *MarginsNode) Type() NodeType {
+	return NodeTypeMargins
+}
+
+func (n *MarginsNode) IsAttached() bool {
+	return n.Node.IsAttached()
+}
+
+func (n *MarginsNode) Children() (nodes []Node) {
+	return []Node{n.Node}
+}
+
+func (n *MarginsNode) SetChild(index int, node Node) {
+	if index == 0 {
+		n.Node = node
+	}
+}
+
+func (n *MarginsNode) Clone() Node {
+	cloned := &(*n)
+	cloned.Node = n.Node.Clone()
+	return cloned
+}
+
+func (n *MarginsNode) Validate() error {
+	return n.Node.Validate()
+}
+
+func (n *MarginsNode) MarshalJanet() interface{} {
+	return struct {
+		Type     janet.Keyword
+		Cols     int
+		Rows     int
+		Frame    *string
+		Border   *prop.Border
+		BorderFg *prop.Color
+		BorderBg *prop.Color
+		Node     interface{}
+	}{
+		Type:     KEYWORD_MARGINS,
+		Cols:     n.Cols,
+		Rows:     n.Rows,
+		Frame:    n.Frame,
+		Border:   n.Border,
+		BorderFg: n.BorderFg,
+		BorderBg: n.BorderBg,
+		Node:     marshalNode(n.Node),
+	}
+}
+
+func (n *MarginsNode) UnmarshalJanet(value *janet.Value) (Node, error) {
+	type marginsArgs struct {
+		Cols     *int
+		Rows     *int
+		Border   *prop.Border
+		BorderBg *prop.Color
+		BorderFg *prop.Color
+		Node     *janet.Value
+	}
+	args := marginsArgs{}
+	err := value.Unmarshal(&args)
+	if err != nil {
+		return nil, err
+	}
+
+	node, err := unmarshalNode(args.Node)
+	if err != nil {
+		return nil, err
+	}
+
+	type_ := MarginsNode{
+		Node:     node,
+		Border:   args.Border,
+		BorderFg: args.BorderFg,
+		BorderBg: args.BorderBg,
+	}
+
+	if args.Border == nil {
+		type_.Border = defaultBorder
+	}
+
+	if args.Cols != nil {
+		type_.Cols = *args.Cols
+	}
+
+	if args.Rows != nil {
+		type_.Rows = *args.Rows
+	}
+
+	return &type_, nil
+}
+
 // Margins puts empty space around a Screen and centers it. In size mode,
 // Margins attempts to keep the Screen at a fixed size (one or both dimensions
 // fixed). In margin mode, the Screen is surrounded by fixed-size margins that
 // do not change with the screen size.
 type Margins struct {
-	*L.Computable
+	*Computable
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 	render *taro.Renderer
@@ -36,11 +140,11 @@ type Margins struct {
 
 	outer  geom.Size
 	inner  geom.Rect
-	config L.MarginsType
+	config *MarginsNode
 }
 
 var _ mux.Screen = (*Margins)(nil)
-var _ L.Reusable = (*Margins)(nil)
+var _ Reusable = (*Margins)(nil)
 
 func fitMargin(outer, margin int) int {
 	if margin == 0 {
@@ -62,8 +166,8 @@ func getSize(outer, desired int) int {
 	return desired
 }
 
-func (l *Margins) Apply(node L.NodeType) (bool, error) {
-	config, ok := node.(L.MarginsType)
+func (l *Margins) Apply(node Node) (bool, error) {
+	config, ok := node.(*MarginsNode)
 	if !ok {
 		return false, nil
 	}
@@ -83,7 +187,7 @@ func (l *Margins) Apply(node L.NodeType) (bool, error) {
 		l.setSize(newSize)
 	}
 
-	layout := L.New(config.Node)
+	layout := New(config.Node)
 	for _, prop := range []prop.Presettable{
 		config.Border,
 		config.BorderFg,
@@ -225,7 +329,7 @@ func (l *Margins) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-updates.Recv():
-			if _, ok := event.(L.NodeChangeEvent); ok {
+			if _, ok := event.(NodeChangeEvent); ok {
 				continue
 			}
 			l.Publish(event)
@@ -250,8 +354,8 @@ func (l *Margins) Resize(size geom.Size) error {
 	return l.recalculate()
 }
 
-func New(ctx context.Context, screen mux.Screen) *Margins {
-	c := L.NewComputable(ctx)
+func NewMargins(ctx context.Context, screen mux.Screen) *Margins {
+	c := NewComputable(ctx)
 	margins := &Margins{
 		Computable:      c,
 		UpdatePublisher: mux.NewPublisher(),
@@ -276,7 +380,7 @@ func Add(ctx context.Context, screen mux.Screen) mux.Screen {
 		S.WithOpaque,
 		S.WithInteractive,
 	)
-	margins := New(ctx, innerLayers)
+	margins := NewMargins(ctx, innerLayers)
 
 	outerLayers := S.NewLayers()
 	frame := frames.NewFramer(ctx, frames.RandomFrame())

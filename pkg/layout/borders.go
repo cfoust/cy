@@ -1,11 +1,12 @@
-package borders
+package layout
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	L "github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
@@ -14,22 +15,122 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
+type BordersNode struct {
+	Title       *prop.String
+	TitleBottom *prop.String
+	Border      *prop.Border
+	BorderFg    *prop.Color
+	BorderBg    *prop.Color
+	Node        Node
+}
+
+var _ Node = (*BordersNode)(nil)
+
+func (n *BordersNode) Type() NodeType {
+	return NodeTypeBorders
+}
+
+func (n *BordersNode) IsAttached() bool {
+	return n.Node.IsAttached()
+}
+
+func (n *BordersNode) Children() (nodes []Node) {
+	return []Node{n.Node}
+}
+
+func (n *BordersNode) SetChild(index int, node Node) {
+	if index == 0 {
+		n.Node = node
+	}
+}
+
+func (n *BordersNode) Clone() Node {
+	cloned := &(*n)
+	cloned.Node = n.Node.Clone()
+	return cloned
+}
+
+func (n *BordersNode) Validate() error {
+	return n.Node.Validate()
+}
+
+func (n *BordersNode) MarshalJanet() interface{} {
+	return struct {
+		Type        janet.Keyword
+		Title       *prop.String
+		TitleBottom *prop.String
+		Border      *prop.Border
+		BorderFg    *prop.Color
+		BorderBg    *prop.Color
+		Node        interface{}
+	}{
+		Type:        KEYWORD_BORDERS,
+		Title:       n.Title,
+		TitleBottom: n.TitleBottom,
+		Border:      n.Border,
+		BorderFg:    n.BorderFg,
+		BorderBg:    n.BorderBg,
+		Node:        marshalNode(n.Node),
+	}
+}
+
+func (n *BordersNode) UnmarshalJanet(value *janet.Value) (Node, error) {
+	type borderArgs struct {
+		Title       *prop.String
+		TitleBottom *prop.String
+		Border      *prop.Border
+		Node        *janet.Value
+		BorderBg    *prop.Color
+		BorderFg    *prop.Color
+	}
+	args := borderArgs{}
+	err := value.Unmarshal(&args)
+	if err != nil {
+		return nil, err
+	}
+
+	node, err := unmarshalNode(args.Node)
+	if err != nil {
+		return nil, err
+	}
+
+	type_ := BordersNode{
+		Title:       args.Title,
+		TitleBottom: args.TitleBottom,
+		Node:        node,
+		Border:      args.Border,
+		BorderFg:    args.BorderFg,
+	}
+
+	if type_.Border != nil {
+		if border, ok := type_.Border.Static(); ok && border.None() {
+			return nil, fmt.Errorf(
+				"type :border does not support :border=:none, use :hidden instead",
+			)
+		}
+	} else {
+		type_.Border = defaultBorder
+	}
+
+	return &type_, nil
+}
+
 type Borders struct {
-	*L.Computable
+	*Computable
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 	render *taro.Renderer
 	screen mux.Screen
 	size   geom.Size
 	inner  geom.Rect
-	config L.BorderType
+	config *BordersNode
 }
 
 var _ mux.Screen = (*Borders)(nil)
-var _ L.Reusable = (*Borders)(nil)
+var _ Reusable = (*Borders)(nil)
 
-func (l *Borders) Apply(node L.NodeType) (bool, error) {
-	config, ok := node.(L.BorderType)
+func (l *Borders) Apply(node Node) (bool, error) {
+	config, ok := node.(*BordersNode)
 	if !ok {
 		return false, nil
 	}
@@ -50,7 +151,7 @@ func (l *Borders) Apply(node L.NodeType) (bool, error) {
 	}
 
 	// Some properties only get the layout, so they can be preset
-	layout := L.New(config.Node)
+	layout := New(config.Node)
 	for _, prop := range []prop.Presettable{
 		config.Border,
 		config.BorderFg,
@@ -126,7 +227,7 @@ func (l *Borders) State() *tty.State {
 		C: inner.Size.C,
 	}
 
-	layout := L.New(config.Node)
+	layout := New(config.Node)
 	if value, ok := config.Title.Get(
 		l.Ctx(),
 		l.Context.Context(),
@@ -185,7 +286,7 @@ func (l *Borders) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-updates.Recv():
-			if _, ok := event.(L.NodeChangeEvent); ok {
+			if _, ok := event.(NodeChangeEvent); ok {
 				continue
 			}
 			l.Publish(event)
@@ -233,8 +334,8 @@ func (l *Borders) Resize(size geom.Size) error {
 	return l.recalculate()
 }
 
-func New(ctx context.Context, screen mux.Screen) *Borders {
-	c := L.NewComputable(ctx)
+func NewBorders(ctx context.Context, screen mux.Screen) *Borders {
+	c := NewComputable(ctx)
 	borders := &Borders{
 		Computable:      c,
 		UpdatePublisher: mux.NewPublisher(),

@@ -1,4 +1,4 @@
-package pane
+package layout
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	L "github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
@@ -19,6 +19,79 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
+type PaneNode struct {
+	Attached     bool
+	RemoveOnExit *bool
+	ID           *tree.NodeID
+}
+
+var _ Node = (*PaneNode)(nil)
+
+func (p *PaneNode) Type() NodeType {
+	return NodeTypePane
+}
+
+func (p *PaneNode) IsAttached() bool {
+	return p.Attached
+}
+
+func (p *PaneNode) Children() (nodes []Node) {
+	return
+}
+
+func (p *PaneNode) SetChild(index int, node Node) {
+	return
+}
+
+func (p *PaneNode) Clone() Node {
+	return &(*p)
+}
+
+func (p *PaneNode) Validate() error {
+	return nil
+}
+
+func (p *PaneNode) MarshalJanet() interface{} {
+	return struct {
+		Type         janet.Keyword
+		Attached     bool
+		ID           *tree.NodeID
+		RemoveOnExit *bool
+	}{
+		Type:         KEYWORD_PANE,
+		Attached:     p.Attached,
+		ID:           p.ID,
+		RemoveOnExit: p.RemoveOnExit,
+	}
+}
+
+func (p *PaneNode) UnmarshalJanet(value *janet.Value) (Node, error) {
+	type paneArgs struct {
+		Attached     *bool
+		RemoveOnExit *bool
+		ID           *tree.NodeID
+	}
+	args := paneArgs{}
+
+	err := value.Unmarshal(&args)
+	if err != nil {
+		return nil, err
+	}
+	type_ := PaneNode{
+		ID: args.ID,
+	}
+
+	if args.Attached != nil {
+		type_.Attached = *args.Attached
+	}
+
+	if args.RemoveOnExit != nil {
+		type_.RemoveOnExit = args.RemoveOnExit
+	}
+
+	return &type_, err
+}
+
 type Pane struct {
 	util.Lifetime
 	deadlock.RWMutex
@@ -28,7 +101,7 @@ type Pane struct {
 	tree   *tree.Tree
 	server *server.Server
 
-	config L.PaneType
+	config *PaneNode
 
 	size geom.Size
 	id   *tree.NodeID
@@ -41,7 +114,7 @@ type Pane struct {
 }
 
 var _ mux.Screen = (*Pane)(nil)
-var _ L.Reusable = (*Pane)(nil)
+var _ Reusable = (*Pane)(nil)
 
 func (p *Pane) Send(msg mux.Msg) {
 	p.RLock()
@@ -73,7 +146,7 @@ func (p *Pane) Send(msg mux.Msg) {
 	}
 
 	p.config.Attached = true
-	p.Publish(L.NodeChangeEvent{
+	p.Publish(NodeChangeEvent{
 		Config: p.config,
 	})
 }
@@ -163,14 +236,14 @@ func (p *Pane) attach(
 
 			// Remove the node from the tree
 			if removeOnExit && isAttached {
-				p.Publish(L.NodeRemoveEvent{})
+				p.Publish(NodeRemoveEvent{})
 				return
 			}
 
 			// Keep the pane around, just detach from it in the
 			// layout
 			newConfig.ID = nil
-			p.Publish(L.NodeChangeEvent{
+			p.Publish(NodeChangeEvent{
 				Config: newConfig,
 			})
 		}
@@ -223,7 +296,7 @@ func (p *Pane) setID(id *tree.NodeID) error {
 					continue
 				}
 
-				p.Publish(L.NodeRemoveEvent{})
+				p.Publish(NodeRemoveEvent{})
 			}
 		}
 	}()
@@ -232,7 +305,7 @@ func (p *Pane) setID(id *tree.NodeID) error {
 	return nil
 }
 
-func (p *Pane) applyConfig(config L.PaneType) {
+func (p *Pane) applyConfig(config *PaneNode) {
 	p.config = config
 	p.isAttached = config.Attached
 
@@ -243,8 +316,8 @@ func (p *Pane) applyConfig(config L.PaneType) {
 	}
 }
 
-func (p *Pane) Apply(node L.NodeType) (bool, error) {
-	config, ok := node.(L.PaneType)
+func (p *Pane) Apply(node Node) (bool, error) {
+	config, ok := node.(*PaneNode)
 	if !ok {
 		return false, nil
 	}
@@ -270,7 +343,7 @@ func (p *Pane) Apply(node L.NodeType) (bool, error) {
 	return true, nil
 }
 
-func New(
+func NewPane(
 	ctx context.Context,
 	tree *tree.Tree,
 	server *server.Server,

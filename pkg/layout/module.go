@@ -6,121 +6,26 @@ import (
 	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/style"
-
-	"github.com/charmbracelet/lipgloss"
 )
 
-type NodeType interface{}
-
-type PaneType struct {
-	Attached     bool
-	RemoveOnExit *bool
-	ID           *tree.NodeID
-}
-
-type SplitType struct {
-	Vertical bool
-	Percent  *int
-	Cells    *int
-	Border   *prop.Border
-	BorderFg *prop.Color
-	BorderBg *prop.Color
-	A        NodeType
-	B        NodeType
-}
-
-type MarginsType struct {
-	Cols     int
-	Rows     int
-	Frame    *string
-	Border   *prop.Border
-	BorderFg *prop.Color
-	BorderBg *prop.Color
-	Node     NodeType
-}
-
-type BorderType struct {
-	Title       *prop.String
-	TitleBottom *prop.String
-	Border      *prop.Border
-	BorderFg    *prop.Color
-	BorderBg    *prop.Color
-	Node        NodeType
-}
-
-type ColorMapType struct {
-	Map  *prop.ColorMap
-	Node NodeType
-}
-
-type Tab struct {
-	Active bool
-	Name   string
-	Node   NodeType
-}
-
-type TabsType struct {
-	ActiveFg, ActiveBg     *prop.Color
-	InactiveFg, InactiveBg *prop.Color
-	Bg                     *prop.Color
-	Bottom                 bool
-	Tabs                   []Tab
-}
-
-// Active returns the Tab config of the currently active tab.
-func (t TabsType) Active() (tab Tab) {
-	var active Tab
-	for _, tab := range t.Tabs {
-		if !tab.Active {
-			continue
-		}
-		active = tab
-		break
-	}
-	return active
-}
-
-// Active returns the index of the currently active tab.
-func (t TabsType) ActiveIndex() int {
-	for index, tab := range t.Tabs {
-		if !tab.Active {
-			continue
-		}
-		return index
-	}
-	return -1
-}
-
-type BarType struct {
-	Text   *prop.String
-	Bottom bool
-	Node   NodeType
-}
-
 type Layout struct {
-	Root NodeType
+	Root Node
 }
 
-func New(node NodeType) Layout {
+func New(node Node) Layout {
 	return Layout{Root: node}
 }
 
 // Default returns the default layout.
 func Default() Layout {
-	return New(MarginsType{
+	return New(&MarginsNode{
 		Cols:   80,
 		Border: prop.NewStatic(&style.DefaultBorder),
-		Node: PaneType{
+		Node: &PaneNode{
 			Attached: true,
 		},
 	})
 }
-
-type NodeChangeEvent struct {
-	Config NodeType
-}
-
-type NodeRemoveEvent struct{}
 
 // getPaneType gets all of the panes that are descendants of the provided node,
 // in essence all of the leaf nodes.
@@ -172,51 +77,8 @@ func getNumLeaves(node NodeType) int {
 	return 0
 }
 
-// Copy recursively copies the node. This is so mutations don't affect the
-// original.
-func Copy(node NodeType) NodeType {
-	switch node := node.(type) {
-	case PaneType:
-		copied := node
-		return copied
-	case SplitType:
-		copied := node
-		copied.A = Copy(node.A)
-		copied.B = Copy(node.B)
-		return node
-	case MarginsType:
-		copied := node
-		copied.Node = Copy(node.Node)
-		return node
-	case BorderType:
-		copied := node
-		copied.Node = Copy(node.Node)
-		return node
-	case BarType:
-		copied := node
-		copied.Node = Copy(node.Node)
-		return node
-	case TabsType:
-		copied := node
-		var newTabs []Tab
-		for _, tab := range node.Tabs {
-			copiedTab := tab
-			copiedTab.Node = Copy(tab.Node)
-			newTabs = append(newTabs, copiedTab)
-		}
-		copied.Tabs = newTabs
-		return copied
-	case ColorMapType:
-		copied := node
-		copied.Node = Copy(node.Node)
-		return node
-	}
-
-	return node
-}
-
 // AttachFirst attaches to the first node it can find.
-func AttachFirst(node NodeType) NodeType {
+func AttachFirst(node Node) Node {
 	switch node := node.(type) {
 	case PaneType:
 		node.Attached = true
@@ -315,35 +177,8 @@ func RemoveAttached(node NodeType) NodeType {
 	return node
 }
 
-// IsAttached reports whether the node provided leads to a node that is
-// attached.
-func IsAttached(tree NodeType) bool {
-	switch node := tree.(type) {
-	case PaneType:
-		return node.Attached
-	case SplitType:
-		return IsAttached(node.A) || IsAttached(node.B)
-	case MarginsType:
-		return IsAttached(node.Node)
-	case BorderType:
-		return IsAttached(node.Node)
-	case BarType:
-		return IsAttached(node.Node)
-	case TabsType:
-		for _, tab := range node.Tabs {
-			if IsAttached(tab.Node) {
-				return true
-			}
-		}
-		return false
-	case ColorMapType:
-		return IsAttached(node.Node)
-	}
-	return false
-}
-
 // Detach returns a copy of node with no attachment points.
-func Detach(node NodeType) NodeType {
+func Detach(node Node) Node {
 	switch node := node.(type) {
 	case PaneType:
 		node.Attached = false
@@ -457,71 +292,6 @@ func getAttached(node NodeType) *tree.NodeID {
 // Attached returns the ID field of the attached pane in the layout.
 func Attached(layout Layout) *tree.NodeID {
 	return getAttached(layout.Root)
-}
-
-// validateNodes makes sure that nodes in the layout provided match a set of
-// constraints.
-func validateNodes(node NodeType) error {
-	switch node := node.(type) {
-	case SplitType:
-		if err := validateNodes(node.A); err != nil {
-			return err
-		}
-
-		if err := validateNodes(node.B); err != nil {
-			return err
-		}
-
-		return nil
-	case MarginsType:
-		return validateNodes(node.Node)
-	case BorderType:
-		return validateNodes(node.Node)
-	case BarType:
-		return validateNodes(node.Node)
-	case TabsType:
-		tabs := node.Tabs
-		if len(tabs) == 0 {
-			return fmt.Errorf(":tabs must have at least one tab")
-		}
-
-		haveActive := false
-		for _, tab := range node.Tabs {
-			if tab.Active {
-				haveActive = true
-			}
-		}
-
-		if !haveActive {
-			return fmt.Errorf(":tabs must have at least one active tab")
-		}
-
-		for index, tab := range tabs {
-			if lipgloss.Width(tab.Name) == 0 {
-				return fmt.Errorf(
-					":tabs index %d has empty name",
-					index,
-				)
-			}
-
-			err := validateNodes(tab.Node)
-			if err == nil {
-				continue
-			}
-
-			return fmt.Errorf(
-				":tabs index %d is invalid: %s",
-				index,
-				err,
-			)
-		}
-
-		return nil
-	case ColorMapType:
-		return validateNodes(node.Node)
-	}
-
-	return nil
 }
 
 // ValidateTree inspects a tree and ensures that it conforms to all relevant
