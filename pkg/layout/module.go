@@ -1,12 +1,42 @@
 package layout
 
 import (
+	"context"
+	"errors"
 	"fmt"
 
+	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/layout/prop"
+	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/style"
 )
+
+var ErrChildNil = errors.New("child nodes cannot be nil")
+
+type NodeType int
+
+type Node interface {
+	Type() NodeType
+	IsAttached() bool
+	Children() []Node
+	SetChild(index int, node Node)
+	VisibleChildren() []Node
+	SetVisibleChild(index int, node Node)
+	Clone() Node
+	Validate() error
+	MarshalJanet() interface{}
+	UnmarshalJanet(*janet.Value) (Node, error)
+	// Create a Screen from this Node.
+	Screen(
+		ctx context.Context,
+		tree *tree.Tree,
+		server *server.Server,
+		params *params.Parameters,
+		children []Reusable,
+	) Reusable
+}
 
 type Layout struct {
 	Root Node

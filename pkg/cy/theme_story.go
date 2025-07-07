@@ -4,7 +4,7 @@ import (
 	"context"
 	_ "embed"
 
-	"github.com/cfoust/cy/pkg/layout"
+	L "github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/replay"
@@ -69,13 +69,13 @@ var initTheme stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 		replayBottom = p.Id()
 	}
 
-	err = client.SetLayout(layout.New(layout.SplitType{
+	err = client.SetLayout(L.New(&L.SplitNode{
 		Vertical: true,
 		Border:   prop.NewStatic(&style.DefaultBorder),
-		A: layout.PaneType{
+		A: &L.PaneNode{
 			ID: &replayTop,
 		},
-		B: layout.PaneType{
+		B: &L.PaneNode{
 			ID:       &replayBottom,
 			Attached: true,
 		},

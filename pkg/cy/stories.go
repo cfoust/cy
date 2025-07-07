@@ -6,7 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/layout/split"
+	"github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/params"
@@ -236,7 +236,7 @@ func init() {
 			return nil, err
 		}
 
-		split := split.New(
+		split := layout.NewSplit(
 			ctx,
 			screenA,
 			screenB,

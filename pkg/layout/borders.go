@@ -9,6 +9,9 @@ import (
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/mux/screen/server"
+	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/charmbracelet/lipgloss"
@@ -117,6 +120,24 @@ func (n *BordersNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 	}
 
 	return &type_, nil
+}
+
+func (n *BordersNode) VisibleChildren() (nodes []Node) {
+	return n.Children()
+}
+
+func (n *BordersNode) SetVisibleChild(index int, node Node) {
+	n.SetChild(index, node)
+}
+
+func (n *BordersNode) Screen(
+	ctx context.Context,
+	tree *tree.Tree,
+	server *server.Server,
+	params *params.Parameters,
+	children []Reusable,
+) Reusable {
+	return NewBorders(ctx, children[0])
 }
 
 type Borders struct {

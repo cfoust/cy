@@ -27,7 +27,7 @@ import (
 type screenNode struct {
 	util.Lifetime
 	Screen   L.Reusable
-	Config   L.NodeType
+	Config   L.Node
 	Children []*screenNode
 }
 
@@ -113,9 +113,9 @@ type LayoutEngine struct {
 	log     zerolog.Logger
 
 	size           geom.Size
-	layout         L.Node
 	layoutLifetime *util.Lifetime
 	screen         mux.Screen
+	layout         L.Node
 	existing       *screenNode
 }
 
@@ -189,8 +189,8 @@ func (l *LayoutEngine) Resize(size geom.Size) error {
 // pane to focus it again. The Screen at that location detects the click and
 // indicates to the LayoutEngine that it should attach to it.
 func (l *LayoutEngine) handleChange(
-	node *screenNode,
-	config L.Node,
+	changedNode *screenNode,
+	newConfig L.Node,
 ) error {
 	l.Lock()
 	defer l.Unlock()
@@ -199,15 +199,15 @@ func (l *LayoutEngine) handleChange(
 
 	// If the new configuration changes the attachment point, we need to
 	// detach from whatever node we're currently attached to
-	if config.IsAttached() {
+	if newConfig.IsAttached() {
 		layout = L.Detach(layout.Clone())
 	}
 
 	layout = applyNodeChange(
 		l.existing,
-		node,
+		changedNode,
 		layout,
-		config,
+		newConfig,
 	)
 
 	err := L.ValidateTree(layout)
@@ -231,8 +231,8 @@ func (l *LayoutEngine) removeAttached() error {
 func (l *LayoutEngine) set(layout L.Node) error {
 	node, err := l.updateNode(
 		l.Ctx(),
-		layout,
 		l.existing,
+		layout,
 	)
 	if err != nil {
 		return err

@@ -8,7 +8,6 @@ import (
 
 	"github.com/cfoust/cy/pkg/geom"
 	L "github.com/cfoust/cy/pkg/layout"
-	"github.com/cfoust/cy/pkg/layout/pane"
 	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	T "github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -78,7 +77,7 @@ func TestClickInactivePane(t *testing.T) {
 	})
 	time.Sleep(500 * time.Millisecond)
 
-	require.Equal(t, &L.SplitNode{
+	require.Equal(t, L.SplitNode{
 		A: &L.PaneNode{},
 		B: &L.PaneNode{Attached: true},
 	}, l.Get().Root)
@@ -121,7 +120,7 @@ func TestPaneRemoval(t *testing.T) {
 	l.Resize(size)
 
 	createPane := func() (*taro.Program, *T.Pane, *T.NodeID) {
-		static := pane.NewStatic(
+		static := L.NewStatic(
 			ctx,
 			false,
 			"foo",

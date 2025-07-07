@@ -92,6 +92,29 @@ func (p *PaneNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 	return &type_, err
 }
 
+func (n *PaneNode) VisibleChildren() (nodes []Node) {
+	return n.Children()
+}
+
+func (n *PaneNode) SetVisibleChild(index int, node Node) {
+	n.SetChild(index, node)
+}
+
+func (n *PaneNode) Screen(
+	ctx context.Context,
+	tree *tree.Tree,
+	server *server.Server,
+	params *params.Parameters,
+	children []Reusable,
+) Reusable {
+	return NewPane(
+		ctx,
+		tree,
+		server,
+		params,
+	)
+}
+
 type Pane struct {
 	util.Lifetime
 	deadlock.RWMutex

@@ -11,6 +11,9 @@ import (
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/mux/screen/server"
+	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/sasha-s/go-deadlock"
@@ -152,6 +155,24 @@ func (n *SplitNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 	}
 
 	return &type_, nil
+}
+
+func (n *SplitNode) VisibleChildren() (nodes []Node) {
+	return n.Children()
+}
+
+func (n *SplitNode) SetVisibleChild(index int, node Node) {
+	n.SetChild(index, node)
+}
+
+func (n *SplitNode) Screen(
+	ctx context.Context,
+	tree *tree.Tree,
+	server *server.Server,
+	params *params.Parameters,
+	children []Reusable,
+) Reusable {
+	return NewSplit(ctx, children[0], children[1], n.Vertical)
 }
 
 // Split renders two screens side by side (or one above the other) at a fixed proportion of its full width or height (respectively.)

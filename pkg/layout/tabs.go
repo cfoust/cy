@@ -11,6 +11,9 @@ import (
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/mux/screen/server"
+	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/charmbracelet/lipgloss"
@@ -209,6 +212,39 @@ func (n *TabsNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 	}
 
 	return &type_, nil
+}
+
+func (n *TabsNode) VisibleChildren() (nodes []Node) {
+	index := n.ActiveIndex()
+	if index == -1 {
+		return
+	}
+
+	return []Node{n.Tabs[index].Node}
+}
+
+func (n *TabsNode) SetVisibleChild(index int, node Node) {
+	// There can only be one visible child
+	if index != 0 {
+		return
+	}
+
+	index = n.ActiveIndex()
+	if index == -1 {
+		return
+	}
+
+	n.SetChild(0, node)
+}
+
+func (n *TabsNode) Screen(
+	ctx context.Context,
+	tree *tree.Tree,
+	server *server.Server,
+	params *params.Parameters,
+	children []Reusable,
+) Reusable {
+	return NewTabs(ctx, children[0])
 }
 
 // Active returns the Tab config of the currently active tab.
