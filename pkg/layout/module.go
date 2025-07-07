@@ -162,28 +162,19 @@ func Detach(node Node) Node {
 	return node
 }
 
-// attach returns a copy of node with the NodeID of the current attachment
-// point replaced with id.
-func attach(node Node, id tree.NodeID) Node {
+// Attach changes the currently attached tree node to the one specified by id.
+func Attach(node Node, id tree.NodeID) Node {
 	node = node.Clone()
-	if pane, ok := node.(*PaneNode); ok {
-		if pane.Attached {
-			pane.ID = &id
+	for _, pane := range getPaneNodes(node) {
+		if !pane.Attached {
+			continue
 		}
 
-		return pane
-	}
-
-	for _, child := range node.Children() {
-		attach(child, id)
+		pane.ID = &id
+		break
 	}
 
 	return node
-}
-
-// Attach changes the currently attached tree node to the one specified by id.
-func Attach(layout Layout, id tree.NodeID) Layout {
-	return Layout{Root: attach(layout.Root, id)}
 }
 
 // Attached returns the ID field of the attached pane in the layout.

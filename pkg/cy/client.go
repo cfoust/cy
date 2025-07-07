@@ -11,7 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/janet"
-	"github.com/cfoust/cy/pkg/layout"
+	L "github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/layout/engine"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen"
@@ -199,7 +199,7 @@ func (c *Client) pollEvents() {
 
 func (c *Client) Node() tree.Node {
 	l := c.layoutEngine.Get()
-	nodeID := layout.Attached(l)
+	nodeID := L.Attached(l)
 	if nodeID == nil {
 		return nil
 	}
@@ -258,7 +258,7 @@ func (c *Client) initialize(options ClientOptions) error {
 		engine.WithLogger(c.cy.log),
 	)
 
-	err = c.layoutEngine.Set(layout.Default())
+	err = c.layoutEngine.Set(L.Default())
 	if err != nil {
 		return err
 	}
@@ -375,7 +375,7 @@ func (c *Client) findNewPane() error {
 	return attach.CallContext(c.Ctx(), c, cwd)
 }
 
-func (c *Client) GetLayout() layout.Layout {
+func (c *Client) GetLayout() L.Layout {
 	return c.layoutEngine.Get()
 }
 
@@ -384,7 +384,7 @@ func (c *Client) GetLayout() layout.Layout {
 // also updates the client's bindings and params to point to that node. If it
 // does not exist, the client uses the bindings and parameters of the root
 // node.
-func (c *Client) SetLayout(l layout.Layout) error {
+func (c *Client) SetLayout(l L.Layout) error {
 	err := c.layoutEngine.Set(l)
 	if err != nil {
 		return err
@@ -395,7 +395,7 @@ func (c *Client) SetLayout(l layout.Layout) error {
 
 	var node tree.Node
 
-	attached := layout.Attached(l)
+	attached := L.Attached(l)
 	if attached != nil {
 		node, _ = c.cy.tree.NodeById(*attached)
 	}
@@ -441,7 +441,7 @@ func (c *Client) SetLayout(l layout.Layout) error {
 // layout.
 func (c *Client) attach(node tree.Node) error {
 	current := c.layoutEngine.Get()
-	return c.SetLayout(layout.Attach(current, node.Id()))
+	return c.SetLayout(L.New(L.Attach(current.Root, node.Id())))
 }
 
 // Attach attaches to the given node and (as distinct from attach()) adds an
