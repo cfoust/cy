@@ -76,12 +76,12 @@ func getPaneNodes(tree Node) (panes []*PaneNode) {
 
 // AttachFirst attaches to the first node it can find.
 func AttachFirst(node Node) Node {
+	node = node.Clone()
 	panes := getPaneNodes(node)
 	if len(panes) == 0 {
 		return node
 	}
 
-	node = node.Clone()
 	panes[0].Attached = true
 	return node
 }

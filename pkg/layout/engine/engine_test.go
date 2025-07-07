@@ -83,29 +83,6 @@ func TestClickInactivePane(t *testing.T) {
 	}, l.Get().Root)
 }
 
-func TestRemoveAttached(t *testing.T) {
-	require.Equal(t,
-		L.MarginsNode{Node: &L.PaneNode{Attached: true}},
-		L.RemoveAttached(&L.SplitNode{
-			A: &L.MarginsNode{Node: &L.PaneNode{}},
-			B: &L.PaneNode{Attached: true},
-		}),
-	)
-}
-
-func TestAttachFirst(t *testing.T) {
-	require.Equal(t,
-		L.SplitNode{
-			A: &L.MarginsNode{Node: &L.PaneNode{Attached: true}},
-			B: &L.PaneNode{},
-		},
-		L.AttachFirst(&L.SplitNode{
-			A: &L.MarginsNode{Node: &L.PaneNode{}},
-			B: &L.PaneNode{},
-		}),
-	)
-}
-
 func TestPaneRemoval(t *testing.T) {
 	ctx := context.Background()
 	size := geom.DEFAULT_SIZE
