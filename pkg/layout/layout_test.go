@@ -109,3 +109,16 @@ func TestRemoveAttached(t *testing.T) {
 		}),
 	)
 }
+
+func TestAttach(t *testing.T) {
+	var id int32 = 1
+	node := Attach(&SplitNode{
+		A: &PaneNode{Attached: false},
+		B: &PaneNode{Attached: true},
+	}, id)
+
+	require.Equal(t,
+		id,
+		*node.Children()[1].(*PaneNode).ID,
+	)
+}
