@@ -238,9 +238,10 @@ func (l *LayoutEngine) set(layout L.Node) error {
 		return err
 	}
 
-	screen := node.Screen
-
-	reusedRoot := l.existing == node
+	var (
+		screen     = node.Screen
+		reusedRoot = l.existing == node
+	)
 
 	screen.Resize(l.size)
 

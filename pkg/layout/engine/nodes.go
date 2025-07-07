@@ -116,7 +116,7 @@ func (l *LayoutEngine) updateNode(
 	}
 
 	var (
-		childNodes     = current.Config.VisibleChildren()
+		childNodes     = node.VisibleChildren()
 		oldScreenNodes = current.Children
 		newScreenNodes []*screenNode
 	)

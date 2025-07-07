@@ -47,7 +47,7 @@ func TestSet(t *testing.T) {
 		},
 	))
 	require.NoError(t, err)
-	require.NotEqual(t, before, l.existing)
+	require.NotEqual(t, before.Config, l.existing.Config)
 }
 
 func TestClickInactivePane(t *testing.T) {
@@ -77,7 +77,7 @@ func TestClickInactivePane(t *testing.T) {
 	})
 	time.Sleep(500 * time.Millisecond)
 
-	require.Equal(t, L.SplitNode{
+	require.Equal(t, &L.SplitNode{
 		A: &L.PaneNode{},
 		B: &L.PaneNode{Attached: true},
 	}, l.Get().Root)
