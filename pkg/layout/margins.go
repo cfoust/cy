@@ -54,6 +54,10 @@ func (n *MarginsNode) Clone() Node {
 }
 
 func (n *MarginsNode) Validate() error {
+	if n.Node == nil {
+		return ErrChildNil
+	}
+
 	return n.Node.Validate()
 }
 
@@ -68,14 +72,14 @@ func (n *MarginsNode) MarshalJanet() interface{} {
 		BorderBg *prop.Color
 		Node     interface{}
 	}{
-		Type:     KEYWORD_MARGINS,
+		Type:     NodeKeywordMargins,
 		Cols:     n.Cols,
 		Rows:     n.Rows,
 		Frame:    n.Frame,
 		Border:   n.Border,
 		BorderFg: n.BorderFg,
 		BorderBg: n.BorderBg,
-		Node:     marshalNode(n.Node),
+		Node:     n.Node.MarshalJanet(),
 	}
 }
 

@@ -48,6 +48,10 @@ func (n *BarNode) Clone() Node {
 }
 
 func (n *BarNode) Validate() error {
+	if n.Node == nil {
+		return ErrChildNil
+	}
+
 	return n.Node.Validate()
 }
 
@@ -58,10 +62,10 @@ func (n *BarNode) MarshalJanet() interface{} {
 		Bottom bool
 		Node   interface{}
 	}{
-		Type:   KEYWORD_BAR,
+		Type:   NodeKeywordBar,
 		Text:   n.Text,
 		Bottom: n.Bottom,
-		Node:   marshalNode(n.Node),
+		Node:   n.Node.MarshalJanet(),
 	}
 }
 

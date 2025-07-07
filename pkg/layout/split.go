@@ -58,6 +58,10 @@ func (n *SplitNode) Clone() Node {
 }
 
 func (n *SplitNode) Validate() error {
+	if n.A == nil || n.B == nil {
+		return ErrChildNil
+	}
+
 	if err := n.A.Validate(); err != nil {
 		return err
 	}
@@ -83,7 +87,7 @@ func (n *SplitNode) MarshalJanet() interface{} {
 	}
 
 	s := splitType{
-		Type:     KEYWORD_SPLIT,
+		Type:     NodeKeywordSplit,
 		Vertical: n.Vertical,
 		Percent:  n.Percent,
 		Cells:    n.Cells,

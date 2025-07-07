@@ -113,7 +113,7 @@ type LayoutEngine struct {
 	log     zerolog.Logger
 
 	size           geom.Size
-	layout         L.NodeType
+	layout         L.Node
 	layoutLifetime *util.Lifetime
 	screen         mux.Screen
 	existing       *screenNode
@@ -190,7 +190,7 @@ func (l *LayoutEngine) Resize(size geom.Size) error {
 // indicates to the LayoutEngine that it should attach to it.
 func (l *LayoutEngine) handleChange(
 	node *screenNode,
-	config L.NodeType,
+	config L.Node,
 ) error {
 	l.Lock()
 	defer l.Unlock()
@@ -199,8 +199,8 @@ func (l *LayoutEngine) handleChange(
 
 	// If the new configuration changes the attachment point, we need to
 	// detach from whatever node we're currently attached to
-	if L.IsAttached(config) {
-		layout = L.Detach(L.Copy(layout))
+	if config.IsAttached() {
+		layout = L.Detach(layout.Clone())
 	}
 
 	layout = applyNodeChange(
@@ -225,10 +225,10 @@ func (l *LayoutEngine) handleChange(
 func (l *LayoutEngine) removeAttached() error {
 	l.Lock()
 	defer l.Unlock()
-	return l.set(L.RemoveAttached(l.layout))
+	return l.set(L.RemoveAttached(l.layout.Clone()))
 }
 
-func (l *LayoutEngine) set(layout L.NodeType) error {
+func (l *LayoutEngine) set(layout L.Node) error {
 	node, err := l.updateNode(
 		l.Ctx(),
 		layout,

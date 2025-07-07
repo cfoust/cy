@@ -9,7 +9,22 @@ const (
 	NodeTypeBar
 	NodeTypeColorMap
 )
+const (
+	NodeKeywordPane     = "pane"
+	NodeKeywordBar      = "bar"
+	NodeKeywordBorders  = "borders"
+	NodeKeywordColorMap = "color-map"
+	NodeKeywordMargins  = "margins"
+	NodeKeywordSplit    = "split"
+	NodeKeywordTabs     = "tabs"
+)
 
 var janetTypes = map[string]Node{
-	"tabs": &TabsNode{},
+	NodeKeywordPane:     &PaneNode{},
+	NodeKeywordBar:      &BarNode{},
+	NodeKeywordBorders:  &BordersNode{},
+	NodeKeywordColorMap: &ColorMapNode{},
+	NodeKeywordMargins:  &MarginsNode{},
+	NodeKeywordSplit:    &SplitNode{},
+	NodeKeywordTabs:     &TabsNode{},
 }

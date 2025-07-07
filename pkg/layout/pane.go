@@ -58,7 +58,7 @@ func (p *PaneNode) MarshalJanet() interface{} {
 		ID           *tree.NodeID
 		RemoveOnExit *bool
 	}{
-		Type:         KEYWORD_PANE,
+		Type:         NodeKeywordPane,
 		Attached:     p.Attached,
 		ID:           p.ID,
 		RemoveOnExit: p.RemoveOnExit,

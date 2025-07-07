@@ -26,10 +26,10 @@ func TestSet(t *testing.T) {
 	)
 
 	err := l.Set(L.New(
-		L.MarginsType{
-			Node: L.SplitType{
-				A: L.PaneType{Attached: true},
-				B: L.PaneType{},
+		&L.MarginsNode{
+			Node: &L.SplitNode{
+				A: &L.PaneNode{Attached: true},
+				B: &L.PaneNode{},
 			},
 		},
 	))
@@ -37,12 +37,12 @@ func TestSet(t *testing.T) {
 
 	before := l.existing
 	err = l.Set(L.New(
-		L.MarginsType{
-			Node: L.SplitType{
-				A: L.PaneType{Attached: true},
-				B: L.SplitType{
-					A: L.PaneType{},
-					B: L.PaneType{},
+		&L.MarginsNode{
+			Node: &L.SplitNode{
+				A: &L.PaneNode{Attached: true},
+				B: &L.SplitNode{
+					A: &L.PaneNode{},
+					B: &L.PaneNode{},
 				},
 			},
 		},
@@ -61,9 +61,9 @@ func TestClickInactivePane(t *testing.T) {
 	l.Resize(size)
 
 	err := l.Set(L.New(
-		L.SplitType{
-			A: L.PaneType{Attached: true},
-			B: L.PaneType{},
+		&L.SplitNode{
+			A: &L.PaneNode{Attached: true},
+			B: &L.PaneNode{},
 		},
 	))
 	require.NoError(t, err)
@@ -78,31 +78,31 @@ func TestClickInactivePane(t *testing.T) {
 	})
 	time.Sleep(500 * time.Millisecond)
 
-	require.Equal(t, L.SplitType{
-		A: L.PaneType{},
-		B: L.PaneType{Attached: true},
+	require.Equal(t, &L.SplitNode{
+		A: &L.PaneNode{},
+		B: &L.PaneNode{Attached: true},
 	}, l.Get().Root)
 }
 
 func TestRemoveAttached(t *testing.T) {
 	require.Equal(t,
-		L.MarginsType{Node: L.PaneType{Attached: true}},
-		L.RemoveAttached(L.SplitType{
-			A: L.MarginsType{Node: L.PaneType{}},
-			B: L.PaneType{Attached: true},
+		L.MarginsNode{Node: &L.PaneNode{Attached: true}},
+		L.RemoveAttached(&L.SplitNode{
+			A: &L.MarginsNode{Node: &L.PaneNode{}},
+			B: &L.PaneNode{Attached: true},
 		}),
 	)
 }
 
 func TestAttachFirst(t *testing.T) {
 	require.Equal(t,
-		L.SplitType{
-			A: L.MarginsType{Node: L.PaneType{Attached: true}},
-			B: L.PaneType{},
+		L.SplitNode{
+			A: &L.MarginsNode{Node: &L.PaneNode{Attached: true}},
+			B: &L.PaneNode{},
 		},
-		L.AttachFirst(L.SplitType{
-			A: L.MarginsType{Node: L.PaneType{}},
-			B: L.PaneType{},
+		L.AttachFirst(&L.SplitNode{
+			A: &L.MarginsNode{Node: &L.PaneNode{}},
+			B: &L.PaneNode{},
 		}),
 	)
 }
@@ -153,12 +153,12 @@ func TestPaneRemoval(t *testing.T) {
 
 		removeOnExit := true
 		err := l.Set(L.New(
-			L.SplitType{
-				A: L.PaneType{
+			&L.SplitNode{
+				A: &L.PaneNode{
 					Attached: true,
 					ID:       id1,
 				},
-				B: L.PaneType{
+				B: &L.PaneNode{
 					ID:           id2,
 					RemoveOnExit: &removeOnExit,
 				},
@@ -171,12 +171,12 @@ func TestPaneRemoval(t *testing.T) {
 		sleep()
 
 		// The attached node should stick around
-		require.Equal(t, L.SplitType{
-			A: L.PaneType{
+		require.Equal(t, &L.SplitNode{
+			A: &L.PaneNode{
 				Attached: true,
 				ID:       nil,
 			},
-			B: L.PaneType{
+			B: &L.PaneNode{
 				ID:           id2,
 				RemoveOnExit: &removeOnExit,
 			},
@@ -184,11 +184,11 @@ func TestPaneRemoval(t *testing.T) {
 
 		// Switch attachment to B
 		require.NoError(t, l.Set(L.New(
-			L.SplitType{
-				A: L.PaneType{
+			&L.SplitNode{
+				A: &L.PaneNode{
 					ID: nil,
 				},
-				B: L.PaneType{
+				B: &L.PaneNode{
 					Attached:     true,
 					ID:           id2,
 					RemoveOnExit: &removeOnExit,
@@ -199,7 +199,7 @@ func TestPaneRemoval(t *testing.T) {
 		// This pane should not stick around
 		pane2.Cancel()
 		sleep()
-		require.Equal(t, L.PaneType{
+		require.Equal(t, &L.PaneNode{
 			Attached: true,
 			ID:       nil,
 		}, l.Get().Root)
@@ -211,12 +211,12 @@ func TestPaneRemoval(t *testing.T) {
 		static2, _, id2 := createPane()
 
 		removeOnExit := true
-		layout := L.SplitType{
-			A: L.PaneType{
+		layout := &L.SplitNode{
+			A: &L.PaneNode{
 				Attached: true,
 				ID:       id1,
 			},
-			B: L.PaneType{
+			B: &L.PaneNode{
 				ID:           id2,
 				RemoveOnExit: &removeOnExit,
 			},
@@ -228,19 +228,19 @@ func TestPaneRemoval(t *testing.T) {
 		// true, nothing should happen.
 		static1.Publish(S.ExitEvent{})
 		sleep()
-		require.Equal(t, L.SplitType{
-			A: L.PaneType{
+		require.Equal(t, &L.SplitNode{
+			A: &L.PaneNode{
 				Attached: true,
 				ID:       id1,
 			},
-			B: L.PaneType{
+			B: &L.PaneNode{
 				ID:           id2,
 				RemoveOnExit: &removeOnExit,
 			},
 		}, l.Get().Root)
 
 		// Reset the layout to force new subscriptions
-		require.NoError(t, l.Set(L.New(L.PaneType{Attached: true})))
+		require.NoError(t, l.Set(L.New(&L.PaneNode{Attached: true})))
 		require.NoError(t, l.Set(L.New(layout)))
 
 		// static1 exiting with an error should still cause nothing to happen
@@ -248,41 +248,41 @@ func TestPaneRemoval(t *testing.T) {
 			Errored: true,
 		})
 		sleep()
-		require.Equal(t, L.SplitType{
-			A: L.PaneType{
+		require.Equal(t, &L.SplitNode{
+			A: &L.PaneNode{
 				Attached: true,
 				ID:       id1,
 			},
-			B: L.PaneType{
+			B: &L.PaneNode{
 				ID:           id2,
 				RemoveOnExit: &removeOnExit,
 			},
 		}, l.Get().Root)
 
-		layout = L.SplitType{
-			A: L.PaneType{
+		layout = &L.SplitNode{
+			A: &L.PaneNode{
 				ID: id1,
 			},
-			B: L.PaneType{
+			B: &L.PaneNode{
 				Attached:     true,
 				ID:           id2,
 				RemoveOnExit: &removeOnExit,
 			},
 		}
-		require.NoError(t, l.Set(L.New(L.PaneType{Attached: true})))
+		require.NoError(t, l.Set(L.New(&L.PaneNode{Attached: true})))
 		require.NoError(t, l.Set(L.New(layout)))
 		sleep()
 
 		// If static2 exits without an error, it should remove the node
 		static2.Publish(S.ExitEvent{})
 		sleep()
-		require.Equal(t, L.PaneType{
+		require.Equal(t, &L.PaneNode{
 			Attached: true,
 			ID:       id1,
 		}, l.Get().Root)
 
 		// Reset
-		require.NoError(t, l.Set(L.New(L.PaneType{Attached: true})))
+		require.NoError(t, l.Set(L.New(&L.PaneNode{Attached: true})))
 		require.NoError(t, l.Set(L.New(layout)))
 
 		// If static2 exits with an error, it should NOT remove the node
@@ -303,17 +303,17 @@ func TestClickTabs(t *testing.T) {
 
 	name := "tab"
 	err := l.Set(L.New(
-		L.TabsType{
+		&L.TabsNode{
 			Tabs: []L.Tab{
 				{
 					Name:   name,
 					Active: true,
-					Node:   L.PaneType{Attached: true},
+					Node:   &L.PaneNode{Attached: true},
 				},
 				{
 					Name:   name,
 					Active: false,
-					Node:   L.PaneType{},
+					Node:   &L.PaneNode{},
 				},
 			},
 		},
@@ -334,73 +334,73 @@ func TestClickTabs(t *testing.T) {
 
 	// Should be on the second tab
 	click(geom.Vec2{C: 5})
-	require.Equal(t, L.TabsType{
+	require.Equal(t, &L.TabsNode{
 		Tabs: []L.Tab{
 			{
 				Name:   name,
 				Active: false,
-				Node:   L.PaneType{},
+				Node:   &L.PaneNode{},
 			},
 			{
 				Name:   name,
 				Active: true,
-				Node:   L.PaneType{Attached: true},
+				Node:   &L.PaneNode{Attached: true},
 			},
 		},
 	}, l.Get().Root)
 
 	// Should be on the first tab
 	click(geom.Vec2{C: 1})
-	require.Equal(t, L.TabsType{
+	require.Equal(t, &L.TabsNode{
 		Tabs: []L.Tab{
 			{
 				Name:   name,
 				Active: true,
-				Node:   L.PaneType{Attached: true},
+				Node:   &L.PaneNode{Attached: true},
 			},
 			{
 				Name:   name,
 				Active: false,
-				Node:   L.PaneType{},
+				Node:   &L.PaneNode{},
 			},
 		},
 	}, l.Get().Root)
 
 	// This should not cause any trouble
 	click(geom.Vec2{C: 1})
-	require.Equal(t, L.TabsType{
+	require.Equal(t, &L.TabsNode{
 		Tabs: []L.Tab{
 			{
 				Name:   name,
 				Active: true,
-				Node:   L.PaneType{Attached: true},
+				Node:   &L.PaneNode{Attached: true},
 			},
 			{
 				Name:   name,
 				Active: false,
-				Node:   L.PaneType{},
+				Node:   &L.PaneNode{},
 			},
 		},
 	}, l.Get().Root)
 
 	// Now set nested tabs
 	err = l.Set(L.New(
-		L.TabsType{
+		&L.TabsNode{
 			Tabs: []L.Tab{
 				{
 					Name:   name,
 					Active: true,
-					Node:   L.PaneType{Attached: true},
+					Node:   &L.PaneNode{Attached: true},
 				},
 				{
 					Name:   name,
 					Active: false,
-					Node: L.TabsType{
+					Node: &L.TabsNode{
 						Tabs: []L.Tab{
 							{
 								Name:   name,
 								Active: true,
-								Node:   L.PaneType{},
+								Node:   &L.PaneNode{},
 							},
 						},
 					},
@@ -411,22 +411,22 @@ func TestClickTabs(t *testing.T) {
 	require.NoError(t, err)
 	click(geom.Vec2{C: 5})
 
-	require.Equal(t, L.TabsType{
+	require.Equal(t, &L.TabsNode{
 		Tabs: []L.Tab{
 			{
 				Name:   name,
 				Active: false,
-				Node:   L.PaneType{},
+				Node:   &L.PaneNode{},
 			},
 			{
 				Name:   name,
 				Active: true,
-				Node: L.TabsType{
+				Node: &L.TabsNode{
 					Tabs: []L.Tab{
 						{
 							Name:   name,
 							Active: true,
-							Node:   L.PaneType{Attached: true},
+							Node:   &L.PaneNode{Attached: true},
 						},
 					},
 				},

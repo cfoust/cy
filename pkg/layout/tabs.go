@@ -99,6 +99,10 @@ func (n *TabsNode) Validate() error {
 			)
 		}
 
+		if tab.Node == nil {
+			return ErrChildNil
+		}
+
 		err := tab.Node.Validate()
 		if err == nil {
 			continue
@@ -128,7 +132,7 @@ func (n *TabsNode) MarshalJanet() interface{} {
 		Bottom                 bool
 		Tabs                   []tabArg
 	}{
-		Type:       KEYWORD_TABS,
+		Type:       NodeKeywordTabs,
 		ActiveFg:   n.ActiveFg,
 		ActiveBg:   n.ActiveBg,
 		InactiveFg: n.InactiveFg,
@@ -143,7 +147,7 @@ func (n *TabsNode) MarshalJanet() interface{} {
 			tabArg{
 				Active: tab.Active,
 				Name:   tab.Name,
-				Node:   marshalNode(tab.Node),
+				Node:   tab.Node.MarshalJanet(),
 			},
 		)
 	}
