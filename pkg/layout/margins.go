@@ -396,7 +396,7 @@ func NewMargins(ctx context.Context, screen mux.Screen) *Margins {
 	return margins
 }
 
-func Add(ctx context.Context, screen mux.Screen) mux.Screen {
+func AddMargins(ctx context.Context, screen mux.Screen) mux.Screen {
 	innerLayers := S.NewLayers()
 	innerLayers.NewLayer(
 		ctx,
