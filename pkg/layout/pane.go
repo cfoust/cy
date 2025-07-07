@@ -44,7 +44,8 @@ func (p *PaneNode) SetChild(index int, node Node) {
 }
 
 func (p *PaneNode) Clone() Node {
-	return &(*p)
+	cloned := *p
+	return &cloned
 }
 
 func (p *PaneNode) Validate() error {
@@ -168,9 +169,10 @@ func (p *Pane) Send(msg mux.Msg) {
 		return
 	}
 
-	p.config.Attached = true
+	newConfig := p.config.Clone().(*PaneNode)
+	newConfig.Attached = true
 	p.Publish(NodeChangeEvent{
-		Config: p.config,
+		Config: newConfig,
 	})
 }
 

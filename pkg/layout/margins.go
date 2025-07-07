@@ -51,9 +51,9 @@ func (n *MarginsNode) SetChild(index int, node Node) {
 }
 
 func (n *MarginsNode) Clone() Node {
-	cloned := &(*n)
+	cloned := *n
 	cloned.Node = n.Node.Clone()
-	return cloned
+	return &cloned
 }
 
 func (n *MarginsNode) Validate() error {

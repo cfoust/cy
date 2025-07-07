@@ -43,9 +43,9 @@ func (n *ColorMapNode) SetChild(index int, node Node) {
 }
 
 func (n *ColorMapNode) Clone() Node {
-	cloned := &(*n)
+	cloned := *n
 	cloned.Node = n.Node.Clone()
-	return cloned
+	return &cloned
 }
 
 func (n *ColorMapNode) Validate() error {
