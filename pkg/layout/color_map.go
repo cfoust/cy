@@ -1,11 +1,12 @@
-package colormap
+package layout
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	L "github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
@@ -13,21 +14,97 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
+type ColorMapNode struct {
+	Map  *prop.ColorMap
+	Node Node
+}
+
+var _ Node = (*ColorMapNode)(nil)
+
+func (n *ColorMapNode) Type() NodeType {
+	return NodeTypeColorMap
+}
+
+func (n *ColorMapNode) IsAttached() bool {
+	return n.Node.IsAttached()
+}
+
+func (n *ColorMapNode) Children() (nodes []Node) {
+	return []Node{n.Node}
+}
+
+func (n *ColorMapNode) SetChild(index int, node Node) {
+	if index == 0 {
+		n.Node = node
+	}
+}
+
+func (n *ColorMapNode) Clone() Node {
+	cloned := &(*n)
+	cloned.Node = n.Node.Clone()
+	return cloned
+}
+
+func (n *ColorMapNode) Validate() error {
+	return n.Node.Validate()
+}
+
+func (n *ColorMapNode) MarshalJanet() interface{} {
+	return struct {
+		Type janet.Keyword
+		Map  *prop.ColorMap
+		Node interface{}
+	}{
+		Type: KEYWORD_COLORMAP,
+		Map:  n.Map,
+		Node: marshalNode(n.Node),
+	}
+}
+
+func (n *ColorMapNode) UnmarshalJanet(value *janet.Value) (Node, error) {
+	type colormapArgs struct {
+		Map  *prop.ColorMap
+		Node *janet.Value
+	}
+
+	args := colormapArgs{}
+	err := value.Unmarshal(&args)
+	if err != nil {
+		return nil, err
+	}
+
+	node, err := unmarshalNode(args.Node)
+	if err != nil {
+		return nil, err
+	}
+
+	if args.Map == nil {
+		return nil, fmt.Errorf(
+			":color-map node missing :map",
+		)
+	}
+
+	return &ColorMapNode{
+		Map:  args.Map,
+		Node: node,
+	}, nil
+}
+
 type ColorMap struct {
-	*L.Computable
+	*Computable
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 	render *taro.Renderer
 	screen mux.Screen
 	size   geom.Size
-	config L.ColorMapType
+	config *ColorMapNode
 }
 
 var _ mux.Screen = (*ColorMap)(nil)
-var _ L.Reusable = (*ColorMap)(nil)
+var _ Reusable = (*ColorMap)(nil)
 
-func (l *ColorMap) Apply(node L.NodeType) (bool, error) {
-	config, ok := node.(L.ColorMapType)
+func (l *ColorMap) Apply(node Node) (bool, error) {
+	config, ok := node.(*ColorMapNode)
 	if !ok {
 		return false, nil
 	}
@@ -37,7 +114,7 @@ func (l *ColorMap) Apply(node L.NodeType) (bool, error) {
 
 	l.config = config
 
-	layout := L.New(config.Node)
+	layout := New(config.Node)
 	for _, prop := range []prop.Presettable{
 		config.Map,
 	} {
@@ -101,7 +178,7 @@ func (l *ColorMap) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-updates.Recv():
-			if _, ok := event.(L.NodeChangeEvent); ok {
+			if _, ok := event.(NodeChangeEvent); ok {
 				continue
 			}
 			l.Publish(event)
@@ -116,8 +193,8 @@ func (l *ColorMap) Resize(size geom.Size) error {
 	return l.screen.Resize(size)
 }
 
-func New(ctx context.Context, screen mux.Screen) *ColorMap {
-	c := L.NewComputable(ctx)
+func NewColorMap(ctx context.Context, screen mux.Screen) *ColorMap {
+	c := NewComputable(ctx)
 	colormap := &ColorMap{
 		Computable:      c,
 		UpdatePublisher: mux.NewPublisher(),

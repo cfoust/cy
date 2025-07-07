@@ -1,13 +1,14 @@
-package tabs
+package layout
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	L "github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
@@ -16,15 +17,229 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
+type Tab struct {
+	Active bool
+	Name   string
+	Node   Node
+}
+
+type TabsNode struct {
+	ActiveFg, ActiveBg     *prop.Color
+	InactiveFg, InactiveBg *prop.Color
+	Bg                     *prop.Color
+	Bottom                 bool
+	Tabs                   []Tab
+}
+
+var _ Node = (*TabsNode)(nil)
+
+func (n *TabsNode) Type() NodeType {
+	return NodeTypeTabs
+}
+
+func (n *TabsNode) IsAttached() bool {
+	for _, tab := range n.Tabs {
+		if tab.Node.IsAttached() {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (n *TabsNode) Children() (nodes []Node) {
+	for _, tab := range n.Tabs {
+		nodes = append(nodes, tab.Node)
+	}
+	return
+}
+
+func (n *TabsNode) SetChild(index int, node Node) {
+	if index < 0 || index >= len(n.Tabs) {
+		return
+	}
+
+	n.Tabs[index].Node = node
+}
+
+func (n *TabsNode) Clone() Node {
+	cloned := &(*n)
+	tabs := make([]Tab, 0)
+	for _, tab := range n.Tabs {
+		newTab := tab
+		newTab.Node = tab.Node.Clone()
+		tabs = append(tabs, newTab)
+	}
+	cloned.Tabs = tabs
+	return cloned
+}
+
+func (n *TabsNode) Validate() error {
+	tabs := n.Tabs
+	if len(tabs) == 0 {
+		return fmt.Errorf(":tabs must have at least one tab")
+	}
+
+	haveActive := false
+	for _, tab := range n.Tabs {
+		if tab.Active {
+			haveActive = true
+		}
+	}
+
+	if !haveActive {
+		return fmt.Errorf(":tabs must have at least one active tab")
+	}
+
+	for index, tab := range tabs {
+		if lipgloss.Width(tab.Name) == 0 {
+			return fmt.Errorf(
+				":tabs index %d has empty name",
+				index,
+			)
+		}
+
+		err := tab.Node.Validate()
+		if err == nil {
+			continue
+		}
+
+		return fmt.Errorf(
+			":tabs index %d is invalid: %s",
+			index,
+			err,
+		)
+	}
+
+	return nil
+}
+
+func (n *TabsNode) MarshalJanet() interface{} {
+	type tabArg struct {
+		Active bool
+		Name   string
+		Node   interface{}
+	}
+	type_ := struct {
+		Type                   janet.Keyword
+		ActiveFg, ActiveBg     *prop.Color
+		InactiveFg, InactiveBg *prop.Color
+		Bg                     *prop.Color
+		Bottom                 bool
+		Tabs                   []tabArg
+	}{
+		Type:       KEYWORD_TABS,
+		ActiveFg:   n.ActiveFg,
+		ActiveBg:   n.ActiveBg,
+		InactiveFg: n.InactiveFg,
+		InactiveBg: n.InactiveBg,
+		Bg:         n.Bg,
+		Bottom:     n.Bottom,
+	}
+
+	for _, tab := range n.Tabs {
+		type_.Tabs = append(
+			type_.Tabs,
+			tabArg{
+				Active: tab.Active,
+				Name:   tab.Name,
+				Node:   marshalNode(tab.Node),
+			},
+		)
+	}
+
+	return type_
+}
+
+func (n *TabsNode) UnmarshalJanet(value *janet.Value) (Node, error) {
+	type tabArg struct {
+		Active *bool
+		Name   *string
+		Node   *janet.Value
+	}
+	type tabsArgs struct {
+		ActiveFg, ActiveBg     *prop.Color
+		InactiveFg, InactiveBg *prop.Color
+		Bg                     *prop.Color
+		Bottom                 *bool
+		Tabs                   []tabArg
+	}
+	args := tabsArgs{}
+	err := value.Unmarshal(&args)
+	if err != nil {
+		return nil, err
+	}
+
+	type_ := TabsNode{
+		ActiveFg:   args.ActiveFg,
+		ActiveBg:   args.ActiveBg,
+		InactiveFg: args.InactiveFg,
+		InactiveBg: args.InactiveBg,
+		Bg:         args.Bg,
+	}
+
+	if args.Bottom != nil {
+		type_.Bottom = *args.Bottom
+	}
+
+	for i, tab := range args.Tabs {
+		newTab := Tab{}
+		if tab.Active != nil {
+			newTab.Active = *tab.Active
+		}
+
+		if tab.Name == nil || len(*tab.Name) == 0 {
+			return nil, fmt.Errorf("tab %d has empty name", i)
+		}
+
+		newTab.Name = *tab.Name
+
+		node, err := unmarshalNode(tab.Node)
+		if err != nil {
+			return nil, fmt.Errorf("tab %d invalid: %s", i, err)
+		}
+
+		newTab.Node = node
+
+		type_.Tabs = append(type_.Tabs, newTab)
+	}
+
+	return &type_, nil
+}
+
+// Active returns the Tab config of the currently active tab.
+func (t *TabsNode) Active() (tab Tab) {
+	var active Tab
+	for _, tab := range t.Tabs {
+		if !tab.Active {
+			continue
+		}
+		active = tab
+		break
+	}
+	return active
+}
+
+// Active returns the index of the currently active tab.
+func (t *TabsNode) ActiveIndex() int {
+	for index, tab := range t.Tabs {
+		if !tab.Active {
+			continue
+		}
+		return index
+	}
+	return -1
+}
+
 type Tabs struct {
-	*L.Computable
+	*Computable
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 	render     *taro.Renderer
 	screen     mux.Screen
 	size       geom.Size
 	inner, bar geom.Rect
-	config     L.TabsType
+	config     *TabsNode
 
 	// The tab bar at the time of the last render. Saving this lets us use
 	// it for hit detection on clicks.
@@ -32,7 +247,7 @@ type Tabs struct {
 }
 
 var _ mux.Screen = (*Tabs)(nil)
-var _ L.Reusable = (*Tabs)(nil)
+var _ Reusable = (*Tabs)(nil)
 
 func (t *Tabs) Kill() {
 	t.screen.Kill()
@@ -174,8 +389,8 @@ func (t *Tabs) State() *tty.State {
 	return state
 }
 
-func (t *Tabs) Apply(node L.NodeType) (bool, error) {
-	config, ok := node.(L.TabsType)
+func (t *Tabs) Apply(node Node) (bool, error) {
+	config, ok := node.(*TabsNode)
 	if !ok {
 		return false, nil
 	}
@@ -183,7 +398,7 @@ func (t *Tabs) Apply(node L.NodeType) (bool, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	layout := L.New(config.Active().Node)
+	layout := New(config.Active().Node)
 	for _, prop := range []*prop.Color{
 		config.ActiveFg,
 		config.ActiveBg,
@@ -240,7 +455,8 @@ func (t *Tabs) Send(msg mux.Msg) {
 	tabIndex := int(lastBar[0][mouseMsg.C].Write)
 	t.RLock()
 	var (
-		config = L.Copy(t.config).(L.TabsType)
+		// TODO(cfoust): 07/06/25 could just be t.config.Clone()?
+		config = t.config.Clone().(*TabsNode)
 	)
 	t.RUnlock()
 
@@ -248,15 +464,15 @@ func (t *Tabs) Send(msg mux.Msg) {
 		return
 	}
 
-	isAttached := L.IsAttached(config)
+	isAttached := config.IsAttached()
 
 	if isAttached {
-		if newConfig, ok := L.Detach(config).(L.TabsType); ok {
+		if newConfig, ok := Detach(config).(*TabsNode); ok {
 			config = newConfig
 		}
 	}
 
-	var newTabs []L.Tab
+	var newTabs []Tab
 	for index, tab := range config.Tabs {
 		// Do nothing if we're already on this tab
 		if index == tabIndex && tab.Active {
@@ -269,10 +485,10 @@ func (t *Tabs) Send(msg mux.Msg) {
 		// Don't attach to the node unless we were otherwise attached
 		// to this tabs node
 		if isActive && isAttached {
-			node = L.AttachFirst(tab.Node)
+			node = AttachFirst(tab.Node)
 		}
 
-		newTabs = append(newTabs, L.Tab{
+		newTabs = append(newTabs, Tab{
 			Active: isActive,
 			Name:   tab.Name,
 			Node:   node,
@@ -280,7 +496,7 @@ func (t *Tabs) Send(msg mux.Msg) {
 	}
 
 	config.Tabs = newTabs
-	t.Publish(L.NodeChangeEvent{Config: config})
+	t.Publish(NodeChangeEvent{Config: config})
 }
 
 func (t *Tabs) Resize(size geom.Size) error {
@@ -320,7 +536,7 @@ func (t *Tabs) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-updates.Recv():
-			if _, ok := event.(L.NodeChangeEvent); ok {
+			if _, ok := event.(NodeChangeEvent); ok {
 				continue
 			}
 			t.Publish(event)
@@ -328,8 +544,8 @@ func (t *Tabs) poll(ctx context.Context) {
 	}
 }
 
-func New(ctx context.Context, screen mux.Screen) *Tabs {
-	c := L.NewComputable(ctx)
+func NewTabs(ctx context.Context, screen mux.Screen) *Tabs {
+	c := NewComputable(ctx)
 	tabs := &Tabs{
 		Computable:      c,
 		UpdatePublisher: mux.NewPublisher(),

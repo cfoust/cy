@@ -16,7 +16,7 @@ import (
 // configuration and updates it if possible.
 type Reusable interface {
 	mux.Screen
-	Apply(NodeType) (bool, error)
+	Apply(Node) (bool, error)
 }
 
 // Loggable is used for passing a logger to the Screen when appropriate.

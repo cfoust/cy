@@ -1,13 +1,14 @@
-package split
+package layout
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
-	L "github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
@@ -15,9 +16,143 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
+type SplitNode struct {
+	Vertical bool
+	Percent  *int
+	Cells    *int
+	Border   *prop.Border
+	BorderFg *prop.Color
+	BorderBg *prop.Color
+	A        Node
+	B        Node
+}
+
+var _ Node = (*SplitNode)(nil)
+
+func (n *SplitNode) Type() NodeType {
+	return NodeTypeSplit
+}
+
+func (n *SplitNode) IsAttached() bool {
+	return n.A.IsAttached() || n.B.IsAttached()
+}
+
+func (n *SplitNode) Children() (nodes []Node) {
+	return []Node{n.A, n.B}
+}
+
+func (n *SplitNode) SetChild(index int, node Node) {
+	if index == 0 {
+		n.A = node
+	}
+	if index == 1 {
+		n.B = node
+	}
+}
+
+func (n *SplitNode) Clone() Node {
+	cloned := &(*n)
+	cloned.A = n.A.Clone()
+	cloned.B = n.B.Clone()
+	return cloned
+}
+
+func (n *SplitNode) Validate() error {
+	if err := n.A.Validate(); err != nil {
+		return err
+	}
+
+	if err := n.B.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (n *SplitNode) MarshalJanet() interface{} {
+	type splitType struct {
+		Type     janet.Keyword
+		Vertical bool
+		Percent  *int
+		Cells    *int
+		Border   *prop.Border
+		BorderFg *prop.Color
+		BorderBg *prop.Color
+		A        interface{}
+		B        interface{}
+	}
+
+	s := splitType{
+		Type:     KEYWORD_SPLIT,
+		Vertical: n.Vertical,
+		Percent:  n.Percent,
+		Cells:    n.Cells,
+		Border:   n.Border,
+		BorderFg: n.BorderFg,
+		BorderBg: n.BorderBg,
+		A:        n.A.MarshalJanet(),
+		B:        n.B.MarshalJanet(),
+	}
+	return s
+}
+
+func (n *SplitNode) UnmarshalJanet(value *janet.Value) (Node, error) {
+	type splitArgs struct {
+		Vertical *bool
+		Percent  *int
+		Cells    *int
+		A        *janet.Value
+		B        *janet.Value
+		Border   *prop.Border
+		BorderFg *prop.Color
+		BorderBg *prop.Color
+	}
+	args := splitArgs{}
+	err := value.Unmarshal(&args)
+	if err != nil {
+		return nil, err
+	}
+
+	if args.Percent != nil && args.Cells != nil {
+		return nil, fmt.Errorf(
+			"type :splits must have only one of :percent and :cells",
+		)
+	}
+
+	a, err := unmarshalNode(args.A)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := unmarshalNode(args.B)
+	if err != nil {
+		return nil, err
+	}
+
+	type_ := SplitNode{
+		Percent:  args.Percent,
+		Cells:    args.Cells,
+		A:        a,
+		B:        b,
+		Border:   args.Border,
+		BorderFg: args.BorderFg,
+		BorderBg: args.BorderBg,
+	}
+
+	if args.Border == nil {
+		type_.Border = defaultBorder
+	}
+
+	if args.Vertical != nil {
+		type_.Vertical = *args.Vertical
+	}
+
+	return &type_, nil
+}
+
 // Split renders two screens side by side (or one above the other) at a fixed proportion of its full width or height (respectively.)
 type Split struct {
-	*L.Computable
+	*Computable
 	deadlock.RWMutex
 	*mux.UpdatePublisher
 
@@ -42,11 +177,11 @@ type Split struct {
 	// The number of cells perpendicular to the split axis to include from
 	// screen A. This is calculated using `percent`.
 	cells  int
-	config L.SplitType
+	config *SplitNode
 }
 
 var _ mux.Screen = (*Split)(nil)
-var _ L.Reusable = (*Split)(nil)
+var _ Reusable = (*Split)(nil)
 
 func (s *Split) Kill() {
 	s.RLock()
@@ -129,8 +264,8 @@ func (s *Split) State() *tty.State {
 	return state
 }
 
-func (s *Split) Apply(node L.NodeType) (bool, error) {
-	config, ok := node.(L.SplitType)
+func (s *Split) Apply(node Node) (bool, error) {
+	config, ok := node.(*SplitNode)
 	if !ok {
 		return false, nil
 	}
@@ -151,8 +286,8 @@ func (s *Split) Apply(node L.NodeType) (bool, error) {
 		changed = true
 	}
 
-	a := L.New(config.A)
-	b := L.New(config.B)
+	a := New(config.A)
+	b := New(config.B)
 	for _, prop := range []prop.Presettable{
 		config.Border,
 		config.BorderFg,
@@ -197,12 +332,12 @@ func (s *Split) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-updatesA.Recv():
-			if _, ok := event.(L.NodeChangeEvent); ok {
+			if _, ok := event.(NodeChangeEvent); ok {
 				continue
 			}
 			s.Publish(event)
 		case event := <-updatesB.Recv():
-			if _, ok := event.(L.NodeChangeEvent); ok {
+			if _, ok := event.(NodeChangeEvent); ok {
 				continue
 			}
 			s.Publish(event)
@@ -294,12 +429,12 @@ func (s *Split) Resize(size geom.Size) error {
 	return s.recalculate()
 }
 
-func New(
+func NewSplit(
 	ctx context.Context,
 	screenA, screenB mux.Screen,
 	isVertical bool,
 ) *Split {
-	c := L.NewComputable(ctx)
+	c := NewComputable(ctx)
 	split := &Split{
 		Computable:      c,
 		UpdatePublisher: mux.NewPublisher(),
