@@ -9,6 +9,9 @@ import (
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/layout/prop"
 	"github.com/cfoust/cy/pkg/mux"
+	"github.com/cfoust/cy/pkg/mux/screen/server"
+	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/sasha-s/go-deadlock"
@@ -92,6 +95,24 @@ func (n *ColorMapNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 		Map:  args.Map,
 		Node: node,
 	}, nil
+}
+
+func (n *ColorMapNode) VisibleChildren() (nodes []Node) {
+	return n.Children()
+}
+
+func (n *ColorMapNode) SetVisibleChild(index int, node Node) {
+	n.SetChild(index, node)
+}
+
+func (n *ColorMapNode) Screen(
+	ctx context.Context,
+	tree *tree.Tree,
+	server *server.Server,
+	params *params.Parameters,
+	children []Reusable,
+) Reusable {
+	return NewColorMap(ctx, children[0])
 }
 
 type ColorMap struct {
