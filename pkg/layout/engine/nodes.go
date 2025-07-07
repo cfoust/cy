@@ -29,7 +29,7 @@ func (l *LayoutEngine) createNode(
 	)
 
 	for i, child := range childNodes {
-		childNode, err := l.createNode(ctx, child)
+		childNode, err := l.createNode(node.Ctx(), child)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"error creating child %d: %w",
