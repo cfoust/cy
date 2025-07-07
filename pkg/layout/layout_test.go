@@ -87,4 +87,25 @@ func TestAttachFirst(t *testing.T) {
 			},
 		},
 	}))
+
+	require.Equal(t,
+		&SplitNode{
+			A: &MarginsNode{Node: &PaneNode{Attached: true}},
+			B: &PaneNode{},
+		},
+		AttachFirst(&SplitNode{
+			A: &MarginsNode{Node: &PaneNode{}},
+			B: &PaneNode{},
+		}),
+	)
+}
+
+func TestRemoveAttached(t *testing.T) {
+	require.Equal(t,
+		&MarginsNode{Node: &PaneNode{Attached: true}},
+		RemoveAttached(&SplitNode{
+			A: &MarginsNode{Node: &PaneNode{}},
+			B: &PaneNode{Attached: true},
+		}),
+	)
 }
