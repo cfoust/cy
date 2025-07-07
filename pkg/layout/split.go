@@ -54,10 +54,10 @@ func (n *SplitNode) SetChild(index int, node Node) {
 }
 
 func (n *SplitNode) Clone() Node {
-	cloned := &(*n)
+	cloned := *n
 	cloned.A = n.A.Clone()
 	cloned.B = n.B.Clone()
-	return cloned
+	return &cloned
 }
 
 func (n *SplitNode) Validate() error {

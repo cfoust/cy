@@ -45,9 +45,9 @@ func (n *BarNode) SetChild(index int, node Node) {
 }
 
 func (n *BarNode) Clone() Node {
-	cloned := &(*n)
+	cloned := *n
 	cloned.Node = n.Node.Clone()
-	return cloned
+	return &cloned
 }
 
 func (n *BarNode) Validate() error {

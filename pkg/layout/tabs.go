@@ -66,7 +66,7 @@ func (n *TabsNode) SetChild(index int, node Node) {
 }
 
 func (n *TabsNode) Clone() Node {
-	cloned := &(*n)
+	cloned := *n
 	tabs := make([]Tab, 0)
 	for _, tab := range n.Tabs {
 		newTab := tab
@@ -74,7 +74,7 @@ func (n *TabsNode) Clone() Node {
 		tabs = append(tabs, newTab)
 	}
 	cloned.Tabs = tabs
-	return cloned
+	return &cloned
 }
 
 func (n *TabsNode) Validate() error {
@@ -495,7 +495,6 @@ func (t *Tabs) Send(msg mux.Msg) {
 	tabIndex := int(lastBar[0][mouseMsg.C].Write)
 	t.RLock()
 	var (
-		// TODO(cfoust): 07/06/25 could just be t.config.Clone()?
 		config = t.config.Clone().(*TabsNode)
 	)
 	t.RUnlock()

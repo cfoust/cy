@@ -48,9 +48,9 @@ func (n *BordersNode) SetChild(index int, node Node) {
 }
 
 func (n *BordersNode) Clone() Node {
-	cloned := &(*n)
+	cloned := *n
 	cloned.Node = n.Node.Clone()
-	return cloned
+	return &cloned
 }
 
 func (n *BordersNode) Validate() error {

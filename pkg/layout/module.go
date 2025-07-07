@@ -148,14 +148,15 @@ func RemoveAttached(node Node) Node {
 
 // Detach returns a copy of `node` with no attachment points.
 func Detach(node Node) Node {
+	// TODO(cfoust): 07/07/25 this creates a lot of extra copies
 	node = node.Clone()
 	if pane, ok := node.(*PaneNode); ok {
 		pane.Attached = false
 		return pane
 	}
 
-	for _, child := range node.Children() {
-		Detach(child)
+	for i, child := range node.Children() {
+		node.SetChild(i, Detach(child))
 	}
 
 	return node
