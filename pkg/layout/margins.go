@@ -265,6 +265,11 @@ func (l *Margins) State() *tty.State {
 		}
 	}
 
+	// TODO(cfoust): 07/10/25 handle non-layout usage better
+	if config == nil {
+		return state
+	}
+
 	borderStyle, ok := config.Border.GetPreset()
 	if !ok || borderStyle.None() {
 		return state
