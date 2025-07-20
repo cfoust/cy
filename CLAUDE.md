@@ -56,6 +56,9 @@ just install
 just test
 go test ./pkg/... ./cmd/...
 
+# Run Janet API tests
+go test ./pkg/cy/ -run TestAPI
+
 # Format code
 just format
 go fmt ./pkg/... ./cmd/...

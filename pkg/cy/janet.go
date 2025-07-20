@@ -80,6 +80,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 	// like 01_actions.janet, 02_layout.janet is ugly
 	files := []string{
 		"time.janet",
+		"input.janet",
 		"actions.janet",
 		"style.janet",
 		"colors.janet",

@@ -168,6 +168,7 @@ type TextParams struct {
 	Full        bool
 	Reverse     bool
 	Animated    *bool
+	Single      bool
 }
 
 func (i *InputModule) Text(
@@ -253,6 +254,10 @@ func (i *InputModule) Text(
 			settings,
 			text.WithPlaceholder(*params.Placeholder),
 		)
+	}
+
+	if params.Single {
+		settings = append(settings, text.WithSingle)
 	}
 
 	if client.Params().SkipInput() {

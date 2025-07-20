@@ -14,3 +14,10 @@
                                       :title "test"
                                       :border :double
                                       :node {:type :pane :attached true}}} 2]]))
+
+(test "text"
+      # In test mode, this should return "test" due to SkipInput() behavior
+      (assert (= "test" (input/text "Enter text:"))))
+
+(test "single char"
+      (assert (= "test" (input/text "Press any key:" :single true))))

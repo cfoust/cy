@@ -32,6 +32,9 @@ type Text struct {
 	// the screen.
 	isInline bool
 	location geom.Vec2
+
+	// Whether to accept only a single character instead of full text input.
+	isSingle bool
 }
 
 var _ taro.Model = (*Text)(nil)
@@ -132,6 +135,11 @@ func WithParams(params *params.Parameters) Setting {
 	return func(ctx context.Context, t *Text) {
 		t.params = params
 	}
+}
+
+// WithSingle configures the text input to accept only a single character.
+func WithSingle(ctx context.Context, t *Text) {
+	t.isSingle = true
 }
 
 func newText(

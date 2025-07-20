@@ -126,5 +126,10 @@ func (t *Text) View(state *tty.State) {
 		windowBounds.Position.R += emptyRows
 	}
 
+	// In single character mode, hide the cursor from the text input
+	if t.isSingle {
+		t.textInput.Blur()
+	}
+
 	image.Copy(windowBounds.Position, state.Image, matchWindow)
 }

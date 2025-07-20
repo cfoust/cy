@@ -42,16 +42,28 @@ func (t *Text) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				t.result <- nil
 			}
 			return t.quit()
+		default:
+			// In single character mode, accept any printable character immediately
+			if t.isSingle && msg.Type == taro.KeyRunes {
+				char := string(msg.Runes)
+				if len(char) == 1 {
+					t.result <- char
+					return t.quit()
+				}
+			}
 		}
 	}
 
-	inputMsg := msg
-	// We need to translate taro.KeyMsg to tea.KeyMsg (for now)
-	if key, ok := msg.(taro.KeyMsg); ok {
-		inputMsg = key.ToTea()
+	// Only update the text input if not in single character mode
+	if !t.isSingle {
+		inputMsg := msg
+		// We need to translate taro.KeyMsg to tea.KeyMsg (for now)
+		if key, ok := msg.(taro.KeyMsg); ok {
+			inputMsg = key.ToTea()
+		}
+		t.textInput, cmd = t.textInput.Update(inputMsg)
+		cmds = append(cmds, cmd)
 	}
-	t.textInput, cmd = t.textInput.Update(inputMsg)
-	cmds = append(cmds, cmd)
 
 	return t, tea.Batch(cmds...)
 }

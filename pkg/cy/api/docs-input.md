@@ -19,7 +19,7 @@ This function supports a range of named parameters that adjust its functionality
 
 # doc: Text
 
-(input/text prompt &named preset placeholder full reverse animated)
+(input/text prompt &named preset placeholder full reverse animated single)
 
 `(input/text)` prompts the user with a freeform text input. If the input is non-empty when the user presses enter, `(input/text)` returns the value of the text input; otherwise it returns `nil`.
 
@@ -32,3 +32,4 @@ This function supports a range of named parameters that adjust its functionality
 - `:full` (boolean): If true, occupy the entire screen.
 - `:reverse` (boolean): Display from the top of the screen (rather than the bottom.)
 - `:animated` (boolean): Enable and disable background animation.
+- `:single` (boolean): If true, accept only a single character and return immediately when any printable character is typed, without requiring the user to press Enter.

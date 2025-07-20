@@ -57,6 +57,15 @@ var Preset stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	return f, nil
 }
 
+var Single stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
+	f := New(
+		ctx,
+		WithSingle,
+		WithPrompt("press any key"),
+	)
+	return f, nil
+}
+
 func init() {
 	config := stories.Config{
 		Size: geom.DEFAULT_SIZE,
@@ -84,4 +93,17 @@ func init() {
 	}
 	stories.Register("input/text/placeholder", Placeholder, smallConfig)
 	stories.Register("input/text/preset", Preset, smallConfig)
+
+	singleConfig := stories.Config{
+		Size: geom.Size{
+			R: 10,
+			C: 40,
+		},
+		Input: []interface{}{
+			stories.Wait(stories.Some),
+			stories.Type("a"), // Should exit immediately after typing one character
+			stories.Wait(stories.ALot),
+		},
+	}
+	stories.Register("input/text/single", Single, singleConfig)
 }

@@ -276,12 +276,14 @@ For example:
 (key/action
   action/kill-server
   "Kill the cy server."
-  (cy/kill-server))
+  (if (input/ok? "kill the cy server?")
+    (cy/kill-server)))
 
 (key/action
   action/detach
   "Detach from the cy server."
-  (cy/detach))
+  (if (input/ok? "detach from the cy server?")
+    (cy/detach)))
 
 (key/action
   action/choose-frame
@@ -460,5 +462,3 @@ For example:
              :focus input
              :alt-screen false))
          (pane/attach _)))
-
-(merge-module root-env (curenv))
