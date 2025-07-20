@@ -462,3 +462,5 @@ For example:
              :focus input
              :alt-screen false))
          (pane/attach _)))
+
+(merge-module root-env (curenv))
