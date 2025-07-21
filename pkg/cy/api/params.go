@@ -1,14 +1,17 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/params"
 )
 
 type ParamModule struct {
-	Tree   *tree.Tree
-	Server Server
+	Tree            *tree.Tree
+	Server          Server
+	PersistentStore *params.PersistentStore
 }
 
 // haha
@@ -19,6 +22,11 @@ type ParamParams struct {
 // isClientTarget reports whether value is the :client keyword.
 func isClientTarget(value *janet.Value) bool {
 	return value.Unmarshal(&KEYWORD_CLIENT) == nil
+}
+
+// isPersistTarget reports whether value is the :persist keyword.
+func isPersistTarget(value *janet.Value) bool {
+	return value.Unmarshal(&KEYWORD_PERSIST) == nil
 }
 
 func (p *ParamModule) Get(
@@ -51,6 +59,21 @@ func (p *ParamModule) Get(
 		return value, nil
 	}
 
+	if isPersistTarget(params.Target) {
+		if p.PersistentStore == nil {
+			return nil, fmt.Errorf("persistent storage is not available")
+		}
+
+		value, exists, err := p.PersistentStore.Get(string(keyword))
+		if err != nil {
+			return nil, err
+		}
+		if !exists {
+			return nil, nil
+		}
+		return value, nil
+	}
+
 	node, err := resolveNode(p.Tree, params.Target)
 	if err != nil {
 		return nil, err
@@ -73,6 +96,18 @@ func (p *ParamModule) Set(
 	err := key.Unmarshal(&keyword)
 	if err != nil {
 		return err
+	}
+
+	if isPersistTarget(target) {
+		if p.PersistentStore == nil {
+			return fmt.Errorf("persistent storage is not available")
+		}
+
+		err = p.PersistentStore.Set(string(keyword), value)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	var params *params.Parameters

@@ -34,6 +34,9 @@ type Options struct {
 	// The default directory in which to store data (e.g. recorded
 	// sessions).
 	DataDir string
+	// The default directory in which to store state (e.g. persistent
+	// parameters). If empty, uses in-memory storage.
+	StateDir string
 	// The default shell
 	Shell string
 	// Whether to show the splash screen on client join
@@ -73,6 +76,9 @@ type Cy struct {
 	// from the *Parameters at the root node of the tree, which the user
 	// can actually change.
 	defaults *params.Parameters
+
+	// Persistent parameter storage
+	persistentStore *params.PersistentStore
 
 	// The tree of groups and panes
 	tree *tree.Tree
@@ -441,12 +447,37 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	consoleWriter := zerolog.ConsoleWriter{Out: logs.Writer(), TimeFormat: time.RFC3339}
 	cy.log = log.Output(zerolog.MultiLevelWriter(consoleWriter, os.Stdout))
 
-	vm, err := cy.initJanet(ctx)
+	// Initialize Janet VM first (without modules)
+	vm, err := janet.New(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error initializing Janet: %s", err.Error())
+		return nil, fmt.Errorf(
+			"error initializing Janet: %s",
+			err.Error(),
+		)
 	}
-
 	cy.VM = vm
+
+	// Create persistent store before initializing Janet modules
+	persistentStore, err := params.NewPersistentStore(
+		vm,
+		options.StateDir,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to initialize persistent parameter store: %w",
+			err,
+		)
+	}
+	cy.persistentStore = persistentStore
+
+	// Now initialize Janet with modules (which can use the persistent store)
+	err = cy.initJanetModules()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error initializing Janet modules: %s",
+			err.Error(),
+		)
+	}
 
 	if len(options.Config) != 0 {
 		cy.loadConfig()

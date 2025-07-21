@@ -11,6 +11,8 @@ func NewTestServer() (*Cy, func(geom.Size) (*Client, error), error) {
 	cy, err := Start(ctx, Options{
 		Shell:     "/bin/bash",
 		SkipInput: true,
+		// Use empty StateDir to enable persistent storage with in-memory database for testing
+		StateDir:  "",
 	})
 	if err != nil {
 		return nil, nil, err

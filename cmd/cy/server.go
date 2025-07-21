@@ -148,6 +148,7 @@ func serve(path string) error {
 		SocketName: CLI.Socket,
 		Config:     cy.FindConfig(),
 		DataDir:    cy.FindDataDir(),
+		StateDir:   cy.FindStateDir(),
 		Shell:      getShell(),
 		Clipboard:  clipboard,
 		Cwd:        cwd,

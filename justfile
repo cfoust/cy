@@ -15,3 +15,6 @@ run:
 
 serve-docs:
   cd docs && mdbook serve
+
+sqlc:
+  cd pkg/db/ && sqlc generate
