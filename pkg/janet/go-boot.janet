@@ -122,9 +122,9 @@
 (defn
   go/-/marshal
   [value]
-  (marshal value))
+  (marshal value (invert (env-lookup root-env))))
 
 (defn
   go/-/unmarshal
   [data]
-  (unmarshal data))
+  (unmarshal data (env-lookup root-env)))

@@ -44,10 +44,14 @@
       (param/set :persist :test-table value)
       (assert (deep= value (param/get :test-table :target :persist)))
 
-      (var func (fn [a] (cy/kill-server)))
+      # persist a func that uses a cy API function
+      (var func
+        (fn [a]
+          (input/text "blah")
+          (+ a a)))
       (param/set :persist :test-func func)
-      (pp (param/get :test-func :target :persist))
-      (assert (deep= func (param/get :test-func :target :persist)))
+      (var func-after (param/get :test-func :target :persist))
+      (assert (= (func-after 2) 4))
 
       # nonexistent key
       (assert (= nil (param/get :nonexistent :target :persist))))
