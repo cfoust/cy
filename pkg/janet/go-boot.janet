@@ -118,3 +118,13 @@
     (or (string? value) (buffer? value)) value
     (or (nil? value) (boolean? value) (number? value)) (string value)
     (error "type cannot be encoded as raw")))
+
+(defn
+  go/-/marshal
+  [value]
+  (marshal value))
+
+(defn
+  go/-/unmarshal
+  [data]
+  (unmarshal data))
