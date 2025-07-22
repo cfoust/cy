@@ -87,6 +87,7 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 		"layout.janet",
 		"register.janet",
 		"replay.janet",
+		"tmux.janet",
 		"binds.janet",
 	}
 
