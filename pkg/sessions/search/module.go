@@ -33,7 +33,8 @@ func (a Address) Equal(other Address) bool {
 }
 
 type Selection struct {
-	From, To geom.Vec2
+	From geom.Vec2
+	To   geom.Vec2
 }
 
 // Within returns true if `pos` falls within the Selection.

@@ -1,4 +1,4 @@
-package motion
+package re
 
 import (
 	"testing"
@@ -8,20 +8,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFind(t *testing.T) {
+func TestFindLine(t *testing.T) {
 	require.Equal(
 		t,
 		[]int{3, 6},
-		findLine(
-			makePattern("bar"),
+		FindLine(
+			MakePattern("bar"),
 			emu.LineFromString("foobar"),
 		),
 	)
 	require.Equal(
 		t,
 		[]int{4, 7},
-		findLine(
-			makePattern("bar"),
+		FindLine(
+			MakePattern("bar"),
 			emu.LineFromString("你好bar"),
 		),
 	)
@@ -32,16 +32,16 @@ func TestFind(t *testing.T) {
 			{4, 7},
 			{8, 11},
 		},
-		findAllLine(
-			makePattern("foo"),
+		FindAllLine(
+			MakePattern("foo"),
 			emu.LineFromString("foo foo foo"),
 		),
 	)
 	require.Equal(
 		t,
 		([]int)(nil),
-		findLine(
-			makePattern("bar"),
+		FindLine(
+			MakePattern("bar"),
 			emu.LineFromString("foo"),
 		),
 	)
