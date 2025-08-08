@@ -29,6 +29,7 @@ type VM struct {
 	evaluate  C.Janet
 
 	jsonEncode, raw, format *Function
+	marshalFn, unmarshalFn  *Function
 
 	requests chan Request
 
@@ -92,6 +93,8 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 	v.jsonEncode = v.getFunction(env, "go/-/json/encode")
 	v.raw = v.getFunction(env, "go/-/raw")
 	v.format = v.getFunction(env, "go/-/string/format")
+	v.marshalFn = v.getFunction(env, "go/-/marshal")
+	v.unmarshalFn = v.getFunction(env, "go/-/unmarshal")
 
 	ready <- true
 

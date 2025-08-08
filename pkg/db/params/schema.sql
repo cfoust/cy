@@ -1,0 +1,12 @@
+CREATE TABLE parameters (
+  key TEXT PRIMARY KEY,
+  value BLOB NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER update_updated_at
+AFTER UPDATE ON parameters
+BEGIN
+  UPDATE parameters SET updated_at = CURRENT_TIMESTAMP WHERE key = NEW.key;
+END;

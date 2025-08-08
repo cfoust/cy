@@ -34,6 +34,9 @@ type Options struct {
 	// The default directory in which to store data (e.g. recorded
 	// sessions).
 	DataDir string
+	// The default directory in which to store state (e.g. persistent
+	// parameters). If empty, uses in-memory storage.
+	StateDir string
 	// The default shell
 	Shell string
 	// Whether to show the splash screen on client join
@@ -72,7 +75,10 @@ type Cy struct {
 	// The top-level fallback for all parameter queries. This is distinct
 	// from the *Parameters at the root node of the tree, which the user
 	// can actually change.
-	defaults *params.Parameters
+	defaultParams *params.Parameters
+
+	// Persistent parameter storage
+	persistParams *params.PersistentStore
 
 	// The tree of groups and panes
 	tree *tree.Tree
@@ -393,20 +399,20 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	defaults := params.New()
 	t := tree.NewTree(tree.WithParams(defaults.NewChild()))
 	cy := Cy{
-		Lifetime:    util.NewLifetime(ctx),
-		registers:   newMemoryRegisters(options.Clipboard),
-		cmdStore:    cmd.NewStore(),
-		copyBinds:   copyBinds,
-		defaults:    defaults,
-		lastVisit:   make(map[tree.NodeID]historyEvent),
-		lastWrite:   make(map[tree.NodeID]historyEvent),
-		muxServer:   server.New(),
-		options:     options,
-		searchBinds: searchBinds,
-		timeBinds:   timeBinds,
-		tree:        t,
-		visits:      make(chan historyEvent),
-		writes:      make(chan historyEvent),
+		Lifetime:      util.NewLifetime(ctx),
+		registers:     newMemoryRegisters(options.Clipboard),
+		cmdStore:      cmd.NewStore(),
+		copyBinds:     copyBinds,
+		defaultParams: defaults,
+		lastVisit:     make(map[tree.NodeID]historyEvent),
+		lastWrite:     make(map[tree.NodeID]historyEvent),
+		muxServer:     server.New(),
+		options:       options,
+		searchBinds:   searchBinds,
+		timeBinds:     timeBinds,
+		tree:          t,
+		visits:        make(chan historyEvent),
+		writes:        make(chan historyEvent),
 	}
 	cy.toast = NewToastLogger(cy.sendToast)
 
@@ -448,12 +454,34 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	}
 	cy.log = log.Output(zerolog.MultiLevelWriter(consoleWriter, os.Stdout))
 
-	vm, err := cy.initJanet(ctx)
+	vm, err := janet.New(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error initializing Janet: %s", err.Error())
+		return nil, fmt.Errorf(
+			"error initializing Janet: %s",
+			err.Error(),
+		)
 	}
-
 	cy.VM = vm
+
+	persistentStore, err := params.NewPersistentStore(
+		vm,
+		options.StateDir,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to initialize persistent store: %w",
+			err,
+		)
+	}
+	cy.persistParams = persistentStore
+
+	err = cy.initAPI()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error initializing Janet modules: %s",
+			err.Error(),
+		)
+	}
 
 	if len(options.Config) != 0 {
 		_ = cy.loadConfig()

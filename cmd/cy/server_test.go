@@ -70,8 +70,9 @@ func setupServer(t *testing.T) *TestServer {
 	socketPath := filepath.Join(dir, "socket")
 
 	cy, err := cy.Start(context.Background(), cy.Options{
-		DataDir: filepath.Join(t.TempDir(), "data"),
-		Shell:   "/bin/bash",
+		DataDir:  filepath.Join(t.TempDir(), "data"),
+		StateDir: filepath.Join(t.TempDir(), "state"),
+		Shell:    "/bin/bash",
 	})
 	require.NoError(t, err)
 

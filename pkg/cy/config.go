@@ -57,3 +57,15 @@ func FindDataDir() string {
 
 	return filepath.Join(home, ".local", "share", "cy")
 }
+
+func FindStateDir() string {
+	if xdgState, ok := os.LookupEnv("XDG_STATE_HOME"); ok {
+		return filepath.Join(xdgState, "cy")
+	}
+	home, ok := os.LookupEnv("HOME")
+	if !ok {
+		home = "~"
+	}
+
+	return filepath.Join(home, ".local", "state", "cy")
+}

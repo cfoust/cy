@@ -11,6 +11,7 @@ func NewTestServer() (*Cy, func(geom.Size) (*Client, error), error) {
 	cy, err := Start(ctx, Options{
 		Shell:     "/bin/bash",
 		SkipInput: true,
+		StateDir:  "",
 	})
 	if err != nil {
 		return nil, nil, err
