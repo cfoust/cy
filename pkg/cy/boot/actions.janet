@@ -468,6 +468,7 @@ For example:
   "Select a thumb and insert it."
   (var choice (input/thumbs))
   (when (nil? choice) (break))
-  (msg/toast :info choice))
+  (msg/toast :info (string "inserting" choice))
+  (pane/send-keys (pane/current) @[choice]))
 
 (merge-module root-env (curenv))

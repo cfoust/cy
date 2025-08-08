@@ -7,31 +7,27 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func (t *Thumbs) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
+func (t *Thumbs) resolveMatch(match Match) string {
+	var (
+		initial = t.initial
+		runes   = make([]rune, 0)
+	)
+	for _, cell := range match {
+		runes = append(runes,
+			initial[cell.R][cell.C].Char,
+		)
+	}
+
+	return string(runes)
+}
+
+func (t *Thumbs) handleKey(msg taro.KeyMsg) (taro.Model, tea.Cmd) {
+	teaMsg := msg.ToTea()
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
-	switch msg := msg.(type) {
-	case taro.ScreenUpdate:
-		return t, msg.Wait()
-	case taro.KeyMsg:
-		switch msg.Type {
-		case taro.KeyEsc, taro.KeyCtrlC:
-			if t.result != nil {
-				t.result <- nil
-			}
-			return t.quit()
-		}
-	}
-
-	// Convert taro key to tea key for text input
-	inputMsg := msg
-	if key, ok := msg.(taro.KeyMsg); ok {
-		inputMsg = key.ToTea()
-	}
-
 	// Update text input
-	t.textInput, cmd = t.textInput.Update(inputMsg)
+	t.textInput, cmd = t.textInput.Update(teaMsg)
 	cmds = append(cmds, cmd)
 
 	// Get current input value after update
@@ -45,7 +41,7 @@ func (t *Thumbs) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 		// Exact match found - select it
 		if t.result != nil {
-			t.result <- match
+			t.result <- t.resolveMatch(match)
 		}
 
 		return t.quit()
@@ -68,4 +64,23 @@ func (t *Thumbs) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	}
 
 	return t, tea.Batch(cmds...)
+}
+
+func (t *Thumbs) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case taro.ScreenUpdate:
+		return t, msg.Wait()
+	case taro.KeyMsg:
+		switch msg.Type {
+		case taro.KeyEsc, taro.KeyCtrlC:
+			if t.result != nil {
+				t.result <- nil
+			}
+			return t.quit()
+		}
+
+		return t.handleKey(msg)
+	}
+
+	return t, nil
 }

@@ -330,6 +330,10 @@ func (i *InputModule) Thumbs(
 		initial,
 	)
 
+	if len(matches) == 0 {
+		return nil, nil
+	}
+
 	// Handle custom alphabet
 	if params.Alphabet != nil {
 		settings = append(
