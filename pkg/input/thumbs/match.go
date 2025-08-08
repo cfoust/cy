@@ -161,7 +161,6 @@ func findPatterns(
 	// Deconflict matches by taking the longest that occupies a certain cell
 	deleted := make(map[int]struct{})
 	for _, conflicts := range occupied {
-
 		if len(conflicts) == 1 {
 			continue
 		}

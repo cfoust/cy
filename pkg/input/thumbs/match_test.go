@@ -1,6 +1,7 @@
 package thumbs
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/cfoust/cy/pkg/emu"
@@ -88,6 +89,18 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
+			name: "first line",
+			match: search.Selection{
+				From: geom.Vec2{R: 0, C: 0},
+				To:   geom.Vec2{R: 1, C: 0},
+			},
+			expected: []geom.Vec2{
+				{R: 0, C: 0},
+				{R: 0, C: 1},
+				{R: 0, C: 2},
+			},
+		},
+		{
 			name: "wrap_twice",
 			match: search.Selection{
 				// 0 0 1
@@ -110,6 +123,117 @@ func TestConvert(t *testing.T) {
 				t,
 				thumbMatch(tc.expected),
 				convertMatch(region, tc.match),
+			)
+		})
+	}
+}
+
+func pattern(s string) *regexp.Regexp {
+	return regexp.MustCompile(s)
+}
+
+func TestFind(t *testing.T) {
+	term := emu.New(emu.WithSize(geom.Size{
+		R: 3,
+		C: 10,
+	}))
+	for range 2 {
+		term.Write([]byte("foobarbazf"))
+	}
+	term.Write([]byte("你还好吗"))
+
+	i := image.Capture(term)
+
+	// foo is one pane
+	setWrite(i, 1,
+		0, 0,
+		3, 3,
+	)
+	// baz is another
+	setWrite(i, 2,
+		0, 6,
+		3, 9,
+	)
+
+	line := func(row, col int, text string) (result thumbMatch) {
+		for index := range len(text) {
+			result = append(result, geom.Vec2{
+				R: row,
+				C: col + index,
+			})
+		}
+		return
+	}
+
+	merge := func(matches ...thumbMatch) (result thumbMatch) {
+		for _, match := range matches {
+			result = append(result, match...)
+		}
+		return
+	}
+
+	for _, tc := range []struct {
+		name     string
+		patterns []*regexp.Regexp
+		expected []thumbMatch
+	}{
+		{
+			name: "take longest",
+			patterns: []*regexp.Regexp{
+				pattern("foobar"),
+				pattern("foo"),
+			},
+			expected: []thumbMatch{
+				line(0, 0, "foobar"),
+				line(1, 0, "foobar"),
+			},
+		},
+		{
+			name: "take longest with submatch",
+			patterns: []*regexp.Regexp{
+				pattern("foobar"),
+				pattern("bar"),
+			},
+			expected: []thumbMatch{
+				line(0, 0, "foobar"),
+				line(1, 0, "foobar"),
+			},
+		},
+		{
+			name: "wrapping in two regions",
+			patterns: []*regexp.Regexp{
+				pattern("foofoo"),
+				pattern("bazbaz"),
+			},
+			expected: []thumbMatch{
+				merge(
+					line(0, 0, "foo"),
+					line(1, 0, "foo"),
+				),
+				merge(
+					line(0, 6, "baz"),
+					line(1, 6, "baz"),
+				),
+			},
+		},
+		{
+			name: "takes longest across two regions",
+			patterns: []*regexp.Regexp{
+				pattern("foofoo"),
+				pattern("bazbaz"),
+				pattern("foobarbaz"),
+			},
+			expected: []thumbMatch{
+				line(0, 0, "foobarbaz"),
+				line(1, 0, "foobarbaz"),
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(
+				t,
+				tc.expected,
+				findPatterns(tc.patterns, i),
 			)
 		})
 	}
