@@ -93,6 +93,16 @@ type defaultParams struct {
 	InputFindInactiveBg *style.Color
 	// The foreground [color](/api.md#color) of match text in (input/thumbs).
 	InputThumbsMatchFg *style.Color
+	// The background [color](/api.md#color) of match text in (input/thumbs).
+	InputThumbsMatchBg *style.Color
+	// The foreground [color](/api.md#color) of hint text in (input/thumbs).
+	InputThumbsHintFg *style.Color
+	// The background [color](/api.md#color) of hint text in (input/thumbs).
+	InputThumbsHintBg *style.Color
+	// The foreground [color](/api.md#color) of partially selected hint text in (input/thumbs).
+	InputThumbsPartialFg *style.Color
+	// The background [color](/api.md#color) of partially selected hint text in (input/thumbs).
+	InputThumbsPartialBg *style.Color
 
 	// The foreground [color](/api.md#color) used to represent time mode.
 	ReplayTimeFg *style.Color
@@ -177,6 +187,12 @@ var (
 		InputFindActiveBg:        style.White,
 		InputFindInactiveFg:      style.Black,
 		InputFindInactiveBg:      style.LightGrey,
+		InputThumbsMatchFg:       style.Red,
+		InputThumbsMatchBg:       style.Black,
+		InputThumbsHintFg:        style.Yellow,
+		InputThumbsHintBg:        style.Black,
+		InputThumbsPartialFg:     style.White,
+		InputThumbsPartialBg:     style.Blue,
 		ReplayTimeFg:             style.White,
 		ReplayTimeBg:             style.Blue,
 		ReplayPlayFg:             style.White,

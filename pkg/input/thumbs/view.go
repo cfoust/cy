@@ -21,6 +21,7 @@ func (t *Thumbs) renderMatch(
 		numInput  = len(input)
 		doesMatch = numInput > 0 && strings.HasPrefix(hint, input)
 		hintRunes = []rune(hint)
+		p         = t.params
 	)
 
 	for index, cell := range match {
@@ -38,16 +39,16 @@ func (t *Thumbs) renderMatch(
 			glyph.Char = hintRunes[index]
 			glyph.Mode = emu.AttrBold
 
-			glyph.FG = emu.Yellow
-			glyph.BG = emu.DefaultBG
+			glyph.FG = p.InputThumbsHintFg().Emu()
+			glyph.BG = p.InputThumbsHintBg().Emu()
 
 			if isCorrect {
-				glyph.FG = emu.White
-				glyph.BG = emu.Blue
+				glyph.FG = p.InputThumbsPartialFg().Emu()
+				glyph.BG = p.InputThumbsPartialBg().Emu()
 			}
 		} else {
-			glyph.FG = emu.Red
-			glyph.BG = emu.DefaultBG
+			glyph.FG = p.InputThumbsMatchFg().Emu()
+			glyph.BG = p.InputThumbsMatchBg().Emu()
 		}
 
 		i[cell.R][cell.C] = glyph

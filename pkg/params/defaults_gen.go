@@ -26,6 +26,12 @@ const (
 	ParamInputPreviewBorderFg     = "input-preview-border-fg"
 	ParamInputPromptBg            = "input-prompt-bg"
 	ParamInputPromptFg            = "input-prompt-fg"
+	ParamInputThumbsHintBg        = "input-thumbs-hint-bg"
+	ParamInputThumbsHintFg        = "input-thumbs-hint-fg"
+	ParamInputThumbsMatchBg       = "input-thumbs-match-bg"
+	ParamInputThumbsMatchFg       = "input-thumbs-match-fg"
+	ParamInputThumbsPartialBg     = "input-thumbs-partial-bg"
+	ParamInputThumbsPartialFg     = "input-thumbs-partial-fg"
 	ParamNumSearchWorkers         = "num-search-workers"
 	ParamRemovePaneOnExit         = "remove-pane-on-exit"
 	ParamReplayCopyBg             = "replay-copy-bg"
@@ -363,6 +369,114 @@ func (p *Parameters) InputPromptFg() *style.Color {
 
 func (p *Parameters) SetInputPromptFg(value *style.Color) {
 	p.set(ParamInputPromptFg, value)
+}
+
+func (p *Parameters) InputThumbsHintBg() *style.Color {
+	value, ok := p.Get(ParamInputThumbsHintBg)
+	if !ok {
+		return defaults.InputThumbsHintBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputThumbsHintBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputThumbsHintBg(value *style.Color) {
+	p.set(ParamInputThumbsHintBg, value)
+}
+
+func (p *Parameters) InputThumbsHintFg() *style.Color {
+	value, ok := p.Get(ParamInputThumbsHintFg)
+	if !ok {
+		return defaults.InputThumbsHintFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputThumbsHintFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputThumbsHintFg(value *style.Color) {
+	p.set(ParamInputThumbsHintFg, value)
+}
+
+func (p *Parameters) InputThumbsMatchBg() *style.Color {
+	value, ok := p.Get(ParamInputThumbsMatchBg)
+	if !ok {
+		return defaults.InputThumbsMatchBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputThumbsMatchBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputThumbsMatchBg(value *style.Color) {
+	p.set(ParamInputThumbsMatchBg, value)
+}
+
+func (p *Parameters) InputThumbsMatchFg() *style.Color {
+	value, ok := p.Get(ParamInputThumbsMatchFg)
+	if !ok {
+		return defaults.InputThumbsMatchFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputThumbsMatchFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputThumbsMatchFg(value *style.Color) {
+	p.set(ParamInputThumbsMatchFg, value)
+}
+
+func (p *Parameters) InputThumbsPartialBg() *style.Color {
+	value, ok := p.Get(ParamInputThumbsPartialBg)
+	if !ok {
+		return defaults.InputThumbsPartialBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputThumbsPartialBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputThumbsPartialBg(value *style.Color) {
+	p.set(ParamInputThumbsPartialBg, value)
+}
+
+func (p *Parameters) InputThumbsPartialFg() *style.Color {
+	value, ok := p.Get(ParamInputThumbsPartialFg)
+	if !ok {
+		return defaults.InputThumbsPartialFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputThumbsPartialFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputThumbsPartialFg(value *style.Color) {
+	p.set(ParamInputThumbsPartialFg, value)
 }
 
 func (p *Parameters) NumSearchWorkers() int {
@@ -959,6 +1073,18 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamInputPromptFg:
 		return true
+	case ParamInputThumbsHintBg:
+		return true
+	case ParamInputThumbsHintFg:
+		return true
+	case ParamInputThumbsMatchBg:
+		return true
+	case ParamInputThumbsMatchFg:
+		return true
+	case ParamInputThumbsPartialBg:
+		return true
+	case ParamInputThumbsPartialFg:
+		return true
 	case ParamNumSearchWorkers:
 		return true
 	case ParamRemovePaneOnExit:
@@ -1062,6 +1188,18 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.InputPromptBg, true
 	case ParamInputPromptFg:
 		return defaults.InputPromptFg, true
+	case ParamInputThumbsHintBg:
+		return defaults.InputThumbsHintBg, true
+	case ParamInputThumbsHintFg:
+		return defaults.InputThumbsHintFg, true
+	case ParamInputThumbsMatchBg:
+		return defaults.InputThumbsMatchBg, true
+	case ParamInputThumbsMatchFg:
+		return defaults.InputThumbsMatchFg, true
+	case ParamInputThumbsPartialBg:
+		return defaults.InputThumbsPartialBg, true
+	case ParamInputThumbsPartialFg:
+		return defaults.InputThumbsPartialFg, true
 	case ParamNumSearchWorkers:
 		return defaults.NumSearchWorkers, true
 	case ParamRemovePaneOnExit:
@@ -1451,6 +1589,120 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		if err != nil {
 			janetValue.Free()
 			return fmt.Errorf("invalid value for :input-prompt-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputThumbsHintBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputThumbsHintBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-thumbs-hint-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputThumbsHintFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputThumbsHintFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-thumbs-hint-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputThumbsMatchBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputThumbsMatchBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-thumbs-match-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputThumbsMatchFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputThumbsMatchFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-thumbs-match-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputThumbsPartialBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputThumbsPartialBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-thumbs-partial-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputThumbsPartialFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputThumbsPartialFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-thumbs-partial-fg: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -2127,6 +2379,36 @@ func init() {
 			Name:      "input-prompt-fg",
 			Docstring: "The foreground [color](/api.md#color) of the input prompt in\n(input/*) functions.",
 			Default:   defaults.InputPromptFg,
+		},
+		{
+			Name:      "input-thumbs-hint-bg",
+			Docstring: "The background [color](/api.md#color) of hint text in (input/thumbs).",
+			Default:   defaults.InputThumbsHintBg,
+		},
+		{
+			Name:      "input-thumbs-hint-fg",
+			Docstring: "The foreground [color](/api.md#color) of hint text in (input/thumbs).",
+			Default:   defaults.InputThumbsHintFg,
+		},
+		{
+			Name:      "input-thumbs-match-bg",
+			Docstring: "The background [color](/api.md#color) of match text in (input/thumbs).",
+			Default:   defaults.InputThumbsMatchBg,
+		},
+		{
+			Name:      "input-thumbs-match-fg",
+			Docstring: "The foreground [color](/api.md#color) of match text in (input/thumbs).",
+			Default:   defaults.InputThumbsMatchFg,
+		},
+		{
+			Name:      "input-thumbs-partial-bg",
+			Docstring: "The background [color](/api.md#color) of partially selected hint text in (input/thumbs).",
+			Default:   defaults.InputThumbsPartialBg,
+		},
+		{
+			Name:      "input-thumbs-partial-fg",
+			Docstring: "The foreground [color](/api.md#color) of partially selected hint text in (input/thumbs).",
+			Default:   defaults.InputThumbsPartialFg,
 		},
 		{
 			Name:      "num-search-workers",

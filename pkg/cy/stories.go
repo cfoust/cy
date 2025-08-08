@@ -1004,7 +1004,7 @@ func init() {
 * Git SHA: a1b2c3d4e5f6 and full hash 973113963b491874ab2e372ee60d4b4cb75f717c
 * UUID: 123e4567-e89b-12d3-a456-426655440000
 * Colors: #ff0000, #00ff00, #0000ff
-* URLS: https://news.ycombinator.com/
+* URLs: https://news.ycombinator.com/
 `
 		pane := cy.tree.Root().NewPane(
 			ctx,
