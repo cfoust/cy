@@ -1,6 +1,7 @@
 package thumbs
 
 import (
+	"fmt"
 	"regexp"
 	"sort"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/re"
 	"github.com/cfoust/cy/pkg/sessions/search"
+
+	"github.com/mattn/go-runewidth"
 )
 
 type Match []geom.Vec2
@@ -279,4 +282,36 @@ func AssignHints(
 	}
 
 	return
+}
+
+func ValidateAlphabet(alphabet []rune) error {
+	if len(alphabet) < 2 {
+		return fmt.Errorf(
+			"alphabet must consist of two or more unique characters",
+		)
+	}
+
+	chars := make(map[rune]struct{})
+
+	for _, r := range alphabet {
+		if _, ok := chars[r]; ok {
+			return fmt.Errorf(
+				"every symbol in alphabet must be unique",
+			)
+		}
+
+		chars[r] = struct{}{}
+
+		width := runewidth.RuneWidth(r)
+		if width == 1 {
+			continue
+		}
+
+		return fmt.Errorf(
+			"invalid rune '%c': hint symbols must be one cell wide",
+			r,
+		)
+	}
+
+	return nil
 }

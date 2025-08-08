@@ -72,7 +72,7 @@ Numbers: 12345, 678910, 99999, 12345
 			return createThumbStory(
 				ctx,
 				content,
-				DefaultPatterns,
+				CompiledDefaultPatterns,
 			)
 		},
 		stories.Config{

@@ -2,7 +2,9 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
+	"regexp"
 
 	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/geom"
@@ -35,7 +37,7 @@ type FuzzyParams struct {
 
 func (i *InputModule) Find(
 	ctx context.Context,
-	context interface{},
+	context any,
 	choices *janet.Value,
 	named *janet.Named[FuzzyParams],
 ) (interface{}, error) {
@@ -287,9 +289,8 @@ func (i *InputModule) Text(
 }
 
 type ThumbsParams struct {
-	Animated *bool
 	Alphabet *string
-	Regexp   *[]string
+	Patterns *[]string
 }
 
 func (i *InputModule) Thumbs(
@@ -309,35 +310,52 @@ func (i *InputModule) Thumbs(
 		state       = outerLayers.State()
 		initial     = state.Image
 		origin      = state.Cursor.Vec2
-		result      = make(chan interface{})
+		result      = make(chan any)
 		settings    = []thumbs.Setting{
 			thumbs.WithResult(result),
 			thumbs.WithParams(client.Params()),
 		}
+		patterns = thumbs.CompiledDefaultPatterns
 	)
 
-	// Handle custom regexps
-	//var customPatterns []string
-	//if params.Regexp != nil {
-	//customPatterns = *params.Regexp
-	//}
+	if params.Patterns != nil {
+		patterns = make([]*regexp.Regexp, 0, len(*params.Patterns))
+		for _, pattern := range *params.Patterns {
+			re, err := regexp.Compile(pattern)
+			if err == nil {
+				patterns = append(
+					patterns,
+					re,
+				)
+				continue
+			}
 
-	matches := thumbs.Find(
-		thumbs.DefaultPatterns,
-		initial,
-	)
+			return nil, fmt.Errorf(
+				"could not compile pattern '%s': %w",
+				pattern,
+				err,
+			)
+		}
+	}
+
+	if params.Alphabet != nil {
+		runes := []rune(*params.Alphabet)
+		err := thumbs.ValidateAlphabet(runes)
+		if err != nil {
+			return nil, err
+		}
+
+		settings = append(
+			settings,
+			thumbs.WithAlphabet(runes),
+		)
+	}
+
+	matches := thumbs.Find(patterns, initial)
 
 	if len(matches) == 0 {
 		// TODO(cfoust): 07/28/25 inform user
 		return nil, nil
-	}
-
-	// Handle custom alphabet
-	if params.Alphabet != nil {
-		settings = append(
-			settings,
-			thumbs.WithAlphabet(*params.Alphabet),
-		)
 	}
 
 	if client.Params().SkipInput() {

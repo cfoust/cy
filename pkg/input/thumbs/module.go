@@ -71,11 +71,9 @@ func WithParams(params *params.Parameters) Setting {
 }
 
 // WithAlphabet sets the alphabet to use for generating hints
-func WithAlphabet(alphabet string) Setting {
+func WithAlphabet(alphabet []rune) Setting {
 	return func(ctx context.Context, t *Thumbs) {
-		if alphabet != "" {
-			t.alphabet = []rune(alphabet)
-		}
+		t.alphabet = alphabet
 	}
 }
 

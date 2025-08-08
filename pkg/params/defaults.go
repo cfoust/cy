@@ -10,7 +10,7 @@ import (
 type DefaultParam struct {
 	Name      string
 	Docstring string
-	Default   interface{}
+	Default   any
 }
 
 var _defaultParams []DefaultParam
@@ -91,6 +91,8 @@ type defaultParams struct {
 	InputFindInactiveFg *style.Color
 	// The background [color](/api.md#color) of the inactive row in (input/find).
 	InputFindInactiveBg *style.Color
+	// The foreground [color](/api.md#color) of match text in (input/thumbs).
+	InputThumbsMatchFg *style.Color
 
 	// The foreground [color](/api.md#color) used to represent time mode.
 	ReplayTimeFg *style.Color

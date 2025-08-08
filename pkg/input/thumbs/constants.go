@@ -29,38 +29,49 @@ import (
 	"regexp"
 )
 
-var DefaultPatterns = []*regexp.Regexp{
+var DefaultPatterns = []string{
 	// markdown_url
-	regexp.MustCompile(`\[[^\]]*\]\(([^)]+)\)`),
+	`\[[^\]]*\]\(([^)]+)\)`,
 	// url
-	regexp.MustCompile(`(?P<match>(https?://|git@|git://|ssh://|ftp://|file:///)[^\s]+)`),
+	`(?P<match>(https?://|git@|git://|ssh://|ftp://|file:///)[^\s]+)`,
 	// diff_summary
-	regexp.MustCompile(`diff --git a/([.\w\-@~\[\]]+?/[.\w\-@\[\]]+) b/([.\w\-@~\[\]]+?/[.\w\-@\[\]]+)`),
+	`diff --git a/([.\w\-@~\[\]]+?/[.\w\-@\[\]]+) b/([.\w\-@~\[\]]+?/[.\w\-@\[\]]+)`,
 	// diff_a
-	regexp.MustCompile(`--- a/([^\s]+)`),
+	`--- a/([^\s]+)`,
 	// diff_b
-	regexp.MustCompile(`\+\+\+ b/([^\s]+)`),
+	`\+\+\+ b/([^\s]+)`,
 	// docker
-	regexp.MustCompile(`sha256:([0-9a-f]{64})`),
+	`sha256:([0-9a-f]{64})`,
 	// path
-	regexp.MustCompile(`(?P<match>([.\w\-@$~\[\]]+)?(/[.\w\-@$\[\]]+)+)`),
+	`(?P<match>([.\w\-@$~\[\]]+)?(/[.\w\-@$\[\]]+)+)`,
 	// color
-	regexp.MustCompile(`#[0-9a-fA-F]{6}`),
+	`#[0-9a-fA-F]{6}`,
 	// uid
-	regexp.MustCompile(`[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`),
+	`[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`,
 	// ipfs
-	regexp.MustCompile(`Qm[0-9a-zA-Z]{44}`),
+	`Qm[0-9a-zA-Z]{44}`,
 	// sha
-	regexp.MustCompile(`[0-9a-f]{7,40}`),
+	`[0-9a-f]{7,40}`,
 	// ip
-	regexp.MustCompile(`\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}`),
+	`\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}`,
 	// ipv6
-	regexp.MustCompile(`[A-f0-9:]+:+[A-f0-9:]+[%\w\d]+`),
+	`[A-f0-9:]+:+[A-f0-9:]+[%\w\d]+`,
 	// address
-	regexp.MustCompile(`0x[0-9a-fA-F]+`),
+	`0x[0-9a-fA-F]+`,
 	// number
-	regexp.MustCompile(`[0-9]{4,}`),
+	`[0-9]{4,}`,
 }
 
 // Default alphabet for generating hints (qwerty layout)
 var defaultAlphabet = []rune("asdfqwerzxcvjklmiuopghtybn")
+
+var CompiledDefaultPatterns = []*regexp.Regexp{}
+
+func init() {
+	for _, pattern := range DefaultPatterns {
+		CompiledDefaultPatterns = append(
+			CompiledDefaultPatterns,
+			regexp.MustCompile(pattern),
+		)
+	}
+}
