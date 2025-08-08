@@ -67,25 +67,6 @@ def plot_grid(grid):
     plt.yticks([])
     plt.show()
 
-symbols = [
-    # "Standard" common characters
-    ',', '_', '-', '"', ']', '[', '}', '{', 'v', 'V',
-    '<', '>', '\'', 'Я', '⣳',
-
-    # Light box-drawing characters
-    '─', '│', '┌', '┐', '└', '┘', '├', '┤', '┬', '┴', '┼',
-    '╭', '╮', '╯', '╰', '╱', '╲', '╳',
-
-    # Legacy computing symbols
-    # '🯐', '🯑', '🯒', '🯓', '🯔', '🯕', '🯖', '🯗', '🯘', '🯙', '🯚',
-    # '🯛', '🯜', '🯝', '🯞', '🯟',
-    # '🯠', '🯡', '🯢', '🯣',
-    # '🭱','🭲','🭳','🭴','🭵',
-]
-
-face = freetype.Face("./CozetteVector.ttf")
-face.set_char_size(128 * 64)  # Set font size in p
-
 def compute_occupancies(
     face,
     symbols,
@@ -125,7 +106,7 @@ def compute_occupancies(
         _, bitmap, occupancy = render_glyph(
             face,
             symbol,
-            (4, 8),
+            (8, 8),
             size,
             max_descent,
         )
@@ -141,8 +122,24 @@ def compute_occupancies(
 
     plot_grid(out_canvas)
 
-compute_occupancies(face, symbols)
 
-# Show the occupancy grid
-# plot_grid(occupancy_grid)
-# plot_grid(occupancy_grid)
+symbols = [
+    # "Standard" common characters
+    ',', '_', '-', '"', ']', '[', '}', '{', 'v', 'V',
+    '<', '>', '\'',
+
+    # Light box-drawing characters
+    '─', '│', '┌', '┐', '└', '┘', '├', '┤', '┬', '┴', '┼',
+    '╭', '╮', '╯', '╰', '╱', '╲', '╳',
+
+    # Legacy computing symbols
+    # '🯐', '🯑', '🯒', '🯓', '🯔', '🯕', '🯖', '🯗', '🯘', '🯙', '🯚',
+    # '🯛', '🯜', '🯝', '🯞', '🯟',
+    # '🯠', '🯡', '🯢', '🯣',
+    # '🭱','🭲','🭳','🭴','🭵',
+]
+
+face = freetype.Face("./CozetteVector.ttf")
+face.set_char_size(128 * 64)  # Set font size in p
+
+compute_occupancies(face, symbols)
