@@ -123,6 +123,22 @@ func TestFindImage(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "named capture groups",
+			from:    geom.Vec2{R: 0, C: 0},
+			to:      geom.Vec2{R: 2, C: 10},
+			pattern: regexp.MustCompile(`(?P<match>([z]+)?(ba[rz]){2})`),
+			expected: []search.Selection{
+				{
+					From: geom.Vec2{R: 0, C: 3},
+					To:   geom.Vec2{R: 0, C: 9},
+				},
+				{
+					From: geom.Vec2{R: 1, C: 3},
+					To:   geom.Vec2{R: 1, C: 9},
+				},
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			require.Equal(

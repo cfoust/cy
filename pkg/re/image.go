@@ -52,19 +52,43 @@ func (l *imageReader) Reset() {
 	l.next = l.from
 }
 
+func getMatchIndex(pattern *regexp.Regexp) int {
+	for i, subName := range pattern.SubexpNames() {
+		if subName == "match" {
+			return i
+		}
+	}
+
+	return -1
+}
+
 func findAllSubmatch(pattern *regexp.Regexp) func(r io.RuneReader) [][]int {
+	var (
+		matchIndex  = getMatchIndex(pattern)
+		hasNamed    = matchIndex != -1
+		startOffset = 0
+	)
+
+	if hasNamed {
+		startOffset = matchIndex * 2
+	}
+
 	return func(r io.RuneReader) [][]int {
-		loc := pattern.FindReaderSubmatchIndex(r)
-		if len(loc) == 0 {
+		var (
+			loc = pattern.FindReaderSubmatchIndex(r)
+		)
+
+		if startOffset >= len(loc) {
 			return nil
 		}
 
-		if len(loc) == 2 {
-			return [][]int{loc}
+		matchSlice := loc[startOffset : startOffset+2]
+		if len(loc) == 2 || hasNamed {
+			return [][]int{matchSlice}
 		}
 
-		// Just take submatches rather than whole pattern if
-		// that's what's returned
+		// Just take all submatches rather than whole pattern if that's
+		// what's returned
 		results := make([][]int, 0, (len(loc)-2)/2)
 		for i := 2; i+1 < len(loc); i += 2 {
 			results = append(

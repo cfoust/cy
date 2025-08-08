@@ -114,7 +114,6 @@ func findMatches(
 			convertMatch(region, match),
 		)
 	}
-
 	return
 }
 
