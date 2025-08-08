@@ -386,3 +386,13 @@ func (i *InputModule) Thumbs(
 		return nil, ctx.Err()
 	}
 }
+
+func (i *InputModule) ThumbsDefaultPatterns(ctx context.Context) []string {
+	return thumbs.DefaultPatterns
+}
+
+func (i *InputModule) Renames() map[string]string {
+	return map[string]string{
+		"ThumbsDefaultPatterns": "thumbs/default-patterns",
+	}
+}

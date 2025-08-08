@@ -44,3 +44,9 @@ This function supports the following named parameters:
 
 - `:alphabet` (string): Set the character set used for generating hints. Default is `"asdfqwerzxcvjklmiuopghtybn"`.
 - `:patterns` ([]string): Array of regular expressions to search for.
+
+# doc: ThumbsDefaultPatterns
+
+(input/thumbs/default-patterns)
+
+Get the default search patterns used by {{api input/thumbs}}. This is useful for extending the default patterns without replacing them.
