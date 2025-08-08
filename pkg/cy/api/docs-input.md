@@ -38,12 +38,21 @@ This function supports a range of named parameters that adjust its functionality
 
 (input/thumbs &named alphabet regexp)
 
-`(input/thumbs)` searches the contents of the screen for matches of a set of patterns and prompts the user to select one using short sequences of characters. The return value of the function is the match text or `nil` if the user did not select anything. This is similar to the functionality offered by [tmux-thumbs](https://github.com/fcsonline/tmux-thumbs) or [tmux-fingers](https://github.com/Morantron/tmux-fingers/).
+`(input/thumbs)` searches the contents of the screen for matches of a set of patterns and prompts the user to select one using short sequences of characters. The return value of the function is the match text or `nil` if the user did not select anything. This is similar to the functionality offered by [tmux-thumbs](https://github.com/fcsonline/tmux-thumbs) or [tmux-fingers](https://github.com/Morantron/tmux-fingers/). Unlike those programs, `(input/thumbs)` searches across the entire screen and is sensitive to pane boundaries, so matches that occur in wrapped lines will still appear.
 
 This function supports the following named parameters:
 
 - `:alphabet` (string): Set the character set used for generating hints. Default is `"asdfqwerzxcvjklmiuopghtybn"`.
 - `:patterns` ([]string): Array of regular expressions to search for.
+
+#### Patterns
+
+Regular expressions supplied to the `:patterns` parameter have special behavior for effectively matching content on the screen:
+* If a pattern has a named capture group called `match`, the content matched by that group will be used as the match (as opposed to any other matched group.)
+    - Example (filenames): `(?P<match>([.\w\-@$~\[\]]+)?(/[.\w\-@$\[\]]+)+)`
+* If a pattern has several capture groups, a match of the full pattern will produce several matches.
+    - Example (git diffs): `diff --git a/([.\w\-@~\[\]]+?/[.\w\-@\[\]]+) b/([.\w\-@~\[\]]+?/[.\w\-@\[\]]+)`
+    - If this pattern matches, hints will appear over the text following `a/` and `b/`
 
 # doc: ThumbsDefaultPatterns
 
