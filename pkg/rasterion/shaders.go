@@ -37,6 +37,16 @@ func (t TransformShader) Vertex(
 	return camera.Transform(t.Transform(vertex).Vec3())
 }
 
+type NoopVertexShader struct{}
+
+var _ VertexShader = (*NoopVertexShader)(nil)
+
+func (v *NoopVertexShader) Vertex(
+	camera *Camera, face, index int, vertex gl.Vec3,
+) gl.Vec4 {
+	return vertex.Vec4(1)
+}
+
 type FragmentShader interface {
 	Fragment(
 		i0, i1, i2 int,

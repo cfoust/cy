@@ -22,11 +22,12 @@ type Thumbs struct {
 	initial image.Image
 	result  chan<- interface{}
 	size    geom.Vec2
+	origin  geom.Vec2
 
 	render    *taro.Renderer
 	textInput textinput.Model
 
-	location geom.Vec2
+	lines *lineDrawer
 
 	hints map[string]Match
 
@@ -97,6 +98,8 @@ func newThumbs(
 		alphabet:  defaultAlphabet,
 		params:    params.New(),
 		initial:   initial,
+		lines:     newLineDrawer(),
+		origin:    origin,
 	}
 
 	for _, setting := range settings {

@@ -46,6 +46,32 @@ func (c *Context) Resize(size geom.Vec2) {
 	c.size = size
 }
 
+func (c *Context) Size() geom.Vec2 {
+	return c.size
+}
+
+func (c *Context) SetTarget(i image.Image) {
+	size := i.Size()
+	c.i = i
+
+	if size == c.size {
+		return
+	}
+
+	c.camera = NewCamera(size)
+	c.z = allocZ(size)
+	c.size = size
+}
+
+func (c *Context) ClearZBuffer() {
+	size := c.i.Size()
+	for row := range size.R {
+		for col := range size.C {
+			c.z[c.getIndex(row, col)] = gl.InfPos
+		}
+	}
+}
+
 func (c *Context) Clear() {
 	e := emu.EmptyGlyph()
 	size := c.i.Size()

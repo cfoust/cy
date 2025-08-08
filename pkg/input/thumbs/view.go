@@ -16,7 +16,8 @@ func (t *Thumbs) renderMatch(
 	match Match,
 ) {
 	var (
-		size       = state.Image.Size()
+		i          = state.Image
+		size       = i.Size()
 		isBlank    = len(input) == 0
 		doesMatch  = strings.HasPrefix(hint, input)
 		background = emu.Yellow
@@ -29,6 +30,15 @@ func (t *Thumbs) renderMatch(
 		} else {
 			background = emu.LightGrey
 		}
+	}
+
+	if doesMatch {
+		t.lines.Draw(
+			t.origin,
+			match[0],
+			emu.LightBlue,
+			emu.DefaultBG,
+		)
 	}
 
 	for i, cell := range match {
@@ -50,7 +60,8 @@ func (t *Thumbs) renderMatch(
 
 func (t *Thumbs) View(state *tty.State) {
 	var (
-		size  = state.Image.Size()
+		i     = state.Image
+		size  = i.Size()
 		input = t.textInput.Value()
 	)
 
@@ -60,12 +71,15 @@ func (t *Thumbs) View(state *tty.State) {
 		return
 	}
 
-	image.Copy(geom.Vec2{}, state.Image, t.initial)
+	t.lines.Prepare(size)
+	t.lines.SetTarget(i)
+
+	image.Copy(geom.Vec2{}, i, t.initial)
 
 	for row := range size.R {
 		for col := range size.C {
-			state.Image[row][col].FG = emu.DefaultFG
-			state.Image[row][col].BG = emu.DefaultBG
+			i[row][col].FG = emu.DefaultFG
+			i[row][col].BG = emu.DefaultBG
 		}
 	}
 
