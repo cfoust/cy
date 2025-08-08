@@ -130,9 +130,9 @@ func (f *Fuzzy) renderOptions(
 		Border(lipgloss.Border{}).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			switch row {
-			case 0:
+			case table.HeaderRow:
 				return prompt
-			case (f.selected - windowOffset) + 1:
+			case (f.selected - windowOffset):
 				return active
 			default:
 				return inactive
