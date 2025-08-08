@@ -57,3 +57,22 @@ func (c *Color) Emu() emu.Color {
 func NewColor(c string) *Color {
 	return &Color{Color: lipgloss.Color(c)}
 }
+
+var (
+	Black        = NewColor("0")
+	Red          = NewColor("1")
+	Green        = NewColor("2")
+	Yellow       = NewColor("3")
+	Blue         = NewColor("4")
+	Magenta      = NewColor("5")
+	Cyan         = NewColor("6")
+	LightGrey    = NewColor("7")
+	DarkGrey     = NewColor("8")
+	LightRed     = NewColor("9")
+	LightGreen   = NewColor("10")
+	LightYellow  = NewColor("11")
+	LightBlue    = NewColor("12")
+	LightMagenta = NewColor("13")
+	LightCyan    = NewColor("14")
+	White        = NewColor("15")
+)
