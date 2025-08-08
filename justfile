@@ -7,8 +7,8 @@ install:
 test:
   go test ./pkg/... ./cmd/...
 
-stories:
-  go run ./cmd/stories/...
+stories *args:
+  go run ./cmd/stories/... {{args}}
 
 format:
   go fmt ./pkg/... ./cmd/...
