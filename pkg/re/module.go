@@ -102,14 +102,17 @@ func findAll(
 ) (matches [][]int) {
 	var last int
 	for {
-		// Reset the reader back to one cell past the beginning of the
+		// Reset the reader back to one cell past the end of the
 		// last match
 		if len(matches) > 0 {
-			last = matches[len(matches)-1][0]
+			last = matches[len(matches)-1][1]
 
 			g.Reset()
 			for g.offset <= last {
-				g.ReadRune()
+				_, _, err := g.ReadRune()
+				if err == io.EOF {
+					return
+				}
 			}
 		}
 
