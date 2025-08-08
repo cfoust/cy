@@ -76,15 +76,18 @@ var foustLine Drawing = func(c *R.Context, delta time.Duration) {
 	foustShader.Clear()
 
 	t := delta.Seconds() / 5
-	c.Line(
-		foustShader,
-		gl.Vec3{0, 0, 1},
-		gl.Vec3{
-			1 * float32(math.Cos(t)),
-			1 * float32(math.Sin(t)),
-			1,
-		},
-	)
+	for i := 0; i < 5; i++ {
+		advance := float64(i) * 0.1
+		c.Line(
+			foustShader,
+			gl.Vec3{0, 0, 1},
+			gl.Vec3{
+				1 * float32(math.Cos(t + advance)),
+				1 * float32(math.Sin(t + advance)),
+				1,
+			},
+		)
+	}
 }
 
 func init() {
