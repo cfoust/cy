@@ -91,8 +91,8 @@ func (l *lineDrawer) Draw(
 	)
 
 	for _, v := range []*gl.Vec3{&v0, &v1} {
-		v[0] = (v[0] / float32(size.C)) - 0.5
-		v[1] = (v[1] / float32(size.R)) - 0.5
+		v[0] = ((v[0] / float32(size.C)) * 2) - 0.5
+		v[1] = ((v[1] / float32(size.R)) * 2) - 0.5
 		v[2] = 1
 	}
 

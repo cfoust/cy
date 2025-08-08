@@ -237,7 +237,7 @@ func generateHints(alphabet []rune, numMatches int) []string {
 		hint := ""
 		num := i + offset
 		for {
-			hint = string(alphabet[num%numSymbols]) + hint
+			hint = hint + string(alphabet[num%numSymbols])
 			num = num / numSymbols
 			if num == 0 {
 				break

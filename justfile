@@ -13,6 +13,9 @@ stories:
 format:
   go fmt ./pkg/... ./cmd/...
 
+generate:
+  go generate ./pkg/... ./cmd/...
+
 run:
   go run ./cmd/cy/... -L dev
 

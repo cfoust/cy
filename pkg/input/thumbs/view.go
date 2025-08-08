@@ -16,45 +16,41 @@ func (t *Thumbs) renderMatch(
 	match Match,
 ) {
 	var (
-		i          = state.Image
-		size       = i.Size()
-		isBlank    = len(input) == 0
-		doesMatch  = strings.HasPrefix(hint, input)
-		background = emu.Yellow
-		hintRunes  = []rune(hint)
+		i         = state.Image
+		size      = i.Size()
+		numInput  = len(input)
+		doesMatch = numInput > 0 && strings.HasPrefix(hint, input)
+		hintRunes = []rune(hint)
 	)
 
-	if !isBlank {
-		if doesMatch {
-			background = emu.LightBlue
-		} else {
-			background = emu.LightGrey
-		}
-	}
-
-	if doesMatch {
-		t.lines.Draw(
-			t.origin,
-			match[0],
-			emu.LightBlue,
-			emu.DefaultBG,
-		)
-	}
-
-	for i, cell := range match {
+	for index, cell := range match {
 		if cell.R >= size.R || cell.C >= size.C {
 			continue
 		}
 
-		glyph := state.Image[cell.R][cell.C]
-		glyph.BG = background
+		var (
+			glyph     = i[cell.R][cell.C]
+			isHint    = index < len(hintRunes)
+			isCorrect = doesMatch && isHint && index < numInput
+		)
 
-		if i < len(hintRunes) {
-			glyph.Char = hintRunes[i]
+		if isHint {
+			glyph.Char = hintRunes[index]
 			glyph.Mode = emu.AttrBold
+
+			glyph.FG = emu.Yellow
+			glyph.BG = emu.DefaultBG
+
+			if isCorrect {
+				glyph.FG = emu.White
+				glyph.BG = emu.Blue
+			}
+		} else {
+			glyph.FG = emu.Red
+			glyph.BG = emu.DefaultBG
 		}
 
-		state.Image[cell.R][cell.C] = glyph
+		i[cell.R][cell.C] = glyph
 	}
 }
 
@@ -75,13 +71,6 @@ func (t *Thumbs) View(state *tty.State) {
 	t.lines.SetTarget(i)
 
 	image.Copy(geom.Vec2{}, i, t.initial)
-
-	for row := range size.R {
-		for col := range size.C {
-			i[row][col].FG = emu.DefaultFG
-			i[row][col].BG = emu.DefaultBG
-		}
-	}
 
 	for hint, match := range t.hints {
 		t.renderMatch(state, input, hint, match)
