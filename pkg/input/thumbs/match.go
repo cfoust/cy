@@ -2,6 +2,7 @@ package thumbs
 
 import (
 	"regexp"
+	"sort"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
@@ -10,7 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
-type thumbMatch []geom.Vec2
+type Match []geom.Vec2
 
 // getRegions gets all of the contiguous screen regions that should be checked
 // for matches. This is useful only on image.Images produced by capturing the
@@ -64,7 +65,7 @@ func getRegions(i image.Image) (regions []search.Selection) {
 // once, in which we want to check for wrapped matches. convertMatch
 // "normalizes" all discontiguous matches so that they're just a dumb sequence
 // of cells.
-func convertMatch(region, raw search.Selection) (match thumbMatch) {
+func convertMatch(region, raw search.Selection) (match Match) {
 	var (
 		startCol = region.From.C
 		endCol   = region.To.C
@@ -99,7 +100,7 @@ func findMatches(
 	pattern *regexp.Regexp,
 	i image.Image,
 	region search.Selection,
-) (matches []thumbMatch) {
+) (matches []Match) {
 	rawMatches := re.FindAllImage(
 		pattern,
 		i,
@@ -117,13 +118,15 @@ func findMatches(
 	return
 }
 
-func findPatterns(
+// Find searches `i` for all matches of `patterns` and resolves them (after
+// deconfliction) into `Match`es.
+func Find(
 	patterns []*regexp.Regexp,
 	i image.Image,
-) (matches []thumbMatch) {
+) (matches []Match) {
 	var (
 		regions    = getRegions(i)
-		allMatches []thumbMatch
+		allMatches []Match
 		occupied   = make(map[geom.Vec2]map[int]struct{})
 	)
 
@@ -203,6 +206,54 @@ func findPatterns(
 		}
 
 		matches = append(matches, match)
+	}
+
+	return
+}
+
+// generateHints creates hint strings for the given number of matches
+func generateHints(alphabet []rune, numMatches int) []string {
+	hints := make([]string, 0, numMatches)
+	alphabetLen := len(alphabet)
+
+	for i := range numMatches {
+		hint := ""
+		num := i
+		for {
+			hint = string(alphabet[num%alphabetLen]) + hint
+			num = num / alphabetLen
+			if num == 0 {
+				break
+			}
+			num--
+		}
+		hints = append(hints, hint)
+	}
+
+	return hints
+}
+
+// AssignHints assigns hints to `matches` by giving shorter hints to matches
+// that are closer to `origin`.
+func AssignHints(
+	alphabet []rune,
+	matches []Match,
+	origin geom.Vec2,
+) (hints map[string]Match) {
+	hints = make(map[string]Match)
+
+	distances := make([]int, len(matches))
+	for index, match := range matches {
+		distances[index] = match[0].Dist(origin)
+	}
+
+	sort.SliceStable(matches, func(a, b int) bool {
+		return distances[a] < distances[b]
+	})
+
+	hintStrings := generateHints(alphabet, len(matches))
+	for index, match := range matches {
+		hints[hintStrings[index]] = match
 	}
 
 	return

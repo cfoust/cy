@@ -121,7 +121,7 @@ func TestConvert(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			require.Equal(
 				t,
-				thumbMatch(tc.expected),
+				Match(tc.expected),
 				convertMatch(region, tc.match),
 			)
 		})
@@ -130,6 +130,16 @@ func TestConvert(t *testing.T) {
 
 func pattern(s string) *regexp.Regexp {
 	return regexp.MustCompile(s)
+}
+
+func m(row, col int, text string) (result Match) {
+	for index := range len(text) {
+		result = append(result, geom.Vec2{
+			R: row,
+			C: col + index,
+		})
+	}
+	return
 }
 
 func TestFind(t *testing.T) {
@@ -155,17 +165,7 @@ func TestFind(t *testing.T) {
 		3, 9,
 	)
 
-	line := func(row, col int, text string) (result thumbMatch) {
-		for index := range len(text) {
-			result = append(result, geom.Vec2{
-				R: row,
-				C: col + index,
-			})
-		}
-		return
-	}
-
-	merge := func(matches ...thumbMatch) (result thumbMatch) {
+	merge := func(matches ...Match) (result Match) {
 		for _, match := range matches {
 			result = append(result, match...)
 		}
@@ -175,7 +175,7 @@ func TestFind(t *testing.T) {
 	for _, tc := range []struct {
 		name     string
 		patterns []*regexp.Regexp
-		expected []thumbMatch
+		expected []Match
 	}{
 		{
 			name: "take longest",
@@ -183,9 +183,9 @@ func TestFind(t *testing.T) {
 				pattern("foobar"),
 				pattern("foo"),
 			},
-			expected: []thumbMatch{
-				line(0, 0, "foobar"),
-				line(1, 0, "foobar"),
+			expected: []Match{
+				m(0, 0, "foobar"),
+				m(1, 0, "foobar"),
 			},
 		},
 		{
@@ -194,9 +194,9 @@ func TestFind(t *testing.T) {
 				pattern("foobar"),
 				pattern("bar"),
 			},
-			expected: []thumbMatch{
-				line(0, 0, "foobar"),
-				line(1, 0, "foobar"),
+			expected: []Match{
+				m(0, 0, "foobar"),
+				m(1, 0, "foobar"),
 			},
 		},
 		{
@@ -205,14 +205,14 @@ func TestFind(t *testing.T) {
 				pattern("foofoo"),
 				pattern("bazbaz"),
 			},
-			expected: []thumbMatch{
+			expected: []Match{
 				merge(
-					line(0, 0, "foo"),
-					line(1, 0, "foo"),
+					m(0, 0, "foo"),
+					m(1, 0, "foo"),
 				),
 				merge(
-					line(0, 6, "baz"),
-					line(1, 6, "baz"),
+					m(0, 6, "baz"),
+					m(1, 6, "baz"),
 				),
 			},
 		},
@@ -223,9 +223,9 @@ func TestFind(t *testing.T) {
 				pattern("bazbaz"),
 				pattern("foobarbaz"),
 			},
-			expected: []thumbMatch{
-				line(0, 0, "foobarbaz"),
-				line(1, 0, "foobarbaz"),
+			expected: []Match{
+				m(0, 0, "foobarbaz"),
+				m(1, 0, "foobarbaz"),
 			},
 		},
 	} {
@@ -233,8 +233,22 @@ func TestFind(t *testing.T) {
 			require.Equal(
 				t,
 				tc.expected,
-				findPatterns(tc.patterns, i),
+				Find(tc.patterns, i),
 			)
 		})
 	}
+}
+
+func TestHints(t *testing.T) {
+	hints := AssignHints(
+		[]rune("abc"),
+		[]Match{
+			m(9, 0, "testtest"),
+			m(2, 0, "asd"),
+			m(3, 0, "asd"),
+			m(4, 0, "asd"),
+		},
+		geom.Vec2{},
+	)
+	t.Logf("%+v", hints)
 }

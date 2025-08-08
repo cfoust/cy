@@ -1,5 +1,9 @@
 package geom
 
+import (
+	"math"
+)
+
 type Vec2 struct {
 	_ struct{} `janet:"tuple"`
 	// row (y)
@@ -17,6 +21,12 @@ func (v Vec2) Scalar(value int) Vec2 {
 
 func (v Vec2) Sub(other Vec2) Vec2 {
 	return v.Add(other.Scalar(-1))
+}
+
+func (v Vec2) Dist(other Vec2) int {
+	x2 := math.Pow(float64(other.C)-float64(v.C), 2)
+	y2 := math.Pow(float64(other.R)-float64(v.R), 2)
+	return int(math.Sqrt(x2 + y2))
 }
 
 func (v Vec2) IsZero() bool {
