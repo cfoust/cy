@@ -33,9 +33,12 @@ Send keys to the pane referred to by [NodeID](/api.md#nodeid). `keys` is an arra
 (def pane (cmd/new :root))
 # }
 
-# Send the string "test" to the pane
-(pane/send-keys pane @["test"])
-
 # Send ctrl+c to the pane
 (pane/send-keys pane @["ctrl+c"])
 ```
+
+# doc: SendText
+
+(pane/send-text pane text)
+
+Send text to the pane referred to by [NodeID](/api.md#nodeid). Unlike {{api pane/send-keys}}, `text` will not be interpreted as a [key specifier](/preset-keys.md).

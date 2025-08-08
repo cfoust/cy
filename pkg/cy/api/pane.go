@@ -90,3 +90,21 @@ func (p *PaneModule) SendKeys(id *janet.Value, keys []string) error {
 
 	return nil
 }
+
+func (p *PaneModule) SendText(id *janet.Value, text string) error {
+	defer id.Free()
+
+	pane, err := resolvePane(p.Tree, id)
+	if err != nil {
+		return err
+	}
+
+	for _, key := range []rune(text) {
+		pane.Screen().Send(taro.KeyMsg{
+			Type:  taro.KeyRunes,
+			Runes: []rune{key},
+		})
+	}
+
+	return nil
+}

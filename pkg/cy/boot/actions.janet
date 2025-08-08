@@ -468,6 +468,6 @@ For example:
   "Select a thumb and insert it into the current pane."
   (var choice (input/thumbs))
   (when (nil? choice) (break))
-  (pane/send-keys (pane/current) @[choice]))
+  (pane/send-text (pane/current) choice))
 
 (merge-module root-env (curenv))
