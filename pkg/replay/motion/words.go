@@ -4,6 +4,7 @@ import (
 	"regexp"
 
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/re"
 )
 
 var (
@@ -27,7 +28,7 @@ var (
 
 func getLineMatches(
 	m Movable,
-	re *regexp.Regexp,
+	pattern *regexp.Regexp,
 	row int,
 ) (loc [][]int, ok bool) {
 	line, ok := m.Line(row)
@@ -35,12 +36,12 @@ func getLineMatches(
 		return
 	}
 
-	return findAllLine(re, line), true
+	return re.FindAllLine(pattern, line), true
 }
 
 func nextWord(
 	m Movable,
-	re *regexp.Regexp,
+	pattern *regexp.Regexp,
 	index indexFunc,
 	isForward bool,
 ) (
@@ -49,7 +50,7 @@ func nextWord(
 ) {
 	cursor := m.Cursor()
 
-	matches, matchOk := getLineMatches(m, re, cursor.R)
+	matches, matchOk := getLineMatches(m, pattern, cursor.R)
 	if !matchOk {
 		return
 	}
@@ -101,7 +102,7 @@ func nextWord(
 			}, true
 		}
 
-		matches := findAllLine(re, line)
+		matches := re.FindAllLine(pattern, line)
 
 		// Non-blank lines with no words are skipped
 		if len(matches) == 0 {

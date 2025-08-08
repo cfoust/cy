@@ -5,6 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/re"
 
 	"github.com/stretchr/testify/require"
 )
@@ -150,7 +151,7 @@ func TestFindNext(t *testing.T) {
 	{
 		to, ok := findNext(
 			m,
-			makePattern("foo"),
+			re.MakePattern("foo"),
 			geom.Vec2{},
 			true,
 		)
@@ -170,7 +171,7 @@ func TestFindNext(t *testing.T) {
 	{
 		to, ok := findNext(
 			m,
-			makePattern("foo"),
+			re.MakePattern("foo"),
 			geom.Vec2{R: 0, C: 3},
 			false,
 		)
@@ -190,7 +191,7 @@ func TestFindNext(t *testing.T) {
 	{
 		to, ok := findNext(
 			m,
-			makePattern("foo"),
+			re.MakePattern("foo"),
 			geom.Vec2{R: 0, C: 2},
 			false,
 		)
@@ -210,7 +211,7 @@ func TestFindNext(t *testing.T) {
 	{
 		to, ok := findNext(
 			m,
-			makePattern("bar"),
+			re.MakePattern("bar"),
 			geom.Vec2{},
 			true,
 		)
@@ -230,7 +231,7 @@ func TestFindNext(t *testing.T) {
 	{
 		to, ok := findNext(
 			m,
-			makePattern("foo"),
+			re.MakePattern("foo"),
 			geom.Vec2{C: -1},
 			true,
 		)
@@ -250,7 +251,7 @@ func TestFindNext(t *testing.T) {
 	{
 		to, ok := findNext(
 			m,
-			makePattern("baz"),
+			re.MakePattern("baz"),
 			geom.Vec2{R: 2, C: 9},
 			false,
 		)
@@ -270,7 +271,7 @@ func TestFindNext(t *testing.T) {
 	{
 		_, ok := findNext(
 			m,
-			makePattern(""),
+			re.MakePattern(""),
 			geom.Vec2{R: 2, C: 9},
 			false,
 		)
@@ -281,7 +282,7 @@ func TestFindNext(t *testing.T) {
 	{
 		_, ok := findNext(
 			m,
-			makePattern("asdasdasd"),
+			re.MakePattern("asdasdasd"),
 			geom.Vec2{R: 0, C: 0},
 			false,
 		)
