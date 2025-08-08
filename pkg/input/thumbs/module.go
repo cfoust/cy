@@ -296,4 +296,3 @@ func New(
 type SelectedEvent struct {
 	Match Match
 }
-
