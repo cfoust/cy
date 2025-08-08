@@ -8,6 +8,7 @@ import (
 	C "github.com/cfoust/cy/pkg/cmd"
 	"github.com/cfoust/cy/pkg/cy/cmd"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/mux/stream"
 	"github.com/cfoust/cy/pkg/replay/detect"
@@ -37,7 +38,7 @@ type CmdModule struct {
 }
 
 func (c *CmdModule) New(
-	user interface{},
+	user any,
 	groupId *janet.Value,
 	cmdParams *janet.Named[CmdParams],
 ) (tree.NodeID, error) {
@@ -154,6 +155,28 @@ func (c *CmdModule) Commands(id *janet.Value) (*[]detect.Command, error) {
 
 	commands := r.Commands()
 	return &commands, nil
+}
+
+func (c *CmdModule) Title(id *janet.Value) (*string, error) {
+	defer id.Free()
+
+	pane, err := resolvePane(c.Tree, id)
+	if err != nil {
+		return nil, err
+	}
+
+	r, ok := pane.Screen().(*replayable.Replayable)
+	if !ok {
+		return nil, fmt.Errorf("pane was not a cmd")
+	}
+
+	terminal, ok := r.Screen().(*screen.Terminal)
+	if !ok {
+		return nil, fmt.Errorf("pane does not have a terminal")
+	}
+
+	title := terminal.Title()
+	return &title, nil
 }
 
 func (c *CmdModule) Query() ([]C.CommandEvent, error) {

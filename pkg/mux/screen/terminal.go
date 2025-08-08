@@ -114,6 +114,10 @@ func (t *Terminal) IsAltMode() bool {
 	return t.terminal.IsAltMode()
 }
 
+func (t *Terminal) Title() string {
+	return t.terminal.Title()
+}
+
 func (t *Terminal) Send(msg mux.Msg) {
 	if t.stream == nil {
 		return

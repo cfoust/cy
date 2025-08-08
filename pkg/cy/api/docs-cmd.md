@@ -22,6 +22,12 @@ Some examples:
 
 Get the working directory of the program running in the pane pane specified by `target`. `target` is a [NodeID](/api.md#nodeid).
 
+# doc: Title
+
+(cmd/title target)
+
+Get the terminal title of the pane specified by `target`. Returns the title as set by the program running in the terminal (e.g. via OSC escape sequences). `target` is a [NodeID](/api.md#nodeid).
+
 # doc: Commands
 
 (cmd/commands target)
