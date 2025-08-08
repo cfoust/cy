@@ -57,9 +57,10 @@ func (t *Thumbs) renderMatch(
 
 func (t *Thumbs) View(state *tty.State) {
 	var (
-		i     = state.Image
-		size  = i.Size()
-		input = t.textInput.Value()
+		i      = state.Image
+		size   = i.Size()
+		origin = t.origin
+		input  = t.textInput.Value()
 	)
 
 	state.CursorVisible = false
@@ -72,6 +73,10 @@ func (t *Thumbs) View(state *tty.State) {
 	t.lines.SetTarget(i)
 
 	image.Copy(geom.Vec2{}, i, t.initial)
+
+	if (geom.Rect{Size: size}).Contains(origin) {
+		i[t.origin.R][t.origin.C].BG = emu.Blue
+	}
 
 	for hint, match := range t.hints {
 		t.renderMatch(state, input, hint, match)
