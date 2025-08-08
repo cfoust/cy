@@ -63,7 +63,11 @@ func NewPerlin(alpha, beta float64, n int32, seed int64) *perlin {
 // Typically it is 2, As this approaches 1 the function is noisier.
 // "beta" is the harmonic scaling/spacing, typically 2, n is the
 // number of iterations and source is source of pseudo-random int64 values
-func NewPerlinRandSource(alpha, beta float64, n int32, source rand.Source) *perlin {
+func NewPerlinRandSource(
+	alpha, beta float64,
+	n int32,
+	source rand.Source,
+) *perlin {
 	var p perlin
 	var i, j int32
 

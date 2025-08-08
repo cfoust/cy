@@ -21,7 +21,9 @@ func createBorg() error {
 		Defaults()
 
 	for i := 0; i < 100_000; i++ {
-		sim.Add("Finally, code is a cultural resource, not trivial and only instrumental, but bound up in social change, aesthetic projects, and the relationship of people to computers. Instead of being dismissed as cryptic and irrelevant to human concerns such as art and user experience, code should be valued as text with machine and human meanings, something produced and operating within culture.\n")
+		sim.Add(
+			"Finally, code is a cultural resource, not trivial and only instrumental, but bound up in social change, aesthetic projects, and the relationship of people to computers. Instead of being dismissed as cryptic and irrelevant to human concerns such as art and user experience, code should be valued as text with machine and human meanings, something produced and operating within culture.\n",
+		)
 	}
 
 	return sim.WriteBorg(STORY_BORG_FILE)

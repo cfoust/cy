@@ -1,6 +1,7 @@
 package cy
 
 import (
+	_ "embed"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -11,8 +12,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
-
-import _ "embed"
 
 type testFailure struct {
 	File  string
@@ -87,7 +86,12 @@ func TestAPI(t *testing.T) {
 	}
 
 	for _, failure := range failures {
-		t.Logf("%s: '%s' failed: %+v", failure.File, failure.Name, failure.Error)
+		t.Logf(
+			"%s: '%s' failed: %+v",
+			failure.File,
+			failure.Name,
+			failure.Error,
+		)
 	}
 
 	t.Errorf("%d API test(s) failed", len(failures))

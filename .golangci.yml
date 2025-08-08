@@ -8,6 +8,13 @@ linters:
 formatters:
   enable:
     - golines
+    - gci
   settings:
     golines:
       max-len: 80
+    gci:
+      sections:
+        - standard
+        - prefix(github.com/cfoust/cy)
+        - default
+      custom-order: true

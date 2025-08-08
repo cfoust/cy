@@ -66,7 +66,8 @@ func (c *Conway) Update(delta time.Duration) image.Image {
 
 				cellR = row + dy
 				cellC = col + dx
-				if cellR < 0 || cellR >= size.R || cellC < 0 || cellC >= size.C {
+				if cellR < 0 || cellR >= size.R || cellC < 0 ||
+					cellC >= size.C {
 					continue
 				}
 

@@ -155,7 +155,6 @@ const (
 	MouseMotion
 )
 
-
 type MouseButton int
 
 const (

@@ -22,7 +22,6 @@ func (c *csiEscape) reset() {
 	c.priv = false
 }
 
-
 func (c *csiEscape) parse() {
 	c.mode = c.buf[len(c.buf)-1]
 	if len(c.buf) == 1 {

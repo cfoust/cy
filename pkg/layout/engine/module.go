@@ -42,7 +42,7 @@ type throttle struct {
 	publish *mux.UpdatePublisher
 	wait    chan interface{}
 	ready   time.Time
-	sleep time.Duration
+	sleep   time.Duration
 }
 
 func (t *throttle) poll(ctx context.Context) {
@@ -88,7 +88,7 @@ func newThrottle(
 	t := &throttle{
 		publish: p,
 		wait:    make(chan interface{}),
-		sleep: time.Second / time.Duration(maxFps),
+		sleep:   time.Second / time.Duration(maxFps),
 		ready:   time.Now(),
 	}
 
@@ -112,10 +112,10 @@ type LayoutEngine struct {
 	server  *server.Server
 	log     zerolog.Logger
 
-	size           geom.Size
-	screen         mux.Screen
-	layout         L.Node
-	existing       *screenNode
+	size     geom.Size
+	screen   mux.Screen
+	layout   L.Node
+	existing *screenNode
 }
 
 var _ mux.Screen = (*LayoutEngine)(nil)

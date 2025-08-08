@@ -218,7 +218,11 @@ func (c *Cy) Shutdown() error {
 	return nil
 }
 
-func (c *Cy) pollInteractions(ctx context.Context, journal map[tree.NodeID]historyEvent, channel chan historyEvent) {
+func (c *Cy) pollInteractions(
+	ctx context.Context,
+	journal map[tree.NodeID]historyEvent,
+	channel chan historyEvent,
+) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -438,7 +442,10 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	logPane.SetProtected(true)
 	_, _ = logs.Write([]byte(emu.LineFeedMode))
 
-	consoleWriter := zerolog.ConsoleWriter{Out: logs.Writer(), TimeFormat: time.RFC3339}
+	consoleWriter := zerolog.ConsoleWriter{
+		Out:        logs.Writer(),
+		TimeFormat: time.RFC3339,
+	}
 	cy.log = log.Output(zerolog.MultiLevelWriter(consoleWriter, os.Stdout))
 
 	vm, err := cy.initJanet(ctx)

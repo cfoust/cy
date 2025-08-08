@@ -1,8 +1,9 @@
 package util
 
 import (
-	"github.com/rs/zerolog/log"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 func Span(name string) func() {

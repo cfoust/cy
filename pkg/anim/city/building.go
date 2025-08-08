@@ -16,7 +16,6 @@ var buildingVerts = []gl.Vec3{
 	{1, 0, 1},   // Front-right
 }
 
-
 var buildingFaces = [][3]int{
 	{2, 1, 0},
 	{1, 2, 3},
@@ -70,7 +69,21 @@ func (b *buildingShader) Vertex(
 }
 
 var (
-	lights    = []rune{'⡀', '⡁', '⡂', '⡃', '⡄', '⡅', '⡆', '⡇', '⡈', '⡉', '⡊', '⡋', '⡌'}
+	lights = []rune{
+		'⡀',
+		'⡁',
+		'⡂',
+		'⡃',
+		'⡄',
+		'⡅',
+		'⡆',
+		'⡇',
+		'⡈',
+		'⡉',
+		'⡊',
+		'⡋',
+		'⡌',
+	}
 	numLights = len(lights)
 )
 

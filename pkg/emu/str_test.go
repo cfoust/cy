@@ -165,7 +165,15 @@ func TestParseColor(t *testing.T) {
 			}
 
 			if r != tc.r || g != tc.g || b != tc.b {
-				t.Fatalf("expected (%d, %d, %d), got (%d, %d, %d)", tc.r, tc.g, tc.b, r, g, b)
+				t.Fatalf(
+					"expected (%d, %d, %d), got (%d, %d, %d)",
+					tc.r,
+					tc.g,
+					tc.b,
+					r,
+					g,
+					b,
+				)
 			}
 		})
 	}

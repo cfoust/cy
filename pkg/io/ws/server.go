@@ -55,7 +55,12 @@ func (ws *WSServer[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 var _ http.Handler = (*WSServer[[]byte])(nil)
 
-func Serve[T any](ctx context.Context, socketPath string, protocol Protocol[T], server Server[T]) error {
+func Serve[T any](
+	ctx context.Context,
+	socketPath string,
+	protocol Protocol[T],
+	server Server[T],
+) error {
 	l, err := net.Listen("unix", socketPath)
 	if err != nil {
 		return err

@@ -23,7 +23,6 @@ func (s *strEscape) reset() {
 	s.args = nil
 }
 
-
 func (s *strEscape) parse() {
 	s.args = strings.Split(string(s.buf), ";")
 }
@@ -45,7 +44,6 @@ func (s *strEscape) argString(i int, def string) string {
 	}
 	return s.args[i]
 }
-
 
 func (t *State) setColorName(j Color, p *string) error {
 	if p == nil {
@@ -73,7 +71,17 @@ func (t *State) oscColorResponse(j Color, num int) {
 	if !ok {
 		return
 	}
-	_, _ = fmt.Fprintf(t.w, "\033]%d;rgb:%02x%02x/%02x%02x/%02x%02x\007", num, r, r, g, g, b, b)
+	_, _ = fmt.Fprintf(
+		t.w,
+		"\033]%d;rgb:%02x%02x/%02x%02x/%02x%02x\007",
+		num,
+		r,
+		r,
+		g,
+		g,
+		b,
+		b,
+	)
 }
 
 func (t *State) osc4ColorResponse(j Color) {
@@ -88,11 +96,23 @@ func (t *State) osc4ColorResponse(j Color) {
 	if !ok {
 		return
 	}
-	_, _ = fmt.Fprintf(t.w, "\033]4;%d;rgb:%02x%02x/%02x%02x/%02x%02x\007", j, r, r, g, g, b, b)
+	_, _ = fmt.Fprintf(
+		t.w,
+		"\033]4;%d;rgb:%02x%02x/%02x%02x/%02x%02x\007",
+		j,
+		r,
+		r,
+		g,
+		g,
+		b,
+		b,
+	)
 }
 
 var (
-	RGBPattern  = regexp.MustCompile(`^([\da-f]{1})\/([\da-f]{1})\/([\da-f]{1})$|^([\da-f]{2})\/([\da-f]{2})\/([\da-f]{2})$|^([\da-f]{3})\/([\da-f]{3})\/([\da-f]{3})$|^([\da-f]{4})\/([\da-f]{4})\/([\da-f]{4})$`)
+	RGBPattern = regexp.MustCompile(
+		`^([\da-f]{1})\/([\da-f]{1})\/([\da-f]{1})$|^([\da-f]{2})\/([\da-f]{2})\/([\da-f]{2})$|^([\da-f]{3})\/([\da-f]{3})\/([\da-f]{3})$|^([\da-f]{4})\/([\da-f]{4})\/([\da-f]{4})$`,
+	)
 	HashPattern = regexp.MustCompile(`[\da-f]`)
 )
 
@@ -123,17 +143,29 @@ func parseColor(p string) (r, g, b int, err error) {
 			base = 65535
 		}
 
-		r64, err := strconv.ParseInt(firstNonEmpty(m[1], m[4], m[7], m[10]), 16, 0)
+		r64, err := strconv.ParseInt(
+			firstNonEmpty(m[1], m[4], m[7], m[10]),
+			16,
+			0,
+		)
 		if err != nil {
 			return r, g, b, err
 		}
 
-		g64, err := strconv.ParseInt(firstNonEmpty(m[2], m[5], m[8], m[11]), 16, 0)
+		g64, err := strconv.ParseInt(
+			firstNonEmpty(m[2], m[5], m[8], m[11]),
+			16,
+			0,
+		)
 		if err != nil {
 			return r, g, b, err
 		}
 
-		b64, err := strconv.ParseInt(firstNonEmpty(m[3], m[6], m[9], m[12]), 16, 0)
+		b64, err := strconv.ParseInt(
+			firstNonEmpty(m[3], m[6], m[9], m[12]),
+			16,
+			0,
+		)
 		if err != nil {
 			return r, g, b, err
 		}

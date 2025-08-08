@@ -26,7 +26,10 @@ func createStoryServer(ctx context.Context) (cy *Cy, err error) {
 	return
 }
 
-func createStoryClient(ctx context.Context, cy *Cy) (client *Client, screen mux.Screen, err error) {
+func createStoryClient(
+	ctx context.Context,
+	cy *Cy,
+) (client *Client, screen mux.Screen, err error) {
 	client, err = cy.NewClient(ctx, ClientOptions{
 		Env: map[string]string{
 			"TERM":   "xterm-256color",
@@ -48,7 +51,9 @@ func createStoryClient(ctx context.Context, cy *Cy) (client *Client, screen mux.
 	return
 }
 
-func createStory(ctx context.Context) (cy *Cy, client *Client, screen mux.Screen, err error) {
+func createStory(
+	ctx context.Context,
+) (cy *Cy, client *Client, screen mux.Screen, err error) {
 	cy, err = createStoryServer(ctx)
 	if err != nil {
 		return
@@ -212,57 +217,65 @@ func init() {
 		},
 	})
 
-	stories.Register("cy/palette-static", func(ctx context.Context) (mux.Screen, error) {
-		_, client, screen, err := createStory(ctx)
-		if err != nil {
-			return nil, err
-		}
-		go func() { _ = client.execute(`(action/command-palette)`) }()
-		return screen, err
-	}, stories.Config{})
-
-	stories.Register("cy/multiple-clients", func(ctx context.Context) (mux.Screen, error) {
-		cy, err := createStoryServer(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		_, screenA, err := createStoryClient(ctx, cy)
-		if err != nil {
-			return nil, err
-		}
-
-		_, screenB, err := createStoryClient(ctx, cy)
-		if err != nil {
-			return nil, err
-		}
-
-		split := layout.NewSplit(
-			ctx,
-			screenA,
-			screenB,
-			false,
-		)
-
-		go func() {
-			proportion := 0
-
-			for {
-				if ctx.Err() != nil {
-					return
-				}
-				_ = split.SetPercent(20 + proportion*10)
-
-				time.Sleep(time.Second)
-				proportion++
-				if proportion >= 6 {
-					proportion = 0
-				}
+	stories.Register(
+		"cy/palette-static",
+		func(ctx context.Context) (mux.Screen, error) {
+			_, client, screen, err := createStory(ctx)
+			if err != nil {
+				return nil, err
 			}
-		}()
+			go func() { _ = client.execute(`(action/command-palette)`) }()
+			return screen, err
+		},
+		stories.Config{},
+	)
 
-		return split, err
-	}, stories.Config{})
+	stories.Register(
+		"cy/multiple-clients",
+		func(ctx context.Context) (mux.Screen, error) {
+			cy, err := createStoryServer(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			_, screenA, err := createStoryClient(ctx, cy)
+			if err != nil {
+				return nil, err
+			}
+
+			_, screenB, err := createStoryClient(ctx, cy)
+			if err != nil {
+				return nil, err
+			}
+
+			split := layout.NewSplit(
+				ctx,
+				screenA,
+				screenB,
+				false,
+			)
+
+			go func() {
+				proportion := 0
+
+				for {
+					if ctx.Err() != nil {
+						return
+					}
+					_ = split.SetPercent(20 + proportion*10)
+
+					time.Sleep(time.Second)
+					proportion++
+					if proportion >= 6 {
+						proportion = 0
+					}
+				}
+			}()
+
+			return split, err
+		},
+		stories.Config{},
+	)
 
 	stories.Register("replay/command/time-jump", initReplay, stories.Config{
 		Input: []interface{}{
@@ -296,21 +309,25 @@ func init() {
 		},
 	})
 
-	stories.Register("replay/command/copy-jump-and-copy", initReplay, stories.Config{
-		Input: []interface{}{
-			stories.Wait(stories.Some),
-			stories.Type("k"),
-			stories.Wait(stories.More),
-			stories.Type("[C"),
-			stories.Wait(stories.Some),
-			stories.Type("[C"),
-			stories.Wait(stories.Some),
-			stories.Type("[C"),
-			stories.Wait(stories.Some),
-			stories.Type("]C"),
-			stories.Wait(stories.ALot),
+	stories.Register(
+		"replay/command/copy-jump-and-copy",
+		initReplay,
+		stories.Config{
+			Input: []interface{}{
+				stories.Wait(stories.Some),
+				stories.Type("k"),
+				stories.Wait(stories.More),
+				stories.Type("[C"),
+				stories.Wait(stories.Some),
+				stories.Type("[C"),
+				stories.Wait(stories.Some),
+				stories.Type("[C"),
+				stories.Wait(stories.Some),
+				stories.Type("]C"),
+				stories.Wait(stories.ALot),
+			},
 		},
-	})
+	)
 
 	stories.Register("replay/time-demo", initReplay, stories.Config{
 		Input: []interface{}{

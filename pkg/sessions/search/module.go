@@ -21,11 +21,13 @@ type Address struct {
 }
 
 func (a Address) Before(other Address) bool {
-	return a.Index < other.Index || (a.Index == other.Index && a.Offset < other.Offset)
+	return a.Index < other.Index ||
+		(a.Index == other.Index && a.Offset < other.Offset)
 }
 
 func (a Address) After(other Address) bool {
-	return a.Index > other.Index || (a.Index == other.Index && a.Offset > other.Offset)
+	return a.Index > other.Index ||
+		(a.Index == other.Index && a.Offset > other.Offset)
 }
 
 func (a Address) Equal(other Address) bool {
@@ -103,7 +105,6 @@ type SearchResult struct {
 	Appearances []Appearance
 }
 
-
 // NormalizePattern returns the given pattern if it's a valid regex,
 // otherwise it escapes all speical regex characters.
 func NormalizePattern(pattern string) string {
@@ -115,7 +116,11 @@ func NormalizePattern(pattern string) string {
 	return regexp.QuoteMeta(pattern)
 }
 
-func Search(events []sessions.Event, pattern string, progress chan<- int) (results []SearchResult, err error) {
+func Search(
+	events []sessions.Event,
+	pattern string,
+	progress chan<- int,
+) (results []SearchResult, err error) {
 	if len(pattern) == 0 {
 		err = fmt.Errorf("pattern must be non-empty")
 		return
@@ -278,7 +283,8 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 					)
 				}
 			} else {
-				newMatches = append(newMatches, matches...)			}
+				newMatches = append(newMatches, matches...)
+			}
 
 			if len(nextFull) > 0 {
 				realAddress := address

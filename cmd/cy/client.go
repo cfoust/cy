@@ -186,7 +186,8 @@ func connect(socketPath string, shouldStart bool) (Connection, error) {
 		}
 
 		message := err.Error()
-		if !strings.Contains(message, ENOENT) && !strings.Contains(message, ECONNREFUSED) {
+		if !strings.Contains(message, ENOENT) &&
+			!strings.Contains(message, ECONNREFUSED) {
 			return nil, err
 		}
 
@@ -214,7 +215,8 @@ func connect(socketPath string, shouldStart bool) (Connection, error) {
 			continue
 		}
 
-		if err := os.Remove(socketPath); err != nil && !strings.Contains(err.Error(), ENOENT) {
+		if err := os.Remove(socketPath); err != nil &&
+			!strings.Contains(err.Error(), ENOENT) {
 			return nil, err
 		}
 

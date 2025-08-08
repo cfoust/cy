@@ -101,7 +101,11 @@ func (s *Splash) View(state *tty.State) {
 	image.Copy(size.Center(boxSize), state.Image, box)
 }
 
-func New(ctx context.Context, size geom.Size, shouldAnimate bool) *taro.Program {
+func New(
+	ctx context.Context,
+	size geom.Size,
+	shouldAnimate bool,
+) *taro.Program {
 	lifetime := util.NewLifetime(ctx)
 	render := taro.NewRenderer()
 	var bg mux.Screen

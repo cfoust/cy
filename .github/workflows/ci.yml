@@ -23,7 +23,12 @@ jobs:
 
       - name: Install lint tools
         run: |
-          go install github.com/segmentio/golines@latest
+          just install-linters
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.3.1
 
       - name: Generate and format code
         run: |

@@ -8,10 +8,10 @@ package janet
 #include <api.h>
 */
 import "C"
-import _ "embed"
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"unsafe"

@@ -192,7 +192,9 @@ var LongHistory stories.InitFunc = func(ctx context.Context) (mux.Screen, error)
 		Defaults()
 
 	for range 100 {
-		sim.Add("Finally, code is a cultural resource, not trivial and only instrumental, but bound up in social change, aesthetic projects, and the relationship of people to computers. Instead of being dismissed as cryptic and irrelevant to human concerns such as art and user experience, code should be valued as text with machine and human meanings, something produced and operating within culture.\n")
+		sim.Add(
+			"Finally, code is a cultural resource, not trivial and only instrumental, but bound up in social change, aesthetic projects, and the relationship of people to computers. Instead of being dismissed as cryptic and irrelevant to human concerns such as art and user experience, code should be valued as text with machine and human meanings, something produced and operating within culture.\n",
+		)
 	}
 
 	_, run := createStory(ctx, sim.Events())
@@ -248,10 +250,14 @@ func init() {
 		Size:       geom.DEFAULT_SIZE,
 		IsSnapshot: true,
 	})
-	stories.Register("replay/time/search-progress", SearchProgress, stories.Config{
-		Size:       geom.DEFAULT_SIZE,
-		IsSnapshot: true,
-	})
+	stories.Register(
+		"replay/time/search-progress",
+		SearchProgress,
+		stories.Config{
+			Size:       geom.DEFAULT_SIZE,
+			IsSnapshot: true,
+		},
+	)
 	stories.Register("replay/time/jump-forward", JumpForward, config)
 	stories.Register("replay/time/search-reverse", SearchTimeBackward, config)
 	stories.Register("replay/time/jump-backward", JumpBackward, config)

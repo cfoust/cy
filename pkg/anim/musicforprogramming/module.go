@@ -23,7 +23,9 @@ const (
 	PANEL_WIDTH   = 32
 )
 
-var TRACK_TITLE = []rune("Episode 1337: cy, the time traveling terminal multiplexer • ")
+var TRACK_TITLE = []rune(
+	"Episode 1337: cy, the time traveling terminal multiplexer • ",
+)
 
 type word struct {
 	row    int
@@ -67,7 +69,8 @@ func (r *MFP) Init(start image.Image) {
 		var first emu.Glyph
 
 		for col := 0; col < start.Size().C; col++ {
-			if start[row][col].Char == ' ' || (col0 != -1 && !start[row][col].SameAttrs(first)) {
+			if start[row][col].Char == ' ' ||
+				(col0 != -1 && !start[row][col].SameAttrs(first)) {
 				if col0 == -1 {
 					continue
 				}
@@ -265,7 +268,11 @@ func (r *MFP) drawBackground(delta time.Duration) {
 	// Pause at the end of each cycle
 	pauseFactor := 0.8
 	pauseLength := time.Duration(float64(r.duration) * pauseFactor)
-	progress := float64(float64(delta-(cycle*r.duration))) / float64(r.duration-pauseLength)
+	progress := float64(
+		float64(delta-(cycle*r.duration)),
+	) / float64(
+		r.duration-pauseLength,
+	)
 
 	if progress > 1 {
 		progress = 1
@@ -286,11 +293,15 @@ func (r *MFP) drawBackground(delta time.Duration) {
 			charsToShow = int(math.Floor(wordProgress))
 		}
 
-		randomReplaceRange := int(2 * (0.5 - math.Abs(easedProgress-0.5)) * float64(length))
+		randomReplaceRange := int(
+			2 * (0.5 - math.Abs(easedProgress-0.5)) * float64(length),
+		)
 
 		// Update the temporary text with new characters
 		for j := 0; j < 20; j++ {
-			pos := charsToShow + int((1-rand.Float64())*float64(length)*float64(j)/20)
+			pos := charsToShow + int(
+				(1-rand.Float64())*float64(length)*float64(j)/20,
+			)
 			if pos < 0 || pos >= len(w.buffer) {
 				continue
 			}

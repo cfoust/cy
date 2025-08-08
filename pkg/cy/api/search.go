@@ -39,7 +39,10 @@ func (m *SearchModule) send(context interface{}, msg taro.Msg) error {
 	return nil
 }
 
-func (m *SearchModule) sendAction(context interface{}, action search.ActionType) error {
+func (m *SearchModule) sendAction(
+	context interface{},
+	action search.ActionType,
+) error {
 	return m.send(context, search.ActionEvent{
 		Type: action,
 	})

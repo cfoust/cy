@@ -95,7 +95,8 @@ func (g Glyph) Width() int {
 }
 
 func (g Glyph) Equal(other Glyph) bool {
-	return g.Char == other.Char && g.Mode == other.Mode && g.FG == other.FG && g.BG == other.BG
+	return g.Char == other.Char && g.Mode == other.Mode && g.FG == other.FG &&
+		g.BG == other.BG
 }
 
 // SameAttrs reports whether the two glyphs have the same visual attributes.

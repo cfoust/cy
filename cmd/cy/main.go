@@ -85,7 +85,8 @@ func main() {
 	}
 
 	if !cy.SOCKET_REGEX.MatchString(CLI.Socket) {
-		log.Fatal().Msg("invalid socket name, the socket name must be alphanumeric")
+		log.Fatal().
+			Msg("invalid socket name, the socket name must be alphanumeric")
 	}
 
 	switch ctx.Command() {

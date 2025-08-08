@@ -179,7 +179,9 @@ func (r *Replay) timeStep(sinceLast time.Duration) tea.Cmd {
 }
 
 var (
-	TIME_DELTA_REGEX = regexp.MustCompile(`^((?P<days>\d+)d)?((?P<hours>\d+)h)?((?P<min>\d+)m)?((?P<sec>\d+)s)?$`)
+	TIME_DELTA_REGEX = regexp.MustCompile(
+		`^((?P<days>\d+)d)?((?P<hours>\d+)h)?((?P<min>\d+)m)?((?P<sec>\d+)s)?$`,
+	)
 )
 
 func parseTimeDelta(delta []string) (result time.Duration) {

@@ -452,7 +452,6 @@ func (t *State) clear(x0, y0, x1, y1 int) {
 	}
 }
 
-
 func (t *State) moveAbsTo(x, y int) {
 	if t.cur.State&cursorOrigin != 0 {
 		y += t.top
@@ -500,7 +499,6 @@ func (t *State) setScroll(top, bottom int) {
 	t.top = top
 	t.bottom = bottom
 }
-
 
 func max(a, b int) int {
 	if a > b {

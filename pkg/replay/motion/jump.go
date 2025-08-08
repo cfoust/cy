@@ -5,7 +5,13 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 )
 
-func calculateJump(line emu.Line, needle string, isForward bool, isTo bool, oldPos int) int {
+func calculateJump(
+	line emu.Line,
+	needle string,
+	isForward bool,
+	isTo bool,
+	oldPos int,
+) int {
 	newCol := oldPos
 	if isForward {
 		for i := oldPos + 1; i < len(line); i++ {

@@ -54,8 +54,12 @@ func promptTest(
 	// individually
 	var zero time.Time
 	for i, command := range commands {
-		commands[i].ExecutedAt = zero.Add(time.Duration(command.Executed-1) * time.Second)
-		commands[i].CompletedAt = zero.Add(time.Duration(command.Completed-1) * time.Second)
+		commands[i].ExecutedAt = zero.Add(
+			time.Duration(command.Executed-1) * time.Second,
+		)
+		commands[i].CompletedAt = zero.Add(
+			time.Duration(command.Completed-1) * time.Second,
+		)
 	}
 
 	require.True(t, d.havePrompt)

@@ -19,7 +19,9 @@ type Trie[T any] struct {
 	source interface{}
 }
 
-func (t *Trie[T]) resolve(key interface{}) (value interface{}, matched bool, regex bool) {
+func (t *Trie[T]) resolve(
+	key interface{},
+) (value interface{}, matched bool, regex bool) {
 	switch key := key.(type) {
 	case string:
 		// try matching against a regex
@@ -59,7 +61,6 @@ func (t *Trie[T]) getParent(key interface{}) *Trie[T] {
 
 	return nil
 }
-
 
 func (t *Trie[T]) access(sequence []interface{}, shouldCreate bool) *Trie[T] {
 	if len(sequence) == 0 {

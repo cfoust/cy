@@ -66,7 +66,8 @@ func (i *imageMovement) Snap() {
 
 // Check whether the given point in viewport space actually falls within it.
 func (i *imageMovement) isInViewport(point geom.Vec2) bool {
-	if point.R < 0 || point.C < 0 || point.R >= i.viewport.R || point.C >= i.viewport.C {
+	if point.R < 0 || point.C < 0 || point.R >= i.viewport.R ||
+		point.C >= i.viewport.C {
 		return false
 	}
 
@@ -177,7 +178,6 @@ func (i *imageMovement) recalculateViewport() {
 	i.setOffsetX(i.offset.C)
 }
 
-
 func (i *imageMovement) ScrollXDelta(delta int) {
 	before := i.viewportToTerm(i.cursor)
 	i.setOffsetX(i.offset.C + delta)
@@ -232,7 +232,6 @@ func (i *imageMovement) MoveCursorY(delta int) {
 
 // For a point that is off the screen, find the closest point that can be used
 // as the start or end point of a selection.
-
 
 // normalizeBoxRange normalizes box selections so that `from` is the top-left
 // coordinate and `to` is the bottom right coordinate defining the box.

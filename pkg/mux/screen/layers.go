@@ -113,7 +113,12 @@ const (
 	PositionBottom
 )
 
-func (l *Layers) NewLayer(ctx context.Context, screen Screen, pos Position, options ...LayerOption) *Layer {
+func (l *Layers) NewLayer(
+	ctx context.Context,
+	screen Screen,
+	pos Position,
+	options ...LayerOption,
+) *Layer {
 	layer := &Layer{
 		Screen: screen,
 	}

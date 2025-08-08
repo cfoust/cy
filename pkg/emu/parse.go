@@ -81,7 +81,12 @@ func (t *State) Unhook() {
 	//fmt.Printf("[Unhook]\n")
 }
 
-func (t *State) Hook(params []int64, intermediates []byte, ignore bool, r rune) {
+func (t *State) Hook(
+	params []int64,
+	intermediates []byte,
+	ignore bool,
+	r rune,
+) {
 	t.dirty.hookCount = 1
 	t.dirty.hookState[0] = byte(r)
 	// TODO(cfoust): 08/10/23
@@ -194,7 +199,12 @@ func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
 	//// t.str.dump()
 }
 
-func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r rune) {
+func (t *State) CsiDispatch(
+	params []int64,
+	intermediates []byte,
+	ignore bool,
+	r rune,
+) {
 	args := make([]int, 0)
 	for _, arg := range params {
 		args = append(args, int(arg))
@@ -350,7 +360,13 @@ unknown: // TODO: get rid of this goto
 func (t *State) EscDispatch(intermediates []byte, ignore bool, b byte) {
 	switch b {
 	default:
-		fmt.Printf("[EscDispatch] %c intermediates=%v, ignore=%v, byte=%02x\n", b, intermediates, ignore, b)
+		fmt.Printf(
+			"[EscDispatch] %c intermediates=%v, ignore=%v, byte=%02x\n",
+			b,
+			intermediates,
+			ignore,
+			b,
+		)
 	case 'D': // IND - linefeed
 		if t.cur.R == t.bottom {
 			t.scrollUp(t.top, 1)

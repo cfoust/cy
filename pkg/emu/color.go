@@ -28,7 +28,9 @@ func XTermColor(color int) Color {
 }
 
 func RGBColor(r, g, b int) Color {
-	return Color(colorSet | colorRGB | (uint32(r) << 16) | (uint32(g) << 8) | uint32(b))
+	return Color(
+		colorSet | colorRGB | (uint32(r) << 16) | (uint32(g) << 8) | uint32(b),
+	)
 }
 
 // ANSI color values

@@ -15,7 +15,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/cursor"
 	tea "github.com/charmbracelet/bubbletea"
-
 	"github.com/stretchr/testify/require"
 	"github.com/xo/terminfo"
 )

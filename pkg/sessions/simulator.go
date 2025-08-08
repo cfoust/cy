@@ -67,7 +67,11 @@ func (s *Simulator) AddTime(delta time.Duration, event interface{}) *Simulator {
 	return s
 }
 
-func (s *Simulator) TermTime(delta time.Duration, i int, v ...interface{}) *Simulator {
+func (s *Simulator) TermTime(
+	delta time.Duration,
+	i int,
+	v ...interface{},
+) *Simulator {
 	s.AddTime(delta, s.info.Printf(i, v...))
 	return s
 }

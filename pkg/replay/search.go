@@ -40,7 +40,8 @@ func (r *Replay) searchAgain(isForward bool) tea.Cmd {
 	firstMatch := matches[0].Begin
 	lastMatch := matches[len(matches)-1].Begin
 
-	if !isForward && (location.Before(firstMatch) || location.Equal(firstMatch)) {
+	if !isForward &&
+		(location.Before(firstMatch) || location.Equal(firstMatch)) {
 		location.Index = len(events) - 1
 		location.Offset = -1
 	}

@@ -3,15 +3,15 @@ package fluid
 type number = float64
 
 type Simulator struct {
-	width               number
-	height              number
-	particles           []Particle
+	width     number
+	height    number
+	particles []Particle
 
-	mouseX     number
-	mouseY     number
-	mousePrevX number
-	mousePrevY number
-	attract    bool
+	mouseX           number
+	mouseY           number
+	mousePrevX       number
+	mousePrevY       number
+	attract          bool
 	numHashBuckets   int
 	numActiveBuckets int
 	activeBuckets    []int

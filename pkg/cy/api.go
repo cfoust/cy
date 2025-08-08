@@ -1,6 +1,7 @@
 package cy
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"runtime/pprof"
@@ -10,8 +11,6 @@ import (
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 )
-
-import _ "embed"
 
 type CyModule struct {
 	cy *Cy

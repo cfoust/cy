@@ -9,10 +9,10 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/taro"
-	"github.com/xo/terminfo"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
+	"github.com/xo/terminfo"
 )
 
 //go:embed example.md

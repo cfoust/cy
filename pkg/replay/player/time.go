@@ -54,7 +54,8 @@ func (p *Player) GotoProgress(
 
 	isBeginning := fromIndex == 0 && fromByte == 0
 	// Going back in time; must start over
-	isBefore := toIndex < fromIndex || (toIndex == fromIndex && toByte < fromByte)
+	isBefore := toIndex < fromIndex ||
+		(toIndex == fromIndex && toByte < fromByte)
 
 	if isBefore || isBeginning {
 		p.resetTerminal()

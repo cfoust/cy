@@ -101,28 +101,36 @@ func main() {
 	}
 
 	symbols := make([]Symbol, 0)
-	_ = cy.Callback("cy/doc", "", func(name string, docstring string, link string, macro bool) {
-		if name == "cy/env" {
-			return
-		}
+	_ = cy.Callback(
+		"cy/doc",
+		"",
+		func(name string, docstring string, link string, macro bool) {
+			if name == "cy/env" {
+				return
+			}
 
-		symbols = append(symbols, Symbol{
-			Name:      name,
-			Docstring: docstring,
-			Link:      link,
-			Macro:     macro,
-		})
-	})
+			symbols = append(symbols, Symbol{
+				Name:      name,
+				Docstring: docstring,
+				Link:      link,
+				Macro:     macro,
+			})
+		},
+	)
 
 	binds := make([]Binding, 0)
-	_ = cy.Callback("cy/bind", "", func(source string, tag string, sequence []string, function string) {
-		binds = append(binds, Binding{
-			Tag:      tag,
-			Source:   source,
-			Sequence: sequence,
-			Function: function,
-		})
-	})
+	_ = cy.Callback(
+		"cy/bind",
+		"",
+		func(source string, tag string, sequence []string, function string) {
+			binds = append(binds, Binding{
+				Tag:      tag,
+				Source:   source,
+				Sequence: sequence,
+				Function: function,
+			})
+		},
+	)
 
 	err = cy.Execute(ctx, GEN_API)
 	if err != nil {

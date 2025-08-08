@@ -19,6 +19,10 @@ lint:
 lint-fix:
   golangci-lint run --fix
 
+install-linters:
+  go install github.com/segmentio/golines@v0.12.2
+  go install github.com/daixiang0/gci@v0.13.7
+
 generate:
   go generate ./pkg/... ./cmd/...
 

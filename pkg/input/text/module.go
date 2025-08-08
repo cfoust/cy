@@ -66,7 +66,6 @@ type AcceptedEvent struct {
 	Text string
 }
 
-
 type Setting func(context.Context, *Text)
 
 func WithAnimation(image image.Image, creator anim.Creator) Setting {

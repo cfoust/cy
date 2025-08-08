@@ -209,7 +209,6 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 	return ch
 }
 
-
 // eventLoop is the central message loop. It receives and handles the default
 // Bubble Tea messages, update the model and triggers redraws.
 func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
@@ -304,7 +303,8 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			p.write(model) // send view to renderer
 			frameTime := time.Since(frameStart)
 			if frameTime > 16*time.Millisecond {
-				log.Debug().Msgf("%T: frame render time exceeded threshold (%+v)", p.initialModel, frameTime)
+				log.Debug().
+					Msgf("%T: frame render time exceeded threshold (%+v)", p.initialModel, frameTime)
 			}
 
 			if !isSequence {
@@ -338,7 +338,8 @@ func (p *Program) readLoop() {
 
 		msgs, err := readInputs(p.cancelReader)
 		if err != nil {
-			if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
+			if !errors.Is(err, io.EOF) &&
+				!errors.Is(err, cancelreader.ErrCanceled) {
 				select {
 				case <-p.Ctx().Done():
 				case p.errs <- err:

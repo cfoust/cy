@@ -23,14 +23,16 @@ func TestCSIParse(t *testing.T) {
 	csi.reset()
 	csi.buf = []byte("48;2f")
 	csi.parse()
-	if csi.mode != 'f' || csi.arg(0, 0) != 48 || csi.arg(1, 0) != 2 || len(csi.args) != 2 {
+	if csi.mode != 'f' || csi.arg(0, 0) != 48 || csi.arg(1, 0) != 2 ||
+		len(csi.args) != 2 {
 		t.Fatal("CSI parse mismatch")
 	}
 
 	csi.reset()
 	csi.buf = []byte("?25l")
 	csi.parse()
-	if csi.mode != 'l' || csi.arg(0, 0) != 25 || csi.priv != true || len(csi.args) != 1 {
+	if csi.mode != 'l' || csi.arg(0, 0) != 25 || csi.priv != true ||
+		len(csi.args) != 1 {
 		t.Fatal("CSI parse mismatch")
 	}
 }

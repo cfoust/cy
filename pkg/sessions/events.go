@@ -126,7 +126,10 @@ func (f *FileRecorder) Flush() error {
 	return nil
 }
 
-func NewFileRecorder(ctx context.Context, filename string) (*FileRecorder, error) {
+func NewFileRecorder(
+	ctx context.Context,
+	filename string,
+) (*FileRecorder, error) {
 	f := &FileRecorder{
 		eventc: make(chan Event, 100),
 		flushc: make(chan struct{}),

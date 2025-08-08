@@ -300,7 +300,11 @@ func wrapLines(lines []Line, cols int) (wrapped []physicalLine) {
 	return
 }
 
-func reflow(oldScreen []Line, oldCursor Cursor, cols int) (newLines []Line, newCursor Cursor, cursorValid bool) {
+func reflow(
+	oldScreen []Line,
+	oldCursor Cursor,
+	cols int,
+) (newLines []Line, newCursor Cursor, cursorValid bool) {
 	// 1. Get the offsets of all of the "physical" lines
 	oldWrapped := unwrapLines(oldScreen)
 

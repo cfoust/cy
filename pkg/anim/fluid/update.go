@@ -42,7 +42,6 @@ func (s *Simulator) populateHashGrid() {
 	}
 }
 
-
 func (s *Simulator) applySpringDisplacements(dt number) {
 	if s.material.springStiffness == 0 {
 		return
@@ -207,7 +206,9 @@ func (s *Simulator) doubleDensityRelaxation(dt number) {
 
 							// Add spring if not already present
 							// TODO: this JS hash thing is absolutely crazy but curious how it performs
-							if addSprings && selfIdx < neighborIdx && r > minDist && p0.springs[neighborIdx] == 0. {
+							if addSprings && selfIdx < neighborIdx &&
+								r > minDist &&
+								p0.springs[neighborIdx] == 0. {
 								s.particles[selfIdx].springs[neighborIdx] = r
 							}
 						}

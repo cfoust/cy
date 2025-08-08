@@ -164,7 +164,8 @@ func (p *Pane) Send(msg mux.Msg) {
 		return
 	}
 
-	if mouseMsg.Type != taro.MousePress || mouseMsg.Button != taro.MouseLeft || mouseMsg.Down {
+	if mouseMsg.Type != taro.MousePress || mouseMsg.Button != taro.MouseLeft ||
+		mouseMsg.Down {
 		return
 	}
 

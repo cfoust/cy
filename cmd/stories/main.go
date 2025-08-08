@@ -44,7 +44,11 @@ func main() {
 			Summary: true,
 		}))
 
-	logs, err := os.OpenFile("stories.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	logs, err := os.OpenFile(
+		"stories.log",
+		os.O_CREATE|os.O_APPEND|os.O_WRONLY,
+		0644,
+	)
 	if err != nil {
 		panic(err)
 	}

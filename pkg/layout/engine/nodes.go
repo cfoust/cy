@@ -86,7 +86,6 @@ func (l *LayoutEngine) createNode(
 	return node, nil
 }
 
-
 // updateNode attempts to reuse the given screenNode to match the provided
 // layout node's configuration if it is possible, or creates a new screenNode
 // if it is not.
