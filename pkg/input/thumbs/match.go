@@ -75,6 +75,7 @@ func convertMatch(region, raw search.Selection) (match thumbMatch) {
 		match = append(match, pos)
 
 		pos.C++
+
 		if pos == raw.To {
 			break
 		}
@@ -83,8 +84,13 @@ func convertMatch(region, raw search.Selection) (match thumbMatch) {
 			continue
 		}
 
+		// Feed onto the next line
 		pos.R++
 		pos.C = startCol
+
+		if pos == raw.To {
+			break
+		}
 	}
 	return
 }
@@ -106,6 +112,98 @@ func findMatches(
 			matches,
 			convertMatch(region, match),
 		)
+	}
+
+	return
+}
+
+func findPatterns(
+	patterns []*regexp.Regexp,
+	i image.Image,
+) (matches []thumbMatch) {
+	var (
+		regions    = getRegions(i)
+		allMatches []thumbMatch
+		occupied   = make(map[geom.Vec2]map[int]struct{})
+	)
+
+	// First get all the matches
+	for _, pattern := range patterns {
+		for _, region := range regions {
+			for _, match := range findMatches(
+				pattern,
+				i,
+				region,
+			) {
+				allMatches = append(
+					allMatches,
+					match,
+				)
+			}
+		}
+	}
+
+	// Store a mapping from cell -> match indices
+	for index, match := range allMatches {
+		for _, cell := range match {
+			occupancy, exists := occupied[cell]
+			if !exists {
+				occupancy = make(
+					map[int]struct{},
+				)
+				occupied[cell] = occupancy
+			}
+
+			occupied[cell][index] = struct{}{}
+		}
+	}
+
+	// Deconflict matches by taking the longest that occupies a certain cell
+	deleted := make(map[int]struct{})
+	for _, conflicts := range occupied {
+
+		if len(conflicts) == 1 {
+			continue
+		}
+
+		var (
+			longestIndex  = -1
+			longestLength = -1
+		)
+		for matchIndex := range conflicts {
+			if _, ok := deleted[matchIndex]; ok {
+				continue
+			}
+
+			length := len(allMatches[matchIndex])
+			if length < longestLength {
+				continue
+			}
+
+			longestIndex = matchIndex
+			longestLength = length
+		}
+
+		// All were deleted
+		if longestIndex == -1 {
+			continue
+		}
+
+		for matchIndex := range conflicts {
+			if matchIndex == longestIndex {
+				continue
+			}
+			deleted[matchIndex] = struct{}{}
+		}
+	}
+
+	// Just grab non-deleted matches
+	for index, match := range allMatches {
+		if _, ok := deleted[index]; ok {
+			continue
+		}
+
+		matches = append(matches, match)
 	}
 
 	return
