@@ -123,7 +123,7 @@ func (c *Cy) ExecuteOnBehalf(
 }
 
 func (c *Cy) Log(level zerolog.Level, message string) {
-	c.log.WithLevel(level).Msgf(message)
+	c.log.WithLevel(level).Msg(message)
 }
 
 func (c *Cy) loadConfig() error {

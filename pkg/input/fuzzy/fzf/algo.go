@@ -382,7 +382,7 @@ func debugV2(
 		if i == 0 {
 			fmt.Print("  ")
 			for j := int(f); j <= lastIdx; j++ {
-				fmt.Printf(" " + string(T[j]) + " ")
+				fmt.Println(" " + string(T[j]) + " ")
 			}
 			fmt.Println()
 		}

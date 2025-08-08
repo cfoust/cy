@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"time"
+	"errors"
 
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/janet"
@@ -111,7 +112,7 @@ func RPC[S any, T any](
 		return result, err
 	case msg := <-response:
 		if msg.Errored {
-			return result, fmt.Errorf(msg.Error)
+			return result, errors.New(msg.Error)
 		}
 
 		dec := codec.NewDecoderBytes(

@@ -14,14 +14,10 @@ format:
   go fmt ./pkg/... ./cmd/...
 
 lint:
-  golangci-lint run
+  go tool golangci-lint run
 
 lint-fix:
-  golangci-lint run --fix
-
-install-linters:
-  go install github.com/segmentio/golines@v0.12.2
-  go install github.com/daixiang0/gci@v0.13.7
+  go tool golangci-lint run --fix
 
 generate:
   go generate ./pkg/... ./cmd/...
