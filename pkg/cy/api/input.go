@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 	"math/rand"
-	"strings"
+	"regexp"
 
 	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/geom"
@@ -305,39 +305,30 @@ func (i *InputModule) Thumbs(
 		return nil, err
 	}
 
-	outerLayers := client.OuterLayers()
-	state := outerLayers.State()
-	initial := state.Image
-
-	// Extract text lines from the current screen
-	screenLines := make([]string, state.Image.Size().R)
-	for r := 0; r < state.Image.Size().R; r++ {
-		var lineBuilder strings.Builder
-		for c := 0; c < state.Image.Size().C; c++ {
-			cell := state.Image.Cell(c, r)
-			lineBuilder.WriteRune(cell.Char)
+	var (
+		outerLayers = client.OuterLayers()
+		state       = outerLayers.State()
+		initial     = state.Image
+		origin      = state.Cursor.Vec2
+		result      = make(chan interface{})
+		settings    = []thumbs.Setting{
+			thumbs.WithResult(result),
+			thumbs.WithParams(client.Params()),
 		}
-		screenLines[r] = strings.TrimRightFunc(lineBuilder.String(), func(r rune) bool {
-			return r == ' ' || r == '\t'
-		})
-	}
-
-	result := make(chan interface{})
-	settings := []thumbs.Setting{
-		thumbs.WithResult(result),
-		thumbs.WithInitial(initial),
-		thumbs.WithParams(client.Params()),
-		thumbs.WithInline(
-			geom.Vec2{R: 0, C: 0},
-			state.Image.Size(),
-		),
-	}
+	)
 
 	// Handle custom regexps
-	var customPatterns []string
-	if params.Regexp != nil {
-		customPatterns = *params.Regexp
-	}
+	//var customPatterns []string
+	//if params.Regexp != nil {
+	//customPatterns = *params.Regexp
+	//}
+
+	matches := thumbs.Find(
+		[]*regexp.Regexp{
+			regexp.MustCompile(`[A-Z]\w+`),
+		},
+		initial,
+	)
 
 	// Handle custom alphabet
 	if params.Alphabet != nil {
@@ -347,26 +338,6 @@ func (i *InputModule) Thumbs(
 		)
 	}
 
-	// Handle animation
-	if (params.Animated == nil || (*params.Animated) == true) && client.Params().Animate() {
-		var animations []anim.Creator
-		for _, a := range client.Params().Animations() {
-			if creator, ok := anim.Animations[a]; ok {
-				animations = append(animations, creator)
-			}
-		}
-
-		// Add all of the defaults if the setting was empty
-		if len(animations) == 0 {
-			for _, creator := range anim.Animations {
-				animations = append(animations, creator)
-			}
-		}
-
-		creator := animations[rand.Int()%len(animations)]
-		settings = append(settings, thumbs.WithAnimation(initial, creator))
-	}
-
 	if client.Params().SkipInput() {
 		// For testing, just return empty string
 		return "", nil
@@ -374,8 +345,9 @@ func (i *InputModule) Thumbs(
 
 	thumbsProgram := thumbs.New(
 		ctx,
-		screenLines,
-		customPatterns,
+		initial,
+		origin,
+		matches,
 		settings...,
 	)
 

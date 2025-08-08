@@ -1,9 +1,8 @@
 package thumbs
 
 import (
-	"strings"
-
 	"github.com/cfoust/cy/pkg/taro"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -22,21 +21,6 @@ func (t *Thumbs) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				t.result <- nil
 			}
 			return t.quit()
-		case taro.KeyEnter:
-			// If we have a partial hint typed, try to match it
-			input := strings.TrimSpace(t.textInput.Value())
-			if input != "" {
-				// Check if this partial input matches any hint exactly
-				for _, match := range t.matches {
-					if match.Hint == input {
-						if t.result != nil {
-							t.result <- match.Text
-						}
-						return t.quit()
-					}
-				}
-			}
-			return t, nil
 		}
 	}
 
@@ -54,21 +38,24 @@ func (t *Thumbs) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	input := strings.TrimSpace(t.textInput.Value())
 
 	// Check if this input matches any hint exactly
-	for _, match := range t.matches {
-		if match.Hint == input {
-			// Exact match found - select it
-			if t.result != nil {
-				t.result <- match.Text
-			}
-			return t.quit()
+	for hint, match := range t.hints {
+		if hint != input {
+			continue
 		}
+
+		// Exact match found - select it
+		if t.result != nil {
+			t.result <- match
+		}
+
+		return t.quit()
 	}
 
 	// Check if this input is a prefix of any hint
 	hasValidPrefix := false
 	if input != "" {
-		for _, match := range t.matches {
-			if strings.HasPrefix(match.Hint, input) {
+		for hint := range t.hints {
+			if strings.HasPrefix(hint, input) {
 				hasValidPrefix = true
 				break
 			}

@@ -199,9 +199,14 @@ func Find(
 		}
 	}
 
-	// Just grab non-deleted matches
+	// Grab non-deleted matches
 	for index, match := range allMatches {
 		if _, ok := deleted[index]; ok {
+			continue
+		}
+
+		// just type it bro
+		if len(match) <= 4 {
 			continue
 		}
 

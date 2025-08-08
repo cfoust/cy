@@ -11,6 +11,7 @@
                    [prefix "ctrl+p"] action/command-palette
                    [prefix "q"] action/kill-server
                    [prefix "d"] action/detach
+                   [prefix "f"] action/insert-thumb
                    [prefix "F"] action/choose-frame
                    [prefix "p"] action/open-replay
                    [prefix "r"] action/reload-config
@@ -24,7 +25,6 @@
                    [prefix "x"] action/remove-layout-pane
                    [prefix "X"] action/kill-layout-pane
                    [prefix "C"] action/jump-command
-                   [prefix "f"] action/jump-history-command
                    [prefix ":"] action/jump-screen-lines
                    [prefix "j"] action/new-shell
                    [prefix "n"] action/new-project

@@ -463,4 +463,11 @@ For example:
              :alt-screen false))
          (pane/attach _)))
 
+(key/action
+  action/insert-thumb
+  "Select a thumb and insert it."
+  (var choice (input/thumbs))
+  (when (nil? choice) (break))
+  (msg/toast :info choice))
+
 (merge-module root-env (curenv))
