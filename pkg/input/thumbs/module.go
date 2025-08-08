@@ -36,31 +36,6 @@ type Thumbs struct {
 
 var _ taro.Model = (*Thumbs)(nil)
 
-// Default regex patterns from tmux-thumbs
-var defaultPatterns = []struct {
-	name    string
-	pattern string
-}{
-	{"markdown_url", `\[[^\]]*\]\(([^)]+)\)`},
-	{"url", `(?P<match>(https?://|git@|git://|ssh://|ftp://|file:///)[^\s]+)`},
-	{"diff_summary", `diff --git a/([.\w\-@~\[\]]+?/[.\w\-@\[\]]++) b/([.\w\-@~\[\]]+?/[.\w\-@\[\]]++)`},
-	{"diff_a", `--- a/([^\s]+)`},
-	{"diff_b", `\+\+\+ b/([^\s]+)`},
-	{"docker", `sha256:([0-9a-f]{64})`},
-	{"path", `(?P<match>([.\w\-@$~\[\]]+)?(/[.\w\-@$\[\]]+)+)`},
-	{"color", `#[0-9a-fA-F]{6}`},
-	{"uid", `[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`},
-	{"ipfs", `Qm[0-9a-zA-Z]{44}`},
-	{"sha", `[0-9a-f]{7,40}`},
-	{"ip", `\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}`},
-	{"ipv6", `[A-f0-9:]+:+[A-f0-9:]+[%\w\d]+`},
-	{"address", `0x[0-9a-fA-F]+`},
-	{"number", `[0-9]{4,}`},
-}
-
-// Default alphabet for generating hints (qwerty layout)
-var defaultAlphabet = []rune("asdfqwerzxcvjklmiuopghtybn")
-
 func (t *Thumbs) quit() (taro.Model, tea.Cmd) {
 	return t, tea.Batch(
 		func() tea.Msg {

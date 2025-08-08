@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"math/rand"
-	"regexp"
 
 	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/geom"
@@ -324,13 +323,12 @@ func (i *InputModule) Thumbs(
 	//}
 
 	matches := thumbs.Find(
-		[]*regexp.Regexp{
-			regexp.MustCompile(`[A-Z]\w+`),
-		},
+		thumbs.DefaultPatterns,
 		initial,
 	)
 
 	if len(matches) == 0 {
+		// TODO(cfoust): 07/28/25 inform user
 		return nil, nil
 	}
 

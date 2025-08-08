@@ -218,15 +218,28 @@ func Find(
 
 // generateHints creates hint strings for the given number of matches
 func generateHints(alphabet []rune, numMatches int) []string {
-	hints := make([]string, 0, numMatches)
-	alphabetLen := len(alphabet)
+	var (
+		hints      = make([]string, 0, numMatches)
+		numSymbols = len(alphabet)
+		capacity   = numSymbols
+		offset     = 0
+	)
+
+	// This is a quick way of calculating M s.t. |matches| <= N^M
+	// Where N is the size of the alphabet
+	// It enforces the constraint that no hint should be the prefix of
+	// another hint
+	for numMatches > capacity-offset {
+		offset = capacity
+		capacity *= numSymbols
+	}
 
 	for i := range numMatches {
 		hint := ""
-		num := i
+		num := i + offset
 		for {
-			hint = string(alphabet[num%alphabetLen]) + hint
-			num = num / alphabetLen
+			hint = string(alphabet[num%numSymbols]) + hint
+			num = num / numSymbols
 			if num == 0 {
 				break
 			}
@@ -249,6 +262,11 @@ func AssignHints(
 
 	distances := make([]int, len(matches))
 	for index, match := range matches {
+		if len(match) == 0 {
+			distances[index] = 0
+			continue
+		}
+
 		distances[index] = match[0].Dist(origin)
 	}
 

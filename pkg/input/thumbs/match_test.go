@@ -238,17 +238,3 @@ func TestFind(t *testing.T) {
 		})
 	}
 }
-
-func TestHints(t *testing.T) {
-	hints := AssignHints(
-		[]rune("abc"),
-		[]Match{
-			m(9, 0, "testtest"),
-			m(2, 0, "asd"),
-			m(3, 0, "asd"),
-			m(4, 0, "asd"),
-		},
-		geom.Vec2{},
-	)
-	t.Logf("%+v", hints)
-}
