@@ -103,8 +103,8 @@ func openDatabase(dbPath string) (*DB, error) {
 		}
 
 		defer func() {
-			lock.Close()
-			os.Remove(lockPath)
+			_ = lock.Close()
+			_ = os.Remove(lockPath)
 		}()
 
 		return Create(dbPath)

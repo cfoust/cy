@@ -66,16 +66,6 @@ type AcceptedEvent struct {
 	Text string
 }
 
-func (t *Text) acceptText() taro.Cmd {
-	return func() taro.Msg {
-		return taro.PublishMsg{
-			Msg: AcceptedEvent{
-				Text: t.textInput.Value(),
-			},
-		}
-	}
-}
-
 type Setting func(context.Context, *Text)
 
 func WithAnimation(image image.Image, creator anim.Creator) Setting {

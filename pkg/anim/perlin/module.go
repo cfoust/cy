@@ -39,7 +39,7 @@ var perlinShader shader.Shader = func(in image.Image) shader.ShaderOutput {
 
 		// Easing function for smooth animation
 		easedProgress := -(math.Cos(math.Pi*progress) - 1) / 2
-		easedProgress = math.Pow(easedProgress, 2)
+		easedProgress = easedProgress * easedProgress
 
 		easedProgress = 1 - easedProgress
 

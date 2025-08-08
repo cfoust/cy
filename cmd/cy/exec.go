@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strconv"
 
@@ -41,13 +41,13 @@ func execCommand() error {
 		code = []byte(CLI.Exec.Command)
 	} else if CLI.Exec.File == "-" {
 		source = "<stdin>"
-		code, err = ioutil.ReadAll(os.Stdin)
+		code, err = io.ReadAll(os.Stdin)
 		if err != nil {
 			return fmt.Errorf("failed to read from stdin: %s", err)
 		}
 	} else {
 		source = CLI.Exec.File
-		code, err = ioutil.ReadFile(CLI.Exec.File)
+		code, err = os.ReadFile(CLI.Exec.File)
 		if err != nil {
 			return fmt.Errorf("failed to read from %s: %s", CLI.Exec.File, err)
 		}
@@ -69,7 +69,7 @@ func execCommand() error {
 		return err
 	}
 
-	format := OutputFormatRaw
+	var format OutputFormat
 	switch CLI.Exec.Format {
 	case "raw":
 		format = OutputFormatRaw

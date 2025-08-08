@@ -52,7 +52,7 @@ func connectCommand() error {
 					err,
 				)
 			}
-			defer f.Close()
+			defer func() { _ = f.Close() }()
 			if err := pprof.StartCPUProfile(f); err != nil {
 				return fmt.Errorf(
 					"could not start CPU profile: %s",
@@ -71,7 +71,7 @@ func connectCommand() error {
 					err,
 				)
 			}
-			defer f.Close()
+			defer func() { _ = f.Close() }()
 			if err := trace.Start(f); err != nil {
 				return fmt.Errorf(
 					"could not start trace profile: %s",

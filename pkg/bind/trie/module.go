@@ -19,7 +19,9 @@ type Trie[T any] struct {
 	source interface{}
 }
 
-func (t *Trie[T]) resolve(key interface{}) (value interface{}, matched bool, regex bool) {
+func (t *Trie[T]) resolve(
+	key interface{},
+) (value interface{}, matched bool, regex bool) {
 	switch key := key.(type) {
 	case string:
 		// try matching against a regex
@@ -60,29 +62,14 @@ func (t *Trie[T]) getParent(key interface{}) *Trie[T] {
 	return nil
 }
 
-func (t *Trie[T]) getLeaf(key string) (value T, ok bool) {
-	node, found, _ := t.resolve(key)
-	if !found {
-		return
-	}
-
-	if leaf, cast := node.(T); cast {
-		value = leaf
-		ok = true
-		return
-	}
-
-	return
-}
-
 func (t *Trie[T]) access(sequence []interface{}, shouldCreate bool) *Trie[T] {
 	if len(sequence) == 0 {
 		return t
 	}
 
-	var current *Trie[T] = t
+	current := t
 	for _, step := range sequence {
-		var next *Trie[T] = current.getParent(step)
+		next := current.getParent(step)
 		if next == nil {
 			if !shouldCreate {
 				return nil
@@ -199,7 +186,7 @@ func (t *Trie[T]) Get(sequence []string) (value T, re []string, matched bool) {
 	t.RLock()
 	defer t.RUnlock()
 
-	var current *Trie[T] = t
+	current := t
 	for i, step := range sequence {
 		node, ok, isRegex := current.resolve(step)
 		if !ok {

@@ -179,13 +179,23 @@ func (s *searcher) put(b byte) {
 func (s *searcher) unhook() {
 }
 
-func (s *searcher) hook(params []int64, intermediates []byte, ignore bool, r rune) {
+func (s *searcher) hook(
+	params []int64,
+	intermediates []byte,
+	ignore bool,
+	r rune,
+) {
 }
 
 func (s *searcher) oscDispatch(params [][]byte, bellTerminated bool) {
 }
 
-func (s *searcher) csiDispatch(params []int64, intermediates []byte, ignore bool, r rune) {
+func (s *searcher) csiDispatch(
+	params []int64,
+	intermediates []byte,
+	ignore bool,
+	r rune,
+) {
 }
 
 func (s *searcher) escDispatch(intermediates []byte, ignore bool, b byte) {

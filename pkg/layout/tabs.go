@@ -483,12 +483,14 @@ func (t *Tabs) Send(msg mux.Msg) {
 	}
 
 	// Must be a click
-	if mouseMsg.Type != taro.MousePress || mouseMsg.Button != taro.MouseLeft || mouseMsg.Down {
+	if mouseMsg.Type != taro.MousePress || mouseMsg.Button != taro.MouseLeft ||
+		mouseMsg.Down {
 		return
 	}
 
 	// And must be inside the bounds of the bar
-	if !bar.Contains(mouseMsg.Vec2) || mouseMsg.C < 0 || mouseMsg.C >= lastBar.Size().C {
+	if !bar.Contains(mouseMsg.Vec2) || mouseMsg.C < 0 ||
+		mouseMsg.C >= lastBar.Size().C {
 		return
 	}
 

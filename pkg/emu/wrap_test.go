@@ -62,10 +62,10 @@ func TestLongLine(t *testing.T) {
 	term := New()
 
 	for i := 0; i < 40; i++ {
-		term.Write([]byte("a"))
+		_, _ = term.Write([]byte("a"))
 	}
 	for i := 0; i < 40; i++ {
-		term.Write([]byte("b"))
+		_, _ = term.Write([]byte("b"))
 	}
 	term.Resize(geom.Vec2{C: 40, R: 24})
 	require.Equal(t, "a", extractStr(term, 39, 39, 0))
@@ -79,8 +79,8 @@ func TestLongLine(t *testing.T) {
 func TestSeveralLines(t *testing.T) {
 	term := New()
 	term.Resize(geom.Vec2{C: 4, R: 24})
-	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("test\ntest"))
+	_, _ = term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte("test\ntest"))
 	term.Resize(geom.Vec2{C: 2, R: 24})
 	term.Resize(geom.Vec2{C: 4, R: 24})
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
@@ -92,8 +92,8 @@ func TestSeveralLines(t *testing.T) {
 func TestDisappear(t *testing.T) {
 	term := New()
 	term.Resize(geom.Vec2{C: 4, R: 2})
-	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("foobar\ntest"))
+	_, _ = term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte("foobar\ntest"))
 	require.Equal(t, "ar", extractStr(term, 0, 1, 0))
 	require.Equal(t, "test", extractStr(term, 0, 3, 1))
 	term.Resize(geom.Vec2{C: 4, R: 3})
@@ -107,8 +107,8 @@ func TestDisappear(t *testing.T) {
 func TestExpand(t *testing.T) {
 	term := New()
 	term.Resize(geom.Vec2{C: 4, R: 4})
-	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("test\ntest"))
+	_, _ = term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte("test\ntest"))
 	term.Resize(geom.Vec2{C: 2, R: 4})
 	require.Equal(t, "te", extractStr(term, 0, 1, 0))
 	require.Equal(t, "st", extractStr(term, 0, 1, 1))
@@ -125,8 +125,8 @@ func TestExpand(t *testing.T) {
 func TestFull(t *testing.T) {
 	term := New()
 	term.Resize(geom.Vec2{C: 4, R: 2})
-	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("test\ntest"))
+	_, _ = term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte("test\ntest"))
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
 	require.Equal(t, "test", extractStr(term, 0, 3, 1))
 	term.Resize(geom.Vec2{C: 2, R: 2})
@@ -146,14 +146,14 @@ func TestFull(t *testing.T) {
 func TestAlt(t *testing.T) {
 	term := New()
 	term.Resize(geom.Vec2{C: 4, R: 4})
-	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("testt"))
+	_, _ = term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte("testt"))
 	require.Equal(t, 1, term.Cursor().C)
 	require.Equal(t, 1, term.Cursor().R)
-	term.Write([]byte(EnterAltScreen))
-	term.Write([]byte("foobar foobar foobar"))
+	_, _ = term.Write([]byte(EnterAltScreen))
+	_, _ = term.Write([]byte("foobar foobar foobar"))
 	term.Resize(geom.Vec2{C: 2, R: 4})
-	term.Write([]byte(ExitAltScreen)) // leave altscreen
+	_, _ = term.Write([]byte(ExitAltScreen)) // leave altscreen
 	require.Equal(t, "te", extractStr(term, 0, 1, 0))
 	require.Equal(t, "st", extractStr(term, 0, 1, 1))
 	require.Equal(t, 1, term.Cursor().C)
@@ -165,8 +165,8 @@ func TestAlt(t *testing.T) {
 func TestCursor(t *testing.T) {
 	term := New()
 	term.Resize(geom.Vec2{C: 6, R: 4})
-	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("foobar\ntest"))
+	_, _ = term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte("foobar\ntest"))
 	require.Equal(t, 4, term.Cursor().C)
 	require.Equal(t, 1, term.Cursor().R)
 	term.Resize(geom.Vec2{C: 5, R: 4})
@@ -186,22 +186,22 @@ func TestCursor(t *testing.T) {
 func TestFullAlt(t *testing.T) {
 	term := New()
 	term.Resize(geom.Vec2{C: 4, R: 3})
-	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("test\ntest\nte"))
+	_, _ = term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte("test\ntest\nte"))
 	require.Equal(t, 2, term.Cursor().C)
 	require.Equal(t, 2, term.Cursor().R)
-	term.Write([]byte(EnterAltScreen))
+	_, _ = term.Write([]byte(EnterAltScreen))
 	term.Resize(geom.Vec2{C: 2, R: 3})
-	term.Write([]byte(ExitAltScreen))
+	_, _ = term.Write([]byte(ExitAltScreen))
 	require.Equal(t, "te", extractStr(term, 0, 1, 0))
 	require.Equal(t, "st", extractStr(term, 0, 1, 1))
 	require.Equal(t, "te", extractStr(term, 0, 1, 2))
 	require.Equal(t, 1, term.Cursor().C)
 	require.Equal(t, 2, term.Cursor().R)
 	require.True(t, term.Cursor().State&cursorWrapNext != 0)
-	term.Write([]byte(EnterAltScreen))
+	_, _ = term.Write([]byte(EnterAltScreen))
 	term.Resize(geom.Vec2{C: 4, R: 3})
-	term.Write([]byte(ExitAltScreen))
+	_, _ = term.Write([]byte(ExitAltScreen))
 	require.Equal(t, "test", extractStr(term, 0, 3, 0))
 	require.Equal(t, "te  ", extractStr(term, 0, 3, 1))
 	require.Equal(t, "    ", extractStr(term, 0, 3, 2))
@@ -209,12 +209,12 @@ func TestFullAlt(t *testing.T) {
 	require.Equal(t, 1, term.Cursor().R)
 
 	// fill up the rest
-	term.Write([]byte("st\ntest\nok"))
-	term.Write([]byte(EnterAltScreen))
+	_, _ = term.Write([]byte("st\ntest\nok"))
+	_, _ = term.Write([]byte(EnterAltScreen))
 	term.Resize(geom.Vec2{C: 2, R: 5})
 	term.Resize(geom.Vec2{C: 1, R: 1})
 	term.Resize(geom.Vec2{C: 6, R: 3})
-	term.Write([]byte(ExitAltScreen))
+	_, _ = term.Write([]byte(ExitAltScreen))
 }
 
 // Ensure that terminals that disable history and those that do not end up with
@@ -225,8 +225,8 @@ func TestHistory(t *testing.T) {
 
 	for _, term := range []Terminal{a, b} {
 		term.Resize(geom.Vec2{C: 4, R: 3})
-		term.Write([]byte(LineFeedMode))
-		term.Write([]byte("foobar\nfoo\ntest"))
+		_, _ = term.Write([]byte(LineFeedMode))
+		_, _ = term.Write([]byte("foobar\nfoo\ntest"))
 		term.Resize(geom.Vec2{C: 4, R: 2})
 	}
 
@@ -304,9 +304,9 @@ func TestTranslateCursor(t *testing.T) {
 	{
 		term := New()
 		term.Resize(geom.Size{R: 3, C: 5})
-		term.Write([]byte(LineFeedMode))
-		term.Write([]byte("fooba"))
-		term.Write([]byte("rbaz"))
+		_, _ = term.Write([]byte(LineFeedMode))
+		_, _ = term.Write([]byte("fooba"))
+		_, _ = term.Write([]byte("rbaz"))
 
 		cursor := term.Cursor()
 		require.Equal(t, geom.Vec2{R: 1, C: 4}, cursor.Vec2)
@@ -351,11 +351,11 @@ func TestTranslateCursor(t *testing.T) {
 func TestCJKWrap(t *testing.T) {
 	term := New()
 	term.Resize(geom.Vec2{C: 4, R: 2})
-	term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte(LineFeedMode))
 	// Leaves us in the last cell
-	term.Write([]byte("foo"))
+	_, _ = term.Write([]byte("foo"))
 	// Should cause 你 to be written to the next line instead
-	term.Write([]byte("你"))
+	_, _ = term.Write([]byte("你"))
 
 	lines := term.Screen()
 	require.Equal(t, "foo ", lines[0].String())

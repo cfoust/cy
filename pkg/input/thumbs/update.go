@@ -1,8 +1,9 @@
 package thumbs
 
 import (
-	"github.com/cfoust/cy/pkg/taro"
 	"strings"
+
+	"github.com/cfoust/cy/pkg/taro"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

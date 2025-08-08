@@ -31,14 +31,20 @@ func resolveLevel(level *janet.Value) (toasts.ToastLevel, error) {
 		return toasts.ToastLevelError, nil
 	}
 
-	return toasts.ToastLevelError, fmt.Errorf("you must provide one of :info, :warn, or :error")
+	return toasts.ToastLevelError, fmt.Errorf(
+		"you must provide one of :info, :warn, or :error",
+	)
 }
 
 type MsgModule struct {
 	Server Server
 }
 
-func (m *MsgModule) Toast(context interface{}, level *janet.Value, message string) error {
+func (m *MsgModule) Toast(
+	context interface{},
+	level *janet.Value,
+	message string,
+) error {
 	defer level.Free()
 
 	toastLevel, err := resolveLevel(level)
@@ -66,7 +72,7 @@ func (m *MsgModule) Log(level *janet.Value, text string) error {
 		return err
 	}
 
-	var logLevel zerolog.Level = zerolog.InfoLevel
+	logLevel := zerolog.InfoLevel
 	switch levelValue {
 	case toasts.ToastLevelInfo:
 		logLevel = zerolog.InfoLevel

@@ -101,7 +101,11 @@ func (c *WSClient[T]) Close() error {
 
 var _ RawClient = (*WSClient[[]byte])(nil)
 
-func Connect[T any](ctx context.Context, protocol Protocol[T], socketPath string) (Client[T], error) {
+func Connect[T any](
+	ctx context.Context,
+	protocol Protocol[T],
+	socketPath string,
+) (Client[T], error) {
 	// https://gist.github.com/teknoraver/5ffacb8757330715bcbcc90e6d46ac74
 	httpClient := http.Client{
 		Transport: &http.Transport{
@@ -130,7 +134,7 @@ func Connect[T any](ctx context.Context, protocol Protocol[T], socketPath string
 
 	go func() {
 		<-client.Ctx().Done()
-		c.Close(websocket.StatusNormalClosure, "")
+		_ = c.Close(websocket.StatusNormalClosure, "")
 	}()
 
 	return &client, nil

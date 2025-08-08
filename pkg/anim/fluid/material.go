@@ -20,7 +20,10 @@ type Material struct {
 	maxPressure     number // 1;
 }
 
-func NewMaterial(name string, restDensity, stiffness, nearStiffness, kernelRadius number) Material {
+func NewMaterial(
+	name string,
+	restDensity, stiffness, nearStiffness, kernelRadius number,
+) Material {
 	return Material{
 		name:            name,
 		restDensity:     restDensity,

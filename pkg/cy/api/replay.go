@@ -43,13 +43,20 @@ func (m *ReplayModule) send(context interface{}, msg taro.Msg) error {
 	return nil
 }
 
-func (m *ReplayModule) sendAction(context interface{}, action replay.ActionType) error {
+func (m *ReplayModule) sendAction(
+	context interface{},
+	action replay.ActionType,
+) error {
 	return m.send(context, replay.ActionEvent{
 		Type: action,
 	})
 }
 
-func (m *ReplayModule) sendArg(context interface{}, action replay.ActionType, arg string) error {
+func (m *ReplayModule) sendArg(
+	context interface{},
+	action replay.ActionType,
+	arg string,
+) error {
 	if len(arg) != 1 {
 		return nil
 	}

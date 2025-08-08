@@ -46,28 +46,38 @@ func screenLineMotion(getIndex func(
 }
 
 // StartOfScreenLine corresponds to vim's `g0`.
-var StartOfScreenLine = screenLineMotion(func(width int, line emu.ScreenLine) int {
-	return line.C0
-})
+var StartOfScreenLine = screenLineMotion(
+	func(width int, line emu.ScreenLine) int {
+		return line.C0
+	},
+)
 
 // MiddleOfScreenLine corresponds to vim's `gm`.
-var MiddleOfScreenLine = screenLineMotion(func(width int, line emu.ScreenLine) int {
-	return line.C0 + width/2
-})
+var MiddleOfScreenLine = screenLineMotion(
+	func(width int, line emu.ScreenLine) int {
+		return line.C0 + width/2
+	},
+)
 
 // FirstNonBlankScreen corresponds to vim's `g^`.
-var FirstNonBlankScreen = screenLineMotion(func(width int, line emu.ScreenLine) int {
-	first, _ := line.Chars.Whitespace()
-	return line.C0 + first
-})
+var FirstNonBlankScreen = screenLineMotion(
+	func(width int, line emu.ScreenLine) int {
+		first, _ := line.Chars.Whitespace()
+		return line.C0 + first
+	},
+)
 
 // LastNonBlankScreen corresponds to vim's `g<end>`.
-var LastNonBlankScreen = screenLineMotion(func(width int, line emu.ScreenLine) int {
-	_, last := line.Chars.Whitespace()
-	return line.C0 + last
-})
+var LastNonBlankScreen = screenLineMotion(
+	func(width int, line emu.ScreenLine) int {
+		_, last := line.Chars.Whitespace()
+		return line.C0 + last
+	},
+)
 
 // EndOfScreenLine corresponds to vim's `g$`.
-var EndOfScreenLine = screenLineMotion(func(width int, line emu.ScreenLine) int {
-	return line.C1 - 1
-})
+var EndOfScreenLine = screenLineMotion(
+	func(width int, line emu.ScreenLine) int {
+		return line.C1 - 1
+	},
+)

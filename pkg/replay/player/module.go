@@ -180,7 +180,7 @@ func FromEvents(events []sessions.Event) *Player {
 	player := New()
 
 	for _, event := range events {
-		player.Process(event)
+		_ = player.Process(event)
 	}
 
 	return player
@@ -199,7 +199,7 @@ func FromEventsContext(
 			return nil, ctx.Err()
 		}
 
-		player.Process(event)
+		_ = player.Process(event)
 	}
 
 	return player, nil

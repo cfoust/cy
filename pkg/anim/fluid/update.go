@@ -42,117 +42,6 @@ func (s *Simulator) populateHashGrid() {
 	}
 }
 
-func (s *Simulator) applyViscosity(dt number) {
-	if s.material.linViscosity == 0 && s.material.quadViscosity == 0 {
-		return
-	}
-
-	numActiveBuckets := s.numActiveBuckets
-	visitedBuckets := make([]int, s.numHashBuckets)
-
-	kernelRadius := s.material.kernelRadius // h
-	kernelRadiusSq := kernelRadius * kernelRadius
-	kernelRadiusInv := 1.0 / kernelRadius
-
-	linViscosity := s.material.linViscosity * dt
-	quadViscosity := s.material.quadViscosity * dt
-
-	for abIdx := 0; abIdx < numActiveBuckets; abIdx++ {
-		selfIdx := s.particleListHeads[s.activeBuckets[abIdx]]
-
-		for selfIdx != -1 {
-			p0 := s.particles[selfIdx]
-			numVisitedBuckets := 0
-
-			// Compute density and near-density
-			bucketX := math.Floor(p0.X * kernelRadiusInv)
-			bucketY := math.Floor(p0.Y * kernelRadiusInv)
-
-			for bucketDX := -1; bucketDX <= 1; bucketDX++ {
-				for bucketDY := -1; bucketDY <= 1; bucketDY++ {
-					bucketIdx := s.getHashBucketIdx(
-						int(math.Floor(bucketX+float64(bucketDX))),
-						int(math.Floor(bucketY+float64(bucketDY))),
-					)
-
-					// Check hash collision
-					found := false
-					for k := 0; k < numVisitedBuckets; k++ {
-						if visitedBuckets[k] == bucketIdx {
-							found = true
-							break
-						}
-					}
-
-					if found {
-						continue
-					}
-
-					visitedBuckets[numVisitedBuckets] = bucketIdx
-					numVisitedBuckets++
-
-					neighborIdx := s.particleListHeads[bucketIdx]
-
-					for neighborIdx != -1 {
-						if neighborIdx == selfIdx {
-							neighborIdx = s.particleListNextIdx[neighborIdx]
-							continue
-						}
-
-						p1 := s.particles[neighborIdx]
-
-						diffX := p1.X - p0.X
-
-						if diffX > kernelRadius || diffX < -kernelRadius {
-							neighborIdx = s.particleListNextIdx[neighborIdx]
-							continue
-						}
-
-						diffY := p1.Y - p0.Y
-
-						if diffY > kernelRadius || diffY < -kernelRadius {
-							neighborIdx = s.particleListNextIdx[neighborIdx]
-							continue
-						}
-
-						rSq := diffX*diffX + diffY*diffY
-
-						if rSq < kernelRadiusSq {
-							r := math.Sqrt(rSq)
-							q := r * kernelRadiusInv
-							closeness := 1 - q
-
-							// inward radial velocity
-							dx := diffX / r
-							dy := diffY / r
-							inwardVel := ((p0.velX-p1.velX)*dx + (p0.velY-p1.velY)*dy)
-
-							if inwardVel > 1 {
-								inwardVel = 1
-							}
-
-							if inwardVel > 0 {
-								// linear and quadratic impulses
-								I := closeness * (linViscosity*inwardVel + quadViscosity*inwardVel*inwardVel) * .5
-								IX := I * dx
-								IY := I * dy
-								s.particles[selfIdx].velX -= IX
-								s.particles[selfIdx].velY -= IY
-								s.particles[neighborIdx].velX += IX
-								s.particles[neighborIdx].velY += IY
-							}
-						}
-
-						neighborIdx = s.particleListNextIdx[neighborIdx]
-					}
-				}
-			}
-
-			selfIdx = s.particleListNextIdx[selfIdx]
-		}
-	}
-}
-
 func (s *Simulator) applySpringDisplacements(dt number) {
 	if s.material.springStiffness == 0 {
 		return
@@ -317,7 +206,9 @@ func (s *Simulator) doubleDensityRelaxation(dt number) {
 
 							// Add spring if not already present
 							// TODO: this JS hash thing is absolutely crazy but curious how it performs
-							if addSprings && selfIdx < neighborIdx && r > minDist && p0.springs[neighborIdx] == 0. {
+							if addSprings && selfIdx < neighborIdx &&
+								r > minDist &&
+								p0.springs[neighborIdx] == 0. {
 								s.particles[selfIdx].springs[neighborIdx] = r
 							}
 						}
@@ -457,19 +348,17 @@ func (s *Simulator) Update(dt float64) {
 			}
 		}
 
-		if s.drag {
-			dx := s.particles[i].X - s.mouseX
-			dy := s.particles[i].Y - s.mouseY
-			distSq := dx*dx + dy*dy
-
-			if distSq < 10000 && distSq > 0.1 {
-				//dist := math.Sqrt(distSq)
-
-				// TODO(cfoust): 07/07/24
-				//s.particles[i].velX = dragX
-				//s.particles[i].velY = dragY
-			}
-		}
+		// TODO(cfoust): 07/07/24 - drag interaction disabled
+		// if s.drag {
+		//	dx := s.particles[i].X - s.mouseX
+		//	dy := s.particles[i].Y - s.mouseY
+		//	distSq := dx*dx + dy*dy
+		//	if distSq < 10000 && distSq > 0.1 {
+		//		dist := math.Sqrt(distSq)
+		//		s.particles[i].velX = dragX
+		//		s.particles[i].velY = dragY
+		//	}
+		// }
 
 		// TODO(cfoust): 07/07/24
 		//s.particles[i].posX -= screenMoveX

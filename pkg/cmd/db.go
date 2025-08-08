@@ -37,7 +37,7 @@ func (db *DB) CreateCommand(
 		return err
 	}
 
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	queries := db.WithTx(tx)
 

@@ -107,7 +107,9 @@ type Rect struct {
 }
 
 func (r Rect) Contains(v Vec2) bool {
-	return v.R >= r.Position.R && v.R < r.Position.R+r.Size.R && v.C >= r.Position.C && v.C < r.Position.C+r.Size.C
+	return v.R >= r.Position.R && v.R < r.Position.R+r.Size.R &&
+		v.C >= r.Position.C &&
+		v.C < r.Position.C+r.Size.C
 }
 
 // Get the position of the bottom-right corner of the Rect.

@@ -112,7 +112,8 @@ func (t *Text) View(state *tty.State) {
 	}
 
 	// Default to full screen if we can't fit the match window
-	if !t.isInline || windowBounds.Position.C < 0 || windowBounds.Position.R < 0 {
+	if !t.isInline || windowBounds.Position.C < 0 ||
+		windowBounds.Position.R < 0 {
 		windowBounds.Size = screenSize
 		windowBounds.Position = geom.Vec2{}
 	}

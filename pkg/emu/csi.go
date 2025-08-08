@@ -22,15 +22,6 @@ func (c *csiEscape) reset() {
 	c.priv = false
 }
 
-func (c *csiEscape) put(b byte) bool {
-	c.buf = append(c.buf, b)
-	if b >= 0x40 && b <= 0x7E || len(c.buf) >= 256 {
-		c.parse()
-		return true
-	}
-	return false
-}
-
 func (c *csiEscape) parse() {
 	c.mode = c.buf[len(c.buf)-1]
 	if len(c.buf) == 1 {

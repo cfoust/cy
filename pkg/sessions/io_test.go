@@ -1,10 +1,11 @@
 package sessions
 
 import (
-	P "github.com/cfoust/cy/pkg/io/protocol"
 	"path/filepath"
 	"testing"
 	"time"
+
+	P "github.com/cfoust/cy/pkg/io/protocol"
 
 	"github.com/stretchr/testify/require"
 )

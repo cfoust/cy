@@ -55,7 +55,7 @@ func (s *Server) refreshPane(screen mux.Screen) {
 		return
 	}
 
-	go screen.Resize(size)
+	go func() { _ = screen.Resize(size) }()
 }
 
 func New() *Server {

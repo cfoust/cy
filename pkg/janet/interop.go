@@ -8,10 +8,10 @@ package janet
 #include <api.h>
 */
 import "C"
-import _ "embed"
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"reflect"
 	"runtime"
@@ -66,7 +66,9 @@ func (n *Named[T]) WithDefault(defaults T) T {
 
 		// If defaultField's value is the type's default value, use the
 		// value from default
-		if dstField.Interface() == reflect.New(dstField.Type()).Elem().Interface() {
+		if dstField.Interface() == reflect.New(dstField.Type()).
+			Elem().
+			Interface() {
 			dstField.Set(defaultField)
 		}
 	}
@@ -153,7 +155,10 @@ func (p *PartialCallback) Call() []reflect.Value {
 }
 
 // Process Janet arguments and return a function that invokes the callback.
-func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallback, err error) {
+func (v *VM) setupCallback(
+	params Params,
+	args []C.Janet,
+) (partial *PartialCallback, err error) {
 	if len(args) == 0 {
 		err = fmt.Errorf("you must provide at least one argument")
 		return
@@ -231,7 +236,10 @@ func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallb
 		// Context allows for passing arbitrary vm-wide state to certain callbacks
 		if isInterface(argType) {
 			if _, ok := argValue.Interface().(*context.Context); ok {
-				callbackArgs = append(callbackArgs, reflect.ValueOf(params.Context))
+				callbackArgs = append(
+					callbackArgs,
+					reflect.ValueOf(params.Context),
+				)
 				continue
 			}
 
@@ -245,7 +253,11 @@ func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallb
 		}
 
 		if argIndex >= len(args) {
-			err = fmt.Errorf("%s requires at least %d arguments", name, callbackType.NumIn())
+			err = fmt.Errorf(
+				"%s requires at least %d arguments",
+				name,
+				callbackType.NumIn(),
+			)
 			return
 		}
 
@@ -294,7 +306,10 @@ func (v *VM) setupCallback(params Params, args []C.Janet) (partial *PartialCallb
 	return
 }
 
-func (v *VM) resolveCallback(type_ reflect.Type, out []reflect.Value) (result C.Janet, resultErr error) {
+func (v *VM) resolveCallback(
+	type_ reflect.Type,
+	out []reflect.Value,
+) (result C.Janet, resultErr error) {
 	result = C.janet_wrap_nil()
 	numResults := type_.NumOut()
 	if numResults == 0 {
@@ -313,7 +328,10 @@ func (v *VM) resolveCallback(type_ reflect.Type, out []reflect.Value) (result C.
 
 		value, err := handleReturn(v, out[0])
 		if err != nil {
-			resultErr = fmt.Errorf("failed to marshal return value: %s", err.Error())
+			resultErr = fmt.Errorf(
+				"failed to marshal return value: %s",
+				err.Error(),
+			)
 			return
 		}
 
@@ -324,7 +342,10 @@ func (v *VM) resolveCallback(type_ reflect.Type, out []reflect.Value) (result C.
 	// numResults must be 2
 	value, err := handleReturn(v, out[0])
 	if err != nil {
-		resultErr = fmt.Errorf("failed to marshal return value: %s", err.Error())
+		resultErr = fmt.Errorf(
+			"failed to marshal return value: %s",
+			err.Error(),
+		)
 		return
 	}
 
@@ -422,7 +443,9 @@ func validateFunction(in, out []reflect.Type) error {
 			break
 		}
 
-		if !isSpecial(argType) && !isUnmarshalable(argType) && !isParamType(argType) && !isInterface(argType) {
+		if !isSpecial(argType) && !isUnmarshalable(argType) &&
+			!isParamType(argType) &&
+			!isInterface(argType) {
 			return fmt.Errorf(
 				"arg %d's type %s (%s) not supported",
 				i,
@@ -441,13 +464,18 @@ func validateFunction(in, out []reflect.Type) error {
 	// The first return value can be an error or valid type
 	if numResults == 1 {
 		first := out[0]
-		if !isParamType(first) && !isMarshalable(first) && !isErrorType(first) && !isInterface(first) {
-			return fmt.Errorf("first callback return type must be valid type or error")
+		if !isParamType(first) && !isMarshalable(first) &&
+			!isErrorType(first) &&
+			!isInterface(first) {
+			return fmt.Errorf(
+				"first callback return type must be valid type or error",
+			)
 		}
 	}
 
 	if numResults == 2 {
-		if !isParamType(out[0]) && !isInterface(out[0]) && !isMarshalable(out[0]) {
+		if !isParamType(out[0]) && !isInterface(out[0]) &&
+			!isMarshalable(out[0]) {
 			return fmt.Errorf("first callback return type must be valid type")
 		}
 
@@ -593,7 +621,11 @@ func (v *VM) registerCallback(
 	return nil
 }
 
-func (v *VM) Callback(name string, docstring string, callback interface{}) error {
+func (v *VM) Callback(
+	name string,
+	docstring string,
+	callback interface{},
+) error {
 	return v.registerCallback(
 		name,
 		docstring,
@@ -637,7 +669,9 @@ func (v *VM) Module(name string, module interface{}) error {
 		method := type_.Method(i)
 		methodName := strcase.ToKebab(method.Name)
 
-		if (haveRenames && methodName == "renames") || methodName == "docstrings" || methodName == "documentation" {
+		if (haveRenames && methodName == "renames") ||
+			methodName == "docstrings" ||
+			methodName == "documentation" {
 			continue
 		}
 
@@ -647,7 +681,7 @@ func (v *VM) Module(name string, module interface{}) error {
 			}
 		}
 
-		docstring, _ := docs[method.Name]
+		docstring := docs[method.Name]
 
 		err := v.registerCallback(
 			fmt.Sprintf(

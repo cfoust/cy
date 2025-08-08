@@ -17,7 +17,7 @@ func testExecuteCommands(
 ) geom.Size {
 	p := NewProgram(ctx, m)
 	p.isTest = true
-	p.renderer.resize(size)
+	p.resize(size)
 	clearc := make(chan struct{})
 	p.clear = clearc
 
@@ -34,7 +34,7 @@ func testExecuteCommands(
 
 	done := make(chan struct{})
 	go func() {
-		p.Run()
+		_, _ = p.Run()
 		done <- struct{}{}
 	}()
 
@@ -44,7 +44,7 @@ func testExecuteCommands(
 	p.clear = nil
 	p.Send(tea.QuitMsg{})
 	<-done
-	return p.renderer.state.Image.Size()
+	return p.state.Image.Size()
 }
 
 // Test returns a function that passes the given messages to the taro Model `m`

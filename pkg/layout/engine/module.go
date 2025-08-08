@@ -42,7 +42,7 @@ type throttle struct {
 	publish *mux.UpdatePublisher
 	wait    chan interface{}
 	ready   time.Time
-	sleepMs time.Duration
+	sleep   time.Duration
 }
 
 func (t *throttle) poll(ctx context.Context) {
@@ -51,7 +51,7 @@ func (t *throttle) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-t.wait:
-			time.Sleep(t.sleepMs)
+			time.Sleep(t.sleep)
 			t.publish.Notify()
 		}
 	}
@@ -74,7 +74,7 @@ func (t *throttle) Publish(value tea.Msg) {
 	}
 
 	t.Lock()
-	t.ready = time.Now().Add(t.sleepMs)
+	t.ready = time.Now().Add(t.sleep)
 	t.Unlock()
 
 	t.wait <- nil
@@ -88,7 +88,7 @@ func newThrottle(
 	t := &throttle{
 		publish: p,
 		wait:    make(chan interface{}),
-		sleepMs: time.Second / time.Duration(maxFps),
+		sleep:   time.Second / time.Duration(maxFps),
 		ready:   time.Now(),
 	}
 
@@ -112,11 +112,10 @@ type LayoutEngine struct {
 	server  *server.Server
 	log     zerolog.Logger
 
-	size           geom.Size
-	layoutLifetime *util.Lifetime
-	screen         mux.Screen
-	layout         L.Node
-	existing       *screenNode
+	size     geom.Size
+	screen   mux.Screen
+	layout   L.Node
+	existing *screenNode
 }
 
 var _ mux.Screen = (*LayoutEngine)(nil)
@@ -243,7 +242,7 @@ func (l *LayoutEngine) set(layout L.Node) error {
 		reusedRoot = l.existing == node
 	)
 
-	screen.Resize(l.size)
+	_ = screen.Resize(l.size)
 
 	l.existing = node
 	l.layout = layout

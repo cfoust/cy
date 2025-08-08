@@ -129,7 +129,7 @@ func poll(conn Connection) error {
 		return err
 	}
 
-	conn.Send(*handshake)
+	_ = conn.Send(*handshake)
 
 	r, w := io.Pipe()
 	writer := &ClientIO{
@@ -151,9 +151,9 @@ func poll(conn Connection) error {
 
 				switch msg := packet.Contents.(type) {
 				case *P.OutputMessage:
-					w.Write(msg.Data)
+					_, _ = w.Write(msg.Data)
 				case *P.CloseMessage:
-					conn.Close()
+					_ = conn.Close()
 					return
 				}
 			}
@@ -186,7 +186,8 @@ func connect(socketPath string, shouldStart bool) (Connection, error) {
 		}
 
 		message := err.Error()
-		if !strings.Contains(message, ENOENT) && !strings.Contains(message, ECONNREFUSED) {
+		if !strings.Contains(message, ENOENT) &&
+			!strings.Contains(message, ECONNREFUSED) {
 			return nil, err
 		}
 
@@ -214,13 +215,14 @@ func connect(socketPath string, shouldStart bool) (Connection, error) {
 			continue
 		}
 
-		if err := os.Remove(socketPath); err != nil && !strings.Contains(err.Error(), ENOENT) {
+		if err := os.Remove(socketPath); err != nil &&
+			!strings.Contains(err.Error(), ENOENT) {
 			return nil, err
 		}
 
 		if lockFd != nil {
-			lockFd.Close()
-			os.Remove(lockPath)
+			_ = lockFd.Close()
+			_ = os.Remove(lockPath)
 		}
 
 		if !started {

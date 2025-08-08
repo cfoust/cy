@@ -155,12 +155,6 @@ const (
 	MouseMotion
 )
 
-var mouseEventTypes = map[MouseEventType]string{
-	MouseUnknown: "unknown",
-	MousePress:   "press",
-	MouseMotion:  "motion",
-}
-
 type MouseButton int
 
 const (

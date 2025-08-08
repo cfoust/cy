@@ -202,7 +202,11 @@ func Open(filename string) (SessionReader, error) {
 	}
 
 	if h.Version != SESSION_FILE_VERSION {
-		return nil, fmt.Errorf("header version %d did not match %d", h.Version, SESSION_FILE_VERSION)
+		return nil, fmt.Errorf(
+			"header version %d did not match %d",
+			h.Version,
+			SESSION_FILE_VERSION,
+		)
 	}
 
 	return &reader, nil

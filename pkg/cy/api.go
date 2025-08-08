@@ -1,6 +1,7 @@
 package cy
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"runtime/pprof"
@@ -10,8 +11,6 @@ import (
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 )
-
-import _ "embed"
 
 type CyModule struct {
 	cy *Cy
@@ -27,7 +26,7 @@ func (i *CyModule) Documentation() string {
 }
 
 func (c *CyModule) KillServer() {
-	c.cy.Shutdown()
+	_ = c.cy.Shutdown()
 }
 
 func (c *CyModule) Detach(user interface{}) {
@@ -76,7 +75,7 @@ func (c *CyModule) CpuProfile(user interface{}) error {
 	go func() {
 		time.Sleep(15 * time.Second)
 		pprof.StopCPUProfile()
-		f.Close()
+		_ = f.Close()
 
 		client.Toast(toasts.Toast{
 			Message: "finished cpu profile: " + path,
@@ -118,7 +117,7 @@ func (c *CyModule) Trace(user interface{}) error {
 	go func() {
 		time.Sleep(15 * time.Second)
 		trace.Stop()
-		f.Close()
+		_ = f.Close()
 
 		client.Toast(toasts.Toast{
 			Message: "finished trace: " + path,

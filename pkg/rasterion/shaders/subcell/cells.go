@@ -105,7 +105,7 @@ func (c gridCell) Query() (r rune) {
 	r = ' '
 
 	var (
-		minIndex    int    = -1
+		minIndex           = -1
 		minCount    uint64 = 64
 		diff, count uint64
 		value       = uint64(c)

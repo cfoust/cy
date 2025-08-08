@@ -11,7 +11,7 @@ func readFile(filename string) ([]byte, error) {
 		return nil, err
 	}
 
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	buffer, err := io.ReadAll(file)
 	if err != nil {

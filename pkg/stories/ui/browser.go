@@ -54,7 +54,7 @@ func (s *Browser) loadViewer(story S.Story) tea.Cmd {
 		lifetime := util.NewLifetime(s.Ctx())
 		viewer := NewViewer(lifetime.Ctx(), story, true)
 		watcher := taro.NewWatcher(lifetime.Ctx(), viewer)
-		viewer.Resize(size)
+		_ = viewer.Resize(size)
 		return loadedViewer{
 			viewer:   viewer,
 			lifetime: lifetime,
@@ -75,13 +75,13 @@ func (s *Browser) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			C: msg.Width,
 		}
 		s.size = size
-		s.fuzzy.Resize(geom.Size{
+		_ = s.fuzzy.Resize(geom.Size{
 			R: msg.Height,
 			C: 30,
 		})
 
 		if s.viewer != nil {
-			s.viewer.Resize(geom.Size{
+			_ = s.viewer.Resize(geom.Size{
 				R: msg.Height,
 				C: msg.Width - 30,
 			})

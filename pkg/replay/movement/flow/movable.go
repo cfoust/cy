@@ -53,7 +53,8 @@ func (f *flowMovement) Goto(location geom.Vec2) {
 	// First check whether the location is on the screen already
 	flow := f.Flow(f.viewport, f.root)
 	for row, line := range flow.Lines {
-		if location.R != line.R || location.C < line.C0 || location.C >= line.C1 {
+		if location.R != line.R || location.C < line.C0 ||
+			location.C >= line.C1 {
 			continue
 		}
 

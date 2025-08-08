@@ -1,6 +1,7 @@
 package cy
 
 import (
+	_ "embed"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -11,8 +12,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
-
-import _ "embed"
 
 type testFailure struct {
 	File  string
@@ -27,7 +26,7 @@ func runTestFile(t *testing.T, file string) (failures []testFailure) {
 	server, create, err := NewTestServer()
 	require.NoError(t, err)
 
-	server.Callback("run-test", "", func(
+	_ = server.Callback("run-test", "", func(
 		name string,
 		// whether a client should be included
 		context bool,
@@ -87,7 +86,12 @@ func TestAPI(t *testing.T) {
 	}
 
 	for _, failure := range failures {
-		t.Logf("%s: '%s' failed: %+v", failure.File, failure.Name, failure.Error)
+		t.Logf(
+			"%s: '%s' failed: %+v",
+			failure.File,
+			failure.Name,
+			failure.Error,
+		)
 	}
 
 	t.Errorf("%d API test(s) failed", len(failures))
@@ -105,14 +109,14 @@ func TestImport(t *testing.T) {
 	{
 		f, err := os.Create(mainFile)
 		require.NoError(t, err)
-		f.WriteString(`(import "./imported")`)
+		_, _ = f.WriteString(`(import "./imported")`)
 	}
 
 	imported := filepath.Join(d, "imported.janet")
 	{
 		f, err := os.Create(imported)
 		require.NoError(t, err)
-		f.WriteString(`
+		_, _ = f.WriteString(`
 		(param/set :root :test 1)
 		(key/action action/test "" (pp "hello"))
 		`)

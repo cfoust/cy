@@ -93,7 +93,7 @@ func (v *Viewer) loadStory() tea.Cmd {
 		}
 
 		if !config.Size.IsZero() {
-			screen.Resize(config.Size)
+			_ = screen.Resize(config.Size)
 		}
 
 		keys := NewKeys(lifetime.Ctx())
@@ -162,7 +162,7 @@ func (v *Viewer) resize(size geom.Size) {
 			return
 		}
 
-		v.screen.Resize(size)
+		_ = v.screen.Resize(size)
 		return
 	}
 
@@ -170,8 +170,8 @@ func (v *Viewer) resize(size geom.Size) {
 		R: v.size.R,
 		C: KEY_COLUMNS,
 	}
-	v.keys.Resize(keySize)
-	v.screen.Resize(geom.Size{
+	_ = v.keys.Resize(keySize)
+	_ = v.screen.Resize(geom.Size{
 		R: v.size.R,
 		C: geom.Max(0, v.size.C-keySize.C),
 	})

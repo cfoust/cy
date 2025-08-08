@@ -73,7 +73,7 @@ func (f *flowMovement) View(
 	r := f.render
 
 	flow := f.Flow(f.viewport, f.root)
-	screen := f.Flow(f.Terminal.Size(), f.Root())
+	screen := f.Flow(f.Size(), f.Root())
 	if !flow.OK || !screen.OK {
 		return
 	}

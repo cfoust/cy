@@ -59,9 +59,7 @@ func (l *LayoutEngine) createNode(
 		c.SetContext(l.context)
 	}
 
-	if r, ok := node.Screen.(L.Reusable); ok {
-		r.Apply(config)
-	}
+	_, _ = node.Screen.Apply(config)
 
 	go func() {
 		updates := node.Screen.Subscribe(node.Ctx())
@@ -77,7 +75,7 @@ func (l *LayoutEngine) createNode(
 
 					log.Debug().Msgf("node %+v had invalid NodeChangeEvent: %s", node, err)
 				case L.NodeRemoveEvent:
-					l.removeAttached()
+					_ = l.removeAttached()
 				}
 			case <-node.Ctx().Done():
 				return
@@ -86,11 +84,6 @@ func (l *LayoutEngine) createNode(
 	}()
 
 	return node, nil
-}
-
-type updateNode struct {
-	Config L.Node
-	Node   *screenNode
 }
 
 // updateNode attempts to reuse the given screenNode to match the provided

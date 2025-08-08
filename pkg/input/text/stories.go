@@ -101,7 +101,9 @@ func init() {
 		},
 		Input: []interface{}{
 			stories.Wait(stories.Some),
-			stories.Type("a"), // Should exit immediately after typing one character
+			stories.Type(
+				"a",
+			), // Should exit immediately after typing one character
 			stories.Wait(stories.ALot),
 		},
 	}

@@ -72,7 +72,10 @@ var _ api.Client = (*Client)(nil)
 
 var _ mux.Stream = (*Client)(nil)
 
-func (c *Cy) NewClient(ctx context.Context, options ClientOptions) (*Client, error) {
+func (c *Cy) NewClient(
+	ctx context.Context,
+	options ClientOptions,
+) (*Client, error) {
 	client := &Client{
 		Lifetime: util.NewLifetime(ctx),
 		cy:       c,
@@ -132,8 +135,8 @@ func (c *Client) Write(data []byte) (n int, err error) {
 }
 
 func (c *Client) Resize(size geom.Vec2) error {
-	c.muxClient.Resize(size)
-	c.renderer.Resize(size)
+	_ = c.muxClient.Resize(size)
+	_ = c.renderer.Resize(size)
 	return nil
 }
 
@@ -231,7 +234,8 @@ func (c *Cy) removeClient(client *Client) {
 }
 
 func isSSH(e Environment) bool {
-	return e.IsSet("SSH_CONNECTION") || e.IsSet("SSH_CLIENT") || e.IsSet("SSH_TTY")
+	return e.IsSet("SSH_CONNECTION") || e.IsSet("SSH_CLIENT") ||
+		e.IsSet("SSH_TTY")
 }
 
 func (c *Client) initialize(options ClientOptions) error {

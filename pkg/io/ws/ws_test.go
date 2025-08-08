@@ -13,7 +13,7 @@ import (
 type EchoServer struct{}
 
 func (e *EchoServer) HandleWSClient(client Client[[]byte]) {
-	client.Send([]byte("test"))
+	_ = client.Send([]byte("test"))
 }
 
 var _ Server[[]byte] = (*EchoServer)(nil)
@@ -25,7 +25,7 @@ func TestServer(t *testing.T) {
 		return
 	}
 
-	defer os.RemoveAll(dir)
+	defer func() { _ = os.RemoveAll(dir) }()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -34,7 +34,7 @@ func TestServer(t *testing.T) {
 
 	go func() {
 		echo := EchoServer{}
-		Serve[[]byte](ctx, socketPath, RawProtocol, &echo)
+		_ = Serve[[]byte](ctx, socketPath, RawProtocol, &echo)
 	}()
 
 	// wait for server to start up

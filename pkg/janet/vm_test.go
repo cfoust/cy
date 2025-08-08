@@ -2,11 +2,12 @@ package janet
 
 import (
 	"context"
-	"github.com/cfoust/cy/pkg/janet/test"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/cfoust/cy/pkg/janet/test"
 
 	"github.com/stretchr/testify/require"
 )
@@ -127,15 +128,19 @@ func TestVM(t *testing.T) {
 
 	t.Run("callback with user and context", func(t *testing.T) {
 		state := 0
-		err = vm.Callback("test-context-ctx", "", func(ctx context.Context, user interface{}) {
-			if ctx == nil || user == nil {
-				t.Fail()
-			}
+		err = vm.Callback(
+			"test-context-ctx",
+			"",
+			func(ctx context.Context, user interface{}) {
+				if ctx == nil || user == nil {
+					t.Fail()
+				}
 
-			if value, ok := user.(int); ok {
-				state = value
-			}
-		})
+				if value, ok := user.(int); ok {
+					state = value
+				}
+			},
+		)
 		require.NoError(t, err)
 
 		call := CallString(`(test-context-ctx)`)
@@ -186,7 +191,10 @@ func TestVM(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = vm.Execute(ctx, `(test-named 2 :second "ok" :nil-bool nil :ok-bool true)`)
+		err = vm.Execute(
+			ctx,
+			`(test-named 2 :second "ok" :nil-bool nil :ok-bool true)`,
+		)
 		require.NoError(t, err)
 
 		require.Equal(t, 2, post.First)
@@ -282,9 +290,13 @@ func TestVM(t *testing.T) {
 	})
 
 	t.Run("callback with value with hidden fields", func(t *testing.T) {
-		err = vm.Callback("test-hidden", "", func() (result test.Hidden, err error) {
-			return
-		})
+		err = vm.Callback(
+			"test-hidden",
+			"",
+			func() (result test.Hidden, err error) {
+				return
+			},
+		)
 		require.NoError(t, err)
 
 		err = vm.Execute(ctx, `(pp (test-hidden))`)

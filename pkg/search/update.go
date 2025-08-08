@@ -40,7 +40,7 @@ func (s *Search) resize(size geom.Size) {
 		return
 	}
 
-	s.loader.Resize(s.inner.Size)
+	_ = s.loader.Resize(s.inner.Size)
 }
 
 func (s *Search) setSelected(index int) taro.Cmd {
@@ -76,7 +76,7 @@ func (s *Search) setSelected(index int) taro.Cmd {
 		replay.WithResults(result.Results),
 		replay.WithParams(s.params),
 	)
-	r.Resize(s.inner.Size)
+	_ = r.Resize(s.inner.Size)
 	s.loader = r
 	return taro.NewWatcher(s.loaderLifetime.Ctx(), r).Wait()
 }

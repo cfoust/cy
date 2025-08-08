@@ -87,7 +87,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return r, nil
 		}
 
-		return r, r.timeStep(time.Now().Sub(msg.Start))
+		return r, r.timeStep(time.Since(msg.Start))
 	case tea.WindowSizeMsg:
 		// -3 for the " / " or " ? "
 		r.input.Width = geom.Max(msg.Width-3, 0)

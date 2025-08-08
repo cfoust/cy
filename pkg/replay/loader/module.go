@@ -51,7 +51,7 @@ func (l *Loader) Init() tea.Cmd {
 			}
 		}
 
-		ctx := l.Lifetime.Ctx()
+		ctx := l.Ctx()
 
 		events := make([]sessions.Event, 0)
 		for {
@@ -87,7 +87,7 @@ func (l *Loader) Init() tea.Cmd {
 			l.copyBinds,
 			l.options...,
 		)
-		replay.Resize(size)
+		_ = replay.Resize(size)
 
 		return loadedEvent{
 			replay: replay,
@@ -183,7 +183,7 @@ func (l *Loader) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 
 		if l.replay != nil {
-			l.replay.Resize(l.size)
+			_ = l.replay.Resize(l.size)
 		}
 		return l, nil
 	case replay.CopyEvent, replay.ActionEvent, replay.PlaybackRateEvent, taro.KeyMsg, taro.MouseMsg:
@@ -200,7 +200,7 @@ func (l *Loader) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 
 		l.replay = msg.replay
-		l.replay.Resize(l.size)
+		_ = l.replay.Resize(l.size)
 
 		w := taro.NewWatcher(l.Ctx(), msg.replay)
 		return l, w.Wait()

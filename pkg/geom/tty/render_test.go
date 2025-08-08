@@ -18,7 +18,7 @@ func testBytes(
 ) {
 	info, _ := terminfo.Load("xterm-256color")
 	termA := emu.New()
-	termA.Write(bytes)
+	_, _ = termA.Write(bytes)
 
 	termB := emu.New()
 	newBytes := swapImage(
@@ -26,7 +26,7 @@ func testBytes(
 		termB.Screen(),
 		termA.Screen(),
 	)
-	termB.Write(newBytes)
+	_, _ = termB.Write(newBytes)
 
 	require.Equal(
 		t,
@@ -58,5 +58,11 @@ func TestAttributes(t *testing.T) {
 		testBytes(t, name, []byte(style.Render("on")+" off"))
 	}
 
-	testBytes(t, "style", []byte("\033[48;2;255;0;0m           \033[0m\033[3;38;2;0;0;255;48;2;255;0;0mtest\033[0m"))
+	testBytes(
+		t,
+		"style",
+		[]byte(
+			"\033[48;2;255;0;0m           \033[0m\033[3;38;2;0;0;255;48;2;255;0;0mtest\033[0m",
+		),
+	)
 }

@@ -100,7 +100,8 @@ func (i *InputModule) Find(
 		settings = append(settings, fuzzy.WithReverse)
 	}
 
-	if (params.Animated == nil || (*params.Animated) == true) && client.Params().Animate() {
+	if (params.Animated == nil || *params.Animated) &&
+		client.Params().Animate() {
 		var animations []anim.Creator
 		for _, a := range client.Params().Animations() {
 			if creator, ok := anim.Animations[a]; ok {
@@ -217,7 +218,8 @@ func (i *InputModule) Text(
 		settings = append(settings, text.WithReverse)
 	}
 
-	if (params.Animated == nil || (*params.Animated) == true) && client.Params().Animate() {
+	if (params.Animated == nil || *params.Animated) &&
+		client.Params().Animate() {
 		var animations []anim.Creator
 		for _, a := range client.Params().Animations() {
 			if creator, ok := anim.Animations[a]; ok {

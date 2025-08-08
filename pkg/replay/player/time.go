@@ -54,7 +54,8 @@ func (p *Player) GotoProgress(
 
 	isBeginning := fromIndex == 0 && fromByte == 0
 	// Going back in time; must start over
-	isBefore := toIndex < fromIndex || (toIndex == fromIndex && toByte < fromByte)
+	isBefore := toIndex < fromIndex ||
+		(toIndex == fromIndex && toByte < fromByte)
 
 	if isBefore || isBeginning {
 		p.resetTerminal()
@@ -89,14 +90,14 @@ func (p *Player) GotoProgress(
 			// Need to clear dirty state before every write
 			// so that the detector works
 			p.Terminal.Changes().Reset()
-			p.Terminal.Parse(data)
+			p.Parse(data)
 
 			if i >= p.nextDetect {
 				p.detector.Detect(p.Terminal, p.events)
 				p.nextDetect = i + 1
 			}
 		case P.SizeMessage:
-			p.Terminal.Resize(e.Vec())
+			p.Resize(e.Vec())
 		}
 
 		if progress == nil {
@@ -113,7 +114,6 @@ func (p *Player) GotoProgress(
 
 	p.location.Index = toIndex
 	p.location.Offset = toByte
-	return
 }
 
 // Goto moves the player to the specified event index and byte offset. If the

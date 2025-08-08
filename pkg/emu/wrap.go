@@ -128,7 +128,7 @@ func emptyLine(cols int) Line {
 }
 
 func getLineLength(line Line) int {
-	var length int = 0
+	length := 0
 	for i := len(line) - 1; i >= 0; i-- {
 		glyph := line[i]
 		if glyph.IsDefault() {
@@ -175,7 +175,6 @@ findOld:
 			width := oldLines[line.R][line.C0+col].Width()
 
 			if oldCursor.R == row && oldCursor.C >= col && oldCursor.C < col+width {
-				didFind = true
 				break findOld
 			}
 
@@ -301,7 +300,11 @@ func wrapLines(lines []Line, cols int) (wrapped []physicalLine) {
 	return
 }
 
-func reflow(oldScreen []Line, oldCursor Cursor, cols int) (newLines []Line, newCursor Cursor, cursorValid bool) {
+func reflow(
+	oldScreen []Line,
+	oldCursor Cursor,
+	cols int,
+) (newLines []Line, newCursor Cursor, cursorValid bool) {
 	// 1. Get the offsets of all of the "physical" lines
 	oldWrapped := unwrapLines(oldScreen)
 

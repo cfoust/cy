@@ -47,7 +47,6 @@ type Cmd struct {
 
 	ptmx *os.File
 	proc *os.Process
-	done chan error
 
 	exitError error
 }
@@ -143,7 +142,7 @@ func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 		c.proc = cmd.Process
 		c.Unlock()
 
-		defer fd.Close()
+		defer func() { _ = fd.Close() }()
 		done <- cmd.Wait()
 	}()
 
@@ -281,7 +280,7 @@ func (c *Cmd) spin(ctx context.Context) {
 				continue
 			}
 
-			elapsed := time.Now().Sub(startTime)
+			elapsed := time.Since(startTime)
 
 			// Reset the clock if it's been a while since the last error
 			// This is just to guard against commands that suddenly stop working

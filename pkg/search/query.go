@@ -80,7 +80,7 @@ func searchFile(
 		return nil, err
 	}
 
-	bytes, err := io.ReadAll(gz)
+	bytes, _ := io.ReadAll(gz)
 	matches := pattern.FindAllIndex(bytes, -1)
 	if len(matches) == 0 {
 		return nil, nil
@@ -185,7 +185,7 @@ func (s *Search) waitResult() tea.Cmd {
 }
 
 func (s *Search) handleResult(event resultEvent) (taro.Model, tea.Cmd) {
-	s.pending[event.fileResult.ID] = event.fileResult
+	s.pending[event.ID] = event.fileResult
 
 	allDone := true
 	for _, result := range s.pending {
@@ -238,7 +238,7 @@ func (s *Search) Execute(request Request) (taro.Model, tea.Cmd) {
 
 	request.Query = search.NormalizePattern(request.Query)
 
-	l := util.NewLifetime(s.Lifetime.Ctx())
+	l := util.NewLifetime(s.Ctx())
 	s.searchLifetime = &l
 	s.searching = true
 	s.pendingQuery = request.Query

@@ -39,13 +39,19 @@ var UNMARSHALABLE = reflect.TypeOf((*Unmarshalable)(nil)).Elem()
 func checkInterfaces(type_ reflect.Type, value reflect.Value) error {
 	if _, ok := value.Interface().(Marshalable); ok {
 		if !type_.Implements(UNMARSHALABLE) {
-			return fmt.Errorf("implementation of Unmarshalable missing for %s", type_.String())
+			return fmt.Errorf(
+				"implementation of Unmarshalable missing for %s",
+				type_.String(),
+			)
 		}
 	}
 
 	if _, ok := value.Interface().(Unmarshalable); ok {
 		if value.Kind() != reflect.Pointer {
-			return fmt.Errorf("implementation of Unmarshalable for %s should have pointer receiver", type_.String())
+			return fmt.Errorf(
+				"implementation of Unmarshalable for %s should have pointer receiver",
+				type_.String(),
+			)
 		}
 	}
 
@@ -95,7 +101,13 @@ func getFieldName(field reflect.StructField) (name string) {
 
 func isValidType(type_ reflect.Type) bool {
 	switch type_.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Float64, reflect.Bool, reflect.String:
+	case reflect.Int,
+		reflect.Int8,
+		reflect.Int16,
+		reflect.Int32,
+		reflect.Float64,
+		reflect.Bool,
+		reflect.String:
 		return true
 	case reflect.Pointer:
 		if _, ok := reflect.New(type_.Elem()).Interface().(*Value); ok {
@@ -244,7 +256,11 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 
 			value_, fieldErr := v.marshal(fieldValue.Interface())
 			if fieldErr != nil {
-				err = fmt.Errorf("could not marshal value '%s': %s", field.Name, fieldErr.Error())
+				err = fmt.Errorf(
+					"could not marshal value '%s': %s",
+					field.Name,
+					fieldErr.Error(),
+				)
 				return
 			}
 
@@ -252,7 +268,8 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 		}
 		result = C.janet_wrap_struct(C.janet_struct_end(struct_))
 	case reflect.Array, reflect.Slice:
-		if type_.Kind() == reflect.Slice && type_.Elem().Kind() == reflect.Uint8 {
+		if type_.Kind() == reflect.Slice &&
+			type_.Elem().Kind() == reflect.Uint8 {
 			slice := value.Bytes()
 			buffer := C.janet_buffer(C.int(len(slice)))
 			for i := 0; i < len(slice); i++ {
@@ -432,7 +449,9 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 				return err
 			}
 
-			strPtr := strings.Clone(C.GoString(C.cast_janet_string(C.janet_unwrap_keyword(source))))
+			strPtr := strings.Clone(
+				C.GoString(C.cast_janet_string(C.janet_unwrap_keyword(source))),
+			)
 
 			// if the keyword already contains a value, act as if
 			// we're comparing against a constant
@@ -541,7 +560,11 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 			value_ := C.janet_struct_get(struct_, key_)
 			err := v.unmarshal(value_, fieldValue.Addr().Interface())
 			if err != nil {
-				return fmt.Errorf("failed to unmarshal struct field %s: %s", field.Name, err.Error())
+				return fmt.Errorf(
+					"failed to unmarshal struct field %s: %s",
+					field.Name,
+					err.Error(),
+				)
 			}
 		}
 	case reflect.Array:
@@ -552,14 +575,22 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 		wantElements := type_.Len()
 		haveElements := int(C.janet_length(source))
 		if haveElements != wantElements {
-			return fmt.Errorf("janet array had %d elements, wanted %d", haveElements, wantElements)
+			return fmt.Errorf(
+				"janet array had %d elements, wanted %d",
+				haveElements,
+				wantElements,
+			)
 		}
 
 		for i := 0; i < type_.Len(); i++ {
 			value_ := C.janet_get(source, C.janet_wrap_integer(C.int(i)))
 			err := v.unmarshal(value_, value.Index(i).Addr().Interface())
 			if err != nil {
-				return fmt.Errorf("failed to unmarshal array index %d: %s", i, err.Error())
+				return fmt.Errorf(
+					"failed to unmarshal array index %d: %s",
+					i,
+					err.Error(),
+				)
 			}
 		}
 	case reflect.Slice:
@@ -597,7 +628,11 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 			entry := reflect.New(element)
 			err := v.unmarshal(value_, entry.Interface())
 			if err != nil {
-				return fmt.Errorf("failed to unmarshal slice index %d: %s", i, err.Error())
+				return fmt.Errorf(
+					"failed to unmarshal slice index %d: %s",
+					i,
+					err.Error(),
+				)
 			}
 			slice = reflect.Append(slice, entry.Elem())
 		}
@@ -630,12 +665,18 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 
 			err := v.unmarshal(kv.key, key.Interface())
 			if err != nil {
-				return fmt.Errorf("failed to unmarshal map key: %s", err.Error())
+				return fmt.Errorf(
+					"failed to unmarshal map key: %s",
+					err.Error(),
+				)
 			}
 
 			err = v.unmarshal(kv.value, value.Interface())
 			if err != nil {
-				return fmt.Errorf("failed to unmarshal map value: %s", err.Error())
+				return fmt.Errorf(
+					"failed to unmarshal map value: %s",
+					err.Error(),
+				)
 			}
 
 			newMap.SetMapIndex(key.Elem(), value.Elem())
@@ -643,7 +684,11 @@ func (v *VM) unmarshal(source C.Janet, dest interface{}) error {
 		value.Set(newMap)
 		return nil
 	default:
-		return fmt.Errorf("unimplemented type: %s (%s)", type_.String(), type_.Kind().String())
+		return fmt.Errorf(
+			"unimplemented type: %s (%s)",
+			type_.String(),
+			type_.Kind().String(),
+		)
 	}
 
 	return nil

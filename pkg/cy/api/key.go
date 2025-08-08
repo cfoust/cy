@@ -83,7 +83,9 @@ func (k *KeyModule) getScope(target *janet.Value) (*bind.BindScope, error) {
 		return k.SearchBinds, nil
 	}
 
-	return nil, fmt.Errorf("target must be one of :root, :time, :copy, :search, or node ID")
+	return nil, fmt.Errorf(
+		"target must be one of :root, :time, :copy, :search, or node ID",
+	)
 }
 
 type BindParams struct {

@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	METHOD_REGEX = regexp.MustCompile("^# doc: (\\w+)$")
+	METHOD_REGEX = regexp.MustCompile(`^# doc: (\w+)$`)
 )
 
 // Documented provides documentation in the form of a Markdown-formatted

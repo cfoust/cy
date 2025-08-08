@@ -135,28 +135,24 @@ func Find(
 	// First get all the matches
 	for _, pattern := range patterns {
 		for _, region := range regions {
-			for _, match := range findMatches(
-				pattern,
-				i,
-				region,
-			) {
-				allMatches = append(
-					allMatches,
-					match,
-				)
-			}
+			allMatches = append(
+				allMatches,
+				findMatches(
+					pattern,
+					i,
+					region,
+				)...,
+			)
 		}
 	}
 
 	// Store a mapping from cell -> match indices
 	for index, match := range allMatches {
 		for _, cell := range match {
-			occupancy, exists := occupied[cell]
-			if !exists {
-				occupancy = make(
+			if _, exists := occupied[cell]; !exists {
+				occupied[cell] = make(
 					map[int]struct{},
 				)
-				occupied[cell] = occupancy
 			}
 
 			occupied[cell][index] = struct{}{}

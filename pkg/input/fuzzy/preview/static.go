@@ -25,7 +25,6 @@ func (n *Static) Update(msg taro.Msg) (taro.Model, taro.Cmd) {
 
 func (f *Static) View(out *tty.State) {
 	out.Image = f.image
-	return
 }
 
 func NewStatic(ctx context.Context, image I.Image) mux.Screen {

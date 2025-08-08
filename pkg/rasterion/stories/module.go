@@ -31,7 +31,7 @@ func (d *Drawer) Init(start image.Image) {
 func (d *Drawer) Update(delta time.Duration) image.Image {
 	r := d.rCtx
 	r.Clear()
-	d.drawing(r, time.Now().Sub(d.start))
+	d.drawing(r, time.Since(d.start))
 	return r.Image()
 }
 

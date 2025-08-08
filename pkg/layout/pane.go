@@ -44,7 +44,6 @@ func (p *PaneNode) Children() (nodes []Node) {
 }
 
 func (p *PaneNode) SetChild(index int, node Node) {
-	return
 }
 
 func (p *PaneNode) Clone() Node {
@@ -165,7 +164,8 @@ func (p *Pane) Send(msg mux.Msg) {
 		return
 	}
 
-	if mouseMsg.Type != taro.MousePress || mouseMsg.Button != taro.MouseLeft || mouseMsg.Down {
+	if mouseMsg.Type != taro.MousePress || mouseMsg.Button != taro.MouseLeft ||
+		mouseMsg.Down {
 		return
 	}
 
@@ -401,7 +401,7 @@ func NewPane(
 		regionId:        nextRegionId.Add(1),
 	}
 
-	p.setID(nil)
+	_ = p.setID(nil)
 
 	return p
 }

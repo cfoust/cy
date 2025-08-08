@@ -113,7 +113,7 @@ type Program struct {
 var _ mux.Screen = (*Program)(nil)
 
 func (p *Program) Resize(size geom.Size) error {
-	p.renderer.resize(size)
+	p.resize(size)
 	p.Send(tea.WindowSizeMsg{
 		Width:  size.C,
 		Height: size.R,
@@ -209,12 +209,6 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 	return ch
 }
 
-func (p *Program) render(model Model) {
-	p.renderer.Lock()
-	model.View(p.renderer.state)
-	p.renderer.Unlock()
-}
-
 // eventLoop is the central message loop. It receives and handles the default
 // Bubble Tea messages, update the model and triggers redraws.
 func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
@@ -292,7 +286,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				// then we can guarantee the order of
 				// execution.
 				if p.isTest {
-					p.renderer.resize(geom.Size{
+					p.resize(geom.Size{
 						C: msg.Width,
 						R: msg.Height,
 					})
@@ -306,10 +300,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			}
 			cmds <- cmd // process command (if any)
 			frameStart := time.Now()
-			p.renderer.write(model) // send view to renderer
-			frameTime := time.Now().Sub(frameStart)
+			p.write(model) // send view to renderer
+			frameTime := time.Since(frameStart)
 			if frameTime > 16*time.Millisecond {
-				log.Debug().Msgf("%T: frame render time exceeded threshold (%+v)", p.initialModel, frameTime)
+				log.Debug().
+					Msgf("%T: frame render time exceeded threshold (%+v)", p.initialModel, frameTime)
 			}
 
 			if !isSequence {
@@ -343,7 +338,8 @@ func (p *Program) readLoop() {
 
 		msgs, err := readInputs(p.cancelReader)
 		if err != nil {
-			if !errors.Is(err, io.EOF) && !errors.Is(err, cancelreader.ErrCanceled) {
+			if !errors.Is(err, io.EOF) &&
+				!errors.Is(err, cancelreader.ErrCanceled) {
 				select {
 				case <-p.Ctx().Done():
 				case p.errs <- err:
@@ -401,7 +397,7 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Render the initial view.
-	p.renderer.write(model)
+	p.write(model)
 
 	// Subscribe to user input.
 	if p.input != nil {
@@ -420,7 +416,7 @@ func (p *Program) Run() (Model, error) {
 		err = ErrProgramKilled
 	} else {
 		// Ensure we rendered the final state of the model.
-		p.renderer.write(model)
+		p.write(model)
 	}
 
 	// Tear down.
@@ -526,7 +522,7 @@ func NewProgram(ctx context.Context, model Model) *Program {
 func New(ctx context.Context, model Model) *Program {
 	p := NewProgram(ctx, model)
 
-	go p.Run()
+	go func() { _, _ = p.Run() }()
 
 	return p
 }
@@ -536,7 +532,7 @@ func Existing(ctx context.Context, model Model) *Program {
 
 	p.skipInit = true
 
-	go p.Run()
+	go func() { _, _ = p.Run() }()
 
 	return p
 }

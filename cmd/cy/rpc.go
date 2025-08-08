@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -111,7 +112,7 @@ func RPC[S any, T any](
 		return result, err
 	case msg := <-response:
 		if msg.Errored {
-			return result, fmt.Errorf(msg.Error)
+			return result, errors.New(msg.Error)
 		}
 
 		dec := codec.NewDecoderBytes(
@@ -229,7 +230,7 @@ func (s *Server) HandleRPC(conn Connection, request *P.RPCRequestMessage) {
 	}
 
 	if err != nil {
-		conn.Send(P.RPCResponseMessage{
+		_ = conn.Send(P.RPCResponseMessage{
 			Errored: err != nil,
 			Error:   err.Error(),
 		})
@@ -254,5 +255,5 @@ func (s *Server) HandleRPC(conn Connection, request *P.RPCRequestMessage) {
 		msg.Error = err.Error()
 	}
 
-	conn.Send(msg)
+	_ = conn.Send(msg)
 }

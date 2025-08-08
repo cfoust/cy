@@ -8,10 +8,11 @@ package janet
 #include <api.h>
 */
 import "C"
-import _ "embed"
 
 import (
 	"context"
+	_ "embed"
+	"errors"
 	"fmt"
 	"unsafe"
 )
@@ -75,7 +76,7 @@ func (v *VM) handleCodeResult(call Call, out *Value) error {
 			return err
 		}
 
-		return fmt.Errorf(message)
+		return errors.New(message)
 	}
 
 	if resultType != C.JANET_TABLE {

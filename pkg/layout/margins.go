@@ -15,8 +15,8 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
-	"github.com/charmbracelet/lipgloss"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/sasha-s/go-deadlock"
 )
 

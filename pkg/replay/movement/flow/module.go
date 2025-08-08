@@ -151,7 +151,7 @@ func (f *flowMovement) getLine(row int) (line emu.ScreenLine, ok bool) {
 // on the screen; it's used primarily to prevent the user from scrolling onto
 // blank lines at the end of the terminal screen.
 func (f *flowMovement) getLastRoot() (lastRoot geom.Vec2) {
-	screen := f.Flow(f.Terminal.Size(), f.Root())
+	screen := f.Flow(f.Size(), f.Root())
 	if len(screen.Lines) == 0 {
 		return
 	}

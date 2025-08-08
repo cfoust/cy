@@ -81,7 +81,8 @@ func (r *Replay) getCommand() (command detect.Command, ok bool) {
 			}
 		}
 
-		if cursor.GTE(otherCommand.Output.From) && cursor.LT(otherCommand.Output.To) {
+		if cursor.GTE(otherCommand.Output.From) &&
+			cursor.LT(otherCommand.Output.To) {
 			return otherCommand, true
 		}
 	}
@@ -196,7 +197,11 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	)
 
 	progressWidth := size.C - lipgloss.Width(leftSide) - 3
-	percent := int((float64(r.Location().Index) / float64(len(events))) * float64(progressWidth))
+	percent := int(
+		(float64(r.Location().Index) / float64(len(events))) * float64(
+			progressWidth,
+		),
+	)
 	progressBar := ""
 	for i := 0; i < progressWidth; i++ {
 		if i <= percent {
@@ -264,7 +269,6 @@ func (r *Replay) renderSearch(
 	var (
 		p               = r.params
 		size            = state.Image.Size()
-		prompt          = "search-forward"
 		leftStatusStyle = r.getLeftStatusStyle()
 	)
 
@@ -297,7 +301,10 @@ func (r *Replay) renderSearch(
 			),
 		)
 		return
-	} else if r.isEmpty {
+	}
+
+	var prompt string
+	if r.isEmpty {
 		prompt = "no matches found"
 	} else {
 		prompt = "/"

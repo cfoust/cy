@@ -221,7 +221,7 @@ lastOutput:
 	command.Output.To = outputTo
 	command.Output.From = outputFrom
 
-	first, lineOk = d.getLine(term, outputFrom.R)
+	first, _ = d.getLine(term, outputFrom.R)
 
 	// Check to see whether this is a multiline command
 	// The recognizer must be consistent across all lines

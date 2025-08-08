@@ -142,7 +142,12 @@ func UnmarshalOptions(input *janet.Value) (result []Option, err error) {
 
 	for i, option := range result {
 		if len(option.Columns) != numColumns {
-			err = fmt.Errorf("row %d has invalid number of columns (has %d, need %d)", i, len(option.Columns), numColumns)
+			err = fmt.Errorf(
+				"row %d has invalid number of columns (has %d, need %d)",
+				i,
+				len(option.Columns),
+				numColumns,
+			)
 			return
 		}
 	}

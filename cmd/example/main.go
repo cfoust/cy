@@ -21,7 +21,7 @@ func main() {
 
 	buffer := make([]byte, 8192)
 
-	fmt.Fprintln(os.Stdout, "ready")
+	_, _ = fmt.Fprintln(os.Stdout, "ready")
 
 	for {
 		client, err := create(geom.DEFAULT_SIZE)
@@ -47,11 +47,11 @@ func main() {
 		)
 		client.Cancel()
 		if err != nil {
-			fmt.Fprintf(os.Stdout, "%+v\n", err)
-			fmt.Fprintf(os.Stdout, "error\n")
+			_, _ = fmt.Fprintf(os.Stdout, "%+v\n", err)
+			_, _ = fmt.Fprintf(os.Stdout, "error\n")
 			continue
 		}
 
-		fmt.Fprintf(os.Stdout, "ok\n")
+		_, _ = fmt.Fprintf(os.Stdout, "ok\n")
 	}
 }

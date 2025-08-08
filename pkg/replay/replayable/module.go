@@ -156,7 +156,8 @@ func (r *Replayable) Send(msg mux.Msg) {
 	// We want to automatically trigger replay mode when the user scrolls
 	// up with the mouse
 	if mouse, ok := msg.(taro.MouseMsg); ok {
-		isMouseUp := mouse.Type == taro.MousePress && mouse.Button == taro.MouseWheelUp
+		isMouseUp := mouse.Type == taro.MousePress &&
+			mouse.Button == taro.MouseWheelUp
 		if isMouseUp && !r.terminal.IsAltMode() {
 			r.EnterReplay()
 			return
@@ -186,7 +187,7 @@ func (r *Replayable) EnterReplay(options ...replay.Option) {
 		options...,
 	)
 
-	replay.Resize(r.size)
+	_ = replay.Resize(r.size)
 	r.replay = replay
 
 	go func() {

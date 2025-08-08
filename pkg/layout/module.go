@@ -195,7 +195,7 @@ func Attached(layout Layout) *tree.NodeID {
 func ValidateTree(tree Node) error {
 	numAttached := 0
 	for _, pane := range getPaneNodes(tree) {
-		if pane.Attached != true {
+		if !pane.Attached {
 			continue
 		}
 		numAttached++

@@ -126,7 +126,10 @@ func (f *FileRecorder) Flush() error {
 	return nil
 }
 
-func NewFileRecorder(ctx context.Context, filename string) (*FileRecorder, error) {
+func NewFileRecorder(
+	ctx context.Context,
+	filename string,
+) (*FileRecorder, error) {
 	f := &FileRecorder{
 		eventc: make(chan Event, 100),
 		flushc: make(chan struct{}),
@@ -138,14 +141,14 @@ func NewFileRecorder(ctx context.Context, filename string) (*FileRecorder, error
 	}
 
 	go func() {
-		defer w.Close()
+		defer func() { _ = w.Close() }()
 		for {
 			// TODO(cfoust): 09/19/23 error handling
 			select {
 			case event := <-f.eventc:
-				w.Write(event)
+				_ = w.Write(event)
 			case <-f.flushc:
-				w.Flush()
+				_ = w.Flush()
 			case <-ctx.Done():
 				return
 			}

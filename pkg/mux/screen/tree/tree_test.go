@@ -47,7 +47,7 @@ func TestRemoveGroup(t *testing.T) {
 		emptyPane(g)
 	}
 
-	tree.RemoveNode(g.Id())
+	_ = tree.RemoveNode(g.Id())
 	require.Equal(t, 0, len(tree.Leaves()))
 }
 
@@ -59,7 +59,7 @@ func TestRemoveNode(t *testing.T) {
 	}
 
 	child := g.Children()[1]
-	tree.RemoveNode(child.Id())
+	_ = tree.RemoveNode(child.Id())
 	require.Equal(t, 2, len(tree.Leaves()))
 	require.Equal(t, 2, len(g.Children()))
 }

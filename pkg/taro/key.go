@@ -237,7 +237,7 @@ func readInputs(input io.Reader) (msgs []Msg, err error) {
 	b := buf[:numBytes]
 
 	var i, w int
-	for i, w = 0, 0; i < len(b); i += w {
+	for i = 0; i < len(b); i += w {
 		var msg Msg
 		w, msg = DetectOneMsg(b[i:])
 		msgs = append(msgs, msg)
@@ -246,7 +246,9 @@ func readInputs(input io.Reader) (msgs []Msg, err error) {
 	return
 }
 
-var unknownCSIRe = regexp.MustCompile(`^\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]`)
+var unknownCSIRe = regexp.MustCompile(
+	`^\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]`,
+)
 
 func isMouseEvent(b []byte) bool {
 	return len(b) >= 6 && b[0] == '\x1b' && b[1] == '[' && b[2] == 'M'
@@ -287,7 +289,8 @@ func DetectOneMsg(b []byte) (w int, msg Msg) {
 	for rw := 0; i < len(b); i += rw {
 		var r rune
 		r, rw = utf8.DecodeRune(b[i:])
-		if r == utf8.RuneError || r <= rune(keyUS) || r == rune(keyDEL) || r == ' ' {
+		if r == utf8.RuneError || r <= rune(keyUS) || r == rune(keyDEL) ||
+			r == ' ' {
 			// Rune errors are handled below; control characters and spaces will
 			// be handled by detectSequence in the next call to detectOneMsg.
 			break

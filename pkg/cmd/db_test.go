@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
 	"testing"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/sessions/search"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,7 +60,7 @@ func createTestCommand(text string) CommandEvent {
 func TestCommandCreate(t *testing.T) {
 	db, err := openDB()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 

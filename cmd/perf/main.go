@@ -36,7 +36,10 @@ var CLI struct {
 }
 
 func main() {
-	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	consoleWriter := zerolog.ConsoleWriter{
+		Out:        os.Stdout,
+		TimeFormat: time.RFC3339,
+	}
 	log.Logger = log.Output(consoleWriter)
 
 	ctx := kong.Parse(&CLI,
@@ -106,7 +109,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	if err := pprof.StartCPUProfile(f); err != nil {
 		panic(err)
 	}

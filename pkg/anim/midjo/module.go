@@ -37,7 +37,7 @@ func (mid *Midjo) Update(delta time.Duration) image.Image {
 			m := int(math.Round(((o*b + s*f + 1) / 2) * float64(size.C)))
 			h := int(math.Round(((u+1)/2)*float64(size.R))) % size.R
 			g = emu.EmptyGlyph()
-			if !(m < 0 || m >= size.C || h < 0 || h >= size.R) {
+			if m >= 0 && m < size.C && h >= 0 && h < size.R {
 				g = mid.in[h][m]
 			}
 			mid.out[row][col] = g

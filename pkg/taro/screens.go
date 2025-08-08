@@ -23,7 +23,6 @@ func (s ScreenUpdate) Wait() Cmd {
 
 type ScreenWatcher struct {
 	util.Lifetime
-	wait  *util.Lifetime
 	queue chan ScreenUpdate
 }
 
@@ -69,7 +68,11 @@ func NewWatcher(ctx context.Context, screen mux.Screen) *ScreenWatcher {
 	return w
 }
 
-func waitScreen(ctx context.Context, screen mux.Screen, done chan<- ScreenUpdate) {
+func waitScreen(
+	ctx context.Context,
+	screen mux.Screen,
+	done chan<- ScreenUpdate,
+) {
 	u := screen.Subscribe(ctx)
 	defer u.Done()
 

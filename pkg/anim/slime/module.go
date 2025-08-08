@@ -72,7 +72,10 @@ type Agent struct {
 
 func (a *Agent) Sense(m float64, chem []float64) float64 {
 	senseVec := a.Dir.Rot(m * SENS_ANGLE).MulN(SENS_DIST)
-	pos := Vec2{math.Floor(a.Pos.X + senseVec.X), math.Floor(a.Pos.Y + senseVec.Y)}
+	pos := Vec2{
+		math.Floor(a.Pos.X + senseVec.X),
+		math.Floor(a.Pos.Y + senseVec.Y),
+	}
 	if !bounded(pos) {
 		return -1
 	}
@@ -191,7 +194,10 @@ func (s *Simulator) updateView(cursor Cursor) {
 
 	var targetFocus Vec2
 	if cursor.Pressed {
-		targetFocus = Vec2{Y: cursor.Y / float64(s.rows), X: cursor.X / float64(s.cols)}
+		targetFocus = Vec2{
+			Y: cursor.Y / float64(s.rows),
+			X: cursor.X / float64(s.cols),
+		}
 	} else {
 		targetFocus = Vec2{Y: 0.5, X: 0.5}
 	}
@@ -236,8 +242,12 @@ func (s *Simulator) Step(cursor Cursor) {
 
 func (s *Simulator) renderCell(row, col int) rune {
 	offset := Vec2{
-		Y: math.Floor(s.viewFocus.Y * (float64(HEIGHT) - s.viewScale.Y*float64(s.rows))),
-		X: math.Floor(s.viewFocus.X * (float64(WIDTH) - s.viewScale.X*float64(s.cols))),
+		Y: math.Floor(
+			s.viewFocus.Y * (float64(HEIGHT) - s.viewScale.Y*float64(s.rows)),
+		),
+		X: math.Floor(
+			s.viewFocus.X * (float64(WIDTH) - s.viewScale.X*float64(s.cols)),
+		),
 	}
 
 	x := float64(col)

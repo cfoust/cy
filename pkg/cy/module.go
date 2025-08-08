@@ -123,7 +123,7 @@ func (c *Cy) ExecuteOnBehalf(
 }
 
 func (c *Cy) Log(level zerolog.Level, message string) {
-	c.log.WithLevel(level).Msgf(message)
+	c.log.WithLevel(level).Msg(message)
 }
 
 func (c *Cy) loadConfig() error {
@@ -218,7 +218,11 @@ func (c *Cy) Shutdown() error {
 	return nil
 }
 
-func (c *Cy) pollInteractions(ctx context.Context, journal map[tree.NodeID]historyEvent, channel chan historyEvent) {
+func (c *Cy) pollInteractions(
+	ctx context.Context,
+	journal map[tree.NodeID]historyEvent,
+	channel chan historyEvent,
+) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -436,9 +440,12 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	logPane := t.Root().NewPane(cy.Ctx(), logScreen)
 	logPane.SetName("logs")
 	logPane.SetProtected(true)
-	logs.Write([]byte(emu.LineFeedMode))
+	_, _ = logs.Write([]byte(emu.LineFeedMode))
 
-	consoleWriter := zerolog.ConsoleWriter{Out: logs.Writer(), TimeFormat: time.RFC3339}
+	consoleWriter := zerolog.ConsoleWriter{
+		Out:        logs.Writer(),
+		TimeFormat: time.RFC3339,
+	}
 	cy.log = log.Output(zerolog.MultiLevelWriter(consoleWriter, os.Stdout))
 
 	vm, err := cy.initJanet(ctx)
@@ -449,7 +456,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	cy.VM = vm
 
 	if len(options.Config) != 0 {
-		cy.loadConfig()
+		_ = cy.loadConfig()
 	}
 
 	return &cy, nil
