@@ -16,7 +16,7 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
-var ERROR_FREED = fmt.Errorf("cannot use freed value")
+var ErrFreed = fmt.Errorf("cannot use freed value")
 
 type Value struct {
 	deadlock.RWMutex
@@ -65,7 +65,7 @@ func (v *Value) Free() {
 
 func (v *Value) JSON() ([]byte, error) {
 	if v.IsFree() {
-		return nil, ERROR_FREED
+		return nil, ErrFreed
 	}
 
 	out, err := v.vm.jsonEncode.CallResult(
@@ -90,7 +90,7 @@ func (v *Value) JSON() ([]byte, error) {
 
 func (v *Value) Raw() ([]byte, error) {
 	if v.IsFree() {
-		return nil, ERROR_FREED
+		return nil, ErrFreed
 	}
 
 	out, err := v.vm.raw.CallResult(
@@ -164,7 +164,7 @@ func (v *Value) Unmarshal(dest interface{}) error {
 	}
 
 	if v.IsFree() {
-		return ERROR_FREED
+		return ErrFreed
 	}
 
 	return v.vm.unmarshalSafe(v.janet, dest)

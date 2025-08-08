@@ -40,7 +40,7 @@ func (t *TestServer) Attach(rows, cols int) (Connection, error) {
 		return nil, err
 	}
 
-	conn.Send(P.HandshakeMessage{
+	_ = conn.Send(P.HandshakeMessage{
 		Env: map[string]string{
 			"TERM": "xterm-256color",
 		},
@@ -84,13 +84,13 @@ func setupServer(t *testing.T) *TestServer {
 	}
 
 	go func() {
-		ws.Serve[P.Message](
+		_ = ws.Serve[P.Message](
 			testServer.Ctx(),
 			socketPath,
 			P.Protocol,
 			server,
 		)
-		os.RemoveAll(dir)
+		_ = os.RemoveAll(dir)
 	}()
 
 	// TODO(cfoust): 06/01/23 no more race condition on socket creation
@@ -106,7 +106,7 @@ func TestHandshake(t *testing.T) {
 	conn, err := server.Connect()
 	require.NoError(t, err)
 
-	conn.Send(P.HandshakeMessage{
+	_ = conn.Send(P.HandshakeMessage{
 		Env: map[string]string{
 			"TERM": "xterm-256color",
 		},
@@ -169,7 +169,7 @@ func TestExec(t *testing.T) {
 		require.NotNil(t, result)
 		require.Equal(t, test.Result, result.Data)
 
-		conn.Close()
+		_ = conn.Close()
 	}
 
 }

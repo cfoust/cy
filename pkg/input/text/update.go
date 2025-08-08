@@ -20,7 +20,7 @@ func (t *Text) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			C: msg.Width,
 		}
 		if t.anim != nil {
-			t.anim.Resize(size)
+			_ = t.anim.Resize(size)
 		}
 		t.size = size
 		t.location = geom.Vec2{

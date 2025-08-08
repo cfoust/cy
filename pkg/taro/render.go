@@ -22,7 +22,6 @@ func GetSize(text string) geom.Vec2 {
 type Renderer struct {
 	*lipgloss.Renderer
 	info *terminfo.Terminfo
-	term emu.Terminal
 }
 
 // RenderAtSize renders the given string at (row, col) in `state` with a
@@ -34,11 +33,11 @@ func (r *Renderer) RenderAtSize(
 	value string,
 ) {
 	term := emu.New()
-	term.Write([]byte(emu.LineFeedMode)) // set CRLF mode
+	_, _ = term.Write([]byte(emu.LineFeedMode)) // set CRLF mode
 	term.Resize(geom.Size{C: cols, R: rows})
 	r.info.Fprintf(term, terminfo.ClearScreen)
 	r.info.Fprintf(term, terminfo.CursorHome)
-	term.Write([]byte(value))
+	_, _ = term.Write([]byte(value))
 
 	image.Compose(geom.Vec2{R: row, C: col}, state, term.Screen())
 }

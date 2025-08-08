@@ -80,7 +80,7 @@ var initReplay stories.InitFunc = func(ctx context.Context) (mux.Screen, error) 
 	// Create a sample screen to attach to
 	p := server.tree.Root().NewPane(ctx, r)
 
-	client.Attach(p)
+	_ = client.Attach(p)
 
 	return screen, err
 }

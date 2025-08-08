@@ -153,7 +153,7 @@ func (t *Terminal) Send(msg mux.Msg) {
 	}
 
 	// TODO(cfoust): 11/08/23 error handling
-	t.stream.Write(input)
+	_, _ = t.stream.Write(input)
 }
 
 func (t *Terminal) Write(p []byte) (n int, err error) {

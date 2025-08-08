@@ -1,0 +1,13 @@
+version: "2"
+
+linters:
+  exclusions:
+    paths:
+      - pkg/janet/test/module.go
+
+formatters:
+  enable:
+    - golines
+  settings:
+    golines:
+      max-len: 80

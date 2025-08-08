@@ -15,7 +15,7 @@ func getBackwardsMatch(
 	row int,
 	matches [][]int,
 ) (to emu.ScreenLine, ok bool) {
-	if matches == nil || len(matches) == 0 {
+	if len(matches) == 0 {
 		return
 	}
 

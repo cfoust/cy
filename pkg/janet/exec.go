@@ -12,6 +12,7 @@ import _ "embed"
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"unsafe"
 )
@@ -75,7 +76,7 @@ func (v *VM) handleCodeResult(call Call, out *Value) error {
 			return err
 		}
 
-		return fmt.Errorf(message)
+		return errors.New(message)
 	}
 
 	if resultType != C.JANET_TABLE {

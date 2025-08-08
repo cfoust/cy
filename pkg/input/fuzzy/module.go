@@ -185,9 +185,9 @@ func (f *Fuzzy) getPreview() mux.Screen {
 	case preview.FrameType,
 		preview.AnimationType,
 		preview.LayoutType:
-		p.Resize(f.size)
+		_ = p.Resize(f.size)
 	default:
-		p.Resize(geom.DEFAULT_SIZE)
+		_ = p.Resize(geom.DEFAULT_SIZE)
 	}
 
 	return p

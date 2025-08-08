@@ -57,7 +57,7 @@ func TestClickInactivePane(t *testing.T) {
 		T.NewTree(),
 		server.New(),
 	)
-	l.Resize(size)
+	_ = l.Resize(size)
 
 	err := l.Set(L.New(
 		&L.SplitNode{
@@ -94,7 +94,7 @@ func TestPaneRemoval(t *testing.T) {
 		server.New(),
 		WithParams(params),
 	)
-	l.Resize(size)
+	_ = l.Resize(size)
 
 	createPane := func() (*taro.Program, *T.Pane, *T.NodeID) {
 		static := L.NewStatic(
@@ -275,7 +275,7 @@ func TestClickTabs(t *testing.T) {
 		T.NewTree(),
 		server.New(),
 	)
-	l.Resize(size)
+	_ = l.Resize(size)
 
 	name := "tab"
 	err := l.Set(L.New(

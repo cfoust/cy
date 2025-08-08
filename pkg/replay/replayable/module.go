@@ -186,7 +186,7 @@ func (r *Replayable) EnterReplay(options ...replay.Option) {
 		options...,
 	)
 
-	replay.Resize(r.size)
+	_ = replay.Resize(r.size)
 	r.replay = replay
 
 	go func() {

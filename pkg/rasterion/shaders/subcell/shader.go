@@ -46,7 +46,7 @@ func (s *Shader) Fragment(
 	return
 }
 
-func (s *Shader) Size() geom.Vec2 {
+func (s *Shader) Size() geom.Size {
 	return s.size
 }
 
@@ -59,8 +59,8 @@ func (s *Shader) Clear() {
 	}
 }
 
-func (s *Shader) Resize(size geom.Vec2) {
-	var cells [][]gridCell = make([][]gridCell, size.R)
+func (s *Shader) Resize(size geom.Size) {
+	cells := make([][]gridCell, size.R)
 	for row := 0; row < size.R; row++ {
 		cells[row] = make([]gridCell, size.C)
 	}

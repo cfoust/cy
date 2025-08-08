@@ -647,7 +647,7 @@ func (v *VM) Module(name string, module interface{}) error {
 			}
 		}
 
-		docstring, _ := docs[method.Name]
+		docstring := docs[method.Name]
 
 		err := v.registerCallback(
 			fmt.Sprintf(

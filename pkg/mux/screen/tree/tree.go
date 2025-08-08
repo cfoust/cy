@@ -77,7 +77,7 @@ func (t *Tree) Reset() {
 	t.RUnlock()
 
 	for _, child := range group.Children() {
-		t.RemoveNode(child.Id())
+		_ = t.RemoveNode(child.Id())
 	}
 
 	// Reset the root node too
@@ -125,7 +125,7 @@ func (t *Tree) RemoveNode(id NodeID) error {
 		node.Cancel()
 	case *Group:
 		for _, child := range node.children {
-			t.RemoveNode(child.Id())
+			_ = t.RemoveNode(child.Id())
 		}
 	}
 
@@ -182,7 +182,7 @@ func NewTree(options ...TreeOption) *Tree {
 
 	root := &Group{tree: tree}
 	root.metaData = tree.newMetadata(root)
-	root.metaData.SetProtected(true)
+	root.SetProtected(true)
 	tree.root = root
 	tree.storeNode(tree.root)
 

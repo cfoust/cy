@@ -11,7 +11,7 @@ import (
 func TestFlowLines(t *testing.T) {
 	term := New()
 	term.Resize(geom.Vec2{C: 4, R: 2})
-	term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte(LineFeedMode))
 
 	// Remove anything in lines that can mess with comparisons
 	cleanLines := func(lines []ScreenLine) {
@@ -40,7 +40,7 @@ func TestFlowLines(t *testing.T) {
 		require.Equal(t, 0, result.Cursor.C)
 	}
 
-	term.Write([]byte("foo\nfoobar\nbaz"))
+	_, _ = term.Write([]byte("foo\nfoobar\nbaz"))
 	// flow should be:
 	// 0: foo
 	// 1: foob
@@ -99,7 +99,7 @@ func TestFlowLines(t *testing.T) {
 
 	// Just check that the screen is correct in alt mode too
 	{
-		term.Write([]byte(EnterAltScreen))
+		_, _ = term.Write([]byte(EnterAltScreen))
 		result := term.Flow(
 			geom.Vec2{
 				R: 2,
@@ -137,7 +137,7 @@ func TestFlowLines(t *testing.T) {
 		require.True(t, result.CursorOK)
 		require.Equal(t, 1, result.Cursor.R)
 		require.Equal(t, 3, result.Cursor.C)
-		term.Write([]byte(ExitAltScreen))
+		_, _ = term.Write([]byte(ExitAltScreen))
 	}
 
 	// Check that negative counts work correctly
@@ -285,8 +285,8 @@ func TestFlowLines(t *testing.T) {
 func TestCJKFlow(t *testing.T) {
 	term := New()
 	term.Resize(geom.Size{R: 4, C: 3})
-	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("fo你好bar"))
+	_, _ = term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte("fo你好bar"))
 
 	result := term.Flow(geom.Vec2{C: 10, R: 1}, geom.Vec2{})
 	require.True(t, result.OK)
@@ -300,8 +300,8 @@ func TestCJKFlow(t *testing.T) {
 func TestHistoryLine(t *testing.T) {
 	term := New()
 	term.Resize(geom.Size{R: 2, C: 3})
-	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("foo\nbar\nbaz"))
+	_, _ = term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte("foo\nbar\nbaz"))
 
 	result := term.Flow(geom.Vec2{C: 8, R: 0}, geom.Vec2{})
 	require.True(t, result.OK)
@@ -315,8 +315,8 @@ func TestHistoryLine(t *testing.T) {
 func TestCursorBug(t *testing.T) {
 	term := New()
 	term.Resize(geom.Size{R: 3, C: 4})
-	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("foo bar\nbaz"))
+	_, _ = term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte("foo bar\nbaz"))
 
 	result := term.Flow(geom.Vec2{R: 3, C: 4}, geom.Vec2{})
 	require.True(t, result.OK)
@@ -328,8 +328,8 @@ func TestCursorBug(t *testing.T) {
 func TestGetLines(t *testing.T) {
 	term := New()
 	term.Resize(geom.Size{R: 2, C: 3})
-	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("foobar\nbaz"))
+	_, _ = term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte("foobar\nbaz"))
 
 	lines := term.GetLines(0, 2)
 	require.Equal(t, "foobar", lines[0].String())
@@ -338,7 +338,7 @@ func TestGetLines(t *testing.T) {
 
 func TestBrokenLine(t *testing.T) {
 	term := New()
-	term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte(LineFeedMode))
 
 	setup := []string{
 		"> ", "command\n",
@@ -352,7 +352,7 @@ func TestBrokenLine(t *testing.T) {
 	setup = append(setup, "> ")
 
 	for _, item := range setup {
-		term.Write([]byte(item))
+		_, _ = term.Write([]byte(item))
 	}
 
 	lines := term.GetLines(0, 0)

@@ -63,7 +63,7 @@ func (r *MFP) Init(start image.Image) {
 
 	// Find all of the sequences of non-blank characters
 	for row := 0; row < start.Size().R; row++ {
-		var col0 int = -1
+		col0 := -1
 		var first emu.Glyph
 
 		for col := 0; col < start.Size().C; col++ {
@@ -273,7 +273,7 @@ func (r *MFP) drawBackground(delta time.Duration) {
 
 	// Easing function for smooth animation
 	easedProgress := -(math.Cos(math.Pi*progress) - 1) / 2
-	easedProgress = math.Pow(easedProgress, 2)
+	easedProgress = easedProgress * easedProgress
 	if reverse {
 		easedProgress = 1 - easedProgress
 	}

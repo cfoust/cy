@@ -34,7 +34,7 @@ func (s *Splash) Init() taro.Cmd {
 func (s *Splash) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		s.bg.Resize(geom.Size{
+		_ = s.bg.Resize(geom.Size{
 			R: msg.Height,
 			C: msg.Width,
 		})
@@ -125,7 +125,7 @@ func New(ctx context.Context, size geom.Size, shouldAnimate bool) *taro.Program 
 			},
 		)
 	}
-	bg.Resize(size)
+	_ = bg.Resize(size)
 
 	return taro.New(ctx, &Splash{
 		Lifetime: lifetime,

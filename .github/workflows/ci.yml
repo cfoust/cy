@@ -21,6 +21,18 @@ jobs:
         # This is used for the TestDefaultShell test
         run: sudo apt-get install -qqy zsh libx11-dev
 
+      - name: Install lint tools
+        run: |
+          go install github.com/segmentio/golines@latest
+
+      - name: Generate and format code
+        run: |
+          go generate ./cmd/... ./pkg/...
+          go fmt ./cmd/... ./pkg/...
+          git add .
+          git diff HEAD
+          git diff-index --quiet --cached HEAD --
+
       - name: Generate and format code
         run: |
           go generate ./cmd/... ./pkg/...

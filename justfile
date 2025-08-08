@@ -13,6 +13,12 @@ stories *args:
 format:
   go fmt ./pkg/... ./cmd/...
 
+lint:
+  golangci-lint run
+
+lint-fix:
+  golangci-lint run --fix
+
 generate:
   go generate ./pkg/... ./cmd/...
 

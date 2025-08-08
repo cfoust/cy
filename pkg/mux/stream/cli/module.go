@@ -39,7 +39,7 @@ func Attach(
 		output.ExitAltScreen()
 		output.DisableMouseAllMotion()
 		info.Fprintf(out, terminfo.CursorVisible)
-		term.Restore(int(in.Fd()), oldState)
+		_ = term.Restore(int(in.Fd()), oldState)
 	}()
 
 	go func() { _, _ = io.Copy(stream, in) }()
@@ -68,7 +68,7 @@ func Attach(
 				}
 
 				// TODO(cfoust): 11/10/23 error handling
-				stream.Resize(geom.Size{
+				_ = stream.Resize(geom.Size{
 					R: rows,
 					C: columns,
 				})

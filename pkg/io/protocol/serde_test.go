@@ -15,6 +15,6 @@ func TestSerialization(t *testing.T) {
 	encoded, err := Encode(before)
 	assert.NoError(t, err)
 
-	after, err := Decode(encoded)
+	after, _ := Decode(encoded)
 	assert.Equal(t, &before, after, "should yield same result")
 }

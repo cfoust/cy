@@ -123,9 +123,8 @@ func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
 			t.oscColorResponse(DefaultFG, 10)
 		} else if err := t.setColorName(DefaultFG, p); err != nil {
 			t.logf("invalid foreground color: %s\n", maybe(p))
-		} else {
-			// TODO: redraw
 		}
+		// TODO: redraw when color is set
 	case 11:
 		if len(s.args) < 2 {
 			break
@@ -137,9 +136,8 @@ func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
 			t.oscColorResponse(DefaultBG, 11)
 		} else if err := t.setColorName(DefaultBG, p); err != nil {
 			t.logf("invalid cursor color: %s\n", maybe(p))
-		} else {
-			// TODO: redraw
 		}
+		// TODO: redraw when color is set
 	// case 12:
 	// if len(s.args) < 2 {
 	// 	break
@@ -170,12 +168,11 @@ func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
 		if p != nil && *p == "?" { // report
 			t.osc4ColorResponse(XTermColor(j))
 		} else if err := t.setColorName(XTermColor(j), p); err != nil {
-			if !(d == 104 && len(s.args) <= 1) {
+			if d != 104 || len(s.args) > 1 {
 				t.logf("invalid color j=%d, p=%s\n", j, maybe(p))
 			}
-		} else {
-			// TODO: redraw
 		}
+		// TODO: redraw when color is set
 	default:
 		t.logf("unknown OSC command %d\n", d)
 		// TODO: s.dump()
@@ -227,7 +224,7 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 		t.moveTo(t.cur.C, t.cur.R+c.maxarg(0, 1))
 	case 'c': // DA - device attributes
 		if c.arg(0, 0) == 0 {
-			t.w.Write([]byte("\033[?6c"))
+			_, _ = t.w.Write([]byte("\033[?6c"))
 		}
 	case 'C', 'a': // CUF, HPR - cursor <n> forward
 		t.moveTo(t.cur.C+c.maxarg(0, 1), t.cur.R)
@@ -319,9 +316,9 @@ func (t *State) CsiDispatch(params []int64, intermediates []byte, ignore bool, r
 	case 'n':
 		switch c.arg(0, 0) {
 		case 5: // DSR - device status report
-			t.w.Write([]byte("\033[0n"))
+			_, _ = t.w.Write([]byte("\033[0n"))
 		case 6: // CPR - cursor position report
-			t.w.Write([]byte(fmt.Sprintf("\033[%d;%dR", t.cur.R+1, t.cur.C+1)))
+			_, _ = fmt.Fprintf(t.w, "\033[%d;%dR", t.cur.R+1, t.cur.C+1)
 		}
 	case 'r': // DECSTBM - set scrolling region
 		if c.priv {

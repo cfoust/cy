@@ -18,9 +18,9 @@ func TestFindImage(t *testing.T) {
 		C: 10,
 	}))
 	for range 2 {
-		term.Write([]byte("foobarbazf"))
+		_, _ = term.Write([]byte("foobarbazf"))
 	}
-	term.Write([]byte("你还好吗"))
+	_, _ = term.Write([]byte("你还好吗"))
 
 	i := image.Capture(term)
 

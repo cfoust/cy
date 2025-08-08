@@ -40,7 +40,7 @@ func NewReader() *Reader {
 	go func() {
 		// Set the terminal to CRLF mode so that carriage returns go
 		// back to the first column
-		w.Write([]byte(emu.LineFeedMode))
+		_, _ = w.Write([]byte(emu.LineFeedMode))
 	}()
 
 	return &Reader{

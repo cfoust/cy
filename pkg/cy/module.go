@@ -436,7 +436,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	logPane := t.Root().NewPane(cy.Ctx(), logScreen)
 	logPane.SetName("logs")
 	logPane.SetProtected(true)
-	logs.Write([]byte(emu.LineFeedMode))
+	_, _ = logs.Write([]byte(emu.LineFeedMode))
 
 	consoleWriter := zerolog.ConsoleWriter{Out: logs.Writer(), TimeFormat: time.RFC3339}
 	cy.log = log.Output(zerolog.MultiLevelWriter(consoleWriter, os.Stdout))
@@ -449,7 +449,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	cy.VM = vm
 
 	if len(options.Config) != 0 {
-		cy.loadConfig()
+		_ = cy.loadConfig()
 	}
 
 	return &cy, nil

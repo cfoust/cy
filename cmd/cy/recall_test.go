@@ -10,7 +10,7 @@ import (
 )
 
 func TestParse(t *testing.T) {
-	os.Setenv(cy.CONTEXT_ENV, "default:1")
+	_ = os.Setenv(cy.CONTEXT_ENV, "default:1")
 
 	for index, test := range []struct {
 		Value    string

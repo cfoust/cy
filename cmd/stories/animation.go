@@ -20,7 +20,7 @@ func createInitial(size geom.Size) image.Image {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	outerLayers := layout.AddMargins(ctx, placeholder.New(ctx))
-	outerLayers.Resize(size)
+	_ = outerLayers.Resize(size)
 	return outerLayers.State().Image
 }
 
@@ -52,7 +52,7 @@ func (s *AnimationStory) initialize(size geom.Size) {
 		createInitial(size),
 		23,
 	)
-	s.animator.Resize(size)
+	_ = s.animator.Resize(size)
 }
 
 func (s *AnimationStory) Update(msg tea.Msg) (taro.Model, tea.Cmd) {

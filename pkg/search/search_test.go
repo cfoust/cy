@@ -125,6 +125,7 @@ func TestPassthrough(t *testing.T) {
 
 	actions := make(chan bind.BindEvent)
 	copies := make(chan replay.CopyEvent)
+	errors := make(chan string, 1)
 	go func() {
 		events := program.Subscribe(ctx)
 
@@ -140,7 +141,8 @@ func TestPassthrough(t *testing.T) {
 					// catches that, albeit in a naive
 					// way
 					if gotEvent {
-						t.Fatalf("duplicate event: %+v", action)
+						errors <- fmt.Sprintf("duplicate event: %+v", action)
+						return
 					}
 
 					gotEvent = true
@@ -160,8 +162,12 @@ func TestPassthrough(t *testing.T) {
 	for _, key := range taro.KeysToMsg("a") {
 		program.Send(key)
 	}
-	event := <-actions
-	require.Equal(t, "foo", event.Action.Tag)
+	select {
+	case event := <-actions:
+		require.Equal(t, "foo", event.Action.Tag)
+	case err := <-errors:
+		t.Fatal(err)
+	}
 
 	program.Send(replay.ActionEvent{Type: replay.ActionCursorLeft})
 	program.Send(replay.ActionEvent{Type: replay.ActionSelect})

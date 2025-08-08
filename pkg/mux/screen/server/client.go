@@ -183,7 +183,7 @@ func (c *Client) Attach(ctx context.Context, screen mux.Screen) {
 	}
 	c.server.refreshPane(screen)
 
-	go c.pollScreen(attachment.Ctx(), screen)
+	go func() { _ = c.pollScreen(attachment.Ctx(), screen) }()
 
 	c.Notify()
 }

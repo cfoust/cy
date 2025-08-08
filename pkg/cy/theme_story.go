@@ -94,7 +94,7 @@ var initTheme stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	}
 
 	go func() {
-		client.execute(`
+		_ = client.execute(`
 (input/find @["У лукоморья дуб зелёный" "Златая цепь на дубе том" "И днём и ночью кот учёный"]
         :prompt "выбор строчки"
 	:animated false)`)

@@ -25,7 +25,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			C: msg.Width,
 		}
 		if f.anim != nil {
-			f.anim.Resize(size)
+			_ = f.anim.Resize(size)
 		}
 		f.size = size
 		f.location = geom.Vec2{

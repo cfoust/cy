@@ -164,7 +164,7 @@ func (i *imageMovement) ScrollYDelta(delta int) {
 
 // Calculate the bounds of `{min,max}Offset` and ensure `offset` falls between them.
 func (i *imageMovement) recalculateViewport() {
-	termSize := i.Terminal.Size()
+	termSize := i.Size()
 	i.minOffset = geom.Vec2{
 		R: -len(i.History()),
 		C: 0, // always, but for clarity
@@ -177,19 +177,6 @@ func (i *imageMovement) recalculateViewport() {
 	i.setOffsetX(i.offset.C)
 }
 
-func (i *imageMovement) setScrollX(offset int) {
-	before := i.viewportToTerm(i.cursor)
-	i.setOffsetX(offset)
-	after := i.termToViewport(before)
-
-	if after.C >= i.viewport.C {
-		i.cursor.C = geom.Max(i.viewport.C-1, 0)
-	} else if after.C < 0 {
-		i.cursor.C = 0
-	} else {
-		i.cursor.C = after.C
-	}
-}
 
 func (i *imageMovement) ScrollXDelta(delta int) {
 	before := i.viewportToTerm(i.cursor)
@@ -245,66 +232,7 @@ func (i *imageMovement) MoveCursorY(delta int) {
 
 // For a point that is off the screen, find the closest point that can be used
 // as the start or end point of a selection.
-func anchorToScreen(size geom.Vec2, v geom.Vec2) geom.Vec2 {
-	if v.R < 0 {
-		return geom.Vec2{}
-	}
 
-	if v.R >= size.R {
-		return geom.Vec2{
-			R: size.R - 1,
-			C: size.C - 1,
-		}
-	}
-
-	if v.C < 0 {
-		return geom.Vec2{
-			R: v.R,
-			C: 0,
-		}
-	}
-
-	if v.C > 0 {
-		return geom.Vec2{
-			R: v.R,
-			C: size.C - 1,
-		}
-	}
-
-	return v
-}
-
-func (i *imageMovement) highlightRange(state *tty.State, from, to geom.Vec2, fg, bg emu.Color) {
-	from, to = geom.NormalizeRange(from, to)
-	from = i.termToViewport(from)
-	to = i.termToViewport(to)
-
-	size := state.Image.Size()
-	if !i.isInViewport(from) {
-		from = anchorToScreen(size, from)
-	}
-	if !i.isInViewport(to) {
-		to = anchorToScreen(size, to)
-	}
-
-	var startCol, endCol int
-	for row := from.R; row <= to.R; row++ {
-		startCol = 0
-		if row == from.R {
-			startCol = from.C
-		}
-
-		endCol = size.C - 1
-		if row == to.R {
-			endCol = to.C
-		}
-
-		for col := startCol; col <= endCol; col++ {
-			state.Image[row][col].FG = fg
-			state.Image[row][col].BG = bg
-		}
-	}
-}
 
 // normalizeBoxRange normalizes box selections so that `from` is the top-left
 // coordinate and `to` is the bottom right coordinate defining the box.
@@ -403,7 +331,7 @@ func (i *imageMovement) View(
 	}
 
 	screen := i.Screen()
-	termSize := i.Terminal.Size()
+	termSize := i.Size()
 	var point geom.Vec2
 	var glyph emu.Glyph
 	var start, end geom.Vec2

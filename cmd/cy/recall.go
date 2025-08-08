@@ -11,11 +11,11 @@ var (
 	// Full references contain everything necessry to refer to a command
 	// uniquely, including which cy server it's on. They can be used outside of
 	// cy.
-	FULL_REFERENCE = regexp.MustCompile("^(?P<socket>\\w+):(?P<node>\\d+):(?P<index>-?\\d+)$")
+	FULL_REFERENCE = regexp.MustCompile(`^(?P<socket>\w+):(?P<node>\d+):(?P<index>-?\d+)$`)
 	// The latter two reference types are used within cy; the socket (and the
 	// node) are derived from the environment.
-	ABSOLUTE_REFERENCE = regexp.MustCompile("^(?P<node>\\d+):(?P<index>-?\\d+)$")
-	RELATIVE_REFERENCE = regexp.MustCompile("^(?P<index>-?\\d+)$")
+	ABSOLUTE_REFERENCE = regexp.MustCompile(`^(?P<node>\d+):(?P<index>-?\d+)$`)
+	RELATIVE_REFERENCE = regexp.MustCompile(`^(?P<index>-?\d+)$`)
 )
 
 type Reference struct {

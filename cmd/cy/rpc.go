@@ -229,7 +229,7 @@ func (s *Server) HandleRPC(conn Connection, request *P.RPCRequestMessage) {
 	}
 
 	if err != nil {
-		conn.Send(P.RPCResponseMessage{
+		_ = conn.Send(P.RPCResponseMessage{
 			Errored: err != nil,
 			Error:   err.Error(),
 		})
@@ -254,5 +254,5 @@ func (s *Server) HandleRPC(conn Connection, request *P.RPCRequestMessage) {
 		msg.Error = err.Error()
 	}
 
-	conn.Send(msg)
+	_ = conn.Send(msg)
 }

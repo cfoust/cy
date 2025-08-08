@@ -60,7 +60,7 @@ func createTestCommand(text string) CommandEvent {
 func TestCommandCreate(t *testing.T) {
 	db, err := openDB()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	ctx := context.Background()
 

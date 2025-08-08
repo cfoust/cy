@@ -52,7 +52,7 @@ func New(ctx context.Context) mux.Screen {
 func FromMarkdown(ctx context.Context, text string) mux.Screen {
 	rendered, _ := glamour.Render(text, "dark")
 	term := emu.New()
-	term.Write([]byte(emu.LineFeedMode))
+	_, _ = term.Write([]byte(emu.LineFeedMode))
 
 	// Hide the cursor
 	info, err := terminfo.Load("xterm-256color")
@@ -61,6 +61,6 @@ func FromMarkdown(ctx context.Context, text string) mux.Screen {
 	}
 	info.Fprintf(term, terminfo.CursorInvisible)
 
-	term.Write([]byte(rendered))
+	_, _ = term.Write([]byte(rendered))
 	return S.NewStaticTerminal(ctx, term)
 }

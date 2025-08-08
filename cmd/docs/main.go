@@ -41,11 +41,11 @@ func getParams() (params []Param, err error) {
 	}
 
 	var handlerFunc *janet.Function
-	vm.Callback("handler", "", func(f *janet.Function) {
+	_ = vm.Callback("handler", "", func(f *janet.Function) {
 		handlerFunc = f
 	})
 
-	vm.Callback("register", "", func(
+	_ = vm.Callback("register", "", func(
 		name string,
 		docstring string,
 		def string,
@@ -101,7 +101,7 @@ func main() {
 	}
 
 	symbols := make([]Symbol, 0)
-	cy.Callback("cy/doc", "", func(name string, docstring string, link string, macro bool) {
+	_ = cy.Callback("cy/doc", "", func(name string, docstring string, link string, macro bool) {
 		if name == "cy/env" {
 			return
 		}
@@ -115,7 +115,7 @@ func main() {
 	})
 
 	binds := make([]Binding, 0)
-	cy.Callback("cy/bind", "", func(source string, tag string, sequence []string, function string) {
+	_ = cy.Callback("cy/bind", "", func(source string, tag string, sequence []string, function string) {
 		binds = append(binds, Binding{
 			Tag:      tag,
 			Source:   source,
@@ -184,5 +184,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	os.Stdout.Write(data)
+	_, _ = os.Stdout.Write(data)
 }

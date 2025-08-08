@@ -65,7 +65,7 @@ var initWithFrame stories.InitFunc = func(ctx context.Context) (mux.Screen, erro
 
 var initNoFrame stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	_, client, screen, err := createStory(ctx)
-	client.execute(`(viewport/set-size [0 0])`)
+	_ = client.execute(`(viewport/set-size [0 0])`)
 	return screen, err
 }
 
@@ -75,7 +75,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (def cmd (cmd/new :root))
 (layout/set {:type :pane :id cmd :attached true})
 		`)
@@ -217,7 +217,7 @@ func init() {
 		if err != nil {
 			return nil, err
 		}
-		go client.execute(`(action/command-palette)`)
+		go func() { _ = client.execute(`(action/command-palette)`) }()
 		return screen, err
 	}, stories.Config{})
 
@@ -251,7 +251,7 @@ func init() {
 				if ctx.Err() != nil {
 					return
 				}
-				split.SetPercent(20 + proportion*10)
+				_ = split.SetPercent(20 + proportion*10)
 
 				time.Sleep(time.Second)
 				proportion++
@@ -356,7 +356,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (msg/toast :info "this shows up in blue")
 (msg/toast :warn "this shows up in yellow")
 (msg/toast :error "this shows up in red")
@@ -372,8 +372,8 @@ func init() {
 	) {
 		server, client, screen, err := createStory(ctx)
 		logs, _ := server.tree.Root().ChildByName("logs")
-		client.Attach(logs)
-		client.execute(`
+		_ = client.Attach(logs)
+		_ = client.execute(`
 (msg/log :info "this shows up in green")
 (msg/log :warn "this shows up in red(ish?)")
 (msg/log :error "this shows up in red")
@@ -388,7 +388,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (viewport/set-frame "puzzle")
 (param/set :root :animations @["fluid"])
 		`)
@@ -428,7 +428,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (def cmd1 (shell/new))
 (def cmd2 (shell/new))
 (layout/set
@@ -445,7 +445,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (def cmd1 (shell/new))
 (def cmd2 (shell/new))
 (def cmd3 (shell/new))
@@ -467,7 +467,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (def cmd1 (shell/new))
 (def cmd2 (shell/new))
 (layout/set
@@ -484,7 +484,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (def cmd1 (shell/new))
 (layout/set
         {:type :margins
@@ -500,7 +500,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (def cmd1 (shell/new))
 (layout/set
         {:type :margins
@@ -524,7 +524,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (def cmd1 (shell/new))
 (def cmd2 (shell/new))
 (layout/set
@@ -542,7 +542,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (def cmd (cmd/new :root :command "bash" :args ["-c" "exit 0"]))
 (pane/attach cmd)
 		`)
@@ -554,7 +554,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (def cmd (cmd/new :root :command "bash" :args ["-c" "exit 128"]))
 (pane/attach cmd)
 		`)
@@ -566,7 +566,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (def cmd (cmd/new :root))
 (layout/set {:type :pane :id cmd :attached true})
 (tree/rm cmd)
@@ -579,7 +579,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (layout/set {:type :pane :id 1234 :attached true})
 		`)
 		return screen, err
@@ -590,7 +590,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (def group (group/mkdir :root "/foo/bar/baz"))
 (layout/set {:type :pane :id group :attached true})
 		`)
@@ -602,7 +602,7 @@ func init() {
 		error,
 	) {
 		_, client, screen, err := createStory(ctx)
-		client.execute(`
+		_ = client.execute(`
 (def cmd1 (shell/new))
 (layout/set
         {:type :borders
@@ -617,8 +617,8 @@ func init() {
 		mux.Screen,
 		error,
 	) {
-		_, client, screen, err := createStory(ctx)
-		err = client.execute(`
+		_, client, screen, _ := createStory(ctx)
+		err := client.execute(`
 (def cmd1 (shell/new))
 (def cmd2 (shell/new))
 (layout/set
@@ -646,8 +646,8 @@ func init() {
 		mux.Screen,
 		error,
 	) {
-		_, client, screen, err := createStory(ctx)
-		err = client.execute(`
+		_, client, screen, _ := createStory(ctx)
+		err := client.execute(`
 (def cmd1 (shell/new))
 (def cmd2 (shell/new))
 (def cmd3 (shell/new))
@@ -680,8 +680,8 @@ func init() {
 		mux.Screen,
 		error,
 	) {
-		_, client, screen, err := createStory(ctx)
-		err = client.execute(`
+		_, client, screen, _ := createStory(ctx)
+		err := client.execute(`
 (def cmd1 (shell/new))
 (layout/set (layout/new
   (tabs
@@ -697,8 +697,8 @@ func init() {
 		mux.Screen,
 		error,
 	) {
-		_, client, screen, err := createStory(ctx)
-		err = client.execute(`
+		_, client, screen, _ := createStory(ctx)
+		err := client.execute(`
 (def cmd1 (shell/new))
 (layout/set (layout/new
   (tabs
@@ -736,8 +736,8 @@ func init() {
 		mux.Screen,
 		error,
 	) {
-		_, client, screen, err := createStory(ctx)
-		err = client.execute(`
+		_, client, screen, _ := createStory(ctx)
+		err := client.execute(`
 (def cmd1 (shell/new))
 (layout/set (layout/new
   (tabs
@@ -774,8 +774,8 @@ func init() {
 		mux.Screen,
 		error,
 	) {
-		_, client, screen, err := createStory(ctx)
-		err = client.execute(`
+		_, client, screen, _ := createStory(ctx)
+		err := client.execute(`
 (def cmd1 (shell/new))
 (layout/set (layout/new
               (bar
@@ -795,8 +795,8 @@ func init() {
 		mux.Screen,
 		error,
 	) {
-		_, client, screen, err := createStory(ctx)
-		err = client.execute(`
+		_, client, screen, _ := createStory(ctx)
+		err := client.execute(`
 (def cmd1 (cmd/new :root :command "htop"))
 (def cmd2 (cmd/new :root :command "htop"))
 (def cmd3 (cmd/new :root :command "htop"))
@@ -838,8 +838,8 @@ func init() {
 		mux.Screen,
 		error,
 	) {
-		_, client, screen, err := createStory(ctx)
-		err = client.execute(`
+		_, client, screen, _ := createStory(ctx)
+		err := client.execute(`
 (def cmd1 (shell/new))
 (layout/set (layout/new
               (bar
@@ -853,8 +853,8 @@ func init() {
 		mux.Screen,
 		error,
 	) {
-		_, client, screen, err := createStory(ctx)
-		err = client.execute(`
+		_, client, screen, _ := createStory(ctx)
+		err := client.execute(`
 (def cmd1 (shell/new))
 (def cmd2 (shell/new))
 (defn
@@ -901,8 +901,8 @@ func init() {
 		mux.Screen,
 		error,
 	) {
-		_, client, screen, err := createStory(ctx)
-		err = client.execute(`
+		_, client, screen, _ := createStory(ctx)
+		err := client.execute(`
 (def cmd1 (shell/new))
 (def cmd2 (shell/new))
 
@@ -948,8 +948,8 @@ func init() {
 		mux.Screen,
 		error,
 	) {
-		_, client, screen, err := createStory(ctx)
-		err = client.execute(`
+		_, client, screen, _ := createStory(ctx)
+		err := client.execute(`
 (def cmd1 (shell/new))
 (layout/set (layout/new
   (bar
@@ -1014,15 +1014,15 @@ func init() {
 			),
 		)
 
-		client, screen, err := createStoryClient(ctx, cy)
-		err = client.execute(fmt.Sprintf(`
+		client, screen, _ := createStoryClient(ctx, cy)
+		_ = client.execute(fmt.Sprintf(`
 (def cmd1 (shell/new))
 (layout/set (layout/new
     (split
       (attach :id cmd1)
       (pane :id %d))
   ))`, pane.Id()))
-		return screen, err
+		return screen, nil
 	}, stories.Config{
 		Input: []any{
 			stories.Wait(stories.Some),

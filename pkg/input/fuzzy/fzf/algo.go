@@ -256,13 +256,14 @@ func charClassOf(char rune) charClass {
 
 func bonusFor(prevClass charClass, class charClass) int16 {
 	if class > charNonWord {
-		if prevClass == charWhite {
+		switch prevClass {
+		case charWhite:
 			// Word boundary after whitespace
 			return bonusBoundaryWhite
-		} else if prevClass == charDelimiter {
+		case charDelimiter:
 			// Word boundary after a delimiter character
 			return bonusBoundaryDelimiter
-		} else if prevClass == charNonWord {
+		case charNonWord:
 			// Word boundary
 			return bonusBoundary
 		}

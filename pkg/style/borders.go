@@ -61,10 +61,11 @@ func FillBorder(
 	}
 
 	var top, left, bottom, right bool
-	if char == leftChar {
+	switch char {
+	case leftChar:
 		top = true
 		bottom = true
-	} else if char == topChar {
+	case topChar:
 		left = true
 		right = true
 	}

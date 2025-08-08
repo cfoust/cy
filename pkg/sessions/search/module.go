@@ -103,13 +103,6 @@ type SearchResult struct {
 	Appearances []Appearance
 }
 
-func createLookup(matches []Match) map[Address]Match {
-	lookup := make(map[Address]Match)
-	for _, match := range matches {
-		lookup[match.End] = match
-	}
-	return lookup
-}
 
 // NormalizePattern returns the given pattern if it's a valid regex,
 // otherwise it escapes all speical regex characters.
@@ -285,13 +278,7 @@ func Search(events []sessions.Event, pattern string, progress chan<- int) (resul
 					)
 				}
 			} else {
-				for _, match := range matches {
-					newMatches = append(
-						newMatches,
-						match,
-					)
-				}
-			}
+				newMatches = append(newMatches, matches...)			}
 
 			if len(nextFull) > 0 {
 				realAddress := address

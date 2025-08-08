@@ -23,16 +23,6 @@ func (s *strEscape) reset() {
 	s.args = nil
 }
 
-func (s *strEscape) put(c rune) {
-	// TODO: improve allocs with an array backed slice; bench first
-	if len(s.buf) < 256 {
-		s.buf = append(s.buf, c)
-	}
-	// Going by st, it is better to remain silent when the STR sequence is not
-	// ended so that it is apparent to users something is wrong. The length sanity
-	// check ensures we don't absorb the entire stream into memory.
-	// TODO: see what rxvt or xterm does
-}
 
 func (s *strEscape) parse() {
 	s.args = strings.Split(string(s.buf), ";")
@@ -56,10 +46,6 @@ func (s *strEscape) argString(i int, def string) string {
 	return s.args[i]
 }
 
-func (t *State) handleSTR() {
-	s := &t.str
-	s.parse()
-}
 
 func (t *State) setColorName(j Color, p *string) error {
 	if p == nil {
@@ -87,14 +73,11 @@ func (t *State) oscColorResponse(j Color, num int) {
 	if !ok {
 		return
 	}
-	t.w.Write([]byte(fmt.Sprintf("\033]%d;rgb:%02x%02x/%02x%02x/%02x%02x\007", num, r, r, g, g, b, b)))
+	_, _ = fmt.Fprintf(t.w, "\033]%d;rgb:%02x%02x/%02x%02x/%02x%02x\007", num, r, r, g, g, b, b)
 }
 
 func (t *State) osc4ColorResponse(j Color) {
-	if j < 0 {
-		t.logf("failed to fetch osc4 color %d\n", j)
-		return
-	}
+	// Color is uint32, cannot be negative - removed impossible check
 
 	k, ok := t.colorOverride[j]
 	if ok {
@@ -105,7 +88,7 @@ func (t *State) osc4ColorResponse(j Color) {
 	if !ok {
 		return
 	}
-	t.w.Write([]byte(fmt.Sprintf("\033]4;%d;rgb:%02x%02x/%02x%02x/%02x%02x\007", j, r, r, g, g, b, b)))
+	_, _ = fmt.Fprintf(t.w, "\033]4;%d;rgb:%02x%02x/%02x%02x/%02x%02x\007", j, r, r, g, g, b, b)
 }
 
 var (

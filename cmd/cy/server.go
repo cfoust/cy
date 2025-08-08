@@ -76,7 +76,7 @@ func (s *Server) handleCyClient(
 		case <-conn.Ctx().Done():
 			return nil
 		case <-cy.Ctx().Done():
-			ws.close()
+			_ = ws.close()
 			return nil
 		case packet := <-events:
 			if packet.Error != nil {
@@ -87,7 +87,7 @@ func (s *Server) handleCyClient(
 			switch packet.Contents.Type() {
 			case P.MessageTypeSize:
 				msg := packet.Contents.(*P.SizeMessage)
-				cy.Resize(geom.Vec2{
+				_ = cy.Resize(geom.Vec2{
 					R: msg.Rows,
 					C: msg.Columns,
 				})
@@ -120,7 +120,7 @@ func (s *Server) HandleWSClient(conn Connection) {
 					wsClient,
 					msg,
 				); err != nil {
-					wsClient.closeError(err)
+					_ = wsClient.closeError(err)
 					return
 				}
 				return

@@ -160,7 +160,7 @@ func (l *Layers) NewLayer(ctx context.Context, screen Screen, pos Position, opti
 		l.rerender()
 	}()
 
-	layer.Resize(l.size)
+	_ = layer.Resize(l.size)
 
 	return layer
 }
@@ -187,7 +187,7 @@ func (l *Layers) Resize(size Size) error {
 	l.Unlock()
 
 	for _, layer := range l.layers {
-		layer.Resize(size)
+		_ = layer.Resize(size)
 	}
 
 	return nil

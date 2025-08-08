@@ -237,7 +237,7 @@ func readInputs(input io.Reader) (msgs []Msg, err error) {
 	b := buf[:numBytes]
 
 	var i, w int
-	for i, w = 0, 0; i < len(b); i += w {
+	for i = 0; i < len(b); i += w {
 		var msg Msg
 		w, msg = DetectOneMsg(b[i:])
 		msgs = append(msgs, msg)

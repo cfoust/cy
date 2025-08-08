@@ -48,8 +48,6 @@ type State struct {
 	cur, curSaved Cursor
 	top, bottom   int // scroll limits
 	mode          ModeFlag
-	str           strEscape
-	csi           csiEscape
 	tabs          []bool
 	title         string
 	directory     string
@@ -454,9 +452,6 @@ func (t *State) clear(x0, y0, x1, y1 int) {
 	}
 }
 
-func (t *State) clearAll() {
-	t.clear(0, 0, t.cols-1, t.rows-1)
-}
 
 func (t *State) moveAbsTo(x, y int) {
 	if t.cur.State&cursorOrigin != 0 {
@@ -506,12 +501,6 @@ func (t *State) setScroll(top, bottom int) {
 	t.bottom = bottom
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
 
 func max(a, b int) int {
 	if a > b {
@@ -605,11 +594,8 @@ func (t *State) setMode(priv bool, set bool, args []int) {
 			case 1: // DECCKM - cursor key
 				t.modMode(set, ModeAppCursor)
 			case 5: // DECSCNM - reverse video
-				mode := t.mode
 				t.modMode(set, ModeReverse)
-				if mode != t.mode {
-					// TODO: redraw
-				}
+				// TODO: redraw when reverse mode changes
 			case 6: // DECOM - origin
 				if set {
 					t.cur.State |= cursorOrigin
@@ -629,7 +615,7 @@ func (t *State) setMode(priv bool, set bool, args []int) {
 				19, // DECPEX - printer extent
 				42, // DECNRCM - national characters
 				12: // att610 - start blinking cursor
-				break
+				// These modes are ignored
 			case 25: // DECTCEM - text cursor enable mode
 				t.modMode(!set, ModeHide)
 			case 9: // X10 mouse compatibility mode

@@ -30,7 +30,7 @@ func (ws *WSServer[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	defer c.Close(websocket.StatusInternalError, "operational fault during relay")
+	defer func() { _ = c.Close(websocket.StatusInternalError, "operational fault during relay") }()
 
 	client := WSClient[T]{
 		Lifetime: util.NewLifetime(r.Context()),
@@ -67,12 +67,10 @@ func Serve[T any](ctx context.Context, socketPath string, protocol Protocol[T], 
 	}
 
 	go func() {
-		select {
-		case <-ctx.Done():
-			httpServer.Shutdown(ctx)
-			l.Close()
-			os.Remove(socketPath)
-		}
+		<-ctx.Done()
+		_ = httpServer.Shutdown(ctx)
+		_ = l.Close()
+		_ = os.Remove(socketPath)
 	}()
 
 	return httpServer.Serve(l)

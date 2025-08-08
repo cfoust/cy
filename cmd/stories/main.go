@@ -115,14 +115,14 @@ func main() {
 		panic(fmt.Errorf("to use --cast, you must provide a single story"))
 	}
 
-	var cols, rows int = 80, 26
+	var cols, rows int
 	if haveCast {
 		cols = CLI.Width
 		rows = CLI.Height
 	} else {
 		cols, rows, err = term.GetSize(int(os.Stdin.Fd()))
 		if err != nil {
-			panic(err)
+			cols, rows = 80, 26
 		}
 	}
 
@@ -164,7 +164,7 @@ func main() {
 	renderer := renderer.NewRenderer(screen.Ctx(), info, size, screen)
 
 	if !haveCast {
-		cli.Attach(screen.Ctx(), renderer, os.Stdin, os.Stdout)
+		_ = cli.Attach(screen.Ctx(), renderer, os.Stdin, os.Stdout)
 		return
 	}
 
@@ -174,7 +174,7 @@ func main() {
 	// The recorder only stores data on Read() calls, so we need to drain
 	// it
 	go func() { _, _ = io.Copy(io.Discard, stream) }()
-	stream.Resize(size)
+	_ = stream.Resize(size)
 	<-screen.Ctx().Done()
 
 	err = sessions.WriteAsciinema(CLI.Cast, recorder.Events())

@@ -44,7 +44,6 @@ func (p *PaneNode) Children() (nodes []Node) {
 }
 
 func (p *PaneNode) SetChild(index int, node Node) {
-	return
 }
 
 func (p *PaneNode) Clone() Node {
@@ -401,7 +400,7 @@ func NewPane(
 		regionId:        nextRegionId.Add(1),
 	}
 
-	p.setID(nil)
+	_ = p.setID(nil)
 
 	return p
 }

@@ -15,7 +15,7 @@ func Lock(lockPath string) (*os.File, error) {
 	}
 
 	if err := syscall.Flock(int(fd.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
-		fd.Close()
+		_ = fd.Close()
 		return nil, ErrorLockFailed
 	}
 

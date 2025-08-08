@@ -193,8 +193,6 @@ func (v *VM) handleCallback(params Params, fiber *Fiber, out C.Janet) {
 			}
 		}
 	}()
-
-	return
 }
 
 func (v *VM) continueFiber(params Params, fiber *Fiber, in *Value) {

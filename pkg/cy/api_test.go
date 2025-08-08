@@ -27,7 +27,7 @@ func runTestFile(t *testing.T, file string) (failures []testFailure) {
 	server, create, err := NewTestServer()
 	require.NoError(t, err)
 
-	server.Callback("run-test", "", func(
+	_ = server.Callback("run-test", "", func(
 		name string,
 		// whether a client should be included
 		context bool,
@@ -105,14 +105,14 @@ func TestImport(t *testing.T) {
 	{
 		f, err := os.Create(mainFile)
 		require.NoError(t, err)
-		f.WriteString(`(import "./imported")`)
+		_, _ = f.WriteString(`(import "./imported")`)
 	}
 
 	imported := filepath.Join(d, "imported.janet")
 	{
 		f, err := os.Create(imported)
 		require.NoError(t, err)
-		f.WriteString(`
+		_, _ = f.WriteString(`
 		(param/set :root :test 1)
 		(key/action action/test "" (pp "hello"))
 		`)

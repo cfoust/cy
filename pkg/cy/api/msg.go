@@ -66,7 +66,7 @@ func (m *MsgModule) Log(level *janet.Value, text string) error {
 		return err
 	}
 
-	var logLevel zerolog.Level = zerolog.InfoLevel
+	logLevel := zerolog.InfoLevel
 	switch levelValue {
 	case toasts.ToastLevelInfo:
 		logLevel = zerolog.InfoLevel

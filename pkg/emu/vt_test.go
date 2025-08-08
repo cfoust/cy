@@ -70,17 +70,17 @@ func TestNewline(t *testing.T) {
 func TestRoot(t *testing.T) {
 	term := New()
 	term.Resize(geom.Vec2{C: 6, R: 2})
-	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("foo\nbar"))
+	_, _ = term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte("foo\nbar"))
 	require.Equal(t, geom.Vec2{}, term.Root())
-	term.Write([]byte("\nbaz"))
+	_, _ = term.Write([]byte("\nbaz"))
 	require.Equal(t, geom.Vec2{
 		R: 1,
 		C: 0,
 	}, term.Root())
 
 	// Wrap onto screen
-	term.Write([]byte("foobar\n"))
+	_, _ = term.Write([]byte("foobar\n"))
 	require.Equal(t, geom.Vec2{
 		R: 2,
 		C: 6,
@@ -88,8 +88,8 @@ func TestRoot(t *testing.T) {
 
 	// Root() should return result from main screen, alt screen does not
 	// have root
-	term.Write([]byte(EnterAltScreen))
-	term.Write([]byte("test\ntest\ntest"))
+	_, _ = term.Write([]byte(EnterAltScreen))
+	_, _ = term.Write([]byte("test\ntest\ntest"))
 	require.Equal(t, geom.Vec2{
 		R: 2,
 		C: 6,
@@ -113,8 +113,8 @@ func TestTabsBug(t *testing.T) {
 	term := New()
 	// This is the simplest example of a bug that I encountered with tabs.
 	term.Resize(geom.Vec2{C: 172, R: 3})
-	term.Write([]byte(LineFeedMode))
-	term.Write([]byte("LICENSE\t\tcmd\t\tdaemon.log\terr.log\t\tgo.sum\t\tmain\t\tscreenshot.gif\tstories.log\ttrace.prof\r\n"))
+	_, _ = term.Write([]byte(LineFeedMode))
+	_, _ = term.Write([]byte("LICENSE\t\tcmd\t\tdaemon.log\terr.log\t\tgo.sum\t\tmain\t\tscreenshot.gif\tstories.log\ttrace.prof\r\n"))
 	first := term.Screen()[0].String()
 	index := strings.Index(first, "trace.prof")
 	require.NotEqual(t, -1, index)
@@ -123,7 +123,7 @@ func TestTabsBug(t *testing.T) {
 func TestResizeBug(t *testing.T) {
 	term := New(WithoutHistory)
 	term.Resize(geom.Vec2{C: 6, R: 2})
-	term.Write([]byte("foobarbaz"))
+	_, _ = term.Write([]byte("foobarbaz"))
 	term.Resize(geom.Vec2{C: 6, R: 1})
 	term.Resize(geom.Vec2{C: 6, R: 2})
 }

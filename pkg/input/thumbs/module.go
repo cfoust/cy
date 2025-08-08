@@ -21,7 +21,6 @@ type Thumbs struct {
 	// The initial state of the screen before thumbs was started
 	initial image.Image
 	result  chan<- interface{}
-	size    geom.Vec2
 	origin  geom.Vec2
 
 	render    *taro.Renderer

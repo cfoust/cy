@@ -132,8 +132,8 @@ func (c *Client) Write(data []byte) (n int, err error) {
 }
 
 func (c *Client) Resize(size geom.Vec2) error {
-	c.muxClient.Resize(size)
-	c.renderer.Resize(size)
+	_ = c.muxClient.Resize(size)
+	_ = c.renderer.Resize(size)
 	return nil
 }
 

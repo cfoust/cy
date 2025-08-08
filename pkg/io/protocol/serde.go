@@ -19,7 +19,7 @@ func Decode(data []byte) (Message, error) {
 		return nil, err
 	}
 
-	var msg Message = nil
+	var msg Message
 	switch type_ {
 	case MessageTypeHandshake:
 		msg = &HandshakeMessage{}

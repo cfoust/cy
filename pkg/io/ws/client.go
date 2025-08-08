@@ -130,7 +130,7 @@ func Connect[T any](ctx context.Context, protocol Protocol[T], socketPath string
 
 	go func() {
 		<-client.Ctx().Done()
-		c.Close(websocket.StatusNormalClosure, "")
+		_ = c.Close(websocket.StatusNormalClosure, "")
 	}()
 
 	return &client, nil

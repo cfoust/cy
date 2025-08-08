@@ -46,7 +46,6 @@ type City struct {
 	screen   *screenShader
 	building *buildingShader
 
-	buildingSize float32
 	screenBounds R.Rect
 
 	seed int64
@@ -134,7 +133,7 @@ func (c *City) Update(delta time.Duration) image.Image {
 
 	c.last = delta
 
-	t := time.Now().Sub(c.start).Seconds() / 3
+	t := time.Since(c.start).Seconds() / 3
 	r := c.rCtx
 	d := math.Min(lerp(t/5.0, 0, 5.0), 5.0)
 	camera := r.Camera()

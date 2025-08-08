@@ -27,6 +27,6 @@ func NewLayout(
 	)
 
 	// TODO(cfoust): 08/02/24 no error handling on this?
-	l.Set(*args.Layout)
+	_ = l.Set(*args.Layout)
 	return l
 }

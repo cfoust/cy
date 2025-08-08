@@ -101,7 +101,7 @@ func (r *Replay) waitProgress() tea.Cmd {
 }
 
 func (r *Replay) handleSearchResult(msg SearchResultEvent) tea.Cmd {
-	if r.isWaiting != true {
+	if !r.isWaiting {
 		return nil
 	}
 

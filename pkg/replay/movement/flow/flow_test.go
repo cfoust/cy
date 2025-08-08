@@ -480,14 +480,14 @@ func TestGetRoot(t *testing.T) {
 	r := createFlowTest(s.Terminal(), size)
 
 	// Before beginning
-	root, ok := r.getRoot(geom.Vec2{R: -1, C: 0})
+	_, ok := r.getRoot(geom.Vec2{R: -1, C: 0})
 	require.False(t, ok)
 
 	// At or after end is ok
-	root, ok = r.getRoot(geom.Vec2{R: 6, C: 3})
+	_, ok = r.getRoot(geom.Vec2{R: 6, C: 3})
 	require.True(t, ok)
 
-	root, ok = r.getRoot(geom.Vec2{C: 1})
+	root, ok := r.getRoot(geom.Vec2{C: 1})
 	require.True(t, ok)
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, root)
 
@@ -495,7 +495,7 @@ func TestGetRoot(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, geom.Vec2{R: 2, C: 0}, root)
 
-	root, ok = r.getRoot(geom.Vec2{C: 3})
+	_, ok = r.getRoot(geom.Vec2{C: 3})
 	require.True(t, ok)
 }
 

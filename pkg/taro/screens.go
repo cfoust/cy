@@ -23,7 +23,6 @@ func (s ScreenUpdate) Wait() Cmd {
 
 type ScreenWatcher struct {
 	util.Lifetime
-	wait  *util.Lifetime
 	queue chan ScreenUpdate
 }
 

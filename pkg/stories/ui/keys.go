@@ -69,7 +69,7 @@ func (k *Keys) View(state *tty.State) {
 			Background(lipgloss.Color("#EAA549")).
 			Foreground(lipgloss.Color("#20111B"))
 
-		delta := time.Now().Sub(press.stamp)
+		delta := time.Since(press.stamp)
 
 		if delta > 400*time.Millisecond || i != last {
 			style = k.render.NewStyle().

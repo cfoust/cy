@@ -18,8 +18,8 @@ func createThumbStory(
 	patterns []*regexp.Regexp,
 ) (mux.Screen, error) {
 	t := emu.New()
-	t.Write([]byte(emu.LineFeedMode))
-	t.Write([]byte(content))
+	_, _ = t.Write([]byte(emu.LineFeedMode))
+	_, _ = t.Write([]byte(content))
 
 	var (
 		i    = image.Capture(t)

@@ -74,7 +74,7 @@ func (r *Renderer) poll(ctx context.Context) error {
 			tty.Capture(r.raw),
 			r.screen.State(),
 		)
-		r.raw.Write(changes)
+		_, _ = r.raw.Write(changes)
 		_, err := r.w.Write(changes)
 		if err != nil {
 			return err
@@ -100,7 +100,7 @@ func NewRenderer(
 		emu.WithSize(initialSize),
 		emu.WithoutHistory,
 	)
-	screen.Resize(initialSize)
+	_ = screen.Resize(initialSize)
 	renderer := &Renderer{
 		raw:    target,
 		screen: screen,
@@ -109,7 +109,7 @@ func NewRenderer(
 		info:   info,
 	}
 
-	go renderer.poll(ctx)
+	go func() { _ = renderer.poll(ctx) }()
 
 	return renderer
 }

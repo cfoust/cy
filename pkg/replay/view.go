@@ -264,7 +264,6 @@ func (r *Replay) renderSearch(
 	var (
 		p               = r.params
 		size            = state.Image.Size()
-		prompt          = "search-forward"
 		leftStatusStyle = r.getLeftStatusStyle()
 	)
 
@@ -297,7 +296,10 @@ func (r *Replay) renderSearch(
 			),
 		)
 		return
-	} else if r.isEmpty {
+	}
+	
+	var prompt string
+	if r.isEmpty {
 		prompt = "no matches found"
 	} else {
 		prompt = "/"

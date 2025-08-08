@@ -184,8 +184,6 @@ func (l *ColorMap) State() *tty.State {
 }
 
 func (l *ColorMap) Send(msg mux.Msg) {
-	l.RLock()
-	l.RUnlock()
 	l.screen.Send(msg)
 }
 
