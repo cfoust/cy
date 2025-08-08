@@ -19,7 +19,7 @@ jobs:
 
       - name: Install zsh
         # This is used for the TestDefaultShell test
-        run: sudo apt-get install -qqy zsh libx11-dev
+        run: sudo apt-get install -qqy zsh libx11-dev just
 
       - name: Install lint tools
         run: |
@@ -29,14 +29,6 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.3.1
-
-      - name: Generate and format code
-        run: |
-          go generate ./cmd/... ./pkg/...
-          go fmt ./cmd/... ./pkg/...
-          git add .
-          git diff HEAD
-          git diff-index --quiet --cached HEAD --
 
       - name: Generate and format code
         run: |
