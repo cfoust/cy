@@ -64,6 +64,7 @@ type Shader interface {
 
 type LineFragmentShader interface {
 	Fragment(
+		gl_FragCoord gl.Vec2,
 		i0, i1 int,
 		v0, v1 gl.Vec3,
 		t float32,
@@ -75,6 +76,7 @@ type DefaultLineFragmentShader struct{}
 var _ LineFragmentShader = (*DefaultLineFragmentShader)(nil)
 
 func (f DefaultLineFragmentShader) Fragment(
+	gl_FragCoord gl.Vec2,
 	i0, i1 int,
 	v0, v1 gl.Vec3,
 	t float32,
