@@ -21,6 +21,7 @@ import (
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay"
 	"github.com/cfoust/cy/pkg/replay/replayable"
+	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/util"
 
 	"github.com/rs/zerolog"
@@ -457,15 +458,25 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	vm, err := janet.New(ctx)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error initializing Janet: %s",
-			err.Error(),
+			"error initializing Janet: %w",
+			err,
 		)
 	}
 	cy.VM = vm
 
+	stateDir := options.StateDir
+	if stateDir != "" {
+		if err := sessions.EnsureDirectory(stateDir); err != nil {
+			return nil, fmt.Errorf(
+				"error initializing persistent parameter store: %w",
+				err,
+			)
+		}
+	}
+
 	persistentStore, err := params.NewPersistentStore(
 		vm,
-		options.StateDir,
+		stateDir,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -478,8 +489,8 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	err = cy.initAPI()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"error initializing Janet modules: %s",
-			err.Error(),
+			"error initializing Janet modules: %w",
+			err,
 		)
 	}
 

@@ -64,10 +64,10 @@ func (t *TestServer) Release() {
 }
 
 func setupServer(t *testing.T) *TestServer {
-	dir, err := os.MkdirTemp("", "example")
-	require.NoError(t, err)
-
-	socketPath := filepath.Join(dir, "socket")
+	var (
+		dir        = t.TempDir()
+		socketPath = filepath.Join(dir, "socket")
+	)
 
 	cy, err := cy.Start(context.Background(), cy.Options{
 		DataDir:  filepath.Join(t.TempDir(), "data"),

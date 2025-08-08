@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	dbUtil "github.com/cfoust/cy/pkg/db"
 	"github.com/cfoust/cy/pkg/db/params"
 	"github.com/cfoust/cy/pkg/janet"
 
@@ -26,21 +27,34 @@ func NewPersistentStore(
 	vm *janet.VM,
 	stateDir string,
 ) (*PersistentStore, error) {
-	var db *params.DB
-	var err error
-
 	if stateDir == "" {
-		db, err = params.Create(":memory:")
-	} else {
-		dbPath := filepath.Join(stateDir, "params.db")
-
-		if _, err = os.Stat(dbPath); os.IsNotExist(err) {
-			db, err = params.Create(dbPath)
-		} else {
-			db, err = params.Open(dbPath)
-		}
+		db, err := Create(":memory:")
+		return &PersistentStore{
+			db: db,
+			vm: vm,
+		}, err
 	}
 
+	dbPath := filepath.Join(stateDir, "params.db")
+	sqlDB, err := dbUtil.OpenOrCreate(
+		dbPath,
+		func(path string) (*sql.DB, error) {
+			db, err := sql.Open("sqlite3", path+"?_foreign_keys=on")
+			if err != nil {
+				return nil, err
+			}
+
+			if _, err := db.Exec(params.SCHEMA); err != nil {
+				_ = db.Close()
+				return nil, err
+			}
+
+			return db, nil
+		},
+		func(path string) (*sql.DB, error) {
+			return sql.Open("sqlite3", path+"?_foreign_keys=on")
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to initialize params database: %w",
@@ -49,7 +63,7 @@ func NewPersistentStore(
 	}
 
 	return &PersistentStore{
-		db: db,
+		db: params.NewDB(sqlDB),
 		vm: vm,
 	}, nil
 }
@@ -132,4 +146,36 @@ func (p *PersistentStore) Get(
 	}
 
 	return value, true, nil
+}
+
+// Create creates a new parameter database with schema at the given path
+func Create(filename string) (*params.DB, error) {
+	db, err := sql.Open("sqlite3", filename+"?_foreign_keys=on")
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := db.Exec(params.SCHEMA); err != nil {
+		_ = db.Close()
+		return nil, err
+	}
+
+	return params.NewDB(db), nil
+}
+
+// Open opens an existing parameter database at the given path
+func Open(filename string) (*params.DB, error) {
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return nil, fmt.Errorf(
+			"%s does not exist",
+			filename,
+		)
+	}
+
+	db, err := sql.Open("sqlite3", filename+"?_foreign_keys=on")
+	if err != nil {
+		return nil, err
+	}
+
+	return params.NewDB(db), nil
 }
