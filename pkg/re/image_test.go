@@ -34,7 +34,7 @@ func TestFindImage(t *testing.T) {
 		{
 			name:    "two at beginning",
 			from:    geom.Vec2{},
-			to:      geom.Vec2{R: 1, C: 4},
+			to:      geom.Vec2{R: 2, C: 4},
 			pattern: regexp.MustCompile("foo"),
 			expected: []search.Selection{
 				{
@@ -50,7 +50,7 @@ func TestFindImage(t *testing.T) {
 		{
 			name:    "bar on entire window",
 			from:    geom.Vec2{},
-			to:      geom.Vec2{R: 1, C: 10},
+			to:      geom.Vec2{R: 2, C: 10},
 			pattern: regexp.MustCompile("bar"),
 			expected: []search.Selection{
 				{
@@ -66,7 +66,7 @@ func TestFindImage(t *testing.T) {
 		{
 			name:    "just in second row",
 			from:    geom.Vec2{R: 1, C: 0},
-			to:      geom.Vec2{R: 1, C: 10},
+			to:      geom.Vec2{R: 2, C: 10},
 			pattern: regexp.MustCompile("bar"),
 			expected: []search.Selection{
 				{
@@ -78,7 +78,7 @@ func TestFindImage(t *testing.T) {
 		{
 			name:    "cjk",
 			from:    geom.Vec2{R: 0, C: 0},
-			to:      geom.Vec2{R: 3, C: 10},
+			to:      geom.Vec2{R: 4, C: 10},
 			pattern: regexp.MustCompile("还"),
 			expected: []search.Selection{
 				{
@@ -90,7 +90,7 @@ func TestFindImage(t *testing.T) {
 		{
 			name:    "across rows",
 			from:    geom.Vec2{R: 0, C: 0},
-			to:      geom.Vec2{R: 1, C: 10},
+			to:      geom.Vec2{R: 2, C: 10},
 			pattern: regexp.MustCompile("ffoo"),
 			expected: []search.Selection{
 				{

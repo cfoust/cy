@@ -23,7 +23,7 @@ func (l *imageReader) Next() (glyph emu.Glyph, loc geom.Vec2, done bool) {
 		next = l.next
 		i    = l.i
 	)
-	if next.R >= len(i) || next.R > l.to.R {
+	if next.R >= len(i) || next.R >= l.to.R {
 		done = true
 		return
 	}
@@ -51,6 +51,8 @@ func (l *imageReader) Reset() {
 	l.next = l.from
 }
 
+// FindAllImage finds all matches of `pattern` in `i` in the region specified by
+// `from` and `to`. `to` is exclusive.
 func FindAllImage(
 	pattern *regexp.Regexp,
 	i image.Image,
