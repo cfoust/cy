@@ -2,6 +2,7 @@ package cy
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/cfoust/cy/pkg/emu"
@@ -9,6 +10,7 @@ import (
 	"github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
+	"github.com/cfoust/cy/pkg/mux/screen/placeholder"
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/stories"
 )
@@ -43,7 +45,6 @@ func createStoryClient(ctx context.Context, cy *Cy) (client *Client, screen mux.
 		params.New(),
 		emu.WithoutHistory,
 	)
-
 	return
 }
 
@@ -983,6 +984,52 @@ func init() {
 			stories.Wait(stories.ABit),
 			stories.Type("enter"),
 			stories.Wait(stories.ALot),
+		},
+	})
+
+	stories.Register("input/thumbs", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		cy, err := createStoryServer(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		text := `
+# Thumb-ables
+
+* File paths: /var/log/nginx.log and /tmp/test.txt
+* IP addresses: 127.0.0.1 and 192.168.1.100
+* Git SHA: a1b2c3d4e5f6 and full hash 973113963b491874ab2e372ee60d4b4cb75f717c
+* UUID: 123e4567-e89b-12d3-a456-426655440000
+* Colors: #ff0000, #00ff00, #0000ff
+* URLS: https://news.ycombinator.com/
+`
+		pane := cy.tree.Root().NewPane(
+			ctx,
+			placeholder.FromMarkdown(
+				ctx,
+				text,
+			),
+		)
+
+		client, screen, err := createStoryClient(ctx, cy)
+		err = client.execute(fmt.Sprintf(`
+(def cmd1 (shell/new))
+(layout/set (layout/new
+    (split
+      (attach :id cmd1)
+      (pane :id %d))
+  ))`, pane.Id()))
+		return screen, err
+	}, stories.Config{
+		Input: []any{
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "f"),
+			stories.Wait(stories.More),
+			stories.Type("s"),
+			stories.Wait(stories.More),
 		},
 	})
 }

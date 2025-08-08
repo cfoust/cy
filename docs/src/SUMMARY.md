@@ -72,6 +72,8 @@
 
   - [Text](./user-input/text.md)
 
+  - [Thumbs](./user-input/thumbs.md)
+
 - [Notifications](./notifications.md)
 
 # Reference

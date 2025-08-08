@@ -4,9 +4,12 @@ import (
 	"context"
 	_ "embed"
 
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
+	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/taro"
+	"github.com/xo/terminfo"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
@@ -44,4 +47,20 @@ func New(ctx context.Context) mux.Screen {
 	return taro.New(ctx, &Markdown{
 		render: taro.NewRenderer(),
 	})
+}
+
+func FromMarkdown(ctx context.Context, text string) mux.Screen {
+	rendered, _ := glamour.Render(text, "dark")
+	term := emu.New()
+	term.Write([]byte(emu.LineFeedMode))
+
+	// Hide the cursor
+	info, err := terminfo.Load("xterm-256color")
+	if err != nil {
+		return nil
+	}
+	info.Fprintf(term, terminfo.CursorInvisible)
+
+	term.Write([]byte(rendered))
+	return S.NewStaticTerminal(ctx, term)
 }

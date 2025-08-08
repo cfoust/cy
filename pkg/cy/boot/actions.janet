@@ -465,7 +465,7 @@ For example:
 
 (key/action
   action/insert-thumb
-  "Select a thumb and insert it."
+  "Select a thumb and insert it into the current pane."
   (var choice (input/thumbs))
   (when (nil? choice) (break))
   (pane/send-keys (pane/current) @[choice]))

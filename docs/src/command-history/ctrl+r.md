@@ -2,7 +2,7 @@
 
 Hitting {{bind :root ctrl+a ctrl+r}} allows you to choose a command from your command history and insert it into your current pane. This works just like [fzf](https://github.com/junegunn/fzf), [atuin](https://atuin.sh/), [hstr](https://github.com/dvorka/hstr), et al, but it also gives you a preview of what the screen looked like when you executed that command.
 
-You can also use the same interface to open a particular command from your history in [replay mode](/replay-mode.md) using the {{bind :root ctrl+a f}} binding. In effect, you can jump back to the exact moment in time you executed any command.
+You can also use the same interface to open a particular command from your history in [replay mode](/replay-mode.md) using the {{api action/jump-history-command}} action. In effect, you can jump back to the exact moment in time you executed any command.
 
 ### Why not bind this directly in the shell?
 

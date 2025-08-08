@@ -99,9 +99,11 @@ func (t *Terminal) Resize(size Size) error {
 	t.size = size
 	t.terminal.Resize(size)
 
-	err := t.stream.Resize(size)
-	if err != nil {
-		return err
+	if t.stream != nil {
+		err := t.stream.Resize(size)
+		if err != nil {
+			return err
+		}
 	}
 
 	t.Notify()
@@ -113,6 +115,10 @@ func (t *Terminal) IsAltMode() bool {
 }
 
 func (t *Terminal) Send(msg mux.Msg) {
+	if t.stream == nil {
+		return
+	}
+
 	input := make([]byte, 0)
 	mode := t.terminal.Mode()
 
@@ -200,4 +206,16 @@ func NewTerminal(
 	}()
 
 	return t
+}
+
+func NewStaticTerminal(
+	ctx context.Context,
+	term emu.Terminal,
+) *Terminal {
+	return &Terminal{
+		UpdatePublisher: mux.NewPublisher(),
+		terminal:        term,
+		render:          taro.NewRenderer(),
+		params:          params.New(),
+	}
 }
