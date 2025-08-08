@@ -1,13 +1,21 @@
 package thumbs
 
 import (
+	"regexp"
+
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
+	"github.com/cfoust/cy/pkg/re"
 	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
-// getRegions gets all of the contiguous screen regions that should be checked for matches. This is useful only on image.Images produced by capturing the output of a LayoutEngine, since the Write field of each emu.Glyph will contain the ID of a pane.
+type thumbMatch []geom.Vec2
+
+// getRegions gets all of the contiguous screen regions that should be checked
+// for matches. This is useful only on image.Images produced by capturing the
+// output of a LayoutEngine, since the Write field of each emu.Glyph will
+// contain the ID of a pane.
 func getRegions(i image.Image) (regions []search.Selection) {
 	size := i.Size()
 
@@ -46,6 +54,58 @@ func getRegions(i image.Image) (regions []search.Selection) {
 
 	for _, pane := range panes {
 		regions = append(regions, pane)
+	}
+
+	return
+}
+
+// convertMatch turns the match inside of a region into a sequence of cells.
+// This is because there might be arbitrarily many regions on the screen at
+// once, in which we want to check for wrapped matches. convertMatch
+// "normalizes" all discontiguous matches so that they're just a dumb sequence
+// of cells.
+func convertMatch(region, raw search.Selection) (match thumbMatch) {
+	var (
+		startCol = region.From.C
+		endCol   = region.To.C
+		pos      = raw.From
+	)
+
+	for {
+		match = append(match, pos)
+
+		pos.C++
+		if pos == raw.To {
+			break
+		}
+
+		if pos.C < endCol {
+			continue
+		}
+
+		pos.R++
+		pos.C = startCol
+	}
+	return
+}
+
+func findMatches(
+	pattern *regexp.Regexp,
+	i image.Image,
+	region search.Selection,
+) (matches []thumbMatch) {
+	rawMatches := re.FindAllImage(
+		pattern,
+		i,
+		region.From,
+		region.To,
+	)
+
+	for _, match := range rawMatches {
+		matches = append(
+			matches,
+			convertMatch(region, match),
+		)
 	}
 
 	return
