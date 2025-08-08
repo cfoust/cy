@@ -38,8 +38,7 @@ func (l *imageReader) Next() (glyph emu.Glyph, loc geom.Vec2, done bool) {
 	loc = next
 	l.next.C += glyph.Width()
 
-	// to is inclusive
-	if l.next.C <= l.to.C {
+	if l.next.C < l.to.C {
 		return
 	}
 
