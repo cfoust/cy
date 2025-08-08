@@ -1,6 +1,7 @@
 package re
 
 import (
+	"io"
 	"regexp"
 
 	"github.com/cfoust/cy/pkg/emu"
@@ -54,7 +55,14 @@ func findAllLine(
 	r := &lineReader{lines: []emu.Line{line}}
 	g := &glyphReader{reader: r}
 
-	matches := findAll(pattern, g, count)
+	matches := findAll(func(r io.RuneReader) [][]int {
+		loc := pattern.FindReaderIndex(r)
+		if len(loc) == 0 {
+			return nil
+		}
+
+		return [][]int{loc}
+	}, g, count)
 	if len(matches) == 0 {
 		return nil
 	}

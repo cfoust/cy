@@ -1,6 +1,7 @@
 package re
 
 import (
+	"io"
 	"regexp"
 
 	"github.com/cfoust/cy/pkg/emu"
@@ -51,6 +52,31 @@ func (l *imageReader) Reset() {
 	l.next = l.from
 }
 
+func findAllSubmatch(pattern *regexp.Regexp) func(r io.RuneReader) [][]int {
+	return func(r io.RuneReader) [][]int {
+		loc := pattern.FindReaderSubmatchIndex(r)
+		if len(loc) == 0 {
+			return nil
+		}
+
+		if len(loc) == 2 {
+			return [][]int{loc}
+		}
+
+		// Just take submatches rather than whole pattern if
+		// that's what's returned
+		results := make([][]int, 0, (len(loc)-2)/2)
+		for i := 2; i+1 < len(loc); i += 2 {
+			results = append(
+				results,
+				loc[i:i+2],
+			)
+		}
+
+		return results
+	}
+}
+
 // FindAllImage finds all matches of `pattern` in `i` in the region specified by
 // `from` and `to`. `to` is exclusive.
 func FindAllImage(
@@ -66,7 +92,7 @@ func FindAllImage(
 	}
 	g := &glyphReader{reader: r}
 
-	matches := findAll(pattern, g, -1)
+	matches := findAll(findAllSubmatch(pattern), g, -1)
 	if len(matches) == 0 {
 		return nil
 	}

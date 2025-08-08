@@ -96,12 +96,14 @@ func translateMatches(
 }
 
 func findAll(
-	pattern *regexp.Regexp,
+	find func(io.RuneReader) [][]int,
 	g *glyphReader,
 	count int,
 ) (matches [][]int) {
 	var last int
 	for {
+		// Reset the reader back to one cell past the beginning of the
+		// last match
 		if len(matches) > 0 {
 			last = matches[len(matches)-1][0]
 
@@ -112,17 +114,19 @@ func findAll(
 		}
 
 		offset := g.offset
-		loc := pattern.FindReaderIndex(g)
-		if loc == nil {
+		loc := find(g)
+		if len(loc) == 0 {
 			return
 		}
 
-		loc[0] += offset
-		loc[1] += offset
-		matches = append(matches, loc)
+		for _, match := range loc {
+			match[0] += offset
+			match[1] += offset
+			matches = append(matches, match)
 
-		if count != -1 && len(matches) == count {
-			return
+			if count != -1 && len(matches) == count {
+				return
+			}
 		}
 	}
 }
