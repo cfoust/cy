@@ -19,7 +19,7 @@ generate:
 run:
   go run ./cmd/cy/... -L dev
 
-serve-docs:
+docs:
   cd docs && mdbook serve
 
 api:
