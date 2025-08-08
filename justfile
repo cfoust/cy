@@ -7,6 +7,9 @@ install:
 test:
   go test ./pkg/... ./cmd/...
 
+stories:
+  go run ./cmd/stories/...
+
 format:
   go fmt ./pkg/... ./cmd/...
 
@@ -15,3 +18,6 @@ run:
 
 serve-docs:
   cd docs && mdbook serve
+
+api:
+  go run ./cmd/docs/main.go

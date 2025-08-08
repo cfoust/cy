@@ -3,11 +3,13 @@ package api
 import (
 	"context"
 	"math/rand"
+	"strings"
 
 	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/input/fuzzy"
 	"github.com/cfoust/cy/pkg/input/text"
+	"github.com/cfoust/cy/pkg/input/thumbs"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
@@ -272,6 +274,114 @@ func (i *InputModule) Text(
 	outerLayers.NewLayer(
 		text.Ctx(),
 		text,
+		screen.PositionTop,
+		screen.WithInteractive,
+		screen.WithOpaque,
+	)
+
+	select {
+	case match := <-result:
+		return match, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+type ThumbsParams struct {
+	Animated *bool
+	Alphabet *string
+	Regexp   *[]string
+}
+
+func (i *InputModule) Thumbs(
+	ctx context.Context,
+	context interface{},
+	named *janet.Named[ThumbsParams],
+) (interface{}, error) {
+	params := named.Values()
+
+	client, err := getClient(context)
+	if err != nil {
+		return nil, err
+	}
+
+	outerLayers := client.OuterLayers()
+	state := outerLayers.State()
+	initial := state.Image
+
+	// Extract text lines from the current screen
+	screenLines := make([]string, state.Image.Size().R)
+	for r := 0; r < state.Image.Size().R; r++ {
+		var lineBuilder strings.Builder
+		for c := 0; c < state.Image.Size().C; c++ {
+			cell := state.Image.Cell(c, r)
+			lineBuilder.WriteRune(cell.Char)
+		}
+		screenLines[r] = strings.TrimRightFunc(lineBuilder.String(), func(r rune) bool {
+			return r == ' ' || r == '\t'
+		})
+	}
+
+	result := make(chan interface{})
+	settings := []thumbs.Setting{
+		thumbs.WithResult(result),
+		thumbs.WithInitial(initial),
+		thumbs.WithParams(client.Params()),
+		thumbs.WithInline(
+			geom.Vec2{R: 0, C: 0},
+			state.Image.Size(),
+		),
+	}
+
+	// Handle custom regexps
+	var customPatterns []string
+	if params.Regexp != nil {
+		customPatterns = *params.Regexp
+	}
+
+	// Handle custom alphabet
+	if params.Alphabet != nil {
+		settings = append(
+			settings,
+			thumbs.WithAlphabet(*params.Alphabet),
+		)
+	}
+
+	// Handle animation
+	if (params.Animated == nil || (*params.Animated) == true) && client.Params().Animate() {
+		var animations []anim.Creator
+		for _, a := range client.Params().Animations() {
+			if creator, ok := anim.Animations[a]; ok {
+				animations = append(animations, creator)
+			}
+		}
+
+		// Add all of the defaults if the setting was empty
+		if len(animations) == 0 {
+			for _, creator := range anim.Animations {
+				animations = append(animations, creator)
+			}
+		}
+
+		creator := animations[rand.Int()%len(animations)]
+		settings = append(settings, thumbs.WithAnimation(initial, creator))
+	}
+
+	if client.Params().SkipInput() {
+		// For testing, just return empty string
+		return "", nil
+	}
+
+	thumbsProgram := thumbs.New(
+		ctx,
+		screenLines,
+		customPatterns,
+		settings...,
+	)
+
+	outerLayers.NewLayer(
+		thumbsProgram.Ctx(),
+		thumbsProgram,
 		screen.PositionTop,
 		screen.WithInteractive,
 		screen.WithOpaque,

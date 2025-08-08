@@ -68,6 +68,9 @@ just run
 
 # Serve documentation
 just serve-docs
+
+# Get a JSON description of all API functions
+just api
 ```
 
 ## Development Workflow
