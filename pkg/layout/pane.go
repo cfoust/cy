@@ -3,7 +3,9 @@ package layout
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/janet"
@@ -18,6 +20,8 @@ import (
 
 	"github.com/sasha-s/go-deadlock"
 )
+
+var nextRegionId atomic.Uint32
 
 type PaneNode struct {
 	Attached     bool
@@ -135,6 +139,9 @@ type Pane struct {
 
 	isAttached   bool
 	removeOnExit bool
+
+	// A unique ID for this Pane that is _only_ used for thumbs
+	regionId uint32
 }
 
 var _ mux.Screen = (*Pane)(nil)
@@ -193,6 +200,16 @@ func (p *Pane) State() *tty.State {
 		cursor := state.Cursor
 		state.CursorVisible = false
 		style.GhostCursor(state.Image, cursor.R, cursor.C)
+	}
+
+	// Store a unique number into the WriteID so consumers of the
+	// LayoutEngine can detect pane regions
+	writeId := emu.WriteID(p.regionId)
+	size := state.Image.Size()
+	for row := range size.R {
+		for col := range size.C {
+			state.Image[row][col].Write = writeId
+		}
 	}
 
 	return state
@@ -381,6 +398,7 @@ func NewPane(
 		tree:            tree,
 		server:          server,
 		params:          params,
+		regionId:        nextRegionId.Add(1),
 	}
 
 	p.setID(nil)
