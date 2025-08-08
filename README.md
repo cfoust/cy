@@ -24,6 +24,6 @@
 Features:
 
 - [Replay and search through](https://cfoust.github.io/cy/replay-mode.html) any terminal session
-- [Shell command history](https://cfoust.github.io/cy/command-history.md) that lets you insert (and [revisit](https://cfoust.github.io/cy/command-history/ctrl+r.md#ctrlr)) any command you've ever run
 - [Flexible configuration](https://cfoust.github.io/cy/configuration.html) with [Janet](https://janet-lang.org/), a simple imperative programming language
-- Built-in [fuzzy finding](https://cfoust.github.io/cy/fuzzy-finding.html) using concepts from [fzf](https://github.com/junegunn/fzf)
+- Built-in [fuzzy finding](https://cfoust.github.io/cy/user-input/fuzzy-finding.html) and [thumbs](https://cfoust.github.io/cy/user-input/thumbs.html) support
+- [Shell command history](https://cfoust.github.io/cy/command-history.html) that lets you insert (and [revisit](https://cfoust.github.io/cy/command-history/ctrl+r.html)) any command you've ever run
