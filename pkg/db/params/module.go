@@ -2,12 +2,15 @@ package params
 
 import (
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+//go:embed schema.sql
+var SCHEMA string
 
 type DB struct {
 	*sql.DB
@@ -25,41 +28,38 @@ func newDB(db *sql.DB) *DB {
 	}
 }
 
-func OpenDBAt(dbPath string) (*DB, error) {
-	dir := filepath.Dir(dbPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create directory %s: %w", dir, err)
-	}
+// initSchema creates the parameters table if it doesn't exist
+func initSchema(db *sql.DB) error {
+	_, err := db.Exec(SCHEMA)
+	return err
+}
 
-	db, err := sql.Open("sqlite3", dbPath+"?_foreign_keys=on")
+func Create(filename string) (*DB, error) {
+	db, err := sql.Open("sqlite3", filename+"?_foreign_keys=on")
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
+		return nil, err
 	}
 
 	if err := initSchema(db); err != nil {
 		_ = db.Close()
-		return nil, fmt.Errorf("failed to initialize schema: %w", err)
+		return nil, err
 	}
 
 	return newDB(db), nil
 }
 
-// initSchema creates the parameters table if it doesn't exist
-func initSchema(db *sql.DB) error {
-	schema := `
-		CREATE TABLE IF NOT EXISTS parameters (
-			key TEXT PRIMARY KEY,
-			value BLOB NOT NULL,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		);
+func Open(filename string) (*DB, error) {
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return nil, fmt.Errorf(
+			"%s does not exist",
+			filename,
+		)
+	}
 
-		CREATE TRIGGER IF NOT EXISTS update_updated_at
-		AFTER UPDATE ON parameters
-		BEGIN
-			UPDATE parameters SET updated_at = CURRENT_TIMESTAMP WHERE key = NEW.key;
-		END;
-	`
-	_, err := db.Exec(schema)
-	return err
+	db, err := sql.Open("sqlite3", filename+"?_foreign_keys=on")
+	if err != nil {
+		return nil, err
+	}
+
+	return newDB(db), nil
 }

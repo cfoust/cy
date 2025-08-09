@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/cfoust/cy/pkg/db/params"
@@ -19,24 +20,30 @@ type PersistentStore struct {
 	vm *janet.VM
 }
 
-// NewPersistentStore creates a new persistent parameter store in the given state directory.
-// If stateDir is empty, uses an in-memory database.
+// NewPersistentStore creates a new persistent parameter store in the given
+// state directory. If stateDir is empty, uses an in-memory database.
 func NewPersistentStore(
 	vm *janet.VM,
 	stateDir string,
 ) (*PersistentStore, error) {
-	var dbPath string
+	var db *params.DB
+	var err error
+
 	if stateDir == "" {
-		dbPath = ":memory:"
+		db, err = params.Create(":memory:")
 	} else {
-		dbPath = filepath.Join(stateDir, "params.db")
+		dbPath := filepath.Join(stateDir, "params.db")
+
+		if _, err = os.Stat(dbPath); os.IsNotExist(err) {
+			db, err = params.Create(dbPath)
+		} else {
+			db, err = params.Open(dbPath)
+		}
 	}
 
-	db, err := params.OpenDBAt(dbPath)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to open params database at %s: %w",
-			dbPath,
+			"failed to initialize params database: %w",
 			err,
 		)
 	}
