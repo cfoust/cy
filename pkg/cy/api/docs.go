@@ -167,3 +167,12 @@ var _ janet.Documented = (*RegisterModule)(nil)
 func (c *RegisterModule) Documentation() string {
 	return DOCS_REGISTER
 }
+
+//go:embed docs-clipboard.md
+var DOCS_CLIPBOARD string
+
+var _ janet.Documented = (*ClipboardModule)(nil)
+
+func (c *ClipboardModule) Documentation() string {
+	return DOCS_CLIPBOARD
+}

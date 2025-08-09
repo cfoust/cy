@@ -4,8 +4,8 @@ build:
 install:
   go install ./cmd/cy/...
 
-test:
-  go test ./pkg/... ./cmd/...
+test *args:
+  go test ./pkg/... ./cmd/... {{args}}
 
 stories *args:
   go run ./cmd/stories/... {{args}}

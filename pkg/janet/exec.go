@@ -217,6 +217,33 @@ func (v *VM) ExecuteCall(
 	return req.WaitResult()
 }
 
+func (v *VM) ExecuteFunction(
+	ctx context.Context,
+	user interface{},
+	funcName string,
+	params ...interface{},
+) error {
+	out, err := v.ExecuteCall(
+		ctx,
+		nil,
+		CallString(fmt.Sprintf(
+			`(yield %s)`,
+			funcName,
+		)),
+	)
+	if err != nil {
+		return err
+	}
+
+	var fun *Function
+	err = out.Yield.Unmarshal(&fun)
+	if err != nil {
+		return err
+	}
+
+	return fun.CallContext(ctx, user, params...)
+}
+
 func (v *VM) Execute(ctx context.Context, code string) error {
 	_, err := v.ExecuteCall(ctx, nil, CallString(code))
 	return err

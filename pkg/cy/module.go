@@ -65,7 +65,6 @@ type Cy struct {
 	util.Lifetime
 	deadlock.RWMutex
 	*janet.VM
-	registers *memoryRegisters
 
 	cmdStore *cmd.Store
 
@@ -109,24 +108,6 @@ type Cy struct {
 
 func (c *Cy) ExecuteJanet(path string) error {
 	return c.ExecuteFile(c.Ctx(), path)
-}
-
-func (c *Cy) ExecuteOnBehalf(
-	ctx context.Context,
-	node tree.NodeID,
-	code []byte,
-	path string,
-) (*janet.Value, error) {
-	_, err := c.ExecuteCall(
-		ctx,
-		// todo: infer
-		nil,
-		janet.Call{
-			Code:       code,
-			SourcePath: path,
-		},
-	)
-	return nil, err
 }
 
 func (c *Cy) Log(level zerolog.Level, message string) {
@@ -347,11 +328,13 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 
 			switch event := nodeEvent.Event.(type) {
 			case replay.CopyEvent:
-				err := c.registers.Set(
+				err := c.ExecuteFunction(
+					ctx,
+					nil,
+					"register/set",
 					event.Register,
 					event.Text,
 				)
-
 				if err == nil {
 					continue
 				}
@@ -401,7 +384,6 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 	t := tree.NewTree(tree.WithParams(defaults.NewChild()))
 	cy := Cy{
 		Lifetime:      util.NewLifetime(ctx),
-		registers:     newMemoryRegisters(options.Clipboard),
 		cmdStore:      cmd.NewStore(),
 		copyBinds:     copyBinds,
 		defaultParams: defaults,

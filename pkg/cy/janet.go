@@ -15,7 +15,10 @@ var CY_BOOT embed.FS
 func (c *Cy) initAPI() error {
 	modules := map[string]interface{}{
 		"register": &api.RegisterModule{
-			Registers: c.registers,
+			Clipboard: c.options.Clipboard,
+		},
+		"clipboard": &api.ClipboardModule{
+			Clipboard: c.options.Clipboard,
 		},
 		"cmd": &api.CmdModule{
 			Server:    c,

@@ -360,23 +360,13 @@ func (c *Client) findNewPane() error {
 		return c.execute(`(shell/attach)`)
 	}
 
-	out, err := c.cy.ExecuteCall(
-		c.Ctx(),
-		nil,
-		janet.CallString(`(yield shell/attach)`),
-	)
-	if err != nil {
-		return err
-	}
-
-	var attach *janet.Function
-	err = out.Yield.Unmarshal(&attach)
-	if err != nil {
-		return err
-	}
-
 	// Otherwise just create a new shell and attach to it
-	return attach.CallContext(c.Ctx(), c, cwd)
+	return c.cy.ExecuteFunction(
+		c.Ctx(),
+		c,
+		"shell/attach",
+		cwd,
+	)
 }
 
 func (c *Client) GetLayout() L.Layout {

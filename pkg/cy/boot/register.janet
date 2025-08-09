@@ -1,22 +1,26 @@
 (defn
-  clipboard/get
-  "Get the contents of the system clipboard."
-  []
-  (register/get "+"))
+  register/get
+  "Get the contents of the given register."
+  [register]
+  (if (= register "+")
+    (clipboard/get)
+    (param/get (keyword (string "register-" register)) :target :persist)))
 
 (defn
-  clipboard/set
-  "Set the contents of the system clipboard."
-  [text]
-  (register/set "+" text))
+  register/set
+  "Set the contents of the given register."
+  [register text]
+  (if (= register "+")
+    (clipboard/set text)
+    (param/set :persist (keyword (string "register-" register)) text)))
 
 (defn
   register/insert
   "Insert the contents of the given register in the current pane."
   [register]
-  (pane/send-keys
+  (pane/send-text
     (pane/current)
-    @[(register/get register)]))
+    (register/get register)))
 
 (key/action
   action/paste
