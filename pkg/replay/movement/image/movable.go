@@ -60,3 +60,7 @@ func (i *imageMovement) Viewport() (
 	}
 	return
 }
+
+func (i *imageMovement) ViewportToMovement(pos geom.Vec2) geom.Vec2 {
+	return i.viewportToTerm(pos)
+}

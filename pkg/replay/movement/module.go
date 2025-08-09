@@ -69,4 +69,8 @@ type Movement interface {
 		state *tty.State,
 		highlights []Highlight,
 	)
+
+	// ViewportToMovement converts a coordinate from viewport space to the
+	// reference frame of the Movement.
+	ViewportToMovement(pos geom.Vec2) geom.Vec2
 }

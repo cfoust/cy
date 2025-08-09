@@ -542,3 +542,53 @@ func TestBlank(t *testing.T) {
 	r.MoveCursorY(-2)
 	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.cursor)
 }
+
+func TestViewportToMovement(t *testing.T) {
+	s := sessions.NewSimulator()
+	s.Add(
+		geom.Size{R: 5, C: 10},
+		emu.LineFeedMode,
+		"hello world\nthis is a test\nfoobar\nbaz",
+	)
+
+	size := geom.Size{R: 3, C: 5}
+	r := createFlowTest(s.Terminal(), size)
+	r.ScrollTop()
+
+	// Get the flow layout for coordinate mapping
+	flow := r.Flow(r.viewport, r.root)
+
+	// Click on first line at position 1
+	result := r.ViewportToMovement(geom.Vec2{R: 0, C: 1})
+	require.Equal(t, geom.Vec2{R: 0, C: 1}, result)
+
+	// Click on second line
+	{
+		line := flow.Lines[1]
+		result = r.ViewportToMovement(geom.Vec2{R: 1, C: 2})
+		expected := geom.Vec2{R: line.R, C: line.C0 + 2}
+		require.Equal(t, expected, result)
+	}
+
+	// Click on third line
+	{
+		line := flow.Lines[2]
+		result = r.ViewportToMovement(geom.Vec2{R: 2, C: 3})
+		// When clicking beyond the line content, it should clamp to the
+		// last valid position
+		expectedC := line.C0 + 3
+		if line.C1 > line.C0 {
+			expectedC = geom.Min(expectedC, line.C1-1)
+		}
+		expected := geom.Vec2{R: line.R, C: expectedC}
+		require.Equal(t, expected, result)
+	}
+
+	// Out of bounds viewport coordinate
+	result = r.ViewportToMovement(geom.Vec2{R: 10, C: 10})
+	require.Equal(t, geom.Vec2{}, result)
+
+	// Negative coordinates
+	result = r.ViewportToMovement(geom.Vec2{R: -1, C: -1})
+	require.Equal(t, geom.Vec2{}, result)
+}

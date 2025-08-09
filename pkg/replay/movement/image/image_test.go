@@ -304,3 +304,33 @@ func TestImageHighlight(t *testing.T) {
 		"000",
 	)
 }
+
+func TestViewportToMovement(t *testing.T) {
+	s := sim().
+		Add(
+			geom.Size{R: 5, C: 5},
+			emu.LineFeedMode,
+			"abcde\nfghij\nklmno\npqrst\nuvwxy",
+		).
+		Term(terminfo.CursorAddress, 2, 2)
+
+	size := geom.Size{R: 3, C: 3}
+	i := createImageTest(s.Terminal(), size)
+
+	// Test basic coordinate translation with no offset
+	i.offset = geom.Vec2{R: 0, C: 0}
+	result := i.ViewportToMovement(geom.Vec2{R: 1, C: 1})
+	require.Equal(t, geom.Vec2{R: 1, C: 1}, result)
+
+	// Test coordinate translation with offset
+	i.offset = geom.Vec2{R: 1, C: 1}
+	result = i.ViewportToMovement(geom.Vec2{R: 0, C: 0})
+	require.Equal(t, geom.Vec2{R: 1, C: 1}, result)
+
+	result = i.ViewportToMovement(geom.Vec2{R: 2, C: 2})
+	require.Equal(t, geom.Vec2{R: 3, C: 3}, result)
+
+	// Test edge cases
+	result = i.ViewportToMovement(geom.Vec2{R: -1, C: -1})
+	require.Equal(t, geom.Vec2{R: 0, C: 0}, result)
+}

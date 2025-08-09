@@ -124,3 +124,26 @@ func (f *flowMovement) ReadString(start, end geom.Vec2) (result string) {
 
 	return result
 }
+
+func (f *flowMovement) ViewportToMovement(coord geom.Vec2) geom.Vec2 {
+	flow := f.Flow(f.viewport, f.root)
+
+	if !flow.OK || coord.R < 0 || coord.R >= len(flow.Lines) {
+		return geom.Vec2{}
+	}
+
+	line := flow.Lines[coord.R]
+
+	movementC := line.C0 + coord.C
+
+	if line.C1 > line.C0 {
+		movementC = geom.Clamp(movementC, line.C0, line.C1-1)
+	} else {
+		movementC = line.C0
+	}
+
+	return geom.Vec2{
+		R: line.R,
+		C: movementC,
+	}
+}

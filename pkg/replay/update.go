@@ -169,6 +169,31 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.scrollXDelta(-1)
 		case taro.MouseWheelRight:
 			r.scrollXDelta(+1)
+		case taro.MouseLeft:
+			coord := r.movement.ViewportToMovement(msg.Vec2)
+
+			switch msg.Type {
+			case taro.MousePress:
+				if !msg.Down {
+					break
+				}
+
+				if !r.isCopyMode() {
+					r.mode = ModeCopy
+				}
+
+				r.isSelecting = true
+				r.movement.Goto(coord)
+				r.selectStart = coord
+			case taro.MouseMotion:
+				if !r.isCopyMode() {
+					break
+				}
+
+				if msg.Down && r.isSelecting {
+					r.movement.Goto(coord)
+				}
+			}
 		}
 	case ActionEvent:
 		r.isPlaying = false

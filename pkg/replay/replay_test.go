@@ -135,6 +135,79 @@ func TestEmpty(t *testing.T) {
 	i(ActionSearchAgain)
 }
 
+func TestMouseClickAndDrag(t *testing.T) {
+	events := sim().
+		Add(
+			geom.Size{R: 5, C: 10},
+			emu.LineFeedMode,
+			"hello world\nthis is a test\nfoobar baz",
+		).
+		Events()
+
+	r, i := createTest(events)
+
+	// Set up the replay in copy mode
+	i(geom.Size{R: 5, C: 10})
+	i(ActionBeginning)
+	r.enterCopyMode()
+
+	clickMsg := taro.MouseMsg{
+		Vec2:   geom.Vec2{R: 1, C: 2},
+		Type:   taro.MousePress,
+		Button: taro.MouseLeft,
+		Down:   true,
+	}
+	i(clickMsg)
+
+	require.True(t, r.isSelecting)
+
+	dragMsg := taro.MouseMsg{
+		Vec2:   geom.Vec2{R: 1, C: 5},
+		Type:   taro.MouseMotion,
+		Button: taro.MouseLeft,
+		Down:   true,
+	}
+	i(dragMsg)
+
+	require.True(t, r.isSelecting)
+
+	releaseMsg := taro.MouseMsg{
+		Vec2:   geom.Vec2{R: 1, C: 5},
+		Type:   taro.MousePress,
+		Button: taro.MouseLeft,
+		Down:   false,
+	}
+	i(releaseMsg)
+
+	require.True(t, r.isSelecting)
+}
+
+func TestMouseClickOutsideCopyMode(t *testing.T) {
+	events := sim().
+		Add(
+			geom.Size{R: 5, C: 10},
+			emu.LineFeedMode,
+			"hello world\ntest",
+		).
+		Events()
+
+	r, i := createTest(events)
+
+	i(geom.Size{R: 5, C: 10})
+	i(ActionBeginning)
+	require.False(t, r.isCopyMode())
+
+	clickMsg := taro.MouseMsg{
+		Vec2:   geom.Vec2{R: 1, C: 2},
+		Type:   taro.MousePress,
+		Button: taro.MouseLeft,
+		Down:   true,
+	}
+	i(clickMsg)
+
+	require.True(t, r.isSelecting)
+}
+
 func TestTime(t *testing.T) {
 	delta := time.Second / PLAYBACK_FPS
 	size := geom.Size{R: 5, C: 10}
