@@ -3,7 +3,6 @@ package params
 import (
 	"testing"
 
-	"github.com/cfoust/cy/pkg/db/params"
 	"github.com/cfoust/cy/pkg/janet"
 
 	"github.com/stretchr/testify/require"
@@ -13,7 +12,7 @@ func TestPersistentStore(t *testing.T) {
 	vm, err := janet.New(t.Context())
 	require.NoError(t, err)
 
-	db, err := params.Create(t.TempDir() + "/test.db")
+	db, err := Create(t.TempDir() + "/test.db")
 	require.NoError(t, err)
 	defer func() { _ = db.Close() }()
 
