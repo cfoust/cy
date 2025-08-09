@@ -25,9 +25,10 @@ type Client struct {
 	// does not impose its size on the underlying screen. This is useful
 	// for previews.
 	size geom.Vec2
+
 	// The location on the screen where the underlying screen was last
 	// rendered.
-	lastLocation geom.Vec2
+	screenPos geom.Vec2
 }
 
 var _ mux.Screen = (*Client)(nil)
@@ -55,28 +56,25 @@ func (c *Client) getState(isUnfiltered bool) *tty.State {
 		return state
 	}
 
-	out := tty.New(size)
-	stateSize := state.Image.Size()
-	if stateSize.R >= size.R && stateSize.C >= size.C {
-		tty.Copy(
-			geom.Vec2{},
-			out,
-			state,
-		)
-		return out
-	}
+	var (
+		out       = tty.New(size)
+		stateSize = state.Image.Size()
+		centered  = size.Center(stateSize)
+	)
 
-	for row := 0; row < size.R; row++ {
-		for col := 0; col < size.C; col++ {
-			out.Image[row][col].Char = '-'
-			out.Image[row][col].FG = 8
+	c.Lock()
+	c.screenPos = centered
+	c.Unlock()
+
+	// tmux-style background fill
+	if size.C > stateSize.C || size.R > stateSize.R {
+		for row := 0; row < size.R; row++ {
+			for col := 0; col < size.C; col++ {
+				out.Image[row][col].Char = '-'
+				out.Image[row][col].FG = 8
+			}
 		}
 	}
-
-	centered := size.Center(stateSize)
-	c.Lock()
-	c.lastLocation = centered
-	c.Unlock()
 
 	tty.Copy(
 		centered,
@@ -118,7 +116,7 @@ func (c *Client) Send(msg mux.Msg) {
 	}
 
 	c.RLock()
-	lastLocation := c.lastLocation
+	lastLocation := c.screenPos
 	c.RUnlock()
 
 	screen.Send(taro.TranslateMouseMessage(

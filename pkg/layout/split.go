@@ -467,6 +467,7 @@ func NewSplit(
 		screenB:         screenB,
 		isVertical:      isVertical,
 		percent:         50,
+		config:          &SplitNode{},
 	}
 
 	go split.poll(ctx)
