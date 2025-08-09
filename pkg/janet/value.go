@@ -118,6 +118,50 @@ func (v *Value) Raw() ([]byte, error) {
 	return result, nil
 }
 
+// Bytes uses Janet's marshal function to serialize this value to bytes
+func (v *Value) Bytes() ([]byte, error) {
+	if v.IsFree() {
+		return nil, ErrFreed
+	}
+
+	out, err := v.vm.marshalFn.CallResult(
+		context.Background(),
+		nil,
+		v,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer out.Free()
+
+	var result []byte
+	err = out.Unmarshal(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// FromBytes uses Janet's unmarshal function to deserialize bytes to a Janet value
+func (vm *VM) FromBytes(data []byte) (*Value, error) {
+	if len(data) == 0 {
+		return nil, fmt.Errorf("empty data cannot be unmarshaled")
+	}
+
+	out, err := vm.unmarshalFn.CallResult(
+		context.Background(),
+		nil,
+		data,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
 func (v *Value) String() string {
 	if v.IsFree() {
 		return ""

@@ -30,3 +30,6 @@ docs:
 
 api:
   go run ./cmd/docs/main.go
+
+sqlc:
+  cd pkg/db/ && sqlc generate

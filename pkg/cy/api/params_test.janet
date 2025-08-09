@@ -38,3 +38,20 @@
 (test "color map"
       (param/set :root :color-map {"0" "#ff0000"})
       (assert (deep= @{"0" "#ff0000"} (param/get :color-map))))
+
+(test ":persist"
+      (var value @{:key "value" :num 123 :ok true})
+      (param/set :persist :test-table value)
+      (assert (deep= value (param/get :test-table :target :persist)))
+
+      # persist a func that uses a cy API function
+      (var func
+        (fn [a]
+          (input/text "blah")
+          (+ a a)))
+      (param/set :persist :test-func func)
+      (var func-after (param/get :test-func :target :persist))
+      (assert (= (func-after 2) 4))
+
+      # nonexistent key
+      (assert (= nil (param/get :nonexistent :target :persist))))

@@ -414,4 +414,200 @@ func TestVM(t *testing.T) {
 		require.Equal(t, `{:a 1 :b 2}`, out.Yield.String())
 	})
 
+	t.Run(
+		"janet (un)marshaling with Bytes() and FromBytes()",
+		func(t *testing.T) {
+			// Test basic integer marshaling
+			t.Run("integer", func(t *testing.T) {
+				original := 42
+				value, err := vm.Marshal(original)
+				require.NoError(t, err)
+				defer value.Free()
+
+				// Test Bytes() method
+				bytes, err := value.Bytes()
+				require.NoError(t, err)
+				require.NotEmpty(
+					t,
+					bytes,
+					"marshaled bytes should not be empty",
+				)
+
+				// Test FromBytes() method
+				unmarshaled, err := vm.FromBytes(bytes)
+				require.NoError(t, err)
+				defer unmarshaled.Free()
+
+				// Verify the value is correct
+				var result int
+				err = unmarshaled.Unmarshal(&result)
+				require.NoError(t, err)
+				require.Equal(
+					t,
+					original,
+					result,
+					"unmarshaled value should match original",
+				)
+			})
+
+			// Test string marshaling
+			t.Run("string", func(t *testing.T) {
+				original := "hello world"
+				value, err := vm.Marshal(original)
+				require.NoError(t, err)
+				defer value.Free()
+
+				bytes, err := value.Bytes()
+				require.NoError(t, err)
+				require.NotEmpty(t, bytes)
+
+				unmarshaled, err := vm.FromBytes(bytes)
+				require.NoError(t, err)
+				defer unmarshaled.Free()
+
+				var result string
+				err = unmarshaled.Unmarshal(&result)
+				require.NoError(t, err)
+				require.Equal(t, original, result)
+			})
+
+			// Test boolean marshaling
+			t.Run("boolean", func(t *testing.T) {
+				original := true
+				value, err := vm.Marshal(original)
+				require.NoError(t, err)
+				defer value.Free()
+
+				bytes, err := value.Bytes()
+				require.NoError(t, err)
+				require.NotEmpty(t, bytes)
+
+				unmarshaled, err := vm.FromBytes(bytes)
+				require.NoError(t, err)
+				defer unmarshaled.Free()
+
+				var result bool
+				err = unmarshaled.Unmarshal(&result)
+				require.NoError(t, err)
+				require.Equal(t, original, result)
+			})
+
+			// Test array marshaling
+			t.Run("array", func(t *testing.T) {
+				original := []int{1, 2, 3, 4, 5}
+				value, err := vm.Marshal(original)
+				require.NoError(t, err)
+				defer value.Free()
+
+				bytes, err := value.Bytes()
+				require.NoError(t, err)
+				require.NotEmpty(t, bytes)
+
+				unmarshaled, err := vm.FromBytes(bytes)
+				require.NoError(t, err)
+				defer unmarshaled.Free()
+
+				var result []int
+				err = unmarshaled.Unmarshal(&result)
+				require.NoError(t, err)
+				require.Equal(t, original, result)
+			})
+
+			// Test map marshaling
+			t.Run("map", func(t *testing.T) {
+				original := map[string]int{"a": 1, "b": 2, "c": 3}
+				value, err := vm.Marshal(original)
+				require.NoError(t, err)
+				defer value.Free()
+
+				bytes, err := value.Bytes()
+				require.NoError(t, err)
+				require.NotEmpty(t, bytes)
+
+				unmarshaled, err := vm.FromBytes(bytes)
+				require.NoError(t, err)
+				defer unmarshaled.Free()
+
+				var result map[string]int
+				err = unmarshaled.Unmarshal(&result)
+				require.NoError(t, err)
+				require.Equal(t, original, result)
+			})
+
+			// Test complex nested structure
+			t.Run("nested structure", func(t *testing.T) {
+				original := TestValue{
+					One:    42,
+					Two:    true,
+					Three:  "test string",
+					Four:   nil,
+					Five:   func() *int { i := 99; return &i }(),
+					Ints:   [6]int{1, 2, 3, 4, 5, 6},
+					Bools:  []bool{true, false, true},
+					Buffer: []byte("binary data"),
+					Map:    map[string]int{"key1": 10, "key2": 20},
+				}
+
+				value, err := vm.Marshal(original)
+				require.NoError(t, err)
+				defer value.Free()
+
+				bytes, err := value.Bytes()
+				require.NoError(t, err)
+				require.NotEmpty(t, bytes)
+
+				unmarshaled, err := vm.FromBytes(bytes)
+				require.NoError(t, err)
+				defer unmarshaled.Free()
+
+				var result TestValue
+				err = unmarshaled.Unmarshal(&result)
+				require.NoError(t, err)
+				require.Equal(t, original.One, result.One)
+				require.Equal(t, original.Two, result.Two)
+				require.Equal(t, original.Three, result.Three)
+				require.Equal(t, original.Four, result.Four)
+				require.NotNil(t, result.Five)
+				require.Equal(t, *original.Five, *result.Five)
+				require.Equal(t, original.Ints, result.Ints)
+				require.Equal(t, original.Bools, result.Bools)
+				require.Equal(t, original.Buffer, result.Buffer)
+				require.Equal(t, original.Map, result.Map)
+			})
+
+			// Test error conditions
+			t.Run("error conditions", func(t *testing.T) {
+				// Test Bytes() on freed value
+				t.Run("bytes on freed value", func(t *testing.T) {
+					value, err := vm.Marshal(42)
+					require.NoError(t, err)
+
+					value.Free()
+
+					_, err = value.Bytes()
+					require.Error(t, err)
+					require.Contains(t, err.Error(), "freed")
+				})
+
+				// Test FromBytes() with empty data
+				t.Run("from bytes with empty data", func(t *testing.T) {
+					_, err := vm.FromBytes([]byte{})
+					require.Error(t, err)
+					require.Contains(t, err.Error(), "empty data")
+				})
+
+				// Test FromBytes() with invalid data (may or may not error depending on Janet's implementation)
+				t.Run("from bytes with invalid data", func(t *testing.T) {
+					result, err := vm.FromBytes([]byte{0x00, 0x01, 0x02, 0xFF})
+					// Janet's unmarshal is quite robust, so it may not always error
+					// If it doesn't error, at least verify we got something back
+					if err == nil && result != nil {
+						result.Free() // Clean up if no error
+					}
+					// This test mainly verifies the function doesn't panic or crash
+				})
+			})
+		},
+	)
+
 }

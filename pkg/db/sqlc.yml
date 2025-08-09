@@ -7,3 +7,10 @@ sql:
       go:
         package: "cmd"
         out: "cmd"
+  - engine: "sqlite"
+    schema: "./params/schema.sql"
+    queries: "./params/query.sql"
+    gen:
+      go:
+        package: "params"
+        out: "params"

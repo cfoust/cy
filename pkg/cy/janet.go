@@ -1,7 +1,6 @@
 package cy
 
 import (
-	"context"
 	"embed"
 	"fmt"
 
@@ -13,12 +12,7 @@ import (
 //go:embed boot/*.janet
 var CY_BOOT embed.FS
 
-func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
-	vm, err := janet.New(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (c *Cy) initAPI() error {
 	modules := map[string]interface{}{
 		"register": &api.RegisterModule{
 			Registers: c.registers,
@@ -46,8 +40,9 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 		},
 		"pane": &api.PaneModule{Tree: c.tree},
 		"param": &api.ParamModule{
-			Server: c,
-			Tree:   c.tree,
+			Server:          c,
+			Tree:            c.tree,
+			PersistentStore: c.persistParams,
 		},
 		"path": &api.PathModule{},
 		"replay": &api.ReplayModule{
@@ -70,9 +65,13 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 	}
 
 	for name, module := range modules {
-		err := vm.Module(name, module)
+		err := c.Module(name, module)
 		if err != nil {
-			return nil, err
+			return fmt.Errorf(
+				"failed to register module %s: %s",
+				name,
+				err.Error(),
+			)
 		}
 	}
 
@@ -95,16 +94,16 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 
 		data, err := CY_BOOT.ReadFile(path)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		_, err = vm.ExecuteCall(ctx, nil, janet.Call{
+		_, err = c.ExecuteCall(c.Ctx(), nil, janet.Call{
 			Code:       data,
 			SourcePath: path,
 			Options:    janet.DEFAULT_CALL_OPTIONS,
 		})
 		if err != nil {
-			return nil, fmt.Errorf(
+			return fmt.Errorf(
 				"failed to execute %s: %s",
 				file,
 				err.Error(),
@@ -112,5 +111,5 @@ func (c *Cy) initJanet(ctx context.Context) (*janet.VM, error) {
 		}
 	}
 
-	return vm, nil
+	return nil
 }
