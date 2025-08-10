@@ -14,11 +14,9 @@ type Context struct {
 	height int
 }
 
-func init() {
-	runtime.LockOSThread()
-}
-
 func NewContext(width, height int) (*Context, error) {
+	runtime.LockOSThread()
+
 	if err := glfw.Init(); err != nil {
 		return nil, fmt.Errorf("failed to initialize GLFW: %v", err)
 	}
@@ -26,7 +24,8 @@ func NewContext(width, height int) (*Context, error) {
 	glfw.WindowHint(glfw.ContextVersionMajor, 3)
 	glfw.WindowHint(glfw.ContextVersionMinor, 3)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
-	glfw.WindowHint(glfw.Visible, glfw.False) // Hidden window for offscreen rendering
+	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
+	glfw.WindowHint(glfw.Visible, glfw.False)
 
 	window, err := glfw.CreateWindow(width, height, "Offscreen", nil, nil)
 	if err != nil {
