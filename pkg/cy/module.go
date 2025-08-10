@@ -42,6 +42,8 @@ type Options struct {
 	Shell string
 	// Whether to show the splash screen on client join
 	HideSplash bool
+	// Whether OpenGL is available.
+	HaveOpenGL bool
 	// Whether to skip blocking (input/*) API calls. Just for testing.
 	SkipInput bool
 	// The path to the Unix domain socket for this server.

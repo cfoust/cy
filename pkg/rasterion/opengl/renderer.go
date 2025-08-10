@@ -46,9 +46,14 @@ func NewRenderer(width, height int) (*Renderer, error) {
 
 	gl.BindVertexArray(vao)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*8, gl.Ptr(vertices), gl.STATIC_DRAW)
+	gl.BufferData(
+		gl.ARRAY_BUFFER,
+		len(vertices)*8,
+		gl.Ptr(vertices),
+		gl.STATIC_DRAW,
+	)
 
-	gl.VertexAttribPointer(0, 2, gl.FLOAT, false, 8, gl.PtrOffset(0))
+	gl.VertexAttribPointerWithOffset(0, 2, gl.FLOAT, false, 8, 0)
 	gl.EnableVertexAttribArray(0)
 
 	gl.BindVertexArray(0)

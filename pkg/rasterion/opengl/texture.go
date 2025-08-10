@@ -22,7 +22,17 @@ func NewTexture(width, height int32) *Texture {
 	gl.GenTextures(1, &id)
 	gl.BindTexture(gl.TEXTURE_2D, id)
 
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, nil)
+	gl.TexImage2D(
+		gl.TEXTURE_2D,
+		0,
+		gl.RGBA,
+		width,
+		height,
+		0,
+		gl.RGBA,
+		gl.UNSIGNED_BYTE,
+		nil,
+	)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
@@ -81,7 +91,13 @@ func NewFramebuffer(width, height int32) (*Framebuffer, error) {
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
-	gl.FramebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture.id, 0)
+	gl.FramebufferTexture2D(
+		gl.FRAMEBUFFER,
+		gl.COLOR_ATTACHMENT0,
+		gl.TEXTURE_2D,
+		texture.id,
+		0,
+	)
 
 	status := gl.CheckFramebufferStatus(gl.FRAMEBUFFER)
 	if status != gl.FRAMEBUFFER_COMPLETE {
@@ -138,7 +154,15 @@ func (f *Framebuffer) ReadPixels() ([]byte, error) {
 	defer f.Unbind()
 
 	data := make([]byte, f.texture.width*f.texture.height*4) // RGBA
-	gl.ReadPixels(0, 0, f.texture.width, f.texture.height, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(data))
+	gl.ReadPixels(
+		0,
+		0,
+		f.texture.width,
+		f.texture.height,
+		gl.RGBA,
+		gl.UNSIGNED_BYTE,
+		gl.Ptr(data),
+	)
 
 	return data, nil
 }

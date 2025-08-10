@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/cfoust/cy/pkg/rasterion/opengl"
+
 	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
@@ -41,13 +42,19 @@ func TestOpenGLRenderer(t *testing.T) {
 	defer renderer.Destroy()
 
 	// Compile shaders
-	vertexShader, err := opengl.CompileShader(vertexShaderSource, gl.VERTEX_SHADER)
+	vertexShader, err := opengl.CompileShader(
+		vertexShaderSource,
+		gl.VERTEX_SHADER,
+	)
 	if err != nil {
 		t.Fatalf("Failed to compile vertex shader: %v", err)
 	}
 	defer vertexShader.Delete()
 
-	fragmentShader, err := opengl.CompileShader(fragmentShaderSource, gl.FRAGMENT_SHADER)
+	fragmentShader, err := opengl.CompileShader(
+		fragmentShaderSource,
+		gl.FRAGMENT_SHADER,
+	)
 	if err != nil {
 		t.Fatalf("Failed to compile fragment shader: %v", err)
 	}
@@ -68,7 +75,11 @@ func TestOpenGLRenderer(t *testing.T) {
 	resolutionLocation := program.GetUniformLocation("resolution")
 
 	program.SetUniform1f(timeLocation, 1.0)
-	program.SetUniform2f(resolutionLocation, float32(renderer.Width()), float32(renderer.Height()))
+	program.SetUniform2f(
+		resolutionLocation,
+		float32(renderer.Width()),
+		float32(renderer.Height()),
+	)
 
 	// Clear and render
 	renderer.Clear(0.0, 0.0, 0.0, 1.0)
@@ -102,5 +113,10 @@ func TestOpenGLRenderer(t *testing.T) {
 		t.Fatal("All pixels are black, rendering may have failed")
 	}
 
-	t.Logf("Successfully rendered %dx%d texture with %d bytes", renderer.Width(), renderer.Height(), len(pixels))
+	t.Logf(
+		"Successfully rendered %dx%d texture with %d bytes",
+		renderer.Width(),
+		renderer.Height(),
+		len(pixels),
+	)
 }
