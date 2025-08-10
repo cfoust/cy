@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
+	"github.com/cfoust/cy/pkg/clipboard"
 	"github.com/cfoust/cy/pkg/cy/api"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
@@ -61,6 +62,8 @@ type Client struct {
 	frame        *frames.Framer
 	outerLayers  *screen.Layers
 	renderer     *renderer.Renderer
+
+	clipboard clipboard.Clipboard
 
 	// An array of all of the panes this client has attached to.
 	history []tree.NodeID
@@ -329,6 +332,10 @@ func (c *Client) initialize(options ClientOptions) error {
 	}
 
 	return nil
+}
+
+func (c *Client) Clipboard() clipboard.Clipboard {
+	return c.clipboard
 }
 
 // findNewPane looks for a pane that the client can attach to or creates a new

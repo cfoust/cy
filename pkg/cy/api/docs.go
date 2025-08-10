@@ -159,15 +159,6 @@ func (t *ColorMapsModule) Documentation() string {
 	return DOCS_COLORMAPS
 }
 
-//go:embed docs-register.md
-var DOCS_REGISTER string
-
-var _ janet.Documented = (*RegisterModule)(nil)
-
-func (c *RegisterModule) Documentation() string {
-	return DOCS_REGISTER
-}
-
 //go:embed docs-clipboard.md
 var DOCS_CLIPBOARD string
 

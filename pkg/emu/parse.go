@@ -1,6 +1,7 @@
 package emu
 
 import (
+	"encoding/base64"
 	"fmt"
 
 	"github.com/mattn/go-runewidth"
@@ -177,7 +178,8 @@ func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
 				t.logf("invalid color j=%d, p=%s\n", j, maybe(p))
 			}
 		}
-		// TODO: redraw when color is set
+	case 52: // clipboard operations
+		t.handleOSC52(s)
 	default:
 		t.logf("unknown OSC command %d\n", d)
 		// TODO: s.dump()
@@ -408,4 +410,37 @@ func (t *State) EscDispatch(intermediates []byte, ignore bool, b byte) {
 		'C', // Finnish (ignored)
 		'K': // German (ignored)
 	}
+}
+
+// handleOSC52 processes OSC 52 clipboard sequences
+func (t *State) handleOSC52(s strEscape) {
+	if len(s.args) < 3 {
+		return
+	}
+
+	// OSC 52 format: 52;Pc;Pd
+	// Pc = clipboard identifier ('c' for clipboard, 'p' for primary, 's' for select)
+	// Pd = base64-encoded data or '?' to query
+	pc := s.argString(1, "")
+	pd := s.argString(2, "")
+
+	// We only support clipboard ('c') for now
+	if pc != "c" {
+		return
+	}
+
+	// Query clipboard
+	if pd == "?" {
+		t.logf("osc-52: query not supported yet")
+		return
+	}
+
+	// Decode base64 data
+	_, err := base64.StdEncoding.DecodeString(pd)
+	if err != nil {
+		t.logf("osc-52: failed to decode data %v", err)
+		return
+	}
+
+	// TODO(cfoust): 08/10/25 publish event
 }

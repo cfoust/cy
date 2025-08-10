@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 
+	"github.com/cfoust/cy/pkg/clipboard"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/layout"
 	"github.com/cfoust/cy/pkg/mux/screen"
@@ -26,6 +27,7 @@ type Client interface {
 	Frame() *frames.Framer
 	Binds() []Binding
 	Toast(toasts.Toast)
+	Clipboard() clipboard.Clipboard
 }
 
 type Server interface {

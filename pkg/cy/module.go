@@ -370,6 +370,10 @@ func (c *Cy) SocketName() string {
 	return c.options.SocketName
 }
 
+func (c *Cy) BaseClipboard() clipboard.Clipboard {
+	return c.options.Clipboard
+}
+
 func Start(ctx context.Context, options Options) (*Cy, error) {
 	if options.Clipboard == nil {
 		// provide one for testing

@@ -1,7 +1,9 @@
 package clipboard
 
 import (
+	"encoding/base64"
 	"fmt"
+	"io"
 
 	"github.com/sasha-s/go-deadlock"
 	"golang.design/x/clipboard"
@@ -66,4 +68,34 @@ func NewSystemClipboard() (*SystemClipboard, error) {
 	}
 
 	return s, nil
+}
+
+type OSC52Clipboard struct {
+	w io.Writer
+}
+
+var _ Clipboard = (*OSC52Clipboard)(nil)
+
+func NewOSC52Clipboard(writer io.Writer) *OSC52Clipboard {
+	return &OSC52Clipboard{
+		w: writer,
+	}
+}
+
+func (c *OSC52Clipboard) Write(text string) error {
+	// OSC-52 format: \033]52;c;<base64-encoded-text>\007
+	// where 'c' means clipboard
+	encoded := base64.StdEncoding.EncodeToString([]byte(text))
+	sequence := fmt.Sprintf("\033]52;c;%s\007", encoded)
+
+	_, err := c.w.Write([]byte(sequence))
+	if err != nil {
+		return fmt.Errorf("failed to write OSC-52 sequence: %w", err)
+	}
+
+	return nil
+}
+
+func (c *OSC52Clipboard) Read() (string, error) {
+	return "", nil
 }
