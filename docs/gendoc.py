@@ -77,6 +77,14 @@ def render_symbol_link(symbol: Symbol) -> str:
     return f"[{symbol.Name}]({symbol_to_url(symbol)})"
 
 
+def param_to_url(param: Param) -> str:
+    return f"{SITE_URL}/default-parameters.md#{param.Name}"
+
+
+def render_param_link(param: Param) -> str:
+    return f"[{param.Name}]({param_to_url(param)})"
+
+
 def render_animations(animations: List[str]) -> str:
     output = "\n---\n"
     for animation in api['Animations']:
@@ -330,6 +338,34 @@ def transform_api(
         ), None
 
     return handle_pattern(re.compile(r"{{api ([a-z0-9/-]+)}}"), handler)
+
+
+def transform_param(
+    param_lookup: Dict[str, Param],
+) -> Transformer:
+    def handler(match: re.Match) -> Tuple[
+            Optional[Replacement],
+            Optional[Error],
+    ]:
+        name = match.group(1)
+        if len(name) == 0:
+            return None, None
+
+        if not name in param_lookup:
+            return None, (
+                match.start(0),
+                f"missing parameter: {name}",
+            )
+
+        param = param_lookup[name]
+
+        return (
+            match.start(0),
+            match.end(0),
+            render_param_link(param),
+        ), None
+
+    return handle_pattern(re.compile(r"{{param ([a-zA-Z0-9_-]+)}}"), handler)
 
 
 def transform_bind(
@@ -596,6 +632,7 @@ if __name__ == '__main__':
         params.append(Param(**param))
 
     symbol_lookup = {x.Name: x for x in symbols}
+    param_lookup = {x.Name: x for x in params}
 
     bindings: List[Binding] = []
     for binding in api['Binds']:
@@ -626,6 +663,7 @@ if __name__ == '__main__':
             params,
         ),
         transform_api(symbol_lookup),
+        transform_param(param_lookup),
         transform_bind(bindings),
         transform_examples(runner),
         transform_links(),
