@@ -50,7 +50,7 @@ In `cy`, you can copy text to and paste text from **registers**. This system wor
 
 By default, `cy` lets you copy to and paste from a range of registers that mimic those found in `vim`. In visual mode you can copy text into a register using `" [a-zA-Z0-9+] y`. For example, hitting <kbd>"</kbd> <kbd>a</kbd> <kbd>y</kbd> copies the current selection into register `"a"`. Elsewhere in `cy` you can paste from `"a"` by hitting <kbd>ctrl+a</kbd> <kbd>"</kbd> <kbd>a</kbd> <kbd>p</kbd>.
 
-The state of registers in `cy` is **global, not per-client.** This means that after one client yanks into a register, all connected clients can paste from that register. The contents of registers are lost when the `cy` server exits, however. This may change in the future.
+The state of registers in `cy` is **global, not per-client.** This means that after one client yanks into a register, all connected clients can paste from that register. The contents of registers are written to `cy`'s [persistent store](/parameters.md#persist) and therefore remain available even after restarting the `cy` server.
 
 You can access these registers programmatically using the `register/*` family of API functions such as {{api register/get}} and {{api register/set}}.
 
