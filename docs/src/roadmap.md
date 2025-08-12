@@ -1,5 +1,7 @@
 # Roadmap
 
+> Note (2025-08-12): This page is out of date and does not represent current priorities.
+
 This document outlines the features I plan on implementing in the next few months. Features denoted with "\*" are tentative and may not make the cut.
 
 - [ ] **Performance**: cy is not slow, but there's still room for improvement in rendering speed.
@@ -10,5 +12,4 @@ This document outlines the features I plan on implementing in the next few month
   - [ ] **API functions for executing external commands**
   - [ ] **Progress bars\*:** It would be nice for Janet code to be able to show the user the progress of some long-running operation.
   - [ ] **tmux emulation:** This would be the first proof-of-concept cy plugin. Some people really like tmux, and I intentionally built cy's layout functionality so that it would be flexible enough to emulate tmux's user interface. This does not have to be that comprehensive, it could just mimic most of tmux's common keybindings.
-- [ ] **Persistent parameter store:** This would add another target for {{api param/set}} called `:persist` (name pending) which would be a key-value store backed by an SQLite database stored in `$XDG_STATE_HOME`. Any serializable Janet value could be written to this parameter store. This persistent parameter store could be used for things like saving and restoring layouts from previous sessions, reopening frequently used projects, et cetera.
 - [ ] **fzf-cy\*:** `cy` literally uses `fzf`'s algorithm and its fuzzy finder should be able to be used as a drop-in replacement for `fzf` just like in [fzf-tmux](https://github.com/junegunn/fzf/blob/master/bin/fzf-tmux). In other words, `cy`'s fuzzy finder should support everything (within reason) that `fzf` does.
