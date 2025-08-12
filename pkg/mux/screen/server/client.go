@@ -83,8 +83,8 @@ func (c *Client) getState(isUnfiltered bool) *tty.State {
 	)
 
 	visible := geom.Rect{Size: geom.Vec2{
-		R: size.R - 1,
-		C: size.C - 1,
+		R: size.R,
+		C: size.C,
 	}}
 	if !visible.Contains(out.Cursor.Vec2) {
 		out.Cursor.R = 0

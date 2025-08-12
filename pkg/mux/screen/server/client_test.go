@@ -3,6 +3,7 @@ package server
 import (
 	"testing"
 
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
@@ -82,4 +83,30 @@ func TestResize(t *testing.T) {
 			screenPos,
 		)
 	}
+}
+
+func TestCursorAtEdges(t *testing.T) {
+	var (
+		ctx        = t.Context()
+		server     = &Server{}
+		clientSize = geom.Vec2{R: 10, C: 20}
+		screen     = newTestScreen(clientSize)
+		client     = &Client{
+			size:            clientSize,
+			UpdatePublisher: mux.NewPublisher(),
+			server:          server,
+		}
+	)
+
+	screen.state.Cursor = emu.Cursor{Vec2: geom.Vec2{R: 9, C: 19}}
+	screen.state.CursorVisible = true
+
+	client.Attach(ctx, screen)
+	state := client.State()
+
+	require.True(
+		t,
+		state.CursorVisible,
+		"cursor at bottom-right edge should be visible",
+	)
 }
