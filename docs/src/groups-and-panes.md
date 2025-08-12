@@ -48,7 +48,7 @@ Instead, each node is permanently assigned a unique identifier (which is just an
 `cy`'s flexibility comes from the way key bindings and parameters interact:
 
 - **Key bindings** are inherited down the tree, but can be overridden by descendant groups and panes.
-- **Parameters** work the same way: {{api param/get}} will get the value of a parameter from the closest parent group or pane that defines it.
+- **Parameters** work the same way: {{api param/get}} will get the value of a parameter from the closest parent group or pane that defines it. Note that `:persist` parameters are stored globally and do not follow this inheritance pattern.
 
 Imagine that you are attached to `/my-project/group-2/pane-3` in the example above:
 
