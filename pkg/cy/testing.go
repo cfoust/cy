@@ -17,6 +17,9 @@ func NewTestServer() (*Cy, func(geom.Size) (*Client, error), error) {
 		return nil, nil, err
 	}
 
+	// Nothing is reading from the client, so this will fail otherwise
+	cy.defaultParams.SetUseSystemClipboard(true)
+
 	return cy, func(size geom.Size) (*Client, error) {
 		return cy.NewClient(ctx, ClientOptions{
 			Env: map[string]string{

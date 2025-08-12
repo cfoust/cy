@@ -330,7 +330,7 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 			case replay.CopyEvent:
 				err := c.ExecuteFunction(
 					ctx,
-					nil,
+					client,
 					"register/set",
 					event.Register,
 					event.Text,
@@ -342,7 +342,7 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 				c.log.
 					Error().
 					Err(err).Msg(
-					"error copying to clipboard",
+					"error setting register",
 				)
 			case bind.BindEvent:
 				go client.runAction(event)
@@ -368,10 +368,6 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 
 func (c *Cy) SocketName() string {
 	return c.options.SocketName
-}
-
-func (c *Cy) BaseClipboard() clipboard.Clipboard {
-	return c.options.Clipboard
 }
 
 func Start(ctx context.Context, options Options) (*Cy, error) {

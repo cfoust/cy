@@ -50,6 +50,10 @@ type defaultParams struct {
 	// The number of goroutines to use for searching in .borg files.
 	// Defaults to the number of CPUs.
 	NumSearchWorkers int
+	// Whether to use the system clipboard instead of outputting OSC-52
+	// codes. This should generally be "true" unless you use an old terminal
+	// emulator.
+	UseSystemClipboard bool
 	// Whether to avoid blocking on (input/*) calls. Just for testing.
 	skipInput bool
 
@@ -166,11 +170,12 @@ type defaultParams struct {
 
 var (
 	defaults = defaultParams{
-		Animate:       true,
-		DataDirectory: "",
-		DefaultFrame:  "",
-		DefaultShell:  "/bin/bash",
-		skipInput:     false,
+		Animate:            true,
+		DataDirectory:      "",
+		DefaultFrame:       "",
+		DefaultShell:       "/bin/bash",
+		skipInput:          false,
+		UseSystemClipboard: false,
 
 		ColorMap: &style.ColorMap{},
 

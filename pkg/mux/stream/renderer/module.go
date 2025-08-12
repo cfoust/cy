@@ -65,6 +65,10 @@ func (r *Renderer) Read(p []byte) (n int, err error) {
 	return r.r.Read(p)
 }
 
+func (r *Renderer) Writer() io.Writer {
+	return r.w
+}
+
 func (r *Renderer) poll(ctx context.Context) error {
 	subscriber := r.screen.Subscribe(ctx)
 

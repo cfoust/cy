@@ -63,6 +63,7 @@ const (
 	ParamSkipInput                = "---skip-input"
 	ParamTerminalTextExited       = "terminal-text-exited"
 	ParamTimestampFormat          = "timestamp-format"
+	ParamUseSystemClipboard       = "use-system-clipboard"
 )
 
 func (p *Parameters) Animate() bool {
@@ -1037,6 +1038,24 @@ func (p *Parameters) SetTimestampFormat(value string) {
 	p.set(ParamTimestampFormat, value)
 }
 
+func (p *Parameters) UseSystemClipboard() bool {
+	value, ok := p.Get(ParamUseSystemClipboard)
+	if !ok {
+		return defaults.UseSystemClipboard
+	}
+
+	realValue, ok := value.(bool)
+	if !ok {
+		return defaults.UseSystemClipboard
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetUseSystemClipboard(value bool) {
+	p.set(ParamUseSystemClipboard, value)
+}
+
 func (p *Parameters) isDefault(key string) bool {
 	switch key {
 	case ParamAnimate:
@@ -1146,6 +1165,8 @@ func (p *Parameters) isDefault(key string) bool {
 	case ParamTerminalTextExited:
 		return true
 	case ParamTimestampFormat:
+		return true
+	case ParamUseSystemClipboard:
 		return true
 
 	}
@@ -1262,6 +1283,8 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.TerminalTextExited, true
 	case ParamTimestampFormat:
 		return defaults.TimestampFormat, true
+	case ParamUseSystemClipboard:
+		return defaults.UseSystemClipboard, true
 
 	}
 	return nil, false
@@ -2289,6 +2312,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
+	case ParamUseSystemClipboard:
+		if !janetOk {
+			realValue, ok := value.(bool)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamUseSystemClipboard, should be bool")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated bool
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :use-system-clipboard: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
 	}
 	return nil
 }
@@ -2559,6 +2601,11 @@ func init() {
 			Name:      "timestamp-format",
 			Docstring: "The format for all timestamps shown in cy. This uses Go's\ntime.Layout format described\n[here](https://pkg.go.dev/time#Layout).",
 			Default:   defaults.TimestampFormat,
+		},
+		{
+			Name:      "use-system-clipboard",
+			Docstring: "Whether to use the system clipboard instead of outputting OSC-52\ncodes. This should generally be \"true\" unless you use an old terminal\nemulator.",
+			Default:   defaults.UseSystemClipboard,
 		},
 	}
 }

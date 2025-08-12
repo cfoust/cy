@@ -324,6 +324,9 @@ func (c *Client) initialize(options ClientOptions) error {
 		c.outerLayers,
 	)
 
+	// TODO(cfoust): 08/11/25 this is weird
+	c.clipboard = clipboard.NewOSC52Clipboard(c.renderer.Writer())
+
 	if isClientSSH {
 		c.params.SetAnimate(false)
 		c.toast.Send(toasts.Toast{

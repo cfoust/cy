@@ -8,10 +8,28 @@ type ClipboardModule struct {
 	Clipboard clipboard.Clipboard
 }
 
-func (c *ClipboardModule) Set(text string) error {
-	return c.Clipboard.Write(text)
+func (c *ClipboardModule) Set(context interface{}, text string) error {
+	client, err := getClient(context)
+	if err != nil {
+		return err
+	}
+
+	if client.Params().UseSystemClipboard() {
+		return c.Clipboard.Write(text)
+	}
+
+	return client.Clipboard().Write(text)
 }
 
-func (c *ClipboardModule) Get() (string, error) {
-	return c.Clipboard.Read()
+func (c *ClipboardModule) Get(context interface{}) (string, error) {
+	client, err := getClient(context)
+	if err != nil {
+		return "", err
+	}
+
+	if client.Params().UseSystemClipboard() {
+		return c.Clipboard.Read()
+	}
+
+	return client.Clipboard().Read()
 }
