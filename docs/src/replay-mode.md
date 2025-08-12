@@ -27,7 +27,7 @@ This is a basic safety measure so that your passwords (such as for `sudo`) never
 
 In the future, `cy` may give you more fine-grained control over specifically what it records and when, but for now this is not configurable.
 
-If you wish to opt out of recording to disk entirely, set [the `:data-directory` parameter](/parameters.md#default-parameters) to an empty string. Note that `cy` will continue to hold on to your terminal sessions in memory.
+If you wish to opt out of recording to disk entirely, set {{param data-directory}} to an empty string. Note that `cy` will continue to hold on to your terminal sessions in memory.
 
 For example:
 

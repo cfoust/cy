@@ -24,7 +24,7 @@ If `true`, user input will be sent to the pane specified by `:id`.
 
 If `true`, when the pane specified by `:id` exits successfully (ie with exit code 0) or is killed using {{api tree/rm}}, this pane will be removed from the layout. This works just like `exit`ing from a shell in `tmux` does: the intent is to preserve that behavior for users who want it.
 
-The value of `:remove-on-exit`, by default, is the value of the [:remove-pane-on-exit](/default-parameters.md#remove-pane-on-exit) parameter.
+The value of `:remove-on-exit`, by default, is the value of {{param remove-pane-on-exit}}.
 
 In other words, to make this global you can do the following:
 

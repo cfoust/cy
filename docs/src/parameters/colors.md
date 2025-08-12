@@ -33,7 +33,7 @@ In `cy`, this works by using a color map to translate those ANSI colors to RGB t
   "15" "#ffffff"})
 ```
 
-Like any other parameter, the [`:color-map`](/default-parameters.md#color-map) parameter can be set on a per-pane or per-group basis.
+Like any other parameter, {{param color-map}} can be set on a per-pane or per-group basis.
 
 The important distinction between a color map and a color scheme is that color maps in `cy` allow you to map _any_ color to _any other color_, not just the 16 ANSI colors as is the case with traditional terminal emulators. For example, if a program you use insists on hard-coding ANSI256 or RGB colors, you can swap them to something else:
 

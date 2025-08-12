@@ -82,7 +82,7 @@ def param_to_url(param: Param) -> str:
 
 
 def render_param_link(param: Param) -> str:
-    return f"[{param.Name}]({param_to_url(param)})"
+    return f"[`:{param.Name}`]({param_to_url(param)})"
 
 
 def render_animations(animations: List[str]) -> str:

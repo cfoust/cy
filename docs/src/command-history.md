@@ -7,7 +7,7 @@ One of `cy`'s distinguishing features is that it can detect the commands that yo
 - All of the output the command produced (by indexing into [.borg files](/replay-mode.md#recording-to-disk))
 - The directory in which the command was run
 
-This metadata is stored in an SQLite database called `cmd.db` (in your [:data-directory](/default-parameters.md#data-directory)) and accessible in Janet via the {{api cmd/query}} API.
+This metadata is stored in an SQLite database called `cmd.db` (in your {{param data-directory}}) and accessible in Janet via the {{api cmd/query}} API.
 
 `cy` uses this information to provide a range of functionality:
 
