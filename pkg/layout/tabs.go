@@ -83,15 +83,22 @@ func (n *TabsNode) Validate() error {
 		return fmt.Errorf(":tabs must have at least one tab")
 	}
 
-	haveActive := false
+	activeCount := 0
 	for _, tab := range n.Tabs {
 		if tab.Active {
-			haveActive = true
+			activeCount++
 		}
 	}
 
-	if !haveActive {
-		return fmt.Errorf(":tabs must have at least one active tab")
+	if activeCount == 0 {
+		return fmt.Errorf(":tabs must have exactly one active tab")
+	}
+
+	if activeCount > 1 {
+		return fmt.Errorf(
+			":tabs must have exactly one active tab, found %d",
+			activeCount,
+		)
 	}
 
 	for index, tab := range tabs {

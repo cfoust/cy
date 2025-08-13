@@ -54,7 +54,55 @@
             :bottom false)))
 
       (layout/set layout)
-      (assert (deep= (layout/get) layout)))
+      (assert (deep= (layout/get) layout))
+
+      # empty tabs
+      (expect-error (layout/set (layout/new (tabs @[]))))
+
+      # no active tab
+      (expect-error
+        (layout/set
+          (layout/new (tabs @[(tab "foo" (pane))
+                              (tab "bar" (pane))]))))
+
+      # empty name
+      (expect-error (layout/set
+                      (layout/new (tabs @[(active-tab "" (attach))]))))
+
+      # nested tabs with no active tab
+      (expect-error (layout/set
+                      (layout/new
+                        (tabs @[(active-tab "outer"
+                                            (tabs @[(tab "inner" (pane))]))]))))
+
+      # multiple tabs with one active
+      (layout/set (layout/new (tabs @[(tab "foo" (pane))
+                                      (active-tab "bar" (attach))
+                                      (tab "baz" (pane))])))
+
+      # multiple active tabs should fail (exactly one active required)
+      (expect-error (layout/set (layout/new (tabs @[(active-tab "foo" (attach))
+                                                    (active-tab "bar" (pane))]))))
+
+      # single valid tab should pass
+      (layout/set (layout/new (tabs @[(active-tab "single" (attach))]))))
+
+(test "split validation"
+      # split with both children attached
+      (expect-error (layout/set
+                      (layout/new (split (attach) (attach)))))
+
+      # split with no children attached
+      (expect-error (layout/set
+                      (layout/new (split (pane) (pane)))))
+
+      # split with one child attached
+      (layout/set (layout/new (split (attach) (pane))))
+      (layout/set (layout/new (split (pane) (attach))))
+
+      # vertical split with one child attached
+      (layout/set (layout/new (vsplit (attach) (pane))))
+      (layout/set (layout/new (vsplit (pane) (attach)))))
 
 (test "bar"
       (def layout
@@ -144,20 +192,13 @@
 
 (test ":split"
       (layout/set
-        {:type :split
-         # horizontal
-         :percent 26
-         :a {:type :pane :attached true}
-         :b {:type :pane}})
+        (layout/new (split (attach) (pane) :percent 26)))
 
       (layout/set
-        {:type :split
-         :vertical true
-         :percent 26
-         :border-fg "7"
-         :border-bg "7"
-         :a {:type :pane :attached true}
-         :b {:type :pane}})
+        (layout/new (vsplit (attach) (pane)
+                            :percent 26
+                            :border-fg "7"
+                            :border-bg "7")))
 
       (expect-error (layout/set
                       {:type :split
@@ -170,26 +211,18 @@
 
 (test ":margins"
       (layout/set
-        {:type :margins
-         :cols 20
-         :rows 0
-         :node {:type :pane :attached true}})
+        (layout/new (margins (attach) :cols 20 :rows 0)))
 
       # omit a bunch of fields
       (layout/set
-        {:type :margins
-         :node {:type :pane :attached true}}))
+        (layout/new (margins (attach)))))
 
 (test ":border"
       (layout/set
-        {:type :borders
-         :title "test"
-         :border :double
-         :node {:type :pane :attached true}})
+        (layout/new (borders (attach) :title "test" :border :double)))
 
       (layout/set
-        {:type :borders
-         :node {:type :pane :attached true}}))
+        (layout/new (borders (attach)))))
 
 (test "bad input"
       # bad node
