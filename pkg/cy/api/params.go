@@ -109,6 +109,14 @@ func (p *ParamModule) Set(
 			return fmt.Errorf("persistent storage is not available")
 		}
 
+		keyStr := string(keyword)
+		if params.IsDefaultParam(keyStr) {
+			return fmt.Errorf(
+				"cannot set default parameter %q in :persist",
+				keyStr,
+			)
+		}
+
 		err = p.PersistentStore.Set(
 			ctx,
 			string(keyword),

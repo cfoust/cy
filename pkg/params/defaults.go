@@ -14,6 +14,7 @@ type DefaultParam struct {
 }
 
 var _defaultParams []DefaultParam
+var _params = New()
 
 func DefaultParams() []DefaultParam {
 	params := make([]DefaultParam, len(_defaultParams))
@@ -22,6 +23,11 @@ func DefaultParams() []DefaultParam {
 		return params[i].Name < params[j].Name
 	})
 	return params
+}
+
+// IsDefaultParam reports whether the given key is a default parameter.
+func IsDefaultParam(key string) bool {
+	return _params.isDefault(key)
 }
 
 //go:generate go run gen.go

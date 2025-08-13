@@ -54,4 +54,9 @@
       (assert (= (func-after 2) 4))
 
       # nonexistent key
-      (assert (= nil (param/get :nonexistent :target :persist))))
+      (assert (= nil (param/get :nonexistent :target :persist)))
+
+      # setting default parameters is not OK
+      (expect-error (param/set :persist :animate true))
+      (expect-error (param/set :persist :color-error "red"))
+      (expect-error (param/set :persist :default-shell "/bin/zsh")))
