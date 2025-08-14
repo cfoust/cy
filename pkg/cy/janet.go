@@ -80,6 +80,7 @@ func (c *Cy) initAPI() error {
 	files := []string{
 		"time.janet",
 		"input.janet",
+		"key.janet",
 		"actions.janet",
 		"style.janet",
 		"colors.janet",

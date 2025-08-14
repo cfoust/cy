@@ -43,6 +43,7 @@ func TestAction(t *testing.T) {
 		Action:   2,
 		Source:   scope,
 		Sequence: []string{"ctrl+a"},
+		Args:     []interface{}{},
 	}, event)
 }
 
