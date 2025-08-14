@@ -144,3 +144,88 @@ func TestMultipleRegex(t *testing.T) {
 	require.Equal(t, []interface{}{"a"}, args2)
 	require.Equal(t, true, matched)
 }
+
+func TestStepBasedTrie(t *testing.T) {
+	trie := New[int](nil)
+	
+	// Test basic string steps
+	trie.Set([]interface{}{
+		"one",
+		"two",
+	}, 2)
+
+	value, args, matched := trie.Get([]string{
+		"one",
+		"two",
+	})
+	require.Equal(t, true, matched)
+	require.Equal(t, 2, value)
+	require.Equal(t, 0, len(args))
+
+	// Test regex steps
+	trie.Set([]interface{}{
+		re("[abc]"),
+		"test",
+	}, 5)
+
+	value2, args2, matched2 := trie.Get([]string{
+		"a",
+		"test",
+	})
+	require.Equal(t, true, matched2)
+	require.Equal(t, 5, value2)
+	require.Equal(t, []interface{}{"a"}, args2)
+
+	// Test no match
+	_, _, matched3 := trie.Get([]string{
+		"d",
+		"test",
+	})
+	require.Equal(t, false, matched3)
+}
+
+func count(pattern interface{}, min, max int) *Count {
+	c, err := NewCount(pattern, min, max)
+	if err != nil {
+		panic(err)
+	}
+	return c
+}
+
+func TestStepBasedTrieWithCount(t *testing.T) {
+	trie := New[string](nil)
+	
+	// Create a count pattern: (key/count "a" 1 3)
+	countPattern := count("a", 1, 3)
+	
+	// Set a binding: ["f", count, "g"] -> "test"
+	sequence := []interface{}{"f", countPattern, "g"}
+	trie.Set(sequence, "test")
+	
+	// Test that it matches different repetitions using the new step-based approach
+	testCases := []struct {
+		input    []string
+		expected string
+		should   bool
+	}{
+		{[]string{"f", "a", "g"}, "test", true},           // 1 repetition
+		{[]string{"f", "a", "a", "g"}, "test", true},      // 2 repetitions  
+		{[]string{"f", "a", "a", "a", "g"}, "test", true}, // 3 repetitions
+		{[]string{"f", "g"}, "", false},                   // 0 repetitions (should not match)
+		{[]string{"f", "a", "a", "a", "a", "g"}, "", false}, // 4 repetitions (should not match)
+	}
+	
+	for _, tc := range testCases {
+		value, args, matched := trie.Get(tc.input)
+		if matched != tc.should {
+			t.Errorf("Input %v: expected matched=%v, got %v", tc.input, tc.should, matched)
+		}
+		if matched && value != tc.expected {
+			t.Errorf("Input %v: expected value='%s', got '%s'", tc.input, tc.expected, value)
+		}
+		if matched && tc.should {
+			// Count patterns should return args
+			require.Equal(t, 1, len(args), "Expected 1 arg for count pattern")
+		}
+	}
+}
