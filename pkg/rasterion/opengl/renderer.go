@@ -1,6 +1,7 @@
 package opengl
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"sync"
@@ -44,6 +45,12 @@ type rendererCreateContextResponse struct {
 
 type rendererRenderData struct {
 	contextID int
+	// Bauble shader uniforms
+	time             float32
+	viewport         [4]float32
+	freeCameraTarget [3]float32
+	freeCameraOrbit  [2]float32
+	freeCameraZoom   float32
 }
 
 type rendererSetShaderData struct {
@@ -52,7 +59,7 @@ type rendererSetShaderData struct {
 }
 
 type rendererClearData struct {
-	contextID int
+	contextID  int
 	r, g, b, a float32
 }
 
@@ -68,13 +75,11 @@ type Renderer struct {
 	running     bool
 	mu          sync.RWMutex
 
-	// Main thread state
-	contexts map[int]*mainThreadContext
+	contexts      map[int]*renderContext
 	nextContextID int
 }
 
-// mainThreadContext holds OpenGL state for a single rendering context
-type mainThreadContext struct {
+type renderContext struct {
 	id          int
 	context     *Context
 	framebuffer *Framebuffer
@@ -83,17 +88,32 @@ type mainThreadContext struct {
 	vbo         uint32
 	width       int
 	height      int
+
+	// Bauble shader uniform locations
+	tLocation                int32 // time
+	viewportLocation         int32 // viewport (vec4)
+	freeCameraTargetLocation int32 // free_camera_target (vec3)
+	freeCameraOrbitLocation  int32 // free_camera_orbit (vec2)
+	freeCameraZoomLocation   int32 // free_camera_zoom (float)
 }
 
 // NewRenderer creates a new main-thread renderer
 // This must be called from the main thread before calling Poll()
 func NewRenderer() *Renderer {
 	return &Renderer{
-		commandChan: make(chan rendererCommand, 32),
-		quit:        make(chan struct{}),
-		contexts:    make(map[int]*mainThreadContext),
+		commandChan:   make(chan rendererCommand, 32),
+		quit:          make(chan struct{}),
+		contexts:      make(map[int]*renderContext),
 		nextContextID: 1,
 	}
+}
+
+// getContext retrieves a render context by ID
+func (r *Renderer) getContext(contextID int) (*renderContext, error) {
+	if ctx, ok := r.contexts[contextID]; ok {
+		return ctx, nil
+	}
+	return nil, fmt.Errorf("context %d not found", contextID)
 }
 
 // Poll processes OpenGL commands on the main thread
@@ -125,64 +145,83 @@ func (r *Renderer) Shutdown() {
 
 // NewContext creates a new rendering context
 // Returns a ContextHandle that can be used for rendering operations
-func (r *Renderer) NewContext(width, height int) *ContextHandle {
+func (r *Renderer) NewContext(ctx context.Context, width, height int) *ContextHandle {
 	responseChan := make(chan interface{})
-	r.commandChan <- rendererCommand{
+
+	select {
+	case r.commandChan <- rendererCommand{
 		cmd: cmdRendererCreateContext,
 		data: rendererInitData{
 			width:  width,
 			height: height,
 		},
 		response: responseChan,
+	}:
+	case <-ctx.Done():
+		return &ContextHandle{renderer: r, contextID: -1, err: ctx.Err()}
 	}
 
-	result := <-responseChan
-	if resp, ok := result.(rendererCreateContextResponse); ok {
-		if resp.err != nil {
-			return &ContextHandle{renderer: r, contextID: -1, err: resp.err}
+	select {
+	case result := <-responseChan:
+		if resp, ok := result.(rendererCreateContextResponse); ok {
+			if resp.err != nil {
+				return &ContextHandle{renderer: r, contextID: -1, err: resp.err}
+			}
+			return &ContextHandle{
+				renderer:  r,
+				contextID: resp.contextID,
+			}
 		}
-		return &ContextHandle{
-			renderer:  r,
-			contextID: resp.contextID,
-		}
+		return &ContextHandle{renderer: r, contextID: -1, err: fmt.Errorf("unexpected response type")}
+	case <-ctx.Done():
+		return &ContextHandle{renderer: r, contextID: -1, err: ctx.Err()}
 	}
-	
-	return &ContextHandle{renderer: r, contextID: -1, err: fmt.Errorf("unexpected response type")}
 }
 
 func (r *Renderer) handleCommand(cmd rendererCommand) {
+	var result interface{}
+	var err error
+
 	switch cmd.cmd {
 	case cmdRendererCreateContext:
 		data := cmd.data.(rendererInitData)
-		r.handleCreateContext(cmd.response, data)
+		result, err = r.handleCreateContext(data)
 
 	case cmdRendererSetShaderProgram:
 		data := cmd.data.(rendererSetShaderData)
-		r.handleSetShaderProgram(cmd.response, data)
+		err = r.handleSetShaderProgram(data)
 
 	case cmdRendererRender:
 		data := cmd.data.(rendererRenderData)
-		r.handleRender(cmd.response, data)
+		err = r.handleRender(data)
 
 	case cmdRendererReadPixels:
 		data := cmd.data.(rendererRenderData)
-		r.handleReadPixels(cmd.response, data)
+		result, err = r.handleReadPixels(data)
 
 	case cmdRendererClear:
 		data := cmd.data.(rendererClearData)
-		r.handleClear(cmd.response, data)
+		err = r.handleClear(data)
 
 	case cmdRendererDestroy:
 		data := cmd.data.(rendererRenderData)
-		r.handleDestroyContext(cmd.response, data)
+		err = r.handleDestroyContext(data)
+	}
+
+	// Send result or error back through response channel
+	if err != nil {
+		cmd.response <- err
+	} else if result != nil {
+		cmd.response <- result
+	} else {
+		cmd.response <- nil
 	}
 }
 
-func (r *Renderer) handleCreateContext(response chan interface{}, data rendererInitData) {
+func (r *Renderer) handleCreateContext(data rendererInitData) (rendererCreateContextResponse, error) {
 	ctx, err := NewContext(data.width, data.height)
 	if err != nil {
-		response <- rendererCreateContextResponse{err: err}
-		return
+		return rendererCreateContextResponse{}, err
 	}
 
 	ctx.MakeCurrent()
@@ -190,8 +229,7 @@ func (r *Renderer) handleCreateContext(response chan interface{}, data rendererI
 	fbo, err := NewFramebuffer(int32(data.width), int32(data.height))
 	if err != nil {
 		ctx.Destroy()
-		response <- rendererCreateContextResponse{err: err}
-		return
+		return rendererCreateContextResponse{}, err
 	}
 
 	// Create a fullscreen quad
@@ -224,7 +262,7 @@ func (r *Renderer) handleCreateContext(response chan interface{}, data rendererI
 	contextID := r.nextContextID
 	r.nextContextID++
 
-	r.contexts[contextID] = &mainThreadContext{
+	r.contexts[contextID] = &renderContext{
 		id:          contextID,
 		context:     ctx,
 		framebuffer: fbo,
@@ -234,87 +272,115 @@ func (r *Renderer) handleCreateContext(response chan interface{}, data rendererI
 		height:      data.height,
 	}
 
-	response <- rendererCreateContextResponse{contextID: contextID}
+	return rendererCreateContextResponse{contextID: contextID}, nil
 }
 
-func (r *Renderer) handleSetShaderProgram(response chan interface{}, data rendererSetShaderData) {
-	if ctx, ok := r.contexts[data.contextID]; ok {
-		ctx.program = data.program
-		response <- nil
-	} else {
-		response <- fmt.Errorf("context %d not found", data.contextID)
+func (r *Renderer) handleSetShaderProgram(data rendererSetShaderData) error {
+	ctx, err := r.getContext(data.contextID)
+	if err != nil {
+		return err
 	}
+
+	ctx.program = data.program
+
+	// Get Bauble shader uniform locations
+	if data.program != nil {
+		ctx.tLocation = data.program.GetUniformLocation("t")
+		ctx.viewportLocation = data.program.GetUniformLocation("viewport")
+		ctx.freeCameraTargetLocation = data.program.GetUniformLocation("free_camera_target")
+		ctx.freeCameraOrbitLocation = data.program.GetUniformLocation("free_camera_orbit")
+		ctx.freeCameraZoomLocation = data.program.GetUniformLocation("free_camera_zoom")
+	}
+
+	return nil
 }
 
-func (r *Renderer) handleRender(response chan interface{}, data rendererRenderData) {
-	ctx, ok := r.contexts[data.contextID]
-	if !ok {
-		response <- fmt.Errorf("context %d not found", data.contextID)
-		return
+func (r *Renderer) handleRender(data rendererRenderData) error {
+	ctx, err := r.getContext(data.contextID)
+	if err != nil {
+		return err
 	}
 
 	if ctx.program == nil {
-		response <- fmt.Errorf("no shader program set")
-		return
+		return fmt.Errorf("no shader program set")
 	}
 
 	ctx.context.MakeCurrent()
 	ctx.framebuffer.Bind()
 
 	ctx.program.Use()
+
+	// Set Bauble shader uniforms
+	if ctx.tLocation >= 0 {
+		ctx.program.SetUniform1f(ctx.tLocation, data.time)
+	}
+	if ctx.viewportLocation >= 0 {
+		ctx.program.SetUniform4f(ctx.viewportLocation, data.viewport[0], data.viewport[1], data.viewport[2], data.viewport[3])
+	}
+	if ctx.freeCameraTargetLocation >= 0 {
+		ctx.program.SetUniform3f(ctx.freeCameraTargetLocation, data.freeCameraTarget[0], data.freeCameraTarget[1], data.freeCameraTarget[2])
+	}
+	if ctx.freeCameraOrbitLocation >= 0 {
+		ctx.program.SetUniform2f(ctx.freeCameraOrbitLocation, data.freeCameraOrbit[0], data.freeCameraOrbit[1])
+	}
+	if ctx.freeCameraZoomLocation >= 0 {
+		ctx.program.SetUniform1f(ctx.freeCameraZoomLocation, data.freeCameraZoom)
+	}
+
 	gl.BindVertexArray(ctx.vao)
 	gl.DrawArrays(gl.TRIANGLE_FAN, 0, 4)
 	gl.BindVertexArray(0)
 
 	ctx.framebuffer.Unbind()
 
-	response <- nil
+	return nil
 }
 
-func (r *Renderer) handleReadPixels(response chan interface{}, data rendererRenderData) {
-	ctx, ok := r.contexts[data.contextID]
-	if !ok {
-		response <- rendererReadPixelsResponse{err: fmt.Errorf("context %d not found", data.contextID)}
-		return
+func (r *Renderer) handleReadPixels(data rendererRenderData) (rendererReadPixelsResponse, error) {
+	ctx, err := r.getContext(data.contextID)
+	if err != nil {
+		return rendererReadPixelsResponse{}, err
 	}
 
 	pixels, err := ctx.framebuffer.ReadPixels()
-	response <- rendererReadPixelsResponse{pixels: pixels, err: err}
+	return rendererReadPixelsResponse{pixels: pixels, err: err}, nil
 }
 
-func (r *Renderer) handleClear(response chan interface{}, data rendererClearData) {
-	ctx, ok := r.contexts[data.contextID]
-	if !ok {
-		response <- fmt.Errorf("context %d not found", data.contextID)
-		return
+func (r *Renderer) handleClear(data rendererClearData) error {
+	ctx, err := r.getContext(data.contextID)
+	if err != nil {
+		return err
 	}
 
 	ctx.framebuffer.Clear(data.r, data.g, data.b, data.a)
-	response <- nil
+	return nil
 }
 
-func (r *Renderer) handleDestroyContext(response chan interface{}, data rendererRenderData) {
-	if ctx, ok := r.contexts[data.contextID]; ok {
-		if ctx.vao != 0 {
-			gl.DeleteVertexArrays(1, &ctx.vao)
-		}
-		if ctx.vbo != 0 {
-			gl.DeleteBuffers(1, &ctx.vbo)
-		}
-		if ctx.framebuffer != nil {
-			ctx.framebuffer.Delete()
-		}
-		if ctx.context != nil {
-			ctx.context.Destroy()
-		}
-		delete(r.contexts, data.contextID)
+func (r *Renderer) handleDestroyContext(data rendererRenderData) error {
+	ctx, err := r.getContext(data.contextID)
+	if err != nil {
+		return err
 	}
-	response <- nil
+
+	if ctx.vao != 0 {
+		gl.DeleteVertexArrays(1, &ctx.vao)
+	}
+	if ctx.vbo != 0 {
+		gl.DeleteBuffers(1, &ctx.vbo)
+	}
+	if ctx.framebuffer != nil {
+		ctx.framebuffer.Delete()
+	}
+	if ctx.context != nil {
+		ctx.context.Destroy()
+	}
+	delete(r.contexts, data.contextID)
+	return nil
 }
 
 func (r *Renderer) cleanup() {
 	for contextID := range r.contexts {
-		r.handleDestroyContext(make(chan interface{}, 1), rendererRenderData{contextID: contextID})
+		r.handleDestroyContext(rendererRenderData{contextID: contextID})
 	}
 }
 
@@ -331,80 +397,114 @@ func (h *ContextHandle) Error() error {
 }
 
 // SetShaderProgram sets the shader program for this context
-func (h *ContextHandle) SetShaderProgram(program *Program) error {
+func (h *ContextHandle) SetShaderProgram(ctx context.Context, program *Program) error {
 	if h.err != nil {
 		return h.err
 	}
 
 	responseChan := make(chan interface{})
-	h.renderer.commandChan <- rendererCommand{
+
+	select {
+	case h.renderer.commandChan <- rendererCommand{
 		cmd: cmdRendererSetShaderProgram,
 		data: rendererSetShaderData{
 			contextID: h.contextID,
 			program:   program,
 		},
 		response: responseChan,
+	}:
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 
-	result := <-responseChan
-	if err, ok := result.(error); ok {
-		return err
+	select {
+	case result := <-responseChan:
+		if err, ok := result.(error); ok {
+			return err
+		}
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
-	return nil
 }
 
-// Render executes a render operation
-func (h *ContextHandle) Render() error {
+// Render executes a render operation with Bauble shader uniforms
+func (h *ContextHandle) Render(ctx context.Context, time float32, viewport [4]float32, freeCameraTarget [3]float32, freeCameraOrbit [2]float32, freeCameraZoom float32) error {
 	if h.err != nil {
 		return h.err
 	}
 
 	responseChan := make(chan interface{})
-	h.renderer.commandChan <- rendererCommand{
+
+	select {
+	case h.renderer.commandChan <- rendererCommand{
 		cmd: cmdRendererRender,
 		data: rendererRenderData{
-			contextID: h.contextID,
+			contextID:        h.contextID,
+			time:             time,
+			viewport:         viewport,
+			freeCameraTarget: freeCameraTarget,
+			freeCameraOrbit:  freeCameraOrbit,
+			freeCameraZoom:   freeCameraZoom,
 		},
 		response: responseChan,
+	}:
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 
-	result := <-responseChan
-	if err, ok := result.(error); ok {
-		return err
+	select {
+	case result := <-responseChan:
+		if err, ok := result.(error); ok {
+			return err
+		}
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
-	return nil
 }
 
 // ReadPixels reads the current framebuffer contents
-func (h *ContextHandle) ReadPixels() ([]byte, error) {
+func (h *ContextHandle) ReadPixels(ctx context.Context) ([]byte, error) {
 	if h.err != nil {
 		return nil, h.err
 	}
 
 	responseChan := make(chan interface{})
-	h.renderer.commandChan <- rendererCommand{
+
+	select {
+	case h.renderer.commandChan <- rendererCommand{
 		cmd: cmdRendererReadPixels,
 		data: rendererRenderData{
 			contextID: h.contextID,
 		},
 		response: responseChan,
+	}:
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
 
-	result := <-responseChan
-	if resp, ok := result.(rendererReadPixelsResponse); ok {
-		return resp.pixels, resp.err
+	select {
+	case result := <-responseChan:
+		if resp, ok := result.(rendererReadPixelsResponse); ok {
+			return resp.pixels, resp.err
+		}
+		return nil, fmt.Errorf("unexpected response type")
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
-	return nil, fmt.Errorf("unexpected response type")
 }
 
 // Clear clears the framebuffer with the specified color
-func (h *ContextHandle) Clear(r, g, b, a float32) error {
+func (h *ContextHandle) Clear(ctx context.Context, r, g, b, a float32) error {
 	if h.err != nil {
 		return h.err
 	}
 
 	responseChan := make(chan interface{})
-	h.renderer.commandChan <- rendererCommand{
+
+	select {
+	case h.renderer.commandChan <- rendererCommand{
 		cmd: cmdRendererClear,
 		data: rendererClearData{
 			contextID: h.contextID,
@@ -414,37 +514,52 @@ func (h *ContextHandle) Clear(r, g, b, a float32) error {
 			a:         a,
 		},
 		response: responseChan,
+	}:
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 
-	result := <-responseChan
-	if err, ok := result.(error); ok {
-		return err
+	select {
+	case result := <-responseChan:
+		if err, ok := result.(error); ok {
+			return err
+		}
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
-	return nil
 }
 
 // Destroy destroys this context and cleans up resources
-func (h *ContextHandle) Destroy() error {
+func (h *ContextHandle) Destroy(ctx context.Context) error {
 	if h.err != nil {
 		return h.err
 	}
 
 	responseChan := make(chan interface{})
-	h.renderer.commandChan <- rendererCommand{
+
+	select {
+	case h.renderer.commandChan <- rendererCommand{
 		cmd: cmdRendererDestroy,
 		data: rendererRenderData{
 			contextID: h.contextID,
 		},
 		response: responseChan,
+	}:
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 
-	result := <-responseChan
-	if err, ok := result.(error); ok {
-		return err
+	select {
+	case result := <-responseChan:
+		if err, ok := result.(error); ok {
+			return err
+		}
+		h.contextID = -1 // Mark as destroyed
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
-	
-	h.contextID = -1 // Mark as destroyed
-	return nil
 }
 
 // Width returns the framebuffer width
@@ -452,10 +567,10 @@ func (h *ContextHandle) Width() int {
 	if h.err != nil || h.contextID == -1 {
 		return 0
 	}
-	
+
 	h.renderer.mu.RLock()
 	defer h.renderer.mu.RUnlock()
-	
+
 	if ctx, ok := h.renderer.contexts[h.contextID]; ok {
 		return ctx.width
 	}
@@ -467,10 +582,10 @@ func (h *ContextHandle) Height() int {
 	if h.err != nil || h.contextID == -1 {
 		return 0
 	}
-	
+
 	h.renderer.mu.RLock()
 	defer h.renderer.mu.RUnlock()
-	
+
 	if ctx, ok := h.renderer.contexts[h.contextID]; ok {
 		return ctx.height
 	}
