@@ -6,113 +6,65 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
+// stepChild represents a step and its associated child node or value
+type stepChild[T any] struct {
+	step Step
+	next interface{} // either *Trie[T] or T
+}
+
 type Trie[T any] struct {
 	deadlock.RWMutex
 
-	// mapping from exact match -> node or T
-	next map[string]interface{}
-
-	// a mapping from raw regex pattern -> node or T
-	nextRe map[string]*Regex
-
-	// a mapping for count patterns - keyed by a unique identifier
-	nextCount map[string]*Count
+	// Array of steps and their associated children
+	steps []stepChild[T]
 
 	// arbitrary extra data associated with this Trie
 	source interface{}
 }
 
-func (t *Trie[T]) resolve(
-	key interface{},
-) (value interface{}, matched bool, regex bool) {
-	switch key := key.(type) {
-	case string:
-		// try matching against count patterns
-		for _, count := range t.nextCount {
-			if count.Matches(key) {
-				return count.next, true, true
-			}
+// findStepMatches finds all steps that match the given input string
+func (t *Trie[T]) findStepMatches(input string) []stepChild[T] {
+	matches := make([]stepChild[T], 0)
+	for _, step := range t.steps {
+		if step.step.Match(input) {
+			matches = append(matches, step)
 		}
-		
-		// try matching against a regex
-		for _, re := range t.nextRe {
-			if !re.compiled.MatchString(key) {
-				continue
-			}
-
-			return re.next, true, true
-		}
-
-		node, ok := t.next[key]
-		if !ok {
-			return nil, false, false
-		}
-		return node, true, false
-	case *Regex:
-		node, ok := t.nextRe[key.Pattern]
-		if !ok {
-			return nil, false, false
-		}
-		return node.next, true, false
-	case *Count:
-		// For Count patterns, we need a unique key to identify this count instance
-		countKey := fmt.Sprintf("count:%p", key)
-		node, ok := t.nextCount[countKey]
-		if !ok {
-			return nil, false, false
-		}
-		return node.next, true, false
 	}
-
-	return nil, false, false
+	return matches
 }
 
-func (t *Trie[T]) getParent(key interface{}) *Trie[T] {
-	node, ok, _ := t.resolve(key)
-	if !ok {
-		return nil
+// findStepByStep finds a step by equality comparison
+func (t *Trie[T]) findStepByStep(targetStep Step) *stepChild[T] {
+	for i := range t.steps {
+		if t.steps[i].step.Equal(targetStep) {
+			return &t.steps[i]
+		}
 	}
-
-	if parent, ok := node.(*Trie[T]); ok {
-		return parent
-	}
-
 	return nil
 }
 
-func (t *Trie[T]) access(sequence []interface{}, shouldCreate bool) *Trie[T] {
-	if len(sequence) == 0 {
-		return t
-	}
-
-	current := t
-	for _, step := range sequence {
-		next := current.getParent(step)
-		if next == nil {
-			if !shouldCreate {
-				return nil
-			}
-			next = New[T](nil)
+// convertToStep converts an interface{} item to a Step
+func convertToStep(item interface{}) Step {
+	switch v := item.(type) {
+	case string:
+		return NewLiteralStep(v)
+	case *Regex:
+		step, _ := NewRegexStep(v.Pattern)
+		return step
+	case *Count:
+		var pattern Step
+		switch p := v.Pattern.(type) {
+		case string:
+			pattern = NewLiteralStep(p)
+		case *Regex:
+			pattern, _ = NewRegexStep(p.Pattern)
+		default:
+			return nil
 		}
-
-		if shouldCreate {
-			switch step := step.(type) {
-			case string:
-				current.next[step] = next
-			case *Regex:
-				step.next = next
-				current.nextRe[step.Pattern] = step
-			case *Count:
-				countKey := fmt.Sprintf("count:%p", step)
-				step.next = next
-				current.nextCount[countKey] = step
-			}
-		}
-
-		current = next
+		return NewCountStep(pattern, v.Min, v.Max)
+	default:
+		return nil
 	}
-
-	return current
 }
 
 type Leaf[T any] struct {
@@ -120,69 +72,23 @@ type Leaf[T any] struct {
 	Value T
 }
 
-type location struct {
-	Key  string
-	Next interface{}
-}
-
-// Leaves gets all of the leaves accessible from this Trie and the path to each
-// leaf. Regex paths are represented as "re:[pattern]".
+// Leaves gets all of the leaves accessible from this Trie and the path to each leaf.
 func (t *Trie[T]) Leaves() (leaves []Leaf[T]) {
 	t.RLock()
 	defer t.RUnlock()
 
-	locations := make([]location, 0)
-	for key, next := range t.next {
-		locations = append(locations, location{
-			Key:  key,
-			Next: next,
-		})
-	}
-
-	for _, re := range t.nextRe {
-		locations = append(locations, location{
-			Key:  fmt.Sprintf("re:%s", re.Pattern),
-			Next: re.next,
-		})
-	}
-
-	for _, count := range t.nextCount {
-		var patternStr string
-		switch p := count.Pattern.(type) {
-		case string:
-			patternStr = p
-		case *Regex:
-			patternStr = p.Pattern
-		default:
-			patternStr = "unknown"
-		}
-		locations = append(locations, location{
-			Key:  fmt.Sprintf("count:%s(%d,%d)", patternStr, count.Min, count.Max),
-			Next: count.next,
-		})
-	}
-
-	for _, loc := range locations {
-		switch next := loc.Next.(type) {
+	for _, step := range t.steps {
+		key := t.stepToDisplayKey(step.step)
+		switch next := step.next.(type) {
 		case T:
-			leaves = append(
-				leaves,
-				Leaf[T]{
-					Path: []string{
-						loc.Key,
-					},
-					Value: next,
-				},
-			)
+			leaves = append(leaves, Leaf[T]{
+				Path:  []string{key},
+				Value: next,
+			})
 		case *Trie[T]:
 			childLeaves := next.Leaves()
 			for _, leaf := range childLeaves {
-				newPath := append(
-					[]string{
-						loc.Key,
-					},
-					leaf.Path...,
-				)
+				newPath := append([]string{key}, leaf.Path...)
 				newLeaf := Leaf[T]{
 					Path:  newPath,
 					Value: leaf.Value,
@@ -195,6 +101,29 @@ func (t *Trie[T]) Leaves() (leaves []Leaf[T]) {
 	return
 }
 
+// stepToDisplayKey converts a Step to a display string for backward compatibility
+func (t *Trie[T]) stepToDisplayKey(step Step) string {
+	switch s := step.(type) {
+	case *LiteralStep:
+		return s.Value
+	case *RegexStep:
+		return fmt.Sprintf("re:%s", s.Pattern)
+	case *CountStep:
+		var patternStr string
+		switch p := s.Pattern.(type) {
+		case *LiteralStep:
+			patternStr = p.Value
+		case *RegexStep:
+			patternStr = p.Pattern
+		default:
+			patternStr = "unknown"
+		}
+		return fmt.Sprintf("count:%s(%d,%d)", patternStr, s.Min, s.Max)
+	default:
+		return "unknown"
+	}
+}
+
 func strToInterface(slice []string) []interface{} {
 	query := make([]interface{}, 0)
 	for _, step := range slice {
@@ -204,16 +133,15 @@ func strToInterface(slice []string) []interface{} {
 	return query
 }
 
-// Get a list of all partial matches for a sequence, if any.
+// Partial gets a list of all partial matches for a sequence, if any.
 func (t *Trie[T]) Partial(sequence []string) (result []Leaf[T]) {
 	t.RLock()
 	defer t.RUnlock()
 
-	// Use the new partial matching logic that handles Count patterns
 	return t.getPartialMatches(sequence, 0)
 }
 
-// getPartialMatches finds all possible continuations from a given sequence
+// getPartialMatches finds all possible continuations from a given sequence using step-based approach
 func (t *Trie[T]) getPartialMatches(sequence []string, seqIndex int) (result []Leaf[T]) {
 	if seqIndex >= len(sequence) {
 		// We've consumed all input, return all possible continuations
@@ -222,62 +150,48 @@ func (t *Trie[T]) getPartialMatches(sequence []string, seqIndex int) (result []L
 
 	step := sequence[seqIndex]
 
-	// Try exact string matches first
-	if next, ok := t.next[step]; ok {
-		if node, ok := next.(*Trie[T]); ok {
-			result = append(result, node.getPartialMatches(sequence, seqIndex+1)...)
-		}
-	}
+	// Find all steps that match this input
+	matches := t.findStepMatches(step)
 
-	// Try regex matches
-	for _, re := range t.nextRe {
-		if re.compiled.MatchString(step) {
-			if node, ok := re.next.(*Trie[T]); ok {
-				result = append(result, node.getPartialMatches(sequence, seqIndex+1)...)
-			}
-		}
-	}
+	for _, match := range matches {
+		if node, ok := match.next.(*Trie[T]); ok {
+			// Handle CountStep specially for partial matches
+			if countStep, ok := match.step.(*CountStep); ok {
+				// Try different numbers of repetitions
+				for rep := countStep.Min; rep <= countStep.Max; rep++ {
+					if seqIndex+rep > len(sequence) {
+						// Partial match - check if current subsequence matches
+						if rep <= len(sequence)-seqIndex && rep >= countStep.Min {
+							allMatch := true
+							for i := 0; i < len(sequence)-seqIndex; i++ {
+								if !countStep.Pattern.Match(sequence[seqIndex+i]) {
+									allMatch = false
+									break
+								}
+							}
+							if allMatch {
+								result = append(result, node.Leaves()...)
+							}
+						}
+						continue
+					}
 
-	// Try count patterns
-	for _, count := range t.nextCount {
-		// Try different numbers of repetitions (min to max)
-		for rep := count.Min; rep <= count.Max; rep++ {
-			// Check if we have enough remaining sequence for this repetition
-			if seqIndex+rep > len(sequence) {
-				// Not enough sequence for this repetition count,
-				// but we might have a partial match if we're at min or above
-				if rep <= len(sequence)-seqIndex && rep >= count.Min {
-					// Check if what we have so far matches
+					// Check if the next 'rep' steps match
 					allMatch := true
-					for i := 0; i < len(sequence)-seqIndex; i++ {
-						if !count.Matches(sequence[seqIndex+i]) {
+					for i := 0; i < rep; i++ {
+						if !countStep.Pattern.Match(sequence[seqIndex+i]) {
 							allMatch = false
 							break
 						}
 					}
+
 					if allMatch {
-						// This is a partial match for the count pattern
-						if node, ok := count.next.(*Trie[T]); ok {
-							result = append(result, node.Leaves()...)
-						}
+						result = append(result, node.getPartialMatches(sequence, seqIndex+rep)...)
 					}
 				}
-				continue
-			}
-
-			// Check if the next 'rep' steps match the count pattern
-			allMatch := true
-			for i := 0; i < rep; i++ {
-				if !count.Matches(sequence[seqIndex+i]) {
-					allMatch = false
-					break
-				}
-			}
-
-			if allMatch {
-				if node, ok := count.next.(*Trie[T]); ok {
-					result = append(result, node.getPartialMatches(sequence, seqIndex+rep)...)
-				}
+			} else {
+				// Regular step, continue with next index
+				result = append(result, node.getPartialMatches(sequence, seqIndex+1)...)
 			}
 		}
 	}
@@ -292,88 +206,98 @@ func (t *Trie[T]) Get(sequence []string) (value T, args []interface{}, matched b
 	t.RLock()
 	defer t.RUnlock()
 
-	// This is complex because we need to handle Count patterns specially
-	// We'll use a recursive helper function to try different paths
-	value, args, matched = t.getWithCounts(sequence, 0, make([]interface{}, 0))
-	return
+	return t.getWithSteps(sequence, 0, make([]interface{}, 0))
 }
 
-// getWithCounts recursively tries to match the sequence, handling Count patterns
-func (t *Trie[T]) getWithCounts(sequence []string, seqIndex int, args []interface{}) (value T, finalArgs []interface{}, matched bool) {
+// getWithSteps is the core state machine logic for step-based matching
+func (t *Trie[T]) getWithSteps(sequence []string, seqIndex int, args []interface{}) (value T, finalArgs []interface{}, matched bool) {
 	if seqIndex >= len(sequence) {
-		// We've consumed all input, this means we're done with the sequence
-		// but we haven't matched any value yet. This is not a complete match.
-		return // No complete match found
+		// We've consumed all input but haven't found a complete match
+		return
 	}
 
 	step := sequence[seqIndex]
 
-	// Try exact string matches first
-	if next, ok := t.next[step]; ok {
-		switch node := next.(type) {
+	// Find all steps that match this input
+	matches := t.findStepMatches(step)
+
+	for _, match := range matches {
+		switch child := match.next.(type) {
 		case T:
+			// This is a leaf node - check if we've consumed all input
 			if seqIndex == len(sequence)-1 {
-				return node, args, true
+				newArgs := args
+				// For CountStep, we need special handling to accumulate matched strings
+				if countStep, ok := match.step.(*CountStep); ok {
+					// For count steps, we need to determine how many repetitions this represents
+					repetitions := t.findCountRepetitions(sequence, seqIndex, countStep)
+					if repetitions >= countStep.Min && repetitions <= countStep.Max {
+						// Collect the matched strings for this count
+						matches := sequence[seqIndex : seqIndex+repetitions]
+						newArgs = append(args, matches)
+						// Check if this consumes all remaining input
+						if seqIndex+repetitions == len(sequence) {
+							return child, newArgs, true
+						}
+					}
+				} else {
+					// For regex steps, add the matched string to args
+					if _, ok := match.step.(*RegexStep); ok {
+						newArgs = append(args, step)
+					}
+					return child, newArgs, true
+				}
 			}
 		case *Trie[T]:
-			return node.getWithCounts(sequence, seqIndex+1, args)
-		}
-	}
+			newArgs := args
+			nextSeqIndex := seqIndex + 1
 
-	// Try regex matches
-	for _, re := range t.nextRe {
-		if re.compiled.MatchString(step) {
-			newArgs := append(args, step)
-			switch next := re.next.(type) {
-			case T:
-				if seqIndex == len(sequence)-1 {
-					return next, newArgs, true
+			// Handle special logic for CountStep
+			if countStep, ok := match.step.(*CountStep); ok {
+				repetitions := t.findCountRepetitions(sequence, seqIndex, countStep)
+				if repetitions >= countStep.Min && repetitions <= countStep.Max {
+					// Collect the matched strings
+					matches := sequence[seqIndex : seqIndex+repetitions]
+					newArgs = append(args, matches)
+					nextSeqIndex = seqIndex + repetitions
+				} else {
+					continue // This count doesn't match, try next
 				}
-			case *Trie[T]:
-				if val, finalArgs, matched := next.getWithCounts(sequence, seqIndex+1, newArgs); matched {
-					return val, finalArgs, true
-				}
-			}
-		}
-	}
-
-	// Try count patterns - this is the most complex part
-	for _, count := range t.nextCount {
-		// Try different numbers of repetitions (min to max)
-		for rep := count.Min; rep <= count.Max; rep++ {
-			// Check if we have enough remaining sequence for this repetition
-			if seqIndex+rep > len(sequence) {
-				continue
+			} else if _, ok := match.step.(*RegexStep); ok {
+				// For regex steps, add the matched string
+				newArgs = append(args, step)
 			}
 
-			// Check if the next 'rep' steps match the count pattern
-			matches := make([]string, 0, rep)
-			allMatch := true
-			for i := 0; i < rep; i++ {
-				if !count.Matches(sequence[seqIndex+i]) {
-					allMatch = false
-					break
-				}
-				matches = append(matches, sequence[seqIndex+i])
-			}
-
-			if allMatch {
-				newArgs := append(args, matches)
-				switch next := count.next.(type) {
-				case T:
-					if seqIndex+rep == len(sequence) {
-						return next, newArgs, true
-					}
-				case *Trie[T]:
-					if val, finalArgs, matched := next.getWithCounts(sequence, seqIndex+rep, newArgs); matched {
-						return val, finalArgs, true
-					}
-				}
+			// Recursively try the child trie
+			if val, finalArgs, matched := child.getWithSteps(sequence, nextSeqIndex, newArgs); matched {
+				return val, finalArgs, true
 			}
 		}
 	}
 
 	return
+}
+
+// findCountRepetitions determines how many consecutive matches a CountStep should consume
+func (t *Trie[T]) findCountRepetitions(sequence []string, startIndex int, countStep *CountStep) int {
+	for rep := countStep.Max; rep >= countStep.Min; rep-- {
+		if startIndex+rep > len(sequence) {
+			continue
+		}
+
+		allMatch := true
+		for i := 0; i < rep; i++ {
+			if !countStep.Pattern.Match(sequence[startIndex+i]) {
+				allMatch = false
+				break
+			}
+		}
+
+		if allMatch {
+			return rep
+		}
+	}
+	return 0
 }
 
 func (t *Trie[T]) Set(sequence []interface{}, value T) {
@@ -384,84 +308,133 @@ func (t *Trie[T]) Set(sequence []interface{}, value T) {
 		return
 	}
 
-	lastIndex := len(sequence) - 1
-	last := sequence[lastIndex]
-	parent := t.access(sequence[:lastIndex], true)
-	if parent == nil {
-		// can't happen
+	// Navigate to the parent trie, creating nodes as needed
+	current := t
+	for _, item := range sequence[:len(sequence)-1] {
+		step := convertToStep(item)
+		if step == nil {
+			return // Invalid step
+		}
+
+		// Find existing step or create new one
+		existing := current.findStepByStep(step)
+		if existing != nil {
+			if child, ok := existing.next.(*Trie[T]); ok {
+				current = child
+			} else {
+				// Replace non-trie with trie
+				newTrie := New[T](nil)
+				existing.next = newTrie
+				current = newTrie
+			}
+		} else {
+			// Create new child trie
+			newTrie := New[T](nil)
+			current.steps = append(current.steps, stepChild[T]{
+				step: step,
+				next: newTrie,
+			})
+			current = newTrie
+		}
+	}
+
+	// Handle the final step
+	finalStep := convertToStep(sequence[len(sequence)-1])
+	if finalStep == nil {
 		return
 	}
 
-	switch step := last.(type) {
-	case string:
-		parent.next[step] = value
-	case *Regex:
-		parent.nextRe[step.Pattern] = step
-		step.next = value
-	case *Count:
-		countKey := fmt.Sprintf("count:%p", step)
-		parent.nextCount[countKey] = step
-		step.next = value
+	// Find existing step or create new one
+	existing := current.findStepByStep(finalStep)
+	if existing != nil {
+		existing.next = value
+	} else {
+		current.steps = append(current.steps, stepChild[T]{
+			step: finalStep,
+			next: value,
+		})
 	}
 }
 
 func (t *Trie[T]) clear(sequence []interface{}) {
 	if len(sequence) == 0 {
-		t.next = make(map[string]interface{})
-		t.nextRe = make(map[string]*Regex)
-		t.nextCount = make(map[string]*Count)
+		t.steps = make([]stepChild[T], 0)
 		return
 	}
 
-	// First, delete the portion of the tree that this sequence refers to
-	{
-		lastIndex := len(sequence) - 1
-		last := sequence[lastIndex]
-		parent := t.access(sequence[:lastIndex], false)
-		if parent == nil {
+	// Navigate to parent and remove the final step
+	if len(sequence) == 1 {
+		// Remove from root
+		step := convertToStep(sequence[0])
+		if step == nil {
 			return
 		}
 
-		switch step := last.(type) {
-		case string:
-			delete(parent.next, step)
-		case *Regex:
-			delete(parent.nextRe, step.Pattern)
-		case *Count:
-			countKey := fmt.Sprintf("count:%p", step)
-			delete(parent.nextCount, countKey)
+		for i, child := range t.steps {
+			if child.step.Equal(step) {
+				// Remove this step
+				t.steps = append(t.steps[:i], t.steps[i+1:]...)
+				break
+			}
+		}
+		return
+	}
+
+	// Navigate to the parent
+	current := t
+	parents := []*Trie[T]{t}
+	stepPath := make([]Step, 0, len(sequence))
+
+	for _, item := range sequence[:len(sequence)-1] {
+		step := convertToStep(item)
+		if step == nil {
+			return
+		}
+		stepPath = append(stepPath, step)
+
+		found := false
+		for _, child := range current.steps {
+			if child.step.Equal(step) {
+				if nextTrie, ok := child.next.(*Trie[T]); ok {
+					current = nextTrie
+					parents = append(parents, current)
+					found = true
+					break
+				}
+			}
+		}
+		if !found {
+			return // Path doesn't exist
 		}
 	}
 
-	// Then prune any portions of the tree that no longer have any leaves
-	// For example:
-	// a -> b -> c
-	// |    |    |
-	// |    |    leaf
-	// |    parent
-	// parent
-	// we've already cleared b's leaves, we need to check whether b has any
-	// other keys, if it does not, remove it from a
-	for i := len(sequence) - 3; i >= 0; i-- {
-		parent := t.access(sequence[:i+1], false)
-		child := t.access(sequence[:i+2], false)
-		if parent == nil || child == nil {
-			return
-		}
+	// Remove the final step from the current node
+	finalStep := convertToStep(sequence[len(sequence)-1])
+	if finalStep == nil {
+		return
+	}
 
-		numLeaves := len(child.next) + len(child.nextRe) + len(child.nextCount)
-		if numLeaves != 0 {
+	for i, child := range current.steps {
+		if child.step.Equal(finalStep) {
+			current.steps = append(current.steps[:i], current.steps[i+1:]...)
 			break
 		}
+	}
 
-		switch step := sequence[i].(type) {
-		case string:
-			delete(parent.next, step)
-		case *Regex:
-			delete(parent.nextRe, step.Pattern)
-		case *Count:
-			countKey := fmt.Sprintf("count:%p", step)
-			delete(parent.nextCount, countKey)
+	// Prune empty parents
+	for i := len(parents) - 1; i > 0; i-- {
+		if len(parents[i].steps) == 0 {
+			// Remove this empty node from its parent
+			parentStep := stepPath[i-1]
+			parent := parents[i-1]
+			for j, child := range parent.steps {
+				if child.step.Equal(parentStep) {
+					parent.steps = append(parent.steps[:j], parent.steps[j+1:]...)
+					break
+				}
+			}
+		} else {
+			break // Stop pruning if we find a non-empty node
 		}
 	}
 }
@@ -484,47 +457,97 @@ func (t *Trie[T]) Remap(from, to []interface{}) {
 		return
 	}
 
-	oldParent := t.access(from[:len(from)-1], false)
-	if oldParent == nil {
+	// Find the node to move
+	current := t
+	for _, item := range from[:len(from)-1] {
+		step := convertToStep(item)
+		if step == nil {
+			return
+		}
+
+		found := false
+		for _, child := range current.steps {
+			if child.step.Equal(step) {
+				if nextTrie, ok := child.next.(*Trie[T]); ok {
+					current = nextTrie
+					found = true
+					break
+				}
+			}
+		}
+		if !found {
+			return // Path doesn't exist
+		}
+	}
+
+	// Get the final step and its associated data
+	finalStep := convertToStep(from[len(from)-1])
+	if finalStep == nil {
 		return
 	}
 
-	// Get the node or leaf that this step referred to
-	var next interface{}
-	switch step := from[len(from)-1].(type) {
-	case string:
-		next = oldParent.next[step]
-	case *Regex:
-		next = oldParent.nextRe[step.Pattern].next
-	case *Count:
-		countKey := fmt.Sprintf("count:%p", step)
-		next = oldParent.nextCount[countKey].next
+	var nodeToMove interface{}
+	for i, child := range current.steps {
+		if child.step.Equal(finalStep) {
+			nodeToMove = child.next
+			// Remove the old step
+			current.steps = append(current.steps[:i], current.steps[i+1:]...)
+			break
+		}
 	}
 
-	if next == nil {
+	if nodeToMove == nil {
+		return // Step not found
+	}
+
+	// Clear empty parent nodes as needed (reuse clear logic)
+	t.clear(from)
+
+	// Navigate to the destination and set the moved node
+	current = t
+	for _, item := range to[:len(to)-1] {
+		step := convertToStep(item)
+		if step == nil {
+			return
+		}
+
+		// Find existing step or create new one
+		existing := current.findStepByStep(step)
+		if existing != nil {
+			if child, ok := existing.next.(*Trie[T]); ok {
+				current = child
+			} else {
+				// Replace non-trie with trie
+				newTrie := New[T](nil)
+				existing.next = newTrie
+				current = newTrie
+			}
+		} else {
+			// Create new child trie
+			newTrie := New[T](nil)
+			current.steps = append(current.steps, stepChild[T]{
+				step: step,
+				next: newTrie,
+			})
+			current = newTrie
+		}
+	}
+
+	// Set the final step with the moved node
+	finalDestStep := convertToStep(to[len(to)-1])
+	if finalDestStep == nil {
 		return
 	}
 
-	// Remove that path
-	oldParent.clear(from)
-
-	// Then create the path to the new parent if necessary
-	newParent := t.access(from[:len(to)-1], true)
-	if newParent == nil {
-		// can't happen, we're creating
-		return
-	}
-
-	switch step := to[len(to)-1].(type) {
-	case string:
-		newParent.next[step] = next
-	case *Regex:
-		step.next = next
-		newParent.nextRe[step.Pattern] = step
-	case *Count:
-		countKey := fmt.Sprintf("count:%p", step)
-		step.next = next
-		newParent.nextCount[countKey] = step
+	// Find existing step or create new one
+	existing := current.findStepByStep(finalDestStep)
+	if existing != nil {
+		existing.next = nodeToMove
+	} else {
+		current.steps = append(current.steps, stepChild[T]{
+			step: finalDestStep,
+			next: nodeToMove,
+		})
 	}
 }
 
@@ -534,9 +557,7 @@ func (t *Trie[T]) Source() interface{} {
 
 func New[T any](source interface{}) *Trie[T] {
 	return &Trie[T]{
-		next:      make(map[string]interface{}),
-		nextRe:    make(map[string]*Regex),
-		nextCount: make(map[string]*Count),
-		source:    source,
+		steps:  make([]stepChild[T], 0),
+		source: source,
 	}
 }
