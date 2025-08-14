@@ -25,8 +25,8 @@ type ActionEvent[T any] struct {
 	Engine   *Engine[T]
 	Source   *trie.Trie[T]
 	Sequence []string
-	// Any regex traversals that matched
-	Args []string
+	// Any regex traversals that matched (strings) and count patterns ([]string)
+	Args []interface{}
 }
 
 type Match[T any] struct {
@@ -152,7 +152,7 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) (consumed bool) {
 	// Later scopes override earlier ones
 	for i := len(scopes) - 1; i >= 0; i-- {
 		scope := scopes[i]
-		value, re, matched := scope.Get(sequence)
+		value, args, matched := scope.Get(sequence)
 		if !matched {
 			continue
 		}
@@ -165,7 +165,7 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) (consumed bool) {
 			Engine:   e,
 			Source:   scope,
 			Sequence: sequence,
-			Args:     re,
+			Args:     args,
 		}
 		return
 	}

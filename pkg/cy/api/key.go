@@ -21,6 +21,36 @@ type regexKey struct {
 	Pattern string
 }
 
+type countKey struct {
+	_       struct{} `janet:"tuple"`
+	Type    janet.Keyword
+	Pattern *janet.Value // Use *janet.Value to handle any type
+	Min     int
+	Max     int
+}
+
+// parsePattern parses a Janet value that could be either a string or a regex tuple
+// Returns the appropriate pattern (string or *trie.Regex) for use in key bindings
+func parsePattern(value *janet.Value) (interface{}, error) {
+	// Try to unmarshal as string first
+	var patternStr string
+	if value.Unmarshal(&patternStr) == nil {
+		return patternStr, nil
+	}
+	
+	// Try to unmarshal as regex tuple
+	var patternRe regexKey
+	if value.Unmarshal(&patternRe) == nil {
+		regexPattern, err := trie.NewRegex(patternRe.Pattern)
+		if err != nil {
+			return nil, fmt.Errorf("invalid regex pattern: %w", err)
+		}
+		return regexPattern, nil
+	}
+	
+	return nil, fmt.Errorf("pattern must be either a string or a regex tuple")
+}
+
 func getKeySequence(value *janet.Value) (result []interface{}, err error) {
 	var array []*janet.Value
 	err = value.Unmarshal(&array)
@@ -32,6 +62,7 @@ func getKeySequence(value *janet.Value) (result []interface{}, err error) {
 	re := regexKey{
 		Type: KEYWORD_RE,
 	}
+	var count countKey
 	for i, item := range array {
 		strErr := item.Unmarshal(&str)
 		if strErr == nil {
@@ -48,11 +79,31 @@ func getKeySequence(value *janet.Value) (result []interface{}, err error) {
 			continue
 		}
 
+
 		reErr := item.Unmarshal(&re)
 		if reErr == nil {
 			pattern, reErr := trie.NewRegex(re.Pattern)
 			if reErr != nil {
 				err = fmt.Errorf("invalid regex at index %d", i)
+				return
+			}
+			result = append(result, pattern)
+			continue
+		}
+
+		count = countKey{} // Reset the struct
+		countErr := item.Unmarshal(&count)
+		if countErr == nil {
+			// Parse the pattern using centralized logic
+			actualPattern, parseErr := parsePattern(count.Pattern)
+			if parseErr != nil {
+				err = fmt.Errorf("invalid pattern in count at index %d: %w", i, parseErr)
+				return
+			}
+			
+			pattern, countErr := trie.NewCount(actualPattern, count.Min, count.Max)
+			if countErr != nil {
+				err = fmt.Errorf("invalid count pattern at index %d", i)
 				return
 			}
 			result = append(result, pattern)
@@ -207,3 +258,4 @@ func (k *KeyModule) Current(context interface{}) ([]Binding, error) {
 
 	return client.Binds(), nil
 }
+

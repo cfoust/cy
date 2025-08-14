@@ -12,5 +12,6 @@ var (
 	KEYWORD_CLIENT  = janet.Keyword("client")
 	KEYWORD_PERSIST = janet.Keyword("persist")
 
-	KEYWORD_RE = janet.Keyword("re")
+	KEYWORD_RE    = janet.Keyword("re")
+	KEYWORD_COUNT = janet.Keyword("count")
 )
