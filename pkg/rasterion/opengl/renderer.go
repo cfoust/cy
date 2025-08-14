@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"sync"
 
+	"github.com/cfoust/cy/pkg/geom"
 	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
@@ -17,14 +18,10 @@ type QuadVertex struct {
 type rendererCommandType int
 
 const (
-	cmdRendererInit rendererCommandType = iota
-	cmdRendererCreateContext
-	cmdRendererSetShaderProgram
+	cmdRendererCreateContext rendererCommandType = iota
+	cmdRendererCompileShader
 	cmdRendererRender
-	cmdRendererReadPixels
-	cmdRendererClear
-	cmdRendererDestroy
-	cmdRendererShutdown
+	cmdRendererDestroyContext
 )
 
 type rendererCommand struct {
@@ -33,7 +30,7 @@ type rendererCommand struct {
 	response chan interface{}
 }
 
-type rendererInitData struct {
+type rendererCreateContextData struct {
 	width  int
 	height int
 }
@@ -43,29 +40,27 @@ type rendererCreateContextResponse struct {
 	err       error
 }
 
+type rendererCompileShaderData struct {
+	contextID      int
+	fragmentSource string
+}
+
 type rendererRenderData struct {
-	contextID int
-	// Bauble shader uniforms
+	contextID        int
+	viewportSize     geom.Size
 	time             float32
-	viewport         [4]float32
 	freeCameraTarget [3]float32
 	freeCameraOrbit  [2]float32
 	freeCameraZoom   float32
 }
 
-type rendererSetShaderData struct {
-	contextID int
-	program   *Program
-}
-
-type rendererClearData struct {
-	contextID  int
-	r, g, b, a float32
-}
-
-type rendererReadPixelsResponse struct {
+type rendererRenderResponse struct {
 	pixels []byte
 	err    error
+}
+
+type rendererDestroyContextData struct {
+	contextID int
 }
 
 // Renderer manages OpenGL operations on the main thread
@@ -83,11 +78,15 @@ type renderContext struct {
 	id          int
 	context     *Context
 	framebuffer *Framebuffer
-	program     *Program
 	vao         uint32
 	vbo         uint32
 	width       int
 	height      int
+
+	// Bauble's constant vertex shader and current program
+	vertexShader   *Shader
+	fragmentShader *Shader
+	program        *Program
 
 	// Bauble shader uniform locations
 	tLocation                int32 // time
@@ -151,7 +150,7 @@ func (r *Renderer) NewContext(ctx context.Context, width, height int) *ContextHa
 	select {
 	case r.commandChan <- rendererCommand{
 		cmd: cmdRendererCreateContext,
-		data: rendererInitData{
+		data: rendererCreateContextData{
 			width:  width,
 			height: height,
 		},
@@ -184,27 +183,19 @@ func (r *Renderer) handleCommand(cmd rendererCommand) {
 
 	switch cmd.cmd {
 	case cmdRendererCreateContext:
-		data := cmd.data.(rendererInitData)
+		data := cmd.data.(rendererCreateContextData)
 		result, err = r.handleCreateContext(data)
 
-	case cmdRendererSetShaderProgram:
-		data := cmd.data.(rendererSetShaderData)
-		err = r.handleSetShaderProgram(data)
+	case cmdRendererCompileShader:
+		data := cmd.data.(rendererCompileShaderData)
+		err = r.handleCompileShader(data)
 
 	case cmdRendererRender:
 		data := cmd.data.(rendererRenderData)
-		err = r.handleRender(data)
+		result, err = r.handleRender(data)
 
-	case cmdRendererReadPixels:
-		data := cmd.data.(rendererRenderData)
-		result, err = r.handleReadPixels(data)
-
-	case cmdRendererClear:
-		data := cmd.data.(rendererClearData)
-		err = r.handleClear(data)
-
-	case cmdRendererDestroy:
-		data := cmd.data.(rendererRenderData)
+	case cmdRendererDestroyContext:
+		data := cmd.data.(rendererDestroyContextData)
 		err = r.handleDestroyContext(data)
 	}
 
@@ -218,7 +209,9 @@ func (r *Renderer) handleCommand(cmd rendererCommand) {
 	}
 }
 
-func (r *Renderer) handleCreateContext(data rendererInitData) (rendererCreateContextResponse, error) {
+const vertexSource = "#version 300 es\nin vec4 position;void main(){gl_Position=position;}"
+
+func (r *Renderer) handleCreateContext(data rendererCreateContextData) (rendererCreateContextResponse, error) {
 	ctx, err := NewContext(data.width, data.height)
 	if err != nil {
 		return rendererCreateContextResponse{}, err
@@ -232,12 +225,26 @@ func (r *Renderer) handleCreateContext(data rendererInitData) (rendererCreateCon
 		return rendererCreateContextResponse{}, err
 	}
 
-	// Create a fullscreen quad
-	vertices := []QuadVertex{
-		{-1.0, -1.0},
-		{1.0, -1.0},
-		{1.0, 1.0},
-		{-1.0, 1.0},
+	vertexShader, err := CompileShader(vertexSource+"\x00", gl.VERTEX_SHADER)
+	if err != nil {
+		fbo.Delete()
+		ctx.Destroy()
+		return rendererCreateContextResponse{}, fmt.Errorf("failed to compile Bauble vertex shader: %w", err)
+	}
+
+	// Create a fullscreen quad with triangles (matching Bauble's player.ts)
+	left := -float32(data.width) * 0.5
+	right := float32(data.width) * 0.5
+	top := float32(data.height) * 0.5
+	bottom := -float32(data.height) * 0.5
+
+	vertices := []float32{
+		left, top, 0, // Triangle 1
+		right, top, 0,
+		right, bottom, 0,
+		right, bottom, 0, // Triangle 2
+		left, top, 0,
+		left, bottom, 0,
 	}
 
 	var vao, vbo uint32
@@ -248,12 +255,12 @@ func (r *Renderer) handleCreateContext(data rendererInitData) (rendererCreateCon
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(
 		gl.ARRAY_BUFFER,
-		len(vertices)*8,
+		len(vertices)*4, // 4 bytes per float32
 		gl.Ptr(vertices),
 		gl.STATIC_DRAW,
 	)
 
-	gl.VertexAttribPointerWithOffset(0, 2, gl.FLOAT, false, 8, 0)
+	gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false, 12, 0) // position has 3 components
 	gl.EnableVertexAttribArray(0)
 
 	gl.BindVertexArray(0)
@@ -263,46 +270,88 @@ func (r *Renderer) handleCreateContext(data rendererInitData) (rendererCreateCon
 	r.nextContextID++
 
 	r.contexts[contextID] = &renderContext{
-		id:          contextID,
-		context:     ctx,
-		framebuffer: fbo,
-		vao:         vao,
-		vbo:         vbo,
-		width:       data.width,
-		height:      data.height,
+		id:           contextID,
+		context:      ctx,
+		framebuffer:  fbo,
+		vao:          vao,
+		vbo:          vbo,
+		width:        data.width,
+		height:       data.height,
+		vertexShader: vertexShader,
 	}
 
 	return rendererCreateContextResponse{contextID: contextID}, nil
 }
 
-func (r *Renderer) handleSetShaderProgram(data rendererSetShaderData) error {
+func (r *Renderer) handleCompileShader(data rendererCompileShaderData) error {
 	ctx, err := r.getContext(data.contextID)
 	if err != nil {
 		return err
 	}
 
-	ctx.program = data.program
+	// Clean up old fragment shader and program
+	if ctx.program != nil {
+		ctx.program.Delete()
+		ctx.program = nil
+	}
+	if ctx.fragmentShader != nil {
+		ctx.fragmentShader.Delete()
+		ctx.fragmentShader = nil
+	}
+
+	// Compile new fragment shader
+	fragmentShader, err := CompileShader(data.fragmentSource+"\x00", gl.FRAGMENT_SHADER)
+	if err != nil {
+		return err // Return compilation error directly
+	}
+
+	// Create new program with constant vertex shader and new fragment shader
+	program, err := CreateProgram(ctx.vertexShader, fragmentShader)
+	if err != nil {
+		fragmentShader.Delete()
+		return err
+	}
+
+	ctx.fragmentShader = fragmentShader
+	ctx.program = program
 
 	// Get Bauble shader uniform locations
-	if data.program != nil {
-		ctx.tLocation = data.program.GetUniformLocation("t")
-		ctx.viewportLocation = data.program.GetUniformLocation("viewport")
-		ctx.freeCameraTargetLocation = data.program.GetUniformLocation("free_camera_target")
-		ctx.freeCameraOrbitLocation = data.program.GetUniformLocation("free_camera_orbit")
-		ctx.freeCameraZoomLocation = data.program.GetUniformLocation("free_camera_zoom")
-	}
+	ctx.tLocation = program.GetUniformLocation("t")
+	ctx.viewportLocation = program.GetUniformLocation("viewport")
+	ctx.freeCameraTargetLocation = program.GetUniformLocation("free_camera_target")
+	ctx.freeCameraOrbitLocation = program.GetUniformLocation("free_camera_orbit")
+	ctx.freeCameraZoomLocation = program.GetUniformLocation("free_camera_zoom")
 
 	return nil
 }
 
-func (r *Renderer) handleRender(data rendererRenderData) error {
+func (r *Renderer) handleRender(data rendererRenderData) (rendererRenderResponse, error) {
 	ctx, err := r.getContext(data.contextID)
 	if err != nil {
-		return err
+		return rendererRenderResponse{}, err
 	}
 
 	if ctx.program == nil {
-		return fmt.Errorf("no shader program set")
+		return rendererRenderResponse{}, fmt.Errorf("no shader program compiled")
+	}
+
+	// Check if viewport size has changed and resize framebuffer if needed
+	viewportWidth := data.viewportSize.C
+	viewportHeight := data.viewportSize.R
+	if ctx.width != viewportWidth || ctx.height != viewportHeight {
+		// Delete old framebuffer and create new one with new size
+		if ctx.framebuffer != nil {
+			ctx.framebuffer.Delete()
+		}
+
+		fbo, err := NewFramebuffer(int32(viewportWidth), int32(viewportHeight))
+		if err != nil {
+			return rendererRenderResponse{}, fmt.Errorf("failed to resize framebuffer: %w", err)
+		}
+
+		ctx.framebuffer = fbo
+		ctx.width = viewportWidth
+		ctx.height = viewportHeight
 	}
 
 	ctx.context.MakeCurrent()
@@ -315,7 +364,8 @@ func (r *Renderer) handleRender(data rendererRenderData) error {
 		ctx.program.SetUniform1f(ctx.tLocation, data.time)
 	}
 	if ctx.viewportLocation >= 0 {
-		ctx.program.SetUniform4f(ctx.viewportLocation, data.viewport[0], data.viewport[1], data.viewport[2], data.viewport[3])
+		// Set viewport uniform as (x, y, width, height) - using 0,0 as origin
+		ctx.program.SetUniform4f(ctx.viewportLocation, 0, 0, float32(viewportWidth), float32(viewportHeight))
 	}
 	if ctx.freeCameraTargetLocation >= 0 {
 		ctx.program.SetUniform3f(ctx.freeCameraTargetLocation, data.freeCameraTarget[0], data.freeCameraTarget[1], data.freeCameraTarget[2])
@@ -328,35 +378,17 @@ func (r *Renderer) handleRender(data rendererRenderData) error {
 	}
 
 	gl.BindVertexArray(ctx.vao)
-	gl.DrawArrays(gl.TRIANGLE_FAN, 0, 4)
+	gl.DrawArrays(gl.TRIANGLES, 0, 6) // 6 vertices for 2 triangles
 	gl.BindVertexArray(0)
 
 	ctx.framebuffer.Unbind()
 
-	return nil
-}
-
-func (r *Renderer) handleReadPixels(data rendererRenderData) (rendererReadPixelsResponse, error) {
-	ctx, err := r.getContext(data.contextID)
-	if err != nil {
-		return rendererReadPixelsResponse{}, err
-	}
-
+	// Read pixels and return them
 	pixels, err := ctx.framebuffer.ReadPixels()
-	return rendererReadPixelsResponse{pixels: pixels, err: err}, nil
+	return rendererRenderResponse{pixels: pixels, err: err}, nil
 }
 
-func (r *Renderer) handleClear(data rendererClearData) error {
-	ctx, err := r.getContext(data.contextID)
-	if err != nil {
-		return err
-	}
-
-	ctx.framebuffer.Clear(data.r, data.g, data.b, data.a)
-	return nil
-}
-
-func (r *Renderer) handleDestroyContext(data rendererRenderData) error {
+func (r *Renderer) handleDestroyContext(data rendererDestroyContextData) error {
 	ctx, err := r.getContext(data.contextID)
 	if err != nil {
 		return err
@@ -367,6 +399,15 @@ func (r *Renderer) handleDestroyContext(data rendererRenderData) error {
 	}
 	if ctx.vbo != 0 {
 		gl.DeleteBuffers(1, &ctx.vbo)
+	}
+	if ctx.program != nil {
+		ctx.program.Delete()
+	}
+	if ctx.fragmentShader != nil {
+		ctx.fragmentShader.Delete()
+	}
+	if ctx.vertexShader != nil {
+		ctx.vertexShader.Delete()
 	}
 	if ctx.framebuffer != nil {
 		ctx.framebuffer.Delete()
@@ -380,7 +421,7 @@ func (r *Renderer) handleDestroyContext(data rendererRenderData) error {
 
 func (r *Renderer) cleanup() {
 	for contextID := range r.contexts {
-		r.handleDestroyContext(rendererRenderData{contextID: contextID})
+		r.handleDestroyContext(rendererDestroyContextData{contextID: contextID})
 	}
 }
 
@@ -396,8 +437,8 @@ func (h *ContextHandle) Error() error {
 	return h.err
 }
 
-// SetShaderProgram sets the shader program for this context
-func (h *ContextHandle) SetShaderProgram(ctx context.Context, program *Program) error {
+// CompileShader compiles a fragment shader and returns any compilation errors
+func (h *ContextHandle) CompileShader(ctx context.Context, fragmentSource string) error {
 	if h.err != nil {
 		return h.err
 	}
@@ -406,10 +447,10 @@ func (h *ContextHandle) SetShaderProgram(ctx context.Context, program *Program) 
 
 	select {
 	case h.renderer.commandChan <- rendererCommand{
-		cmd: cmdRendererSetShaderProgram,
-		data: rendererSetShaderData{
-			contextID: h.contextID,
-			program:   program,
+		cmd: cmdRendererCompileShader,
+		data: rendererCompileShaderData{
+			contextID:      h.contextID,
+			fragmentSource: fragmentSource,
 		},
 		response: responseChan,
 	}:
@@ -428,10 +469,10 @@ func (h *ContextHandle) SetShaderProgram(ctx context.Context, program *Program) 
 	}
 }
 
-// Render executes a render operation with Bauble shader uniforms
-func (h *ContextHandle) Render(ctx context.Context, time float32, viewport [4]float32, freeCameraTarget [3]float32, freeCameraOrbit [2]float32, freeCameraZoom float32) error {
+// Render executes a render operation with Bauble shader uniforms and returns the rendered image
+func (h *ContextHandle) Render(ctx context.Context, viewportSize geom.Size, time float32, freeCameraTarget [3]float32, freeCameraOrbit [2]float32, freeCameraZoom float32) ([]byte, error) {
 	if h.err != nil {
-		return h.err
+		return nil, h.err
 	}
 
 	responseChan := make(chan interface{})
@@ -441,8 +482,8 @@ func (h *ContextHandle) Render(ctx context.Context, time float32, viewport [4]fl
 		cmd: cmdRendererRender,
 		data: rendererRenderData{
 			contextID:        h.contextID,
+			viewportSize:     viewportSize,
 			time:             time,
-			viewport:         viewport,
 			freeCameraTarget: freeCameraTarget,
 			freeCameraOrbit:  freeCameraOrbit,
 			freeCameraZoom:   freeCameraZoom,
@@ -450,83 +491,20 @@ func (h *ContextHandle) Render(ctx context.Context, time float32, viewport [4]fl
 		response: responseChan,
 	}:
 	case <-ctx.Done():
-		return ctx.Err()
-	}
-
-	select {
-	case result := <-responseChan:
-		if err, ok := result.(error); ok {
-			return err
-		}
-		return nil
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-}
-
-// ReadPixels reads the current framebuffer contents
-func (h *ContextHandle) ReadPixels(ctx context.Context) ([]byte, error) {
-	if h.err != nil {
-		return nil, h.err
-	}
-
-	responseChan := make(chan interface{})
-
-	select {
-	case h.renderer.commandChan <- rendererCommand{
-		cmd: cmdRendererReadPixels,
-		data: rendererRenderData{
-			contextID: h.contextID,
-		},
-		response: responseChan,
-	}:
-	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
 
 	select {
 	case result := <-responseChan:
-		if resp, ok := result.(rendererReadPixelsResponse); ok {
+		if resp, ok := result.(rendererRenderResponse); ok {
 			return resp.pixels, resp.err
+		}
+		if err, ok := result.(error); ok {
+			return nil, err
 		}
 		return nil, fmt.Errorf("unexpected response type")
 	case <-ctx.Done():
 		return nil, ctx.Err()
-	}
-}
-
-// Clear clears the framebuffer with the specified color
-func (h *ContextHandle) Clear(ctx context.Context, r, g, b, a float32) error {
-	if h.err != nil {
-		return h.err
-	}
-
-	responseChan := make(chan interface{})
-
-	select {
-	case h.renderer.commandChan <- rendererCommand{
-		cmd: cmdRendererClear,
-		data: rendererClearData{
-			contextID: h.contextID,
-			r:         r,
-			g:         g,
-			b:         b,
-			a:         a,
-		},
-		response: responseChan,
-	}:
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-
-	select {
-	case result := <-responseChan:
-		if err, ok := result.(error); ok {
-			return err
-		}
-		return nil
-	case <-ctx.Done():
-		return ctx.Err()
 	}
 }
 
@@ -540,8 +518,8 @@ func (h *ContextHandle) Destroy(ctx context.Context) error {
 
 	select {
 	case h.renderer.commandChan <- rendererCommand{
-		cmd: cmdRendererDestroy,
-		data: rendererRenderData{
+		cmd: cmdRendererDestroyContext,
+		data: rendererDestroyContextData{
 			contextID: h.contextID,
 		},
 		response: responseChan,
@@ -560,34 +538,4 @@ func (h *ContextHandle) Destroy(ctx context.Context) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	}
-}
-
-// Width returns the framebuffer width
-func (h *ContextHandle) Width() int {
-	if h.err != nil || h.contextID == -1 {
-		return 0
-	}
-
-	h.renderer.mu.RLock()
-	defer h.renderer.mu.RUnlock()
-
-	if ctx, ok := h.renderer.contexts[h.contextID]; ok {
-		return ctx.width
-	}
-	return 0
-}
-
-// Height returns the framebuffer height
-func (h *ContextHandle) Height() int {
-	if h.err != nil || h.contextID == -1 {
-		return 0
-	}
-
-	h.renderer.mu.RLock()
-	defer h.renderer.mu.RUnlock()
-
-	if ctx, ok := h.renderer.contexts[h.contextID]; ok {
-		return ctx.height
-	}
-	return 0
 }
