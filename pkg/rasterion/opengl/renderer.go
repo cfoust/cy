@@ -31,8 +31,7 @@ type rendererCommand struct {
 }
 
 type rendererCreateContextData struct {
-	width  int
-	height int
+	size geom.Size
 }
 
 type rendererCreateContextResponse struct {
@@ -144,15 +143,14 @@ func (r *Renderer) Shutdown() {
 
 // NewContext creates a new rendering context
 // Returns a ContextHandle that can be used for rendering operations
-func (r *Renderer) NewContext(ctx context.Context, width, height int) *ContextHandle {
+func (r *Renderer) NewContext(ctx context.Context, size geom.Size) *ContextHandle {
 	responseChan := make(chan interface{})
 
 	select {
 	case r.commandChan <- rendererCommand{
 		cmd: cmdRendererCreateContext,
 		data: rendererCreateContextData{
-			width:  width,
-			height: height,
+			size: size,
 		},
 		response: responseChan,
 	}:
@@ -209,17 +207,17 @@ func (r *Renderer) handleCommand(cmd rendererCommand) {
 	}
 }
 
-const vertexSource = "#version 300 es\nin vec4 position;void main(){gl_Position=position;}"
+const vertexSource = "#version 330 core\nin vec4 position;void main(){gl_Position=position;}"
 
 func (r *Renderer) handleCreateContext(data rendererCreateContextData) (rendererCreateContextResponse, error) {
-	ctx, err := NewContext(data.width, data.height)
+	ctx, err := NewContext(data.size.C, data.size.R)
 	if err != nil {
 		return rendererCreateContextResponse{}, err
 	}
 
 	ctx.MakeCurrent()
 
-	fbo, err := NewFramebuffer(int32(data.width), int32(data.height))
+	fbo, err := NewFramebuffer(int32(data.size.C), int32(data.size.R))
 	if err != nil {
 		ctx.Destroy()
 		return rendererCreateContextResponse{}, err
@@ -233,10 +231,10 @@ func (r *Renderer) handleCreateContext(data rendererCreateContextData) (renderer
 	}
 
 	// Create a fullscreen quad with triangles (matching Bauble's player.ts)
-	left := -float32(data.width) * 0.5
-	right := float32(data.width) * 0.5
-	top := float32(data.height) * 0.5
-	bottom := -float32(data.height) * 0.5
+	left := -float32(data.size.C) * 0.5
+	right := float32(data.size.C) * 0.5
+	top := float32(data.size.R) * 0.5
+	bottom := -float32(data.size.R) * 0.5
 
 	vertices := []float32{
 		left, top, 0, // Triangle 1
@@ -275,8 +273,8 @@ func (r *Renderer) handleCreateContext(data rendererCreateContextData) (renderer
 		framebuffer:  fbo,
 		vao:          vao,
 		vbo:          vbo,
-		width:        data.width,
-		height:       data.height,
+		width:        data.size.C,
+		height:       data.size.R,
 		vertexShader: vertexShader,
 	}
 
