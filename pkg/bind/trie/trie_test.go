@@ -105,11 +105,11 @@ func TestRegex(t *testing.T) {
 		"t",
 	}, 2)
 
-	_, re, matched := trie.Get([]string{
+	_, args, matched := trie.Get([]string{
 		"a",
 		"t",
 	})
-	require.Equal(t, []string{"a"}, re)
+	require.Equal(t, []interface{}{"a"}, args)
 	require.Equal(t, true, matched)
 
 	_, _, matched = trie.Get([]string{
@@ -130,17 +130,17 @@ func TestMultipleRegex(t *testing.T) {
 		"j",
 	}, 3)
 
-	_, re, matched := trie.Get([]string{
+	_, args, matched := trie.Get([]string{
 		"a",
 		"t",
 	})
-	require.Equal(t, []string{"a"}, re)
+	require.Equal(t, []interface{}{"a"}, args)
 	require.Equal(t, true, matched)
 
-	_, _, matched = trie.Get([]string{
+	_, args2, matched := trie.Get([]string{
 		"a",
 		"j",
 	})
-	require.Equal(t, []string{"a"}, re)
+	require.Equal(t, []interface{}{"a"}, args2)
 	require.Equal(t, true, matched)
 }
