@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/charmbracelet/lipgloss"
@@ -22,16 +23,16 @@ func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 
 	p := r.params
 	activeFg := r.render.ConvertLipgloss(
-		p.ReplayMatchActiveFg().Color,
+		p.ReplayMatchActiveStyle().GetForegroundColor().Color,
 	)
 	activeBg := r.render.ConvertLipgloss(
-		p.ReplayMatchActiveBg().Color,
+		p.ReplayMatchActiveStyle().GetBackgroundColor().Color,
 	)
 	inactiveFg := r.render.ConvertLipgloss(
-		p.ReplayMatchInactiveFg().Color,
+		p.ReplayMatchInactiveStyle().GetForegroundColor().Color,
 	)
 	inactiveBg := r.render.ConvertLipgloss(
-		p.ReplayMatchInactiveBg().Color,
+		p.ReplayMatchInactiveStyle().GetBackgroundColor().Color,
 	)
 
 	var fg, bg emu.Color
@@ -92,25 +93,20 @@ func (r *Replay) getCommand() (command detect.Command, ok bool) {
 func (r *Replay) getLeftStatusStyle() lipgloss.Style {
 	p := r.params
 
-	statusFg := p.ReplayTimeFg()
-	statusBg := p.ReplayTimeBg()
+	var statusStyle *style.Style = p.ReplayTimeStyle()
 	if r.isCopyMode() {
-		statusFg = p.ReplayCopyFg()
-		statusBg = p.ReplayCopyBg()
+		statusStyle = p.ReplayCopyStyle()
 
 		if r.isSelecting {
-			statusFg = p.ReplayVisualFg()
-			statusBg = p.ReplayVisualBg()
+			statusStyle = p.ReplayVisualStyle()
 		}
 	}
 	if r.isPlaying {
-		statusFg = p.ReplayPlayFg()
-		statusBg = p.ReplayPlayBg()
+		statusStyle = p.ReplayPlayStyle()
 	}
 
 	return r.render.NewStyle().
-		Foreground(statusFg).
-		Background(statusBg).
+		Inherit(statusStyle.Style).
 		Padding(0, 1)
 }
 
@@ -118,9 +114,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	p := r.params
 	size := state.Image.Size()
 
-	statusBarStyle := r.render.NewStyle().
-		Foreground(r.params.ReplayStatusBarFg()).
-		Background(r.params.ReplayStatusBarBg())
+	statusBarStyle := r.render.NewStyle().Inherit(r.params.ReplayStatusBarStyle().Style)
 
 	statusText := p.ReplayTextTimeMode()
 	if r.isCopyMode() {
@@ -237,7 +231,7 @@ func (r *Replay) renderIncremental(
 	)
 
 	r.input.Cursor.Style = r.render.NewStyle().
-		Background(p.ReplayStatusBarFg())
+		Background(p.ReplayStatusBarStyle().GetForeground())
 	r.input.TextStyle = statusBarStyle
 	r.input.Cursor.TextStyle = statusBarStyle
 
@@ -273,14 +267,12 @@ func (r *Replay) renderSearch(
 	)
 
 	r.input.Cursor.Style = r.render.NewStyle().
-		Background(p.ReplayStatusBarFg())
+		Background(p.ReplayStatusBarStyle().GetForeground())
 	r.input.TextStyle = statusBarStyle
 	r.input.Cursor.TextStyle = statusBarStyle
 
 	if r.isWaiting {
-		emptyStyle := r.render.NewStyle().
-			Foreground(p.ReplayTimeFg()).
-			Background(p.ReplayTimeBg())
+		emptyStyle := r.render.NewStyle().Inherit(p.ReplayTimeStyle().Style)
 		filledStyle := r.render.NewStyle().
 			Background(emptyStyle.GetForeground()).
 			Foreground(emptyStyle.GetBackground())
@@ -416,10 +408,10 @@ func (r *Replay) View(state *tty.State) {
 				From: r.selectStart,
 				To:   r.movement.Cursor(),
 				FG: r.render.ConvertLipgloss(
-					p.ReplaySelectionFg().Color,
+					p.ReplaySelectionStyle().GetForegroundColor().Color,
 				),
 				BG: r.render.ConvertLipgloss(
-					p.ReplaySelectionBg().Color,
+					p.ReplaySelectionStyle().GetBackgroundColor().Color,
 				),
 			},
 		)
@@ -435,10 +427,10 @@ func (r *Replay) View(state *tty.State) {
 					C: highlight.C1 - 1,
 				},
 				FG: r.render.ConvertLipgloss(
-					p.ReplayIncrementalFg().Color,
+					p.ReplayIncrementalStyle().GetForegroundColor().Color,
 				),
 				BG: r.render.ConvertLipgloss(
-					p.ReplayIncrementalBg().Color,
+					p.ReplayIncrementalStyle().GetBackgroundColor().Color,
 				),
 			},
 		)
