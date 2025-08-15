@@ -101,6 +101,10 @@ type defaultParams struct {
 	InputFindInactiveFg *style.Color
 	// The background [color](/api.md#color) of the inactive row in (input/find).
 	InputFindInactiveBg *style.Color
+	// The foreground [color](/api.md#color) of highlighted characters in (input/find).
+	InputFindHighlightFg *style.Color
+	// The background [color](/api.md#color) of highlighted characters in (input/find).
+	InputFindHighlightBg *style.Color
 	// The foreground [color](/api.md#color) of match text in (input/thumbs).
 	InputThumbsMatchFg *style.Color
 	// The background [color](/api.md#color) of match text in (input/thumbs).
@@ -198,6 +202,8 @@ var (
 		InputFindActiveBg:        style.White,
 		InputFindInactiveFg:      style.Black,
 		InputFindInactiveBg:      style.LightGrey,
+		InputFindHighlightFg:     style.White,
+		InputFindHighlightBg:     style.Red,
 		InputThumbsMatchFg:       style.Red,
 		InputThumbsMatchBg:       style.Black,
 		InputThumbsHintFg:        style.Yellow,

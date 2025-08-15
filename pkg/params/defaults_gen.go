@@ -20,6 +20,8 @@ const (
 	ParamDefaultShell             = "default-shell"
 	ParamInputFindActiveBg        = "input-find-active-bg"
 	ParamInputFindActiveFg        = "input-find-active-fg"
+	ParamInputFindHighlightBg     = "input-find-highlight-bg"
+	ParamInputFindHighlightFg     = "input-find-highlight-fg"
 	ParamInputFindInactiveBg      = "input-find-inactive-bg"
 	ParamInputFindInactiveFg      = "input-find-inactive-fg"
 	ParamInputPreviewBorder       = "input-preview-border"
@@ -262,6 +264,42 @@ func (p *Parameters) InputFindActiveFg() *style.Color {
 
 func (p *Parameters) SetInputFindActiveFg(value *style.Color) {
 	p.set(ParamInputFindActiveFg, value)
+}
+
+func (p *Parameters) InputFindHighlightBg() *style.Color {
+	value, ok := p.Get(ParamInputFindHighlightBg)
+	if !ok {
+		return defaults.InputFindHighlightBg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputFindHighlightBg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputFindHighlightBg(value *style.Color) {
+	p.set(ParamInputFindHighlightBg, value)
+}
+
+func (p *Parameters) InputFindHighlightFg() *style.Color {
+	value, ok := p.Get(ParamInputFindHighlightFg)
+	if !ok {
+		return defaults.InputFindHighlightFg
+	}
+
+	realValue, ok := value.(*style.Color)
+	if !ok {
+		return defaults.InputFindHighlightFg
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputFindHighlightFg(value *style.Color) {
+	p.set(ParamInputFindHighlightFg, value)
 }
 
 func (p *Parameters) InputFindInactiveBg() *style.Color {
@@ -1080,6 +1118,10 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamInputFindActiveFg:
 		return true
+	case ParamInputFindHighlightBg:
+		return true
+	case ParamInputFindHighlightFg:
+		return true
 	case ParamInputFindInactiveBg:
 		return true
 	case ParamInputFindInactiveFg:
@@ -1197,6 +1239,10 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.InputFindActiveBg, true
 	case ParamInputFindActiveFg:
 		return defaults.InputFindActiveFg, true
+	case ParamInputFindHighlightBg:
+		return defaults.InputFindHighlightBg, true
+	case ParamInputFindHighlightFg:
+		return defaults.InputFindHighlightFg, true
 	case ParamInputFindInactiveBg:
 		return defaults.InputFindInactiveBg, true
 	case ParamInputFindInactiveFg:
@@ -1498,6 +1544,44 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		if err != nil {
 			janetValue.Free()
 			return fmt.Errorf("invalid value for :input-find-active-fg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputFindHighlightBg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputFindHighlightBg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-find-highlight-bg: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputFindHighlightFg:
+		if !janetOk {
+			realValue, ok := value.(*style.Color)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputFindHighlightFg, should be *style.Color")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated *style.Color
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-find-highlight-fg: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -2391,6 +2475,16 @@ func init() {
 			Name:      "input-find-active-fg",
 			Docstring: "The foreground [color](/api.md#color) of the active row in (input/find).",
 			Default:   defaults.InputFindActiveFg,
+		},
+		{
+			Name:      "input-find-highlight-bg",
+			Docstring: "The background [color](/api.md#color) of highlighted characters in (input/find).",
+			Default:   defaults.InputFindHighlightBg,
+		},
+		{
+			Name:      "input-find-highlight-fg",
+			Docstring: "The foreground [color](/api.md#color) of highlighted characters in (input/find).",
+			Default:   defaults.InputFindHighlightFg,
 		},
 		{
 			Name:      "input-find-inactive-bg",

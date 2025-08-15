@@ -6,6 +6,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/input/fuzzy/preview"
 	"github.com/cfoust/cy/pkg/janet"
+
 	"github.com/sahilm/fuzzy"
 )
 
@@ -187,13 +188,13 @@ func Filter(
 	}
 
 	results := fuzzy.FindFrom(searchPattern, source)
-	
+
 	matches := make([]Option, 0, len(results))
 	for _, result := range results {
 		newOption := options[result.Index]
 		newOption.Match = &Match{
-			Score:    result.Score,
-			Index:    &result.MatchedIndexes,
+			Score: result.Score,
+			Index: &result.MatchedIndexes,
 		}
 		matches = append(matches, newOption)
 	}
