@@ -7,4 +7,4 @@ Key features:
 - [Replay and search through](/replay-mode.md) any terminal session
 - [Shell command history](/command-history.md) that lets you insert (and [revisit](/command-history/ctrl+r.md#ctrlr)) any command you've ever run
 - [Flexible configuration](/configuration.md) with [Janet](https://janet-lang.org/), a simple imperative programming language
-- Built-in [fuzzy finding](/user-input/fuzzy-finding.md) using concepts from [fzf](https://github.com/junegunn/fzf)
+- Built-in [fuzzy finding](/user-input/fuzzy-finding.md) with fast, intuitive matching

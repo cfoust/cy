@@ -10,7 +10,7 @@ This is a comprehensive guide for Claude Code to understand and work with the `c
 - Replay and search through any terminal session
 - Shell command history with revisitation capabilities
 - Flexible configuration using Janet programming language
-- Built-in fuzzy finding using concepts from fzf
+- Built-in fuzzy finding with fast, intuitive matching
 - Modern, ergonomic design
 
 ## Architecture

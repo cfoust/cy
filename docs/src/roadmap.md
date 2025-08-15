@@ -12,4 +12,4 @@ This document outlines the features I plan on implementing in the next few month
   - [ ] **API functions for executing external commands**
   - [ ] **Progress bars\*:** It would be nice for Janet code to be able to show the user the progress of some long-running operation.
   - [ ] **tmux emulation:** This would be the first proof-of-concept cy plugin. Some people really like tmux, and I intentionally built cy's layout functionality so that it would be flexible enough to emulate tmux's user interface. This does not have to be that comprehensive, it could just mimic most of tmux's common keybindings.
-- [ ] **fzf-cy\*:** `cy` literally uses `fzf`'s algorithm and its fuzzy finder should be able to be used as a drop-in replacement for `fzf` just like in [fzf-tmux](https://github.com/junegunn/fzf/blob/master/bin/fzf-tmux). In other words, `cy`'s fuzzy finder should support everything (within reason) that `fzf` does.
+- [ ] **cy-find\*:** `cy`'s fuzzy finder should be able to be used as a standalone command-line tool, similar to other fuzzy finders. This would allow users to leverage cy's fast fuzzy matching in scripts and workflows.
