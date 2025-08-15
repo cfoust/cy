@@ -87,70 +87,39 @@ type defaultParams struct {
 	InputPreviewBorderFg *style.Color
 	// The border style of the preview border in (input/find).
 	InputPreviewBorder *style.Border
-	// The foreground [color](/api.md#color) of the input prompt in
+	// The [style](/api.md#style) of the input prompt in
 	// (input/*) functions.
-	InputPromptFg *style.Color
-	// The background [color](/api.md#color) of the input prompt in
-	// (input/*) functions.
-	InputPromptBg *style.Color
-	// The foreground [color](/api.md#color) of the active row in (input/find).
-	InputFindActiveFg *style.Color
-	// The background [color](/api.md#color) of the active row in (input/find).
-	InputFindActiveBg *style.Color
-	// The foreground [color](/api.md#color) of the inactive row in (input/find).
-	InputFindInactiveFg *style.Color
-	// The background [color](/api.md#color) of the inactive row in (input/find).
-	InputFindInactiveBg *style.Color
-	// The foreground [color](/api.md#color) of highlighted characters in (input/find).
-	InputFindHighlightFg *style.Color
-	// The background [color](/api.md#color) of highlighted characters in (input/find).
-	InputFindHighlightBg *style.Color
-	// The foreground [color](/api.md#color) of match text in (input/thumbs).
-	InputThumbsMatchFg *style.Color
-	// The background [color](/api.md#color) of match text in (input/thumbs).
-	InputThumbsMatchBg *style.Color
-	// The foreground [color](/api.md#color) of hint text in (input/thumbs).
-	InputThumbsHintFg *style.Color
-	// The background [color](/api.md#color) of hint text in (input/thumbs).
-	InputThumbsHintBg *style.Color
-	// The foreground [color](/api.md#color) of partially selected hint text in (input/thumbs).
-	InputThumbsPartialFg *style.Color
-	// The background [color](/api.md#color) of partially selected hint text in (input/thumbs).
-	InputThumbsPartialBg *style.Color
+	InputPromptStyle *style.Style
+	// The [style](/api.md#style) of the active row in (input/find).
+	InputFindActiveStyle *style.Style
+	// The [style](/api.md#style) of the inactive row in (input/find).
+	InputFindInactiveStyle *style.Style
+	// The [style](/api.md#style) of highlighted characters in (input/find).
+	InputFindHighlightStyle *style.Style
+	// The [style](/api.md#style) of match text in (input/thumbs).
+	InputThumbsMatchStyle *style.Style
+	// The [style](/api.md#style) of hint text in (input/thumbs).
+	InputThumbsHintStyle *style.Style
+	// The [style](/api.md#style) of partially selected hint text in (input/thumbs).
+	InputThumbsPartialStyle *style.Style
 
-	// The foreground [color](/api.md#color) used to represent time mode.
-	ReplayTimeFg *style.Color
-	// The [color](/api.md#color) used to represent time mode.
-	ReplayTimeBg *style.Color
-	// The foreground [color](/api.md#color) used in time mode when the player is playing.
-	ReplayPlayFg *style.Color
-	// The [color](/api.md#color) used in time mode when the player is playing.
-	ReplayPlayBg *style.Color
-	// The foreground [color](/api.md#color) used in time mode when the player is playing.
-	ReplayCopyFg *style.Color
-	// The [color](/api.md#color) used to represent copy mode.
-	ReplayCopyBg *style.Color
-	// The foreground [color](/api.md#color) used in time mode when the player is playing.
-	ReplayVisualFg *style.Color
-	// The [color](/api.md#color) used to represent visual mode.
-	ReplayVisualBg *style.Color
+	// The [style](/api.md#style) used to represent time mode.
+	ReplayTimeStyle *style.Style
+	// The [style](/api.md#style) used in time mode when the player is playing.
+	ReplayPlayStyle *style.Style
+	// The [style](/api.md#style) used to represent copy mode.
+	ReplayCopyStyle *style.Style
+	// The [style](/api.md#style) used to represent visual mode.
+	ReplayVisualStyle *style.Style
 
-	// The foreground [color](/api.md#color) for selections in replay mode.
-	ReplaySelectionFg *style.Color
-	// The background [color](/api.md#color) for selections in replay mode.
-	ReplaySelectionBg *style.Color
-	// The foreground [color](/api.md#color) for incremental search in replay mode.
-	ReplayIncrementalFg *style.Color
-	// The background [color](/api.md#color) for incremental search in replay mode.
-	ReplayIncrementalBg *style.Color
-	// The foreground [color](/api.md#color) for the current search match in replay mode.
-	ReplayMatchActiveFg *style.Color
-	// The background [color](/api.md#color) for the current search match in replay mode.
-	ReplayMatchActiveBg *style.Color
-	// The foreground [color](/api.md#color) for search matches in replay mode.
-	ReplayMatchInactiveFg *style.Color
-	// The background [color](/api.md#color) for search matches in replay mode.
-	ReplayMatchInactiveBg *style.Color
+	// The [style](/api.md#style) for selections in replay mode.
+	ReplaySelectionStyle *style.Style
+	// The [style](/api.md#style) for incremental search in replay mode.
+	ReplayIncrementalStyle *style.Style
+	// The [style](/api.md#style) for the current search match in replay mode.
+	ReplayMatchActiveStyle *style.Style
+	// The [style](/api.md#style) for search matches in replay mode.
+	ReplayMatchInactiveStyle *style.Style
 
 	// The text shown in the status bar when in time mode.
 	ReplayTextTimeMode string
@@ -161,15 +130,11 @@ type defaultParams struct {
 	// The text shown in the status bar when in visual mode.
 	ReplayTextVisualMode string
 
-	// The foreground [color](/api.md#color) of the status bar in replay mode.
-	ReplayStatusBarFg *style.Color
-	// The background [color](/api.md#color) of the status bar in replay mode.
-	ReplayStatusBarBg *style.Color
+	// The [style](/api.md#style) of the status bar in replay mode.
+	ReplayStatusBarStyle *style.Style
 
-	// The foreground [color](/api.md#color) of the status bar in search mode.
-	SearchStatusBarFg *style.Color
-	// The background [color](/api.md#color) of the status bar in search mode.
-	SearchStatusBarBg *style.Color
+	// The [style](/api.md#style) of the status bar in search mode.
+	SearchStatusBarStyle *style.Style
 	// The text shown in the status bar when searching.
 	SearchTextSearching string
 	// The text shown in the status bar when no matches are found.
@@ -196,44 +161,27 @@ var (
 		TimestampFormat:          time.DateTime,
 		InputPreviewBorderFg:     style.Magenta,
 		InputPreviewBorder:       &style.Borders[0],
-		InputPromptFg:            style.Black,
-		InputPromptBg:            style.Yellow,
-		InputFindActiveFg:        style.Black,
-		InputFindActiveBg:        style.White,
-		InputFindInactiveFg:      style.Black,
-		InputFindInactiveBg:      style.LightGrey,
-		InputFindHighlightFg:     style.White,
-		InputFindHighlightBg:     style.Red,
-		InputThumbsMatchFg:       style.Red,
-		InputThumbsMatchBg:       style.Black,
-		InputThumbsHintFg:        style.Yellow,
-		InputThumbsHintBg:        style.Black,
-		InputThumbsPartialFg:     style.White,
-		InputThumbsPartialBg:     style.Blue,
-		ReplayTimeFg:             style.White,
-		ReplayTimeBg:             style.Blue,
-		ReplayPlayFg:             style.White,
-		ReplayPlayBg:             style.LightBlue,
-		ReplayCopyFg:             style.Black,
-		ReplayCopyBg:             style.Yellow,
-		ReplayVisualFg:           style.Black,
-		ReplayVisualBg:           style.LightGreen,
-		ReplayStatusBarFg:        style.White,
-		ReplayStatusBarBg:        style.DarkGrey,
-		ReplaySelectionFg:        style.LightRed,
-		ReplaySelectionBg:        style.DarkGrey,
-		ReplayIncrementalFg:      style.Black,
-		ReplayIncrementalBg:      style.Yellow,
-		ReplayMatchActiveFg:      style.Red,
-		ReplayMatchActiveBg:      style.LightMagenta,
-		ReplayMatchInactiveFg:    style.Red,
-		ReplayMatchInactiveBg:    style.LightCyan,
+		InputPromptStyle:         style.NewStyle(style.Black, style.Yellow),
+		InputFindActiveStyle:     style.NewStyle(style.Black, style.White),
+		InputFindInactiveStyle:   style.NewStyle(style.Black, style.LightGrey),
+		InputFindHighlightStyle:  style.NewStyle(style.White, style.Red),
+		InputThumbsMatchStyle:    style.NewStyle(style.Red, style.Black),
+		InputThumbsHintStyle:     style.NewStyle(style.Yellow, style.Black),
+		InputThumbsPartialStyle:  style.NewStyle(style.White, style.Blue),
+		ReplayTimeStyle:          style.NewStyle(style.White, style.Blue),
+		ReplayPlayStyle:          style.NewStyle(style.White, style.LightBlue),
+		ReplayCopyStyle:          style.NewStyle(style.Black, style.Yellow),
+		ReplayVisualStyle:        style.NewStyle(style.Black, style.LightGreen),
+		ReplayStatusBarStyle:     style.NewStyle(style.White, style.DarkGrey),
+		ReplaySelectionStyle:     style.NewStyle(style.LightRed, style.DarkGrey),
+		ReplayIncrementalStyle:   style.NewStyle(style.Black, style.Yellow),
+		ReplayMatchActiveStyle:   style.NewStyle(style.Red, style.LightMagenta),
+		ReplayMatchInactiveStyle: style.NewStyle(style.Red, style.LightCyan),
 		ReplayTextTimeMode:       "⏵",
 		ReplayTextPlayMode:       "⏸",
 		ReplayTextCopyMode:       "COPY",
 		ReplayTextVisualMode:     "VISUAL",
-		SearchStatusBarFg:        style.White,
-		SearchStatusBarBg:        style.Blue,
+		SearchStatusBarStyle:     style.NewStyle(style.White, style.Blue),
 		SearchTextSearching:      "searching",
 		SearchTextNoMatchesFound: "no matches found for",
 		TerminalTextExited:       "exited",

@@ -169,17 +169,9 @@ func (f *Fuzzy) renderOptions(
 	prompt = prompt.Width(0)
 
 	p := f.params
-	rowStyle := f.render.NewStyle()
-	inactive := rowStyle.
-		Background(p.InputFindInactiveBg()).
-		Foreground(p.InputFindInactiveFg())
-	active := rowStyle.
-		Background(p.InputFindActiveBg()).
-		Foreground(p.InputFindActiveFg())
-
-	highlightStyle := f.render.NewStyle().
-		Background(p.InputFindHighlightBg()).
-		Foreground(p.InputFindHighlightFg())
+	inactive := f.render.NewStyle().Inherit(p.InputFindInactiveStyle().Style)
+	active := f.render.NewStyle().Inherit(p.InputFindActiveStyle().Style)
+	highlightStyle := f.render.NewStyle().Inherit(p.InputFindHighlightStyle().Style)
 
 	var rows [][]string
 
@@ -327,9 +319,7 @@ func (f *Fuzzy) renderPrompt(prompt lipgloss.Style) string {
 func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
 	p := f.params
 	commonStyle := f.render.NewStyle().Width(size.C)
-	promptStyle := commonStyle.
-		Background(p.InputPromptBg()).
-		Foreground(p.InputPromptFg())
+	promptStyle := f.render.NewStyle().Inherit(p.InputPromptStyle().Style).Width(size.C)
 
 	// TODO(cfoust): 07/20/24 handle this more gracefully
 	if size.R < 2 {
@@ -355,10 +345,10 @@ func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
 		Render("~>")
 
 	inputStyle := f.render.NewStyle().
-		Background(p.InputPromptFg()).
-		Foreground(p.InputFindActiveBg())
+		Background(p.InputPromptStyle().GetForeground()).
+		Foreground(p.InputFindActiveStyle().GetBackground())
 	f.textInput.Cursor.Style = f.render.NewStyle().
-		Background(p.InputFindActiveBg())
+		Background(p.InputFindActiveStyle().GetBackground())
 	f.textInput.TextStyle = inputStyle
 	f.textInput.Cursor.TextStyle = inputStyle
 

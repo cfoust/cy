@@ -18,48 +18,31 @@ const (
 	ParamDataDirectory            = "data-directory"
 	ParamDefaultFrame             = "default-frame"
 	ParamDefaultShell             = "default-shell"
-	ParamInputFindActiveBg        = "input-find-active-bg"
-	ParamInputFindActiveFg        = "input-find-active-fg"
-	ParamInputFindHighlightBg     = "input-find-highlight-bg"
-	ParamInputFindHighlightFg     = "input-find-highlight-fg"
-	ParamInputFindInactiveBg      = "input-find-inactive-bg"
-	ParamInputFindInactiveFg      = "input-find-inactive-fg"
+	ParamInputFindActiveStyle     = "input-find-active-style"
+	ParamInputFindHighlightStyle  = "input-find-highlight-style"
+	ParamInputFindInactiveStyle   = "input-find-inactive-style"
 	ParamInputPreviewBorder       = "input-preview-border"
 	ParamInputPreviewBorderFg     = "input-preview-border-fg"
-	ParamInputPromptBg            = "input-prompt-bg"
-	ParamInputPromptFg            = "input-prompt-fg"
-	ParamInputThumbsHintBg        = "input-thumbs-hint-bg"
-	ParamInputThumbsHintFg        = "input-thumbs-hint-fg"
-	ParamInputThumbsMatchBg       = "input-thumbs-match-bg"
-	ParamInputThumbsMatchFg       = "input-thumbs-match-fg"
-	ParamInputThumbsPartialBg     = "input-thumbs-partial-bg"
-	ParamInputThumbsPartialFg     = "input-thumbs-partial-fg"
+	ParamInputPromptStyle         = "input-prompt-style"
+	ParamInputThumbsHintStyle     = "input-thumbs-hint-style"
+	ParamInputThumbsMatchStyle    = "input-thumbs-match-style"
+	ParamInputThumbsPartialStyle  = "input-thumbs-partial-style"
 	ParamNumSearchWorkers         = "num-search-workers"
 	ParamRemovePaneOnExit         = "remove-pane-on-exit"
-	ParamReplayCopyBg             = "replay-copy-bg"
-	ParamReplayCopyFg             = "replay-copy-fg"
-	ParamReplayIncrementalBg      = "replay-incremental-bg"
-	ParamReplayIncrementalFg      = "replay-incremental-fg"
-	ParamReplayMatchActiveBg      = "replay-match-active-bg"
-	ParamReplayMatchActiveFg      = "replay-match-active-fg"
-	ParamReplayMatchInactiveBg    = "replay-match-inactive-bg"
-	ParamReplayMatchInactiveFg    = "replay-match-inactive-fg"
-	ParamReplayPlayBg             = "replay-play-bg"
-	ParamReplayPlayFg             = "replay-play-fg"
-	ParamReplaySelectionBg        = "replay-selection-bg"
-	ParamReplaySelectionFg        = "replay-selection-fg"
-	ParamReplayStatusBarBg        = "replay-status-bar-bg"
-	ParamReplayStatusBarFg        = "replay-status-bar-fg"
+	ParamReplayCopyStyle          = "replay-copy-style"
+	ParamReplayIncrementalStyle   = "replay-incremental-style"
+	ParamReplayMatchActiveStyle   = "replay-match-active-style"
+	ParamReplayMatchInactiveStyle = "replay-match-inactive-style"
+	ParamReplayPlayStyle          = "replay-play-style"
+	ParamReplaySelectionStyle     = "replay-selection-style"
+	ParamReplayStatusBarStyle     = "replay-status-bar-style"
 	ParamReplayTextCopyMode       = "replay-text-copy-mode"
 	ParamReplayTextPlayMode       = "replay-text-play-mode"
 	ParamReplayTextTimeMode       = "replay-text-time-mode"
 	ParamReplayTextVisualMode     = "replay-text-visual-mode"
-	ParamReplayTimeBg             = "replay-time-bg"
-	ParamReplayTimeFg             = "replay-time-fg"
-	ParamReplayVisualBg           = "replay-visual-bg"
-	ParamReplayVisualFg           = "replay-visual-fg"
-	ParamSearchStatusBarBg        = "search-status-bar-bg"
-	ParamSearchStatusBarFg        = "search-status-bar-fg"
+	ParamReplayTimeStyle          = "replay-time-style"
+	ParamReplayVisualStyle        = "replay-visual-style"
+	ParamSearchStatusBarStyle     = "search-status-bar-style"
 	ParamSearchTextNoMatchesFound = "search-text-no-matches-found"
 	ParamSearchTextSearching      = "search-text-searching"
 	ParamSkipInput                = "---skip-input"
@@ -230,112 +213,58 @@ func (p *Parameters) SetDefaultShell(value string) {
 	p.set(ParamDefaultShell, value)
 }
 
-func (p *Parameters) InputFindActiveBg() *style.Color {
-	value, ok := p.Get(ParamInputFindActiveBg)
+func (p *Parameters) InputFindActiveStyle() *style.Style {
+	value, ok := p.Get(ParamInputFindActiveStyle)
 	if !ok {
-		return defaults.InputFindActiveBg
+		return defaults.InputFindActiveStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.InputFindActiveBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetInputFindActiveBg(value *style.Color) {
-	p.set(ParamInputFindActiveBg, value)
-}
-
-func (p *Parameters) InputFindActiveFg() *style.Color {
-	value, ok := p.Get(ParamInputFindActiveFg)
-	if !ok {
-		return defaults.InputFindActiveFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.InputFindActiveFg
+		return defaults.InputFindActiveStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetInputFindActiveFg(value *style.Color) {
-	p.set(ParamInputFindActiveFg, value)
+func (p *Parameters) SetInputFindActiveStyle(value *style.Style) {
+	p.set(ParamInputFindActiveStyle, value)
 }
 
-func (p *Parameters) InputFindHighlightBg() *style.Color {
-	value, ok := p.Get(ParamInputFindHighlightBg)
+func (p *Parameters) InputFindHighlightStyle() *style.Style {
+	value, ok := p.Get(ParamInputFindHighlightStyle)
 	if !ok {
-		return defaults.InputFindHighlightBg
+		return defaults.InputFindHighlightStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.InputFindHighlightBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetInputFindHighlightBg(value *style.Color) {
-	p.set(ParamInputFindHighlightBg, value)
-}
-
-func (p *Parameters) InputFindHighlightFg() *style.Color {
-	value, ok := p.Get(ParamInputFindHighlightFg)
-	if !ok {
-		return defaults.InputFindHighlightFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.InputFindHighlightFg
+		return defaults.InputFindHighlightStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetInputFindHighlightFg(value *style.Color) {
-	p.set(ParamInputFindHighlightFg, value)
+func (p *Parameters) SetInputFindHighlightStyle(value *style.Style) {
+	p.set(ParamInputFindHighlightStyle, value)
 }
 
-func (p *Parameters) InputFindInactiveBg() *style.Color {
-	value, ok := p.Get(ParamInputFindInactiveBg)
+func (p *Parameters) InputFindInactiveStyle() *style.Style {
+	value, ok := p.Get(ParamInputFindInactiveStyle)
 	if !ok {
-		return defaults.InputFindInactiveBg
+		return defaults.InputFindInactiveStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.InputFindInactiveBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetInputFindInactiveBg(value *style.Color) {
-	p.set(ParamInputFindInactiveBg, value)
-}
-
-func (p *Parameters) InputFindInactiveFg() *style.Color {
-	value, ok := p.Get(ParamInputFindInactiveFg)
-	if !ok {
-		return defaults.InputFindInactiveFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.InputFindInactiveFg
+		return defaults.InputFindInactiveStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetInputFindInactiveFg(value *style.Color) {
-	p.set(ParamInputFindInactiveFg, value)
+func (p *Parameters) SetInputFindInactiveStyle(value *style.Style) {
+	p.set(ParamInputFindInactiveStyle, value)
 }
 
 func (p *Parameters) InputPreviewBorder() *style.Border {
@@ -374,148 +303,76 @@ func (p *Parameters) SetInputPreviewBorderFg(value *style.Color) {
 	p.set(ParamInputPreviewBorderFg, value)
 }
 
-func (p *Parameters) InputPromptBg() *style.Color {
-	value, ok := p.Get(ParamInputPromptBg)
+func (p *Parameters) InputPromptStyle() *style.Style {
+	value, ok := p.Get(ParamInputPromptStyle)
 	if !ok {
-		return defaults.InputPromptBg
+		return defaults.InputPromptStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.InputPromptBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetInputPromptBg(value *style.Color) {
-	p.set(ParamInputPromptBg, value)
-}
-
-func (p *Parameters) InputPromptFg() *style.Color {
-	value, ok := p.Get(ParamInputPromptFg)
-	if !ok {
-		return defaults.InputPromptFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.InputPromptFg
+		return defaults.InputPromptStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetInputPromptFg(value *style.Color) {
-	p.set(ParamInputPromptFg, value)
+func (p *Parameters) SetInputPromptStyle(value *style.Style) {
+	p.set(ParamInputPromptStyle, value)
 }
 
-func (p *Parameters) InputThumbsHintBg() *style.Color {
-	value, ok := p.Get(ParamInputThumbsHintBg)
+func (p *Parameters) InputThumbsHintStyle() *style.Style {
+	value, ok := p.Get(ParamInputThumbsHintStyle)
 	if !ok {
-		return defaults.InputThumbsHintBg
+		return defaults.InputThumbsHintStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.InputThumbsHintBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetInputThumbsHintBg(value *style.Color) {
-	p.set(ParamInputThumbsHintBg, value)
-}
-
-func (p *Parameters) InputThumbsHintFg() *style.Color {
-	value, ok := p.Get(ParamInputThumbsHintFg)
-	if !ok {
-		return defaults.InputThumbsHintFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.InputThumbsHintFg
+		return defaults.InputThumbsHintStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetInputThumbsHintFg(value *style.Color) {
-	p.set(ParamInputThumbsHintFg, value)
+func (p *Parameters) SetInputThumbsHintStyle(value *style.Style) {
+	p.set(ParamInputThumbsHintStyle, value)
 }
 
-func (p *Parameters) InputThumbsMatchBg() *style.Color {
-	value, ok := p.Get(ParamInputThumbsMatchBg)
+func (p *Parameters) InputThumbsMatchStyle() *style.Style {
+	value, ok := p.Get(ParamInputThumbsMatchStyle)
 	if !ok {
-		return defaults.InputThumbsMatchBg
+		return defaults.InputThumbsMatchStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.InputThumbsMatchBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetInputThumbsMatchBg(value *style.Color) {
-	p.set(ParamInputThumbsMatchBg, value)
-}
-
-func (p *Parameters) InputThumbsMatchFg() *style.Color {
-	value, ok := p.Get(ParamInputThumbsMatchFg)
-	if !ok {
-		return defaults.InputThumbsMatchFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.InputThumbsMatchFg
+		return defaults.InputThumbsMatchStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetInputThumbsMatchFg(value *style.Color) {
-	p.set(ParamInputThumbsMatchFg, value)
+func (p *Parameters) SetInputThumbsMatchStyle(value *style.Style) {
+	p.set(ParamInputThumbsMatchStyle, value)
 }
 
-func (p *Parameters) InputThumbsPartialBg() *style.Color {
-	value, ok := p.Get(ParamInputThumbsPartialBg)
+func (p *Parameters) InputThumbsPartialStyle() *style.Style {
+	value, ok := p.Get(ParamInputThumbsPartialStyle)
 	if !ok {
-		return defaults.InputThumbsPartialBg
+		return defaults.InputThumbsPartialStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.InputThumbsPartialBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetInputThumbsPartialBg(value *style.Color) {
-	p.set(ParamInputThumbsPartialBg, value)
-}
-
-func (p *Parameters) InputThumbsPartialFg() *style.Color {
-	value, ok := p.Get(ParamInputThumbsPartialFg)
-	if !ok {
-		return defaults.InputThumbsPartialFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.InputThumbsPartialFg
+		return defaults.InputThumbsPartialStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetInputThumbsPartialFg(value *style.Color) {
-	p.set(ParamInputThumbsPartialFg, value)
+func (p *Parameters) SetInputThumbsPartialStyle(value *style.Style) {
+	p.set(ParamInputThumbsPartialStyle, value)
 }
 
 func (p *Parameters) NumSearchWorkers() int {
@@ -554,256 +411,130 @@ func (p *Parameters) SetRemovePaneOnExit(value bool) {
 	p.set(ParamRemovePaneOnExit, value)
 }
 
-func (p *Parameters) ReplayCopyBg() *style.Color {
-	value, ok := p.Get(ParamReplayCopyBg)
+func (p *Parameters) ReplayCopyStyle() *style.Style {
+	value, ok := p.Get(ParamReplayCopyStyle)
 	if !ok {
-		return defaults.ReplayCopyBg
+		return defaults.ReplayCopyStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.ReplayCopyBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetReplayCopyBg(value *style.Color) {
-	p.set(ParamReplayCopyBg, value)
-}
-
-func (p *Parameters) ReplayCopyFg() *style.Color {
-	value, ok := p.Get(ParamReplayCopyFg)
-	if !ok {
-		return defaults.ReplayCopyFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.ReplayCopyFg
+		return defaults.ReplayCopyStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetReplayCopyFg(value *style.Color) {
-	p.set(ParamReplayCopyFg, value)
+func (p *Parameters) SetReplayCopyStyle(value *style.Style) {
+	p.set(ParamReplayCopyStyle, value)
 }
 
-func (p *Parameters) ReplayIncrementalBg() *style.Color {
-	value, ok := p.Get(ParamReplayIncrementalBg)
+func (p *Parameters) ReplayIncrementalStyle() *style.Style {
+	value, ok := p.Get(ParamReplayIncrementalStyle)
 	if !ok {
-		return defaults.ReplayIncrementalBg
+		return defaults.ReplayIncrementalStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.ReplayIncrementalBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetReplayIncrementalBg(value *style.Color) {
-	p.set(ParamReplayIncrementalBg, value)
-}
-
-func (p *Parameters) ReplayIncrementalFg() *style.Color {
-	value, ok := p.Get(ParamReplayIncrementalFg)
-	if !ok {
-		return defaults.ReplayIncrementalFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.ReplayIncrementalFg
+		return defaults.ReplayIncrementalStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetReplayIncrementalFg(value *style.Color) {
-	p.set(ParamReplayIncrementalFg, value)
+func (p *Parameters) SetReplayIncrementalStyle(value *style.Style) {
+	p.set(ParamReplayIncrementalStyle, value)
 }
 
-func (p *Parameters) ReplayMatchActiveBg() *style.Color {
-	value, ok := p.Get(ParamReplayMatchActiveBg)
+func (p *Parameters) ReplayMatchActiveStyle() *style.Style {
+	value, ok := p.Get(ParamReplayMatchActiveStyle)
 	if !ok {
-		return defaults.ReplayMatchActiveBg
+		return defaults.ReplayMatchActiveStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.ReplayMatchActiveBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetReplayMatchActiveBg(value *style.Color) {
-	p.set(ParamReplayMatchActiveBg, value)
-}
-
-func (p *Parameters) ReplayMatchActiveFg() *style.Color {
-	value, ok := p.Get(ParamReplayMatchActiveFg)
-	if !ok {
-		return defaults.ReplayMatchActiveFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.ReplayMatchActiveFg
+		return defaults.ReplayMatchActiveStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetReplayMatchActiveFg(value *style.Color) {
-	p.set(ParamReplayMatchActiveFg, value)
+func (p *Parameters) SetReplayMatchActiveStyle(value *style.Style) {
+	p.set(ParamReplayMatchActiveStyle, value)
 }
 
-func (p *Parameters) ReplayMatchInactiveBg() *style.Color {
-	value, ok := p.Get(ParamReplayMatchInactiveBg)
+func (p *Parameters) ReplayMatchInactiveStyle() *style.Style {
+	value, ok := p.Get(ParamReplayMatchInactiveStyle)
 	if !ok {
-		return defaults.ReplayMatchInactiveBg
+		return defaults.ReplayMatchInactiveStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.ReplayMatchInactiveBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetReplayMatchInactiveBg(value *style.Color) {
-	p.set(ParamReplayMatchInactiveBg, value)
-}
-
-func (p *Parameters) ReplayMatchInactiveFg() *style.Color {
-	value, ok := p.Get(ParamReplayMatchInactiveFg)
-	if !ok {
-		return defaults.ReplayMatchInactiveFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.ReplayMatchInactiveFg
+		return defaults.ReplayMatchInactiveStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetReplayMatchInactiveFg(value *style.Color) {
-	p.set(ParamReplayMatchInactiveFg, value)
+func (p *Parameters) SetReplayMatchInactiveStyle(value *style.Style) {
+	p.set(ParamReplayMatchInactiveStyle, value)
 }
 
-func (p *Parameters) ReplayPlayBg() *style.Color {
-	value, ok := p.Get(ParamReplayPlayBg)
+func (p *Parameters) ReplayPlayStyle() *style.Style {
+	value, ok := p.Get(ParamReplayPlayStyle)
 	if !ok {
-		return defaults.ReplayPlayBg
+		return defaults.ReplayPlayStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.ReplayPlayBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetReplayPlayBg(value *style.Color) {
-	p.set(ParamReplayPlayBg, value)
-}
-
-func (p *Parameters) ReplayPlayFg() *style.Color {
-	value, ok := p.Get(ParamReplayPlayFg)
-	if !ok {
-		return defaults.ReplayPlayFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.ReplayPlayFg
+		return defaults.ReplayPlayStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetReplayPlayFg(value *style.Color) {
-	p.set(ParamReplayPlayFg, value)
+func (p *Parameters) SetReplayPlayStyle(value *style.Style) {
+	p.set(ParamReplayPlayStyle, value)
 }
 
-func (p *Parameters) ReplaySelectionBg() *style.Color {
-	value, ok := p.Get(ParamReplaySelectionBg)
+func (p *Parameters) ReplaySelectionStyle() *style.Style {
+	value, ok := p.Get(ParamReplaySelectionStyle)
 	if !ok {
-		return defaults.ReplaySelectionBg
+		return defaults.ReplaySelectionStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.ReplaySelectionBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetReplaySelectionBg(value *style.Color) {
-	p.set(ParamReplaySelectionBg, value)
-}
-
-func (p *Parameters) ReplaySelectionFg() *style.Color {
-	value, ok := p.Get(ParamReplaySelectionFg)
-	if !ok {
-		return defaults.ReplaySelectionFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.ReplaySelectionFg
+		return defaults.ReplaySelectionStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetReplaySelectionFg(value *style.Color) {
-	p.set(ParamReplaySelectionFg, value)
+func (p *Parameters) SetReplaySelectionStyle(value *style.Style) {
+	p.set(ParamReplaySelectionStyle, value)
 }
 
-func (p *Parameters) ReplayStatusBarBg() *style.Color {
-	value, ok := p.Get(ParamReplayStatusBarBg)
+func (p *Parameters) ReplayStatusBarStyle() *style.Style {
+	value, ok := p.Get(ParamReplayStatusBarStyle)
 	if !ok {
-		return defaults.ReplayStatusBarBg
+		return defaults.ReplayStatusBarStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.ReplayStatusBarBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetReplayStatusBarBg(value *style.Color) {
-	p.set(ParamReplayStatusBarBg, value)
-}
-
-func (p *Parameters) ReplayStatusBarFg() *style.Color {
-	value, ok := p.Get(ParamReplayStatusBarFg)
-	if !ok {
-		return defaults.ReplayStatusBarFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.ReplayStatusBarFg
+		return defaults.ReplayStatusBarStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetReplayStatusBarFg(value *style.Color) {
-	p.set(ParamReplayStatusBarFg, value)
+func (p *Parameters) SetReplayStatusBarStyle(value *style.Style) {
+	p.set(ParamReplayStatusBarStyle, value)
 }
 
 func (p *Parameters) ReplayTextCopyMode() string {
@@ -878,112 +609,58 @@ func (p *Parameters) SetReplayTextVisualMode(value string) {
 	p.set(ParamReplayTextVisualMode, value)
 }
 
-func (p *Parameters) ReplayTimeBg() *style.Color {
-	value, ok := p.Get(ParamReplayTimeBg)
+func (p *Parameters) ReplayTimeStyle() *style.Style {
+	value, ok := p.Get(ParamReplayTimeStyle)
 	if !ok {
-		return defaults.ReplayTimeBg
+		return defaults.ReplayTimeStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.ReplayTimeBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetReplayTimeBg(value *style.Color) {
-	p.set(ParamReplayTimeBg, value)
-}
-
-func (p *Parameters) ReplayTimeFg() *style.Color {
-	value, ok := p.Get(ParamReplayTimeFg)
-	if !ok {
-		return defaults.ReplayTimeFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.ReplayTimeFg
+		return defaults.ReplayTimeStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetReplayTimeFg(value *style.Color) {
-	p.set(ParamReplayTimeFg, value)
+func (p *Parameters) SetReplayTimeStyle(value *style.Style) {
+	p.set(ParamReplayTimeStyle, value)
 }
 
-func (p *Parameters) ReplayVisualBg() *style.Color {
-	value, ok := p.Get(ParamReplayVisualBg)
+func (p *Parameters) ReplayVisualStyle() *style.Style {
+	value, ok := p.Get(ParamReplayVisualStyle)
 	if !ok {
-		return defaults.ReplayVisualBg
+		return defaults.ReplayVisualStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.ReplayVisualBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetReplayVisualBg(value *style.Color) {
-	p.set(ParamReplayVisualBg, value)
-}
-
-func (p *Parameters) ReplayVisualFg() *style.Color {
-	value, ok := p.Get(ParamReplayVisualFg)
-	if !ok {
-		return defaults.ReplayVisualFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.ReplayVisualFg
+		return defaults.ReplayVisualStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetReplayVisualFg(value *style.Color) {
-	p.set(ParamReplayVisualFg, value)
+func (p *Parameters) SetReplayVisualStyle(value *style.Style) {
+	p.set(ParamReplayVisualStyle, value)
 }
 
-func (p *Parameters) SearchStatusBarBg() *style.Color {
-	value, ok := p.Get(ParamSearchStatusBarBg)
+func (p *Parameters) SearchStatusBarStyle() *style.Style {
+	value, ok := p.Get(ParamSearchStatusBarStyle)
 	if !ok {
-		return defaults.SearchStatusBarBg
+		return defaults.SearchStatusBarStyle
 	}
 
-	realValue, ok := value.(*style.Color)
+	realValue, ok := value.(*style.Style)
 	if !ok {
-		return defaults.SearchStatusBarBg
-	}
-
-	return realValue
-}
-
-func (p *Parameters) SetSearchStatusBarBg(value *style.Color) {
-	p.set(ParamSearchStatusBarBg, value)
-}
-
-func (p *Parameters) SearchStatusBarFg() *style.Color {
-	value, ok := p.Get(ParamSearchStatusBarFg)
-	if !ok {
-		return defaults.SearchStatusBarFg
-	}
-
-	realValue, ok := value.(*style.Color)
-	if !ok {
-		return defaults.SearchStatusBarFg
+		return defaults.SearchStatusBarStyle
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetSearchStatusBarFg(value *style.Color) {
-	p.set(ParamSearchStatusBarFg, value)
+func (p *Parameters) SetSearchStatusBarStyle(value *style.Style) {
+	p.set(ParamSearchStatusBarStyle, value)
 }
 
 func (p *Parameters) SearchTextNoMatchesFound() string {
@@ -1114,69 +791,41 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamDefaultShell:
 		return true
-	case ParamInputFindActiveBg:
+	case ParamInputFindActiveStyle:
 		return true
-	case ParamInputFindActiveFg:
+	case ParamInputFindHighlightStyle:
 		return true
-	case ParamInputFindHighlightBg:
-		return true
-	case ParamInputFindHighlightFg:
-		return true
-	case ParamInputFindInactiveBg:
-		return true
-	case ParamInputFindInactiveFg:
+	case ParamInputFindInactiveStyle:
 		return true
 	case ParamInputPreviewBorder:
 		return true
 	case ParamInputPreviewBorderFg:
 		return true
-	case ParamInputPromptBg:
+	case ParamInputPromptStyle:
 		return true
-	case ParamInputPromptFg:
+	case ParamInputThumbsHintStyle:
 		return true
-	case ParamInputThumbsHintBg:
+	case ParamInputThumbsMatchStyle:
 		return true
-	case ParamInputThumbsHintFg:
-		return true
-	case ParamInputThumbsMatchBg:
-		return true
-	case ParamInputThumbsMatchFg:
-		return true
-	case ParamInputThumbsPartialBg:
-		return true
-	case ParamInputThumbsPartialFg:
+	case ParamInputThumbsPartialStyle:
 		return true
 	case ParamNumSearchWorkers:
 		return true
 	case ParamRemovePaneOnExit:
 		return true
-	case ParamReplayCopyBg:
+	case ParamReplayCopyStyle:
 		return true
-	case ParamReplayCopyFg:
+	case ParamReplayIncrementalStyle:
 		return true
-	case ParamReplayIncrementalBg:
+	case ParamReplayMatchActiveStyle:
 		return true
-	case ParamReplayIncrementalFg:
+	case ParamReplayMatchInactiveStyle:
 		return true
-	case ParamReplayMatchActiveBg:
+	case ParamReplayPlayStyle:
 		return true
-	case ParamReplayMatchActiveFg:
+	case ParamReplaySelectionStyle:
 		return true
-	case ParamReplayMatchInactiveBg:
-		return true
-	case ParamReplayMatchInactiveFg:
-		return true
-	case ParamReplayPlayBg:
-		return true
-	case ParamReplayPlayFg:
-		return true
-	case ParamReplaySelectionBg:
-		return true
-	case ParamReplaySelectionFg:
-		return true
-	case ParamReplayStatusBarBg:
-		return true
-	case ParamReplayStatusBarFg:
+	case ParamReplayStatusBarStyle:
 		return true
 	case ParamReplayTextCopyMode:
 		return true
@@ -1186,17 +835,11 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamReplayTextVisualMode:
 		return true
-	case ParamReplayTimeBg:
+	case ParamReplayTimeStyle:
 		return true
-	case ParamReplayTimeFg:
+	case ParamReplayVisualStyle:
 		return true
-	case ParamReplayVisualBg:
-		return true
-	case ParamReplayVisualFg:
-		return true
-	case ParamSearchStatusBarBg:
-		return true
-	case ParamSearchStatusBarFg:
+	case ParamSearchStatusBarStyle:
 		return true
 	case ParamSearchTextNoMatchesFound:
 		return true
@@ -1235,70 +878,42 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.DefaultFrame, true
 	case ParamDefaultShell:
 		return defaults.DefaultShell, true
-	case ParamInputFindActiveBg:
-		return defaults.InputFindActiveBg, true
-	case ParamInputFindActiveFg:
-		return defaults.InputFindActiveFg, true
-	case ParamInputFindHighlightBg:
-		return defaults.InputFindHighlightBg, true
-	case ParamInputFindHighlightFg:
-		return defaults.InputFindHighlightFg, true
-	case ParamInputFindInactiveBg:
-		return defaults.InputFindInactiveBg, true
-	case ParamInputFindInactiveFg:
-		return defaults.InputFindInactiveFg, true
+	case ParamInputFindActiveStyle:
+		return defaults.InputFindActiveStyle, true
+	case ParamInputFindHighlightStyle:
+		return defaults.InputFindHighlightStyle, true
+	case ParamInputFindInactiveStyle:
+		return defaults.InputFindInactiveStyle, true
 	case ParamInputPreviewBorder:
 		return defaults.InputPreviewBorder, true
 	case ParamInputPreviewBorderFg:
 		return defaults.InputPreviewBorderFg, true
-	case ParamInputPromptBg:
-		return defaults.InputPromptBg, true
-	case ParamInputPromptFg:
-		return defaults.InputPromptFg, true
-	case ParamInputThumbsHintBg:
-		return defaults.InputThumbsHintBg, true
-	case ParamInputThumbsHintFg:
-		return defaults.InputThumbsHintFg, true
-	case ParamInputThumbsMatchBg:
-		return defaults.InputThumbsMatchBg, true
-	case ParamInputThumbsMatchFg:
-		return defaults.InputThumbsMatchFg, true
-	case ParamInputThumbsPartialBg:
-		return defaults.InputThumbsPartialBg, true
-	case ParamInputThumbsPartialFg:
-		return defaults.InputThumbsPartialFg, true
+	case ParamInputPromptStyle:
+		return defaults.InputPromptStyle, true
+	case ParamInputThumbsHintStyle:
+		return defaults.InputThumbsHintStyle, true
+	case ParamInputThumbsMatchStyle:
+		return defaults.InputThumbsMatchStyle, true
+	case ParamInputThumbsPartialStyle:
+		return defaults.InputThumbsPartialStyle, true
 	case ParamNumSearchWorkers:
 		return defaults.NumSearchWorkers, true
 	case ParamRemovePaneOnExit:
 		return defaults.RemovePaneOnExit, true
-	case ParamReplayCopyBg:
-		return defaults.ReplayCopyBg, true
-	case ParamReplayCopyFg:
-		return defaults.ReplayCopyFg, true
-	case ParamReplayIncrementalBg:
-		return defaults.ReplayIncrementalBg, true
-	case ParamReplayIncrementalFg:
-		return defaults.ReplayIncrementalFg, true
-	case ParamReplayMatchActiveBg:
-		return defaults.ReplayMatchActiveBg, true
-	case ParamReplayMatchActiveFg:
-		return defaults.ReplayMatchActiveFg, true
-	case ParamReplayMatchInactiveBg:
-		return defaults.ReplayMatchInactiveBg, true
-	case ParamReplayMatchInactiveFg:
-		return defaults.ReplayMatchInactiveFg, true
-	case ParamReplayPlayBg:
-		return defaults.ReplayPlayBg, true
-	case ParamReplayPlayFg:
-		return defaults.ReplayPlayFg, true
-	case ParamReplaySelectionBg:
-		return defaults.ReplaySelectionBg, true
-	case ParamReplaySelectionFg:
-		return defaults.ReplaySelectionFg, true
-	case ParamReplayStatusBarBg:
-		return defaults.ReplayStatusBarBg, true
-	case ParamReplayStatusBarFg:
-		return defaults.ReplayStatusBarFg, true
+	case ParamReplayCopyStyle:
+		return defaults.ReplayCopyStyle, true
+	case ParamReplayIncrementalStyle:
+		return defaults.ReplayIncrementalStyle, true
+	case ParamReplayMatchActiveStyle:
+		return defaults.ReplayMatchActiveStyle, true
+	case ParamReplayMatchInactiveStyle:
+		return defaults.ReplayMatchInactiveStyle, true
+	case ParamReplayPlayStyle:
+		return defaults.ReplayPlayStyle, true
+	case ParamReplaySelectionStyle:
+		return defaults.ReplaySelectionStyle, true
+	case ParamReplayStatusBarStyle:
+		return defaults.ReplayStatusBarStyle, true
 	case ParamReplayTextCopyMode:
 		return defaults.ReplayTextCopyMode, true
 	case ParamReplayTextPlayMode:
@@ -1307,18 +922,12 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.ReplayTextTimeMode, true
 	case ParamReplayTextVisualMode:
 		return defaults.ReplayTextVisualMode, true
-	case ParamReplayTimeBg:
-		return defaults.ReplayTimeBg, true
-	case ParamReplayTimeFg:
-		return defaults.ReplayTimeFg, true
-	case ParamReplayVisualBg:
-		return defaults.ReplayVisualBg, true
-	case ParamReplayVisualFg:
-		return defaults.ReplayVisualFg, true
-	case ParamSearchStatusBarBg:
-		return defaults.SearchStatusBarBg, true
-	case ParamSearchStatusBarFg:
-		return defaults.SearchStatusBarFg, true
+	case ParamReplayTimeStyle:
+		return defaults.ReplayTimeStyle, true
+	case ParamReplayVisualStyle:
+		return defaults.ReplayVisualStyle, true
+	case ParamSearchStatusBarStyle:
+		return defaults.SearchStatusBarStyle, true
 	case ParamSearchTextNoMatchesFound:
 		return defaults.SearchTextNoMatchesFound, true
 	case ParamSearchTextSearching:
@@ -1510,116 +1119,59 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
-	case ParamInputFindActiveBg:
+	case ParamInputFindActiveStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamInputFindActiveBg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamInputFindActiveStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :input-find-active-bg: %s", err)
+			return fmt.Errorf("invalid value for :input-find-active-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
 
-	case ParamInputFindActiveFg:
+	case ParamInputFindHighlightStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamInputFindActiveFg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamInputFindHighlightStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :input-find-active-fg: %s", err)
+			return fmt.Errorf("invalid value for :input-find-highlight-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
 
-	case ParamInputFindHighlightBg:
+	case ParamInputFindInactiveStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamInputFindHighlightBg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamInputFindInactiveStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :input-find-highlight-bg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamInputFindHighlightFg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamInputFindHighlightFg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :input-find-highlight-fg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamInputFindInactiveBg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamInputFindInactiveBg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :input-find-inactive-bg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamInputFindInactiveFg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamInputFindInactiveFg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :input-find-inactive-fg: %s", err)
+			return fmt.Errorf("invalid value for :input-find-inactive-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -1662,154 +1214,78 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
-	case ParamInputPromptBg:
+	case ParamInputPromptStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamInputPromptBg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamInputPromptStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :input-prompt-bg: %s", err)
+			return fmt.Errorf("invalid value for :input-prompt-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
 
-	case ParamInputPromptFg:
+	case ParamInputThumbsHintStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamInputPromptFg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamInputThumbsHintStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :input-prompt-fg: %s", err)
+			return fmt.Errorf("invalid value for :input-thumbs-hint-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
 
-	case ParamInputThumbsHintBg:
+	case ParamInputThumbsMatchStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamInputThumbsHintBg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamInputThumbsMatchStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :input-thumbs-hint-bg: %s", err)
+			return fmt.Errorf("invalid value for :input-thumbs-match-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
 
-	case ParamInputThumbsHintFg:
+	case ParamInputThumbsPartialStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamInputThumbsHintFg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamInputThumbsPartialStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :input-thumbs-hint-fg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamInputThumbsMatchBg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamInputThumbsMatchBg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :input-thumbs-match-bg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamInputThumbsMatchFg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamInputThumbsMatchFg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :input-thumbs-match-fg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamInputThumbsPartialBg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamInputThumbsPartialBg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :input-thumbs-partial-bg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamInputThumbsPartialFg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamInputThumbsPartialFg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :input-thumbs-partial-fg: %s", err)
+			return fmt.Errorf("invalid value for :input-thumbs-partial-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -1852,268 +1328,135 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
-	case ParamReplayCopyBg:
+	case ParamReplayCopyStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayCopyBg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamReplayCopyStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-copy-bg: %s", err)
+			return fmt.Errorf("invalid value for :replay-copy-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
 
-	case ParamReplayCopyFg:
+	case ParamReplayIncrementalStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayCopyFg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamReplayIncrementalStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-copy-fg: %s", err)
+			return fmt.Errorf("invalid value for :replay-incremental-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
 
-	case ParamReplayIncrementalBg:
+	case ParamReplayMatchActiveStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayIncrementalBg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamReplayMatchActiveStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-incremental-bg: %s", err)
+			return fmt.Errorf("invalid value for :replay-match-active-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
 
-	case ParamReplayIncrementalFg:
+	case ParamReplayMatchInactiveStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayIncrementalFg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamReplayMatchInactiveStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-incremental-fg: %s", err)
+			return fmt.Errorf("invalid value for :replay-match-inactive-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
 
-	case ParamReplayMatchActiveBg:
+	case ParamReplayPlayStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayMatchActiveBg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamReplayPlayStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-match-active-bg: %s", err)
+			return fmt.Errorf("invalid value for :replay-play-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
 
-	case ParamReplayMatchActiveFg:
+	case ParamReplaySelectionStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayMatchActiveFg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamReplaySelectionStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-match-active-fg: %s", err)
+			return fmt.Errorf("invalid value for :replay-selection-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
 
-	case ParamReplayMatchInactiveBg:
+	case ParamReplayStatusBarStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayMatchInactiveBg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamReplayStatusBarStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-match-inactive-bg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamReplayMatchInactiveFg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayMatchInactiveFg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-match-inactive-fg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamReplayPlayBg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayPlayBg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-play-bg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamReplayPlayFg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayPlayFg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-play-fg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamReplaySelectionBg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamReplaySelectionBg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-selection-bg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamReplaySelectionFg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamReplaySelectionFg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-selection-fg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamReplayStatusBarBg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayStatusBarBg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-status-bar-bg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamReplayStatusBarFg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayStatusBarFg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-status-bar-fg: %s", err)
+			return fmt.Errorf("invalid value for :replay-status-bar-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -2194,116 +1537,59 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
-	case ParamReplayTimeBg:
+	case ParamReplayTimeStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayTimeBg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamReplayTimeStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-time-bg: %s", err)
+			return fmt.Errorf("invalid value for :replay-time-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
 
-	case ParamReplayTimeFg:
+	case ParamReplayVisualStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayTimeFg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamReplayVisualStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-time-fg: %s", err)
+			return fmt.Errorf("invalid value for :replay-visual-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
 
-	case ParamReplayVisualBg:
+	case ParamSearchStatusBarStyle:
 		if !janetOk {
-			realValue, ok := value.(*style.Color)
+			realValue, ok := value.(*style.Style)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayVisualBg, should be *style.Color")
+				return fmt.Errorf("invalid value for ParamSearchStatusBarStyle, should be *style.Style")
 			}
 			p.set(key, realValue)
 			return nil
 		}
 
-		var translated *style.Color
+		var translated *style.Style
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-visual-bg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamReplayVisualFg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamReplayVisualFg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :replay-visual-fg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamSearchStatusBarBg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamSearchStatusBarBg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :search-status-bar-bg: %s", err)
-		}
-		p.set(key, translated)
-		return nil
-
-	case ParamSearchStatusBarFg:
-		if !janetOk {
-			realValue, ok := value.(*style.Color)
-			if !ok {
-				return fmt.Errorf("invalid value for ParamSearchStatusBarFg, should be *style.Color")
-			}
-			p.set(key, realValue)
-			return nil
-		}
-
-		var translated *style.Color
-		err := janetValue.Unmarshal(&translated)
-		if err != nil {
-			janetValue.Free()
-			return fmt.Errorf("invalid value for :search-status-bar-fg: %s", err)
+			return fmt.Errorf("invalid value for :search-status-bar-style: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -2467,34 +1753,19 @@ func init() {
 			Default:   defaults.DefaultShell,
 		},
 		{
-			Name:      "input-find-active-bg",
-			Docstring: "The background [color](/api.md#color) of the active row in (input/find).",
-			Default:   defaults.InputFindActiveBg,
+			Name:      "input-find-active-style",
+			Docstring: "The [style](/api.md#style) of the active row in (input/find).",
+			Default:   defaults.InputFindActiveStyle,
 		},
 		{
-			Name:      "input-find-active-fg",
-			Docstring: "The foreground [color](/api.md#color) of the active row in (input/find).",
-			Default:   defaults.InputFindActiveFg,
+			Name:      "input-find-highlight-style",
+			Docstring: "The [style](/api.md#style) of highlighted characters in (input/find).",
+			Default:   defaults.InputFindHighlightStyle,
 		},
 		{
-			Name:      "input-find-highlight-bg",
-			Docstring: "The background [color](/api.md#color) of highlighted characters in (input/find).",
-			Default:   defaults.InputFindHighlightBg,
-		},
-		{
-			Name:      "input-find-highlight-fg",
-			Docstring: "The foreground [color](/api.md#color) of highlighted characters in (input/find).",
-			Default:   defaults.InputFindHighlightFg,
-		},
-		{
-			Name:      "input-find-inactive-bg",
-			Docstring: "The background [color](/api.md#color) of the inactive row in (input/find).",
-			Default:   defaults.InputFindInactiveBg,
-		},
-		{
-			Name:      "input-find-inactive-fg",
-			Docstring: "The foreground [color](/api.md#color) of the inactive row in (input/find).",
-			Default:   defaults.InputFindInactiveFg,
+			Name:      "input-find-inactive-style",
+			Docstring: "The [style](/api.md#style) of the inactive row in (input/find).",
+			Default:   defaults.InputFindInactiveStyle,
 		},
 		{
 			Name:      "input-preview-border",
@@ -2507,44 +1778,24 @@ func init() {
 			Default:   defaults.InputPreviewBorderFg,
 		},
 		{
-			Name:      "input-prompt-bg",
-			Docstring: "The background [color](/api.md#color) of the input prompt in\n(input/*) functions.",
-			Default:   defaults.InputPromptBg,
+			Name:      "input-prompt-style",
+			Docstring: "The [style](/api.md#style) of the input prompt in\n(input/*) functions.",
+			Default:   defaults.InputPromptStyle,
 		},
 		{
-			Name:      "input-prompt-fg",
-			Docstring: "The foreground [color](/api.md#color) of the input prompt in\n(input/*) functions.",
-			Default:   defaults.InputPromptFg,
+			Name:      "input-thumbs-hint-style",
+			Docstring: "The [style](/api.md#style) of hint text in (input/thumbs).",
+			Default:   defaults.InputThumbsHintStyle,
 		},
 		{
-			Name:      "input-thumbs-hint-bg",
-			Docstring: "The background [color](/api.md#color) of hint text in (input/thumbs).",
-			Default:   defaults.InputThumbsHintBg,
+			Name:      "input-thumbs-match-style",
+			Docstring: "The [style](/api.md#style) of match text in (input/thumbs).",
+			Default:   defaults.InputThumbsMatchStyle,
 		},
 		{
-			Name:      "input-thumbs-hint-fg",
-			Docstring: "The foreground [color](/api.md#color) of hint text in (input/thumbs).",
-			Default:   defaults.InputThumbsHintFg,
-		},
-		{
-			Name:      "input-thumbs-match-bg",
-			Docstring: "The background [color](/api.md#color) of match text in (input/thumbs).",
-			Default:   defaults.InputThumbsMatchBg,
-		},
-		{
-			Name:      "input-thumbs-match-fg",
-			Docstring: "The foreground [color](/api.md#color) of match text in (input/thumbs).",
-			Default:   defaults.InputThumbsMatchFg,
-		},
-		{
-			Name:      "input-thumbs-partial-bg",
-			Docstring: "The background [color](/api.md#color) of partially selected hint text in (input/thumbs).",
-			Default:   defaults.InputThumbsPartialBg,
-		},
-		{
-			Name:      "input-thumbs-partial-fg",
-			Docstring: "The foreground [color](/api.md#color) of partially selected hint text in (input/thumbs).",
-			Default:   defaults.InputThumbsPartialFg,
+			Name:      "input-thumbs-partial-style",
+			Docstring: "The [style](/api.md#style) of partially selected hint text in (input/thumbs).",
+			Default:   defaults.InputThumbsPartialStyle,
 		},
 		{
 			Name:      "num-search-workers",
@@ -2557,74 +1808,39 @@ func init() {
 			Default:   defaults.RemovePaneOnExit,
 		},
 		{
-			Name:      "replay-copy-bg",
-			Docstring: "The [color](/api.md#color) used to represent copy mode.",
-			Default:   defaults.ReplayCopyBg,
+			Name:      "replay-copy-style",
+			Docstring: "The [style](/api.md#style) used to represent copy mode.",
+			Default:   defaults.ReplayCopyStyle,
 		},
 		{
-			Name:      "replay-copy-fg",
-			Docstring: "The foreground [color](/api.md#color) used in time mode when the player is playing.",
-			Default:   defaults.ReplayCopyFg,
+			Name:      "replay-incremental-style",
+			Docstring: "The [style](/api.md#style) for incremental search in replay mode.",
+			Default:   defaults.ReplayIncrementalStyle,
 		},
 		{
-			Name:      "replay-incremental-bg",
-			Docstring: "The background [color](/api.md#color) for incremental search in replay mode.",
-			Default:   defaults.ReplayIncrementalBg,
+			Name:      "replay-match-active-style",
+			Docstring: "The [style](/api.md#style) for the current search match in replay mode.",
+			Default:   defaults.ReplayMatchActiveStyle,
 		},
 		{
-			Name:      "replay-incremental-fg",
-			Docstring: "The foreground [color](/api.md#color) for incremental search in replay mode.",
-			Default:   defaults.ReplayIncrementalFg,
+			Name:      "replay-match-inactive-style",
+			Docstring: "The [style](/api.md#style) for search matches in replay mode.",
+			Default:   defaults.ReplayMatchInactiveStyle,
 		},
 		{
-			Name:      "replay-match-active-bg",
-			Docstring: "The background [color](/api.md#color) for the current search match in replay mode.",
-			Default:   defaults.ReplayMatchActiveBg,
+			Name:      "replay-play-style",
+			Docstring: "The [style](/api.md#style) used in time mode when the player is playing.",
+			Default:   defaults.ReplayPlayStyle,
 		},
 		{
-			Name:      "replay-match-active-fg",
-			Docstring: "The foreground [color](/api.md#color) for the current search match in replay mode.",
-			Default:   defaults.ReplayMatchActiveFg,
+			Name:      "replay-selection-style",
+			Docstring: "The [style](/api.md#style) for selections in replay mode.",
+			Default:   defaults.ReplaySelectionStyle,
 		},
 		{
-			Name:      "replay-match-inactive-bg",
-			Docstring: "The background [color](/api.md#color) for search matches in replay mode.",
-			Default:   defaults.ReplayMatchInactiveBg,
-		},
-		{
-			Name:      "replay-match-inactive-fg",
-			Docstring: "The foreground [color](/api.md#color) for search matches in replay mode.",
-			Default:   defaults.ReplayMatchInactiveFg,
-		},
-		{
-			Name:      "replay-play-bg",
-			Docstring: "The [color](/api.md#color) used in time mode when the player is playing.",
-			Default:   defaults.ReplayPlayBg,
-		},
-		{
-			Name:      "replay-play-fg",
-			Docstring: "The foreground [color](/api.md#color) used in time mode when the player is playing.",
-			Default:   defaults.ReplayPlayFg,
-		},
-		{
-			Name:      "replay-selection-bg",
-			Docstring: "The background [color](/api.md#color) for selections in replay mode.",
-			Default:   defaults.ReplaySelectionBg,
-		},
-		{
-			Name:      "replay-selection-fg",
-			Docstring: "The foreground [color](/api.md#color) for selections in replay mode.",
-			Default:   defaults.ReplaySelectionFg,
-		},
-		{
-			Name:      "replay-status-bar-bg",
-			Docstring: "The background [color](/api.md#color) of the status bar in replay mode.",
-			Default:   defaults.ReplayStatusBarBg,
-		},
-		{
-			Name:      "replay-status-bar-fg",
-			Docstring: "The foreground [color](/api.md#color) of the status bar in replay mode.",
-			Default:   defaults.ReplayStatusBarFg,
+			Name:      "replay-status-bar-style",
+			Docstring: "The [style](/api.md#style) of the status bar in replay mode.",
+			Default:   defaults.ReplayStatusBarStyle,
 		},
 		{
 			Name:      "replay-text-copy-mode",
@@ -2647,34 +1863,19 @@ func init() {
 			Default:   defaults.ReplayTextVisualMode,
 		},
 		{
-			Name:      "replay-time-bg",
-			Docstring: "The [color](/api.md#color) used to represent time mode.",
-			Default:   defaults.ReplayTimeBg,
+			Name:      "replay-time-style",
+			Docstring: "The [style](/api.md#style) used to represent time mode.",
+			Default:   defaults.ReplayTimeStyle,
 		},
 		{
-			Name:      "replay-time-fg",
-			Docstring: "The foreground [color](/api.md#color) used to represent time mode.",
-			Default:   defaults.ReplayTimeFg,
+			Name:      "replay-visual-style",
+			Docstring: "The [style](/api.md#style) used to represent visual mode.",
+			Default:   defaults.ReplayVisualStyle,
 		},
 		{
-			Name:      "replay-visual-bg",
-			Docstring: "The [color](/api.md#color) used to represent visual mode.",
-			Default:   defaults.ReplayVisualBg,
-		},
-		{
-			Name:      "replay-visual-fg",
-			Docstring: "The foreground [color](/api.md#color) used in time mode when the player is playing.",
-			Default:   defaults.ReplayVisualFg,
-		},
-		{
-			Name:      "search-status-bar-bg",
-			Docstring: "The background [color](/api.md#color) of the status bar in search mode.",
-			Default:   defaults.SearchStatusBarBg,
-		},
-		{
-			Name:      "search-status-bar-fg",
-			Docstring: "The foreground [color](/api.md#color) of the status bar in search mode.",
-			Default:   defaults.SearchStatusBarFg,
+			Name:      "search-status-bar-style",
+			Docstring: "The [style](/api.md#style) of the status bar in search mode.",
+			Default:   defaults.SearchStatusBarStyle,
 		},
 		{
 			Name:      "search-text-no-matches-found",

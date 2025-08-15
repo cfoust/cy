@@ -16,6 +16,21 @@ var (
 	KEYWORD_CENTER = janet.Keyword("center")
 	KEYWORD_TOP    = janet.Keyword("top")
 	KEYWORD_BOTTOM = janet.Keyword("bottom")
+
+	// Style property keywords
+	KEYWORD_FG               = janet.Keyword("fg")
+	KEYWORD_BG               = janet.Keyword("bg")
+	KEYWORD_WIDTH            = janet.Keyword("width")
+	KEYWORD_HEIGHT           = janet.Keyword("height")
+	KEYWORD_ALIGN_HORIZONTAL = janet.Keyword("align-horizontal")
+	KEYWORD_ALIGN_VERTICAL   = janet.Keyword("align-vertical")
+	KEYWORD_BOLD             = janet.Keyword("bold")
+	KEYWORD_ITALIC           = janet.Keyword("italic")
+	KEYWORD_UNDERLINE        = janet.Keyword("underline")
+	KEYWORD_STRIKETHROUGH    = janet.Keyword("strikethrough")
+	KEYWORD_REVERSE          = janet.Keyword("reverse")
+	KEYWORD_BLINK            = janet.Keyword("blink")
+	KEYWORD_FAINT            = janet.Keyword("faint")
 )
 
 // We use a common renderer, since this actually has no impact on how/where we
@@ -31,6 +46,7 @@ type Style struct {
 }
 
 var _ janet.Unmarshalable = (*Style)(nil)
+var _ janet.Marshalable = (*Style)(nil)
 
 type janetStyle struct {
 	Fg              *janet.Value
@@ -161,4 +177,122 @@ func (s *Style) UnmarshalJanet(value *janet.Value) (err error) {
 
 	s.Style = style
 	return nil
+}
+
+// NewStyle creates a new Style with the given foreground and background colors
+func NewStyle(fg, bg *Color) *Style {
+	style := renderer.NewStyle()
+	if fg != nil {
+		style = style.Foreground(fg.Color)
+	}
+	if bg != nil {
+		style = style.Background(bg.Color)
+	}
+	return &Style{Style: style}
+}
+
+// GetForegroundColor returns the foreground color as a *Color
+func (s *Style) GetForegroundColor() *Color {
+	if c, ok := s.GetForeground().(lipgloss.Color); ok {
+		return &Color{Color: c}
+	}
+	return nil
+}
+
+// GetBackgroundColor returns the background color as a *Color
+func (s *Style) GetBackgroundColor() *Color {
+	if c, ok := s.GetBackground().(lipgloss.Color); ok {
+		return &Color{Color: c}
+	}
+	return nil
+}
+
+// marshalHorizontalPosition converts a horizontal lipgloss.Position to a janet.Keyword
+func marshalHorizontalPosition(position lipgloss.Position) janet.Keyword {
+	switch position {
+	case lipgloss.Right:
+		return KEYWORD_RIGHT
+	case lipgloss.Left:
+		return KEYWORD_LEFT
+	case lipgloss.Center:
+		return KEYWORD_CENTER
+	}
+	return KEYWORD_LEFT // default fallback
+}
+
+// marshalVerticalPosition converts a vertical lipgloss.Position to a janet.Keyword
+func marshalVerticalPosition(position lipgloss.Position) janet.Keyword {
+	switch position {
+	case lipgloss.Top:
+		return KEYWORD_TOP
+	case lipgloss.Bottom:
+		return KEYWORD_BOTTOM
+	case lipgloss.Center:
+		return KEYWORD_CENTER
+	}
+	return KEYWORD_TOP // default fallback
+}
+
+// MarshalJanet implements the janet.Marshalable interface
+func (s *Style) MarshalJanet() interface{} {
+	if s == nil {
+		return nil
+	}
+
+	result := make(map[janet.Keyword]interface{})
+
+	// Extract foreground color if set
+	if fg := s.GetForegroundColor(); fg != nil {
+		result[KEYWORD_FG] = fg.MarshalJanet()
+	}
+
+	// Extract background color if set
+	if bg := s.GetBackgroundColor(); bg != nil {
+		result[KEYWORD_BG] = bg.MarshalJanet()
+	}
+
+	// Extract width if set
+	if width := s.GetWidth(); width > 0 {
+		result[KEYWORD_WIDTH] = width
+	}
+
+	// Extract height if set
+	if height := s.GetHeight(); height > 0 {
+		result[KEYWORD_HEIGHT] = height
+	}
+
+	// Extract horizontal alignment if set
+	if hAlign := s.GetAlignHorizontal(); hAlign != lipgloss.Position(0) {
+		result[KEYWORD_ALIGN_HORIZONTAL] = marshalHorizontalPosition(hAlign)
+	}
+
+	// Extract vertical alignment if set
+	if vAlign := s.GetAlignVertical(); vAlign != lipgloss.Position(0) {
+		result[KEYWORD_ALIGN_VERTICAL] = marshalVerticalPosition(vAlign)
+	}
+
+	// Extract text formatting flags
+	if s.GetBold() {
+		result[KEYWORD_BOLD] = true
+	}
+	if s.GetItalic() {
+		result[KEYWORD_ITALIC] = true
+	}
+	if s.GetUnderline() {
+		result[KEYWORD_UNDERLINE] = true
+	}
+	if s.GetStrikethrough() {
+		result[KEYWORD_STRIKETHROUGH] = true
+	}
+	if s.GetReverse() {
+		result[KEYWORD_REVERSE] = true
+	}
+	if s.GetBlink() {
+		result[KEYWORD_BLINK] = true
+	}
+	if s.GetFaint() {
+		result[KEYWORD_FAINT] = true
+	}
+
+	return result
 }

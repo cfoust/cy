@@ -65,11 +65,19 @@ func createStory(
 
 var initWithFrame stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	_, _, screen, err := createStory(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return screen, err
 }
 
 var initNoFrame stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	_, client, screen, err := createStory(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	_ = client.execute(`(viewport/set-size [0 0])`)
 	return screen, err
 }
