@@ -22,16 +22,16 @@ func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 	}
 
 	p := r.params
-	activeFg := r.render.ConvertLipgloss(
+	activeFg := r.render.LipglossToEmu(
 		p.ReplayMatchActiveStyle().GetForegroundColor().Color,
 	)
-	activeBg := r.render.ConvertLipgloss(
+	activeBg := r.render.LipglossToEmu(
 		p.ReplayMatchActiveStyle().GetBackgroundColor().Color,
 	)
-	inactiveFg := r.render.ConvertLipgloss(
+	inactiveFg := r.render.LipglossToEmu(
 		p.ReplayMatchInactiveStyle().GetForegroundColor().Color,
 	)
-	inactiveBg := r.render.ConvertLipgloss(
+	inactiveBg := r.render.LipglossToEmu(
 		p.ReplayMatchInactiveStyle().GetBackgroundColor().Color,
 	)
 
@@ -407,10 +407,10 @@ func (r *Replay) View(state *tty.State) {
 			movement.Highlight{
 				From: r.selectStart,
 				To:   r.movement.Cursor(),
-				FG: r.render.ConvertLipgloss(
+				FG: r.render.LipglossToEmu(
 					p.ReplaySelectionStyle().GetForegroundColor().Color,
 				),
-				BG: r.render.ConvertLipgloss(
+				BG: r.render.LipglossToEmu(
 					p.ReplaySelectionStyle().GetBackgroundColor().Color,
 				),
 			},
@@ -426,10 +426,10 @@ func (r *Replay) View(state *tty.State) {
 					R: highlight.R,
 					C: highlight.C1 - 1,
 				},
-				FG: r.render.ConvertLipgloss(
+				FG: r.render.LipglossToEmu(
 					p.ReplayIncrementalStyle().GetForegroundColor().Color,
 				),
-				BG: r.render.ConvertLipgloss(
+				BG: r.render.LipglossToEmu(
 					p.ReplayIncrementalStyle().GetBackgroundColor().Color,
 				),
 			},
@@ -445,10 +445,10 @@ func (r *Replay) View(state *tty.State) {
 				movement.Highlight{
 					From: command.Output.From,
 					To:   command.Output.To,
-					FG: r.render.ConvertLipgloss(
+					FG: r.render.LipglossToEmu(
 						lipgloss.Color("9"),
 					),
-					BG: r.render.ConvertLipgloss(
+					BG: r.render.LipglossToEmu(
 						lipgloss.Color("113"),
 					),
 				},
@@ -460,10 +460,10 @@ func (r *Replay) View(state *tty.State) {
 					movement.Highlight{
 						From: input.From,
 						To:   input.To,
-						FG: r.render.ConvertLipgloss(
+						FG: r.render.LipglossToEmu(
 							lipgloss.Color("9"),
 						),
-						BG: r.render.ConvertLipgloss(
+						BG: r.render.LipglossToEmu(
 							lipgloss.Color("160"),
 						),
 					},

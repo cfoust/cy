@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -13,6 +12,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
 
@@ -257,32 +257,31 @@ func (s *Split) State() *tty.State {
 		return state
 	}
 
-	fg := emu.DefaultFG
-	bg := emu.DefaultBG
+	var borderFg, borderBg *style.Color
 
 	if value, ok := config.BorderFg.GetPreset(); ok {
-		fg = value.Emu()
+		borderFg = value
 	}
 
 	if value, ok := config.BorderBg.GetPreset(); ok {
-		bg = value.Emu()
+		borderBg = value
 	}
+
+	borderColorStyle := style.NewStyle(borderFg, borderBg)
 
 	if !isVertical {
 		col := geom.Clamp(positionB.C-1, 0, size.C-1)
 		char := []rune(borderStyle.Left)[0]
 		for row := 0; row < size.R; row++ {
 			state.Image[row][col].Char = char
-			state.Image[row][col].FG = fg
-			state.Image[row][col].BG = bg
+			borderColorStyle.Apply(&state.Image[row][col])
 		}
 	} else {
 		row := geom.Clamp(positionB.R-1, 0, size.R-1)
 		char := []rune(borderStyle.Top)[0]
 		for col := 0; col < size.C; col++ {
 			state.Image[row][col].Char = char
-			state.Image[row][col].FG = fg
-			state.Image[row][col].BG = bg
+			borderColorStyle.Apply(&state.Image[row][col])
 		}
 	}
 

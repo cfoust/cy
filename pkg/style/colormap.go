@@ -69,7 +69,7 @@ func (c *ColorMap) Apply(i image.Image) {
 
 	emuMapping := make(map[emu.Color]emu.Color, len(c.mapping))
 	for k, v := range c.mapping {
-		emuMapping[lipglossToEmu(k)] = lipglossToEmu(v)
+		emuMapping[renderer.LipglossToEmu(k)] = renderer.LipglossToEmu(v)
 	}
 
 	fg, haveFg := emuMapping[emu.ANSIColor(7)]
