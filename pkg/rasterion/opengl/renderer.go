@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"sync"
 
 	"github.com/cfoust/cy/pkg/geom"
+
 	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
@@ -67,7 +67,6 @@ type Renderer struct {
 	commandChan chan rendererCommand
 	quit        chan struct{}
 	running     bool
-	mu          sync.RWMutex
 
 	contexts      map[int]*renderContext
 	nextContextID int
@@ -145,7 +144,10 @@ func (r *Renderer) Shutdown() {
 
 // NewContext creates a new rendering context
 // Returns a ContextHandle that can be used for rendering operations
-func (r *Renderer) NewContext(ctx context.Context, size geom.Size) *ContextHandle {
+func (r *Renderer) NewContext(
+	ctx context.Context,
+	size geom.Size,
+) *ContextHandle {
 	responseChan := make(chan interface{})
 
 	select {
@@ -171,7 +173,11 @@ func (r *Renderer) NewContext(ctx context.Context, size geom.Size) *ContextHandl
 				contextID: resp.contextID,
 			}
 		}
-		return &ContextHandle{renderer: r, contextID: -1, err: fmt.Errorf("unexpected response type")}
+		return &ContextHandle{
+			renderer:  r,
+			contextID: -1,
+			err:       fmt.Errorf("unexpected response type"),
+		}
 	case <-ctx.Done():
 		return &ContextHandle{renderer: r, contextID: -1, err: ctx.Err()}
 	}
@@ -211,7 +217,9 @@ func (r *Renderer) handleCommand(cmd rendererCommand) {
 
 const vertexSource = "#version 330 core\nin vec4 position;void main(){gl_Position=position;}"
 
-func (r *Renderer) handleCreateContext(data rendererCreateContextData) (rendererCreateContextResponse, error) {
+func (r *Renderer) handleCreateContext(
+	data rendererCreateContextData,
+) (rendererCreateContextResponse, error) {
 	ctx, err := NewContext(data.size.C, data.size.R)
 	if err != nil {
 		return rendererCreateContextResponse{}, err
@@ -229,7 +237,10 @@ func (r *Renderer) handleCreateContext(data rendererCreateContextData) (renderer
 	if err != nil {
 		fbo.Delete()
 		ctx.Destroy()
-		return rendererCreateContextResponse{}, fmt.Errorf("failed to compile Bauble vertex shader: %w", err)
+		return rendererCreateContextResponse{}, fmt.Errorf(
+			"failed to compile Bauble vertex shader: %w",
+			err,
+		)
 	}
 
 	// Create a fullscreen quad with triangles (matching Bauble's player.ts)
@@ -260,7 +271,14 @@ func (r *Renderer) handleCreateContext(data rendererCreateContextData) (renderer
 		gl.STATIC_DRAW,
 	)
 
-	gl.VertexAttribPointerWithOffset(0, 3, gl.FLOAT, false, 12, 0) // position has 3 components
+	gl.VertexAttribPointerWithOffset(
+		0,
+		3,
+		gl.FLOAT,
+		false,
+		12,
+		0,
+	) // position has 3 components
 	gl.EnableVertexAttribArray(0)
 
 	gl.BindVertexArray(0)
@@ -300,7 +318,10 @@ func (r *Renderer) handleCompileShader(data rendererCompileShaderData) error {
 	}
 
 	// Compile new fragment shader
-	fragmentShader, err := CompileShader(data.fragmentSource+"\x00", gl.FRAGMENT_SHADER)
+	fragmentShader, err := CompileShader(
+		data.fragmentSource+"\x00",
+		gl.FRAGMENT_SHADER,
+	)
 	if err != nil {
 		return err // Return compilation error directly
 	}
@@ -318,21 +339,29 @@ func (r *Renderer) handleCompileShader(data rendererCompileShaderData) error {
 	// Get Bauble shader uniform locations
 	ctx.tLocation = program.GetUniformLocation("t")
 	ctx.viewportLocation = program.GetUniformLocation("viewport")
-	ctx.freeCameraTargetLocation = program.GetUniformLocation("free_camera_target")
-	ctx.freeCameraOrbitLocation = program.GetUniformLocation("free_camera_orbit")
+	ctx.freeCameraTargetLocation = program.GetUniformLocation(
+		"free_camera_target",
+	)
+	ctx.freeCameraOrbitLocation = program.GetUniformLocation(
+		"free_camera_orbit",
+	)
 	ctx.freeCameraZoomLocation = program.GetUniformLocation("free_camera_zoom")
 
 	return nil
 }
 
-func (r *Renderer) handleRender(data rendererRenderData) (rendererRenderResponse, error) {
+func (r *Renderer) handleRender(
+	data rendererRenderData,
+) (rendererRenderResponse, error) {
 	ctx, err := r.getContext(data.contextID)
 	if err != nil {
 		return rendererRenderResponse{}, err
 	}
 
 	if ctx.program == nil {
-		return rendererRenderResponse{}, fmt.Errorf("no shader program compiled")
+		return rendererRenderResponse{}, fmt.Errorf(
+			"no shader program compiled",
+		)
 	}
 
 	// Check if viewport size has changed and resize framebuffer if needed
@@ -346,7 +375,10 @@ func (r *Renderer) handleRender(data rendererRenderData) (rendererRenderResponse
 
 		fbo, err := NewFramebuffer(int32(viewportWidth), int32(viewportHeight))
 		if err != nil {
-			return rendererRenderResponse{}, fmt.Errorf("failed to resize framebuffer: %w", err)
+			return rendererRenderResponse{}, fmt.Errorf(
+				"failed to resize framebuffer: %w",
+				err,
+			)
 		}
 
 		ctx.framebuffer = fbo
@@ -365,16 +397,34 @@ func (r *Renderer) handleRender(data rendererRenderData) (rendererRenderResponse
 	}
 	if ctx.viewportLocation >= 0 {
 		// Set viewport uniform as (x, y, width, height) - using 0,0 as origin
-		ctx.program.SetUniform4f(ctx.viewportLocation, 0, 0, float32(viewportWidth), float32(viewportHeight))
+		ctx.program.SetUniform4f(
+			ctx.viewportLocation,
+			0,
+			0,
+			float32(viewportWidth),
+			float32(viewportHeight),
+		)
 	}
 	if ctx.freeCameraTargetLocation >= 0 {
-		ctx.program.SetUniform3f(ctx.freeCameraTargetLocation, data.freeCameraTarget[0], data.freeCameraTarget[1], data.freeCameraTarget[2])
+		ctx.program.SetUniform3f(
+			ctx.freeCameraTargetLocation,
+			data.freeCameraTarget[0],
+			data.freeCameraTarget[1],
+			data.freeCameraTarget[2],
+		)
 	}
 	if ctx.freeCameraOrbitLocation >= 0 {
-		ctx.program.SetUniform2f(ctx.freeCameraOrbitLocation, data.freeCameraOrbit[0], data.freeCameraOrbit[1])
+		ctx.program.SetUniform2f(
+			ctx.freeCameraOrbitLocation,
+			data.freeCameraOrbit[0],
+			data.freeCameraOrbit[1],
+		)
 	}
 	if ctx.freeCameraZoomLocation >= 0 {
-		ctx.program.SetUniform1f(ctx.freeCameraZoomLocation, data.freeCameraZoom)
+		ctx.program.SetUniform1f(
+			ctx.freeCameraZoomLocation,
+			data.freeCameraZoom,
+		)
 	}
 
 	gl.BindVertexArray(ctx.vao)
@@ -421,7 +471,9 @@ func (r *Renderer) handleDestroyContext(data rendererDestroyContextData) error {
 
 func (r *Renderer) cleanup() {
 	for contextID := range r.contexts {
-		r.handleDestroyContext(rendererDestroyContextData{contextID: contextID})
+		_ = r.handleDestroyContext(
+			rendererDestroyContextData{contextID: contextID},
+		)
 	}
 }
 
@@ -438,7 +490,10 @@ func (h *ContextHandle) Error() error {
 }
 
 // CompileShader compiles a fragment shader and returns any compilation errors
-func (h *ContextHandle) CompileShader(ctx context.Context, fragmentSource string) error {
+func (h *ContextHandle) CompileShader(
+	ctx context.Context,
+	fragmentSource string,
+) error {
 	if h.err != nil {
 		return h.err
 	}
@@ -470,7 +525,14 @@ func (h *ContextHandle) CompileShader(ctx context.Context, fragmentSource string
 }
 
 // Render executes a render operation with Bauble shader uniforms and returns the rendered image
-func (h *ContextHandle) Render(ctx context.Context, viewportSize geom.Size, time float32, freeCameraTarget [3]float32, freeCameraOrbit [2]float32, freeCameraZoom float32) ([]byte, error) {
+func (h *ContextHandle) Render(
+	ctx context.Context,
+	viewportSize geom.Size,
+	time float32,
+	freeCameraTarget [3]float32,
+	freeCameraOrbit [2]float32,
+	freeCameraZoom float32,
+) ([]byte, error) {
 	if h.err != nil {
 		return nil, h.err
 	}

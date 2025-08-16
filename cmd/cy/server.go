@@ -11,7 +11,6 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
-	"github.com/cfoust/cy/pkg/rasterion/opengl"
 
 	"github.com/sevlyar/go-daemon"
 )
@@ -145,7 +144,6 @@ func serve(path string) error {
 		return err
 	}
 
-	haveOpenGL := opengl.CanUseOpenGL(ctx)
 	cy, err := cy.Start(ctx, cy.Options{
 		SocketPath: path,
 		SocketName: CLI.Socket,
@@ -154,7 +152,8 @@ func serve(path string) error {
 		StateDir:   cy.FindStateDir(),
 		Shell:      getShell(),
 		Clipboard:  clipboard,
-		HaveOpenGL: haveOpenGL,
+		// TODO(cfoust): 08/15/25
+		HaveOpenGL: false,
 		Cwd:        cwd,
 	})
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/cfoust/cy/pkg/geom"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -86,7 +87,11 @@ void main() {
 			break
 		}
 	}
-	require.True(t, hasNonZero, "All pixels are black, rendering may have failed")
+	require.True(
+		t,
+		hasNonZero,
+		"All pixels are black, rendering may have failed",
+	)
 
 	// Test 4: Render with different viewport size (test resizing)
 	pixels2, err := handle.Render(ctx,
@@ -99,7 +104,12 @@ void main() {
 	require.NoError(t, err, "Failed to render with new size")
 
 	expectedPixelCount2 := 256 * 128 * 4 // width * height * RGBA
-	require.Len(t, pixels2, expectedPixelCount2, "Unexpected pixel count for resized render")
+	require.Len(
+		t,
+		pixels2,
+		expectedPixelCount2,
+		"Unexpected pixel count for resized render",
+	)
 
 	// Test 5: Test shader compilation error
 	err = handle.CompileShader(ctx, "invalid shader code")
@@ -176,7 +186,11 @@ void main() {
 
 	// Test 9: Verify contexts are destroyed (should fail)
 	err = handle.CompileShader(ctx, fragmentSource)
-	require.Error(t, err, "Expected error when using destroyed context, but got none")
+	require.Error(
+		t,
+		err,
+		"Expected error when using destroyed context, but got none",
+	)
 
 	t.Logf("Correctly verified context destruction: %v", err)
 }
