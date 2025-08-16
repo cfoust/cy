@@ -1057,4 +1057,58 @@ func init() {
 			stories.Wait(stories.More),
 		},
 	})
+
+	stories.Register("input/thumbs/style", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		cy, err := createStoryServer(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		text := `
+# Thumb-ables
+
+* File paths: /etc/nginx/nginx.conf and /home/user/.bashrc
+* URLs: https://github.com/anthropics/claude-code
+* Commands: docker ps -a && kubectl get pods --all-namespaces
+* IP addresses: 10.0.0.1, 192.168.1.254, and 172.16.0.100
+* Git hashes: 1a2b3c4d5e6f7890 and abc123def456789012345678
+* Hexadecimal: #ff6b35 #f7931e #ffd700 #32cd32 #1e90ff #9370db
+* UUIDs: 550e8400-e29b-41d4-a716-446655440000
+`
+		pane := cy.tree.Root().NewPane(
+			ctx,
+			placeholder.FromMarkdown(
+				ctx,
+				text,
+			),
+		)
+
+		client, screen, _ := createStoryClient(ctx, cy)
+		_ = client.execute(fmt.Sprintf(`
+(param/set :root :input-thumbs-hint-style 
+  {:fg "#ffffff" :bg "#ff6b35" :bold true :italic true})
+(param/set :root :input-thumbs-partial-style 
+  {:fg "#000000" :bg "#ffd700" :bold true :underline true})
+(param/set :root :input-thumbs-match-style 
+  {:fg "#ffffff" :bg "#32cd32" :bold true :italic true})
+
+(def cmd1 (shell/new))
+(layout/set (layout/new
+    (split
+      (attach :id cmd1)
+      (pane :id %d))
+  ))`, pane.Id()))
+		return screen, nil
+	}, stories.Config{
+		Input: []any{
+			stories.Wait(stories.Some),
+			stories.Type("ctrl+a", "f"),
+			stories.Wait(stories.More),
+			stories.Type("s"),
+			stories.Wait(stories.More),
+		},
+	})
 }
