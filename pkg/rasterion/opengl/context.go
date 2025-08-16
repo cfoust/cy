@@ -1,92 +1,123 @@
 package opengl
 
 import (
+	"context"
 	"fmt"
-	"runtime"
-	"sync"
 
-	"github.com/go-gl/gl/v3.3-core/gl"
-	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/cfoust/cy/pkg/geom"
 )
 
-var (
-	glfwInitialized bool
-	glfwMutex       sync.Mutex
-	contextCount    int
-)
-
-type Context struct {
-	window *glfw.Window
-	width  int
-	height int
+// RenderParams contains all parameters needed for rendering
+type RenderParams struct {
+	ViewportSize     geom.Size
+	Time             float32
+	FreeCameraTarget [3]float32
+	FreeCameraOrbit  [2]float32
+	FreeCameraZoom   float32
 }
 
-func NewContext(width, height int) (*Context, error) {
-	runtime.LockOSThread()
+// ContextHandle provides an interface for interacting with a specific OpenGL context
+type ContextHandle struct {
+	renderer  *Renderer
+	contextID int
+}
 
-	glfwMutex.Lock()
-	defer glfwMutex.Unlock()
+// sendCommand is a helper method that centralizes the boilerplate for sending commands
+// and handling responses with proper context cancellation support
+func (h *ContextHandle) sendCommand(
+	ctx context.Context,
+	cmd rendererCommandType,
+	data interface{},
+) (interface{}, error) {
+	responseChan := make(chan interface{}, 1)
 
-	// Initialize GLFW only once
-	if !glfwInitialized {
-		if err := glfw.Init(); err != nil {
-			return nil, fmt.Errorf("failed to initialize GLFW: %v", err)
-		}
-		glfwInitialized = true
+	select {
+	case h.renderer.commandChan <- rendererCommand{
+		cmd:      cmd,
+		data:     data,
+		response: responseChan,
+	}:
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
 
-	glfw.WindowHint(glfw.ContextVersionMajor, 3)
-	glfw.WindowHint(glfw.ContextVersionMinor, 3)
-	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
-	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
-	glfw.WindowHint(glfw.Visible, glfw.False)
+	select {
+	case result := <-responseChan:
+		return result, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
 
-	window, err := glfw.CreateWindow(width, height, "Offscreen", nil, nil)
+// CompileShader compiles a fragment shader and returns any compilation errors
+func (h *ContextHandle) CompileShader(
+	ctx context.Context,
+	fragmentSource string,
+) error {
+	result, err := h.sendCommand(
+		ctx,
+		cmdRendererCompileShader,
+		rendererCompileShaderData{
+			contextID:      h.contextID,
+			fragmentSource: fragmentSource,
+		},
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create GLFW window: %v", err)
+		return err
 	}
 
-	window.MakeContextCurrent()
+	if err, ok := result.(error); ok {
+		return err
+	}
+	return nil
+}
 
-	if err := gl.Init(); err != nil {
-		window.Destroy()
-		return nil, fmt.Errorf("failed to initialize OpenGL: %v", err)
+// Render executes a render operation with Bauble shader uniforms and returns the rendered image
+func (h *ContextHandle) Render(
+	ctx context.Context,
+	params RenderParams,
+) ([]byte, error) {
+	result, err := h.sendCommand(
+		ctx,
+		cmdRendererRender,
+		rendererRenderData{
+			contextID:        h.contextID,
+			viewportSize:     params.ViewportSize,
+			time:             params.Time,
+			freeCameraTarget: params.FreeCameraTarget,
+			freeCameraOrbit:  params.FreeCameraOrbit,
+			freeCameraZoom:   params.FreeCameraZoom,
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	contextCount++
-
-	return &Context{
-		window: window,
-		width:  width,
-		height: height,
-	}, nil
-}
-
-func (c *Context) Destroy() {
-	glfwMutex.Lock()
-	defer glfwMutex.Unlock()
-
-	if c.window != nil {
-		c.window.Destroy()
-		c.window = nil
-		contextCount--
-
-		// Only terminate GLFW when the last context is destroyed
-		if contextCount == 0 && glfwInitialized {
-			glfw.Terminate()
-			glfwInitialized = false
-		}
+	if resp, ok := result.(rendererRenderResponse); ok {
+		return resp.pixels, resp.err
 	}
+	if err, ok := result.(error); ok {
+		return nil, err
+	}
+	return nil, fmt.Errorf("unexpected response type")
 }
 
-func (c *Context) MakeCurrent() {
-	c.window.MakeContextCurrent()
-}
+// Destroy destroys this context and cleans up resources
+func (h *ContextHandle) Destroy(ctx context.Context) error {
+	result, err := h.sendCommand(
+		ctx,
+		cmdRendererDestroyContext,
+		rendererDestroyContextData{
+			contextID: h.contextID,
+		},
+	)
+	if err != nil {
+		return err
+	}
 
-func (c *Context) Width() int {
-	return c.width
-}
-
-func (c *Context) Height() int {
-	return c.height
+	if err, ok := result.(error); ok {
+		return err
+	}
+	h.contextID = -1 // Mark as destroyed
+	return nil
 }
