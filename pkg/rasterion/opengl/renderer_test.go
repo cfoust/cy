@@ -40,8 +40,8 @@ func TestRenderer(t *testing.T) {
 	ctx := context.Background()
 
 	// Test 1: Create single context and basic operations
-	handle := globalRenderer.NewContext(ctx, geom.Size{R: 256, C: 512})
-	require.NoError(t, handle.Error(), "Failed to create context")
+	handle, err := globalRenderer.NewContext(ctx, geom.Size{R: 256, C: 512})
+	require.NoError(t, err, "Failed to create context")
 
 	t.Logf("Created context successfully")
 
@@ -61,19 +61,19 @@ void main() {
     frag_color = vec4(color, 1.0);
 }`
 
-	err := handle.CompileShader(ctx, fragmentSource)
+	err = handle.CompileShader(ctx, fragmentSource)
 	require.NoError(t, err, "Failed to compile shader")
 
 	t.Logf("Successfully compiled fragment shader")
 
 	// Test 3: Render using ContextHandle
-	pixels, err := handle.Render(ctx,
-		geom.Size{R: 256, C: 512}, // height=256, width=512
-		1.5,                       // time
-		[3]float32{0, 0, 0},       // freeCameraTarget
-		[2]float32{0.25, -0.125},  // freeCameraOrbit
-		1.0,                       // freeCameraZoom
-	)
+	pixels, err := handle.Render(ctx, RenderParams{
+		ViewportSize:     geom.Size{R: 256, C: 512}, // height=256, width=512
+		Time:             1.5,
+		FreeCameraTarget: [3]float32{0, 0, 0},
+		FreeCameraOrbit:  [2]float32{0.25, -0.125},
+		FreeCameraZoom:   1.0,
+	})
 	require.NoError(t, err, "Failed to render")
 
 	expectedPixelCount := 512 * 256 * 4 // width * height * RGBA
@@ -94,13 +94,16 @@ void main() {
 	)
 
 	// Test 4: Render with different viewport size (test resizing)
-	pixels2, err := handle.Render(ctx,
-		geom.Size{R: 128, C: 256}, // height=128, width=256 (smaller)
-		2.0,                       // time
-		[3]float32{1, 1, 1},       // freeCameraTarget
-		[2]float32{0.5, 0.25},     // freeCameraOrbit
-		2.0,                       // freeCameraZoom
-	)
+	pixels2, err := handle.Render(ctx, RenderParams{
+		ViewportSize: geom.Size{
+			R: 128,
+			C: 256,
+		}, // height=128, width=256 (smaller)
+		Time:             2.0,
+		FreeCameraTarget: [3]float32{1, 1, 1},
+		FreeCameraOrbit:  [2]float32{0.5, 0.25},
+		FreeCameraZoom:   2.0,
+	})
 	require.NoError(t, err, "Failed to render with new size")
 
 	expectedPixelCount2 := 256 * 128 * 4 // width * height * RGBA
@@ -121,24 +124,24 @@ void main() {
 	cancelCtx, cancel := context.WithCancel(ctx)
 	cancel() // Cancel immediately
 
-	_, err = handle.Render(cancelCtx,
-		geom.Size{R: 100, C: 100},
-		0.0,
-		[3]float32{0, 0, 0},
-		[2]float32{0, 0},
-		1.0,
-	)
+	_, err = handle.Render(cancelCtx, RenderParams{
+		ViewportSize:     geom.Size{R: 100, C: 100},
+		Time:             0.0,
+		FreeCameraTarget: [3]float32{0, 0, 0},
+		FreeCameraOrbit:  [2]float32{0, 0},
+		FreeCameraZoom:   1.0,
+	})
 	require.Error(t, err, "Expected context cancellation error")
 	require.Equal(t, context.Canceled, err, "Expected context.Canceled error")
 
 	t.Logf("Correctly handled context cancellation: %v", err)
 
 	// Test 7: Test multiple contexts (create additional contexts)
-	handle2 := globalRenderer.NewContext(ctx, geom.Size{R: 128, C: 128})
-	require.NoError(t, handle2.Error(), "Failed to create second context")
+	handle2, err := globalRenderer.NewContext(ctx, geom.Size{R: 128, C: 128})
+	require.NoError(t, err, "Failed to create second context")
 
-	handle3 := globalRenderer.NewContext(ctx, geom.Size{R: 64, C: 64})
-	require.NoError(t, handle3.Error(), "Failed to create third context")
+	handle3, err := globalRenderer.NewContext(ctx, geom.Size{R: 64, C: 64})
+	require.NoError(t, err, "Failed to create third context")
 
 	t.Logf("Created multiple contexts successfully")
 
@@ -150,23 +153,23 @@ void main() {
 	require.NoError(t, err, "Failed to compile shader in context 3")
 
 	// Render in additional contexts
-	pixels3, err := handle2.Render(ctx,
-		geom.Size{R: 128, C: 128},
-		1.0,
-		[3]float32{0, 0, 0},
-		[2]float32{0, 0},
-		1.0,
-	)
+	pixels3, err := handle2.Render(ctx, RenderParams{
+		ViewportSize:     geom.Size{R: 128, C: 128},
+		Time:             1.0,
+		FreeCameraTarget: [3]float32{0, 0, 0},
+		FreeCameraOrbit:  [2]float32{0, 0},
+		FreeCameraZoom:   1.0,
+	})
 	require.NoError(t, err, "Failed to render in context 2")
 	require.Len(t, pixels3, 128*128*4, "Unexpected pixel count for context 2")
 
-	pixels4, err := handle3.Render(ctx,
-		geom.Size{R: 64, C: 64},
-		2.0,
-		[3]float32{1, 1, 1},
-		[2]float32{0.5, 0.5},
-		2.0,
-	)
+	pixels4, err := handle3.Render(ctx, RenderParams{
+		ViewportSize:     geom.Size{R: 64, C: 64},
+		Time:             2.0,
+		FreeCameraTarget: [3]float32{1, 1, 1},
+		FreeCameraOrbit:  [2]float32{0.5, 0.5},
+		FreeCameraZoom:   2.0,
+	})
 	require.NoError(t, err, "Failed to render in context 3")
 	require.Len(t, pixels4, 64*64*4, "Unexpected pixel count for context 3")
 

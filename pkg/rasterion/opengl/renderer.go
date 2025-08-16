@@ -114,7 +114,6 @@ func (r *Renderer) getContext(contextID int) (*renderContext, error) {
 }
 
 // Poll processes OpenGL commands on the main thread
-// This MUST be called continuously from the main thread
 func (r *Renderer) Poll(ctx context.Context) {
 	if !r.running {
 		runtime.LockOSThread()
@@ -147,7 +146,7 @@ func (r *Renderer) Shutdown() {
 func (r *Renderer) NewContext(
 	ctx context.Context,
 	size geom.Size,
-) *ContextHandle {
+) (*ContextHandle, error) {
 	responseChan := make(chan interface{})
 
 	select {
@@ -159,27 +158,23 @@ func (r *Renderer) NewContext(
 		response: responseChan,
 	}:
 	case <-ctx.Done():
-		return &ContextHandle{renderer: r, contextID: -1, err: ctx.Err()}
+		return nil, ctx.Err()
 	}
 
 	select {
 	case result := <-responseChan:
 		if resp, ok := result.(rendererCreateContextResponse); ok {
 			if resp.err != nil {
-				return &ContextHandle{renderer: r, contextID: -1, err: resp.err}
+				return nil, resp.err
 			}
 			return &ContextHandle{
 				renderer:  r,
 				contextID: resp.contextID,
-			}
+			}, nil
 		}
-		return &ContextHandle{
-			renderer:  r,
-			contextID: -1,
-			err:       fmt.Errorf("unexpected response type"),
-		}
+		return nil, fmt.Errorf("unexpected response type")
 	case <-ctx.Done():
-		return &ContextHandle{renderer: r, contextID: -1, err: ctx.Err()}
+		return nil, ctx.Err()
 	}
 }
 
@@ -477,16 +472,46 @@ func (r *Renderer) cleanup() {
 	}
 }
 
+// RenderParams contains all parameters needed for rendering
+type RenderParams struct {
+	ViewportSize     geom.Size
+	Time             float32
+	FreeCameraTarget [3]float32
+	FreeCameraOrbit  [2]float32
+	FreeCameraZoom   float32
+}
+
 // ContextHandle provides an interface for interacting with a specific OpenGL context
 type ContextHandle struct {
 	renderer  *Renderer
 	contextID int
-	err       error
 }
 
-// Error returns any error from context creation
-func (h *ContextHandle) Error() error {
-	return h.err
+// sendCommand is a helper method that centralizes the boilerplate for sending commands
+// and handling responses with proper context cancellation support
+func (h *ContextHandle) sendCommand(
+	ctx context.Context,
+	cmd rendererCommandType,
+	data interface{},
+) (interface{}, error) {
+	responseChan := make(chan interface{}, 1)
+
+	select {
+	case h.renderer.commandChan <- rendererCommand{
+		cmd:      cmd,
+		data:     data,
+		response: responseChan,
+	}:
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+
+	select {
+	case result := <-responseChan:
+		return result, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
 
 // CompileShader compiles a fragment shader and returns any compilation errors
@@ -494,110 +519,66 @@ func (h *ContextHandle) CompileShader(
 	ctx context.Context,
 	fragmentSource string,
 ) error {
-	if h.err != nil {
-		return h.err
-	}
-
-	responseChan := make(chan interface{}, 1)
-
-	select {
-	case h.renderer.commandChan <- rendererCommand{
-		cmd: cmdRendererCompileShader,
-		data: rendererCompileShaderData{
+	result, err := h.sendCommand(
+		ctx,
+		cmdRendererCompileShader,
+		rendererCompileShaderData{
 			contextID:      h.contextID,
 			fragmentSource: fragmentSource,
 		},
-		response: responseChan,
-	}:
-	case <-ctx.Done():
-		return ctx.Err()
+	)
+	if err != nil {
+		return err
 	}
 
-	select {
-	case result := <-responseChan:
-		if err, ok := result.(error); ok {
-			return err
-		}
-		return nil
-	case <-ctx.Done():
-		return ctx.Err()
+	if err, ok := result.(error); ok {
+		return err
 	}
+	return nil
 }
 
 // Render executes a render operation with Bauble shader uniforms and returns the rendered image
 func (h *ContextHandle) Render(
 	ctx context.Context,
-	viewportSize geom.Size,
-	time float32,
-	freeCameraTarget [3]float32,
-	freeCameraOrbit [2]float32,
-	freeCameraZoom float32,
+	params RenderParams,
 ) ([]byte, error) {
-	if h.err != nil {
-		return nil, h.err
+	result, err := h.sendCommand(ctx, cmdRendererRender, rendererRenderData{
+		contextID:        h.contextID,
+		viewportSize:     params.ViewportSize,
+		time:             params.Time,
+		freeCameraTarget: params.FreeCameraTarget,
+		freeCameraOrbit:  params.FreeCameraOrbit,
+		freeCameraZoom:   params.FreeCameraZoom,
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	responseChan := make(chan interface{}, 1)
-
-	select {
-	case h.renderer.commandChan <- rendererCommand{
-		cmd: cmdRendererRender,
-		data: rendererRenderData{
-			contextID:        h.contextID,
-			viewportSize:     viewportSize,
-			time:             time,
-			freeCameraTarget: freeCameraTarget,
-			freeCameraOrbit:  freeCameraOrbit,
-			freeCameraZoom:   freeCameraZoom,
-		},
-		response: responseChan,
-	}:
-	case <-ctx.Done():
-		return nil, ctx.Err()
+	if resp, ok := result.(rendererRenderResponse); ok {
+		return resp.pixels, resp.err
 	}
-
-	select {
-	case result := <-responseChan:
-		if resp, ok := result.(rendererRenderResponse); ok {
-			return resp.pixels, resp.err
-		}
-		if err, ok := result.(error); ok {
-			return nil, err
-		}
-		return nil, fmt.Errorf("unexpected response type")
-	case <-ctx.Done():
-		return nil, ctx.Err()
+	if err, ok := result.(error); ok {
+		return nil, err
 	}
+	return nil, fmt.Errorf("unexpected response type")
 }
 
 // Destroy destroys this context and cleans up resources
 func (h *ContextHandle) Destroy(ctx context.Context) error {
-	if h.err != nil {
-		return h.err
-	}
-
-	responseChan := make(chan interface{}, 1)
-
-	select {
-	case h.renderer.commandChan <- rendererCommand{
-		cmd: cmdRendererDestroyContext,
-		data: rendererDestroyContextData{
+	result, err := h.sendCommand(
+		ctx,
+		cmdRendererDestroyContext,
+		rendererDestroyContextData{
 			contextID: h.contextID,
 		},
-		response: responseChan,
-	}:
-	case <-ctx.Done():
-		return ctx.Err()
+	)
+	if err != nil {
+		return err
 	}
 
-	select {
-	case result := <-responseChan:
-		if err, ok := result.(error); ok {
-			return err
-		}
-		h.contextID = -1 // Mark as destroyed
-		return nil
-	case <-ctx.Done():
-		return ctx.Err()
+	if err, ok := result.(error); ok {
+		return err
 	}
+	h.contextID = -1 // Mark as destroyed
+	return nil
 }
