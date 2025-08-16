@@ -259,6 +259,7 @@ func (f *Fuzzy) renderOptions(
 			}
 		}).
 		Headers(headers...).
+		Wrap(false).
 		Width(common.GetWidth() + 2 + geom.Max(numColumns-1, 0)).
 		Rows(rows...)
 
