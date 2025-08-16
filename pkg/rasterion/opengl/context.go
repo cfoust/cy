@@ -22,8 +22,8 @@ type ContextHandle struct {
 	contextID int
 }
 
-// sendCommand is a helper method that centralizes the boilerplate for sending commands
-// and handling responses with proper context cancellation support
+// sendCommand is a helper method that centralizes the boilerplate for sending
+// commands and handling responses with proper context cancellation support
 func (h *ContextHandle) sendCommand(
 	ctx context.Context,
 	cmd rendererCommandType,
@@ -72,7 +72,8 @@ func (h *ContextHandle) CompileShader(
 	return nil
 }
 
-// Render executes a render operation with Bauble shader uniforms and returns the rendered image
+// Render executes a render operation with Bauble shader uniforms and returns
+// the rendered image
 func (h *ContextHandle) Render(
 	ctx context.Context,
 	params RenderParams,

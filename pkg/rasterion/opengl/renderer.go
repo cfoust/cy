@@ -10,6 +10,10 @@ import (
 	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
+// DefaultRenderer is a global renderer instance for use in stories and other contexts
+// where the main thread needs to be managed externally
+var DefaultRenderer *Renderer
+
 type QuadVertex struct {
 	X, Y float32
 }
@@ -471,4 +475,3 @@ func (r *Renderer) cleanup() {
 		)
 	}
 }
-

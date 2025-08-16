@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/cfoust/cy/pkg/anim"
@@ -14,7 +15,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/stream/cli"
 	"github.com/cfoust/cy/pkg/mux/stream/renderer"
-	_ "github.com/cfoust/cy/pkg/rasterion/opengl"
+	"github.com/cfoust/cy/pkg/rasterion/opengl"
 	_ "github.com/cfoust/cy/pkg/rasterion/stories"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/stories"
@@ -36,6 +37,10 @@ var CLI struct {
 }
 
 func main() {
+	// Necessary for OpenGL
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	kong.Parse(&CLI,
 		kong.Name("cy-stories"),
 		kong.Description("storybook, but for the CLI"),
@@ -55,6 +60,31 @@ func main() {
 	}
 	log.Logger = log.Output(logs)
 
+	// Some stories use this
+	opengl.DefaultRenderer = opengl.NewRenderer()
+
+	// Start a goroutine to run the main stories app
+	appDone := make(chan error, 1)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		defer cancel()
+		appDone <- runStoriesApp(ctx)
+	}()
+
+	opengl.DefaultRenderer.Poll(ctx)
+
+	select {
+	case err := <-appDone:
+		if err != nil {
+			panic(err)
+		}
+	default:
+	}
+}
+
+func runStoriesApp(ctx context.Context) error {
 	for name, frame := range frames.Frames {
 		func(f frames.Frame) {
 			stories.Register(
@@ -121,6 +151,7 @@ func main() {
 	}
 
 	var cols, rows int
+	var err error
 	if haveCast {
 		cols = CLI.Width
 		rows = CLI.Height
@@ -138,7 +169,7 @@ func main() {
 		panic(err)
 	}
 
-	ctx := context.Background()
+	appCtx := context.Background()
 
 	var screen *taro.Program
 	if len(CLI.Single) > 0 {
@@ -148,7 +179,7 @@ func main() {
 		}
 
 		screen = ui.NewViewer(
-			ctx,
+			appCtx,
 			story,
 			!haveCast,
 		)
@@ -160,7 +191,7 @@ func main() {
 			}()
 		}
 	} else {
-		screen, err = ui.New(ctx, CLI.Prefix)
+		screen, err = ui.New(appCtx, CLI.Prefix)
 		if err != nil {
 			panic(err)
 		}
@@ -170,7 +201,7 @@ func main() {
 
 	if !haveCast {
 		_ = cli.Attach(screen.Ctx(), renderer, os.Stdin, os.Stdout)
-		return
+		return nil
 	}
 
 	recorder := sessions.NewMemoryRecorder()
@@ -184,6 +215,7 @@ func main() {
 
 	err = sessions.WriteAsciinema(CLI.Cast, recorder.Events())
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }

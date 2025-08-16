@@ -5,6 +5,7 @@ import (
 	"os"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
 
@@ -196,4 +197,55 @@ void main() {
 	)
 
 	t.Logf("Correctly verified context destruction: %v", err)
+
+	// Test 10: Test Screen implementation
+	t.Logf("Testing Screen implementation...")
+
+	// Create a simple test shader
+	screenFragmentSource := `#version 330 core
+out vec4 frag_color;
+
+uniform float t;
+uniform vec4 viewport;
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / viewport.zw;
+    vec3 color = vec3(uv.x, uv.y, sin(t * 3.14159));
+    frag_color = vec4(color, 1.0);
+}`
+
+	// Create a screen
+	screen := NewScreen(ctx, globalRenderer, screenFragmentSource)
+	require.NotNil(t, screen)
+
+	// Test initial state
+	state := screen.State()
+	require.NotNil(t, state)
+	require.Equal(t, geom.Size{R: 24, C: 80}, state.Image.Size())
+
+	// Test resize
+	err = screen.Resize(geom.Size{R: 10, C: 20})
+	require.NoError(t, err)
+
+	state = screen.State()
+	require.Equal(t, geom.Size{R: 10, C: 20}, state.Image.Size())
+
+	// Give it a moment to render
+	time.Sleep(100 * time.Millisecond)
+
+	// Test with invalid shader
+	invalidScreen := NewScreen(ctx, globalRenderer, "invalid shader")
+	require.NotNil(t, invalidScreen)
+
+	// Give it a moment to try to compile
+	time.Sleep(100 * time.Millisecond)
+
+	state = invalidScreen.State()
+	require.NotNil(t, state)
+
+	// Cleanup
+	screen.Kill()
+	invalidScreen.Kill()
+
+	t.Logf("Screen test completed successfully")
 }
