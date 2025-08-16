@@ -92,17 +92,14 @@ func (r *Replay) getLeftStatusStyle() lipgloss.Style {
 		statusStyle = p.ReplayPlayStyle()
 	}
 
-	return r.render.NewStyle().
-		Inherit(statusStyle.Style).
-		Padding(0, 1)
+	return statusStyle.Padding(0, 1)
 }
 
 func (r *Replay) drawStatusBar(state *tty.State) {
 	p := r.params
 	size := state.Image.Size()
 
-	statusBarStyle := r.render.NewStyle().
-		Inherit(r.params.ReplayStatusBarStyle().Style)
+	statusBarStyle := r.params.ReplayStatusBarStyle().Style
 
 	statusText := p.ReplayTextTimeMode()
 	if r.isCopyMode() {
@@ -260,7 +257,7 @@ func (r *Replay) renderSearch(
 	r.input.Cursor.TextStyle = statusBarStyle
 
 	if r.isWaiting {
-		emptyStyle := r.render.NewStyle().Inherit(p.ReplayTimeStyle().Style)
+		emptyStyle := p.ReplayTimeStyle().Style
 		filledStyle := r.render.NewStyle().
 			Background(emptyStyle.GetForeground()).
 			Foreground(emptyStyle.GetBackground())

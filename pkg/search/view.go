@@ -11,7 +11,7 @@ import (
 )
 
 func (s *Search) getBarStyle() lipgloss.Style {
-	return s.render.NewStyle().Inherit(s.params.SearchStatusBarStyle().Style)
+	return s.params.SearchStatusBarStyle().Style
 }
 
 // renderBar renders a status bar with a left and right side. The left side

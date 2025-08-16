@@ -22,9 +22,7 @@ func (t *Text) renderPrompt(prompt lipgloss.Style) string {
 
 func (t *Text) renderInputWindow(size geom.Size) image.Image {
 	p := t.params
-	promptStyle := t.render.NewStyle().
-		Inherit(p.InputPromptStyle().Style).
-		Width(size.C)
+	promptStyle := p.InputPromptStyle().Width(size.C)
 
 	promptStyle.GetBackground()
 	arrow := t.render.NewStyle().
