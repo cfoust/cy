@@ -48,8 +48,8 @@ func ParamsToReplayOptions(
 
 	fixedHighlights := make([]movement.Highlight, 0, len(*highlights))
 	render := taro.NewRenderer()
-	fgColor := render.ConvertLipgloss(lipgloss.Color("1"))
-	bgColor := render.ConvertLipgloss(lipgloss.Color("14"))
+	fgColor := render.LipglossToEmu(lipgloss.Color("1"))
+	bgColor := render.LipglossToEmu(lipgloss.Color("14"))
 
 	for _, highlight := range *highlights {
 		fixedHighlights = append(

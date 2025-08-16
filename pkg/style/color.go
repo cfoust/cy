@@ -5,7 +5,6 @@ import (
 	"github.com/cfoust/cy/pkg/janet"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 )
 
 type Color struct {
@@ -36,22 +35,8 @@ func (c *Color) MarshalJanet() interface{} {
 	return string(c.Color)
 }
 
-func lipglossToEmu(l lipgloss.Color) emu.Color {
-	switch c := renderer.ColorProfile().Color(string(l)).(type) {
-	case termenv.ANSIColor:
-		return emu.ANSIColor(int(c))
-	case termenv.ANSI256Color:
-		return emu.XTermColor(int(c))
-	case termenv.RGBColor:
-		r, g, b := termenv.ConvertToRGB(c).RGB255()
-		return emu.RGBColor(int(r), int(g), int(b))
-	}
-
-	return emu.DefaultFG
-}
-
 func (c *Color) Emu() emu.Color {
-	return lipglossToEmu(c.Color)
+	return renderer.LipglossToEmu(c.Color)
 }
 
 func NewColor(c string) *Color {

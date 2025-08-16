@@ -5,9 +5,9 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 )
 
 var (
@@ -35,10 +35,8 @@ var (
 
 // We use a common renderer, since this actually has no impact on how/where we
 // can render this style (it's all virtual anyway.)
-var renderer *lipgloss.Renderer = func() *lipgloss.Renderer {
-	renderer := lipgloss.NewRenderer(emu.New())
-	renderer.SetColorProfile(termenv.TrueColor)
-	return renderer
+var renderer *taro.Renderer = func() *taro.Renderer {
+	return taro.NewRenderer()
 }()
 
 type Style struct {
@@ -295,4 +293,41 @@ func (s *Style) MarshalJanet() interface{} {
 	}
 
 	return result
+}
+
+func (s *Style) Apply(glyph *emu.Glyph) {
+	if glyph == nil {
+		return
+	}
+
+	if fg := s.GetForegroundColor(); fg != nil {
+		glyph.FG = fg.Emu()
+	}
+
+	if bg := s.GetBackgroundColor(); bg != nil {
+		glyph.BG = bg.Emu()
+	}
+
+	if s.GetBold() {
+		glyph.Mode |= emu.AttrBold
+	}
+	if s.GetItalic() {
+		glyph.Mode |= emu.AttrItalic
+	}
+	if s.GetUnderline() {
+		glyph.Mode |= emu.AttrUnderline
+	}
+	if s.GetStrikethrough() {
+		glyph.Mode |= emu.AttrStrikethrough
+	}
+	if s.GetReverse() {
+		glyph.Mode |= emu.AttrReverse
+	}
+	if s.GetBlink() {
+		glyph.Mode |= emu.AttrBlink
+	}
+
+	// TODO(cfoust): 08/16/25 ???
+	//if s.GetFaint() {
+	//}
 }

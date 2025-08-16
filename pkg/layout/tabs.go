@@ -14,6 +14,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/params"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/charmbracelet/lipgloss"
@@ -343,10 +344,12 @@ func (t *Tabs) State() *tty.State {
 		Foreground(inactiveFg).
 		Background(inactiveBg)
 
-	bg := emu.DefaultBG
+	var tabBarBg *style.Color
 	if value, ok := config.Bg.GetPreset(); ok {
-		bg = value.Emu()
+		tabBarBg = value
 	}
+
+	tabBarStyle := style.NewStyle(nil, tabBarBg)
 
 	var barWidth, activeLoc, activeWidth int
 	var tabs []image.Image
@@ -392,7 +395,7 @@ func (t *Tabs) State() *tty.State {
 	}
 
 	for col := 0; col < size.C; col++ {
-		state.Image[bar.Position.R][col].BG = bg
+		tabBarStyle.Apply(&state.Image[bar.Position.R][col])
 	}
 
 	// Render the tab bar into one long line so we can shift it
