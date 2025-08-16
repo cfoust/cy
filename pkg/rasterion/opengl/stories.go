@@ -603,7 +603,6 @@ void main() {
 			return NewScreen(ctx, nil, fragmentSource), nil
 		},
 		stories.Config{
-			Size: geom.Size{R: 40, C: 80},
 		},
 	)
 }

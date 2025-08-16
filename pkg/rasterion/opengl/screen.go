@@ -2,11 +2,11 @@ package opengl
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
@@ -26,6 +26,7 @@ type Screen struct {
 	fragmentSource string
 	context        *ContextHandle
 	compilationErr error
+	lastContextErr error // Track context creation errors
 
 	size  geom.Size
 	state *tty.State
@@ -57,8 +58,11 @@ func NewScreen(
 
 	screen.state = tty.New(screen.size)
 
-	// Start the rendering loop
-	go screen.renderLoop()
+	// Start the rendering loop with a small delay to let the main thread get ready
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		screen.renderLoop()
+	}()
 
 	return screen
 }
@@ -86,6 +90,7 @@ func (s *Screen) imageToASCII(pixels []byte, width, height int) {
 
 	// Clear the state
 	s.state = tty.New(s.size)
+	s.state.CursorVisible = false
 
 	// Calculate how to fit the image into the terminal size
 	scaleX := float64(width) / float64(s.size.C)
@@ -95,7 +100,8 @@ func (s *Screen) imageToASCII(pixels []byte, width, height int) {
 		for col := 0; col < s.size.C; col++ {
 			// Map terminal position to pixel position
 			pixelX := int(float64(col) * scaleX)
-			pixelY := int(float64(row) * scaleY)
+			// Flip Y coordinate since OpenGL origin is bottom-left, terminal is top-left
+			pixelY := int(float64(s.size.R-1-row) * scaleY)
 
 			// Ensure we're within bounds
 			if pixelX >= width || pixelY >= height {
@@ -142,45 +148,74 @@ func (s *Screen) renderLoop() {
 	}
 }
 
+// tryCreateContext attempts to create and initialize an OpenGL context
+// Returns true if successful, false if failed (with appropriate error display)
+func (s *Screen) tryCreateContext(size geom.Size, lastContextErr error) bool {
+	context, err := s.renderer.NewContext(s.Ctx(), size)
+	if err != nil {
+		// Only update display if this is a new error or first attempt
+		if lastContextErr == nil || lastContextErr.Error() != err.Error() {
+			s.Lock()
+			s.lastContextErr = err
+			s.Unlock()
+			// Show a more user-friendly message during startup
+			if lastContextErr == nil {
+				s.renderMessage("initializing", "OpenGL renderer starting...", false)
+			} else {
+				s.renderMessage("opengl error", err.Error(), true)
+			}
+			s.Notify()
+		}
+		return false
+	}
+
+	// Successfully created context, clear any previous error
+	s.Lock()
+	s.lastContextErr = nil
+	s.Unlock()
+
+	// Compile the shader
+	err = context.CompileShader(s.Ctx(), s.fragmentSource)
+	if err != nil {
+		s.Lock()
+		s.compilationErr = err
+		s.Unlock()
+		s.renderMessage("shader error", err.Error(), true)
+		s.Notify()
+		return false
+	}
+
+	s.Lock()
+	s.context = context
+	s.Unlock()
+	return true
+}
+
 // renderFrame renders a single frame
 func (s *Screen) renderFrame(elapsed time.Duration) {
 	s.RLock()
 	size := s.size
 	context := s.context
 	compilationErr := s.compilationErr
+	lastContextErr := s.lastContextErr
 	s.RUnlock()
 
 	// If we have a compilation error, show it instead of rendering
 	if compilationErr != nil {
-		s.showError(compilationErr)
+		s.renderMessage("shader error", compilationErr.Error(), true)
 		s.Notify()
 		return
 	}
 
 	// If no context, try to create one
 	if context == nil {
-		var err error
-		context, err = s.renderer.NewContext(s.Ctx(), size)
-		if err != nil {
-			s.showError(fmt.Errorf("failed to create OpenGL context: %v", err))
-			s.Notify()
+		if !s.tryCreateContext(size, lastContextErr) {
 			return
 		}
-
-		// Compile the shader
-		err = context.CompileShader(s.Ctx(), s.fragmentSource)
-		if err != nil {
-			s.Lock()
-			s.compilationErr = err
-			s.Unlock()
-			s.showError(err)
-			s.Notify()
-			return
-		}
-
-		s.Lock()
-		s.context = context
-		s.Unlock()
+		// Update context from the newly created one
+		s.RLock()
+		context = s.context
+		s.RUnlock()
 	}
 
 	// Render the frame
@@ -188,11 +223,11 @@ func (s *Screen) renderFrame(elapsed time.Duration) {
 		ViewportSize:     size,
 		Time:             float32(elapsed.Seconds()),
 		FreeCameraTarget: [3]float32{0, 0, 0},
-		FreeCameraOrbit:  [2]float32{0, 0},
-		FreeCameraZoom:   1.0,
+		FreeCameraOrbit:  [2]float32{1.5, 1.5},
+		FreeCameraZoom:   2.0,
 	})
 	if err != nil {
-		s.showError(fmt.Errorf("render error: %v", err))
+		s.renderMessage("render error", err.Error(), true)
 		s.Notify()
 		return
 	}
@@ -202,81 +237,69 @@ func (s *Screen) renderFrame(elapsed time.Duration) {
 	s.Notify()
 }
 
-// showError displays an error message centered on the screen
-func (s *Screen) showError(err error) {
+// renderMessage displays a message in a centered box with border
+func (s *Screen) renderMessage(title, message string, isError bool) {
 	s.Lock()
 	defer s.Unlock()
 
 	// Clear the state
 	s.state = tty.New(s.size)
+	s.state.CursorVisible = false
 
-	// Create error message
-	message := fmt.Sprintf("Shader Error: %s", err.Error())
+	size := s.state.Image.Size()
+	width := geom.Min(size.C, 50)
 
-	// Split message into lines that fit the screen width
-	var lines []string
-	maxWidth := s.size.C - 4 // Leave some padding
+	var borderColor lipgloss.Color
+	var titleStyle lipgloss.Style
 
-	for len(message) > 0 {
-		if len(message) <= maxWidth {
-			lines = append(lines, message)
-			break
-		}
-
-		// Find a good place to break the line
-		breakPoint := maxWidth
-		for i := maxWidth; i > 0; i-- {
-			if message[i] == ' ' {
-				breakPoint = i
-				break
-			}
-		}
-
-		lines = append(lines, message[:breakPoint])
-		message = message[breakPoint:]
-		if len(message) > 0 && message[0] == ' ' {
-			message = message[1:] // Skip leading space
-		}
+	if isError {
+		borderColor = lipgloss.Color("9") // Red
+		titleStyle = s.render.NewStyle().
+			Foreground(borderColor).
+			Bold(true)
+	} else {
+		borderColor = lipgloss.Color("12") // Blue
+		titleStyle = s.render.NewStyle().
+			Foreground(borderColor).
+			Bold(true)
 	}
 
-	// Center the error message
-	startRow := (s.size.R - len(lines)) / 2
-	if startRow < 0 {
-		startRow = 0
-	}
+	boxContents := lipgloss.JoinVertical(
+		lipgloss.Left,
+		titleStyle.Render(title),
+		s.render.NewStyle().
+			Width(width).
+			Render(message),
+	)
 
-	errorStyle := s.render.NewStyle().
-		Foreground(lipgloss.Color("9")). // Red
-		Background(lipgloss.Color("0")). // Black
-		Bold(true)
+	boxStyle := s.render.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(borderColor).
+		BorderTop(true).
+		BorderLeft(true).
+		BorderRight(true).
+		BorderBottom(true)
 
-	for i, line := range lines {
-		row := startRow + i
-		if row >= s.size.R {
-			break
-		}
+	boxText := boxStyle.Render(boxContents)
+	boxSize := taro.GetSize(boxText)
 
-		// Center the line horizontally
-		startCol := (s.size.C - len(line)) / 2
-		if startCol < 0 {
-			startCol = 0
-		}
-
-		// Render the line
-		s.render.RenderAt(
-			s.state.Image,
-			startCol,
-			row,
-			errorStyle.Render(line),
-		)
-	}
+	box := image.New(boxSize)
+	s.render.RenderAt(
+		box,
+		0,
+		0,
+		boxText,
+	)
+	image.Copy(size.Center(boxSize), s.state.Image, box)
 }
 
 // State returns the current terminal state
 func (s *Screen) State() *tty.State {
 	s.RLock()
 	defer s.RUnlock()
-	return s.state.Clone()
+	state := s.state.Clone()
+	state.CursorVisible = false
+	return state
 }
 
 // Resize resizes the screen

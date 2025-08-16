@@ -70,6 +70,8 @@ func main() {
 
 	go func() {
 		defer cancel()
+		// Give the OpenGL renderer a moment to start up
+		time.Sleep(100 * time.Millisecond)
 		appDone <- runStoriesApp(ctx)
 	}()
 
