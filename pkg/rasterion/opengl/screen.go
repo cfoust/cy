@@ -67,24 +67,13 @@ func NewScreen(
 	return screen
 }
 
-// ASCII characters for different brightness levels (dark to light)
-var asciiChars = []rune{' ', '.', ':', '-', '=', '+', '*', '#', '%', '@'}
-
-// pixelToASCII converts RGB pixel values to an ASCII character
-func pixelToASCII(r, g, b uint8) rune {
-	// Convert to grayscale using luminance formula
-	gray := float64(r)*0.299 + float64(g)*0.587 + float64(b)*0.114
-
-	// Map grayscale (0-255) to ASCII character index
-	index := int(gray / 255.0 * float64(len(asciiChars)-1))
-	if index >= len(asciiChars) {
-		index = len(asciiChars) - 1
-	}
-	return asciiChars[index]
+// rgbToColor converts RGB values to emu.Color using true RGB colors
+func rgbToColor(r, g, b uint8) emu.Color {
+	return emu.RGBColor(int(r), int(g), int(b))
 }
 
-// imageToASCII converts RGBA pixel data to ASCII characters and renders to terminal
-func (s *Screen) imageToASCII(pixels []byte, width, height int) {
+// imageToTerminal converts RGBA pixel data to colored terminal characters
+func (s *Screen) imageToTerminal(pixels []byte, width, height int) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -101,7 +90,7 @@ func (s *Screen) imageToASCII(pixels []byte, width, height int) {
 			// Map terminal position to pixel position
 			pixelX := int(float64(col) * scaleX)
 			// Flip Y coordinate since OpenGL origin is bottom-left, terminal is top-left
-			pixelY := int(float64(s.size.R-1-row) * scaleY)
+			pixelY := int(float64(row) * scaleY)
 
 			// Ensure we're within bounds
 			if pixelX >= width || pixelY >= height {
@@ -118,12 +107,12 @@ func (s *Screen) imageToASCII(pixels []byte, width, height int) {
 			g := pixels[pixelIndex+1]
 			b := pixels[pixelIndex+2]
 
-			// Convert to ASCII and set in terminal
-			char := pixelToASCII(r, g, b)
+			// Convert RGB to terminal color and use a block character for full color fill
+			bgColor := rgbToColor(r, g, b)
 			s.state.Image[row][col] = emu.Glyph{
-				Char: char,
+				Char: ' ',      // Space character with colored background
 				FG:   emu.DefaultFG,
-				BG:   emu.DefaultBG,
+				BG:   bgColor,
 			}
 		}
 	}
@@ -232,8 +221,8 @@ func (s *Screen) renderFrame(elapsed time.Duration) {
 		return
 	}
 
-	// Convert to ASCII and update state
-	s.imageToASCII(pixels, size.C, size.R)
+	// Convert to colored terminal and update state
+	s.imageToTerminal(pixels, size.C, size.R)
 	s.Notify()
 }
 
