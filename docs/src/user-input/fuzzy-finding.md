@@ -2,7 +2,7 @@
 
 {{story cast input/find/full-bottom}}
 
-Simple, fast, and configurable fuzzy finding is one of `cy`'s most important features. `cy` provides a purpose-built fuzzy finder (similar to [fzf](https://github.com/junegunn/fzf)) in the form of {{api input/find}}, which is a function available in [the API](/api.md#inputfind).
+Simple, fast, and configurable fuzzy finding is one of `cy`'s most important features. `cy` provides a purpose-built fuzzy finder in the form of {{api input/find}}, which is a function available in [the API](/api.md#inputfind).
 
 ## Choosing a string from a list
 
@@ -51,7 +51,7 @@ It is sometimes handy to be able to have the user choose from a row in a table r
 
 ## Choosing with previews
 
-Where {{api input/find}} really shines, however, is in its ability to show a preview window for each option, which is conceptually similar to `fzf`'s `--preview` command line flag. {{api input/find}} can preview three different types of content:
+Where {{api input/find}} really shines, however, is in its ability to show a preview window for each option. {{api input/find}} can preview several different types of content:
 
 - **Panes:** Show the current state of a pane in `cy`'s [node tree](/groups-and-panes.md#the-node-tree). This is the live view of a pane, regardless of how many other clients are interacting with it or what is happening on the screen.
 - **`.borg` files:** Show a moment in time in a `.borg` file.
