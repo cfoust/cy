@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/params"
+	"github.com/cfoust/cy/pkg/style"
 
 	"github.com/stretchr/testify/require"
 )
@@ -19,8 +20,10 @@ func TestHighlight(
 	lines ...string,
 ) {
 	bg := emu.ANSIColor(1)
+	bgColor := style.Red
+	testStyle := style.NewStyle(nil, bgColor)
 	for i := range highlights {
-		highlights[i].BG = bg
+		highlights[i].Style = testStyle
 	}
 
 	state := tty.New(size)

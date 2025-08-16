@@ -11,9 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/replay/loader"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/sessions/search"
-	"github.com/cfoust/cy/pkg/taro"
-
-	"github.com/charmbracelet/lipgloss"
+	"github.com/cfoust/cy/pkg/style"
 )
 
 type ReplayType struct {
@@ -47,18 +45,15 @@ func ParamsToReplayOptions(
 	}
 
 	fixedHighlights := make([]movement.Highlight, 0, len(*highlights))
-	render := taro.NewRenderer()
-	fgColor := render.LipglossToEmu(lipgloss.Color("1"))
-	bgColor := render.LipglossToEmu(lipgloss.Color("14"))
+	highlightStyle := style.NewStyle(style.Red, style.LightCyan)
 
 	for _, highlight := range *highlights {
 		fixedHighlights = append(
 			fixedHighlights,
 			movement.Highlight{
-				From: highlight.From,
-				To:   highlight.To,
-				FG:   fgColor,
-				BG:   bgColor,
+				From:  highlight.From,
+				To:    highlight.To,
+				Style: highlightStyle,
 			},
 		)
 	}

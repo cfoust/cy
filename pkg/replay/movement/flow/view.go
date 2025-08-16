@@ -60,8 +60,9 @@ func (f *flowMovement) highlightRow(
 	}
 
 	for col := startCol; col <= endCol; col++ {
-		row[col].FG = highlight.FG
-		row[col].BG = highlight.BG
+		if highlight.Style != nil {
+			highlight.Style.Apply(&row[col])
+		}
 	}
 }
 

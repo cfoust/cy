@@ -22,20 +22,10 @@ func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 	}
 
 	p := r.params
-	activeFg := r.render.LipglossToEmu(
-		p.ReplayMatchActiveStyle().GetForegroundColor().Color,
-	)
-	activeBg := r.render.LipglossToEmu(
-		p.ReplayMatchActiveStyle().GetBackgroundColor().Color,
-	)
-	inactiveFg := r.render.LipglossToEmu(
-		p.ReplayMatchInactiveStyle().GetForegroundColor().Color,
-	)
-	inactiveBg := r.render.LipglossToEmu(
-		p.ReplayMatchInactiveStyle().GetBackgroundColor().Color,
-	)
+	activeStyle := p.ReplayMatchActiveStyle()
+	inactiveStyle := p.ReplayMatchInactiveStyle()
 
-	var fg, bg emu.Color
+	var currentStyle *style.Style
 	location := r.Location()
 	for _, match := range matches {
 		// This match is not on the screen
@@ -44,11 +34,9 @@ func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 		}
 
 		if location.Equal(match.Begin) {
-			fg = activeFg
-			bg = activeBg
+			currentStyle = activeStyle
 		} else {
-			fg = inactiveFg
-			bg = inactiveBg
+			currentStyle = inactiveStyle
 		}
 
 		for _, appearance := range match.Appearances {
@@ -62,8 +50,7 @@ func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 					Screen: true,
 					From:   appearance.From,
 					To:     appearance.To,
-					FG:     fg,
-					BG:     bg,
+					Style:  currentStyle,
 				},
 			)
 			break
@@ -406,14 +393,9 @@ func (r *Replay) View(state *tty.State) {
 		highlights = append(
 			highlights,
 			movement.Highlight{
-				From: r.selectStart,
-				To:   r.movement.Cursor(),
-				FG: r.render.LipglossToEmu(
-					p.ReplaySelectionStyle().GetForegroundColor().Color,
-				),
-				BG: r.render.LipglossToEmu(
-					p.ReplaySelectionStyle().GetBackgroundColor().Color,
-				),
+				From:  r.selectStart,
+				To:    r.movement.Cursor(),
+				Style: p.ReplaySelectionStyle(),
 			},
 		)
 	}
@@ -427,12 +409,7 @@ func (r *Replay) View(state *tty.State) {
 					R: highlight.R,
 					C: highlight.C1 - 1,
 				},
-				FG: r.render.LipglossToEmu(
-					p.ReplayIncrementalStyle().GetForegroundColor().Color,
-				),
-				BG: r.render.LipglossToEmu(
-					p.ReplayIncrementalStyle().GetBackgroundColor().Color,
-				),
+				Style: p.ReplayIncrementalStyle(),
 			},
 		)
 	}
@@ -440,18 +417,16 @@ func (r *Replay) View(state *tty.State) {
 	// Only used for development (for now)
 	if r.isFlowMode() && r.showCommands {
 		commands := r.Commands()
+		outputStyle := style.NewStyle(style.LightRed, style.NewColor("113"))
+		inputStyle := style.NewStyle(style.LightRed, style.NewColor("160"))
+
 		for _, command := range commands {
 			highlights = append(
 				highlights,
 				movement.Highlight{
-					From: command.Output.From,
-					To:   command.Output.To,
-					FG: r.render.LipglossToEmu(
-						lipgloss.Color("9"),
-					),
-					BG: r.render.LipglossToEmu(
-						lipgloss.Color("113"),
-					),
+					From:  command.Output.From,
+					To:    command.Output.To,
+					Style: outputStyle,
 				},
 			)
 
@@ -459,14 +434,9 @@ func (r *Replay) View(state *tty.State) {
 				highlights = append(
 					highlights,
 					movement.Highlight{
-						From: input.From,
-						To:   input.To,
-						FG: r.render.LipglossToEmu(
-							lipgloss.Color("9"),
-						),
-						BG: r.render.LipglossToEmu(
-							lipgloss.Color("160"),
-						),
+						From:  input.From,
+						To:    input.To,
+						Style: inputStyle,
 					},
 				)
 			}

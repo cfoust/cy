@@ -1,11 +1,11 @@
 package movement
 
 import (
-	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay/motion"
+	"github.com/cfoust/cy/pkg/style"
 )
 
 type Highlight struct {
@@ -13,7 +13,7 @@ type Highlight struct {
 	// of the Movement.
 	Screen   bool
 	From, To geom.Vec2
-	FG, BG   emu.Color
+	Style    *style.Style
 }
 
 type Movement interface {
