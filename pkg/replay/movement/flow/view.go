@@ -137,7 +137,8 @@ func (f *flowMovement) View(
 
 	// Renders "[1/N]" text in the top-right corner that looks just like
 	// tmux's copy mode, but works on physical lines instead.
-	offsetStyle := f.render.NewStyle().Inherit(params.ReplaySelectionStyle().Style)
+	offsetStyle := f.render.NewStyle().
+		Inherit(params.ReplaySelectionStyle().Style)
 
 	r.RenderAt(
 		state.Image,

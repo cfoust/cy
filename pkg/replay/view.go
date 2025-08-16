@@ -93,7 +93,7 @@ func (r *Replay) getCommand() (command detect.Command, ok bool) {
 func (r *Replay) getLeftStatusStyle() lipgloss.Style {
 	p := r.params
 
-	var statusStyle *style.Style = p.ReplayTimeStyle()
+	var statusStyle = p.ReplayTimeStyle()
 	if r.isCopyMode() {
 		statusStyle = p.ReplayCopyStyle()
 
@@ -114,7 +114,8 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	p := r.params
 	size := state.Image.Size()
 
-	statusBarStyle := r.render.NewStyle().Inherit(r.params.ReplayStatusBarStyle().Style)
+	statusBarStyle := r.render.NewStyle().
+		Inherit(r.params.ReplayStatusBarStyle().Style)
 
 	statusText := p.ReplayTextTimeMode()
 	if r.isCopyMode() {

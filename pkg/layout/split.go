@@ -12,8 +12,8 @@ import (
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
-	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/params"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/sasha-s/go-deadlock"
