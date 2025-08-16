@@ -116,7 +116,7 @@ func (r *Renderer) getContext(contextID int) (*renderContext, error) {
 
 // Poll processes OpenGL commands on the main thread
 // This MUST be called continuously from the main thread
-func (r *Renderer) Poll() {
+func (r *Renderer) Poll(ctx context.Context) {
 	if !r.running {
 		runtime.LockOSThread()
 		r.running = true
@@ -130,8 +130,10 @@ func (r *Renderer) Poll() {
 			r.cleanup()
 			runtime.UnlockOSThread()
 			return
-		default:
-			return // No commands to process
+		case <-ctx.Done():
+			r.cleanup()
+			runtime.UnlockOSThread()
+			return
 		}
 	}
 }
@@ -441,7 +443,7 @@ func (h *ContextHandle) CompileShader(ctx context.Context, fragmentSource string
 		return h.err
 	}
 
-	responseChan := make(chan interface{})
+	responseChan := make(chan interface{}, 1)
 
 	select {
 	case h.renderer.commandChan <- rendererCommand{
@@ -473,7 +475,7 @@ func (h *ContextHandle) Render(ctx context.Context, viewportSize geom.Size, time
 		return nil, h.err
 	}
 
-	responseChan := make(chan interface{})
+	responseChan := make(chan interface{}, 1)
 
 	select {
 	case h.renderer.commandChan <- rendererCommand{
@@ -512,7 +514,7 @@ func (h *ContextHandle) Destroy(ctx context.Context) error {
 		return h.err
 	}
 
-	responseChan := make(chan interface{})
+	responseChan := make(chan interface{}, 1)
 
 	select {
 	case h.renderer.commandChan <- rendererCommand{

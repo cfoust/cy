@@ -3,9 +3,16 @@ package opengl
 import (
 	"fmt"
 	"runtime"
+	"sync"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
+)
+
+var (
+	glfwInitialized bool
+	glfwMutex       sync.Mutex
+	contextCount    int
 )
 
 type Context struct {
@@ -17,8 +24,15 @@ type Context struct {
 func NewContext(width, height int) (*Context, error) {
 	runtime.LockOSThread()
 
-	if err := glfw.Init(); err != nil {
-		return nil, fmt.Errorf("failed to initialize GLFW: %v", err)
+	glfwMutex.Lock()
+	defer glfwMutex.Unlock()
+
+	// Initialize GLFW only once
+	if !glfwInitialized {
+		if err := glfw.Init(); err != nil {
+			return nil, fmt.Errorf("failed to initialize GLFW: %v", err)
+		}
+		glfwInitialized = true
 	}
 
 	glfw.WindowHint(glfw.ContextVersionMajor, 3)
@@ -29,7 +43,6 @@ func NewContext(width, height int) (*Context, error) {
 
 	window, err := glfw.CreateWindow(width, height, "Offscreen", nil, nil)
 	if err != nil {
-		glfw.Terminate()
 		return nil, fmt.Errorf("failed to create GLFW window: %v", err)
 	}
 
@@ -37,9 +50,10 @@ func NewContext(width, height int) (*Context, error) {
 
 	if err := gl.Init(); err != nil {
 		window.Destroy()
-		glfw.Terminate()
 		return nil, fmt.Errorf("failed to initialize OpenGL: %v", err)
 	}
+
+	contextCount++
 
 	return &Context{
 		window: window,
@@ -49,11 +63,20 @@ func NewContext(width, height int) (*Context, error) {
 }
 
 func (c *Context) Destroy() {
+	glfwMutex.Lock()
+	defer glfwMutex.Unlock()
+
 	if c.window != nil {
 		c.window.Destroy()
 		c.window = nil
+		contextCount--
+
+		// Only terminate GLFW when the last context is destroyed
+		if contextCount == 0 && glfwInitialized {
+			glfw.Terminate()
+			glfwInitialized = false
+		}
 	}
-	glfw.Terminate()
 }
 
 func (c *Context) MakeCurrent() {

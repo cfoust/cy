@@ -1,6 +1,8 @@
 package opengl
 
 import (
+	"context"
+	"os"
 	"runtime"
 	"testing"
 
@@ -8,32 +10,43 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestRendererHandleFunctions tests the core renderer functionality by calling handle* functions directly
-// This must be run individually due to OpenGL main thread requirements
-func TestRendererHandleFunctions(t *testing.T) {
-	// Lock to main thread for OpenGL
+var globalRenderer *Renderer
+
+// We can only run OpenGL in the main thread
+func TestMain(m *testing.M) {
+	// TODO(cfoust): 08/15/25 is this necessary?
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	// Create renderer
-	r := NewRenderer()
+	globalRenderer = NewRenderer()
 
-	// Test 1: Create context
-	createData := rendererCreateContextData{
-		size: geom.Size{R: 256, C: 512},
-	}
+	ctx, cancel := context.WithCancel(context.Background())
 
-	createResp, err := r.handleCreateContext(createData)
-	require.NoError(t, err, "Failed to create context")
+	testDone := make(chan int, 1)
+	go func() {
+		exitCode := m.Run()
+		cancel()
+		testDone <- exitCode
+	}()
 
-	contextID := createResp.contextID
-	require.Positive(t, contextID, "Expected positive context ID")
+	globalRenderer.Poll(ctx)
+	globalRenderer.Shutdown()
+	os.Exit(<-testDone)
+}
 
-	t.Logf("Created context with ID: %d", contextID)
+// TestRenderer tests the complete renderer functionality using the public ContextHandle API
+func TestRenderer(t *testing.T) {
+	ctx := context.Background()
+
+	// Test 1: Create single context and basic operations
+	handle := globalRenderer.NewContext(ctx, geom.Size{R: 256, C: 512})
+	require.NoError(t, handle.Error(), "Failed to create context")
+
+	t.Logf("Created context successfully")
 
 	// Test 2: Compile shader
 	fragmentSource := `#version 330 core
-out vec4 FragColor;
+out vec4 frag_color;
 
 uniform float t;
 uniform vec4 viewport;
@@ -44,91 +57,126 @@ uniform float free_camera_zoom;
 void main() {
     vec2 uv = gl_FragCoord.xy / viewport.zw;
     vec3 color = vec3(uv.x, uv.y, sin(t));
-    FragColor = vec4(color, 1.0);
+    frag_color = vec4(color, 1.0);
 }`
 
-	compileData := rendererCompileShaderData{
-		contextID:      contextID,
-		fragmentSource: fragmentSource,
-	}
-
-	err = r.handleCompileShader(compileData)
+	err := handle.CompileShader(ctx, fragmentSource)
 	require.NoError(t, err, "Failed to compile shader")
 
 	t.Logf("Successfully compiled fragment shader")
 
-	// Test 3: Render
-	renderData := rendererRenderData{
-		contextID:        contextID,
-		viewportSize:     geom.Size{R: 256, C: 512}, // height=256, width=512
-		time:             1.5,
-		freeCameraTarget: [3]float32{0, 0, 0},
-		freeCameraOrbit:  [2]float32{0.25, -0.125},
-		freeCameraZoom:   1.0,
-	}
-
-	renderResp, err := r.handleRender(renderData)
+	// Test 3: Render using ContextHandle
+	pixels, err := handle.Render(ctx,
+		geom.Size{R: 256, C: 512}, // height=256, width=512
+		1.5,                       // time
+		[3]float32{0, 0, 0},       // freeCameraTarget
+		[2]float32{0.25, -0.125},  // freeCameraOrbit
+		1.0,                       // freeCameraZoom
+	)
 	require.NoError(t, err, "Failed to render")
-	require.NoError(t, renderResp.err, "Render response contained error")
 
 	expectedPixelCount := 512 * 256 * 4 // width * height * RGBA
-	require.Len(t, renderResp.pixels, expectedPixelCount, "Unexpected pixel count")
+	require.Len(t, pixels, expectedPixelCount, "Unexpected pixel count")
 
 	// Check that we have non-zero pixels (indicating rendering worked)
 	hasNonZero := false
-	for i := 0; i < len(renderResp.pixels); i += 4 {
-		if renderResp.pixels[i] != 0 || renderResp.pixels[i+1] != 0 || renderResp.pixels[i+2] != 0 {
+	for i := 0; i < len(pixels); i += 4 {
+		if pixels[i] != 0 || pixels[i+1] != 0 || pixels[i+2] != 0 {
 			hasNonZero = true
 			break
 		}
 	}
 	require.True(t, hasNonZero, "All pixels are black, rendering may have failed")
 
-	t.Logf("Successfully rendered %dx%d image with %d bytes", 512, 256, len(renderResp.pixels))
-
 	// Test 4: Render with different viewport size (test resizing)
-	renderData2 := rendererRenderData{
-		contextID:        contextID,
-		viewportSize:     geom.Size{R: 128, C: 256},
-		time:             2.0,
-		freeCameraTarget: [3]float32{1, 1, 1},
-		freeCameraOrbit:  [2]float32{0.5, 0.25},
-		freeCameraZoom:   2.0,
-	}
-
-	renderResp2, err := r.handleRender(renderData2)
+	pixels2, err := handle.Render(ctx,
+		geom.Size{R: 128, C: 256}, // height=128, width=256 (smaller)
+		2.0,                       // time
+		[3]float32{1, 1, 1},       // freeCameraTarget
+		[2]float32{0.5, 0.25},     // freeCameraOrbit
+		2.0,                       // freeCameraZoom
+	)
 	require.NoError(t, err, "Failed to render with new size")
-	require.NoError(t, renderResp2.err, "Second render response contained error")
 
 	expectedPixelCount2 := 256 * 128 * 4 // width * height * RGBA
-	require.Len(t, renderResp2.pixels, expectedPixelCount2, "Unexpected pixel count for resized render")
-
-	t.Logf("Successfully resized and rendered %dx%d image with %d bytes", 256, 128, len(renderResp2.pixels))
+	require.Len(t, pixels2, expectedPixelCount2, "Unexpected pixel count for resized render")
 
 	// Test 5: Test shader compilation error
-	badShaderData := rendererCompileShaderData{
-		contextID:      contextID,
-		fragmentSource: "invalid shader code",
-	}
-
-	err = r.handleCompileShader(badShaderData)
+	err = handle.CompileShader(ctx, "invalid shader code")
 	require.Error(t, err, "Expected shader compilation error, but got none")
 
 	t.Logf("Correctly caught shader compilation error: %v", err)
 
-	// Test 6: Destroy context
-	destroyData := rendererDestroyContextData{
-		contextID: contextID,
-	}
+	// Test 6: Test context cancellation
+	cancelCtx, cancel := context.WithCancel(ctx)
+	cancel() // Cancel immediately
 
-	err = r.handleDestroyContext(destroyData)
-	require.NoError(t, err, "Failed to destroy context")
+	_, err = handle.Render(cancelCtx,
+		geom.Size{R: 100, C: 100},
+		0.0,
+		[3]float32{0, 0, 0},
+		[2]float32{0, 0},
+		1.0,
+	)
+	require.Error(t, err, "Expected context cancellation error")
+	require.Equal(t, context.Canceled, err, "Expected context.Canceled error")
 
-	t.Logf("Successfully destroyed context")
+	t.Logf("Correctly handled context cancellation: %v", err)
 
-	// Test 7: Verify context is destroyed (should fail)
-	_, err = r.getContext(contextID)
-	require.Error(t, err, "Expected error when accessing destroyed context, but got none")
+	// Test 7: Test multiple contexts (create additional contexts)
+	handle2 := globalRenderer.NewContext(ctx, geom.Size{R: 128, C: 128})
+	require.NoError(t, handle2.Error(), "Failed to create second context")
+
+	handle3 := globalRenderer.NewContext(ctx, geom.Size{R: 64, C: 64})
+	require.NoError(t, handle3.Error(), "Failed to create third context")
+
+	t.Logf("Created multiple contexts successfully")
+
+	// Compile shader in additional contexts
+	err = handle2.CompileShader(ctx, fragmentSource)
+	require.NoError(t, err, "Failed to compile shader in context 2")
+
+	err = handle3.CompileShader(ctx, fragmentSource)
+	require.NoError(t, err, "Failed to compile shader in context 3")
+
+	// Render in additional contexts
+	pixels3, err := handle2.Render(ctx,
+		geom.Size{R: 128, C: 128},
+		1.0,
+		[3]float32{0, 0, 0},
+		[2]float32{0, 0},
+		1.0,
+	)
+	require.NoError(t, err, "Failed to render in context 2")
+	require.Len(t, pixels3, 128*128*4, "Unexpected pixel count for context 2")
+
+	pixels4, err := handle3.Render(ctx,
+		geom.Size{R: 64, C: 64},
+		2.0,
+		[3]float32{1, 1, 1},
+		[2]float32{0.5, 0.5},
+		2.0,
+	)
+	require.NoError(t, err, "Failed to render in context 3")
+	require.Len(t, pixels4, 64*64*4, "Unexpected pixel count for context 3")
+
+	t.Logf("Successfully rendered in multiple contexts")
+
+	// Test 8: Clean up all contexts
+	err = handle.Destroy(ctx)
+	require.NoError(t, err, "Failed to destroy first context")
+
+	err = handle2.Destroy(ctx)
+	require.NoError(t, err, "Failed to destroy second context")
+
+	err = handle3.Destroy(ctx)
+	require.NoError(t, err, "Failed to destroy third context")
+
+	t.Logf("Successfully destroyed all contexts")
+
+	// Test 9: Verify contexts are destroyed (should fail)
+	err = handle.CompileShader(ctx, fragmentSource)
+	require.Error(t, err, "Expected error when using destroyed context, but got none")
 
 	t.Logf("Correctly verified context destruction: %v", err)
 }
