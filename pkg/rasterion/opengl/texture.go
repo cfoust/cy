@@ -12,9 +12,11 @@ type Texture struct {
 	height int32
 }
 
+// Framebuffer supports Multiple Render Targets (MRT) for both color and glyph output
 type Framebuffer struct {
-	id      uint32
-	texture *Texture
+	id           uint32
+	colorTexture *Texture // COLOR_ATTACHMENT0 - vec4 frag_color
+	glyphTexture *Texture // COLOR_ATTACHMENT1 - vec3 glyph (stored as RGB)
 }
 
 func NewTexture(width, height int32) *Texture {
@@ -85,38 +87,55 @@ func (t *Texture) ReadPixels() ([]byte, error) {
 }
 
 func NewFramebuffer(width, height int32) (*Framebuffer, error) {
-	texture := NewTexture(width, height)
+	colorTexture := NewTexture(width, height)
+	glyphTexture := NewTexture(width, height)
 
 	var fbo uint32
 	gl.GenFramebuffers(1, &fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fbo)
 
+	// Attach color texture to COLOR_ATTACHMENT0
 	gl.FramebufferTexture2D(
 		gl.FRAMEBUFFER,
 		gl.COLOR_ATTACHMENT0,
 		gl.TEXTURE_2D,
-		texture.id,
+		colorTexture.id,
 		0,
 	)
+
+	// Attach glyph texture to COLOR_ATTACHMENT1
+	gl.FramebufferTexture2D(
+		gl.FRAMEBUFFER,
+		gl.COLOR_ATTACHMENT1,
+		gl.TEXTURE_2D,
+		glyphTexture.id,
+		0,
+	)
+
+	// Set the draw buffers to write to both attachments
+	drawBuffers := []uint32{gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1}
+	gl.DrawBuffers(int32(len(drawBuffers)), &drawBuffers[0])
 
 	status := gl.CheckFramebufferStatus(gl.FRAMEBUFFER)
 	if status != gl.FRAMEBUFFER_COMPLETE {
 		gl.DeleteFramebuffers(1, &fbo)
-		texture.Delete()
+		colorTexture.Delete()
+		glyphTexture.Delete()
 		return nil, fmt.Errorf("framebuffer is not complete: %d", status)
 	}
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
 	return &Framebuffer{
-		id:      fbo,
-		texture: texture,
+		id:           fbo,
+		colorTexture: colorTexture,
+		glyphTexture: glyphTexture,
 	}, nil
 }
 
 func (f *Framebuffer) Bind() {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, f.id)
-	gl.Viewport(0, 0, f.texture.width, f.texture.height)
+	gl.Viewport(0, 0, f.colorTexture.width, f.colorTexture.height)
 }
 
 func (f *Framebuffer) Unbind() {
@@ -128,14 +147,27 @@ func (f *Framebuffer) Delete() {
 		gl.DeleteFramebuffers(1, &f.id)
 		f.id = 0
 	}
-	if f.texture != nil {
-		f.texture.Delete()
-		f.texture = nil
+	if f.colorTexture != nil {
+		f.colorTexture.Delete()
+		f.colorTexture = nil
+	}
+	if f.glyphTexture != nil {
+		f.glyphTexture.Delete()
+		f.glyphTexture = nil
 	}
 }
 
+func (f *Framebuffer) ColorTexture() *Texture {
+	return f.colorTexture
+}
+
+func (f *Framebuffer) GlyphTexture() *Texture {
+	return f.glyphTexture
+}
+
+// Legacy method for backward compatibility
 func (f *Framebuffer) Texture() *Texture {
-	return f.texture
+	return f.colorTexture
 }
 
 func (f *Framebuffer) Clear(r, g, b, a float32) {
@@ -145,24 +177,35 @@ func (f *Framebuffer) Clear(r, g, b, a float32) {
 	f.Unbind()
 }
 
-func (f *Framebuffer) ReadPixels() ([]byte, error) {
+// ReadPixels returns both color and glyph data as float arrays
+func (f *Framebuffer) ReadPixels() (colorData []float32, glyphData []float32, err error) {
 	if f.id == 0 {
-		return nil, fmt.Errorf("framebuffer has been deleted")
+		return nil, nil, fmt.Errorf("framebuffer has been deleted")
 	}
 
 	f.Bind()
 	defer f.Unbind()
 
-	data := make([]byte, f.texture.width*f.texture.height*4) // RGBA
+	width := f.colorTexture.width
+	height := f.colorTexture.height
+
+	// Read color data from COLOR_ATTACHMENT0 as floats
+	colorData = make([]float32, width*height*4) // RGBA
+	gl.ReadBuffer(gl.COLOR_ATTACHMENT0)
 	gl.ReadPixels(
-		0,
-		0,
-		f.texture.width,
-		f.texture.height,
-		gl.RGBA,
-		gl.UNSIGNED_BYTE,
-		gl.Ptr(data),
+		0, 0, width, height,
+		gl.RGBA, gl.FLOAT,
+		gl.Ptr(colorData),
 	)
 
-	return data, nil
+	// Read glyph data from COLOR_ATTACHMENT1 as floats (unclamped values)
+	glyphData = make([]float32, width*height*3)
+	gl.ReadBuffer(gl.COLOR_ATTACHMENT1)
+	gl.ReadPixels(
+		0, 0, width, height,
+		gl.RGB, gl.FLOAT,
+		gl.Ptr(glyphData),
+	)
+
+	return colorData, glyphData, nil
 }

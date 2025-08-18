@@ -58,8 +58,9 @@ type rendererRenderData struct {
 }
 
 type rendererRenderResponse struct {
-	pixels []byte
-	err    error
+	colorPixels []float32
+	glyphPixels []float32
+	err         error
 }
 
 type rendererDestroyContextData struct {
@@ -432,9 +433,13 @@ func (r *Renderer) handleRender(
 
 	ctx.framebuffer.Unbind()
 
-	// Read pixels and return them
-	pixels, err := ctx.framebuffer.ReadPixels()
-	return rendererRenderResponse{pixels: pixels, err: err}, nil
+	// Read pixels from both color and glyph outputs
+	colorPixels, glyphPixels, err := ctx.framebuffer.ReadPixels()
+	return rendererRenderResponse{
+		colorPixels: colorPixels,
+		glyphPixels: glyphPixels,
+		err:         err,
+	}, nil
 }
 
 func (r *Renderer) handleDestroyContext(data rendererDestroyContextData) error {

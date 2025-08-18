@@ -73,11 +73,11 @@ func (h *ContextHandle) CompileShader(
 }
 
 // Render executes a render operation with Bauble shader uniforms and returns
-// the rendered image
+// both the rendered color image and glyph data as float arrays
 func (h *ContextHandle) Render(
 	ctx context.Context,
 	params RenderParams,
-) ([]byte, error) {
+) (colorData []float32, glyphData []float32, err error) {
 	result, err := h.sendCommand(
 		ctx,
 		cmdRendererRender,
@@ -91,16 +91,16 @@ func (h *ContextHandle) Render(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if resp, ok := result.(rendererRenderResponse); ok {
-		return resp.pixels, resp.err
+		return resp.colorPixels, resp.glyphPixels, resp.err
 	}
 	if err, ok := result.(error); ok {
-		return nil, err
+		return nil, nil, err
 	}
-	return nil, fmt.Errorf("unexpected response type")
+	return nil, nil, fmt.Errorf("unexpected response type")
 }
 
 // Destroy destroys this context and cleans up resources

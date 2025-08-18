@@ -68,12 +68,27 @@ func NewScreen(
 }
 
 // rgbToColor converts RGB values to emu.Color using true RGB colors
-func rgbToColor(r, g, b uint8) emu.Color {
+func rgbToColor(r, g, b float32) emu.Color {
 	return emu.RGBColor(int(r), int(g), int(b))
 }
 
-// imageToTerminal converts RGBA pixel data to colored terminal characters
-func (s *Screen) imageToTerminal(pixels []byte, width, height int) {
+// clampFloat clamps a float32 value to the range [0,1]
+func clampFloat(value float32) float32 {
+	if value < 0 {
+		return 0
+	}
+	if value > 1 {
+		return 1
+	}
+	return value
+}
+
+// imageToTerminal converts RGBA color and glyph float data to colored terminal characters
+func (s *Screen) imageToTerminal(
+	colorPixels []float32,
+	glyphPixels []float32,
+	size geom.Size,
+) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -81,36 +96,37 @@ func (s *Screen) imageToTerminal(pixels []byte, width, height int) {
 	s.state = tty.New(s.size)
 	s.state.CursorVisible = false
 
-	// Calculate how to fit the image into the terminal size
-	scaleX := float64(width) / float64(s.size.C)
-	scaleY := float64(height) / float64(s.size.R)
-
 	for row := 0; row < s.size.R; row++ {
 		for col := 0; col < s.size.C; col++ {
-			// Map terminal position to pixel position
-			pixelX := int(float64(col) * scaleX)
-			// Flip Y coordinate since OpenGL origin is bottom-left, terminal is top-left
-			pixelY := int(float64(row) * scaleY)
-
-			// Ensure we're within bounds
-			if pixelX >= width || pixelY >= height {
+			// Get pixel data (RGBA format, 4 floats per pixel)
+			pixelIndex := (row*size.C + col) * 4
+			glyphIndex := (row*size.C + col) * 3
+			if pixelIndex+3 >= len(colorPixels) || glyphIndex+2 >= len(glyphPixels) {
 				continue
 			}
 
-			// Get pixel data (RGBA format, 4 bytes per pixel)
-			pixelIndex := (pixelY*width + pixelX) * 4
-			if pixelIndex+2 >= len(pixels) {
-				continue
+			// Extract color data (clamped to [0,1] for display)
+			r := colorPixels[pixelIndex]
+			g := colorPixels[pixelIndex+1]
+			b := colorPixels[pixelIndex+2]
+
+			// Extract glyph data (unclamped floats)
+			glyphR := glyphPixels[glyphIndex]
+			rScaled := clampFloat(r) * 255
+			gScaled := clampFloat(g) * 255
+			bScaled := clampFloat(b) * 255
+			bgColor := rgbToColor(rScaled, gScaled, bScaled)
+
+			// Choose character based on glyph R component
+			var char rune
+			if glyphR == 1.0 {
+				char = 'a'
+			} else {
+				char = '.'
 			}
 
-			r := pixels[pixelIndex]
-			g := pixels[pixelIndex+1]
-			b := pixels[pixelIndex+2]
-
-			// Convert RGB to terminal color and use a block character for full color fill
-			bgColor := rgbToColor(r, g, b)
 			s.state.Image[row][col] = emu.Glyph{
-				Char: ' ',      // Space character with colored background
+				Char: char,
 				FG:   emu.DefaultFG,
 				BG:   bgColor,
 			}
@@ -147,6 +163,7 @@ func (s *Screen) tryCreateContext(size geom.Size, lastContextErr error) bool {
 			s.Lock()
 			s.lastContextErr = err
 			s.Unlock()
+
 			// Show a more user-friendly message during startup
 			if lastContextErr == nil {
 				s.renderMessage("initializing", "OpenGL renderer starting...", false)
@@ -207,8 +224,8 @@ func (s *Screen) renderFrame(elapsed time.Duration) {
 		s.RUnlock()
 	}
 
-	// Render the frame
-	pixels, err := context.Render(s.Ctx(), RenderParams{
+	// Render the frame (now returns both color and glyph data)
+	colorPixels, glyphPixels, err := context.Render(s.Ctx(), RenderParams{
 		ViewportSize:     size,
 		Time:             float32(elapsed.Seconds()),
 		FreeCameraTarget: [3]float32{0, 0, 0},
@@ -221,8 +238,7 @@ func (s *Screen) renderFrame(elapsed time.Duration) {
 		return
 	}
 
-	// Convert to colored terminal and update state
-	s.imageToTerminal(pixels, size.C, size.R)
+	s.imageToTerminal(colorPixels, glyphPixels, size)
 	s.Notify()
 }
 
