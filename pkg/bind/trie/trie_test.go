@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func re(pattern string) *Regex {
-	r, err := NewRegex(pattern)
+func re(pattern string) *RegexStep {
+	r, err := NewRegexStep(pattern)
 	if err != nil {
 		panic(err)
 	}
@@ -15,11 +15,19 @@ func re(pattern string) *Regex {
 	return r
 }
 
+func str(pattern string) *LiteralStep {
+	return NewLiteralStep(pattern)
+}
+
+func count(step Step, min, max int) *CountStep {
+	return NewCountStep(step, min, max)
+}
+
 func TestTrie(t *testing.T) {
-	trie := New[int](nil)
-	trie.Set([]interface{}{
-		"one",
-		"two",
+	trie := New[int]()
+	trie.Set([]Step{
+		str("one"),
+		str("two"),
 	}, 2)
 
 	_, _, matched := trie.Get([]string{
@@ -28,13 +36,13 @@ func TestTrie(t *testing.T) {
 	})
 	require.Equal(t, true, matched)
 
-	trie.Set([]interface{}{
-		"one",
-		"three",
+	trie.Set([]Step{
+		str("one"),
+		str("three"),
 	}, 1)
 
-	trie.Set([]interface{}{
-		"two",
+	trie.Set([]Step{
+		str("two"),
 	}, 1)
 
 	// The tree:
@@ -46,10 +54,10 @@ func TestTrie(t *testing.T) {
 		"one",
 	})))
 
-	trie.Remap([]interface{}{
-		"one",
-	}, []interface{}{
-		"three",
+	trie.Remap([]Step{
+		str("one"),
+	}, []Step{
+		str("three"),
 	})
 	// The tree:
 	// three -> two -> 2
@@ -60,8 +68,8 @@ func TestTrie(t *testing.T) {
 		"three",
 	})))
 
-	trie.Clear([]interface{}{
-		"three",
+	trie.Clear([]Step{
+		str("three"),
 	})
 	// The tree:
 	// two -> 1
@@ -70,162 +78,77 @@ func TestTrie(t *testing.T) {
 		"one",
 	})))
 
-	trie.Clear([]interface{}{})
+	trie.Clear([]Step{})
 	require.Equal(t, 0, len(trie.Leaves()))
 }
 
 func TestManyRemap(t *testing.T) {
-	trie := New[int](nil)
+	trie := New[int]()
 
-	trie.Set([]interface{}{
-		"one",
-		"three",
+	trie.Set([]Step{
+		str("one"),
+		str("three"),
 	}, 1)
 
-	trie.Remap([]interface{}{
-		"one",
-	}, []interface{}{
-		"three",
+	trie.Remap([]Step{
+		str("one"),
+	}, []Step{
+		str("three"),
 	})
 
 	require.Equal(t, 1, len(trie.Leaves()))
 
-	trie.Remap([]interface{}{
-		"one",
-	}, []interface{}{
-		"three",
+	trie.Remap([]Step{
+		str("one"),
+	}, []Step{
+		str("three"),
 	})
 	require.Equal(t, 1, len(trie.Leaves()))
 }
 
 func TestRegex(t *testing.T) {
-	trie := New[int](nil)
-	trie.Set([]interface{}{
+	trie := New[int]()
+	trie.Set([]Step{
 		re("[abc]"),
-		"t",
+		str("t"),
 	}, 2)
 
-	_, args, matched := trie.Get([]string{
+	_, args, ok := trie.Get([]string{
 		"a",
 		"t",
 	})
-	require.Equal(t, []interface{}{"a"}, args)
-	require.Equal(t, true, matched)
+	require.Equal(t, [][]string{{"a"}, {"t"}}, args)
+	require.True(t, ok)
 
-	_, _, matched = trie.Get([]string{
+	_, _, ok = trie.Get([]string{
 		"d",
 		"t",
 	})
-	require.Equal(t, false, matched)
+	require.False(t, ok)
 }
 
 func TestMultipleRegex(t *testing.T) {
-	trie := New[int](nil)
-	trie.Set([]interface{}{
+	trie := New[int]()
+	trie.Set([]Step{
 		re("[abc]"),
-		"t",
+		str("t"),
 	}, 2)
-	trie.Set([]interface{}{
+	trie.Set([]Step{
 		re("[abc]"),
-		"j",
+		str("j"),
 	}, 3)
 
-	_, args, matched := trie.Get([]string{
+	_, args, ok := trie.Get([]string{
 		"a",
 		"t",
 	})
-	require.Equal(t, []interface{}{"a"}, args)
-	require.Equal(t, true, matched)
+	require.Equal(t, [][]string{{"a"}, {"t"}}, args)
+	require.True(t, ok)
 
-	_, args2, matched := trie.Get([]string{
+	_, args2, ok := trie.Get([]string{
 		"a",
 		"j",
 	})
-	require.Equal(t, []interface{}{"a"}, args2)
-	require.Equal(t, true, matched)
-}
-
-func TestStepBasedTrie(t *testing.T) {
-	trie := New[int](nil)
-	
-	// Test basic string steps
-	trie.Set([]interface{}{
-		"one",
-		"two",
-	}, 2)
-
-	value, args, matched := trie.Get([]string{
-		"one",
-		"two",
-	})
-	require.Equal(t, true, matched)
-	require.Equal(t, 2, value)
-	require.Equal(t, 0, len(args))
-
-	// Test regex steps
-	trie.Set([]interface{}{
-		re("[abc]"),
-		"test",
-	}, 5)
-
-	value2, args2, matched2 := trie.Get([]string{
-		"a",
-		"test",
-	})
-	require.Equal(t, true, matched2)
-	require.Equal(t, 5, value2)
-	require.Equal(t, []interface{}{"a"}, args2)
-
-	// Test no match
-	_, _, matched3 := trie.Get([]string{
-		"d",
-		"test",
-	})
-	require.Equal(t, false, matched3)
-}
-
-func count(pattern interface{}, min, max int) *Count {
-	c, err := NewCount(pattern, min, max)
-	if err != nil {
-		panic(err)
-	}
-	return c
-}
-
-func TestStepBasedTrieWithCount(t *testing.T) {
-	trie := New[string](nil)
-	
-	// Create a count pattern: (key/count "a" 1 3)
-	countPattern := count("a", 1, 3)
-	
-	// Set a binding: ["f", count, "g"] -> "test"
-	sequence := []interface{}{"f", countPattern, "g"}
-	trie.Set(sequence, "test")
-	
-	// Test that it matches different repetitions using the new step-based approach
-	testCases := []struct {
-		input    []string
-		expected string
-		should   bool
-	}{
-		{[]string{"f", "a", "g"}, "test", true},           // 1 repetition
-		{[]string{"f", "a", "a", "g"}, "test", true},      // 2 repetitions  
-		{[]string{"f", "a", "a", "a", "g"}, "test", true}, // 3 repetitions
-		{[]string{"f", "g"}, "", false},                   // 0 repetitions (should not match)
-		{[]string{"f", "a", "a", "a", "a", "g"}, "", false}, // 4 repetitions (should not match)
-	}
-	
-	for _, tc := range testCases {
-		value, args, matched := trie.Get(tc.input)
-		if matched != tc.should {
-			t.Errorf("Input %v: expected matched=%v, got %v", tc.input, tc.should, matched)
-		}
-		if matched && value != tc.expected {
-			t.Errorf("Input %v: expected value='%s', got '%s'", tc.input, tc.expected, value)
-		}
-		if matched && tc.should {
-			// Count patterns should return args
-			require.Equal(t, 1, len(args), "Expected 1 arg for count pattern")
-		}
-	}
+	require.Equal(t, [][]string{{"a"}, {"j"}}, args2)
+	require.True(t, ok)
 }
