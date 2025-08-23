@@ -64,9 +64,9 @@ var Load stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 
 	return New(
 		ctx,
-		bind.NewBindScope(nil),
-		bind.NewBindScope(nil),
-		bind.NewBindScope(nil),
+		bind.NewBindScope(),
+		bind.NewBindScope(),
+		bind.NewBindScope(),
 		WithRequest(Request{
 			Query:   "bar",
 			Files:   paths,
@@ -88,9 +88,9 @@ var Many stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 
 	return New(
 		ctx,
-		bind.NewBindScope(nil),
-		bind.NewBindScope(nil),
-		bind.NewBindScope(nil),
+		bind.NewBindScope(),
+		bind.NewBindScope(),
+		bind.NewBindScope(),
 		WithRequest(Request{
 			Query:   "bar",
 			Files:   paths,
@@ -107,9 +107,9 @@ var Empty stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 
 	return New(
 		ctx,
-		bind.NewBindScope(nil),
-		bind.NewBindScope(nil),
-		bind.NewBindScope(nil),
+		bind.NewBindScope(),
+		bind.NewBindScope(),
+		bind.NewBindScope(),
 		WithRequest(Request{
 			Query:   "asdasdasd",
 			Files:   paths,

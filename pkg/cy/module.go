@@ -376,9 +376,9 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 		options.Clipboard = &clipboard.MemoryClipboard{}
 	}
 
-	timeBinds := bind.NewBindScope(nil)
-	copyBinds := bind.NewBindScope(nil)
-	searchBinds := bind.NewBindScope(nil)
+	timeBinds := bind.NewBindScope()
+	copyBinds := bind.NewBindScope()
+	searchBinds := bind.NewBindScope()
 
 	defaults := params.New()
 	t := tree.NewTree(tree.WithParams(defaults.NewChild()))

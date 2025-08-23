@@ -19,14 +19,14 @@ type Tree struct {
 	nextNodeID atomic.Int32
 }
 
-func (t *Tree) newMetadata(node Node) *metaData {
+func (t *Tree) newMetadata() *metaData {
 	t.Lock()
 	defer t.Unlock()
 
 	id := t.nextNodeID.Add(1)
 	metadata := &metaData{
 		id:    id,
-		binds: bind.NewBindScope(node),
+		binds: bind.NewBindScope(),
 		name:  fmt.Sprintf("%d", id),
 	}
 
@@ -82,7 +82,7 @@ func (t *Tree) Reset() {
 
 	// Reset the root node too
 	root := &Group{tree: t}
-	root.metaData = t.newMetadata(root)
+	root.metaData = t.newMetadata()
 	// TODO(cfoust): 07/12/24 probably also want to reset params
 	root.params = group.params
 	t.Lock()
@@ -181,7 +181,7 @@ func NewTree(options ...TreeOption) *Tree {
 	}
 
 	root := &Group{tree: tree}
-	root.metaData = tree.newMetadata(root)
+	root.metaData = tree.newMetadata()
 	root.SetProtected(true)
 	tree.root = root
 	tree.storeNode(tree.root)

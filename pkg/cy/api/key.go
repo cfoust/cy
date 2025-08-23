@@ -15,103 +15,122 @@ type KeyModule struct {
 	SearchBinds, TimeBinds, CopyBinds *bind.BindScope
 }
 
-type regexKey struct {
-	_       struct{} `janet:"tuple"`
+type regexStep struct {
 	Type    janet.Keyword
 	Pattern string
 }
 
-type countKey struct {
-	_       struct{} `janet:"tuple"`
+type countStep struct {
 	Type    janet.Keyword
-	Pattern *janet.Value // Use *janet.Value to handle any type
+	Pattern *janet.Value
 	Min     int
 	Max     int
 }
 
-// parsePattern parses a Janet value that could be either a string or a regex tuple
-// Returns the appropriate pattern (string or *trie.Regex) for use in key bindings
-func parsePattern(value *janet.Value) (interface{}, error) {
-	// Try to unmarshal as string first
-	var patternStr string
-	if value.Unmarshal(&patternStr) == nil {
-		return patternStr, nil
+func stepToJanet(step trie.Step) any {
+	switch s := step.(type) {
+	case *trie.LiteralStep:
+		return s.Value
+	case *trie.RegexStep:
+		return regexStep{
+			Type:    KEYWORD_RE,
+			Pattern: s.Pattern,
+		}
+	case *trie.CountStep:
+		return struct {
+			Type    janet.Keyword
+			Pattern any
+			Min     int
+			Max     int
+		}{
+			Type:    KEYWORD_COUNT,
+			Pattern: stepToJanet(s.Pattern),
+			Min:     s.Min,
+			Max:     s.Max,
+		}
 	}
-	
-	// Try to unmarshal as regex tuple
-	var patternRe regexKey
+	return nil
+}
+
+func StepsToJanet(steps []trie.Step) (result []any) {
+	for _, step := range steps {
+		result = append(result, stepToJanet(step))
+	}
+	return
+}
+
+func parsePattern(value *janet.Value) (trie.Step, error) {
+	var str string
+	if value.Unmarshal(&str) == nil {
+		key, ok := keys.FromHuman(str)
+		if !ok {
+			err := fmt.Errorf(
+				"invalid key specifier %s",
+				str,
+			)
+			return nil, err
+		}
+
+		return trie.NewLiteralStep(key.String()), nil
+	}
+
+	patternRe := regexStep{
+		Type: KEYWORD_RE,
+	}
 	if value.Unmarshal(&patternRe) == nil {
-		regexPattern, err := trie.NewRegex(patternRe.Pattern)
+		step, err := trie.NewRegexStep(
+			patternRe.Pattern,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("invalid regex pattern: %w", err)
 		}
-		return regexPattern, nil
+		return step, nil
 	}
-	
-	return nil, fmt.Errorf("pattern must be either a string or a regex tuple")
+
+	patternCount := countStep{
+		Type: KEYWORD_COUNT,
+	}
+	if value.Unmarshal(&patternCount) == nil {
+		pattern, err := parsePattern(patternCount.Pattern)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"invalid count pattern: %w",
+				err,
+			)
+		}
+
+		return trie.NewCountStep(
+			pattern,
+			patternCount.Min,
+			patternCount.Max,
+		), nil
+	}
+
+	return nil, fmt.Errorf(
+		"step shape not recognized",
+	)
 }
 
-func getKeySequence(value *janet.Value) (result []interface{}, err error) {
+func getKeySequence(value *janet.Value) (result []trie.Step, err error) {
 	var array []*janet.Value
 	err = value.Unmarshal(&array)
 	if err != nil {
 		return
 	}
 
-	var str string
-	re := regexKey{
-		Type: KEYWORD_RE,
-	}
-	var count countKey
 	for i, item := range array {
-		strErr := item.Unmarshal(&str)
-		if strErr == nil {
-			key, ok := keys.FromHuman(str)
-			if !ok {
-				err = fmt.Errorf(
-					"invalid key specifier %s",
-					str,
-				)
-				return
-			}
-
-			result = append(result, key.String())
-			continue
+		var step trie.Step
+		step, err = parsePattern(item)
+		if err != nil {
+			err = fmt.Errorf(
+				"invalid pattern at index %d: %w",
+				i,
+				err,
+			)
+			return
 		}
 
-
-		reErr := item.Unmarshal(&re)
-		if reErr == nil {
-			pattern, reErr := trie.NewRegex(re.Pattern)
-			if reErr != nil {
-				err = fmt.Errorf("invalid regex at index %d", i)
-				return
-			}
-			result = append(result, pattern)
-			continue
-		}
-
-		count = countKey{} // Reset the struct
-		countErr := item.Unmarshal(&count)
-		if countErr == nil {
-			// Parse the pattern using centralized logic
-			actualPattern, parseErr := parsePattern(count.Pattern)
-			if parseErr != nil {
-				err = fmt.Errorf("invalid pattern in count at index %d: %w", i, parseErr)
-				return
-			}
-			
-			pattern, countErr := trie.NewCount(actualPattern, count.Min, count.Max)
-			if countErr != nil {
-				err = fmt.Errorf("invalid count pattern at index %d", i)
-				return
-			}
-			result = append(result, pattern)
-			continue
-		}
-
-		err = fmt.Errorf("invalid key at index %d", i)
-		return
+		result = append(result, step)
 	}
 
 	return
@@ -224,7 +243,7 @@ func (k *KeyModule) Remap(target *janet.Value, from, to *janet.Value) error {
 
 type Binding struct {
 	Tag      string
-	Sequence []string
+	Sequence []any
 	Function *janet.Value
 }
 
@@ -240,7 +259,7 @@ func (k *KeyModule) Get(target *janet.Value) ([]Binding, error) {
 		binds = append(
 			binds,
 			Binding{
-				Sequence: leaf.Path,
+				Sequence: StepsToJanet(leaf.Path),
 				Tag:      leaf.Value.Tag,
 				Function: leaf.Value.Callback.Value,
 			},
@@ -250,7 +269,7 @@ func (k *KeyModule) Get(target *janet.Value) ([]Binding, error) {
 	return binds, nil
 }
 
-func (k *KeyModule) Current(context interface{}) ([]Binding, error) {
+func (k *KeyModule) Current(context any) ([]Binding, error) {
 	client, err := getClient(context)
 	if err != nil {
 		return nil, err
@@ -258,4 +277,3 @@ func (k *KeyModule) Current(context interface{}) ([]Binding, error) {
 
 	return client.Binds(), nil
 }
-

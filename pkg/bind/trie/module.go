@@ -30,12 +30,21 @@ func stepOrder(s Step) int {
 	return -1
 }
 
+// successorNode contains a possible successor to the current node from a
+// descendant tree; since CountSteps can have Min=0, they can be skipped.
+type successorNode[T any] struct {
+	skip int
+	node *trieNode[T]
+}
+
 // successors gets all of the children accessible from this node.
-func (t *Trie[T]) successors() (successors []*trieNode[T]) {
+func (t *Trie[T]) successors() (successors []*successorNode[T]) {
 	// Count steps can be skipped if they have a Min of zero, so we need
 	// to resolve them if that's the case.
 	for _, child := range *t {
-		successors = append(successors, child)
+		successors = append(successors, &successorNode[T]{
+			node: child,
+		})
 
 		count, ok := child.step.(*CountStep)
 		if !ok || count.Min != 0 {
@@ -47,20 +56,23 @@ func (t *Trie[T]) successors() (successors []*trieNode[T]) {
 			continue
 		}
 
-		successors = append(
-			successors,
-			countTrie.successors()...,
-		)
+		for _, childSuccessor := range countTrie.successors() {
+			childSuccessor.skip++
+			successors = append(
+				successors,
+				childSuccessor,
+			)
+		}
 	}
 	return
 }
 
 // next determines whether `input` matches any successor node or nil if it does
 // not.
-func (t *Trie[T]) next(input string) *trieNode[T] {
-	var matches []*trieNode[T]
+func (t *Trie[T]) next(input string) *successorNode[T] {
+	var matches []*successorNode[T]
 	for _, child := range t.successors() {
-		if !child.step.Match(input) {
+		if !child.node.step.Match(input) {
 			continue
 		}
 
@@ -72,8 +84,8 @@ func (t *Trie[T]) next(input string) *trieNode[T] {
 	}
 
 	// Impose an ordering on steps since they can conflict
-	slices.SortFunc(matches, func(a, b *trieNode[T]) int {
-		return stepOrder(a.step) - stepOrder(b.step)
+	slices.SortFunc(matches, func(a, b *successorNode[T]) int {
+		return stepOrder(a.node.step) - stepOrder(b.node.step)
 	})
 
 	return matches[0]
@@ -103,13 +115,14 @@ func (t *Trie[T]) resolve(sequence []string) (
 		return
 	}
 
-	node := t.next(sequence[0])
-	if node == nil {
+	successor := t.next(sequence[0])
+	if successor == nil {
 		return
 	}
 
 	var (
 		consumed       = sequence[:1]
+		node           = successor.node
 		count, isCount = node.step.(*CountStep)
 	)
 	if isCount {
@@ -130,6 +143,12 @@ func (t *Trie[T]) resolve(sequence []string) (
 	}
 
 	result = node.next
+
+	// Add empty captures for each level we skipped
+	for i := 0; i < successor.skip; i++ {
+		captures = append(captures, []string{})
+	}
+
 	captures = append(captures, consumed)
 	done = len(sequence)-len(consumed) == 0
 	nextTrie, isTrie := result.(*Trie[T])
