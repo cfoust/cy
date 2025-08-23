@@ -16,6 +16,6 @@ type Action struct {
 type BindScope = trie.Trie[Action]
 type BindEvent = ActionEvent[Action]
 
-func NewBindScope(source interface{}) *BindScope {
-	return NewScope[Action](source)
+func NewBindScope() *BindScope {
+	return NewScope[Action]()
 }

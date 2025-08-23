@@ -545,7 +545,7 @@ func (c *Client) Binds() (binds []api.Binding) {
 			binds = append(
 				binds,
 				api.Binding{
-					Sequence: leaf.Path,
+					Sequence: api.StepsToJanet(leaf.Path),
 					Tag:      leaf.Value.Tag,
 					Function: leaf.Value.Callback.Value,
 				},

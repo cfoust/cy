@@ -72,7 +72,7 @@ func (g *Group) NewPaneCreator(ctx context.Context) (
 	func(screen mux.Screen) *Pane,
 ) {
 	p := &Pane{Lifetime: util.NewLifetime(ctx)}
-	metadata := g.tree.newMetadata(p)
+	metadata := g.tree.newMetadata()
 	metadata.params = g.params.NewChild()
 	p.metaData = metadata
 
@@ -101,7 +101,7 @@ func (g *Group) NewPaneCreator(ctx context.Context) (
 
 func (g *Group) NewPane(ctx context.Context, screen mux.Screen) *Pane {
 	pane := newPane(ctx, screen)
-	metadata := g.tree.newMetadata(pane)
+	metadata := g.tree.newMetadata()
 	pane.metaData = metadata
 	metadata.params = g.params.NewChild()
 	g.addNode(pane)
@@ -128,7 +128,7 @@ func (g *Group) NewGroup() *Group {
 	group := &Group{
 		tree: g.tree,
 	}
-	group.metaData = g.tree.newMetadata(group)
+	group.metaData = g.tree.newMetadata()
 	group.params = g.params.NewChild()
 	g.addNode(group)
 	return group

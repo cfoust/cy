@@ -35,8 +35,8 @@ func createStory(
 	events []sessions.Event,
 	msgs ...any,
 ) (*Replay, func() mux.Screen) {
-	replayEngine := bind.Run(ctx, bind.NewBindScope(nil))
-	copyEngine := bind.Run(ctx, bind.NewBindScope(nil))
+	replayEngine := bind.Run(ctx, bind.NewBindScope())
+	copyEngine := bind.Run(ctx, bind.NewBindScope())
 	r := newReplay(
 		ctx,
 		player.FromEvents(events),

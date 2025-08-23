@@ -68,11 +68,18 @@ type CountStep struct {
 	Max     int
 }
 
-func NewCountStep(pattern Step, min, max int) *CountStep {
+func NewCountStep(pattern Step, minCount, maxCount int) *CountStep {
+	minCount = max(0, minCount)
+	maxCount = max(1, maxCount)
+
+	if minCount > maxCount {
+		minCount, maxCount = maxCount, minCount
+	}
+
 	return &CountStep{
 		Pattern: pattern,
-		Min:     min,
-		Max:     max,
+		Min:     minCount,
+		Max:     maxCount,
 	}
 }
 

@@ -39,8 +39,8 @@ var Load stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	return New(
 		ctx,
 		params.New(),
-		bind.NewBindScope(nil),
-		bind.NewBindScope(nil),
+		bind.NewBindScope(),
+		bind.NewBindScope(),
 		STORY_BORG_FILE,
 	), nil
 }

@@ -25,8 +25,7 @@ type ActionEvent[T any] struct {
 	Engine   *Engine[T]
 	Source   *trie.Trie[T]
 	Sequence []string
-	// Any regex traversals that matched (strings) and count patterns ([]string)
-	Args []interface{}
+	Args     [][]string
 }
 
 type Match[T any] struct {

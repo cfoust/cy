@@ -84,8 +84,8 @@ func NewReplay(
 	return loader.New(
 		ctx,
 		params,
-		bind.NewBindScope(nil),
-		bind.NewBindScope(nil),
+		bind.NewBindScope(),
+		bind.NewBindScope(),
 		args.Path,
 		options...,
 	)

@@ -113,11 +113,11 @@ func TestRegex(t *testing.T) {
 		str("t"),
 	}, 2)
 
-	_, args, ok := trie.Get([]string{
+	_, captures, ok := trie.Get([]string{
 		"a",
 		"t",
 	})
-	require.Equal(t, [][]string{{"a"}, {"t"}}, args)
+	require.Equal(t, [][]string{{"a"}, {"t"}}, captures)
 	require.True(t, ok)
 
 	_, _, ok = trie.Get([]string{
@@ -138,17 +138,56 @@ func TestMultipleRegex(t *testing.T) {
 		str("j"),
 	}, 3)
 
-	_, args, ok := trie.Get([]string{
+	_, captures, ok := trie.Get([]string{
 		"a",
 		"t",
 	})
-	require.Equal(t, [][]string{{"a"}, {"t"}}, args)
+	require.Equal(t, [][]string{{"a"}, {"t"}}, captures)
 	require.True(t, ok)
 
-	_, args2, ok := trie.Get([]string{
+	_, captures2, ok := trie.Get([]string{
 		"a",
 		"j",
 	})
-	require.Equal(t, [][]string{{"a"}, {"j"}}, args2)
+	require.Equal(t, [][]string{{"a"}, {"j"}}, captures2)
 	require.True(t, ok)
+}
+
+func TestCount(t *testing.T) {
+	trie := New[int]()
+	trie.Set([]Step{
+		count(str("a"), 0, 3),
+		str("t"),
+	}, 2)
+
+	// Level skipping
+	{
+		_, captures, ok := trie.Get([]string{
+			"t",
+		})
+		require.Equal(t, [][]string{{}, {"t"}}, captures)
+		require.True(t, ok)
+	}
+
+	// 1
+	{
+		_, captures, ok := trie.Get([]string{
+			"a",
+			"t",
+		})
+		require.Equal(t, [][]string{{"a"}, {"t"}}, captures)
+		require.True(t, ok)
+	}
+
+	// too many
+	{
+		_, _, ok := trie.Get([]string{
+			"a",
+			"a",
+			"a",
+			"a",
+			"t",
+		})
+		require.False(t, ok)
+	}
 }
