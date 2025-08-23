@@ -13,8 +13,8 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
-func NewScope[T any](source interface{}) *trie.Trie[T] {
-	return trie.New[T](source)
+func NewScope[T any]() *trie.Trie[T] {
+	return trie.New[T]()
 }
 
 type Event interface{}
