@@ -91,8 +91,11 @@ func (t *Trie[T]) nextStep(targetStep Step) *trieNode[T] {
 	return nil
 }
 
+// resolve performs the sequence of inputs. result is the *Trie that the state
+// machine ended on or the value the sequence resolved to. done is true if all
+// inputs were used.
 func (t *Trie[T]) resolve(sequence []string) (
-	result *trieNode[T],
+	result any,
 	captures [][]string,
 	done bool,
 ) {
@@ -100,14 +103,14 @@ func (t *Trie[T]) resolve(sequence []string) (
 		return
 	}
 
-	next := t.next(sequence[0])
-	if next == nil {
+	node := t.next(sequence[0])
+	if node == nil {
 		return
 	}
 
 	var (
 		consumed       = sequence[:1]
-		count, isCount = next.step.(*CountStep)
+		count, isCount = node.step.(*CountStep)
 	)
 	if isCount {
 		var i int = 1 // already have one
@@ -126,24 +129,18 @@ func (t *Trie[T]) resolve(sequence []string) (
 		consumed = sequence[:i]
 	}
 
-	result = next
+	result = node.next
 	captures = append(captures, consumed)
 	done = len(sequence)-len(consumed) == 0
-	if done {
+	nextTrie, isTrie := result.(*Trie[T])
+	if done || !isTrie {
 		return
 	}
 
-	switch node := result.next.(type) {
-	case T:
-		// We've reached a terminal node, we can go no further
-		done = true
-		return
-	case *Trie[T]:
-		// Descend down the tree
-		var rest [][]string
-		result, rest, done = node.resolve(sequence[len(consumed):])
-		captures = append(captures, rest...)
-	}
+	// Descend down the tree
+	var rest [][]string
+	result, rest, done = nextTrie.resolve(sequence[len(consumed):])
+	captures = append(captures, rest...)
 	return
 }
 
@@ -181,19 +178,24 @@ func (t *Trie[T]) Set(sequence []Step, value T) {
 	nextTrie.Set(sequence[1:], value)
 }
 
-// Get attempts to retrieve the leaf referred to by `sequence`.
+// Get attempts to retrieve the leaf referred to by sequence. captures contains
+// the parts of sequence matched by each intermediate step. ok is true if this
+// sequence resolved to a leaf.
 func (t *Trie[T]) Get(sequence []string) (
 	value T,
 	captures [][]string,
-	done bool,
+	ok bool,
 ) {
-	var node *trieNode[T]
+	var (
+		node interface{}
+		done bool
+	)
 	node, captures, done = t.resolve(sequence)
 	if !done {
 		return
 	}
 
-	value, done = node.next.(T)
+	value, ok = node.(T)
 	return
 }
 
@@ -231,12 +233,22 @@ func (t *Trie[T]) Leaves() (leaves []Leaf[T]) {
 
 // Partial gets a list of all partial matches for a sequence, if any.
 func (t *Trie[T]) Partial(sequence []string) (result []Leaf[T]) {
-	return
+	node, _, _ := t.resolve(sequence)
+	if node == nil {
+		return
+	}
+
+	trie, ok := node.(*Trie[T])
+	if !ok {
+		return
+	}
+
+	return trie.Leaves()
 }
 
 // Clear all mappings in the trie with the prefix `sequence`. An empty sequence
 // will clear all mappings.
-func (t *Trie[T]) Clear(sequence []string) {
+func (t *Trie[T]) Clear(path []Step) {
 }
 
 // Remap the subtree at sequence `from` to sequence `to`.
