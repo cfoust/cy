@@ -9,7 +9,7 @@ type trieNode[T any] struct {
 	step Step
 
 	// either *Trie[T] or T
-	next interface{}
+	next any
 }
 
 func (t *trieNode[T]) F() {
@@ -144,16 +144,15 @@ func (t *Trie[T]) resolve(sequence []string) (
 	return
 }
 
-func (t *Trie[T]) Set(sequence []Step, value T) {
+func (t *Trie[T]) set(sequence []Step, value any) {
 	if len(sequence) == 0 {
 		return
 	}
 
 	var (
-		head         = sequence[0]
-		isLast       = len(sequence) == 1
-		node         = t.nextStep(head)
-		next     any = value
+		head     = sequence[0]
+		isLast   = len(sequence) == 1
+		node     = t.nextStep(head)
 		nextTrie *Trie[T]
 	)
 	if node == nil {
@@ -164,7 +163,7 @@ func (t *Trie[T]) Set(sequence []Step, value T) {
 
 	// Node now definitely exists--if it's a leaf, we can stop here
 	if isLast {
-		node.next = next
+		node.next = value
 		return
 	}
 
@@ -175,7 +174,11 @@ func (t *Trie[T]) Set(sequence []Step, value T) {
 	}
 
 	node.next = nextTrie
-	nextTrie.Set(sequence[1:], value)
+	nextTrie.set(sequence[1:], value)
+}
+
+func (t *Trie[T]) Set(sequence []Step, value T) {
+	t.set(sequence, value)
 }
 
 // Get attempts to retrieve the leaf referred to by sequence. captures contains
@@ -187,7 +190,7 @@ func (t *Trie[T]) Get(sequence []string) (
 	ok bool,
 ) {
 	var (
-		node interface{}
+		node any
 		done bool
 	)
 	node, captures, done = t.resolve(sequence)
@@ -246,13 +249,119 @@ func (t *Trie[T]) Partial(sequence []string) (result []Leaf[T]) {
 	return trie.Leaves()
 }
 
+func (t *Trie[T]) access(path []Step) (node *Trie[T]) {
+	if len(path) == 0 {
+		return t
+	}
+
+	var (
+		next         = t.nextStep(path[0])
+		trie, isTrie = next.next.(*Trie[T])
+	)
+	if !isTrie {
+		return nil
+	}
+	if len(path) == 1 {
+		return trie
+	}
+
+	return trie.access(path[1:])
+}
+
+func (t *Trie[T]) delete(step Step) {
+	newNodes := make([]*trieNode[T], 0)
+	for _, node := range *t {
+		if node.step.Equal(step) {
+			continue
+		}
+		newNodes = append(newNodes, node)
+	}
+
+	// Nothing changed
+	if len(newNodes) == len(*t) {
+		return
+	}
+
+	(*t) = newNodes
+}
+
+func (t *Trie[T]) clear(sequence []Step) {
+	if len(sequence) == 0 {
+		// Clear all
+		(*t) = make([]*trieNode[T], 0)
+		return
+	}
+
+	// First, delete the portion of the tree that this sequence refers to
+	{
+		var (
+			lastIndex = len(sequence) - 1
+			last      = sequence[lastIndex]
+			parent    = t.access(sequence[:lastIndex])
+		)
+		if parent == nil {
+			return
+		}
+
+		parent.delete(last)
+	}
+
+	// Then prune any portions of the tree that no longer have any leaves
+	// For example:
+	// a -> b -> c
+	// |    |    |
+	// |    |    leaf
+	// |    parent
+	// parent
+	// we've already cleared b's leaves, we need to check whether b has any
+	// other keys, if it does not, remove it from a
+	for i := len(sequence) - 3; i >= 0; i-- {
+		var (
+			parent = t.access(sequence[:i+1])
+			child  = t.access(sequence[:i+2])
+		)
+		if parent == nil || child == nil {
+			return
+		}
+
+		if len(*child) != 0 {
+			break
+		}
+
+		parent.delete(sequence[i])
+	}
+}
+
 // Clear all mappings in the trie with the prefix `sequence`. An empty sequence
 // will clear all mappings.
-func (t *Trie[T]) Clear(path []Step) {
+func (t *Trie[T]) Clear(sequence []Step) {
+	t.clear(sequence)
 }
 
 // Remap the subtree at sequence `from` to sequence `to`.
-func (t *Trie[T]) Remap(from []Step, to []Step) {
+func (t *Trie[T]) Remap(from, to []Step) {
+	if len(from) == 0 || len(to) == 0 {
+		return
+	}
+
+	oldParent := t.access(from[:len(from)-1])
+	if oldParent == nil {
+		return
+	}
+
+	oldTrieNode := oldParent.nextStep(from[len(from)-1])
+	if oldTrieNode == nil {
+		return
+	}
+
+	// Get the node or leaf that this step referred to
+	var next = oldTrieNode.next
+	if next == nil {
+		return
+	}
+
+	t.clear(from)
+	t.set(to, next)
 }
 
 func New[T any]() *Trie[T] {
