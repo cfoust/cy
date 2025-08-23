@@ -61,28 +61,6 @@ func (r *RegexStep) Equal(other Step) bool {
 	return false
 }
 
-// Regex struct for backward compatibility
-type Regex struct {
-	Pattern  string
-	compiled *regexp.Regexp
-	next     interface{}
-}
-
-func NewRegex(pattern string) (*Regex, error) {
-	re := &Regex{
-		Pattern: pattern,
-	}
-
-	compiled, err := regexp.Compile(pattern)
-	if err != nil {
-		return nil, err
-	}
-
-	re.compiled = compiled
-
-	return re, nil
-}
-
 // CountStep represents a pattern that should match between min and max times
 type CountStep struct {
 	Pattern Step
@@ -109,33 +87,4 @@ func (c *CountStep) Equal(other Step) bool {
 			c.Pattern.Equal(otherCount.Pattern)
 	}
 	return false
-}
-
-// Count represents a pattern that should match between min and max times
-type Count struct {
-	Pattern interface{} // Can be string or *Regex
-	Min     int
-	Max     int
-	next    interface{}
-}
-
-func NewCount(pattern interface{}, min, max int) (*Count, error) {
-	count := &Count{
-		Pattern: pattern,
-		Min:     min,
-		Max:     max,
-	}
-	return count, nil
-}
-
-// Matches checks if a given string matches this count pattern
-func (c *Count) Matches(s string) bool {
-	switch p := c.Pattern.(type) {
-	case string:
-		return p == s
-	case *Regex:
-		return p.compiled.MatchString(s)
-	default:
-		return false
-	}
 }
