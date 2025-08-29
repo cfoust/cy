@@ -539,16 +539,12 @@ func (c *Client) Frame() *frames.Framer {
 	return c.frame
 }
 
-func (c *Client) Binds() (binds []api.Binding) {
+func (c *Client) Binds() (binds []bind.BindLeaf) {
 	for _, scope := range c.binds.Scopes() {
 		for _, leaf := range scope.Leaves() {
 			binds = append(
 				binds,
-				api.Binding{
-					Sequence: api.StepsToJanet(leaf.Path),
-					Tag:      leaf.Value.Tag,
-					Function: leaf.Value.Callback.Value,
-				},
+				leaf,
 			)
 		}
 	}

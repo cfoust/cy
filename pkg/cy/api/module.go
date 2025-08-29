@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 
+	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/clipboard"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/layout"
@@ -25,7 +26,7 @@ type Client interface {
 	SetLayout(layout.Layout) error
 	GetLayout() layout.Layout
 	Frame() *frames.Framer
-	Binds() []Binding
+	Binds() []bind.BindLeaf
 	Toast(toasts.Toast)
 	Clipboard() clipboard.Clipboard
 }

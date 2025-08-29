@@ -14,6 +14,7 @@ type Action struct {
 }
 
 type BindScope = trie.Trie[Action]
+type BindLeaf = trie.Leaf[Action]
 type BindEvent = ActionEvent[Action]
 
 func NewBindScope() *BindScope {

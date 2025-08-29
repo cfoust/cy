@@ -247,33 +247,47 @@ type Binding struct {
 	Function *janet.Value
 }
 
-func (k *KeyModule) Get(target *janet.Value) ([]Binding, error) {
+type Binds []*Binding
+
+var _ janet.Marshalable = (*Binds)(nil)
+
+func (b *Binds) MarshalJanet() interface{} {
+	return b
+}
+
+func newBinding(leaf bind.BindLeaf) *Binding {
+	return &Binding{
+		Sequence: StepsToJanet(leaf.Path),
+		Tag:      leaf.Value.Tag,
+		Function: leaf.Value.Callback.Value,
+	}
+}
+
+func leavesToBinds(leaves []bind.BindLeaf) *Binds {
+	binds := make([]*Binding, 0, len(leaves))
+	for _, leaf := range leaves {
+		binds = append(binds, newBinding(leaf))
+	}
+
+	a := Binds(binds)
+	return &a
+}
+
+func (k *KeyModule) Get(target *janet.Value) (*Binds, error) {
 	defer target.Free()
 	scope, err := k.getScope(target)
 	if err != nil {
 		return nil, err
 	}
 
-	binds := []Binding{}
-	for _, leaf := range scope.Leaves() {
-		binds = append(
-			binds,
-			Binding{
-				Sequence: StepsToJanet(leaf.Path),
-				Tag:      leaf.Value.Tag,
-				Function: leaf.Value.Callback.Value,
-			},
-		)
-	}
-
-	return binds, nil
+	return leavesToBinds(scope.Leaves()), nil
 }
 
-func (k *KeyModule) Current(context any) ([]Binding, error) {
+func (k *KeyModule) Current(context any) (*Binds, error) {
 	client, err := getClient(context)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.Binds(), nil
+	return leavesToBinds(client.Binds()), nil
 }

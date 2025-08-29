@@ -7,7 +7,7 @@
     (key/bind :copy ["f" (key/re ".")] replay/jump-forward)
   ```
   [pattern]
-  [:re pattern])
+  {:type :re :pattern pattern})
 
 (defn key/count
   ```Create a counted pattern that matches between min and max times.
@@ -17,4 +17,4 @@
     (key/bind :copy [(key/count (key/re "[0-9]") 1 3) "g"] replay/goto-line)
   ```
   [pattern min max]
-  [:count pattern min max])
+  {:type :count :pattern pattern :min min :max max})
