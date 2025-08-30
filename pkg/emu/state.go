@@ -58,6 +58,9 @@ type State struct {
 	// whether scrolling up should send lines to the scrollback buffer
 	disableHistory bool
 
+	// Kitty keyboard protocol state
+	kittyState *KittyProtocolState
+
 	parser *vtparser.Parser
 }
 

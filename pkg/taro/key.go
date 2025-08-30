@@ -92,6 +92,9 @@ type Key struct {
 	Type  KeyType
 	Runes []rune
 	Alt   bool
+
+	// Kitty protocol enhanced fields (optional, nil means not using Kitty protocol)
+	Kitty *KittyKey
 }
 
 // String returns a friendly string representation for a key. It's safe (and
@@ -115,7 +118,121 @@ func (k Key) String() (str string) {
 }
 
 func (k Key) Bytes() (data []byte) {
-	return
+	// If this key has Kitty protocol information, use it if appropriate
+	if k.HasKittyProtocol() && k.Kitty != nil {
+		// For now, always fall back to legacy bytes for compatibility
+		// In the future, this could check terminal capabilities
+		return k.legacyBytes()
+	}
+	return k.legacyBytes()
+}
+
+// legacyBytes returns the traditional byte encoding for a key
+func (k Key) legacyBytes() (data []byte) {
+	// This is the existing KeysToBytes logic but for a single key
+	switch k.Type {
+	case KeySpace:
+		data = append(data, []byte(" ")...)
+	case KeyRunes:
+		if k.Alt {
+			data = append(data, '\x1b')
+		}
+		data = append(data, []byte(string(k.Runes))...)
+	default:
+		if seq, ok := inverseSequences[keyLookup{
+			Type: k.Type,
+			Alt:  k.Alt,
+		}]; ok {
+			data = append(data, seq...)
+			return data
+		}
+
+		// ESC is also used to indicate an alt+ key sequence,
+		// so we can't just use a predefined sequence.
+		if k.Type == keyESC {
+			data = append(data, '\x1b')
+			return data
+		}
+	}
+	return data
+}
+
+// HasKittyProtocol returns true if this key was parsed using Kitty protocol
+func (k Key) HasKittyProtocol() bool {
+	return k.Kitty != nil
+}
+
+// IsPress returns true if this is a key press event (default for legacy keys)
+func (k Key) IsPress() bool {
+	if k.Kitty != nil {
+		return k.Kitty.EventType == KittyKeyPress
+	}
+	return true // Legacy keys are always considered press events
+}
+
+// IsRepeat returns true if this is a key repeat event
+func (k Key) IsRepeat() bool {
+	if k.Kitty != nil {
+		return k.Kitty.EventType == KittyKeyRepeat
+	}
+	return false
+}
+
+// IsRelease returns true if this is a key release event
+func (k Key) IsRelease() bool {
+	if k.Kitty != nil {
+		return k.Kitty.EventType == KittyKeyRelease
+	}
+	return false
+}
+
+// HasModifier checks if a specific Kitty modifier is present
+func (k Key) HasModifier(mod KittyModifiers) bool {
+	if k.Kitty != nil {
+		return k.Kitty.Modifiers&mod != 0
+	}
+	// For legacy keys, only check Alt
+	if mod == KittyModAlt {
+		return k.Alt
+	}
+	return false
+}
+
+// HasCtrl returns true if Ctrl modifier is present
+func (k Key) HasCtrl() bool {
+	return k.HasModifier(KittyModCtrl)
+}
+
+// HasShift returns true if Shift modifier is present
+func (k Key) HasShift() bool {
+	return k.HasModifier(KittyModShift)
+}
+
+// HasAlt returns true if Alt modifier is present
+func (k Key) HasAlt() bool {
+	return k.HasModifier(KittyModAlt) || k.Alt
+}
+
+// HasSuper returns true if Super modifier is present
+func (k Key) HasSuper() bool {
+	return k.HasModifier(KittyModSuper)
+}
+
+// HasHyper returns true if Hyper modifier is present
+func (k Key) HasHyper() bool {
+	return k.HasModifier(KittyModHyper)
+}
+
+// HasMeta returns true if Meta modifier is present
+func (k Key) HasMeta() bool {
+	return k.HasModifier(KittyModMeta)
+}
+
+// NewKittyKey creates a new Key from a KittyKey
+func NewKittyKey(kittyKey KittyKey) Key {
+	legacyKey := kittyKey.ToLegacyKey()
+	legacyKey.Kitty = &kittyKey
+	return legacyKey
 }
 
 // KeyType indicates the key pressed, such as KeyEnter or KeyBreak or KeyCtrlC.
@@ -255,6 +372,15 @@ func isMouseEvent(b []byte) bool {
 }
 
 func DetectOneMsg(b []byte) (w int, msg Msg) {
+	// Try Kitty protocol sequence first
+	if IsKittySequence(b) {
+		kittyKey, width, err := ParseKittySequence(b)
+		if err == nil {
+			key := NewKittyKey(kittyKey)
+			return width, KeyMsg(key)
+		}
+	}
+
 	// Detect mouse events.
 	if isMouseEvent(b) {
 		return 6, MouseMsg(parseX10MouseEvent(b))
