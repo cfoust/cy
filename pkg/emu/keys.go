@@ -6,53 +6,64 @@ import (
 	"strings"
 )
 
-// KittyProtocolState tracks the current state of Kitty protocol support
-type KittyProtocolState struct {
+type KeyProtocol int
+
+const (
+	KeyLegacy             KeyProtocol = 0
+	KeyDisambiguateEscape KeyProtocol = 1 << iota
+	KeyReportEventTypes
+	KeyReportAlternateKeys
+	KeyReportAllKeys
+	KeyReportAssociatedText
+)
+
+// KeyProtocolState tracks the current state of Kitty protocol support
+type KeyProtocolState struct {
 	Enabled bool
-	Flags   int
-	Stack   []int // Stack for push/pop operations
+	Flags   KeyProtocol
+	Stack   []KeyProtocol // Stack for push/pop operations
 }
 
-// NewKittyProtocolState creates a new Kitty protocol state tracker
-func NewKittyProtocolState() *KittyProtocolState {
-	return &KittyProtocolState{
+// NewKeyProtocolState creates a new Kitty protocol state tracker
+func NewKeyProtocolState() *KeyProtocolState {
+	return &KeyProtocolState{
 		Enabled: false,
 		Flags:   0,
-		Stack:   make([]int, 0),
+		Stack:   make([]KeyProtocol, 0),
 	}
 }
 
 // IsEnabled returns whether Kitty protocol is currently enabled
-func (k *KittyProtocolState) IsEnabled() bool {
+func (k *KeyProtocolState) IsEnabled() bool {
 	return k.Enabled
 }
 
 // GetFlags returns the current progressive enhancement flags
-func (k *KittyProtocolState) GetFlags() int {
+func (k *KeyProtocolState) GetFlags() KeyProtocol {
 	return k.Flags
 }
 
 // Enable enables Kitty protocol with specified flags
-func (k *KittyProtocolState) Enable(flags int) {
+func (k *KeyProtocolState) Enable(flags KeyProtocol) {
 	k.Enabled = true
 	k.Flags = flags
 }
 
 // Disable disables Kitty protocol
-func (k *KittyProtocolState) Disable() {
+func (k *KeyProtocolState) Disable() {
 	k.Enabled = false
 	k.Flags = 0
 }
 
 // Push pushes the current state onto the stack and sets new flags
-func (k *KittyProtocolState) Push(flags int) {
+func (k *KeyProtocolState) Push(flags KeyProtocol) {
 	k.Stack = append(k.Stack, k.Flags)
 	k.Enabled = true
 	k.Flags = flags
 }
 
 // Pop restores the previous state from the stack
-func (k *KittyProtocolState) Pop() {
+func (k *KeyProtocolState) Pop() {
 	if len(k.Stack) == 0 {
 		k.Disable()
 		return
@@ -64,7 +75,7 @@ func (k *KittyProtocolState) Pop() {
 }
 
 // Query returns the current state as a response string
-func (k *KittyProtocolState) Query() string {
+func (k *KeyProtocolState) Query() string {
 	if k.Enabled {
 		return fmt.Sprintf("\x1b[?%d;%du", k.Flags, 1)
 	}
@@ -74,8 +85,8 @@ func (k *KittyProtocolState) Query() string {
 // HandleKittyProtocolCSI processes Kitty protocol CSI sequences
 // Returns true if the sequence was handled, false otherwise
 func (t *State) HandleKittyProtocolCSI(csi *csiEscape) bool {
-	if t.kittyState == nil {
-		t.kittyState = NewKittyProtocolState()
+	if t.keyState == nil {
+		t.keyState = NewKeyProtocolState()
 	}
 
 	// Check for Kitty keyboard protocol sequences
@@ -115,14 +126,14 @@ func (t *State) handleKittyKeyboardMode(csi *csiEscape) bool {
 		return t.handleKittyProtocolCommand(content[1:])
 	} else if strings.HasPrefix(content, "<") {
 		// Disable protocol: ESC[<u
-		if t.kittyState != nil {
-			t.kittyState.Disable()
+		if t.keyState != nil {
+			t.keyState.Disable()
 		}
 		return true
 	} else if strings.HasPrefix(content, "?") {
 		// Query protocol: ESC[?u
-		if t.kittyState != nil {
-			response := t.kittyState.Query()
+		if t.keyState != nil {
+			response := t.keyState.Query()
 			t.w.Write([]byte(response))
 		} else {
 			t.w.Write([]byte("\x1b[?0u"))
@@ -150,20 +161,22 @@ func (t *State) handleKittyProtocolCommand(content string) bool {
 		return false
 	}
 
-	if t.kittyState == nil {
-		t.kittyState = NewKittyProtocolState()
+	if t.keyState == nil {
+		t.keyState = NewKeyProtocolState()
 	}
+
+	protocol := KeyProtocol(flags)
 
 	switch mode {
 	case 1:
 		// Enable/set mode
-		t.kittyState.Enable(flags)
+		t.keyState.Enable(protocol)
 	case 2:
 		// Push current mode and set new
-		t.kittyState.Push(flags)
+		t.keyState.Push(protocol)
 	case 3:
 		// Pop previous mode
-		t.kittyState.Pop()
+		t.keyState.Pop()
 	default:
 		return false
 	}
@@ -171,15 +184,10 @@ func (t *State) handleKittyProtocolCommand(content string) bool {
 	return true
 }
 
-// ShouldUseKittyProtocol returns whether to use Kitty protocol for key encoding
-func (t *State) ShouldUseKittyProtocol() bool {
-	return t.kittyState != nil && t.kittyState.IsEnabled()
-}
-
-// GetKittyFlags returns the current Kitty protocol flags
-func (t *State) GetKittyFlags() int {
-	if t.kittyState == nil {
+func (t *State) KeyState() KeyProtocol {
+	if t.keyState == nil {
 		return 0
 	}
-	return t.kittyState.GetFlags()
+
+	return t.keyState.GetFlags()
 }
