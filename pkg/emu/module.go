@@ -295,6 +295,9 @@ type View interface {
 
 	IsAltMode() bool
 
+	// The kind of key inputs expected by the terminal.
+	KeyState() KeyProtocol
+
 	// The location in history of the top-left cell of the screen. The `R`
 	// field refers to the line in history and the `C` refers to a column
 	// in that line that the cell contains. For example, when only one line

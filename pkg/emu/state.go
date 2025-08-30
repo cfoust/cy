@@ -43,7 +43,8 @@ type State struct {
 	// Whether the last cell of history _continues to wrap onto the screen_.
 	// This is only used when `disableHistory` is true, since we still need
 	// the wrapping behavior to be correct.
-	wrapped, altWrapped bool
+	wrapped, altWrapped   bool
+	keyState, altKeyState *KeyProtocolState
 
 	cur, curSaved Cursor
 	top, bottom   int // scroll limits
@@ -57,9 +58,6 @@ type State struct {
 
 	// whether scrolling up should send lines to the scrollback buffer
 	disableHistory bool
-
-	// Kitty keyboard protocol state
-	kittyState *KittyProtocolState
 
 	parser *vtparser.Parser
 }
@@ -482,6 +480,7 @@ func (t *State) moveTo(x, y int) {
 func (t *State) swapScreen() {
 	t.screen, t.altScreen = t.altScreen, t.screen
 	t.history, t.altHistory = t.altHistory, t.history
+	t.keyState, t.altKeyState = t.altKeyState, t.keyState
 	t.mode ^= ModeAltScreen
 	t.dirtyAll()
 }
