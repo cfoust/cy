@@ -83,212 +83,8 @@ const (
 	KittyKeyF12       = 0xE000 + 123
 )
 
-// KittyKey represents an enhanced key with Kitty protocol information
-type KittyKey struct {
-	KeyCode    int               // Unicode key code or Kitty special key
-	Modifiers  KittyModifiers    // Combined modifier flags
-	EventType  KittyKeyEventType // Press/repeat/release
-	BaseKey    rune              // Base layout key (without shift)
-	ShiftedKey rune              // Shifted key value
-	Text       string            // Associated text (if any)
-}
+// Note: KittyKey has been merged into Key. This file now contains supporting types and functions.
 
-// ToLegacyKey converts a KittyKey to the legacy Key format for compatibility
-func (k KittyKey) ToLegacyKey() Key {
-	key := Key{
-		Alt: k.Modifiers&KittyModAlt != 0,
-	}
-
-	// Map Kitty key codes to legacy KeyType
-	switch k.KeyCode {
-	case KittyKeyEscape:
-		key.Type = KeyEscape
-	case KittyKeyEnter:
-		key.Type = KeyEnter
-	case KittyKeyTab:
-		key.Type = KeyTab
-	case KittyKeyBackspace:
-		key.Type = KeyBackspace
-	case KittyKeyInsert:
-		key.Type = KeyInsert
-	case KittyKeyDelete:
-		key.Type = KeyDelete
-	case KittyKeyHome:
-		if k.Modifiers&KittyModCtrl != 0 && k.Modifiers&KittyModShift != 0 {
-			key.Type = KeyCtrlShiftHome
-		} else if k.Modifiers&KittyModCtrl != 0 {
-			key.Type = KeyCtrlHome
-		} else if k.Modifiers&KittyModShift != 0 {
-			key.Type = KeyShiftHome
-		} else {
-			key.Type = KeyHome
-		}
-	case KittyKeyEnd:
-		if k.Modifiers&KittyModCtrl != 0 && k.Modifiers&KittyModShift != 0 {
-			key.Type = KeyCtrlShiftEnd
-		} else if k.Modifiers&KittyModCtrl != 0 {
-			key.Type = KeyCtrlEnd
-		} else if k.Modifiers&KittyModShift != 0 {
-			key.Type = KeyShiftEnd
-		} else {
-			key.Type = KeyEnd
-		}
-	case KittyKeyPageUp:
-		if k.Modifiers&KittyModCtrl != 0 {
-			key.Type = KeyCtrlPgUp
-		} else {
-			key.Type = KeyPgUp
-		}
-	case KittyKeyPageDown:
-		if k.Modifiers&KittyModCtrl != 0 {
-			key.Type = KeyCtrlPgDown
-		} else {
-			key.Type = KeyPgDown
-		}
-	case KittyKeyLeft:
-		if k.Modifiers&KittyModCtrl != 0 && k.Modifiers&KittyModShift != 0 {
-			key.Type = KeyCtrlShiftLeft
-		} else if k.Modifiers&KittyModCtrl != 0 {
-			key.Type = KeyCtrlLeft
-		} else if k.Modifiers&KittyModShift != 0 {
-			key.Type = KeyShiftLeft
-		} else {
-			key.Type = KeyLeft
-		}
-	case KittyKeyUp:
-		if k.Modifiers&KittyModCtrl != 0 && k.Modifiers&KittyModShift != 0 {
-			key.Type = KeyCtrlShiftUp
-		} else if k.Modifiers&KittyModCtrl != 0 {
-			key.Type = KeyCtrlUp
-		} else if k.Modifiers&KittyModShift != 0 {
-			key.Type = KeyShiftUp
-		} else {
-			key.Type = KeyUp
-		}
-	case KittyKeyRight:
-		if k.Modifiers&KittyModCtrl != 0 && k.Modifiers&KittyModShift != 0 {
-			key.Type = KeyCtrlShiftRight
-		} else if k.Modifiers&KittyModCtrl != 0 {
-			key.Type = KeyCtrlRight
-		} else if k.Modifiers&KittyModShift != 0 {
-			key.Type = KeyShiftRight
-		} else {
-			key.Type = KeyRight
-		}
-	case KittyKeyDown:
-		if k.Modifiers&KittyModCtrl != 0 && k.Modifiers&KittyModShift != 0 {
-			key.Type = KeyCtrlShiftDown
-		} else if k.Modifiers&KittyModCtrl != 0 {
-			key.Type = KeyCtrlDown
-		} else if k.Modifiers&KittyModShift != 0 {
-			key.Type = KeyShiftDown
-		} else {
-			key.Type = KeyDown
-		}
-	case KittyKeyF1:
-		key.Type = KeyF1
-	case KittyKeyF2:
-		key.Type = KeyF2
-	case KittyKeyF3:
-		key.Type = KeyF3
-	case KittyKeyF4:
-		key.Type = KeyF4
-	case KittyKeyF5:
-		key.Type = KeyF5
-	case KittyKeyF6:
-		key.Type = KeyF6
-	case KittyKeyF7:
-		key.Type = KeyF7
-	case KittyKeyF8:
-		key.Type = KeyF8
-	case KittyKeyF9:
-		key.Type = KeyF9
-	case KittyKeyF10:
-		key.Type = KeyF10
-	case KittyKeyF11:
-		key.Type = KeyF11
-	case KittyKeyF12:
-		key.Type = KeyF12
-	default:
-		// Regular Unicode character
-		if k.KeyCode <= 0x10FFFF {
-			key.Type = KeyRunes
-			key.Runes = []rune{rune(k.KeyCode)}
-		}
-	}
-
-	return key
-}
-
-// String returns a human-readable representation of the KittyKey
-func (k KittyKey) String() string {
-	var modParts []string
-
-	if k.Modifiers&KittyModSuper != 0 {
-		modParts = append(modParts, "super")
-	}
-	if k.Modifiers&KittyModHyper != 0 {
-		modParts = append(modParts, "hyper")
-	}
-	if k.Modifiers&KittyModMeta != 0 {
-		modParts = append(modParts, "meta")
-	}
-	if k.Modifiers&KittyModCtrl != 0 {
-		modParts = append(modParts, "ctrl")
-	}
-	if k.Modifiers&KittyModAlt != 0 {
-		modParts = append(modParts, "alt")
-	}
-	if k.Modifiers&KittyModShift != 0 {
-		modParts = append(modParts, "shift")
-	}
-
-	var keyPart string
-	switch k.KeyCode {
-	case KittyKeyEscape:
-		keyPart = "esc"
-	case KittyKeyEnter:
-		keyPart = "enter"
-	case KittyKeyTab:
-		keyPart = "tab"
-	case KittyKeyBackspace:
-		keyPart = "backspace"
-	case KittyKeyInsert:
-		keyPart = "insert"
-	case KittyKeyDelete:
-		keyPart = "delete"
-	case KittyKeyHome:
-		keyPart = "home"
-	case KittyKeyEnd:
-		keyPart = "end"
-	case KittyKeyPageUp:
-		keyPart = "pgup"
-	case KittyKeyPageDown:
-		keyPart = "pgdown"
-	case KittyKeyLeft:
-		keyPart = "left"
-	case KittyKeyUp:
-		keyPart = "up"
-	case KittyKeyRight:
-		keyPart = "right"
-	case KittyKeyDown:
-		keyPart = "down"
-	case KittyKeyF1, KittyKeyF2, KittyKeyF3, KittyKeyF4, KittyKeyF5, KittyKeyF6,
-		KittyKeyF7, KittyKeyF8, KittyKeyF9, KittyKeyF10, KittyKeyF11, KittyKeyF12:
-		keyPart = fmt.Sprintf("f%d", k.KeyCode-KittyKeyF1+1)
-	default:
-		if k.KeyCode <= 0x10FFFF {
-			keyPart = string(rune(k.KeyCode))
-		} else {
-			keyPart = fmt.Sprintf("unknown(%d)", k.KeyCode)
-		}
-	}
-
-	if len(modParts) > 0 {
-		return strings.Join(modParts, "+") + "+" + keyPart
-	}
-	return keyPart
-}
 
 // IsKittySequence checks if the byte sequence might be a Kitty protocol sequence
 // Kitty sequences follow the pattern: ESC [ {keycode} [; {modifiers}] u
@@ -324,9 +120,9 @@ func IsKittySequence(b []byte) bool {
 
 // ParseKittySequence parses a Kitty protocol key sequence
 // Format: ESC [ {keycode} [; {modifiers} [; {event_type} [; {text}]]] u
-func ParseKittySequence(b []byte) (KittyKey, int, error) {
+func ParseKittySequence(b []byte) (Key, int, error) {
 	if !IsKittySequence(b) {
-		return KittyKey{}, 0, fmt.Errorf("not a valid Kitty sequence")
+		return Key{}, 0, fmt.Errorf("not a valid Kitty sequence")
 	}
 	
 	// Extract the content between '[' and 'u'
@@ -334,16 +130,16 @@ func ParseKittySequence(b []byte) (KittyKey, int, error) {
 	parts := strings.Split(content, ";")
 	
 	if len(parts) == 0 {
-		return KittyKey{}, 0, fmt.Errorf("empty key sequence")
+		return Key{}, 0, fmt.Errorf("empty key sequence")
 	}
 	
 	// Parse keycode (required)
 	keycode, err := strconv.Atoi(parts[0])
 	if err != nil {
-		return KittyKey{}, 0, fmt.Errorf("invalid keycode: %v", err)
+		return Key{}, 0, fmt.Errorf("invalid keycode: %v", err)
 	}
 	
-	key := KittyKey{
+	key := Key{
 		KeyCode:   keycode,
 		EventType: KittyKeyPress, // Default to press event
 	}
@@ -352,7 +148,7 @@ func ParseKittySequence(b []byte) (KittyKey, int, error) {
 	if len(parts) > 1 && parts[1] != "" {
 		modifierBits, err := strconv.Atoi(parts[1])
 		if err != nil {
-			return KittyKey{}, 0, fmt.Errorf("invalid modifiers: %v", err)
+			return Key{}, 0, fmt.Errorf("invalid modifiers: %v", err)
 		}
 		key.Modifiers = KittyModifiers(modifierBits)
 	}
@@ -361,7 +157,7 @@ func ParseKittySequence(b []byte) (KittyKey, int, error) {
 	if len(parts) > 2 && parts[2] != "" {
 		eventTypeBits, err := strconv.Atoi(parts[2])
 		if err != nil {
-			return KittyKey{}, 0, fmt.Errorf("invalid event type: %v", err)
+			return Key{}, 0, fmt.Errorf("invalid event type: %v", err)
 		}
 		
 		// Map event type bits to KittyKeyEventType
@@ -373,7 +169,7 @@ func ParseKittySequence(b []byte) (KittyKey, int, error) {
 		case 2:
 			key.EventType = KittyKeyRelease
 		default:
-			return KittyKey{}, 0, fmt.Errorf("unknown event type: %d", eventTypeBits)
+			return Key{}, 0, fmt.Errorf("unknown event type: %d", eventTypeBits)
 		}
 	}
 	
@@ -396,29 +192,3 @@ func GenerateKittyDisableSequence() string {
 	return "\x1b[<u"
 }
 
-// Bytes returns the byte representation of the KittyKey using Kitty protocol
-func (k KittyKey) Bytes() []byte {
-	return []byte(k.kittySequence())
-}
-
-// kittySequence generates the Kitty protocol sequence for this key
-func (k KittyKey) kittySequence() string {
-	keycode := k.KeyCode
-	modifiers := int(k.Modifiers)
-	eventType := int(k.EventType)
-
-	if eventType != 0 || k.Text != "" {
-		// Extended format with event type and text
-		if k.Text != "" {
-			return fmt.Sprintf("\x1b[%d;%d;%d;%su", keycode, modifiers, eventType, k.Text)
-		} else {
-			return fmt.Sprintf("\x1b[%d;%d;%du", keycode, modifiers, eventType)
-		}
-	} else if modifiers != 0 {
-		// Standard format with modifiers
-		return fmt.Sprintf("\x1b[%d;%du", keycode, modifiers)
-	} else {
-		// Minimal format
-		return fmt.Sprintf("\x1b[%du", keycode)
-	}
-}

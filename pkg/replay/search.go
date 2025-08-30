@@ -131,7 +131,7 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return r, nil
 		}
 	case taro.KeyMsg:
-		switch msg.Type {
+		switch msg.Type() {
 		case taro.KeyEsc, taro.KeyCtrlC:
 			r.mode = ModeTime
 			return r, nil

@@ -15,7 +15,7 @@ func (r *Replay) handleIncrementalInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return r, nil
 		}
 	case taro.KeyMsg:
-		switch msg.Type {
+		switch msg.Type() {
 		case taro.KeyEsc, taro.KeyCtrlC:
 			r.incr.Cancel(r.movement)
 			return r, nil
