@@ -40,8 +40,8 @@ var extSequences = func() map[string]Key {
 	for seq, key := range sequences {
 		key := key
 		s[seq] = key
-		if !key.Alt {
-			key.Alt = true
+		if key.Modifiers&KittyModAlt == 0 {
+			key.Modifiers |= KittyModAlt
 			s["\x1b"+seq] = key
 		}
 	}
@@ -49,15 +49,15 @@ var extSequences = func() map[string]Key {
 		if i == keyESC {
 			continue
 		}
-		s[string([]byte{byte(i)})] = Key{Type: i}
-		s[string([]byte{'\x1b', byte(i)})] = Key{Type: i, Alt: true}
+		s[string([]byte{byte(i)})] = Key{KeyCode: int(i), EventType: KittyKeyPress}
+		s[string([]byte{'\x1b', byte(i)})] = Key{KeyCode: int(i), Modifiers: KittyModAlt, EventType: KittyKeyPress}
 		if i == keyUS {
 			i = keyDEL - 1
 		}
 	}
-	s[" "] = Key{Type: KeySpace, Runes: spaceRunes}
-	s["\x1b "] = Key{Type: KeySpace, Alt: true, Runes: spaceRunes}
-	s["\x1b\x1b"] = Key{Type: KeyEscape, Alt: true}
+	s[" "] = Key{KeyCode: ' ', EventType: KittyKeyPress}
+	s["\x1b "] = Key{KeyCode: ' ', Modifiers: KittyModAlt, EventType: KittyKeyPress}
+	s["\x1b\x1b"] = Key{KeyCode: KittyKeyEscape, Modifiers: KittyModAlt, EventType: KittyKeyPress}
 	return s
 }()
 
