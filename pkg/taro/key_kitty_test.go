@@ -60,6 +60,57 @@ func TestParseKittySequence(t *testing.T) {
 			shouldError:   false,
 		},
 		{
+			name:          "Key press event (explicit)",
+			input:         []byte("\x1b[65;2;0u"),
+			expectedKey:   65,
+			expectedMod:   KittyModifiers(2),
+			expectedEvent: KittyKeyPress,
+			expectedWidth: 9,
+			shouldError:   false,
+		},
+		{
+			name:          "Key repeat event",
+			input:         []byte("\x1b[65;2;1u"),
+			expectedKey:   65,
+			expectedMod:   KittyModifiers(2),
+			expectedEvent: KittyKeyRepeat,
+			expectedWidth: 9,
+			shouldError:   false,
+		},
+		{
+			name:          "Key release event",
+			input:         []byte("\x1b[65;2;2u"),
+			expectedKey:   65,
+			expectedMod:   KittyModifiers(2),
+			expectedEvent: KittyKeyRelease,
+			expectedWidth: 9,
+			shouldError:   false,
+		},
+		{
+			name:          "Key with text",
+			input:         []byte("\x1b[65;0;0;textu"),
+			expectedKey:   65,
+			expectedMod:   0,
+			expectedEvent: KittyKeyPress,
+			expectedText:  "text",
+			expectedWidth: 14,
+			shouldError:   false,
+		},
+		{
+			name:          "Key repeat with no modifiers",
+			input:         []byte("\x1b[97;;1u"),
+			expectedKey:   97, // 'a'
+			expectedMod:   0,
+			expectedEvent: KittyKeyRepeat,
+			expectedWidth: 8,
+			shouldError:   false,
+		},
+		{
+			name:        "Invalid event type",
+			input:       []byte("\x1b[65;2;5u"),
+			shouldError: true,
+		},
+		{
 			name:        "Invalid sequence",
 			input:       []byte("\x1b[abc;2u"),
 			shouldError: true,
@@ -93,6 +144,9 @@ func TestParseKittySequence(t *testing.T) {
 			}
 			if key.EventType != tt.expectedEvent {
 				t.Errorf("ParseKittySequence(%q) EventType = %d, want %d", tt.input, key.EventType, tt.expectedEvent)
+			}
+			if key.Text != tt.expectedText {
+				t.Errorf("ParseKittySequence(%q) Text = %q, want %q", tt.input, key.Text, tt.expectedText)
 			}
 			if width != tt.expectedWidth {
 				t.Errorf("ParseKittySequence(%q) width = %d, want %d", tt.input, width, tt.expectedWidth)

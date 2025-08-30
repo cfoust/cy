@@ -323,43 +323,68 @@ func IsKittySequence(b []byte) bool {
 }
 
 // ParseKittySequence parses a Kitty protocol key sequence
-// Format: ESC [ {keycode} ; {modifiers} u
+// Format: ESC [ {keycode} [; {modifiers} [; {event_type} [; {text}]]] u
 func ParseKittySequence(b []byte) (KittyKey, int, error) {
 	if !IsKittySequence(b) {
 		return KittyKey{}, 0, fmt.Errorf("not a valid Kitty sequence")
 	}
-
+	
 	// Extract the content between '[' and 'u'
 	content := string(b[2 : len(b)-1])
 	parts := strings.Split(content, ";")
-
+	
 	if len(parts) == 0 {
 		return KittyKey{}, 0, fmt.Errorf("empty key sequence")
 	}
-
+	
 	// Parse keycode (required)
 	keycode, err := strconv.Atoi(parts[0])
 	if err != nil {
 		return KittyKey{}, 0, fmt.Errorf("invalid keycode: %v", err)
 	}
-
+	
+	key := KittyKey{
+		KeyCode:   keycode,
+		EventType: KittyKeyPress, // Default to press event
+	}
+	
 	// Parse modifiers (optional)
-	var modifierBits int
-	if len(parts) > 1 {
-		modifierBits, err = strconv.Atoi(parts[1])
+	if len(parts) > 1 && parts[1] != "" {
+		modifierBits, err := strconv.Atoi(parts[1])
 		if err != nil {
 			return KittyKey{}, 0, fmt.Errorf("invalid modifiers: %v", err)
 		}
+		key.Modifiers = KittyModifiers(modifierBits)
 	}
-
-	key := KittyKey{
-		KeyCode:   keycode,
-		Modifiers: KittyModifiers(modifierBits),
-		EventType: KittyKeyPress, // Default to press event
+	
+	// Parse event type (optional)
+	if len(parts) > 2 && parts[2] != "" {
+		eventTypeBits, err := strconv.Atoi(parts[2])
+		if err != nil {
+			return KittyKey{}, 0, fmt.Errorf("invalid event type: %v", err)
+		}
+		
+		// Map event type bits to KittyKeyEventType
+		switch eventTypeBits {
+		case 0:
+			key.EventType = KittyKeyPress
+		case 1:
+			key.EventType = KittyKeyRepeat
+		case 2:
+			key.EventType = KittyKeyRelease
+		default:
+			return KittyKey{}, 0, fmt.Errorf("unknown event type: %d", eventTypeBits)
+		}
 	}
-
+	
+	// Parse associated text (optional)
+	if len(parts) > 3 && parts[3] != "" {
+		key.Text = parts[3]
+	}
+	
 	return key, len(b), nil
 }
+
 
 // GenerateKittyEnableSequence generates the escape sequence to enable Kitty protocol
 func GenerateKittyEnableSequence(flags KittyProgressiveFlags) string {
