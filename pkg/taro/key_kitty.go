@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/cfoust/cy/pkg/emu"
 )
 
 // KittyKeyEventType represents the type of key event (press/repeat/release)
@@ -28,29 +30,18 @@ func (k KittyKeyEventType) String() string {
 	}
 }
 
-// KittyModifiers represents Kitty protocol modifier flags
-type KittyModifiers int
+// KeyModifiers represents Kitty protocol modifier flags
+type KeyModifiers int
 
 const (
-	KittyModShift KittyModifiers = 1 << iota
-	KittyModAlt
-	KittyModCtrl
-	KittyModSuper
-	KittyModHyper
-	KittyModMeta
-	KittyModCapsLock
-	KittyModNumLock
-)
-
-// KittyProgressiveFlags represents progressive enhancement flags
-type KittyProgressiveFlags int
-
-const (
-	KittyDisambiguateEscape KittyProgressiveFlags = 1 << iota
-	KittyReportEventTypes
-	KittyReportAlternateKeys
-	KittyReportAllKeys
-	KittyReportAssociatedText
+	KeyModShift KeyModifiers = 1 << iota
+	KeyModAlt
+	KeyModCtrl
+	KeyModSuper
+	KeyModHyper
+	KeyModMeta
+	KeyModCapsLock
+	KeyModNumLock
 )
 
 // Kitty protocol special keys using Unicode Private Use Area
@@ -84,7 +75,6 @@ const (
 )
 
 // Note: KittyKey has been merged into Key. This file now contains supporting types and functions.
-
 
 // IsKittySequence checks if the byte sequence might be a Kitty protocol sequence
 // Kitty sequences follow the pattern: ESC [ {keycode} [; {modifiers}] u
@@ -124,42 +114,42 @@ func ParseKittySequence(b []byte) (Key, int, error) {
 	if !IsKittySequence(b) {
 		return Key{}, 0, fmt.Errorf("not a valid Kitty sequence")
 	}
-	
+
 	// Extract the content between '[' and 'u'
 	content := string(b[2 : len(b)-1])
 	parts := strings.Split(content, ";")
-	
+
 	if len(parts) == 0 {
 		return Key{}, 0, fmt.Errorf("empty key sequence")
 	}
-	
+
 	// Parse keycode (required)
 	keycode, err := strconv.Atoi(parts[0])
 	if err != nil {
 		return Key{}, 0, fmt.Errorf("invalid keycode: %v", err)
 	}
-	
+
 	key := Key{
 		KeyCode:   keycode,
 		EventType: KittyKeyPress, // Default to press event
 	}
-	
+
 	// Parse modifiers (optional)
 	if len(parts) > 1 && parts[1] != "" {
 		modifierBits, err := strconv.Atoi(parts[1])
 		if err != nil {
 			return Key{}, 0, fmt.Errorf("invalid modifiers: %v", err)
 		}
-		key.Modifiers = KittyModifiers(modifierBits)
+		key.Modifiers = KeyModifiers(modifierBits)
 	}
-	
+
 	// Parse event type (optional)
 	if len(parts) > 2 && parts[2] != "" {
 		eventTypeBits, err := strconv.Atoi(parts[2])
 		if err != nil {
 			return Key{}, 0, fmt.Errorf("invalid event type: %v", err)
 		}
-		
+
 		// Map event type bits to KittyKeyEventType
 		switch eventTypeBits {
 		case 0:
@@ -172,18 +162,17 @@ func ParseKittySequence(b []byte) (Key, int, error) {
 			return Key{}, 0, fmt.Errorf("unknown event type: %d", eventTypeBits)
 		}
 	}
-	
+
 	// Parse associated text (optional)
 	if len(parts) > 3 && parts[3] != "" {
 		key.Text = parts[3]
 	}
-	
+
 	return key, len(b), nil
 }
 
-
 // GenerateKittyEnableSequence generates the escape sequence to enable Kitty protocol
-func GenerateKittyEnableSequence(flags KittyProgressiveFlags) string {
+func GenerateKittyEnableSequence(flags emu.KeyProtocol) string {
 	return fmt.Sprintf("\x1b[>%d;1u", int(flags))
 }
 
@@ -191,4 +180,3 @@ func GenerateKittyEnableSequence(flags KittyProgressiveFlags) string {
 func GenerateKittyDisableSequence() string {
 	return "\x1b[<u"
 }
-

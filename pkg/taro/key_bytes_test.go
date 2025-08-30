@@ -80,7 +80,7 @@ func TestKittyKeyBytes(t *testing.T) {
 			name: "Character with Alt modifier",
 			key: KittyKey{
 				KeyCode:   97, // 'a'
-				Modifiers: KittyModAlt,
+				Modifiers: KeyModAlt,
 				EventType: KittyKeyPress,
 			},
 			expected: []byte("\x1b[97;2u"),
@@ -89,7 +89,7 @@ func TestKittyKeyBytes(t *testing.T) {
 			name: "Character with multiple modifiers",
 			key: KittyKey{
 				KeyCode:   97, // 'a'
-				Modifiers: KittyModCtrl | KittyModShift,
+				Modifiers: KeyModCtrl | KeyModShift,
 				EventType: KittyKeyPress,
 			},
 			expected: []byte("\x1b[97;5u"), // 4 (Ctrl) + 1 (Shift) = 5
@@ -139,7 +139,7 @@ func TestNewKittyKeyBytes(t *testing.T) {
 	// Test that a Key created with NewKittyKey still produces correct bytes
 	kittyKey := KittyKey{
 		KeyCode:   97, // 'a'
-		Modifiers: KittyModAlt,
+		Modifiers: KeyModAlt,
 		EventType: KittyKeyPress,
 	}
 
