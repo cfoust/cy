@@ -35,7 +35,7 @@ func TestParseKittySequence(t *testing.T) {
 		name          string
 		input         []byte
 		expectedKey   int
-		expectedMod   KittyModifiers
+		expectedMod   KeyModifiers
 		expectedEvent KittyKeyEventType
 		expectedText  string
 		expectedWidth int
@@ -54,7 +54,7 @@ func TestParseKittySequence(t *testing.T) {
 			name:          "Key with modifiers",
 			input:         []byte("\x1b[65;2u"),
 			expectedKey:   65,
-			expectedMod:   KittyModifiers(2), // Shift
+			expectedMod:   KeyModifiers(2), // Shift
 			expectedEvent: KittyKeyPress,
 			expectedWidth: 7,
 			shouldError:   false,
@@ -63,7 +63,7 @@ func TestParseKittySequence(t *testing.T) {
 			name:          "Key press event (explicit)",
 			input:         []byte("\x1b[65;2;0u"),
 			expectedKey:   65,
-			expectedMod:   KittyModifiers(2),
+			expectedMod:   KeyModifiers(2),
 			expectedEvent: KittyKeyPress,
 			expectedWidth: 9,
 			shouldError:   false,
@@ -72,7 +72,7 @@ func TestParseKittySequence(t *testing.T) {
 			name:          "Key repeat event",
 			input:         []byte("\x1b[65;2;1u"),
 			expectedKey:   65,
-			expectedMod:   KittyModifiers(2),
+			expectedMod:   KeyModifiers(2),
 			expectedEvent: KittyKeyRepeat,
 			expectedWidth: 9,
 			shouldError:   false,
@@ -81,7 +81,7 @@ func TestParseKittySequence(t *testing.T) {
 			name:          "Key release event",
 			input:         []byte("\x1b[65;2;2u"),
 			expectedKey:   65,
-			expectedMod:   KittyModifiers(2),
+			expectedMod:   KeyModifiers(2),
 			expectedEvent: KittyKeyRelease,
 			expectedWidth: 9,
 			shouldError:   false,
@@ -158,14 +158,14 @@ func TestParseKittySequence(t *testing.T) {
 func TestKittyKeyToLegacyKey(t *testing.T) {
 	tests := []struct {
 		name          string
-		kittyKey      KittyKey
+		key      Key
 		expectedType  KeyType
 		expectedAlt   bool
 		expectedRunes []rune
 	}{
 		{
 			name: "Simple character",
-			kittyKey: KittyKey{
+			key: Key{
 				KeyCode:   97, // 'a'
 				Modifiers: 0,
 				EventType: KittyKeyPress,
@@ -176,9 +176,9 @@ func TestKittyKeyToLegacyKey(t *testing.T) {
 		},
 		{
 			name: "Alt+character",
-			kittyKey: KittyKey{
+			key: Key{
 				KeyCode:   97, // 'a'
-				Modifiers: KittyModAlt,
+				Modifiers: KeyModAlt,
 				EventType: KittyKeyPress,
 			},
 			expectedType:  KeyRunes,
@@ -187,7 +187,7 @@ func TestKittyKeyToLegacyKey(t *testing.T) {
 		},
 		{
 			name: "Arrow key",
-			kittyKey: KittyKey{
+			key: Key{
 				KeyCode:   KittyKeyUp,
 				Modifiers: 0,
 				EventType: KittyKeyPress,
@@ -197,9 +197,9 @@ func TestKittyKeyToLegacyKey(t *testing.T) {
 		},
 		{
 			name: "Ctrl+Shift+Arrow",
-			kittyKey: KittyKey{
+			key: Key{
 				KeyCode:   KittyKeyLeft,
-				Modifiers: KittyModCtrl | KittyModShift,
+				Modifiers: KeyModCtrl | KeyModShift,
 				EventType: KittyKeyPress,
 			},
 			expectedType: KeyCtrlShiftLeft,
@@ -207,7 +207,7 @@ func TestKittyKeyToLegacyKey(t *testing.T) {
 		},
 		{
 			name: "Function key",
-			kittyKey: KittyKey{
+			key: Key{
 				KeyCode:   KittyKeyF1,
 				Modifiers: 0,
 				EventType: KittyKeyPress,
@@ -219,7 +219,7 @@ func TestKittyKeyToLegacyKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			legacyKey := tt.kittyKey.ToLegacyKey()
+			legacyKey := tt.key.toLegacyKey()
 
 			if legacyKey.Type != tt.expectedType {
 				t.Errorf("KittyKey.ToLegacyKey() Type = %v, want %v", legacyKey.Type, tt.expectedType)
@@ -245,12 +245,12 @@ func TestKittyKeyToLegacyKey(t *testing.T) {
 func TestKittyKeyString(t *testing.T) {
 	tests := []struct {
 		name     string
-		kittyKey KittyKey
+		key      Key
 		expected string
 	}{
 		{
 			name: "Simple character",
-			kittyKey: KittyKey{
+			key: Key{
 				KeyCode:   97, // 'a'
 				Modifiers: 0,
 			},
@@ -258,23 +258,23 @@ func TestKittyKeyString(t *testing.T) {
 		},
 		{
 			name: "Ctrl+Alt+character",
-			kittyKey: KittyKey{
+			key: Key{
 				KeyCode:   97, // 'a'
-				Modifiers: KittyModCtrl | KittyModAlt,
+				Modifiers: KeyModCtrl | KeyModAlt,
 			},
 			expected: "ctrl+alt+a",
 		},
 		{
 			name: "Super+Shift+F1",
-			kittyKey: KittyKey{
+			key: Key{
 				KeyCode:   KittyKeyF1,
-				Modifiers: KittyModSuper | KittyModShift,
+				Modifiers: KeyModSuper | KeyModShift,
 			},
 			expected: "super+shift+f1",
 		},
 		{
 			name: "Arrow key",
-			kittyKey: KittyKey{
+			key: Key{
 				KeyCode: KittyKeyUp,
 			},
 			expected: "up",
@@ -283,57 +283,10 @@ func TestKittyKeyString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.kittyKey.String()
+			result := tt.key.String()
 			if result != tt.expected {
 				t.Errorf("KittyKey.String() = %q, want %q", result, tt.expected)
 			}
 		})
-	}
-}
-
-func TestNewKittyKey(t *testing.T) {
-	kittyKey := KittyKey{
-		KeyCode:   97, // 'a'
-		Modifiers: KittyModAlt,
-		EventType: KittyKeyPress,
-	}
-
-	key := NewKittyKey(kittyKey)
-
-	// Should have legacy fields filled correctly
-	if key.Type != KeyRunes {
-		t.Errorf("NewKittyKey() Type = %v, want %v", key.Type, KeyRunes)
-	}
-	if !key.Alt {
-		t.Errorf("NewKittyKey() Alt = %v, want %v", key.Alt, true)
-	}
-	if len(key.Runes) != 1 || key.Runes[0] != 'a' {
-		t.Errorf("NewKittyKey() Runes = %v, want %v", key.Runes, []rune{'a'})
-	}
-
-	// Should have Kitty information preserved
-	if key.Kitty == nil {
-		t.Errorf("NewKittyKey() Kitty is nil, want non-nil")
-	} else {
-		if key.Kitty.KeyCode != 97 {
-			t.Errorf("NewKittyKey() Kitty.KeyCode = %d, want %d", key.Kitty.KeyCode, 97)
-		}
-		if key.Kitty.Modifiers != KittyModAlt {
-			t.Errorf("NewKittyKey() Kitty.Modifiers = %v, want %v", key.Kitty.Modifiers, KittyModAlt)
-		}
-	}
-
-	// Test enhanced methods
-	if !key.HasKittyProtocol() {
-		t.Errorf("NewKittyKey() HasKittyProtocol() = false, want true")
-	}
-	if !key.IsPress() {
-		t.Errorf("NewKittyKey() IsPress() = false, want true")
-	}
-	if !key.HasAlt() {
-		t.Errorf("NewKittyKey() HasAlt() = false, want true")
-	}
-	if key.HasCtrl() {
-		t.Errorf("NewKittyKey() HasCtrl() = true, want false")
 	}
 }

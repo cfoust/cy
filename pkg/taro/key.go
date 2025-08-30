@@ -35,8 +35,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/cfoust/cy/pkg/emu"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // KeyMsg contains information about a keypress. KeyMsgs are always sent to
@@ -77,17 +77,17 @@ type KeyMsg Key
 func (k KeyMsg) ToTea() tea.KeyMsg {
 	key := Key(k)
 	legacyType := key.toLegacyKeyType()
-	
+
 	var runes []rune
 	if legacyType == 0 && key.KeyCode <= 0x10FFFF && key.KeyCode > 31 && key.KeyCode != 127 {
 		runes = []rune{rune(key.KeyCode)}
 		legacyType = KeyRunes
 	}
-	
+
 	return tea.KeyMsg{
 		Type:  tea.KeyType(legacyType),
 		Runes: runes,
-		Alt:   key.Modifiers&KittyModAlt != 0,
+		Alt:   key.Modifiers&KeyModAlt != 0,
 	}
 }
 
@@ -109,12 +109,10 @@ func (k KeyMsg) Type() KeyType {
 
 // Key contains information about a keypress using Kitty protocol structure.
 type Key struct {
-	KeyCode    int               // Unicode key code or Kitty special key
-	Modifiers  KittyModifiers    // Combined modifier flags
-	EventType  KittyKeyEventType // Press/repeat/release
-	BaseKey    rune              // Base layout key (without shift)
-	ShiftedKey rune              // Shifted key value
-	Text       string            // Associated text (if any)
+	KeyCode   int               // Unicode key code or Kitty special key
+	Modifiers KeyModifiers      // Combined modifier flags
+	EventType KittyKeyEventType // Press/repeat/release
+	Text      string            // Associated text (if any)
 }
 
 // String returns a friendly string representation for a key. It's safe (and
@@ -126,22 +124,22 @@ type Key struct {
 func (k Key) String() (str string) {
 	var modParts []string
 
-	if k.Modifiers&KittyModSuper != 0 {
+	if k.Modifiers&KeyModSuper != 0 {
 		modParts = append(modParts, "super")
 	}
-	if k.Modifiers&KittyModHyper != 0 {
+	if k.Modifiers&KeyModHyper != 0 {
 		modParts = append(modParts, "hyper")
 	}
-	if k.Modifiers&KittyModMeta != 0 {
+	if k.Modifiers&KeyModMeta != 0 {
 		modParts = append(modParts, "meta")
 	}
-	if k.Modifiers&KittyModCtrl != 0 {
+	if k.Modifiers&KeyModCtrl != 0 {
 		modParts = append(modParts, "ctrl")
 	}
-	if k.Modifiers&KittyModAlt != 0 {
+	if k.Modifiers&KeyModAlt != 0 {
 		modParts = append(modParts, "alt")
 	}
-	if k.Modifiers&KittyModShift != 0 {
+	if k.Modifiers&KeyModShift != 0 {
 		modParts = append(modParts, "shift")
 	}
 
@@ -205,16 +203,16 @@ func (k Key) kittySequence(protocol emu.KeyProtocol) string {
 	keycode := k.KeyCode
 	modifiers := int(k.Modifiers)
 	eventType := int(k.EventType)
-	
+
 	// Check if event types should be reported
 	reportEventTypes := protocol&emu.KeyReportEventTypes != 0
-	
+
 	// Check if associated text should be reported
 	reportText := protocol&emu.KeyReportAssociatedText != 0
-	
+
 	// Determine if we should include event type in output
 	includeEventType := reportEventTypes && eventType != 0
-	
+
 	// Determine if we should include text in output
 	includeText := reportText && k.Text != ""
 
@@ -237,14 +235,14 @@ func (k Key) kittySequence(protocol emu.KeyProtocol) string {
 // legacyBytes returns the traditional byte encoding for a key
 func (k Key) legacyBytes() (data []byte) {
 	// Convert Kitty-based key to legacy format
-	alt := k.Modifiers&KittyModAlt != 0
-	
+	alt := k.Modifiers&KeyModAlt != 0
+
 	// Handle space specially
 	if k.KeyCode == ' ' {
 		data = append(data, []byte(" ")...)
 		return data
 	}
-	
+
 	// Handle regular Unicode characters
 	if k.KeyCode <= 0x10FFFF && k.KeyCode > 31 && k.KeyCode != 127 {
 		if alt {
@@ -253,7 +251,7 @@ func (k Key) legacyBytes() (data []byte) {
 		data = append(data, []byte(string(rune(k.KeyCode)))...)
 		return data
 	}
-	
+
 	// Convert Kitty special keys to legacy KeyType and use inverse sequences
 	legacyType := k.toLegacyKeyType()
 	if legacyType != 0 {
@@ -264,14 +262,14 @@ func (k Key) legacyBytes() (data []byte) {
 			data = append(data, seq...)
 			return data
 		}
-		
+
 		// ESC is special case
 		if legacyType == keyESC {
 			data = append(data, '\x1b')
 			return data
 		}
 	}
-	
+
 	return data
 }
 
@@ -291,73 +289,73 @@ func (k Key) toLegacyKeyType() KeyType {
 	case KittyKeyDelete:
 		return KeyDelete
 	case KittyKeyHome:
-		if k.Modifiers&KittyModCtrl != 0 && k.Modifiers&KittyModShift != 0 {
+		if k.Modifiers&KeyModCtrl != 0 && k.Modifiers&KeyModShift != 0 {
 			return KeyCtrlShiftHome
-		} else if k.Modifiers&KittyModCtrl != 0 {
+		} else if k.Modifiers&KeyModCtrl != 0 {
 			return KeyCtrlHome
-		} else if k.Modifiers&KittyModShift != 0 {
+		} else if k.Modifiers&KeyModShift != 0 {
 			return KeyShiftHome
 		} else {
 			return KeyHome
 		}
 	case KittyKeyEnd:
-		if k.Modifiers&KittyModCtrl != 0 && k.Modifiers&KittyModShift != 0 {
+		if k.Modifiers&KeyModCtrl != 0 && k.Modifiers&KeyModShift != 0 {
 			return KeyCtrlShiftEnd
-		} else if k.Modifiers&KittyModCtrl != 0 {
+		} else if k.Modifiers&KeyModCtrl != 0 {
 			return KeyCtrlEnd
-		} else if k.Modifiers&KittyModShift != 0 {
+		} else if k.Modifiers&KeyModShift != 0 {
 			return KeyShiftEnd
 		} else {
 			return KeyEnd
 		}
 	case KittyKeyPageUp:
-		if k.Modifiers&KittyModCtrl != 0 {
+		if k.Modifiers&KeyModCtrl != 0 {
 			return KeyCtrlPgUp
 		} else {
 			return KeyPgUp
 		}
 	case KittyKeyPageDown:
-		if k.Modifiers&KittyModCtrl != 0 {
+		if k.Modifiers&KeyModCtrl != 0 {
 			return KeyCtrlPgDown
 		} else {
 			return KeyPgDown
 		}
 	case KittyKeyLeft:
-		if k.Modifiers&KittyModCtrl != 0 && k.Modifiers&KittyModShift != 0 {
+		if k.Modifiers&KeyModCtrl != 0 && k.Modifiers&KeyModShift != 0 {
 			return KeyCtrlShiftLeft
-		} else if k.Modifiers&KittyModCtrl != 0 {
+		} else if k.Modifiers&KeyModCtrl != 0 {
 			return KeyCtrlLeft
-		} else if k.Modifiers&KittyModShift != 0 {
+		} else if k.Modifiers&KeyModShift != 0 {
 			return KeyShiftLeft
 		} else {
 			return KeyLeft
 		}
 	case KittyKeyUp:
-		if k.Modifiers&KittyModCtrl != 0 && k.Modifiers&KittyModShift != 0 {
+		if k.Modifiers&KeyModCtrl != 0 && k.Modifiers&KeyModShift != 0 {
 			return KeyCtrlShiftUp
-		} else if k.Modifiers&KittyModCtrl != 0 {
+		} else if k.Modifiers&KeyModCtrl != 0 {
 			return KeyCtrlUp
-		} else if k.Modifiers&KittyModShift != 0 {
+		} else if k.Modifiers&KeyModShift != 0 {
 			return KeyShiftUp
 		} else {
 			return KeyUp
 		}
 	case KittyKeyRight:
-		if k.Modifiers&KittyModCtrl != 0 && k.Modifiers&KittyModShift != 0 {
+		if k.Modifiers&KeyModCtrl != 0 && k.Modifiers&KeyModShift != 0 {
 			return KeyCtrlShiftRight
-		} else if k.Modifiers&KittyModCtrl != 0 {
+		} else if k.Modifiers&KeyModCtrl != 0 {
 			return KeyCtrlRight
-		} else if k.Modifiers&KittyModShift != 0 {
+		} else if k.Modifiers&KeyModShift != 0 {
 			return KeyShiftRight
 		} else {
 			return KeyRight
 		}
 	case KittyKeyDown:
-		if k.Modifiers&KittyModCtrl != 0 && k.Modifiers&KittyModShift != 0 {
+		if k.Modifiers&KeyModCtrl != 0 && k.Modifiers&KeyModShift != 0 {
 			return KeyCtrlShiftDown
-		} else if k.Modifiers&KittyModCtrl != 0 {
+		} else if k.Modifiers&KeyModCtrl != 0 {
 			return KeyCtrlDown
-		} else if k.Modifiers&KittyModShift != 0 {
+		} else if k.Modifiers&KeyModShift != 0 {
 			return KeyShiftDown
 		} else {
 			return KeyDown
@@ -407,38 +405,38 @@ func (k Key) IsRelease() bool {
 }
 
 // HasModifier checks if a specific Kitty modifier is present
-func (k Key) HasModifier(mod KittyModifiers) bool {
+func (k Key) HasModifier(mod KeyModifiers) bool {
 	return k.Modifiers&mod != 0
 }
 
 // HasCtrl returns true if Ctrl modifier is present
 func (k Key) HasCtrl() bool {
-	return k.HasModifier(KittyModCtrl)
+	return k.HasModifier(KeyModCtrl)
 }
 
 // HasShift returns true if Shift modifier is present
 func (k Key) HasShift() bool {
-	return k.HasModifier(KittyModShift)
+	return k.HasModifier(KeyModShift)
 }
 
 // HasAlt returns true if Alt modifier is present
 func (k Key) HasAlt() bool {
-	return k.HasModifier(KittyModAlt)
+	return k.HasModifier(KeyModAlt)
 }
 
 // HasSuper returns true if Super modifier is present
 func (k Key) HasSuper() bool {
-	return k.HasModifier(KittyModSuper)
+	return k.HasModifier(KeyModSuper)
 }
 
 // HasHyper returns true if Hyper modifier is present
 func (k Key) HasHyper() bool {
-	return k.HasModifier(KittyModHyper)
+	return k.HasModifier(KeyModHyper)
 }
 
 // HasMeta returns true if Meta modifier is present
 func (k Key) HasMeta() bool {
-	return k.HasModifier(KittyModMeta)
+	return k.HasModifier(KeyModMeta)
 }
 
 // Runes returns the key as a slice of runes for compatibility with legacy code
@@ -449,7 +447,6 @@ func (k Key) Runes() []rune {
 	}
 	return nil
 }
-
 
 // KeyType indicates the key pressed, such as KeyEnter or KeyBreak or KeyCtrlC.
 // All other keys will be type KeyRunes. To get the rune value, check the Rune
@@ -478,27 +475,27 @@ func (k KeyType) String() (str string) {
 // etc) into KeyMsg events. Unrecognized strings are represented as regular characters.
 func KeysToMsg(keys ...string) (msgs []KeyMsg) {
 	for _, key := range keys {
-		var modifiers KittyModifiers
-		
+		var modifiers KeyModifiers
+
 		// Parse modifiers
 		for {
 			if strings.HasPrefix(key, "alt+") && len(key) > 4 {
-				modifiers |= KittyModAlt
+				modifiers |= KeyModAlt
 				key = key[4:]
 			} else if strings.HasPrefix(key, "ctrl+") && len(key) > 5 {
-				modifiers |= KittyModCtrl
+				modifiers |= KeyModCtrl
 				key = key[5:]
 			} else if strings.HasPrefix(key, "shift+") && len(key) > 6 {
-				modifiers |= KittyModShift
+				modifiers |= KeyModShift
 				key = key[6:]
 			} else if strings.HasPrefix(key, "super+") && len(key) > 6 {
-				modifiers |= KittyModSuper
+				modifiers |= KeyModSuper
 				key = key[6:]
 			} else if strings.HasPrefix(key, "hyper+") && len(key) > 6 {
-				modifiers |= KittyModHyper
+				modifiers |= KeyModHyper
 				key = key[6:]
 			} else if strings.HasPrefix(key, "meta+") && len(key) > 5 {
-				modifiers |= KittyModMeta
+				modifiers |= KeyModMeta
 				key = key[5:]
 			} else {
 				break
@@ -677,9 +674,9 @@ func DetectOneMsg(b []byte) (w int, msg Msg) {
 
 	// Are we seeing a standalone NUL? This is not handled by detectSequence().
 	if i < len(b) && b[i] == 0 {
-		modifiers := KittyModifiers(0)
+		modifiers := KeyModifiers(0)
 		if alt {
-			modifiers |= KittyModAlt
+			modifiers |= KeyModAlt
 		}
 		return i + 1, KeyMsg{KeyCode: 0, Modifiers: modifiers, EventType: KittyKeyPress}
 	}
@@ -706,11 +703,11 @@ func DetectOneMsg(b []byte) (w int, msg Msg) {
 	// If we found at least one rune, we report the bunch of them as
 	// Unicode characters using the new Key structure.
 	if len(runes) > 0 {
-		modifiers := KittyModifiers(0)
+		modifiers := KeyModifiers(0)
 		if alt {
-			modifiers |= KittyModAlt
+			modifiers |= KeyModAlt
 		}
-		
+
 		// For now, just use the first rune for the KeyCode
 		// In a full implementation, might need to handle multi-rune sequences differently
 		k := Key{KeyCode: int(runes[0]), Modifiers: modifiers, EventType: KittyKeyPress}

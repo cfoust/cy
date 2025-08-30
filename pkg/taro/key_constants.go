@@ -338,99 +338,99 @@ var sequences = map[string]Key{
 	"\x1b[B":    {KeyCode: KittyKeyDown, Modifiers: 0, EventType: KittyKeyPress},
 	"\x1b[C":    {KeyCode: KittyKeyRight, Modifiers: 0, EventType: KittyKeyPress},
 	"\x1b[D":    {KeyCode: KittyKeyLeft, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[1;2A": {KeyCode: KittyKeyUp, Modifiers: KittyModShift, EventType: KittyKeyPress},
-	"\x1b[1;2B": {KeyCode: KittyKeyDown, Modifiers: KittyModShift, EventType: KittyKeyPress},
-	"\x1b[1;2C": {KeyCode: KittyKeyRight, Modifiers: KittyModShift, EventType: KittyKeyPress},
-	"\x1b[1;2D": {KeyCode: KittyKeyLeft, Modifiers: KittyModShift, EventType: KittyKeyPress},
-	"\x1b[OA":   {KeyCode: KittyKeyUp, Modifiers: KittyModShift, EventType: KittyKeyPress},    // DECCKM
-	"\x1b[OB":   {KeyCode: KittyKeyDown, Modifiers: KittyModShift, EventType: KittyKeyPress},  // DECCKM
-	"\x1b[OC":   {KeyCode: KittyKeyRight, Modifiers: KittyModShift, EventType: KittyKeyPress}, // DECCKM
-	"\x1b[OD":   {KeyCode: KittyKeyLeft, Modifiers: KittyModShift, EventType: KittyKeyPress},  // DECCKM
-	"\x1b[a":    {KeyCode: KittyKeyUp, Modifiers: KittyModShift, EventType: KittyKeyPress},    // urxvt
-	"\x1b[b":    {KeyCode: KittyKeyDown, Modifiers: KittyModShift, EventType: KittyKeyPress},  // urxvt
-	"\x1b[c":    {KeyCode: KittyKeyRight, Modifiers: KittyModShift, EventType: KittyKeyPress}, // urxvt
-	"\x1b[d":    {KeyCode: KittyKeyLeft, Modifiers: KittyModShift, EventType: KittyKeyPress},  // urxvt
-	"\x1b[1;3A": {KeyCode: KittyKeyUp, Modifiers: KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;3B": {KeyCode: KittyKeyDown, Modifiers: KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;3C": {KeyCode: KittyKeyRight, Modifiers: KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;3D": {KeyCode: KittyKeyLeft, Modifiers: KittyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;2A": {KeyCode: KittyKeyUp, Modifiers: KeyModShift, EventType: KittyKeyPress},
+	"\x1b[1;2B": {KeyCode: KittyKeyDown, Modifiers: KeyModShift, EventType: KittyKeyPress},
+	"\x1b[1;2C": {KeyCode: KittyKeyRight, Modifiers: KeyModShift, EventType: KittyKeyPress},
+	"\x1b[1;2D": {KeyCode: KittyKeyLeft, Modifiers: KeyModShift, EventType: KittyKeyPress},
+	"\x1b[OA":   {KeyCode: KittyKeyUp, Modifiers: KeyModShift, EventType: KittyKeyPress},    // DECCKM
+	"\x1b[OB":   {KeyCode: KittyKeyDown, Modifiers: KeyModShift, EventType: KittyKeyPress},  // DECCKM
+	"\x1b[OC":   {KeyCode: KittyKeyRight, Modifiers: KeyModShift, EventType: KittyKeyPress}, // DECCKM
+	"\x1b[OD":   {KeyCode: KittyKeyLeft, Modifiers: KeyModShift, EventType: KittyKeyPress},  // DECCKM
+	"\x1b[a":    {KeyCode: KittyKeyUp, Modifiers: KeyModShift, EventType: KittyKeyPress},    // urxvt
+	"\x1b[b":    {KeyCode: KittyKeyDown, Modifiers: KeyModShift, EventType: KittyKeyPress},  // urxvt
+	"\x1b[c":    {KeyCode: KittyKeyRight, Modifiers: KeyModShift, EventType: KittyKeyPress}, // urxvt
+	"\x1b[d":    {KeyCode: KittyKeyLeft, Modifiers: KeyModShift, EventType: KittyKeyPress},  // urxvt
+	"\x1b[1;3A": {KeyCode: KittyKeyUp, Modifiers: KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;3B": {KeyCode: KittyKeyDown, Modifiers: KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;3C": {KeyCode: KittyKeyRight, Modifiers: KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;3D": {KeyCode: KittyKeyLeft, Modifiers: KeyModAlt, EventType: KittyKeyPress},
 
-	"\x1b[1;4A": {KeyCode: KittyKeyUp, Modifiers: KittyModShift | KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;4B": {KeyCode: KittyKeyDown, Modifiers: KittyModShift | KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;4C": {KeyCode: KittyKeyRight, Modifiers: KittyModShift | KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;4D": {KeyCode: KittyKeyLeft, Modifiers: KittyModShift | KittyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;4A": {KeyCode: KittyKeyUp, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;4B": {KeyCode: KittyKeyDown, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;4C": {KeyCode: KittyKeyRight, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;4D": {KeyCode: KittyKeyLeft, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},
 
-	"\x1b[1;5A": {KeyCode: KittyKeyUp, Modifiers: KittyModCtrl, EventType: KittyKeyPress},
-	"\x1b[1;5B": {KeyCode: KittyKeyDown, Modifiers: KittyModCtrl, EventType: KittyKeyPress},
-	"\x1b[1;5C": {KeyCode: KittyKeyRight, Modifiers: KittyModCtrl, EventType: KittyKeyPress},
-	"\x1b[1;5D": {KeyCode: KittyKeyLeft, Modifiers: KittyModCtrl, EventType: KittyKeyPress},
-	"\x1b[Oa":   {KeyCode: KittyKeyUp, Modifiers: KittyModCtrl | KittyModAlt, EventType: KittyKeyPress},    // urxvt
-	"\x1b[Ob":   {KeyCode: KittyKeyDown, Modifiers: KittyModCtrl | KittyModAlt, EventType: KittyKeyPress},  // urxvt
-	"\x1b[Oc":   {KeyCode: KittyKeyRight, Modifiers: KittyModCtrl | KittyModAlt, EventType: KittyKeyPress}, // urxvt
-	"\x1b[Od":   {KeyCode: KittyKeyLeft, Modifiers: KittyModCtrl | KittyModAlt, EventType: KittyKeyPress},  // urxvt
-	"\x1b[1;6A": {KeyCode: KittyKeyUp, Modifiers: KittyModCtrl | KittyModShift, EventType: KittyKeyPress},
-	"\x1b[1;6B": {KeyCode: KittyKeyDown, Modifiers: KittyModCtrl | KittyModShift, EventType: KittyKeyPress},
-	"\x1b[1;6C": {KeyCode: KittyKeyRight, Modifiers: KittyModCtrl | KittyModShift, EventType: KittyKeyPress},
-	"\x1b[1;6D": {KeyCode: KittyKeyLeft, Modifiers: KittyModCtrl | KittyModShift, EventType: KittyKeyPress},
-	"\x1b[1;7A": {KeyCode: KittyKeyUp, Modifiers: KittyModCtrl | KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;7B": {KeyCode: KittyKeyDown, Modifiers: KittyModCtrl | KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;7C": {KeyCode: KittyKeyRight, Modifiers: KittyModCtrl | KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;7D": {KeyCode: KittyKeyLeft, Modifiers: KittyModCtrl | KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;8A": {KeyCode: KittyKeyUp, Modifiers: KittyModCtrl | KittyModShift | KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;8B": {KeyCode: KittyKeyDown, Modifiers: KittyModCtrl | KittyModShift | KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;8C": {KeyCode: KittyKeyRight, Modifiers: KittyModCtrl | KittyModShift | KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;8D": {KeyCode: KittyKeyLeft, Modifiers: KittyModCtrl | KittyModShift | KittyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;5A": {KeyCode: KittyKeyUp, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
+	"\x1b[1;5B": {KeyCode: KittyKeyDown, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
+	"\x1b[1;5C": {KeyCode: KittyKeyRight, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
+	"\x1b[1;5D": {KeyCode: KittyKeyLeft, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
+	"\x1b[Oa":   {KeyCode: KittyKeyUp, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},    // urxvt
+	"\x1b[Ob":   {KeyCode: KittyKeyDown, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},  // urxvt
+	"\x1b[Oc":   {KeyCode: KittyKeyRight, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress}, // urxvt
+	"\x1b[Od":   {KeyCode: KittyKeyLeft, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},  // urxvt
+	"\x1b[1;6A": {KeyCode: KittyKeyUp, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},
+	"\x1b[1;6B": {KeyCode: KittyKeyDown, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},
+	"\x1b[1;6C": {KeyCode: KittyKeyRight, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},
+	"\x1b[1;6D": {KeyCode: KittyKeyLeft, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},
+	"\x1b[1;7A": {KeyCode: KittyKeyUp, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;7B": {KeyCode: KittyKeyDown, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;7C": {KeyCode: KittyKeyRight, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;7D": {KeyCode: KittyKeyLeft, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;8A": {KeyCode: KittyKeyUp, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;8B": {KeyCode: KittyKeyDown, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;8C": {KeyCode: KittyKeyRight, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;8D": {KeyCode: KittyKeyLeft, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress},
 
 	// Miscellaneous keys
-	"\x1b[Z": {KeyCode: KittyKeyTab, Modifiers: KittyModShift, EventType: KittyKeyPress},
+	"\x1b[Z": {KeyCode: KittyKeyTab, Modifiers: KeyModShift, EventType: KittyKeyPress},
 
 	"\x1b[2~":   {KeyCode: KittyKeyInsert, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[3;2~": {KeyCode: KittyKeyInsert, Modifiers: KittyModAlt, EventType: KittyKeyPress},
+	"\x1b[3;2~": {KeyCode: KittyKeyInsert, Modifiers: KeyModAlt, EventType: KittyKeyPress},
 
 	"\x1b[3~":   {KeyCode: KittyKeyDelete, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[3;3~": {KeyCode: KittyKeyDelete, Modifiers: KittyModAlt, EventType: KittyKeyPress},
+	"\x1b[3;3~": {KeyCode: KittyKeyDelete, Modifiers: KeyModAlt, EventType: KittyKeyPress},
 
 	"\x1b[5~":   {KeyCode: KittyKeyPageUp, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[5;3~": {KeyCode: KittyKeyPageUp, Modifiers: KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[5;5~": {KeyCode: KittyKeyPageUp, Modifiers: KittyModCtrl, EventType: KittyKeyPress},
-	"\x1b[5^":   {KeyCode: KittyKeyPageUp, Modifiers: KittyModCtrl, EventType: KittyKeyPress}, // urxvt
-	"\x1b[5;7~": {KeyCode: KittyKeyPageUp, Modifiers: KittyModCtrl | KittyModAlt, EventType: KittyKeyPress},
+	"\x1b[5;3~": {KeyCode: KittyKeyPageUp, Modifiers: KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[5;5~": {KeyCode: KittyKeyPageUp, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
+	"\x1b[5^":   {KeyCode: KittyKeyPageUp, Modifiers: KeyModCtrl, EventType: KittyKeyPress}, // urxvt
+	"\x1b[5;7~": {KeyCode: KittyKeyPageUp, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},
 
 	"\x1b[6~":   {KeyCode: KittyKeyPageDown, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[6;3~": {KeyCode: KittyKeyPageDown, Modifiers: KittyModAlt, EventType: KittyKeyPress},
-	"\x1b[6;5~": {KeyCode: KittyKeyPageDown, Modifiers: KittyModCtrl, EventType: KittyKeyPress},
-	"\x1b[6^":   {KeyCode: KittyKeyPageDown, Modifiers: KittyModCtrl, EventType: KittyKeyPress}, // urxvt
-	"\x1b[6;7~": {KeyCode: KittyKeyPageDown, Modifiers: KittyModCtrl | KittyModAlt, EventType: KittyKeyPress},
+	"\x1b[6;3~": {KeyCode: KittyKeyPageDown, Modifiers: KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[6;5~": {KeyCode: KittyKeyPageDown, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
+	"\x1b[6^":   {KeyCode: KittyKeyPageDown, Modifiers: KeyModCtrl, EventType: KittyKeyPress}, // urxvt
+	"\x1b[6;7~": {KeyCode: KittyKeyPageDown, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},
 
 	"\x1b[1~":   {KeyCode: KittyKeyHome, Modifiers: 0, EventType: KittyKeyPress},
 	"\x1b[H":    {KeyCode: KittyKeyHome, Modifiers: 0, EventType: KittyKeyPress},                     // xterm, lxterm
-	"\x1b[1;3H": {KeyCode: KittyKeyHome, Modifiers: KittyModAlt, EventType: KittyKeyPress},          // xterm, lxterm
-	"\x1b[1;5H": {KeyCode: KittyKeyHome, Modifiers: KittyModCtrl, EventType: KittyKeyPress},                 // xterm, lxterm
-	"\x1b[1;7H": {KeyCode: KittyKeyHome, Modifiers: KittyModCtrl | KittyModAlt, EventType: KittyKeyPress},      // xterm, lxterm
-	"\x1b[1;2H": {KeyCode: KittyKeyHome, Modifiers: KittyModShift, EventType: KittyKeyPress},                // xterm, lxterm
-	"\x1b[1;4H": {KeyCode: KittyKeyHome, Modifiers: KittyModShift | KittyModAlt, EventType: KittyKeyPress},     // xterm, lxterm
-	"\x1b[1;6H": {KeyCode: KittyKeyHome, Modifiers: KittyModCtrl | KittyModShift, EventType: KittyKeyPress},            // xterm, lxterm
-	"\x1b[1;8H": {KeyCode: KittyKeyHome, Modifiers: KittyModCtrl | KittyModShift | KittyModAlt, EventType: KittyKeyPress}, // xterm, lxterm
+	"\x1b[1;3H": {KeyCode: KittyKeyHome, Modifiers: KeyModAlt, EventType: KittyKeyPress},          // xterm, lxterm
+	"\x1b[1;5H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl, EventType: KittyKeyPress},                 // xterm, lxterm
+	"\x1b[1;7H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},      // xterm, lxterm
+	"\x1b[1;2H": {KeyCode: KittyKeyHome, Modifiers: KeyModShift, EventType: KittyKeyPress},                // xterm, lxterm
+	"\x1b[1;4H": {KeyCode: KittyKeyHome, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},     // xterm, lxterm
+	"\x1b[1;6H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},            // xterm, lxterm
+	"\x1b[1;8H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress}, // xterm, lxterm
 
 	"\x1b[4~":   {KeyCode: KittyKeyEnd, Modifiers: 0, EventType: KittyKeyPress},
 	"\x1b[F":    {KeyCode: KittyKeyEnd, Modifiers: 0, EventType: KittyKeyPress},                     // xterm, lxterm
-	"\x1b[1;3F": {KeyCode: KittyKeyEnd, Modifiers: KittyModAlt, EventType: KittyKeyPress},          // xterm, lxterm
-	"\x1b[1;5F": {KeyCode: KittyKeyEnd, Modifiers: KittyModCtrl, EventType: KittyKeyPress},                 // xterm, lxterm
-	"\x1b[1;7F": {KeyCode: KittyKeyEnd, Modifiers: KittyModCtrl | KittyModAlt, EventType: KittyKeyPress},      // xterm, lxterm
-	"\x1b[1;2F": {KeyCode: KittyKeyEnd, Modifiers: KittyModShift, EventType: KittyKeyPress},                // xterm, lxterm
-	"\x1b[1;4F": {KeyCode: KittyKeyEnd, Modifiers: KittyModShift | KittyModAlt, EventType: KittyKeyPress},     // xterm, lxterm
-	"\x1b[1;6F": {KeyCode: KittyKeyEnd, Modifiers: KittyModCtrl | KittyModShift, EventType: KittyKeyPress},            // xterm, lxterm
-	"\x1b[1;8F": {KeyCode: KittyKeyEnd, Modifiers: KittyModCtrl | KittyModShift | KittyModAlt, EventType: KittyKeyPress}, // xterm, lxterm
+	"\x1b[1;3F": {KeyCode: KittyKeyEnd, Modifiers: KeyModAlt, EventType: KittyKeyPress},          // xterm, lxterm
+	"\x1b[1;5F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl, EventType: KittyKeyPress},                 // xterm, lxterm
+	"\x1b[1;7F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},      // xterm, lxterm
+	"\x1b[1;2F": {KeyCode: KittyKeyEnd, Modifiers: KeyModShift, EventType: KittyKeyPress},                // xterm, lxterm
+	"\x1b[1;4F": {KeyCode: KittyKeyEnd, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},     // xterm, lxterm
+	"\x1b[1;6F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},            // xterm, lxterm
+	"\x1b[1;8F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress}, // xterm, lxterm
 
 	"\x1b[7~": {KeyCode: KittyKeyHome, Modifiers: 0, EventType: KittyKeyPress},          // urxvt
-	"\x1b[7^": {KeyCode: KittyKeyHome, Modifiers: KittyModCtrl, EventType: KittyKeyPress},      // urxvt
-	"\x1b[7$": {KeyCode: KittyKeyHome, Modifiers: KittyModShift, EventType: KittyKeyPress},     // urxvt
-	"\x1b[7@": {KeyCode: KittyKeyHome, Modifiers: KittyModCtrl | KittyModShift, EventType: KittyKeyPress}, // urxvt
+	"\x1b[7^": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl, EventType: KittyKeyPress},      // urxvt
+	"\x1b[7$": {KeyCode: KittyKeyHome, Modifiers: KeyModShift, EventType: KittyKeyPress},     // urxvt
+	"\x1b[7@": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress}, // urxvt
 
 	"\x1b[8~": {KeyCode: KittyKeyEnd, Modifiers: 0, EventType: KittyKeyPress},          // urxvt
-	"\x1b[8^": {KeyCode: KittyKeyEnd, Modifiers: KittyModCtrl, EventType: KittyKeyPress},      // urxvt
-	"\x1b[8$": {KeyCode: KittyKeyEnd, Modifiers: KittyModShift, EventType: KittyKeyPress},     // urxvt
-	"\x1b[8@": {KeyCode: KittyKeyEnd, Modifiers: KittyModCtrl | KittyModShift, EventType: KittyKeyPress}, // urxvt
+	"\x1b[8^": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl, EventType: KittyKeyPress},      // urxvt
+	"\x1b[8$": {KeyCode: KittyKeyEnd, Modifiers: KeyModShift, EventType: KittyKeyPress},     // urxvt
+	"\x1b[8@": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress}, // urxvt
 
 	// Function keys, Linux console
 	"\x1b[[A": {KeyCode: KittyKeyF1, Modifiers: 0, EventType: KittyKeyPress}, // linux console
@@ -445,10 +445,10 @@ var sequences = map[string]Key{
 	"\x1bOR": {KeyCode: KittyKeyF3, Modifiers: 0, EventType: KittyKeyPress}, // vt100, xterm
 	"\x1bOS": {KeyCode: KittyKeyF4, Modifiers: 0, EventType: KittyKeyPress}, // vt100, xterm
 
-	"\x1b[1;3P": {KeyCode: KittyKeyF1, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1b[1;3Q": {KeyCode: KittyKeyF2, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1b[1;3R": {KeyCode: KittyKeyF3, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1b[1;3S": {KeyCode: KittyKeyF4, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[1;3P": {KeyCode: KittyKeyF1, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[1;3Q": {KeyCode: KittyKeyF2, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[1;3R": {KeyCode: KittyKeyF3, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[1;3S": {KeyCode: KittyKeyF4, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
 
 	"\x1b[11~": {KeyCode: KittyKeyF1, Modifiers: 0, EventType: KittyKeyPress}, // urxvt
 	"\x1b[12~": {KeyCode: KittyKeyF2, Modifiers: 0, EventType: KittyKeyPress}, // urxvt
@@ -457,7 +457,7 @@ var sequences = map[string]Key{
 
 	"\x1b[15~": {KeyCode: KittyKeyF5, Modifiers: 0, EventType: KittyKeyPress}, // vt100, xterm, also urxvt
 
-	"\x1b[15;3~": {KeyCode: KittyKeyF5, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // vt100, xterm, also urxvt
+	"\x1b[15;3~": {KeyCode: KittyKeyF5, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm, also urxvt
 
 	"\x1b[17~": {KeyCode: KittyKeyF6, Modifiers: 0, EventType: KittyKeyPress},  // vt100, xterm, also urxvt
 	"\x1b[18~": {KeyCode: KittyKeyF7, Modifiers: 0, EventType: KittyKeyPress},  // vt100, xterm, also urxvt
@@ -465,17 +465,17 @@ var sequences = map[string]Key{
 	"\x1b[20~": {KeyCode: KittyKeyF9, Modifiers: 0, EventType: KittyKeyPress},  // vt100, xterm, also urxvt
 	"\x1b[21~": {KeyCode: KittyKeyF10, Modifiers: 0, EventType: KittyKeyPress}, // vt100, xterm, also urxvt
 
-	"\x1b[17;3~": {KeyCode: KittyKeyF6, Modifiers: KittyModAlt, EventType: KittyKeyPress},  // vt100, xterm
-	"\x1b[18;3~": {KeyCode: KittyKeyF7, Modifiers: KittyModAlt, EventType: KittyKeyPress},  // vt100, xterm
-	"\x1b[19;3~": {KeyCode: KittyKeyF8, Modifiers: KittyModAlt, EventType: KittyKeyPress},  // vt100, xterm
-	"\x1b[20;3~": {KeyCode: KittyKeyF9, Modifiers: KittyModAlt, EventType: KittyKeyPress},  // vt100, xterm
-	"\x1b[21;3~": {KeyCode: KittyKeyF10, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[17;3~": {KeyCode: KittyKeyF6, Modifiers: KeyModAlt, EventType: KittyKeyPress},  // vt100, xterm
+	"\x1b[18;3~": {KeyCode: KittyKeyF7, Modifiers: KeyModAlt, EventType: KittyKeyPress},  // vt100, xterm
+	"\x1b[19;3~": {KeyCode: KittyKeyF8, Modifiers: KeyModAlt, EventType: KittyKeyPress},  // vt100, xterm
+	"\x1b[20;3~": {KeyCode: KittyKeyF9, Modifiers: KeyModAlt, EventType: KittyKeyPress},  // vt100, xterm
+	"\x1b[21;3~": {KeyCode: KittyKeyF10, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
 
 	"\x1b[23~": {KeyCode: KittyKeyF11, Modifiers: 0, EventType: KittyKeyPress}, // vt100, xterm, also urxvt
 	"\x1b[24~": {KeyCode: KittyKeyF12, Modifiers: 0, EventType: KittyKeyPress}, // vt100, xterm, also urxvt
 
-	"\x1b[23;3~": {KeyCode: KittyKeyF11, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1b[24;3~": {KeyCode: KittyKeyF12, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[23;3~": {KeyCode: KittyKeyF11, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[24;3~": {KeyCode: KittyKeyF12, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
 
 	"\x1b[1;2P": {KeyCode: 0xE000 + 124, Modifiers: 0, EventType: KittyKeyPress}, // F13
 	"\x1b[1;2Q": {KeyCode: 0xE000 + 125, Modifiers: 0, EventType: KittyKeyPress}, // F14
@@ -483,8 +483,8 @@ var sequences = map[string]Key{
 	"\x1b[25~": {KeyCode: 0xE000 + 124, Modifiers: 0, EventType: KittyKeyPress}, // F13, vt100, xterm, also urxvt
 	"\x1b[26~": {KeyCode: 0xE000 + 125, Modifiers: 0, EventType: KittyKeyPress}, // F14, vt100, xterm, also urxvt
 
-	"\x1b[25;3~": {KeyCode: 0xE000 + 124, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // F13, vt100, xterm
-	"\x1b[26;3~": {KeyCode: 0xE000 + 125, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // F14, vt100, xterm
+	"\x1b[25;3~": {KeyCode: 0xE000 + 124, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // F13, vt100, xterm
+	"\x1b[26;3~": {KeyCode: 0xE000 + 125, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // F14, vt100, xterm
 
 	"\x1b[1;2R": {KeyCode: 0xE000 + 126, Modifiers: 0, EventType: KittyKeyPress}, // F15
 	"\x1b[1;2S": {KeyCode: 0xE000 + 127, Modifiers: 0, EventType: KittyKeyPress}, // F16
@@ -492,8 +492,8 @@ var sequences = map[string]Key{
 	"\x1b[28~": {KeyCode: 0xE000 + 126, Modifiers: 0, EventType: KittyKeyPress}, // F15, vt100, xterm, also urxvt
 	"\x1b[29~": {KeyCode: 0xE000 + 127, Modifiers: 0, EventType: KittyKeyPress}, // F16, vt100, xterm, also urxvt
 
-	"\x1b[28;3~": {KeyCode: 0xE000 + 126, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // F15, vt100, xterm
-	"\x1b[29;3~": {KeyCode: 0xE000 + 127, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // F16, vt100, xterm
+	"\x1b[28;3~": {KeyCode: 0xE000 + 126, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // F15, vt100, xterm
+	"\x1b[29;3~": {KeyCode: 0xE000 + 127, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // F16, vt100, xterm
 
 	"\x1b[15;2~": {KeyCode: 0xE000 + 128, Modifiers: 0, EventType: KittyKeyPress}, // F17
 	"\x1b[17;2~": {KeyCode: 0xE000 + 129, Modifiers: 0, EventType: KittyKeyPress}, // F18
@@ -520,51 +520,51 @@ var xtermSequences = map[string]Key{
 	"\x1b[B":    {KeyCode: KittyKeyDown, EventType: KittyKeyPress},
 	"\x1b[C":    {KeyCode: KittyKeyRight, EventType: KittyKeyPress},
 	"\x1b[D":    {KeyCode: KittyKeyLeft, EventType: KittyKeyPress},
-	"\x1b[1;2A": {KeyCode: KittyKeyUp, Modifiers: KittyModShift, EventType: KittyKeyPress},
-	"\x1b[1;2B": {KeyCode: KittyKeyDown, Modifiers: KittyModShift, EventType: KittyKeyPress},
-	"\x1b[1;2C": {KeyCode: KittyKeyRight, Modifiers: KittyModShift, EventType: KittyKeyPress},
-	"\x1b[1;2D": {KeyCode: KittyKeyLeft, Modifiers: KittyModShift, EventType: KittyKeyPress},
+	"\x1b[1;2A": {KeyCode: KittyKeyUp, Modifiers: KeyModShift, EventType: KittyKeyPress},
+	"\x1b[1;2B": {KeyCode: KittyKeyDown, Modifiers: KeyModShift, EventType: KittyKeyPress},
+	"\x1b[1;2C": {KeyCode: KittyKeyRight, Modifiers: KeyModShift, EventType: KittyKeyPress},
+	"\x1b[1;2D": {KeyCode: KittyKeyLeft, Modifiers: KeyModShift, EventType: KittyKeyPress},
 
-	"\x1b[OA": {KeyCode: KittyKeyUp, Modifiers: KittyModShift, EventType: KittyKeyPress},    // DECCKM
-	"\x1b[OB": {KeyCode: KittyKeyDown, Modifiers: KittyModShift, EventType: KittyKeyPress},  // DECCKM
-	"\x1b[OC": {KeyCode: KittyKeyRight, Modifiers: KittyModShift, EventType: KittyKeyPress}, // DECCKM
-	"\x1b[OD": {KeyCode: KittyKeyLeft, Modifiers: KittyModShift, EventType: KittyKeyPress},  // DECCKM
+	"\x1b[OA": {KeyCode: KittyKeyUp, Modifiers: KeyModShift, EventType: KittyKeyPress},    // DECCKM
+	"\x1b[OB": {KeyCode: KittyKeyDown, Modifiers: KeyModShift, EventType: KittyKeyPress},  // DECCKM
+	"\x1b[OC": {KeyCode: KittyKeyRight, Modifiers: KeyModShift, EventType: KittyKeyPress}, // DECCKM
+	"\x1b[OD": {KeyCode: KittyKeyLeft, Modifiers: KeyModShift, EventType: KittyKeyPress},  // DECCKM
 
-	"\x1b[1;5A": {KeyCode: KittyKeyUp, Modifiers: KittyModCtrl, EventType: KittyKeyPress},
-	"\x1b[1;5B": {KeyCode: KittyKeyDown, Modifiers: KittyModCtrl, EventType: KittyKeyPress},
-	"\x1b[1;5C": {KeyCode: KittyKeyRight, Modifiers: KittyModCtrl, EventType: KittyKeyPress},
-	"\x1b[1;5D": {KeyCode: KittyKeyLeft, Modifiers: KittyModCtrl, EventType: KittyKeyPress},
+	"\x1b[1;5A": {KeyCode: KittyKeyUp, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
+	"\x1b[1;5B": {KeyCode: KittyKeyDown, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
+	"\x1b[1;5C": {KeyCode: KittyKeyRight, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
+	"\x1b[1;5D": {KeyCode: KittyKeyLeft, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
 
-	"\x1b[5;5~": {KeyCode: KittyKeyPageUp, Modifiers: KittyModCtrl, EventType: KittyKeyPress},
-	"\x1b[6;5~": {KeyCode: KittyKeyPageDown, Modifiers: KittyModCtrl, EventType: KittyKeyPress},
+	"\x1b[5;5~": {KeyCode: KittyKeyPageUp, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
+	"\x1b[6;5~": {KeyCode: KittyKeyPageDown, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
 
 	"\x1b[H":    {KeyCode: KittyKeyHome, EventType: KittyKeyPress},                     // xterm, lxterm
-	"\x1b[1;3H": {KeyCode: KittyKeyHome, Modifiers: KittyModAlt, EventType: KittyKeyPress},          // xterm, lxterm
-	"\x1b[1;5H": {KeyCode: KittyKeyHome, Modifiers: KittyModCtrl, EventType: KittyKeyPress},                 // xterm, lxterm
-	"\x1b[1;7H": {KeyCode: KittyKeyHome, Modifiers: KittyModCtrl | KittyModAlt, EventType: KittyKeyPress},      // xterm, lxterm
-	"\x1b[1;2H": {KeyCode: KittyKeyHome, Modifiers: KittyModShift, EventType: KittyKeyPress},                // xterm, lxterm
-	"\x1b[1;4H": {KeyCode: KittyKeyHome, Modifiers: KittyModShift | KittyModAlt, EventType: KittyKeyPress},     // xterm, lxterm
-	"\x1b[1;6H": {KeyCode: KittyKeyHome, Modifiers: KittyModCtrl | KittyModShift, EventType: KittyKeyPress},            // xterm, lxterm
-	"\x1b[1;8H": {KeyCode: KittyKeyHome, Modifiers: KittyModCtrl | KittyModShift | KittyModAlt, EventType: KittyKeyPress}, // xterm, lxterm
+	"\x1b[1;3H": {KeyCode: KittyKeyHome, Modifiers: KeyModAlt, EventType: KittyKeyPress},          // xterm, lxterm
+	"\x1b[1;5H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl, EventType: KittyKeyPress},                 // xterm, lxterm
+	"\x1b[1;7H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},      // xterm, lxterm
+	"\x1b[1;2H": {KeyCode: KittyKeyHome, Modifiers: KeyModShift, EventType: KittyKeyPress},                // xterm, lxterm
+	"\x1b[1;4H": {KeyCode: KittyKeyHome, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},     // xterm, lxterm
+	"\x1b[1;6H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},            // xterm, lxterm
+	"\x1b[1;8H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress}, // xterm, lxterm
 
 	"\x1b[F":    {KeyCode: KittyKeyEnd, EventType: KittyKeyPress},                     // xterm, lxterm
-	"\x1b[1;3F": {KeyCode: KittyKeyEnd, Modifiers: KittyModAlt, EventType: KittyKeyPress},          // xterm, lxterm
-	"\x1b[1;5F": {KeyCode: KittyKeyEnd, Modifiers: KittyModCtrl, EventType: KittyKeyPress},                 // xterm, lxterm
-	"\x1b[1;7F": {KeyCode: KittyKeyEnd, Modifiers: KittyModCtrl | KittyModAlt, EventType: KittyKeyPress},      // xterm, lxterm
-	"\x1b[1;2F": {KeyCode: KittyKeyEnd, Modifiers: KittyModShift, EventType: KittyKeyPress},                // xterm, lxterm
-	"\x1b[1;4F": {KeyCode: KittyKeyEnd, Modifiers: KittyModShift | KittyModAlt, EventType: KittyKeyPress},     // xterm, lxterm
-	"\x1b[1;6F": {KeyCode: KittyKeyEnd, Modifiers: KittyModCtrl | KittyModShift, EventType: KittyKeyPress},            // xterm, lxterm
-	"\x1b[1;8F": {KeyCode: KittyKeyEnd, Modifiers: KittyModCtrl | KittyModShift | KittyModAlt, EventType: KittyKeyPress}, // xterm, lxterm
+	"\x1b[1;3F": {KeyCode: KittyKeyEnd, Modifiers: KeyModAlt, EventType: KittyKeyPress},          // xterm, lxterm
+	"\x1b[1;5F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl, EventType: KittyKeyPress},                 // xterm, lxterm
+	"\x1b[1;7F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},      // xterm, lxterm
+	"\x1b[1;2F": {KeyCode: KittyKeyEnd, Modifiers: KeyModShift, EventType: KittyKeyPress},                // xterm, lxterm
+	"\x1b[1;4F": {KeyCode: KittyKeyEnd, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},     // xterm, lxterm
+	"\x1b[1;6F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},            // xterm, lxterm
+	"\x1b[1;8F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress}, // xterm, lxterm
 
 	"\x1bOP": {KeyCode: KittyKeyF1, EventType: KittyKeyPress}, // vt100, xterm
 	"\x1bOQ": {KeyCode: KittyKeyF2, EventType: KittyKeyPress}, // vt100, xterm
 	"\x1bOR": {KeyCode: KittyKeyF3, EventType: KittyKeyPress}, // vt100, xterm
 	"\x1bOS": {KeyCode: KittyKeyF4, EventType: KittyKeyPress}, // vt100, xterm
 
-	"\x1b[1;3P": {KeyCode: KittyKeyF1, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1b[1;3Q": {KeyCode: KittyKeyF2, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1b[1;3R": {KeyCode: KittyKeyF3, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1b[1;3S": {KeyCode: KittyKeyF4, Modifiers: KittyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[1;3P": {KeyCode: KittyKeyF1, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[1;3Q": {KeyCode: KittyKeyF2, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[1;3R": {KeyCode: KittyKeyF3, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[1;3S": {KeyCode: KittyKeyF4, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
 
 	"\x1b[28~": {KeyCode: 0xE000 + 126, EventType: KittyKeyPress}, // F15 - vt100, xterm, also urxvt
 	"\x1b[29~": {KeyCode: 0xE000 + 127, EventType: KittyKeyPress}, // F16 - vt100, xterm, also urxvt
@@ -582,7 +582,7 @@ var inverseSequences = func() map[keyLookup][]byte {
 		legacyType := key.toLegacyKeyType()
 		s[keyLookup{
 			Type: legacyType,
-			Alt:  key.Modifiers&KittyModAlt != 0,
+			Alt:  key.Modifiers&KeyModAlt != 0,
 		}] = []byte(str)
 	}
 
@@ -590,7 +590,7 @@ var inverseSequences = func() map[keyLookup][]byte {
 		legacyType := key.toLegacyKeyType()
 		s[keyLookup{
 			Type: legacyType,
-			Alt:  key.Modifiers&KittyModAlt != 0,
+			Alt:  key.Modifiers&KeyModAlt != 0,
 		}] = []byte(str)
 	}
 	return s
