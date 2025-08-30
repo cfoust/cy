@@ -9,25 +9,28 @@ import (
 func TestKeysToMsg(t *testing.T) {
 	assert.Equal(t, []KeyMsg{
 		{
-			Type:  KeyRunes,
 			Runes: []rune("test"),
+			Type:  KeyEventPress,
 		},
 		{
-			Type: KeyCtrlA,
+			Runes:     []rune{'a'},
+			Modifiers: KeyModCtrl,
+			Type:      KeyEventPress,
 		},
 		{
-			Type: KeyCtrlA,
-			Alt:  true,
+			Runes:     []rune{'a'},
+			Modifiers: KeyModCtrl | KeyModAlt,
+			Type:      KeyEventPress,
 		},
 		{
-			Type:  KeyRunes,
-			Runes: []rune("o"),
-			Alt:   true,
+			Runes:     []rune("o"),
+			Modifiers: KeyModAlt,
+			Type:      KeyEventPress,
 		},
 		{
-			Type:  KeyRunes,
-			Runes: []rune("й"),
-			Alt:   true,
+			Runes:     []rune("й"),
+			Modifiers: KeyModAlt,
+			Type:      KeyEventPress,
 		},
 	}, KeysToMsg(
 		"test",
@@ -41,26 +44,25 @@ func TestKeysToMsg(t *testing.T) {
 func TestKeysToBytes(t *testing.T) {
 	keys := []KeyMsg{
 		{
-			Type:  KeyRunes,
 			Runes: []rune("test"),
+			Type:  KeyEventPress,
 		},
 		{
-			Type: KeyCtrlA,
+			Runes: []rune{'a'},
+			Type:  KeyEventPress,
 		},
 		{
-			Type: keyETX,
+			Runes: []rune{KittyKeyEscape},
+			Type:  KeyEventPress,
 		},
 		{
-			Type: keyESC,
+			Runes:     []rune{'a'},
+			Modifiers: KeyModAlt,
+			Type:      KeyEventPress,
 		},
 		{
-			Type: keyESC,
-			Alt:  true,
-		},
-		{
-			Type:  KeyRunes,
-			Runes: []rune("a"),
-			Alt:   true,
+			Runes: []rune{' '},
+			Type:  KeyEventPress,
 		},
 	}
 
@@ -89,15 +91,22 @@ func TestDetect(t *testing.T) {
 		{
 			input: []byte("\x1b"),
 			msg: KeyMsg{
-				Type: KeyEscape,
+				Runes: []rune{KittyKeyEscape},
+				Type:  KeyEventPress,
 			},
 		},
 		{
 			input: []byte("\x1bo"),
 			msg: KeyMsg{
-				Type:  KeyRunes,
-				Runes: []rune("o"),
-				Alt:   true,
+				Runes:     []rune("o"),
+				Modifiers: KeyModAlt,
+				Type:      KeyEventPress,
+			},
+		},
+		{
+			input: []byte("test"),
+			msg: KeyMsg{
+				Runes: []rune("test"),
 			},
 		},
 	}

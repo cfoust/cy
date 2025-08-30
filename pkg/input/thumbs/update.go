@@ -72,8 +72,9 @@ func (t *Thumbs) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case taro.ScreenUpdate:
 		return t, msg.Wait()
 	case taro.KeyMsg:
-		switch msg.Type() {
-		case taro.KeyEsc, taro.KeyCtrlC:
+		keyMsg := msg.ToTea()
+		switch keyMsg.Type {
+		case tea.KeyEsc, tea.KeyCtrlC:
 			if t.result != nil {
 				t.result <- nil
 			}

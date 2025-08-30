@@ -52,7 +52,11 @@ func TestKeyStateScreenSwapping(t *testing.T) {
 	term.Write([]byte("\x1b[>6;1u"))
 
 	if term.KeyState() != mainFlags {
-		t.Errorf("Expected main screen flags=%d, got %d", mainFlags, term.KeyState())
+		t.Errorf(
+			"Expected main screen flags=%d, got %d",
+			mainFlags,
+			term.KeyState(),
+		)
 	}
 
 	// Switch to alt screen
@@ -63,14 +67,22 @@ func TestKeyStateScreenSwapping(t *testing.T) {
 	term.Write([]byte("\x1b[>8;1u"))
 
 	if term.KeyState() != altFlags {
-		t.Errorf("Expected alt screen flags=%d, got %d", altFlags, term.KeyState())
+		t.Errorf(
+			"Expected alt screen flags=%d, got %d",
+			altFlags,
+			term.KeyState(),
+		)
 	}
 
 	// Switch back to main screen - should restore original key state
 	term.Write([]byte("\x1b[?1049l"))
 
 	if term.KeyState() != mainFlags {
-		t.Errorf("Expected restored main screen flags=%d, got %d", mainFlags, term.KeyState())
+		t.Errorf(
+			"Expected restored main screen flags=%d, got %d",
+			mainFlags,
+			term.KeyState(),
+		)
 	}
 }
 
@@ -116,7 +128,11 @@ func TestKeyStateQuery(t *testing.T) {
 			// Check the response
 			response := output.String()
 			if response != tt.expected {
-				t.Errorf("Expected query response '%s', got '%s'", tt.expected, response)
+				t.Errorf(
+					"Expected query response '%s', got '%s'",
+					tt.expected,
+					response,
+				)
 			}
 		})
 	}
