@@ -334,240 +334,972 @@ var keyRefs = map[string]KeyType{
 // Sequence mappings.
 var sequences = map[string]Key{
 	// Arrow keys
-	"\x1b[A":    {KeyCode: KittyKeyUp, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[B":    {KeyCode: KittyKeyDown, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[C":    {KeyCode: KittyKeyRight, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[D":    {KeyCode: KittyKeyLeft, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[1;2A": {KeyCode: KittyKeyUp, Modifiers: KeyModShift, EventType: KittyKeyPress},
-	"\x1b[1;2B": {KeyCode: KittyKeyDown, Modifiers: KeyModShift, EventType: KittyKeyPress},
-	"\x1b[1;2C": {KeyCode: KittyKeyRight, Modifiers: KeyModShift, EventType: KittyKeyPress},
-	"\x1b[1;2D": {KeyCode: KittyKeyLeft, Modifiers: KeyModShift, EventType: KittyKeyPress},
-	"\x1b[OA":   {KeyCode: KittyKeyUp, Modifiers: KeyModShift, EventType: KittyKeyPress},    // DECCKM
-	"\x1b[OB":   {KeyCode: KittyKeyDown, Modifiers: KeyModShift, EventType: KittyKeyPress},  // DECCKM
-	"\x1b[OC":   {KeyCode: KittyKeyRight, Modifiers: KeyModShift, EventType: KittyKeyPress}, // DECCKM
-	"\x1b[OD":   {KeyCode: KittyKeyLeft, Modifiers: KeyModShift, EventType: KittyKeyPress},  // DECCKM
-	"\x1b[a":    {KeyCode: KittyKeyUp, Modifiers: KeyModShift, EventType: KittyKeyPress},    // urxvt
-	"\x1b[b":    {KeyCode: KittyKeyDown, Modifiers: KeyModShift, EventType: KittyKeyPress},  // urxvt
-	"\x1b[c":    {KeyCode: KittyKeyRight, Modifiers: KeyModShift, EventType: KittyKeyPress}, // urxvt
-	"\x1b[d":    {KeyCode: KittyKeyLeft, Modifiers: KeyModShift, EventType: KittyKeyPress},  // urxvt
-	"\x1b[1;3A": {KeyCode: KittyKeyUp, Modifiers: KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;3B": {KeyCode: KittyKeyDown, Modifiers: KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;3C": {KeyCode: KittyKeyRight, Modifiers: KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;3D": {KeyCode: KittyKeyLeft, Modifiers: KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[A": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	},
+	"\x1b[B": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	},
+	"\x1b[C": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	},
+	"\x1b[D": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;2A": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;2B": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;2C": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;2D": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	},
+	"\x1b[OA": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // DECCKM
+	"\x1b[OB": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // DECCKM
+	"\x1b[OC": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // DECCKM
+	"\x1b[OD": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // DECCKM
+	"\x1b[a": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[b": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[c": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[d": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[1;3A": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;3B": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;3C": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;3D": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	},
 
-	"\x1b[1;4A": {KeyCode: KittyKeyUp, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;4B": {KeyCode: KittyKeyDown, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;4C": {KeyCode: KittyKeyRight, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;4D": {KeyCode: KittyKeyLeft, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;4A": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;4B": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;4C": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;4D": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	},
 
-	"\x1b[1;5A": {KeyCode: KittyKeyUp, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
-	"\x1b[1;5B": {KeyCode: KittyKeyDown, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
-	"\x1b[1;5C": {KeyCode: KittyKeyRight, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
-	"\x1b[1;5D": {KeyCode: KittyKeyLeft, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
-	"\x1b[Oa":   {KeyCode: KittyKeyUp, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},    // urxvt
-	"\x1b[Ob":   {KeyCode: KittyKeyDown, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},  // urxvt
-	"\x1b[Oc":   {KeyCode: KittyKeyRight, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress}, // urxvt
-	"\x1b[Od":   {KeyCode: KittyKeyLeft, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},  // urxvt
-	"\x1b[1;6A": {KeyCode: KittyKeyUp, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},
-	"\x1b[1;6B": {KeyCode: KittyKeyDown, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},
-	"\x1b[1;6C": {KeyCode: KittyKeyRight, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},
-	"\x1b[1;6D": {KeyCode: KittyKeyLeft, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},
-	"\x1b[1;7A": {KeyCode: KittyKeyUp, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;7B": {KeyCode: KittyKeyDown, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;7C": {KeyCode: KittyKeyRight, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;7D": {KeyCode: KittyKeyLeft, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;8A": {KeyCode: KittyKeyUp, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;8B": {KeyCode: KittyKeyDown, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;8C": {KeyCode: KittyKeyRight, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[1;8D": {KeyCode: KittyKeyLeft, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[1;5A": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;5B": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;5C": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;5D": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	},
+	"\x1b[Oa": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: KeyModCtrl | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[Ob": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: KeyModCtrl | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[Oc": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: KeyModCtrl | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[Od": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: KeyModCtrl | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[1;6A": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: KeyModCtrl | KeyModShift,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;6B": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: KeyModCtrl | KeyModShift,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;6C": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: KeyModCtrl | KeyModShift,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;6D": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: KeyModCtrl | KeyModShift,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;7A": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: KeyModCtrl | KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;7B": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: KeyModCtrl | KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;7C": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: KeyModCtrl | KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;7D": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: KeyModCtrl | KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;8A": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: KeyModCtrl | KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;8B": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: KeyModCtrl | KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;8C": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: KeyModCtrl | KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;8D": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: KeyModCtrl | KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	},
 
 	// Miscellaneous keys
-	"\x1b[Z": {KeyCode: KittyKeyTab, Modifiers: KeyModShift, EventType: KittyKeyPress},
+	"\x1b[Z": {
+		Runes:     []rune{KittyKeyTab},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	},
 
-	"\x1b[2~":   {KeyCode: KittyKeyInsert, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[3;2~": {KeyCode: KittyKeyInsert, Modifiers: KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[2~": {
+		Runes:     []rune{KittyKeyInsert},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	},
+	"\x1b[3;2~": {
+		Runes:     []rune{KittyKeyInsert},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	},
 
-	"\x1b[3~":   {KeyCode: KittyKeyDelete, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[3;3~": {KeyCode: KittyKeyDelete, Modifiers: KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[3~": {
+		Runes:     []rune{KittyKeyDelete},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	},
+	"\x1b[3;3~": {
+		Runes:     []rune{KittyKeyDelete},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	},
 
-	"\x1b[5~":   {KeyCode: KittyKeyPageUp, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[5;3~": {KeyCode: KittyKeyPageUp, Modifiers: KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[5;5~": {KeyCode: KittyKeyPageUp, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
-	"\x1b[5^":   {KeyCode: KittyKeyPageUp, Modifiers: KeyModCtrl, EventType: KittyKeyPress}, // urxvt
-	"\x1b[5;7~": {KeyCode: KittyKeyPageUp, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[5~": {
+		Runes:     []rune{KittyKeyPageUp},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	},
+	"\x1b[5;3~": {
+		Runes:     []rune{KittyKeyPageUp},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[5;5~": {
+		Runes:     []rune{KittyKeyPageUp},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	},
+	"\x1b[5^": {
+		Runes:     []rune{KittyKeyPageUp},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[5;7~": {
+		Runes:     []rune{KittyKeyPageUp},
+		Modifiers: KeyModCtrl | KeyModAlt,
+		Type:      KeyEventPress,
+	},
 
-	"\x1b[6~":   {KeyCode: KittyKeyPageDown, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[6;3~": {KeyCode: KittyKeyPageDown, Modifiers: KeyModAlt, EventType: KittyKeyPress},
-	"\x1b[6;5~": {KeyCode: KittyKeyPageDown, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
-	"\x1b[6^":   {KeyCode: KittyKeyPageDown, Modifiers: KeyModCtrl, EventType: KittyKeyPress}, // urxvt
-	"\x1b[6;7~": {KeyCode: KittyKeyPageDown, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},
+	"\x1b[6~": {
+		Runes:     []rune{KittyKeyPageDown},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	},
+	"\x1b[6;3~": {
+		Runes:     []rune{KittyKeyPageDown},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	},
+	"\x1b[6;5~": {
+		Runes:     []rune{KittyKeyPageDown},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	},
+	"\x1b[6^": {
+		Runes:     []rune{KittyKeyPageDown},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[6;7~": {
+		Runes:     []rune{KittyKeyPageDown},
+		Modifiers: KeyModCtrl | KeyModAlt,
+		Type:      KeyEventPress,
+	},
 
-	"\x1b[1~":   {KeyCode: KittyKeyHome, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[H":    {KeyCode: KittyKeyHome, Modifiers: 0, EventType: KittyKeyPress},                     // xterm, lxterm
-	"\x1b[1;3H": {KeyCode: KittyKeyHome, Modifiers: KeyModAlt, EventType: KittyKeyPress},          // xterm, lxterm
-	"\x1b[1;5H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl, EventType: KittyKeyPress},                 // xterm, lxterm
-	"\x1b[1;7H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},      // xterm, lxterm
-	"\x1b[1;2H": {KeyCode: KittyKeyHome, Modifiers: KeyModShift, EventType: KittyKeyPress},                // xterm, lxterm
-	"\x1b[1;4H": {KeyCode: KittyKeyHome, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},     // xterm, lxterm
-	"\x1b[1;6H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},            // xterm, lxterm
-	"\x1b[1;8H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress}, // xterm, lxterm
+	"\x1b[1~": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	},
+	"\x1b[H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;3H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;5H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;7H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModCtrl | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;2H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;4H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;6H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModCtrl | KeyModShift,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;8H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModCtrl | KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
 
-	"\x1b[4~":   {KeyCode: KittyKeyEnd, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1b[F":    {KeyCode: KittyKeyEnd, Modifiers: 0, EventType: KittyKeyPress},                     // xterm, lxterm
-	"\x1b[1;3F": {KeyCode: KittyKeyEnd, Modifiers: KeyModAlt, EventType: KittyKeyPress},          // xterm, lxterm
-	"\x1b[1;5F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl, EventType: KittyKeyPress},                 // xterm, lxterm
-	"\x1b[1;7F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},      // xterm, lxterm
-	"\x1b[1;2F": {KeyCode: KittyKeyEnd, Modifiers: KeyModShift, EventType: KittyKeyPress},                // xterm, lxterm
-	"\x1b[1;4F": {KeyCode: KittyKeyEnd, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},     // xterm, lxterm
-	"\x1b[1;6F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},            // xterm, lxterm
-	"\x1b[1;8F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress}, // xterm, lxterm
+	"\x1b[4~": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	},
+	"\x1b[F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;3F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;5F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;7F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModCtrl | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;2F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;4F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;6F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModCtrl | KeyModShift,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;8F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModCtrl | KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
 
-	"\x1b[7~": {KeyCode: KittyKeyHome, Modifiers: 0, EventType: KittyKeyPress},          // urxvt
-	"\x1b[7^": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl, EventType: KittyKeyPress},      // urxvt
-	"\x1b[7$": {KeyCode: KittyKeyHome, Modifiers: KeyModShift, EventType: KittyKeyPress},     // urxvt
-	"\x1b[7@": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress}, // urxvt
+	"\x1b[7~": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[7^": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[7$": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[7@": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModCtrl | KeyModShift,
+		Type:      KeyEventPress,
+	}, // urxvt
 
-	"\x1b[8~": {KeyCode: KittyKeyEnd, Modifiers: 0, EventType: KittyKeyPress},          // urxvt
-	"\x1b[8^": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl, EventType: KittyKeyPress},      // urxvt
-	"\x1b[8$": {KeyCode: KittyKeyEnd, Modifiers: KeyModShift, EventType: KittyKeyPress},     // urxvt
-	"\x1b[8@": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress}, // urxvt
+	"\x1b[8~": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[8^": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[8$": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[8@": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModCtrl | KeyModShift,
+		Type:      KeyEventPress,
+	}, // urxvt
 
 	// Function keys, Linux console
-	"\x1b[[A": {KeyCode: KittyKeyF1, Modifiers: 0, EventType: KittyKeyPress}, // linux console
-	"\x1b[[B": {KeyCode: KittyKeyF2, Modifiers: 0, EventType: KittyKeyPress}, // linux console
-	"\x1b[[C": {KeyCode: KittyKeyF3, Modifiers: 0, EventType: KittyKeyPress}, // linux console
-	"\x1b[[D": {KeyCode: KittyKeyF4, Modifiers: 0, EventType: KittyKeyPress}, // linux console
-	"\x1b[[E": {KeyCode: KittyKeyF5, Modifiers: 0, EventType: KittyKeyPress}, // linux console
+	"\x1b[[A": {
+		Runes:     []rune{KittyKeyF1},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // linux console
+	"\x1b[[B": {
+		Runes:     []rune{KittyKeyF2},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // linux console
+	"\x1b[[C": {
+		Runes:     []rune{KittyKeyF3},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // linux console
+	"\x1b[[D": {
+		Runes:     []rune{KittyKeyF4},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // linux console
+	"\x1b[[E": {
+		Runes:     []rune{KittyKeyF5},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // linux console
 
 	// Function keys, X11
-	"\x1bOP": {KeyCode: KittyKeyF1, Modifiers: 0, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1bOQ": {KeyCode: KittyKeyF2, Modifiers: 0, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1bOR": {KeyCode: KittyKeyF3, Modifiers: 0, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1bOS": {KeyCode: KittyKeyF4, Modifiers: 0, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1bOP": {
+		Runes:     []rune{KittyKeyF1},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
+	"\x1bOQ": {
+		Runes:     []rune{KittyKeyF2},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
+	"\x1bOR": {
+		Runes:     []rune{KittyKeyF3},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
+	"\x1bOS": {
+		Runes:     []rune{KittyKeyF4},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
 
-	"\x1b[1;3P": {KeyCode: KittyKeyF1, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1b[1;3Q": {KeyCode: KittyKeyF2, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1b[1;3R": {KeyCode: KittyKeyF3, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1b[1;3S": {KeyCode: KittyKeyF4, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[1;3P": {
+		Runes:     []rune{KittyKeyF1},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
+	"\x1b[1;3Q": {
+		Runes:     []rune{KittyKeyF2},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
+	"\x1b[1;3R": {
+		Runes:     []rune{KittyKeyF3},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
+	"\x1b[1;3S": {
+		Runes:     []rune{KittyKeyF4},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
 
-	"\x1b[11~": {KeyCode: KittyKeyF1, Modifiers: 0, EventType: KittyKeyPress}, // urxvt
-	"\x1b[12~": {KeyCode: KittyKeyF2, Modifiers: 0, EventType: KittyKeyPress}, // urxvt
-	"\x1b[13~": {KeyCode: KittyKeyF3, Modifiers: 0, EventType: KittyKeyPress}, // urxvt
-	"\x1b[14~": {KeyCode: KittyKeyF4, Modifiers: 0, EventType: KittyKeyPress}, // urxvt
+	"\x1b[11~": {
+		Runes:     []rune{KittyKeyF1},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[12~": {
+		Runes:     []rune{KittyKeyF2},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[13~": {
+		Runes:     []rune{KittyKeyF3},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // urxvt
+	"\x1b[14~": {
+		Runes:     []rune{KittyKeyF4},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // urxvt
 
-	"\x1b[15~": {KeyCode: KittyKeyF5, Modifiers: 0, EventType: KittyKeyPress}, // vt100, xterm, also urxvt
+	"\x1b[15~": {
+		Runes:     []rune{KittyKeyF5},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // vt100, xterm, also urxvt
 
-	"\x1b[15;3~": {KeyCode: KittyKeyF5, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm, also urxvt
+	"\x1b[15;3~": {
+		Runes:     []rune{KittyKeyF5},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm, also urxvt
 
-	"\x1b[17~": {KeyCode: KittyKeyF6, Modifiers: 0, EventType: KittyKeyPress},  // vt100, xterm, also urxvt
-	"\x1b[18~": {KeyCode: KittyKeyF7, Modifiers: 0, EventType: KittyKeyPress},  // vt100, xterm, also urxvt
-	"\x1b[19~": {KeyCode: KittyKeyF8, Modifiers: 0, EventType: KittyKeyPress},  // vt100, xterm, also urxvt
-	"\x1b[20~": {KeyCode: KittyKeyF9, Modifiers: 0, EventType: KittyKeyPress},  // vt100, xterm, also urxvt
-	"\x1b[21~": {KeyCode: KittyKeyF10, Modifiers: 0, EventType: KittyKeyPress}, // vt100, xterm, also urxvt
+	"\x1b[17~": {
+		Runes:     []rune{KittyKeyF6},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // vt100, xterm, also urxvt
+	"\x1b[18~": {
+		Runes:     []rune{KittyKeyF7},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // vt100, xterm, also urxvt
+	"\x1b[19~": {
+		Runes:     []rune{KittyKeyF8},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // vt100, xterm, also urxvt
+	"\x1b[20~": {
+		Runes:     []rune{KittyKeyF9},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // vt100, xterm, also urxvt
+	"\x1b[21~": {
+		Runes:     []rune{KittyKeyF10},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // vt100, xterm, also urxvt
 
-	"\x1b[17;3~": {KeyCode: KittyKeyF6, Modifiers: KeyModAlt, EventType: KittyKeyPress},  // vt100, xterm
-	"\x1b[18;3~": {KeyCode: KittyKeyF7, Modifiers: KeyModAlt, EventType: KittyKeyPress},  // vt100, xterm
-	"\x1b[19;3~": {KeyCode: KittyKeyF8, Modifiers: KeyModAlt, EventType: KittyKeyPress},  // vt100, xterm
-	"\x1b[20;3~": {KeyCode: KittyKeyF9, Modifiers: KeyModAlt, EventType: KittyKeyPress},  // vt100, xterm
-	"\x1b[21;3~": {KeyCode: KittyKeyF10, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[17;3~": {
+		Runes:     []rune{KittyKeyF6},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
+	"\x1b[18;3~": {
+		Runes:     []rune{KittyKeyF7},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
+	"\x1b[19;3~": {
+		Runes:     []rune{KittyKeyF8},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
+	"\x1b[20;3~": {
+		Runes:     []rune{KittyKeyF9},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
+	"\x1b[21;3~": {
+		Runes:     []rune{KittyKeyF10},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
 
-	"\x1b[23~": {KeyCode: KittyKeyF11, Modifiers: 0, EventType: KittyKeyPress}, // vt100, xterm, also urxvt
-	"\x1b[24~": {KeyCode: KittyKeyF12, Modifiers: 0, EventType: KittyKeyPress}, // vt100, xterm, also urxvt
+	"\x1b[23~": {
+		Runes:     []rune{KittyKeyF11},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // vt100, xterm, also urxvt
+	"\x1b[24~": {
+		Runes:     []rune{KittyKeyF12},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // vt100, xterm, also urxvt
 
-	"\x1b[23;3~": {KeyCode: KittyKeyF11, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1b[24;3~": {KeyCode: KittyKeyF12, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[23;3~": {
+		Runes:     []rune{KittyKeyF11},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
+	"\x1b[24;3~": {
+		Runes:     []rune{KittyKeyF12},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
 
-	"\x1b[1;2P": {KeyCode: 0xE000 + 124, Modifiers: 0, EventType: KittyKeyPress}, // F13
-	"\x1b[1;2Q": {KeyCode: 0xE000 + 125, Modifiers: 0, EventType: KittyKeyPress}, // F14
+	"\x1b[1;2P": {
+		Runes:     []rune{0xE000 + 124},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F13
+	"\x1b[1;2Q": {
+		Runes:     []rune{0xE000 + 125},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F14
 
-	"\x1b[25~": {KeyCode: 0xE000 + 124, Modifiers: 0, EventType: KittyKeyPress}, // F13, vt100, xterm, also urxvt
-	"\x1b[26~": {KeyCode: 0xE000 + 125, Modifiers: 0, EventType: KittyKeyPress}, // F14, vt100, xterm, also urxvt
+	"\x1b[25~": {
+		Runes:     []rune{0xE000 + 124},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F13, vt100, xterm, also urxvt
+	"\x1b[26~": {
+		Runes:     []rune{0xE000 + 125},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F14, vt100, xterm, also urxvt
 
-	"\x1b[25;3~": {KeyCode: 0xE000 + 124, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // F13, vt100, xterm
-	"\x1b[26;3~": {KeyCode: 0xE000 + 125, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // F14, vt100, xterm
+	"\x1b[25;3~": {
+		Runes:     []rune{0xE000 + 124},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // F13, vt100, xterm
+	"\x1b[26;3~": {
+		Runes:     []rune{0xE000 + 125},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // F14, vt100, xterm
 
-	"\x1b[1;2R": {KeyCode: 0xE000 + 126, Modifiers: 0, EventType: KittyKeyPress}, // F15
-	"\x1b[1;2S": {KeyCode: 0xE000 + 127, Modifiers: 0, EventType: KittyKeyPress}, // F16
+	"\x1b[1;2R": {
+		Runes:     []rune{0xE000 + 126},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F15
+	"\x1b[1;2S": {
+		Runes:     []rune{0xE000 + 127},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F16
 
-	"\x1b[28~": {KeyCode: 0xE000 + 126, Modifiers: 0, EventType: KittyKeyPress}, // F15, vt100, xterm, also urxvt
-	"\x1b[29~": {KeyCode: 0xE000 + 127, Modifiers: 0, EventType: KittyKeyPress}, // F16, vt100, xterm, also urxvt
+	"\x1b[28~": {
+		Runes:     []rune{0xE000 + 126},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F15, vt100, xterm, also urxvt
+	"\x1b[29~": {
+		Runes:     []rune{0xE000 + 127},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F16, vt100, xterm, also urxvt
 
-	"\x1b[28;3~": {KeyCode: 0xE000 + 126, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // F15, vt100, xterm
-	"\x1b[29;3~": {KeyCode: 0xE000 + 127, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // F16, vt100, xterm
+	"\x1b[28;3~": {
+		Runes:     []rune{0xE000 + 126},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // F15, vt100, xterm
+	"\x1b[29;3~": {
+		Runes:     []rune{0xE000 + 127},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // F16, vt100, xterm
 
-	"\x1b[15;2~": {KeyCode: 0xE000 + 128, Modifiers: 0, EventType: KittyKeyPress}, // F17
-	"\x1b[17;2~": {KeyCode: 0xE000 + 129, Modifiers: 0, EventType: KittyKeyPress}, // F18
-	"\x1b[18;2~": {KeyCode: 0xE000 + 130, Modifiers: 0, EventType: KittyKeyPress}, // F19
-	"\x1b[19;2~": {KeyCode: 0xE000 + 131, Modifiers: 0, EventType: KittyKeyPress}, // F20
+	"\x1b[15;2~": {
+		Runes:     []rune{0xE000 + 128},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F17
+	"\x1b[17;2~": {
+		Runes:     []rune{0xE000 + 129},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F18
+	"\x1b[18;2~": {
+		Runes:     []rune{0xE000 + 130},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F19
+	"\x1b[19;2~": {
+		Runes:     []rune{0xE000 + 131},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F20
 
-	"\x1b[31~": {KeyCode: 0xE000 + 128, Modifiers: 0, EventType: KittyKeyPress}, // F17
-	"\x1b[32~": {KeyCode: 0xE000 + 129, Modifiers: 0, EventType: KittyKeyPress}, // F18
-	"\x1b[33~": {KeyCode: 0xE000 + 130, Modifiers: 0, EventType: KittyKeyPress}, // F19
-	"\x1b[34~": {KeyCode: 0xE000 + 131, Modifiers: 0, EventType: KittyKeyPress}, // F20
+	"\x1b[31~": {
+		Runes:     []rune{0xE000 + 128},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F17
+	"\x1b[32~": {
+		Runes:     []rune{0xE000 + 129},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F18
+	"\x1b[33~": {
+		Runes:     []rune{0xE000 + 130},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F19
+	"\x1b[34~": {
+		Runes:     []rune{0xE000 + 131},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	}, // F20
 
 	// Powershell sequences.
-	"\x1bOA": {KeyCode: KittyKeyUp, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1bOB": {KeyCode: KittyKeyDown, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1bOC": {KeyCode: KittyKeyRight, Modifiers: 0, EventType: KittyKeyPress},
-	"\x1bOD": {KeyCode: KittyKeyLeft, Modifiers: 0, EventType: KittyKeyPress},
+	"\x1bOA": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	},
+	"\x1bOB": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	},
+	"\x1bOC": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	},
+	"\x1bOD": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: 0,
+		Type:      KeyEventPress,
+	},
 }
 
 // xtermSequences is an authoritative list of the byte sequences for keys to
 // be interpreted by xterm, because sequences above contains conflicting keys.
 // We probably need a better approach to this.
 var xtermSequences = map[string]Key{
-	"\x1b[A":    {KeyCode: KittyKeyUp, EventType: KittyKeyPress},
-	"\x1b[B":    {KeyCode: KittyKeyDown, EventType: KittyKeyPress},
-	"\x1b[C":    {KeyCode: KittyKeyRight, EventType: KittyKeyPress},
-	"\x1b[D":    {KeyCode: KittyKeyLeft, EventType: KittyKeyPress},
-	"\x1b[1;2A": {KeyCode: KittyKeyUp, Modifiers: KeyModShift, EventType: KittyKeyPress},
-	"\x1b[1;2B": {KeyCode: KittyKeyDown, Modifiers: KeyModShift, EventType: KittyKeyPress},
-	"\x1b[1;2C": {KeyCode: KittyKeyRight, Modifiers: KeyModShift, EventType: KittyKeyPress},
-	"\x1b[1;2D": {KeyCode: KittyKeyLeft, Modifiers: KeyModShift, EventType: KittyKeyPress},
+	"\x1b[A": {
+		Runes: []rune{KittyKeyUp},
+		Type:  KeyEventPress,
+	},
+	"\x1b[B": {
+		Runes: []rune{KittyKeyDown},
+		Type:  KeyEventPress,
+	},
+	"\x1b[C": {
+		Runes: []rune{KittyKeyRight},
+		Type:  KeyEventPress,
+	},
+	"\x1b[D": {
+		Runes: []rune{KittyKeyLeft},
+		Type:  KeyEventPress,
+	},
+	"\x1b[1;2A": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;2B": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;2C": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;2D": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	},
 
-	"\x1b[OA": {KeyCode: KittyKeyUp, Modifiers: KeyModShift, EventType: KittyKeyPress},    // DECCKM
-	"\x1b[OB": {KeyCode: KittyKeyDown, Modifiers: KeyModShift, EventType: KittyKeyPress},  // DECCKM
-	"\x1b[OC": {KeyCode: KittyKeyRight, Modifiers: KeyModShift, EventType: KittyKeyPress}, // DECCKM
-	"\x1b[OD": {KeyCode: KittyKeyLeft, Modifiers: KeyModShift, EventType: KittyKeyPress},  // DECCKM
+	"\x1b[OA": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // DECCKM
+	"\x1b[OB": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // DECCKM
+	"\x1b[OC": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // DECCKM
+	"\x1b[OD": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // DECCKM
 
-	"\x1b[1;5A": {KeyCode: KittyKeyUp, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
-	"\x1b[1;5B": {KeyCode: KittyKeyDown, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
-	"\x1b[1;5C": {KeyCode: KittyKeyRight, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
-	"\x1b[1;5D": {KeyCode: KittyKeyLeft, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
+	"\x1b[1;5A": {
+		Runes:     []rune{KittyKeyUp},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;5B": {
+		Runes:     []rune{KittyKeyDown},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;5C": {
+		Runes:     []rune{KittyKeyRight},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	},
+	"\x1b[1;5D": {
+		Runes:     []rune{KittyKeyLeft},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	},
 
-	"\x1b[5;5~": {KeyCode: KittyKeyPageUp, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
-	"\x1b[6;5~": {KeyCode: KittyKeyPageDown, Modifiers: KeyModCtrl, EventType: KittyKeyPress},
+	"\x1b[5;5~": {
+		Runes:     []rune{KittyKeyPageUp},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	},
+	"\x1b[6;5~": {
+		Runes:     []rune{KittyKeyPageDown},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	},
 
-	"\x1b[H":    {KeyCode: KittyKeyHome, EventType: KittyKeyPress},                     // xterm, lxterm
-	"\x1b[1;3H": {KeyCode: KittyKeyHome, Modifiers: KeyModAlt, EventType: KittyKeyPress},          // xterm, lxterm
-	"\x1b[1;5H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl, EventType: KittyKeyPress},                 // xterm, lxterm
-	"\x1b[1;7H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},      // xterm, lxterm
-	"\x1b[1;2H": {KeyCode: KittyKeyHome, Modifiers: KeyModShift, EventType: KittyKeyPress},                // xterm, lxterm
-	"\x1b[1;4H": {KeyCode: KittyKeyHome, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},     // xterm, lxterm
-	"\x1b[1;6H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},            // xterm, lxterm
-	"\x1b[1;8H": {KeyCode: KittyKeyHome, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress}, // xterm, lxterm
+	"\x1b[H": {
+		Runes: []rune{KittyKeyHome},
+		Type:  KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;3H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;5H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;7H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModCtrl | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;2H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;4H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;6H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModCtrl | KeyModShift,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;8H": {
+		Runes:     []rune{KittyKeyHome},
+		Modifiers: KeyModCtrl | KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
 
-	"\x1b[F":    {KeyCode: KittyKeyEnd, EventType: KittyKeyPress},                     // xterm, lxterm
-	"\x1b[1;3F": {KeyCode: KittyKeyEnd, Modifiers: KeyModAlt, EventType: KittyKeyPress},          // xterm, lxterm
-	"\x1b[1;5F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl, EventType: KittyKeyPress},                 // xterm, lxterm
-	"\x1b[1;7F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl | KeyModAlt, EventType: KittyKeyPress},      // xterm, lxterm
-	"\x1b[1;2F": {KeyCode: KittyKeyEnd, Modifiers: KeyModShift, EventType: KittyKeyPress},                // xterm, lxterm
-	"\x1b[1;4F": {KeyCode: KittyKeyEnd, Modifiers: KeyModShift | KeyModAlt, EventType: KittyKeyPress},     // xterm, lxterm
-	"\x1b[1;6F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl | KeyModShift, EventType: KittyKeyPress},            // xterm, lxterm
-	"\x1b[1;8F": {KeyCode: KittyKeyEnd, Modifiers: KeyModCtrl | KeyModShift | KeyModAlt, EventType: KittyKeyPress}, // xterm, lxterm
+	"\x1b[F": {
+		Runes: []rune{KittyKeyEnd},
+		Type:  KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;3F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;5F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModCtrl,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;7F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModCtrl | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;2F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModShift,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;4F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;6F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModCtrl | KeyModShift,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
+	"\x1b[1;8F": {
+		Runes:     []rune{KittyKeyEnd},
+		Modifiers: KeyModCtrl | KeyModShift | KeyModAlt,
+		Type:      KeyEventPress,
+	}, // xterm, lxterm
 
-	"\x1bOP": {KeyCode: KittyKeyF1, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1bOQ": {KeyCode: KittyKeyF2, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1bOR": {KeyCode: KittyKeyF3, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1bOS": {KeyCode: KittyKeyF4, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1bOP": {
+		Runes: []rune{KittyKeyF1},
+		Type:  KeyEventPress,
+	}, // vt100, xterm
+	"\x1bOQ": {
+		Runes: []rune{KittyKeyF2},
+		Type:  KeyEventPress,
+	}, // vt100, xterm
+	"\x1bOR": {
+		Runes: []rune{KittyKeyF3},
+		Type:  KeyEventPress,
+	}, // vt100, xterm
+	"\x1bOS": {
+		Runes: []rune{KittyKeyF4},
+		Type:  KeyEventPress,
+	}, // vt100, xterm
 
-	"\x1b[1;3P": {KeyCode: KittyKeyF1, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1b[1;3Q": {KeyCode: KittyKeyF2, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1b[1;3R": {KeyCode: KittyKeyF3, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
-	"\x1b[1;3S": {KeyCode: KittyKeyF4, Modifiers: KeyModAlt, EventType: KittyKeyPress}, // vt100, xterm
+	"\x1b[1;3P": {
+		Runes:     []rune{KittyKeyF1},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
+	"\x1b[1;3Q": {
+		Runes:     []rune{KittyKeyF2},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
+	"\x1b[1;3R": {
+		Runes:     []rune{KittyKeyF3},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
+	"\x1b[1;3S": {
+		Runes:     []rune{KittyKeyF4},
+		Modifiers: KeyModAlt,
+		Type:      KeyEventPress,
+	}, // vt100, xterm
 
-	"\x1b[28~": {KeyCode: 0xE000 + 126, EventType: KittyKeyPress}, // F15 - vt100, xterm, also urxvt
-	"\x1b[29~": {KeyCode: 0xE000 + 127, EventType: KittyKeyPress}, // F16 - vt100, xterm, also urxvt
+	"\x1b[28~": {
+		Runes: []rune{0xE000 + 126},
+		Type:  KeyEventPress,
+	}, // F15 - vt100, xterm, also urxvt
+	"\x1b[29~": {
+		Runes: []rune{0xE000 + 127},
+		Type:  KeyEventPress,
+	}, // F16 - vt100, xterm, also urxvt
 }
 
 type keyLookup struct {

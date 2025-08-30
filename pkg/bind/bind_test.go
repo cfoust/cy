@@ -10,24 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func sendKeys(client *Engine[int], keys ...interface{}) {
-	msgs := make([]taro.KeyMsg, 0)
-
-	for _, key := range keys {
-		switch key := key.(type) {
-		case string:
-			for _, char := range key {
-				msgs = append(msgs, taro.KeyMsg{
-					Type:  taro.KeyRunes,
-					Runes: []rune{char},
-				})
-			}
-		case taro.KeyType:
-			msgs = append(msgs, taro.KeyMsg{
-				Type: key,
-			})
-		}
-	}
+func sendKeys(client *Engine[int], keys ...string) {
+	msgs := taro.KeysToMsg(keys...)
 
 	for _, msg := range msgs {
 		client.processKey(context.Background(), msg)
@@ -48,7 +32,7 @@ func TestAction(t *testing.T) {
 
 	go sendKeys(
 		engine,
-		taro.KeyCtrlA,
+		"ctrl+a",
 	)
 
 	<-engine.Recv()
@@ -83,7 +67,7 @@ func TestIdle(t *testing.T) {
 
 	sendKeys(
 		engine,
-		taro.KeyCtrlA,
+		"ctrl+a",
 	)
 
 	assert.Equal(t, []string{

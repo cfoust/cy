@@ -99,12 +99,10 @@ func (p *PaneModule) SendText(id *janet.Value, text string) error {
 		return err
 	}
 
-	for _, key := range text {
-		pane.Screen().Send(taro.KeyMsg{
-			KeyCode:   int(key),
-			EventType: taro.KittyKeyPress,
-		})
-	}
+	pane.Screen().Send(taro.KeyMsg{
+		Runes: []rune(text),
+		Type:  taro.KeyEventPress,
+	})
 
 	return nil
 }

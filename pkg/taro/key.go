@@ -36,42 +36,10 @@ import (
 	"unicode/utf8"
 
 	"github.com/cfoust/cy/pkg/emu"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// KeyMsg contains information about a keypress. KeyMsgs are always sent to
-// the program's update function. There are a couple general patterns you could
-// use to check for keypresses:
-//
-//	// Switch on the string representation of the key (shorter)
-//	switch msg := msg.(type) {
-//	case KeyMsg:
-//	    switch msg.String() {
-//	    case "enter":
-//	        fmt.Println("you pressed enter!")
-//	    case "a":
-//	        fmt.Println("you pressed a!")
-//	    }
-//	}
-//
-//	// Switch on the key type (more foolproof)
-//	switch msg := msg.(type) {
-//	case KeyMsg:
-//	    switch msg.Type {
-//	    case KeyEnter:
-//	        fmt.Println("you pressed enter!")
-//	    case KeyRunes:
-//	        switch string(msg.Runes) {
-//	        case "a":
-//	            fmt.Println("you pressed a!")
-//	        }
-//	    }
-//	}
-//
-// Note that Key.Runes will always contain at least one character, so you can
-// always safely call Key.Runes[0]. In most cases Key.Runes will only contain
-// one character, though certain input method editors (most notably Chinese
-// IMEs) can input multiple runes at once.
 type KeyMsg Key
 
 func (k KeyMsg) ToTea() tea.KeyMsg {
@@ -79,8 +47,10 @@ func (k KeyMsg) ToTea() tea.KeyMsg {
 	legacyType := key.toLegacyKeyType()
 
 	var runes []rune
-	if legacyType == 0 && key.KeyCode <= 0x10FFFF && key.KeyCode > 31 && key.KeyCode != 127 {
-		runes = []rune{rune(key.KeyCode)}
+	if legacyType == 0 && len(key.Runes) > 0 && key.Runes[0] <= 0x10FFFF &&
+		key.Runes[0] > 31 &&
+		key.Runes[0] != 127 {
+		runes = []rune{rune(key.Runes[0])}
 		legacyType = KeyRunes
 	}
 
@@ -97,22 +67,11 @@ func (k KeyMsg) String() (str string) {
 	return Key(k).String()
 }
 
-// Runes returns the key as a slice of runes for compatibility with legacy code
-func (k KeyMsg) Runes() []rune {
-	return Key(k).Runes()
-}
-
-// Type returns the legacy KeyType for compatibility with legacy code
-func (k KeyMsg) Type() KeyType {
-	return Key(k).toLegacyKeyType()
-}
-
 // Key contains information about a keypress using Kitty protocol structure.
 type Key struct {
-	KeyCode   int               // Unicode key code or Kitty special key
-	Modifiers KeyModifiers      // Combined modifier flags
-	EventType KittyKeyEventType // Press/repeat/release
-	Text      string            // Associated text (if any)
+	Runes     []rune       // Can also contain KittyKeys
+	Type      KeyEventType // Press/repeat/release
+	Modifiers KeyModifiers // Combined modifier flags
 }
 
 // String returns a friendly string representation for a key. It's safe (and
@@ -144,43 +103,48 @@ func (k Key) String() (str string) {
 	}
 
 	var keyPart string
-	switch k.KeyCode {
-	case KittyKeyEscape:
-		keyPart = "escape"
-	case KittyKeyEnter:
-		keyPart = "enter"
-	case KittyKeyTab:
-		keyPart = "tab"
-	case KittyKeyBackspace:
-		keyPart = "backspace"
-	case KittyKeyInsert:
-		keyPart = "insert"
-	case KittyKeyDelete:
-		keyPart = "delete"
-	case KittyKeyHome:
-		keyPart = "home"
-	case KittyKeyEnd:
-		keyPart = "end"
-	case KittyKeyPageUp:
-		keyPart = "pgup"
-	case KittyKeyPageDown:
-		keyPart = "pgdown"
-	case KittyKeyLeft:
-		keyPart = "left"
-	case KittyKeyUp:
-		keyPart = "up"
-	case KittyKeyRight:
-		keyPart = "right"
-	case KittyKeyDown:
-		keyPart = "down"
-	case KittyKeyF1, KittyKeyF2, KittyKeyF3, KittyKeyF4, KittyKeyF5, KittyKeyF6,
-		KittyKeyF7, KittyKeyF8, KittyKeyF9, KittyKeyF10, KittyKeyF11, KittyKeyF12:
-		keyPart = fmt.Sprintf("f%d", k.KeyCode-KittyKeyF1+1)
-	default:
-		if k.KeyCode <= 0x10FFFF {
-			keyPart = string(rune(k.KeyCode))
-		} else {
-			keyPart = fmt.Sprintf("unknown(%d)", k.KeyCode)
+	if len(k.Runes) == 0 {
+		keyPart = "unknown"
+	} else {
+		keyCode := k.Runes[0]
+		switch keyCode {
+		case KittyKeyEscape:
+			keyPart = "escape"
+		case KittyKeyEnter:
+			keyPart = "enter"
+		case KittyKeyTab:
+			keyPart = "tab"
+		case KittyKeyBackspace:
+			keyPart = "backspace"
+		case KittyKeyInsert:
+			keyPart = "insert"
+		case KittyKeyDelete:
+			keyPart = "delete"
+		case KittyKeyHome:
+			keyPart = "home"
+		case KittyKeyEnd:
+			keyPart = "end"
+		case KittyKeyPageUp:
+			keyPart = "pgup"
+		case KittyKeyPageDown:
+			keyPart = "pgdown"
+		case KittyKeyLeft:
+			keyPart = "left"
+		case KittyKeyUp:
+			keyPart = "up"
+		case KittyKeyRight:
+			keyPart = "right"
+		case KittyKeyDown:
+			keyPart = "down"
+		case KittyKeyF1, KittyKeyF2, KittyKeyF3, KittyKeyF4, KittyKeyF5, KittyKeyF6,
+			KittyKeyF7, KittyKeyF8, KittyKeyF9, KittyKeyF10, KittyKeyF11, KittyKeyF12:
+			keyPart = fmt.Sprintf("f%d", keyCode-KittyKeyF1+1)
+		default:
+			if keyCode <= 0x10FFFF {
+				keyPart = string(rune(keyCode))
+			} else {
+				keyPart = fmt.Sprintf("unknown(%d)", keyCode)
+			}
 		}
 	}
 
@@ -198,57 +162,38 @@ func (k Key) Bytes(protocol emu.KeyProtocol) (data []byte) {
 	return k.legacyBytes()
 }
 
-// kittySequence generates the Kitty protocol sequence for this key
-func (k Key) kittySequence(protocol emu.KeyProtocol) string {
-	keycode := k.KeyCode
-	modifiers := int(k.Modifiers)
-	eventType := int(k.EventType)
-
-	// Check if event types should be reported
-	reportEventTypes := protocol&emu.KeyReportEventTypes != 0
-
-	// Check if associated text should be reported
-	reportText := protocol&emu.KeyReportAssociatedText != 0
-
-	// Determine if we should include event type in output
-	includeEventType := reportEventTypes && eventType != 0
-
-	// Determine if we should include text in output
-	includeText := reportText && k.Text != ""
-
-	if includeEventType || includeText {
-		// Extended format with event type and/or text
-		if includeText {
-			return fmt.Sprintf("\x1b[%d;%d;%d;%su", keycode, modifiers, eventType, k.Text)
-		} else {
-			return fmt.Sprintf("\x1b[%d;%d;%du", keycode, modifiers, eventType)
-		}
-	} else if modifiers != 0 {
-		// Standard format with modifiers
-		return fmt.Sprintf("\x1b[%d;%du", keycode, modifiers)
-	} else {
-		// Minimal format
-		return fmt.Sprintf("\x1b[%du", keycode)
-	}
-}
-
 // legacyBytes returns the traditional byte encoding for a key
 func (k Key) legacyBytes() (data []byte) {
 	// Convert Kitty-based key to legacy format
 	alt := k.Modifiers&KeyModAlt != 0
 
+	if len(k.Runes) == 0 {
+		return data
+	}
+
+	// If we have multiple runes, they're likely regular Unicode characters
+	if len(k.Runes) > 1 {
+		if alt {
+			data = append(data, '\x1b')
+		}
+		data = append(data, []byte(string(k.Runes))...)
+		return data
+	}
+
+	keyCode := k.Runes[0]
+
 	// Handle space specially
-	if k.KeyCode == ' ' {
+	if keyCode == ' ' {
 		data = append(data, []byte(" ")...)
 		return data
 	}
 
 	// Handle regular Unicode characters
-	if k.KeyCode <= 0x10FFFF && k.KeyCode > 31 && k.KeyCode != 127 {
+	if keyCode <= 0x10FFFF && keyCode > 31 && keyCode != 127 {
 		if alt {
 			data = append(data, '\x1b')
 		}
-		data = append(data, []byte(string(rune(k.KeyCode)))...)
+		data = append(data, []byte(string(rune(keyCode)))...)
 		return data
 	}
 
@@ -275,7 +220,11 @@ func (k Key) legacyBytes() (data []byte) {
 
 // toLegacyKeyType converts a Kitty key code to legacy KeyType
 func (k Key) toLegacyKeyType() KeyType {
-	switch k.KeyCode {
+	if len(k.Runes) == 0 {
+		return 0
+	}
+	keyCode := k.Runes[0]
+	switch keyCode {
 	case KittyKeyEscape:
 		return KeyEscape
 	case KittyKeyEnter:
@@ -391,17 +340,17 @@ func (k Key) toLegacyKeyType() KeyType {
 
 // IsPress returns true if this is a key press event (default for legacy keys)
 func (k Key) IsPress() bool {
-	return k.EventType == KittyKeyPress
+	return k.Type == KeyEventPress
 }
 
 // IsRepeat returns true if this is a key repeat event
 func (k Key) IsRepeat() bool {
-	return k.EventType == KittyKeyRepeat
+	return k.Type == KeyEventRepeat
 }
 
 // IsRelease returns true if this is a key release event
 func (k Key) IsRelease() bool {
-	return k.EventType == KittyKeyRelease
+	return k.Type == KeyEventRelease
 }
 
 // HasModifier checks if a specific Kitty modifier is present
@@ -440,13 +389,13 @@ func (k Key) HasMeta() bool {
 }
 
 // Runes returns the key as a slice of runes for compatibility with legacy code
-func (k Key) Runes() []rune {
-	// Only return runes for regular Unicode characters (not special keys)
-	if k.KeyCode <= 0x10FFFF && k.KeyCode > 31 && k.KeyCode != 127 {
-		return []rune{rune(k.KeyCode)}
-	}
-	return nil
-}
+//func (k Key) Runes() []rune {
+//// Only return runes for regular Unicode characters (not special keys)
+//if k.KeyCode <= 0x10FFFF && k.KeyCode > 31 && k.KeyCode != 127 {
+//return []rune{rune(k.KeyCode)}
+//}
+//return nil
+//}
 
 // KeyType indicates the key pressed, such as KeyEnter or KeyBreak or KeyCtrlC.
 // All other keys will be type KeyRunes. To get the rune value, check the Rune
@@ -503,7 +452,7 @@ func KeysToMsg(keys ...string) (msgs []KeyMsg) {
 		}
 
 		// Map key names to Kitty key codes
-		var keyCode int
+		var keyCode rune = -1
 		switch key {
 		case "escape", "esc":
 			keyCode = KittyKeyEscape
@@ -559,17 +508,19 @@ func KeysToMsg(keys ...string) (msgs []KeyMsg) {
 			keyCode = KittyKeyF12
 		case "space":
 			keyCode = ' '
-		default:
-			// For unrecognized keys, use the first character
-			if len(key) > 0 {
-				keyCode = int([]rune(key)[0])
-			}
+		}
+
+		runes := []rune{keyCode}
+
+		// For unrecognized keys, use the first character
+		if keyCode == -1 && len(key) > 0 {
+			runes = []rune(key)
 		}
 
 		msgs = append(msgs, KeyMsg{
-			KeyCode:   keyCode,
+			Runes:     runes,
 			Modifiers: modifiers,
-			EventType: KittyKeyPress,
+			Type:      KeyEventPress,
 		})
 	}
 	return
@@ -580,7 +531,10 @@ func KeysToBytes(keys ...KeyMsg) (data []byte, err error) {
 }
 
 // KeysToBytesWithProtocol converts KeyMsgs to bytes using the specified protocol
-func KeysToBytesWithProtocol(protocol emu.KeyProtocol, keys ...KeyMsg) (data []byte, err error) {
+func KeysToBytesWithProtocol(
+	protocol emu.KeyProtocol,
+	keys ...KeyMsg,
+) (data []byte, err error) {
 	for _, key := range keys {
 		keyBytes := Key(key).Bytes(protocol)
 		data = append(data, keyBytes...)
@@ -678,7 +632,11 @@ func DetectOneMsg(b []byte) (w int, msg Msg) {
 		if alt {
 			modifiers |= KeyModAlt
 		}
-		return i + 1, KeyMsg{KeyCode: 0, Modifiers: modifiers, EventType: KittyKeyPress}
+		return i + 1, KeyMsg{
+			Runes:     []rune{0},
+			Modifiers: modifiers,
+			Type:      KeyEventPress,
+		}
 	}
 
 	// Find the longest sequence of runes that are not control
@@ -700,24 +658,27 @@ func DetectOneMsg(b []byte) (w int, msg Msg) {
 			break
 		}
 	}
-	// If we found at least one rune, we report the bunch of them as
-	// Unicode characters using the new Key structure.
 	if len(runes) > 0 {
 		modifiers := KeyModifiers(0)
 		if alt {
 			modifiers |= KeyModAlt
 		}
 
-		// For now, just use the first rune for the KeyCode
-		// In a full implementation, might need to handle multi-rune sequences differently
-		k := Key{KeyCode: int(runes[0]), Modifiers: modifiers, EventType: KittyKeyPress}
+		k := Key{
+			Runes:     runes,
+			Modifiers: modifiers,
+			Type:      KeyEventPress,
+		}
 		return i, KeyMsg(k)
 	}
 
 	// We didn't find an escape sequence, nor a valid rune. Was this a
 	// lone escape character at the end of the input?
 	if alt && len(b) == 1 {
-		return 1, KeyMsg(Key{KeyCode: KittyKeyEscape, EventType: KittyKeyPress})
+		return 1, KeyMsg(Key{
+			Runes: []rune{KittyKeyEscape},
+			Type:  KeyEventPress,
+		})
 	}
 
 	// The character at the current position is neither an escape

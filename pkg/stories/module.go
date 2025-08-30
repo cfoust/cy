@@ -46,19 +46,20 @@ const TYPE_DELAY = 100 * time.Millisecond
 // Simulate typing.
 func Type(msgs ...string) (result []interface{}) {
 	for _, key := range taro.KeysToMsg(msgs...) {
-		runes := key.Runes()
+		runes := key.Runes
 		if len(runes) == 0 {
 			result = append(result, key, Wait(TYPE_DELAY))
 			continue
 		}
 
 		for _, r := range runes {
-			newKey := taro.KeyMsg(taro.Key{
-				KeyCode:   int(r),
-				Modifiers: taro.Key(key).Modifiers,
-				EventType: taro.Key(key).EventType,
-			})
-			result = append(result, newKey, Wait(TYPE_DELAY))
+			newKey := key
+			newKey.Runes = []rune{r}
+			result = append(
+				result,
+				taro.KeyMsg(newKey),
+				Wait(TYPE_DELAY),
+			)
 		}
 	}
 

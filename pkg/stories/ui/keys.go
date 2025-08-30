@@ -99,8 +99,8 @@ func (k *Keys) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return k, nil
 	case taro.KeyMsg:
 		name := msg.String()
-		runes := msg.Runes()
-		if len(runes) > 0 && string(runes) == " " || msg.Type() == taro.KeySpace {
+		runes := msg.Runes
+		if len(runes) > 0 && string(runes) == " " {
 			name = "space"
 		}
 		k.presses = append(k.presses, keyPress{

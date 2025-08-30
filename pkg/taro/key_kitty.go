@@ -8,22 +8,22 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 )
 
-// KittyKeyEventType represents the type of key event (press/repeat/release)
-type KittyKeyEventType int
+// KeyEventType represents the type of key event (press/repeat/release)
+type KeyEventType int
 
 const (
-	KittyKeyPress KittyKeyEventType = iota
-	KittyKeyRepeat
-	KittyKeyRelease
+	KeyEventPress KeyEventType = iota
+	KeyEventRepeat
+	KeyEventRelease
 )
 
-func (k KittyKeyEventType) String() string {
+func (k KeyEventType) String() string {
 	switch k {
-	case KittyKeyPress:
+	case KeyEventPress:
 		return "press"
-	case KittyKeyRepeat:
+	case KeyEventRepeat:
 		return "repeat"
-	case KittyKeyRelease:
+	case KeyEventRelease:
 		return "release"
 	default:
 		return "unknown"
@@ -74,7 +74,64 @@ const (
 	KittyKeyF12       = 0xE000 + 123
 )
 
-// Note: KittyKey has been merged into Key. This file now contains supporting types and functions.
+// kittySequence generates the Kitty protocol sequence for this key
+func (k Key) kittySequence(protocol emu.KeyProtocol) string {
+	// TODO(cfoust): 08/30/25 handle KittyKeyRunes
+
+	if len(k.Runes) == 0 {
+		return ""
+	}
+	keycode := k.Runes[0]
+	modifiers := int(k.Modifiers)
+	eventType := int(k.Type)
+
+	// Check if event types should be reported
+	reportEventTypes := protocol&emu.KeyReportEventTypes != 0
+
+	// Check if associated text should be reported
+	reportText := protocol&emu.KeyReportAssociatedText != 0
+
+	// Determine if we should include event type in output
+	includeEventType := reportEventTypes && eventType != 0
+
+	// Determine if we should include text in output
+	// Extract printable characters from Runes field for text support
+	var text string
+	if reportText && len(k.Runes) > 0 {
+		var printableRunes []rune
+		for _, r := range k.Runes {
+			// Include only printable characters (not special KittyKey constants)
+			if r <= 0x10FFFF && r > 31 && r != 127 && r < 0xE000 {
+				printableRunes = append(printableRunes, r)
+			}
+		}
+		if len(printableRunes) > 0 {
+			text = string(printableRunes)
+		}
+	}
+	includeText := text != ""
+
+	if includeEventType || includeText {
+		// Extended format with event type and/or text
+		if includeText {
+			return fmt.Sprintf(
+				"\x1b[%d;%d;%d;%su",
+				keycode,
+				modifiers,
+				eventType,
+				text,
+			)
+		} else {
+			return fmt.Sprintf("\x1b[%d;%d;%du", keycode, modifiers, eventType)
+		}
+	} else if modifiers != 0 {
+		// Standard format with modifiers
+		return fmt.Sprintf("\x1b[%d;%du", keycode, modifiers)
+	} else {
+		// Minimal format
+		return fmt.Sprintf("\x1b[%du", keycode)
+	}
+}
 
 // IsKittySequence checks if the byte sequence might be a Kitty protocol sequence
 // Kitty sequences follow the pattern: ESC [ {keycode} [; {modifiers}] u
@@ -130,8 +187,8 @@ func ParseKittySequence(b []byte) (Key, int, error) {
 	}
 
 	key := Key{
-		KeyCode:   keycode,
-		EventType: KittyKeyPress, // Default to press event
+		Runes: []rune{rune(keycode)},
+		Type:  KeyEventPress, // Default to press event
 	}
 
 	// Parse modifiers (optional)
@@ -153,11 +210,11 @@ func ParseKittySequence(b []byte) (Key, int, error) {
 		// Map event type bits to KittyKeyEventType
 		switch eventTypeBits {
 		case 0:
-			key.EventType = KittyKeyPress
+			key.Type = KeyEventPress
 		case 1:
-			key.EventType = KittyKeyRepeat
+			key.Type = KeyEventRepeat
 		case 2:
-			key.EventType = KittyKeyRelease
+			key.Type = KeyEventRelease
 		default:
 			return Key{}, 0, fmt.Errorf("unknown event type: %d", eventTypeBits)
 		}
@@ -165,7 +222,10 @@ func ParseKittySequence(b []byte) (Key, int, error) {
 
 	// Parse associated text (optional)
 	if len(parts) > 3 && parts[3] != "" {
-		key.Text = parts[3]
+		// For now, text is handled implicitly through the Runes field
+		// The text would be stored in the Runes field as printable characters
+		// during key creation. This parsing is primarily for validation.
+		// TODO: Consider if we need to store text separately or append to Runes
 	}
 
 	return key, len(b), nil

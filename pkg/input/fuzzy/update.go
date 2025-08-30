@@ -33,14 +33,15 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			C: geom.Clamp(f.location.C, 0, size.C-1),
 		}
 	case taro.KeyMsg:
-		switch msg.Type() {
-		case taro.KeyEsc, taro.KeyCtrlC:
+		keyMsg := msg.ToTea()
+		switch keyMsg.Type {
+		case tea.KeyEsc, tea.KeyCtrlC:
 			if f.result != nil {
 				f.result <- nil
 			}
 			return f.quit()
-		case taro.KeyHome, taro.KeyEnd:
-			isTop := msg.Type() == taro.KeyHome
+		case tea.KeyHome, tea.KeyEnd:
+			isTop := keyMsg.Type == tea.KeyHome
 			last := len(f.getOptions()) - 1
 
 			var index int
@@ -49,13 +50,13 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			}
 
 			return f, f.setSelected(index)
-		case taro.KeyPgUp, taro.KeyPgDown:
+		case tea.KeyPgUp, tea.KeyPgDown:
 			delta := f.numRenderedOptions
 			if delta == 0 {
 				return f, nil
 			}
 
-			if msg.Type() == taro.KeyPgUp {
+			if keyMsg.Type == tea.KeyPgUp {
 				delta *= -1
 			}
 
@@ -64,11 +65,11 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			}
 
 			return f, f.setSelected(f.selected + delta)
-		case taro.KeyDown, taro.KeyCtrlJ, taro.KeyUp, taro.KeyCtrlK:
+		case tea.KeyDown, tea.KeyCtrlJ, tea.KeyUp, tea.KeyCtrlK:
 			f.haveMoved = true
 			upwards := false
-			switch msg.Type() {
-			case taro.KeyUp, taro.KeyCtrlK:
+			switch keyMsg.Type {
+			case tea.KeyUp, tea.KeyCtrlK:
 				upwards = true
 			}
 			if f.isUp {
@@ -81,7 +82,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			}
 
 			return f, f.setSelected(f.selected + delta)
-		case taro.KeyEnter:
+		case tea.KeyEnter:
 			if f.isSticky {
 				return f, nil
 			}

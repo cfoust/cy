@@ -90,11 +90,12 @@ func (s *Search) handleInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return s, nil
 		}
 	case taro.KeyMsg:
-		switch msg.Type() {
-		case taro.KeyEsc, taro.KeyCtrlC:
+		keyMsg := msg.ToTea()
+		switch keyMsg.Type {
+		case tea.KeyEsc, tea.KeyCtrlC:
 			s.inputing = false
 			return s, nil
-		case taro.KeyEnter:
+		case tea.KeyEnter:
 			s.inputing = false
 
 			if s.initialRequest == nil {
