@@ -1,4 +1,4 @@
-package taro
+package keys
 
 import (
 	"testing"
@@ -169,11 +169,11 @@ func TestParseKittySequence(t *testing.T) {
 					tt.expectedKey,
 				)
 			}
-			if key.Modifiers != tt.expectedMod {
+			if key.Mod != tt.expectedMod {
 				t.Errorf(
 					"ParseKittySequence(%q) Modifiers = %d, want %d",
 					tt.input,
-					key.Modifiers,
+					key.Mod,
 					tt.expectedMod,
 				)
 			}
@@ -216,7 +216,7 @@ func TestKittyKeyString(t *testing.T) {
 			name: "Simple character",
 			key: Key{
 				Runes:     []rune{97}, // 'a'
-				Modifiers: 0,
+				Mod: 0,
 				Type:      KeyEventPress,
 			},
 			expected: "a",
@@ -225,7 +225,7 @@ func TestKittyKeyString(t *testing.T) {
 			name: "Ctrl+Alt+character",
 			key: Key{
 				Runes:     []rune{97}, // 'a'
-				Modifiers: KeyModCtrl | KeyModAlt,
+				Mod: KeyModCtrl | KeyModAlt,
 				Type:      KeyEventPress,
 			},
 			expected: "ctrl+alt+a",
@@ -234,7 +234,7 @@ func TestKittyKeyString(t *testing.T) {
 			name: "Super+Shift+F1",
 			key: Key{
 				Runes:     []rune{KittyKeyF1},
-				Modifiers: KeyModSuper | KeyModShift,
+				Mod: KeyModSuper | KeyModShift,
 				Type:      KeyEventPress,
 			},
 			expected: "super+shift+f1",

@@ -26,25 +26,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package taro
+package keys
 
 import (
 	"github.com/cfoust/cy/pkg/geom"
 )
-
-// MouseMsg contains information about a mouse event and are sent to a programs
-// update function when mouse activity occurs. Note that the mouse must first
-// be enabled in order for the mouse events to be received.
-type MouseMsg MouseEvent
-
-// String returns a string representation of a mouse event.
-func (m MouseMsg) String() string {
-	return MouseEvent(m).String()
-}
-
-func (m MouseMsg) Bytes() []byte {
-	return MouseEvent(m).Bytes()
-}
 
 // MouseEvent represents a mouse event, which could be a click, a scroll wheel
 // movement, a cursor movement, or a combination.
@@ -261,30 +247,7 @@ func parseX10MouseEvent(buf []byte) MouseEvent {
 	return m
 }
 
-// TranslateMouseEvents translates all mouse events in-place by [dx, dy].
-func TranslateMouseEvents(data []byte, dx, dy int) {
-	for i := 0; i < len(data); i++ {
-		slice := data[i:]
-		if !isMouseEvent(slice) {
-			continue
-		}
-
-		e := parseX10MouseEvent(slice)
-		e.C += dx
-		e.R += dy
-		b := e.Bytes()
-		data[i+4] = b[4]
-		data[i+5] = b[5]
-	}
+func isMouseEvent(b []byte) bool {
+	return len(b) >= 6 && b[0] == '\x1b' && b[1] == '[' && b[2] == 'M'
 }
 
-func TranslateMouseMessage(msg Msg, dx, dy int) Msg {
-	switch msg := msg.(type) {
-	case MouseMsg:
-		cloned := msg
-		cloned.C += dx
-		cloned.R += dy
-		return cloned
-	}
-	return msg
-}
