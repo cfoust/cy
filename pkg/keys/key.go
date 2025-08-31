@@ -299,7 +299,6 @@ func FromNames(keys ...string) (msgs []Key) {
 
 		runes := []rune{keyCode}
 
-		// For unrecognized keys, use the first character
 		if keyCode == -1 && len(key) > 0 {
 			runes = []rune(key)
 		}
