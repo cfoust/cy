@@ -250,4 +250,3 @@ func parseX10MouseEvent(buf []byte) MouseEvent {
 func isMouseEvent(b []byte) bool {
 	return len(b) >= 6 && b[0] == '\x1b' && b[1] == '[' && b[2] == 'M'
 }
-

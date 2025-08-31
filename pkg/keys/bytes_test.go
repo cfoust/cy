@@ -24,9 +24,9 @@ func TestKeyBytes(t *testing.T) {
 		{
 			name: "Alt+character",
 			key: Key{
-				Runes:     []rune{'a'},
-				Mod: KeyModAlt,
-				Type:      KeyEventPress,
+				Runes: []rune{'a'},
+				Mod:   KeyModAlt,
+				Type:  KeyEventPress,
 			},
 			expected: []byte("\x1ba"),
 		},
@@ -83,9 +83,9 @@ func TestKittyKeyBytes(t *testing.T) {
 		{
 			name: "Character with Alt modifier - Kitty protocol",
 			key: Key{
-				Runes:     []rune{97}, // 'a'
-				Mod: KeyModAlt,
-				Type:      KeyEventPress,
+				Runes: []rune{97}, // 'a'
+				Mod:   KeyModAlt,
+				Type:  KeyEventPress,
 			},
 			expected: []byte("\x1b[97;2u"),
 		},

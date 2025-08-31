@@ -6,10 +6,10 @@ import (
 	"sync/atomic"
 
 	"github.com/cfoust/cy/pkg/emu"
-	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"

@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/keys"
 	L "github.com/cfoust/cy/pkg/layout"
 	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	T "github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
-	"github.com/cfoust/cy/pkg/keys"
 
 	"github.com/stretchr/testify/require"
 )
