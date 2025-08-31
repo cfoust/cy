@@ -8,6 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
@@ -153,8 +154,8 @@ func TestMouseClickAndDrag(t *testing.T) {
 
 	clickMsg := taro.MouseMsg{
 		Vec2:   geom.Vec2{R: 1, C: 2},
-		Type:   taro.MousePress,
-		Button: taro.MouseLeft,
+		Type:   keys.MousePress,
+		Button: keys.MouseLeft,
 		Down:   true,
 	}
 	i(clickMsg)
@@ -163,8 +164,8 @@ func TestMouseClickAndDrag(t *testing.T) {
 
 	dragMsg := taro.MouseMsg{
 		Vec2:   geom.Vec2{R: 1, C: 5},
-		Type:   taro.MouseMotion,
-		Button: taro.MouseLeft,
+		Type:   keys.MouseMotion,
+		Button: keys.MouseLeft,
 		Down:   true,
 	}
 	i(dragMsg)
@@ -173,8 +174,8 @@ func TestMouseClickAndDrag(t *testing.T) {
 
 	releaseMsg := taro.MouseMsg{
 		Vec2:   geom.Vec2{R: 1, C: 5},
-		Type:   taro.MousePress,
-		Button: taro.MouseLeft,
+		Type:   keys.MousePress,
+		Button: keys.MouseLeft,
 		Down:   false,
 	}
 	i(releaseMsg)
@@ -199,8 +200,8 @@ func TestMouseClickOutsideCopyMode(t *testing.T) {
 
 	clickMsg := taro.MouseMsg{
 		Vec2:   geom.Vec2{R: 1, C: 2},
-		Type:   taro.MousePress,
-		Button: taro.MouseLeft,
+		Type:   keys.MousePress,
+		Button: keys.MouseLeft,
 		Down:   true,
 	}
 	i(clickMsg)
