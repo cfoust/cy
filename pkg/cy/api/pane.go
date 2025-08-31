@@ -101,7 +101,7 @@ func (p *PaneModule) SendText(id *janet.Value, text string) error {
 
 	pane.Screen().Send(taro.KeyMsg{
 		Runes: []rune(text),
-		Type:  taro.KeyEventPress,
+		Text:  text,
 	})
 
 	return nil

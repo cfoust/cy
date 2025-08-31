@@ -54,7 +54,7 @@ func (r *Renderer) Send(msg mux.Msg) {
 func (r *Renderer) Write(data []byte) (n int, err error) {
 	for i, w := 0, 0; i < len(data); i += w {
 		var msg taro.Msg
-		w, msg = taro.DetectOneMsg(data[i:])
+		msg, w = taro.DetectOneMsg(data[i:])
 		r.Send(msg)
 	}
 

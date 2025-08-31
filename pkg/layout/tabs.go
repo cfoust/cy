@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -493,7 +494,7 @@ func (t *Tabs) Send(msg mux.Msg) {
 	}
 
 	// Must be a click
-	if mouseMsg.Type != taro.MousePress || mouseMsg.Button != taro.MouseLeft ||
+	if mouseMsg.Type != keys.MousePress || mouseMsg.Button != keys.MouseLeft ||
 		mouseMsg.Down {
 		return
 	}

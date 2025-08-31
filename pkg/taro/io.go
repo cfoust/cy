@@ -10,23 +10,8 @@ import (
 
 type KeyMsg keys.Key
 
-func (k KeyMsg) ToTea() tea.KeyMsg {
-	key := keys.Key(k)
-	legacyType := key.toLegacyKeyType()
-
-	var runes []rune
-	if legacyType == 0 && len(key.Runes) > 0 && key.Runes[0] <= 0x10FFFF &&
-		key.Runes[0] > 31 &&
-		key.Runes[0] != 127 {
-		runes = []rune{rune(key.Runes[0])}
-		legacyType = tea.KeyRunes
-	}
-
-	return tea.KeyMsg{
-		Type:  tea.KeyType(legacyType),
-		Runes: runes,
-		Alt:   key.Mod&keys.KeyModAlt != 0,
-	}
+func (k KeyMsg) Tea() (tea.KeyMsg, bool) {
+	return keys.Key(k).Tea()
 }
 
 // String returns a string representation for a key message. It's safe (and
@@ -49,6 +34,21 @@ func (m MouseMsg) Bytes() []byte {
 	return keys.MouseEvent(m).Bytes()
 }
 
+func DetectOneMsg(b []byte) (msg Msg, w int) {
+	var event any
+	event, w = keys.Read(b)
+	switch event := event.(type) {
+	case keys.MouseEvent:
+		msg = MouseMsg(event)
+	case keys.Key:
+		msg = KeyMsg(event)
+	default:
+		msg = event
+	}
+
+	return msg, w
+}
+
 // readInputs reads keypress and mouse inputs from a TTY and produces messages
 // containing information about the key or mouse events accordingly.
 func readInputs(input io.Reader) (msgs []Msg, err error) {
@@ -64,7 +64,7 @@ func readInputs(input io.Reader) (msgs []Msg, err error) {
 	var i, w int
 	for i = 0; i < len(b); i += w {
 		var msg Msg
-		w, msg = keys.DetectOneMsg(b[i:])
+		msg, w = DetectOneMsg(b[i:])
 		msgs = append(msgs, msg)
 	}
 
@@ -80,4 +80,12 @@ func TranslateMouseMessage(msg Msg, dx, dy int) Msg {
 		return cloned
 	}
 	return msg
+}
+
+func KeysToMsg(strs ...string) (msgs []KeyMsg) {
+	for _, key := range strs {
+		msgs = append(msgs, KeyMsg(keys.FromNames(key)[0]))
+	}
+
+	return
 }

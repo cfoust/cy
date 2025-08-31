@@ -185,6 +185,9 @@ func (t *State) handleKittyProtocolCommand(content string) bool {
 }
 
 func (t *State) KeyState() KeyProtocol {
+	t.RLock()
+	defer t.RUnlock()
+
 	if t.keyState == nil {
 		return 0
 	}

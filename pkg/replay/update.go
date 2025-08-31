@@ -5,6 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/replay/motion"
 	"github.com/cfoust/cy/pkg/taro"
 
@@ -161,19 +162,19 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return r.handleCopy(msg.Register)
 	case taro.MouseMsg:
 		switch msg.Button {
-		case taro.MouseWheelUp:
+		case keys.MouseWheelUp:
 			r.scrollYDelta(-1)
-		case taro.MouseWheelDown:
+		case keys.MouseWheelDown:
 			r.scrollYDelta(+1)
-		case taro.MouseWheelLeft:
+		case keys.MouseWheelLeft:
 			r.scrollXDelta(-1)
-		case taro.MouseWheelRight:
+		case keys.MouseWheelRight:
 			r.scrollXDelta(+1)
-		case taro.MouseLeft:
+		case keys.MouseLeft:
 			coord := r.movement.ViewportToMovement(msg.Vec2)
 
 			switch msg.Type {
-			case taro.MousePress:
+			case keys.MousePress:
 				if !msg.Down {
 					break
 				}
@@ -185,7 +186,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				r.isSelecting = true
 				r.movement.Goto(coord)
 				r.selectStart = coord
-			case taro.MouseMotion:
+			case keys.MouseMotion:
 				if !r.isCopyMode() {
 					break
 				}

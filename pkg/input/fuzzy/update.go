@@ -33,7 +33,11 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			C: geom.Clamp(f.location.C, 0, size.C-1),
 		}
 	case taro.KeyMsg:
-		keyMsg := msg.ToTea()
+		keyMsg, ok := msg.Tea()
+		if !ok {
+			break
+		}
+
 		switch keyMsg.Type {
 		case tea.KeyEsc, tea.KeyCtrlC:
 			if f.result != nil {
@@ -100,7 +104,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	inputMsg := msg
 	// We need to translate taro.KeyMsg to tea.KeyMsg (for now)
 	if key, ok := msg.(taro.KeyMsg); ok {
-		inputMsg = key.ToTea()
+		inputMsg, _ = key.Tea()
 	}
 	f.textInput, cmd = f.textInput.Update(inputMsg)
 	cmds = append(cmds, cmd)

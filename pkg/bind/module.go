@@ -225,7 +225,7 @@ func (e *Engine[T]) Poll(ctx context.Context) {
 func (e *Engine[T]) Input(data []byte) {
 	for i, w := 0, 0; i < len(data); i += w {
 		var msg taro.Msg
-		w, msg = taro.DetectOneMsg(data[i:])
+		msg, w = taro.DetectOneMsg(data[i:])
 		e.in <- msg
 	}
 }

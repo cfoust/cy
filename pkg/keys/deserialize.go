@@ -294,22 +294,22 @@ var controlToKey = map[rune]Key{
 	keyUS:  kMod('_', KeyModCtrl),
 }
 
-// unknownInputByteMsg is reported by the input reader when an invalid utf-8
+// UnknownInputEvent is reported by the input reader when an invalid utf-8
 // byte is detected on the input. Currently, it is not handled further by keys.
 // However, having this event makes it possible to troubleshoot invalid inputs.
-type unknownInputByteMsg byte
+type UnknownInputEvent byte
 
-func (u unknownInputByteMsg) String() string {
+func (u UnknownInputEvent) String() string {
 	return fmt.Sprintf("?%#02x?", int(u))
 }
 
-// unknownCSISequenceMsg is reported by the input reader when an
+// UnknownCSISequenceEvent is reported by the input reader when an
 // unrecognized CSI sequence is detected on the input. Currently, it
 // is not handled further by bubbletea. However, having this event
 // makes it possible to troubleshoot invalid inputs.
-type unknownCSISequenceMsg []byte
+type UnknownCSISequenceEvent []byte
 
-func (u unknownCSISequenceMsg) String() string {
+func (u UnknownCSISequenceEvent) String() string {
 	return fmt.Sprintf("?CSI%+v?", []byte(u)[2:])
 }
 
@@ -379,12 +379,9 @@ var seqLengths = func() []int {
 	return lsizes
 }()
 
-// One of Key or MouseEvent
-type Event any
-
 // detectSequence uses a longest prefix match over the input
 // sequence and a hash map.
-func detectSequence(input []byte) (hasSeq bool, width int, event Event) {
+func detectSequence(input []byte) (hasSeq bool, width int, event any) {
 	seqs := extSequences
 	for _, sz := range seqLengths {
 		if sz > len(input) {
@@ -398,24 +395,30 @@ func detectSequence(input []byte) (hasSeq bool, width int, event Event) {
 	}
 	// Is this an unknown CSI sequence?
 	if loc := unknownCSIRe.FindIndex(input); loc != nil {
-		return true, loc[1], unknownCSISequenceMsg(input[:loc[1]])
+		return true, loc[1], UnknownCSISequenceEvent(input[:loc[1]])
 	}
 
 	return false, 0, nil
 }
 
-func Read(b []byte) (w int, event Event) {
+// Read attempts to read a key or mouse event.
+// event can be one of:
+// - Key
+// - MouseEvent
+// - UnknownCSISequenceEvent
+// - UnknownInputEvent
+func Read(b []byte) (event any, w int) {
 	// Try Kitty protocol sequence first
 	if isKittySequence(b) {
 		key, width, err := parseKittySequence(b)
 		if err == nil {
-			return width, key
+			return key, width
 		}
 	}
 
 	// Detect mouse events.
 	if isMouseEvent(b) {
-		return 6, parseX10MouseEvent(b)
+		return parseX10MouseEvent(b), 6
 	}
 
 	// Detect escape sequence and control characters other than NUL,
@@ -442,11 +445,11 @@ func Read(b []byte) (w int, event Event) {
 		if alt {
 			modifiers |= KeyModAlt
 		}
-		return i + 1, Key{
+		return Key{
 			Runes: []rune{0},
 			Mod:   modifiers,
 			Type:  KeyEventPress,
-		}
+		}, i + 1
 	}
 
 	// Find the longest sequence of runes that are not control
@@ -474,20 +477,20 @@ func Read(b []byte) (w int, event Event) {
 			modifiers |= KeyModAlt
 		}
 
-		return i, Key{
+		return Key{
 			Runes: runes,
 			Mod:   modifiers,
-		}
+		}, i
 	}
 
 	// We didn't find an escape sequence, nor a valid rune. Was this a
 	// lone escape character at the end of the input?
 	if alt && len(b) == 1 {
-		return 1, k(KittyKeyEscape)
+		return k(KittyKeyEscape), 1
 	}
 
 	// The character at the current position is neither an escape
 	// sequence, a valid rune start or a sole escape character. Report
 	// it as an invalid byte.
-	return 1, unknownInputByteMsg(b[0])
+	return UnknownInputEvent(b[0]), 1
 }
