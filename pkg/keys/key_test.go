@@ -34,7 +34,7 @@ func TestKeysToMsg(t *testing.T) {
 			Mod:   KeyModAlt,
 			Type:  KeyEventPress,
 		},
-	}, KeysToMsg(
+	}, FromNames(
 		"test",
 		"ctrl+a",
 		"alt+ctrl+a",

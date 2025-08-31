@@ -41,6 +41,8 @@ const (
 // isKittySequence checks if the byte sequence might be a Kitty protocol sequence
 // Kitty sequences follow the pattern: ESC [ {keycode} [; {modifiers}] u
 func isKittySequence(b []byte) bool {
+	// TODO(cfoust): 08/31/25 we shouldn't use the length of the sequence to
+	// check for this
 	if len(b) < 4 {
 		return false
 	}

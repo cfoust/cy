@@ -207,9 +207,9 @@ func (k Key) HasMeta() bool {
 	return k.HasModifier(KeyModMeta)
 }
 
-// KeysToMsg translates human-readable key specifiers (such as "ctrl+a", "up",
+// FromNames translates human-readable key specifiers (such as "ctrl+a", "up",
 // etc) into KeyMsg events. Unrecognized strings are represented as regular characters.
-func KeysToMsg(keys ...string) (msgs []Key) {
+func FromNames(keys ...string) (msgs []Key) {
 	for _, key := range keys {
 		var modifiers KeyModifiers
 

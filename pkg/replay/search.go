@@ -131,7 +131,11 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return r, nil
 		}
 	case taro.KeyMsg:
-		keyMsg := msg.ToTea()
+		keyMsg, ok := msg.Tea()
+		if !ok {
+			break
+		}
+
 		switch keyMsg.Type {
 		case tea.KeyEsc, tea.KeyCtrlC:
 			r.mode = ModeTime
@@ -179,7 +183,7 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	inputMsg := msg
 	if key, ok := msg.(taro.KeyMsg); ok {
-		inputMsg = key.ToTea()
+		inputMsg, _ = key.Tea()
 	}
 	r.input, cmd = r.input.Update(inputMsg)
 	return r, cmd

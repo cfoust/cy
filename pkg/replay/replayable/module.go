@@ -8,6 +8,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/params"
@@ -156,8 +157,8 @@ func (r *Replayable) Send(msg mux.Msg) {
 	// We want to automatically trigger replay mode when the user scrolls
 	// up with the mouse
 	if mouse, ok := msg.(taro.MouseMsg); ok {
-		isMouseUp := mouse.Type == taro.MousePress &&
-			mouse.Button == taro.MouseWheelUp
+		isMouseUp := mouse.Type == keys.MousePress &&
+			mouse.Button == keys.MouseWheelUp
 		if isMouseUp && !r.terminal.IsAltMode() {
 			r.EnterReplay()
 			return

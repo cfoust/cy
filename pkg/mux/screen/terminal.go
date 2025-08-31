@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
@@ -130,18 +131,18 @@ func (t *Terminal) Send(msg mux.Msg) {
 	case taro.KeyMsg:
 		// Use the Key's Bytes() method which handles both legacy and Kitty protocol
 		protocol := t.terminal.KeyState()
-		input = taro.Key(msg).Bytes(protocol)
+		input = keys.Key(msg).Bytes(protocol)
 	case taro.MouseMsg:
 		switch mode & emu.ModeMouseMask {
 		case emu.ModeMouseX10:
-			if msg.Type != taro.MousePress {
+			if msg.Type != keys.MousePress {
 				return
 			}
 
-			input = taro.MouseEvent(msg).X10Bytes()
+			input = keys.MouseEvent(msg).X10Bytes()
 		case emu.ModeMouseButton:
 			// TODO(cfoust): 08/08/23 we should still report drag
-			if msg.Type == taro.MouseMotion {
+			if msg.Type == keys.MouseMotion {
 				return
 			}
 			input = msg.Bytes()

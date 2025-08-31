@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/janet"
@@ -164,7 +165,7 @@ func (p *Pane) Send(msg mux.Msg) {
 		return
 	}
 
-	if mouseMsg.Type != taro.MousePress || mouseMsg.Button != taro.MouseLeft ||
+	if mouseMsg.Type != keys.MousePress || mouseMsg.Button != keys.MouseLeft ||
 		mouseMsg.Down {
 		return
 	}
