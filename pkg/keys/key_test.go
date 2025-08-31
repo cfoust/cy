@@ -3,34 +3,36 @@ package keys
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/cfoust/cy/pkg/emu"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestKeysToMsg(t *testing.T) {
-	assert.Equal(t, []Key{
+	require.Equal(t, []Key{
 		{
 			Runes: []rune("test"),
 			Type:  KeyEventPress,
 		},
 		{
-			Runes:     []rune{'a'},
-			Mod: KeyModCtrl,
-			Type:      KeyEventPress,
+			Runes: []rune{'a'},
+			Mod:   KeyModCtrl,
+			Type:  KeyEventPress,
 		},
 		{
-			Runes:     []rune{'a'},
-			Mod: KeyModCtrl | KeyModAlt,
-			Type:      KeyEventPress,
+			Runes: []rune{'a'},
+			Mod:   KeyModCtrl | KeyModAlt,
+			Type:  KeyEventPress,
 		},
 		{
-			Runes:     []rune("o"),
-			Mod: KeyModAlt,
-			Type:      KeyEventPress,
+			Runes: []rune("o"),
+			Mod:   KeyModAlt,
+			Type:  KeyEventPress,
 		},
 		{
-			Runes:     []rune("й"),
-			Mod: KeyModAlt,
-			Type:      KeyEventPress,
+			Runes: []rune("й"),
+			Mod:   KeyModAlt,
+			Type:  KeyEventPress,
 		},
 	}, KeysToMsg(
 		"test",
@@ -42,7 +44,7 @@ func TestKeysToMsg(t *testing.T) {
 }
 
 func TestKeysToBytes(t *testing.T) {
-	keys := []KeyMsg{
+	keys := []Key{
 		{
 			Runes: []rune("test"),
 			Type:  KeyEventPress,
@@ -56,9 +58,9 @@ func TestKeysToBytes(t *testing.T) {
 			Type:  KeyEventPress,
 		},
 		{
-			Runes:     []rune{'a'},
-			Modifiers: KeyModAlt,
-			Type:      KeyEventPress,
+			Runes: []rune{'a'},
+			Mod:   KeyModAlt,
+			Type:  KeyEventPress,
 		},
 		{
 			Runes: []rune{' '},
@@ -67,59 +69,50 @@ func TestKeysToBytes(t *testing.T) {
 	}
 
 	for _, key := range keys {
-		bytes, err := KeysToBytes(key)
-		assert.NoError(t, err)
+		bytes := key.Bytes(emu.KeyLegacy)
 
-		parsed := make([]KeyMsg, 0)
+		parsed := make([]Key, 0)
 		for i, w := 0, 0; i < len(bytes); i += w {
-			var msg Msg
-			w, msg = DetectOneMsg(bytes[i:])
-			if key, ok := msg.(KeyMsg); ok {
+			var msg Event
+			w, msg = Read(bytes[i:])
+			if key, ok := msg.(Key); ok {
 				parsed = append(parsed, key)
 			}
 		}
-		assert.Equal(t, []KeyMsg{key}, parsed)
+		require.Equal(t, []Key{key}, parsed)
 	}
 }
 
 func TestDetect(t *testing.T) {
 	type testCase struct {
 		input []byte
-		msg   Msg
+		msg   Event
 	}
 	cases := []testCase{
 		{
 			input: []byte("\x1b"),
-			msg: KeyMsg{
-				Runes: []rune{KittyKeyEscape},
-				Type:  KeyEventPress,
-			},
+			msg:   k(KittyKeyEscape),
 		},
 		{
 			input: []byte("\x1bo"),
-			msg: KeyMsg{
-				Runes:     []rune("o"),
-				Modifiers: KeyModAlt,
-			},
+			msg:   kMod('o', KeyModAlt),
 		},
 		{
 			input: []byte("test"),
-			msg: KeyMsg{
-				Runes: []rune("test"),
-			},
+			msg:   Key{Runes: []rune("test")},
 		},
 		{
-			input: []byte{byte(KeyCtrlC)},
-			msg: KeyMsg{
-				Runes:     []rune("c"),
-				Modifiers: KeyModCtrl,
+			input: []byte{byte(keyETX)},
+			msg: Key{
+				Runes: []rune("c"),
+				Mod:   KeyModCtrl,
 			},
 		},
 	}
 
 	for _, c := range cases {
-		_, msg := DetectOneMsg(c.input)
-		assert.Equal(
+		_, msg := Read(c.input)
+		require.Equal(
 			t,
 			c.msg,
 			msg,

@@ -30,7 +30,7 @@ func TestIsKittySequence(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IsKittySequence(tt.input)
+			result := isKittySequence(tt.input)
 			if result != tt.expected {
 				t.Errorf(
 					"IsKittySequence(%q) = %v, want %v",
@@ -137,7 +137,7 @@ func TestParseKittySequence(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			key, width, err := ParseKittySequence(tt.input)
+			key, width, err := parseKittySequence(tt.input)
 			if tt.shouldError {
 				if err == nil {
 					t.Errorf(
@@ -215,27 +215,27 @@ func TestKittyKeyString(t *testing.T) {
 		{
 			name: "Simple character",
 			key: Key{
-				Runes:     []rune{97}, // 'a'
-				Mod: 0,
-				Type:      KeyEventPress,
+				Runes: []rune{97}, // 'a'
+				Mod:   0,
+				Type:  KeyEventPress,
 			},
 			expected: "a",
 		},
 		{
 			name: "Ctrl+Alt+character",
 			key: Key{
-				Runes:     []rune{97}, // 'a'
-				Mod: KeyModCtrl | KeyModAlt,
-				Type:      KeyEventPress,
+				Runes: []rune{97}, // 'a'
+				Mod:   KeyModCtrl | KeyModAlt,
+				Type:  KeyEventPress,
 			},
 			expected: "ctrl+alt+a",
 		},
 		{
 			name: "Super+Shift+F1",
 			key: Key{
-				Runes:     []rune{KittyKeyF1},
-				Mod: KeyModSuper | KeyModShift,
-				Type:      KeyEventPress,
+				Runes: []rune{KittyKeyF1},
+				Mod:   KeyModSuper | KeyModShift,
+				Type:  KeyEventPress,
 			},
 			expected: "super+shift+f1",
 		},

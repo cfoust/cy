@@ -8,8 +8,8 @@ import (
 
 func testMouseInput(t *testing.T, input string) {
 	bytes := []byte(input)
-	_, msg := DetectOneMsg(bytes)
-	mouse, ok := msg.(MouseMsg)
+	_, msg := Read(bytes)
+	mouse, ok := msg.(MouseEvent)
 	if !ok {
 		t.Fail()
 	}

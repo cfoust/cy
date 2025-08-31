@@ -379,9 +379,12 @@ var seqLengths = func() []int {
 	return lsizes
 }()
 
+// One of Key or MouseEvent
+type Event any
+
 // detectSequence uses a longest prefix match over the input
 // sequence and a hash map.
-func detectSequence(input []byte) (hasSeq bool, width int, msg Msg) {
+func detectSequence(input []byte) (hasSeq bool, width int, event Event) {
 	seqs := extSequences
 	for _, sz := range seqLengths {
 		if sz > len(input) {
@@ -390,7 +393,7 @@ func detectSequence(input []byte) (hasSeq bool, width int, msg Msg) {
 		prefix := input[:sz]
 		key, ok := seqs[string(prefix)]
 		if ok {
-			return true, sz, KeyMsg(key)
+			return true, sz, key
 		}
 	}
 	// Is this an unknown CSI sequence?
@@ -401,25 +404,25 @@ func detectSequence(input []byte) (hasSeq bool, width int, msg Msg) {
 	return false, 0, nil
 }
 
-func DetectOneMsg(b []byte) (w int, msg Msg) {
+func Read(b []byte) (w int, event Event) {
 	// Try Kitty protocol sequence first
-	if IsKittySequence(b) {
-		key, width, err := ParseKittySequence(b)
+	if isKittySequence(b) {
+		key, width, err := parseKittySequence(b)
 		if err == nil {
-			return width, KeyMsg(key)
+			return width, key
 		}
 	}
 
 	// Detect mouse events.
 	if isMouseEvent(b) {
-		return 6, MouseMsg(parseX10MouseEvent(b))
+		return 6, parseX10MouseEvent(b)
 	}
 
 	// Detect escape sequence and control characters other than NUL,
 	// possibly with an escape character in front to mark the Alt
 	// modifier.
 	var foundSeq bool
-	foundSeq, w, msg = detectSequence(b)
+	foundSeq, w, event = detectSequence(b)
 	if foundSeq {
 		return
 	}
@@ -439,10 +442,10 @@ func DetectOneMsg(b []byte) (w int, msg Msg) {
 		if alt {
 			modifiers |= KeyModAlt
 		}
-		return i + 1, KeyMsg{
-			Runes:     []rune{0},
-			Modifiers: modifiers,
-			Type:      KeyEventPress,
+		return i + 1, Key{
+			Runes: []rune{0},
+			Mod:   modifiers,
+			Type:  KeyEventPress,
 		}
 	}
 
@@ -471,21 +474,16 @@ func DetectOneMsg(b []byte) (w int, msg Msg) {
 			modifiers |= KeyModAlt
 		}
 
-		k := Key{
+		return i, Key{
 			Runes: runes,
 			Mod:   modifiers,
-			Type:  KeyEventPress,
 		}
-		return i, KeyMsg(k)
 	}
 
 	// We didn't find an escape sequence, nor a valid rune. Was this a
 	// lone escape character at the end of the input?
 	if alt && len(b) == 1 {
-		return 1, KeyMsg(Key{
-			Runes: []rune{KittyKeyEscape},
-			Type:  KeyEventPress,
-		})
+		return 1, k(KittyKeyEscape)
 	}
 
 	// The character at the current position is neither an escape
