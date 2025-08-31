@@ -1,4 +1,4 @@
-package taro
+package keys
 
 import (
 	"fmt"
@@ -6,42 +6,6 @@ import (
 	"strings"
 
 	"github.com/cfoust/cy/pkg/emu"
-)
-
-// KeyEventType represents the type of key event (press/repeat/release)
-type KeyEventType int
-
-const (
-	KeyEventPress KeyEventType = iota
-	KeyEventRepeat
-	KeyEventRelease
-)
-
-func (k KeyEventType) String() string {
-	switch k {
-	case KeyEventPress:
-		return "press"
-	case KeyEventRepeat:
-		return "repeat"
-	case KeyEventRelease:
-		return "release"
-	default:
-		return "unknown"
-	}
-}
-
-// KeyModifiers represents Kitty protocol modifier flags
-type KeyModifiers int
-
-const (
-	KeyModShift KeyModifiers = 1 << iota
-	KeyModAlt
-	KeyModCtrl
-	KeyModSuper
-	KeyModHyper
-	KeyModMeta
-	KeyModCapsLock
-	KeyModNumLock
 )
 
 // Kitty protocol special keys using Unicode Private Use Area
@@ -74,25 +38,55 @@ const (
 	KittyKeyF12       = 0xE000 + 123
 )
 
+// IsKittySequence checks if the byte sequence might be a Kitty protocol sequence
+// Kitty sequences follow the pattern: ESC [ {keycode} [; {modifiers}] u
+func IsKittySequence(b []byte) bool {
+	if len(b) < 4 {
+		return false
+	}
+
+	// Must start with ESC [
+	if b[0] != '\x1b' || b[1] != '[' {
+		return false
+	}
+
+	// Must end with 'u'
+	if b[len(b)-1] != 'u' {
+		return false
+	}
+
+	// Check if it's a keyboard protocol command (starts with >, <, or ?)
+	if len(b) > 2 && (b[2] == '>' || b[2] == '<' || b[2] == '?') {
+		return false
+	}
+
+	// Content between '[' and 'u' must start with a digit (keycode)
+	content := string(b[2 : len(b)-1])
+	if len(content) == 0 {
+		return false
+	}
+
+	// First character must be a digit
+	return content[0] >= '0' && content[0] <= '9'
+}
+
 // kittySequence generates the Kitty protocol sequence for this key
 func (k Key) kittySequence(protocol emu.KeyProtocol) string {
-	// TODO(cfoust): 08/30/25 handle KittyKeyRunes
-
 	if len(k.Runes) == 0 {
 		return ""
 	}
-	keycode := k.Runes[0]
-	modifiers := int(k.Modifiers)
-	eventType := int(k.Type)
 
-	// Check if event types should be reported
-	reportEventTypes := protocol&emu.KeyReportEventTypes != 0
-
-	// Check if associated text should be reported
-	reportText := protocol&emu.KeyReportAssociatedText != 0
-
-	// Determine if we should include event type in output
-	includeEventType := reportEventTypes && eventType != 0
+	var (
+		keycode   = k.Runes[0]
+		modifiers = int(k.Mod)
+		eventType = int(k.Type)
+		// Check if event types should be reported
+		reportEventTypes = protocol&emu.KeyReportEventTypes != 0
+		// Check if associated text should be reported
+		reportText = protocol&emu.KeyReportAssociatedText != 0
+		// Determine if we should include event type in output
+		includeEventType = reportEventTypes && eventType != 0
+	)
 
 	// Determine if we should include text in output
 	// Extract printable characters from Runes field for text support
@@ -133,38 +127,6 @@ func (k Key) kittySequence(protocol emu.KeyProtocol) string {
 	}
 }
 
-// IsKittySequence checks if the byte sequence might be a Kitty protocol sequence
-// Kitty sequences follow the pattern: ESC [ {keycode} [; {modifiers}] u
-func IsKittySequence(b []byte) bool {
-	if len(b) < 4 {
-		return false
-	}
-
-	// Must start with ESC [
-	if b[0] != '\x1b' || b[1] != '[' {
-		return false
-	}
-
-	// Must end with 'u'
-	if b[len(b)-1] != 'u' {
-		return false
-	}
-
-	// Check if it's a keyboard protocol command (starts with >, <, or ?)
-	if len(b) > 2 && (b[2] == '>' || b[2] == '<' || b[2] == '?') {
-		return false
-	}
-
-	// Content between '[' and 'u' must start with a digit (keycode)
-	content := string(b[2 : len(b)-1])
-	if len(content) == 0 {
-		return false
-	}
-
-	// First character must be a digit
-	return content[0] >= '0' && content[0] <= '9'
-}
-
 // ParseKittySequence parses a Kitty protocol key sequence
 // Format: ESC [ {keycode} [; {modifiers} [; {event_type} [; {text}]]] u
 func ParseKittySequence(b []byte) (Key, int, error) {
@@ -197,7 +159,7 @@ func ParseKittySequence(b []byte) (Key, int, error) {
 		if err != nil {
 			return Key{}, 0, fmt.Errorf("invalid modifiers: %v", err)
 		}
-		key.Modifiers = KeyModifiers(modifierBits)
+		key.Mod = KeyModifiers(modifierBits)
 	}
 
 	// Parse event type (optional)

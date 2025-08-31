@@ -1,4 +1,4 @@
-package taro
+package keys
 
 import (
 	"bytes"
@@ -25,7 +25,7 @@ func TestKeyBytes(t *testing.T) {
 			name: "Alt+character",
 			key: Key{
 				Runes:     []rune{'a'},
-				Modifiers: KeyModAlt,
+				Mod: KeyModAlt,
 				Type:      KeyEventPress,
 			},
 			expected: []byte("\x1ba"),
@@ -84,7 +84,7 @@ func TestKittyKeyBytes(t *testing.T) {
 			name: "Character with Alt modifier - Kitty protocol",
 			key: Key{
 				Runes:     []rune{97}, // 'a'
-				Modifiers: KeyModAlt,
+				Mod: KeyModAlt,
 				Type:      KeyEventPress,
 			},
 			expected: []byte("\x1b[97;2u"),
