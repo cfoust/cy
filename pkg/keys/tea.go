@@ -13,113 +13,113 @@ func (k Key) toLegacyKeyType() tea.KeyType {
 	keyCode := k.Runes[0]
 	switch keyCode {
 	case KittyKeyEscape:
-		return KeyEscape
+		return tea.KeyEscape
 	case KittyKeyEnter:
-		return KeyEnter
+		return tea.KeyEnter
 	case KittyKeyTab:
-		return KeyTab
+		return tea.KeyTab
 	case KittyKeyBackspace:
-		return KeyBackspace
+		return tea.KeyBackspace
 	case KittyKeyInsert:
-		return KeyInsert
+		return tea.KeyInsert
 	case KittyKeyDelete:
-		return KeyDelete
+		return tea.KeyDelete
 	case KittyKeyHome:
 		if k.Mod&KeyModCtrl != 0 && k.Mod&KeyModShift != 0 {
-			return KeyCtrlShiftHome
+			return tea.KeyCtrlShiftHome
 		} else if k.Mod&KeyModCtrl != 0 {
-			return KeyCtrlHome
+			return tea.KeyCtrlHome
 		} else if k.Mod&KeyModShift != 0 {
-			return KeyShiftHome
+			return tea.KeyShiftHome
 		} else {
-			return KeyHome
+			return tea.KeyHome
 		}
 	case KittyKeyEnd:
 		if k.Mod&KeyModCtrl != 0 && k.Mod&KeyModShift != 0 {
-			return KeyCtrlShiftEnd
+			return tea.KeyCtrlShiftEnd
 		} else if k.Mod&KeyModCtrl != 0 {
-			return KeyCtrlEnd
+			return tea.KeyCtrlEnd
 		} else if k.Mod&KeyModShift != 0 {
-			return KeyShiftEnd
+			return tea.KeyShiftEnd
 		} else {
-			return KeyEnd
+			return tea.KeyEnd
 		}
 	case KittyKeyPageUp:
 		if k.Mod&KeyModCtrl != 0 {
-			return KeyCtrlPgUp
+			return tea.KeyCtrlPgUp
 		} else {
-			return KeyPgUp
+			return tea.KeyPgUp
 		}
 	case KittyKeyPageDown:
 		if k.Mod&KeyModCtrl != 0 {
-			return KeyCtrlPgDown
+			return tea.KeyCtrlPgDown
 		} else {
-			return KeyPgDown
+			return tea.KeyPgDown
 		}
 	case KittyKeyLeft:
 		if k.Mod&KeyModCtrl != 0 && k.Mod&KeyModShift != 0 {
-			return KeyCtrlShiftLeft
+			return tea.KeyCtrlShiftLeft
 		} else if k.Mod&KeyModCtrl != 0 {
-			return KeyCtrlLeft
+			return tea.KeyCtrlLeft
 		} else if k.Mod&KeyModShift != 0 {
-			return KeyShiftLeft
+			return tea.KeyShiftLeft
 		} else {
-			return KeyLeft
+			return tea.KeyLeft
 		}
 	case KittyKeyUp:
 		if k.Mod&KeyModCtrl != 0 && k.Mod&KeyModShift != 0 {
-			return KeyCtrlShiftUp
+			return tea.KeyCtrlShiftUp
 		} else if k.Mod&KeyModCtrl != 0 {
-			return KeyCtrlUp
+			return tea.KeyCtrlUp
 		} else if k.Mod&KeyModShift != 0 {
-			return KeyShiftUp
+			return tea.KeyShiftUp
 		} else {
-			return KeyUp
+			return tea.KeyUp
 		}
 	case KittyKeyRight:
 		if k.Mod&KeyModCtrl != 0 && k.Mod&KeyModShift != 0 {
-			return KeyCtrlShiftRight
+			return tea.KeyCtrlShiftRight
 		} else if k.Mod&KeyModCtrl != 0 {
-			return KeyCtrlRight
+			return tea.KeyCtrlRight
 		} else if k.Mod&KeyModShift != 0 {
-			return KeyShiftRight
+			return tea.KeyShiftRight
 		} else {
-			return KeyRight
+			return tea.KeyRight
 		}
 	case KittyKeyDown:
 		if k.Mod&KeyModCtrl != 0 && k.Mod&KeyModShift != 0 {
-			return KeyCtrlShiftDown
+			return tea.KeyCtrlShiftDown
 		} else if k.Mod&KeyModCtrl != 0 {
-			return KeyCtrlDown
+			return tea.KeyCtrlDown
 		} else if k.Mod&KeyModShift != 0 {
-			return KeyShiftDown
+			return tea.KeyShiftDown
 		} else {
-			return KeyDown
+			return tea.KeyDown
 		}
 	case KittyKeyF1:
-		return KeyF1
+		return tea.KeyF1
 	case KittyKeyF2:
-		return KeyF2
+		return tea.KeyF2
 	case KittyKeyF3:
-		return KeyF3
+		return tea.KeyF3
 	case KittyKeyF4:
-		return KeyF4
+		return tea.KeyF4
 	case KittyKeyF5:
-		return KeyF5
+		return tea.KeyF5
 	case KittyKeyF6:
-		return KeyF6
+		return tea.KeyF6
 	case KittyKeyF7:
-		return KeyF7
+		return tea.KeyF7
 	case KittyKeyF8:
-		return KeyF8
+		return tea.KeyF8
 	case KittyKeyF9:
-		return KeyF9
+		return tea.KeyF9
 	case KittyKeyF10:
-		return KeyF10
+		return tea.KeyF10
 	case KittyKeyF11:
-		return KeyF11
+		return tea.KeyF11
 	case KittyKeyF12:
-		return KeyF12
+		return tea.KeyF12
 	default:
 		return 0
 	}

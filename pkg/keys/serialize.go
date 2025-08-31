@@ -1,8 +1,6 @@
 package keys
 
 import (
-	"fmt"
-
 	"github.com/cfoust/cy/pkg/emu"
 )
 
@@ -62,6 +60,9 @@ var xtermSequences = map[string]Key{
 
 	"\x1b[28~": k(0xE000 + 126), // F15 - vt100, xterm, also urxvt
 	"\x1b[29~": k(0xE000 + 127), // F16 - vt100, xterm, also urxvt
+
+	// Guaranteed mappings
+	"\x1b": k(KittyKeyEscape),
 }
 
 // inverseSequences is a mapping from a Key to its byte sequence.
@@ -78,59 +79,27 @@ var inverseSequences = func() map[keyLookup][]byte {
 	return s
 }()
 
-
 // legacyBytes returns the traditional byte encoding for a key
 func (k Key) legacyBytes() (data []byte) {
-	// Convert Kitty-based key to legacy format
-	alt := k.Mod&KeyModAlt != 0
+	// We can't report non-presses
+	if k.Type != KeyEventPress {
+		return
+	}
 
+	// Immediately return for keys with authoritative binary representations
+	if sequence, ok := inverseSequences[k.toLookup()]; ok {
+		return []byte(sequence)
+	}
+
+	alt := k.Mod&KeyModAlt != 0
 	if len(k.Runes) == 0 {
 		return data
 	}
 
-	// If we have multiple runes, they're likely regular Unicode characters
-	if len(k.Runes) > 1 {
-		if alt {
-			data = append(data, '\x1b')
-		}
-		data = append(data, []byte(string(k.Runes))...)
-		return data
+	if alt {
+		data = append(data, '\x1b')
 	}
-
-	keyCode := k.Runes[0]
-
-	// Handle space specially
-	if keyCode == ' ' {
-		data = append(data, []byte(" ")...)
-		return data
-	}
-
-	// Handle regular Unicode characters
-	if keyCode <= 0x10FFFF && keyCode > 31 && keyCode != 127 {
-		if alt {
-			data = append(data, '\x1b')
-		}
-		data = append(data, []byte(string(rune(keyCode)))...)
-		return data
-	}
-
-	legacyType := k.toLegacyKeyType()
-	if legacyType != 0 {
-		if seq, ok := inverseSequences[keyLookup{
-			Type: legacyType,
-			Alt:  alt,
-		}]; ok {
-			data = append(data, seq...)
-			return data
-		}
-
-		// ESC is special case
-		if legacyType == keyESC {
-			data = append(data, '\x1b')
-			return data
-		}
-	}
-
+	data = append(data, []byte(string(onlyPrintable(k.Runes)))...)
 	return data
 }
 

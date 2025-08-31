@@ -38,9 +38,9 @@ const (
 	KittyKeyF12       = 0xE000 + 123
 )
 
-// IsKittySequence checks if the byte sequence might be a Kitty protocol sequence
+// isKittySequence checks if the byte sequence might be a Kitty protocol sequence
 // Kitty sequences follow the pattern: ESC [ {keycode} [; {modifiers}] u
-func IsKittySequence(b []byte) bool {
+func isKittySequence(b []byte) bool {
 	if len(b) < 4 {
 		return false
 	}
@@ -91,19 +91,15 @@ func (k Key) kittySequence(protocol emu.KeyProtocol) string {
 	// Determine if we should include text in output
 	// Extract printable characters from Runes field for text support
 	var text string
-	if reportText && len(k.Runes) > 0 {
-		var printableRunes []rune
-		for _, r := range k.Runes {
-			// Include only printable characters (not special KittyKey constants)
-			if r <= 0x10FFFF && r > 31 && r != 127 && r < 0xE000 {
-				printableRunes = append(printableRunes, r)
-			}
-		}
+	if len(k.Text) > 0 {
+		text = k.Text
+	} else if len(k.Runes) > 0 {
+		printableRunes := onlyPrintable(k.Runes)
 		if len(printableRunes) > 0 {
 			text = string(printableRunes)
 		}
 	}
-	includeText := text != ""
+	includeText := reportText && text != ""
 
 	if includeEventType || includeText {
 		// Extended format with event type and/or text
@@ -127,10 +123,10 @@ func (k Key) kittySequence(protocol emu.KeyProtocol) string {
 	}
 }
 
-// ParseKittySequence parses a Kitty protocol key sequence
+// parseKittySequence parses a Kitty protocol key sequence
 // Format: ESC [ {keycode} [; {modifiers} [; {event_type} [; {text}]]] u
-func ParseKittySequence(b []byte) (Key, int, error) {
-	if !IsKittySequence(b) {
+func parseKittySequence(b []byte) (Key, int, error) {
+	if !isKittySequence(b) {
 		return Key{}, 0, fmt.Errorf("not a valid Kitty sequence")
 	}
 
@@ -184,10 +180,7 @@ func ParseKittySequence(b []byte) (Key, int, error) {
 
 	// Parse associated text (optional)
 	if len(parts) > 3 && parts[3] != "" {
-		// For now, text is handled implicitly through the Runes field
-		// The text would be stored in the Runes field as printable characters
-		// during key creation. This parsing is primarily for validation.
-		// TODO: Consider if we need to store text separately or append to Runes
+		key.Text = parts[3]
 	}
 
 	return key, len(b), nil
