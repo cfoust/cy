@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/cfoust/cy/pkg/geom"
-	"github.com/cfoust/cy/pkg/keys"
 
 	"github.com/charmbracelet/bubbles/cursor"
 	tea "github.com/charmbracelet/bubbletea"
@@ -79,7 +78,7 @@ func Test(m Model) func(msgs ...interface{}) {
 				})
 				continue
 			case string:
-				keyMsgs := keys.FromNames(msg)
+				keyMsgs := KeysToMsg(msg)
 				if len(keyMsgs) == 1 {
 					realMsg = keyMsgs[0]
 				}

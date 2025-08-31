@@ -73,8 +73,8 @@ func TestKeysToBytes(t *testing.T) {
 
 		parsed := make([]Key, 0)
 		for i, w := 0, 0; i < len(bytes); i += w {
-			var msg Event
-			w, msg = Read(bytes[i:])
+			var msg any
+			msg, w = Read(bytes[i:])
 			if key, ok := msg.(Key); ok {
 				parsed = append(parsed, key)
 			}
@@ -86,7 +86,7 @@ func TestKeysToBytes(t *testing.T) {
 func TestDetect(t *testing.T) {
 	type testCase struct {
 		input []byte
-		msg   Event
+		msg   any
 	}
 	cases := []testCase{
 		{
@@ -111,7 +111,7 @@ func TestDetect(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		_, msg := Read(c.input)
+		msg, _ := Read(c.input)
 		require.Equal(
 			t,
 			c.msg,

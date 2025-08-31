@@ -13,6 +13,7 @@ import (
 	T "github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
+	"github.com/cfoust/cy/pkg/keys"
 
 	"github.com/stretchr/testify/require"
 )
@@ -72,8 +73,8 @@ func TestClickInactivePane(t *testing.T) {
 			R: 0,
 			C: 45,
 		},
-		Type:   taro.MousePress,
-		Button: taro.MouseLeft,
+		Type:   keys.MousePress,
+		Button: keys.MouseLeft,
 	})
 	time.Sleep(500 * time.Millisecond)
 
@@ -302,8 +303,8 @@ func TestClickTabs(t *testing.T) {
 	click := func(loc geom.Vec2) {
 		l.Send(taro.MouseMsg{
 			Vec2:   loc,
-			Type:   taro.MousePress,
-			Button: taro.MouseLeft,
+			Type:   keys.MousePress,
+			Button: keys.MouseLeft,
 		})
 		time.Sleep(500 * time.Millisecond)
 	}
