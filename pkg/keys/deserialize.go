@@ -103,25 +103,71 @@ var sequences = map[string]Key{
 	"\x1b[6^":   kMod(KittyKeyPageDown, KeyModCtrl), // urxvt
 	"\x1b[6;7~": kMod(KittyKeyPageDown, KeyModCtrl|KeyModAlt),
 
-	"\x1b[1~":   k(KittyKeyHome),
-	"\x1b[H":    k(KittyKeyHome),                                      // xterm, lxterm
-	"\x1b[1;3H": kMod(KittyKeyHome, KeyModAlt),                        // xterm, lxterm
-	"\x1b[1;5H": kMod(KittyKeyHome, KeyModCtrl),                       // xterm, lxterm
-	"\x1b[1;7H": kMod(KittyKeyHome, KeyModCtrl|KeyModAlt),             // xterm, lxterm
-	"\x1b[1;2H": kMod(KittyKeyHome, KeyModShift),                      // xterm, lxterm
-	"\x1b[1;4H": kMod(KittyKeyHome, KeyModShift|KeyModAlt),            // xterm, lxterm
-	"\x1b[1;6H": kMod(KittyKeyHome, KeyModCtrl|KeyModShift),           // xterm, lxterm
-	"\x1b[1;8H": kMod(KittyKeyHome, KeyModCtrl|KeyModShift|KeyModAlt), // xterm, lxterm
+	"\x1b[1~": k(KittyKeyHome),
+	"\x1b[H": k(
+		KittyKeyHome,
+	), // xterm, lxterm
+	"\x1b[1;3H": kMod(
+		KittyKeyHome,
+		KeyModAlt,
+	), // xterm, lxterm
+	"\x1b[1;5H": kMod(
+		KittyKeyHome,
+		KeyModCtrl,
+	), // xterm, lxterm
+	"\x1b[1;7H": kMod(
+		KittyKeyHome,
+		KeyModCtrl|KeyModAlt,
+	), // xterm, lxterm
+	"\x1b[1;2H": kMod(
+		KittyKeyHome,
+		KeyModShift,
+	), // xterm, lxterm
+	"\x1b[1;4H": kMod(
+		KittyKeyHome,
+		KeyModShift|KeyModAlt,
+	), // xterm, lxterm
+	"\x1b[1;6H": kMod(
+		KittyKeyHome,
+		KeyModCtrl|KeyModShift,
+	), // xterm, lxterm
+	"\x1b[1;8H": kMod(
+		KittyKeyHome,
+		KeyModCtrl|KeyModShift|KeyModAlt,
+	), // xterm, lxterm
 
-	"\x1b[4~":   k(KittyKeyEnd),
-	"\x1b[F":    k(KittyKeyEnd),                                      // xterm, lxterm
-	"\x1b[1;3F": kMod(KittyKeyEnd, KeyModAlt),                        // xterm, lxterm
-	"\x1b[1;5F": kMod(KittyKeyEnd, KeyModCtrl),                       // xterm, lxterm
-	"\x1b[1;7F": kMod(KittyKeyEnd, KeyModCtrl|KeyModAlt),             // xterm, lxterm
-	"\x1b[1;2F": kMod(KittyKeyEnd, KeyModShift),                      // xterm, lxterm
-	"\x1b[1;4F": kMod(KittyKeyEnd, KeyModShift|KeyModAlt),            // xterm, lxterm
-	"\x1b[1;6F": kMod(KittyKeyEnd, KeyModCtrl|KeyModShift),           // xterm, lxterm
-	"\x1b[1;8F": kMod(KittyKeyEnd, KeyModCtrl|KeyModShift|KeyModAlt), // xterm, lxterm
+	"\x1b[4~": k(KittyKeyEnd),
+	"\x1b[F": k(
+		KittyKeyEnd,
+	), // xterm, lxterm
+	"\x1b[1;3F": kMod(
+		KittyKeyEnd,
+		KeyModAlt,
+	), // xterm, lxterm
+	"\x1b[1;5F": kMod(
+		KittyKeyEnd,
+		KeyModCtrl,
+	), // xterm, lxterm
+	"\x1b[1;7F": kMod(
+		KittyKeyEnd,
+		KeyModCtrl|KeyModAlt,
+	), // xterm, lxterm
+	"\x1b[1;2F": kMod(
+		KittyKeyEnd,
+		KeyModShift,
+	), // xterm, lxterm
+	"\x1b[1;4F": kMod(
+		KittyKeyEnd,
+		KeyModShift|KeyModAlt,
+	), // xterm, lxterm
+	"\x1b[1;6F": kMod(
+		KittyKeyEnd,
+		KeyModCtrl|KeyModShift,
+	), // xterm, lxterm
+	"\x1b[1;8F": kMod(
+		KittyKeyEnd,
+		KeyModCtrl|KeyModShift|KeyModAlt,
+	), // xterm, lxterm
 
 	"\x1b[7~": k(KittyKeyHome),                            // urxvt
 	"\x1b[7^": kMod(KittyKeyHome, KeyModCtrl),             // urxvt
