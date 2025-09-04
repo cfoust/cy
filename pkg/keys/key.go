@@ -69,12 +69,24 @@ const (
 	KeyModNumLock
 )
 
+const (
+	// Special key code that indicates this Key only consists of content in
+	// the Text field and nothing else. This is supported in bubbletea, so
+	// we need to handle it somehow for backwards compatibility.
+	KeyText = KittyKeyF12 + 1
+)
+
 // Key contains information about a keypress using Kitty protocol structure.
+//
+// The fields in this structure have meanings as defined by the Kitty keyboard
+// protocol: https://sw.kovidgoyal.net/kitty/keyboard-protocol/#an-overview
 type Key struct {
-	Runes []rune       // Can also contain KittyKeys
-	Type  KeyEventType // Press/repeat/release
-	Mod   KeyModifiers // Combined modifier flags
-	Text  string       // Can be distinct from Runes
+	Code      rune
+	Shifted   rune
+	Alternate rune
+	Type      KeyEventType // Press/repeat/release
+	Mod       KeyModifiers // Combined modifier flags
+	Text      string       // Can be distinct from Runes
 }
 
 // String returns a friendly string representation for a key. It's safe (and
@@ -106,10 +118,10 @@ func (k Key) String() (str string) {
 	}
 
 	var keyPart string
-	if len(k.Runes) == 0 {
+	if k.Code == 0 {
 		keyPart = "unknown"
 	} else {
-		keyCode := k.Runes[0]
+		keyCode := k.Code
 		switch keyCode {
 		case KittyKeyEscape:
 			keyPart = "escape"
@@ -297,15 +309,19 @@ func FromNames(keys ...string) (msgs []Key) {
 			keyCode = ' '
 		}
 
-		runes := []rune{keyCode}
+		var code rune = keyCode
 
 		if keyCode == -1 && len(key) > 0 {
-			runes = []rune(key)
+			// Take the first rune from the key string
+			keyRunes := []rune(key)
+			if len(keyRunes) > 0 {
+				code = keyRunes[0]
+			}
 		}
 
 		msgs = append(msgs, Key{
-			Runes: runes,
-			Mod:   modifiers,
+			Code: code,
+			Mod:  modifiers,
 		})
 	}
 	return
