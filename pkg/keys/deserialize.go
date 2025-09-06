@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -508,10 +509,24 @@ func Read(b []byte) (event any, w int) {
 			modifiers |= KeyModAlt
 		}
 
+		var (
+			code    = runes[0]
+			shifted rune
+		)
+		if unicode.IsUpper(code) {
+			shifted = code
+			code = unicode.ToLower(code)
+			modifiers |= KeyModShift
+		} else {
+			shifted = unicode.ToUpper(code)
+		}
+
 		return Key{
-			Code: runes[0],
-			Mod:  modifiers,
-		}, i
+			Code:    code,
+			Shifted: shifted,
+			Mod:     modifiers,
+			Text:    string(runes[0]),
+		}, 1
 	}
 
 	// We didn't find an escape sequence, nor a valid rune. Was this a
