@@ -112,14 +112,14 @@ var xtermSequences = map[string]Key{
 }
 
 // inverseSequences is a mapping from a Key to its byte sequence.
-var inverseSequences = func() map[keyLookup][]byte {
-	s := map[keyLookup][]byte{}
+var inverseSequences = func() map[Key][]byte {
+	s := map[Key][]byte{}
 	for str, key := range extSequences {
-		s[key.toLookup()] = []byte(str)
+		s[key] = []byte(str)
 	}
 
 	for str, key := range xtermSequences {
-		s[key.toLookup()] = []byte(str)
+		s[key] = []byte(str)
 	}
 
 	return s
@@ -132,20 +132,15 @@ func (k Key) legacyBytes() (data []byte) {
 		return
 	}
 
-	// Immediately return for keys with authoritative binary representations
-	if sequence, ok := inverseSequences[k.toLookup()]; ok {
+	if sequence, ok := inverseSequences[k]; ok {
 		return []byte(sequence)
 	}
 
 	alt := k.Mod&KeyModAlt != 0
-	if len(k.Runes) == 0 {
-		return data
-	}
-
 	if alt {
 		data = append(data, '\x1b')
 	}
-	data = append(data, []byte(string(onlyPrintable(k.Runes)))...)
+	data = append(data, byte(k.Code))
 	return data
 }
 

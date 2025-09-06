@@ -9,26 +9,14 @@ import (
 
 func k(r rune) Key {
 	return Key{
-		Runes: []rune{r},
+		Code: r,
 	}
 }
 
 func kMod(r rune, m KeyModifiers) Key {
 	return Key{
-		Runes: []rune{r},
-		Mod:   m,
-	}
-}
-
-type keyLookup struct {
-	Rune rune
-	Mod  KeyModifiers
-}
-
-func (k Key) toLookup() keyLookup {
-	return keyLookup{
-		Rune: k.Runes[0],
-		Mod:  k.Mod,
+		Code: r,
+		Mod:  m,
 	}
 }
 
@@ -398,13 +386,13 @@ var extSequences = func() map[string]Key {
 		}
 	}
 
-	s[" "] = Key{Runes: []rune{' '}}
+	s[" "] = Key{Code: ' '}
 	s["\x1b "] = Key{
-		Runes: []rune{' '},
+		Code: ' ',
 		Mod:   KeyModAlt,
 	}
 	s["\x1b\x1b"] = Key{
-		Runes: []rune{KittyKeyEscape},
+		Code: KittyKeyEscape,
 		Mod:   KeyModAlt,
 	}
 	return s
@@ -492,7 +480,7 @@ func Read(b []byte) (event any, w int) {
 			modifiers |= KeyModAlt
 		}
 		return Key{
-			Runes: []rune{0},
+			Code: 0,
 			Mod:   modifiers,
 			Type:  KeyEventPress,
 		}, i + 1
@@ -524,7 +512,7 @@ func Read(b []byte) (event any, w int) {
 		}
 
 		return Key{
-			Runes: runes,
+			Code: runes[0],
 			Mod:   modifiers,
 		}, i
 	}

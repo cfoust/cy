@@ -309,18 +309,17 @@ func FromNames(keys ...string) (msgs []Key) {
 			keyCode = ' '
 		}
 
-		var code rune = keyCode
-
-		if keyCode == -1 && len(key) > 0 {
-			// Take the first rune from the key string
-			keyRunes := []rune(key)
-			if len(keyRunes) > 0 {
-				code = keyRunes[0]
-			}
+		if keyCode == -1 && len(key) > 1 {
+			msgs = append(msgs, Key{
+				Code: KeyText,
+				Text: key,
+				Mod:  modifiers,
+			})
+			continue
 		}
 
 		msgs = append(msgs, Key{
-			Code: code,
+			Code: rune(key[0]),
 			Mod:  modifiers,
 		})
 	}
