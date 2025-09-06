@@ -104,8 +104,8 @@ var xtermSequences = map[string]Key{
 	"\x1b[1;3R": kMod(KittyKeyF3, KeyModAlt), // vt100, xterm
 	"\x1b[1;3S": kMod(KittyKeyF4, KeyModAlt), // vt100, xterm
 
-	"\x1b[28~": k(0xE000 + 126), // F15 - vt100, xterm, also urxvt
-	"\x1b[29~": k(0xE000 + 127), // F16 - vt100, xterm, also urxvt
+	"\x1b[28~": k(KittyKeyF15), // F15 - vt100, xterm, also urxvt
+	"\x1b[29~": k(KittyKeyF16), // F16 - vt100, xterm, also urxvt
 
 	// Guaranteed mappings
 	"\x1b": k(KittyKeyEscape),

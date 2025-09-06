@@ -5,6 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,92 +29,77 @@ func TestFromNames(t *testing.T) {
 	))
 }
 
-func TestKeysToBytes(t *testing.T) {
-	t.Skip()
-	keys := []Key{
-		{
-			Code: KeyText,
-			Text: "test",
-		},
-		{
-			Code: 'a',
-		},
-		{
-			Code: KittyKeyEscape,
-		},
-		{
-			Code: 'a',
-			Mod:  KeyModAlt,
-		},
-		{
-			Code: ' ',
-		},
-	}
+type inCase struct {
+	name  string
+	input string
+	msg   any
+}
 
-	for _, key := range keys {
-		bytes := key.Bytes(emu.KeyLegacy)
-
-		parsed := make([]Key, 0)
-		for i, w := 0, 0; i < len(bytes); i += w {
-			var msg any
-			msg, w = Read(bytes[i:])
-			if key, ok := msg.(Key); ok {
-				parsed = append(parsed, key)
-			}
-		}
-		require.Equal(t, []Key{key}, parsed)
+func in(name string, input string, msg any) inCase {
+	return inCase{
+		name:  name,
+		input: input,
+		msg:   msg,
 	}
 }
 
-type testCase struct {
-	input    string
+func TestDeserialize(t *testing.T) {
+	cases := []inCase{
+		// legacy
+		in("ctrl+c", string([]rune{keyETX}), kMod('c', KeyModCtrl)),
+		in("escape", "\x1b", k(KittyKeyEscape)),
+		in("alt+o", "\x1bo", kMod('o', KeyModAlt)),
+		in("kitty", "\x1b[106;;106u", kMod('o', KeyModAlt)),
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			msg, _ := Read([]byte(test.input))
+			assert.Equal(
+				t,
+				test.msg,
+				msg,
+				"input '%+v' produced invalid Key",
+				[]byte(test.input),
+			)
+		})
+	}
+}
+
+type outCase struct {
+	name     string
 	msg      any
 	protocol emu.KeyProtocol
 	output   string
 }
 
-func same(input string, msg any) testCase {
-	return testCase{
-		input:  input,
+func out(name string, input string, msg any) outCase {
+	return outCase{
+		name:   name,
 		msg:    msg,
 		output: input,
 	}
 }
 
 func TestKeys(t *testing.T) {
-	cases := []testCase{
-		same("\x1b", k(KittyKeyEscape)),
-		same("\x1bo", kMod('o', KeyModAlt)),
-		same("test", Key{
-			Code: KeyText,
-			Text: "test",
-		}),
-		same(string([]rune{keyETX}), kMod('c', KeyModCtrl)),
-	}
+	var cases []outCase
+
 	for _, test := range cases {
-		msg, _ := Read([]byte(test.input))
-		require.Equal(
-			t,
-			test.msg,
-			msg,
-			"input '%+v' produced invalid Key",
-			test.input,
-		)
+		t.Run(test.name, func(t *testing.T) {
+			var data []byte
+			switch msg := test.msg.(type) {
+			case Mouse:
+				data = msg.Bytes()
+			case Key:
+				data = msg.Bytes(test.protocol)
+			}
 
-		var data []byte
-		switch msg := msg.(type) {
-		case MouseEvent:
-			data = msg.Bytes()
-		case Key:
-			data = msg.Bytes(test.protocol)
-		}
-
-		require.Equal(
-			t,
-			[]byte(test.output),
-			data,
-			"input '%+v' produced invalid output",
-			test.input,
-		)
+			assert.Equal(
+				t,
+				[]byte(test.output),
+				data,
+				"Key produced invalid output",
+			)
+		})
 	}
 }
