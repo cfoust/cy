@@ -49,7 +49,23 @@ func TestDeserialize(t *testing.T) {
 		in("ctrl+c", string([]rune{keyETX}), kMod('c', KeyModCtrl)),
 		in("escape", "\x1b", k(KittyKeyEscape)),
 		in("alt+o", "\x1bo", kMod('o', KeyModAlt)),
-		in("kitty", "\x1b[106;;106u", kMod('o', KeyModAlt)),
+		// kitty
+		in("shifted", "\x1b[97:65;2;65u", Key{
+			Code:    'a',
+			Mod:     KeyModShift,
+			Shifted: 'A',
+			Text:    "A",
+		}),
+		in("esc press", "\x1b[27u", Key{
+			Code: KittyKeyEscape,
+		}),
+		in("home", "\x1b[H", Key{
+			Code: KittyKeyHome,
+		}),
+		in("home release", "\x1b[;1:3H", Key{
+			Code: KittyKeyHome,
+			Type: KeyEventRelease,
+		}),
 	}
 
 	for _, test := range cases {

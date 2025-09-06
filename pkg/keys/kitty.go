@@ -9,8 +9,14 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 )
 
-var kittyRe = regexp.MustCompile(
-	`^\x1b\[(?P<code>\d+)(:(?P<shifted>\d*)(:(?P<base>\d*))?)?(;(?P<modifier>\d+)?(:(?P<type>\d+)?)?(;(?P<text>(\d+)(:\d+)*))?)?u`,
+var (
+	kittyRe = regexp.MustCompile(
+		`^\x1b\[(?P<code>\d+)(:(?P<shifted>\d*)(:(?P<base>\d*))?)?(;(?P<modifier>\d+)?(:(?P<type>\d+)?)?(;(?P<text>(\d+)(:\d+)*))?)?u`,
+	)
+
+	kittyLegacy = regexp.MustCompile(
+		`^\x1b\[(?P<code>\d+)?(;(?P<modifier>\d+)(:(?P<type>\d+)?)?)?(?P<suffix>[~ABCDEFHPQS])`,
+	)
 )
 
 const (
@@ -145,39 +151,158 @@ const (
 	KittyRightMeta    = 57452
 )
 
-// irregularCSI maps key constants to their irregular CSI sequences
-// (i.e., those that don't follow the standard "ESC[{number}u" format)
-var irregularCSI = map[rune]string{
+var legacyLetter = map[string]rune{
 	// Navigation keys with letter suffixes
-	KittyKeyLeft:  "1D",
-	KittyKeyRight: "1C",
-	KittyKeyUp:    "1A",
-	KittyKeyDown:  "1B",
-	KittyKeyHome:  "1H", // Alternative: "7~"
-	KittyKeyEnd:   "1F", // Alternative: "8~"
-	KittyKPBegin:  "1E", // Alternative: "57427 ~"
-
-	// Keys with ~ suffix
-	KittyKeyInsert:   "2~",
-	KittyKeyDelete:   "3~",
-	KittyKeyPageUp:   "5~",
-	KittyKeyPageDown: "6~",
+	"D": KittyKeyLeft,
+	"C": KittyKeyRight,
+	"A": KittyKeyUp,
+	"B": KittyKeyDown,
+	"H": KittyKeyHome, // Alternative: "7~"
+	"F": KittyKeyEnd,  // Alternative: "8~"
+	"E": KittyKPBegin, // Alternative: "57427 ~"
 
 	// Function keys F1-F4 with letter suffixes
-	KittyKeyF1: "1P", // Alternative: "11~"
-	KittyKeyF2: "1Q", // Alternative: "12~"
-	KittyKeyF4: "1S", // Alternative: "14~"
+	"P": KittyKeyF1, // Alternative: "11~"
+	"Q": KittyKeyF2, // Alternative: "12~"
+	"S": KittyKeyF4, // Alternative: "14~"
+}
+
+var legacyNumber = map[int]rune{
+	// Keys with ~ suffix
+	2: KittyKeyInsert,
+	3: KittyKeyDelete,
+	5: KittyKeyPageUp,
+	6: KittyKeyPageDown,
 
 	// Function keys F3,F5-F12 with ~ suffix
-	KittyKeyF3:  "13~",
-	KittyKeyF5:  "15~",
-	KittyKeyF6:  "17~",
-	KittyKeyF7:  "18~",
-	KittyKeyF8:  "19~",
-	KittyKeyF9:  "20~",
-	KittyKeyF10: "21~",
-	KittyKeyF11: "23~",
-	KittyKeyF12: "24~",
+	13: KittyKeyF3,
+	15: KittyKeyF5,
+	17: KittyKeyF6,
+	18: KittyKeyF7,
+	19: KittyKeyF8,
+	20: KittyKeyF9,
+	21: KittyKeyF10,
+	23: KittyKeyF11,
+	24: KittyKeyF12,
+}
+
+var (
+	invalidKittyErr = fmt.Errorf("not a valid Kitty sequence")
+)
+
+func getInt(b []byte) (result int) {
+	if len(b) == 0 {
+		return 0
+	}
+
+	result, _ = strconv.Atoi(string(b))
+	return
+}
+
+func parseModifier(modifier, type_ int, key *Key) {
+	// In the escape code, the modifier value is encoded as a decimal number
+	// which is 1 + actual modifiers
+	if modifier > 0 {
+		modifier--
+	}
+
+	if modifier >= 256 {
+		modifier = 255
+	}
+
+	key.Mod = KeyModifiers(modifier)
+
+	if type_ == 0 {
+		type_ = 1
+	}
+
+	key.Type = KeyEventType(type_ - 1)
+}
+
+func parseKittyLegacy(match [][]byte) (key Key, width int, err error) {
+	err = invalidKittyErr
+
+	var (
+		code     = getInt(match[kittyLegacy.SubexpIndex("code")])
+		modifier = getInt(match[kittyLegacy.SubexpIndex("modifier")])
+		type_    = getInt(match[kittyLegacy.SubexpIndex("type")])
+		suffix   = string(match[kittyLegacy.SubexpIndex("suffix")])
+	)
+
+	if len(suffix) == 0 {
+		return
+	}
+
+	if code == 0 {
+		code = 1
+	}
+
+	switch suffix {
+	case "~":
+		r, ok := legacyNumber[code]
+		if !ok {
+			return
+		}
+		key.Code = r
+	default:
+		r, ok := legacyLetter[suffix]
+		if !ok {
+			return
+		}
+		key.Code = r
+	}
+
+	parseModifier(modifier, type_, &key)
+	err = nil
+	return
+}
+
+func parseKittyPrimary(match [][]byte) (key Key, width int, err error) {
+	var (
+		code     = getInt(match[kittyRe.SubexpIndex("code")])
+		shifted  = getInt(match[kittyRe.SubexpIndex("shifted")])
+		base     = getInt(match[kittyRe.SubexpIndex("base")])
+		modifier = getInt(match[kittyRe.SubexpIndex("modifier")])
+		type_    = getInt(match[kittyRe.SubexpIndex("type")])
+		// might be several code points
+		text = string(match[kittyRe.SubexpIndex("text")])
+	)
+
+	key.Code = rune(code)
+	key.Shifted = rune(shifted)
+	key.Base = rune(base)
+
+	parseModifier(modifier, type_, &key)
+
+	if len(text) > 0 {
+		r := []rune{}
+		for s := range strings.SplitSeq(text, ":") {
+			num, _ := strconv.Atoi(string(s))
+			r = append(r, rune(num))
+		}
+		key.Text = string(r)
+	}
+
+	err = nil
+	return
+}
+
+// parseKittySequence parses a Kitty protocol key sequence
+// Format: ESC [ {keycode} [; {modifiers} [; {event_type} [; {text}]]] u
+func parseKittySequence(b []byte) (key Key, width int, err error) {
+	err = invalidKittyErr
+
+	if match := kittyLegacy.FindSubmatch(b); len(match) > 0 {
+		width = len(match[0])
+		return parseKittyLegacy(match)
+	}
+
+	if match := kittyRe.FindSubmatch(b); len(match) > 0 {
+		width = len(match[0])
+		return parseKittyPrimary(match)
+	}
+
+	return
 }
 
 // kittySequence generates the Kitty protocol sequence for this key
@@ -221,75 +346,6 @@ func (k Key) kittySequence(protocol emu.KeyProtocol) string {
 		// Minimal format
 		return fmt.Sprintf("\x1b[%du", keycode)
 	}
-}
-
-var (
-	invalidKittyErr = fmt.Errorf("not a valid Kitty sequence")
-)
-
-func getInt(b []byte) (result int) {
-	if len(b) == 0 {
-		return 0
-	}
-
-	result, _ = strconv.Atoi(string(b))
-	return
-}
-
-// parseKittySequence parses a Kitty protocol key sequence
-// Format: ESC [ {keycode} [; {modifiers} [; {event_type} [; {text}]]] u
-func parseKittySequence(b []byte) (key Key, width int, err error) {
-	err = invalidKittyErr
-
-	matches := kittyRe.FindSubmatch(b)
-	if len(matches) == 0 {
-		return
-	}
-
-	var (
-		code     = getInt(matches[kittyRe.SubexpIndex("code")])
-		shifted  = getInt(matches[kittyRe.SubexpIndex("shifted")])
-		base     = getInt(matches[kittyRe.SubexpIndex("base")])
-		modifier = getInt(matches[kittyRe.SubexpIndex("modifier")])
-		type_    = getInt(matches[kittyRe.SubexpIndex("type")])
-		// might be several code points
-		text = string(matches[kittyRe.SubexpIndex("text")])
-	)
-
-	key.Code = rune(code)
-	key.Shifted = rune(shifted)
-	key.Base = rune(base)
-
-	// In the escape code, the modifier value is encoded as a decimal number
-	// which is 1 + actual modifiers
-	if modifier > 0 {
-		modifier--
-	}
-
-	if modifier >= 256 {
-		modifier = 255
-	}
-
-	key.Mod = KeyModifiers(modifier)
-
-	if type_ == 0 {
-		type_ = 1
-	}
-
-	key.Type = KeyEventType(type_ - 1)
-
-	if len(text) > 0 {
-		r := []rune{}
-		for s := range strings.SplitSeq(text, ":") {
-			num, _ := strconv.Atoi(string(s))
-			r = append(r, rune(num))
-		}
-		key.Text = string(r)
-	}
-
-	width = len(matches[0])
-	err = nil
-	return
 }
 
 // GenerateKittyEnableSequence generates the escape sequence to enable Kitty protocol
