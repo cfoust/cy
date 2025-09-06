@@ -50,7 +50,7 @@ func TestDeserialize(t *testing.T) {
 		in("escape", "\x1b", k(KittyKeyEscape)),
 		in("alt+o", "\x1bo", kMod('o', KeyModAlt)),
 		// kitty
-		in("shifted", "\x1b[97:65;2;65u", Key{
+		in("shifted a", "\x1b[97:65;2;65u", Key{
 			Code:    'a',
 			Mod:     KeyModShift,
 			Shifted: 'A',
@@ -64,6 +64,21 @@ func TestDeserialize(t *testing.T) {
 		}),
 		in("home release", "\x1b[;1:3H", Key{
 			Code: KittyKeyHome,
+			Type: KeyEventRelease,
+		}),
+		in("f5", "\x1b[15~", Key{
+			Code: KittyKeyF5,
+		}),
+		in("f5 release", "\x1b[15;1:3~", Key{
+			Code: KittyKeyF5,
+			Type: KeyEventRelease,
+		}),
+		in("left shift", "\x1b[57441;2u", Key{
+			Code: KittyLeftShift,
+			Mod:  KeyModShift,
+		}),
+		in("left shift release", "\x1b[57441;1:3u", Key{
+			Code: KittyLeftShift,
 			Type: KeyEventRelease,
 		}),
 	}
