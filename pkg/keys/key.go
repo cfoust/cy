@@ -81,12 +81,12 @@ const (
 // The fields in this structure have meanings as defined by the Kitty keyboard
 // protocol: https://sw.kovidgoyal.net/kitty/keyboard-protocol/#an-overview
 type Key struct {
-	Code      rune
-	Shifted   rune
-	Alternate rune
-	Type      KeyEventType // Press/repeat/release
-	Mod       KeyModifiers // Combined modifier flags
-	Text      string       // Can be distinct from Runes
+	Code    rune
+	Shifted rune
+	Base    rune
+	Type    KeyEventType // Press/repeat/release
+	Mod     KeyModifiers // Combined modifier flags
+	Text    string       // Can be distinct from Runes
 }
 
 // String returns a friendly string representation for a key. It's safe (and

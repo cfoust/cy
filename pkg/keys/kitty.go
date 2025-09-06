@@ -2,10 +2,15 @@ package keys
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/cfoust/cy/pkg/emu"
+)
+
+var kittyRe = regexp.MustCompile(
+	`^\x1b\[(?P<code>\d+)(:(?P<shifted>\d*)(:(?P<base>\d*))?)?(;(?P<modifier>\d+)?(:(?P<type>\d+)?)?(;(?P<text>(\d+)(:\d+)*))?)?u`,
 )
 
 const (
@@ -18,7 +23,7 @@ const (
 	// There are a bunch of keys that have irregular encodings; we use our
 	// own internal codes for these
 	/////////////////////////////////////////////////////////////////////
-	// Navigation Keys (using private use area for irregular CSI sequences)
+	// Navigation Keys
 	KittyKeyHome     = 0xE000 + 1 // 1 H or 7 ~
 	KittyKeyInsert   = 0xE000 + 2
 	KittyKeyDelete   = 0xE000 + 3
@@ -30,7 +35,7 @@ const (
 	KittyKeyRight    = 0xE000 + 67 // 1 C
 	KittyKeyLeft     = 0xE000 + 68 // 1 D
 
-	// Function Keys F1-F12 (using private use area for irregular CSI sequences)
+	// Function Keys F1-F12
 	KittyKeyF1  = 0xE000 + 112 // 1 P or 11 ~
 	KittyKeyF2  = 0xE000 + 113 // 1 Q or 12 ~
 	KittyKeyF3  = 0xE000 + 114 // 13 ~
@@ -54,7 +59,7 @@ const (
 	KittyPause       = 57362
 	KittyMenu        = 57363
 
-	// Function Keys F13-F35 (standard u format)
+	// Function Keys F13-F35
 	KittyKeyF13 = 57376
 	KittyKeyF14 = 57377
 	KittyKeyF15 = 57378
@@ -175,41 +180,8 @@ var irregularCSI = map[rune]string{
 	KittyKeyF12: "24~",
 }
 
-// isKittySequence checks if the byte sequence might be a Kitty protocol sequence
-// Kitty sequences follow the pattern: ESC [ {keycode} [; {modifiers}] u
-func isKittySequence(b []byte) bool {
-	// TODO(cfoust): 08/31/25 we shouldn't use the length of the sequence to
-	// check for this
-	if len(b) < 4 {
-		return false
-	}
-
-	// Must start with ESC [
-	if b[0] != '\x1b' || b[1] != '[' {
-		return false
-	}
-
-	// Must end with 'u'
-	if b[len(b)-1] != 'u' {
-		return false
-	}
-
-	// Content between '[' and 'u' must start with a digit (keycode)
-	content := string(b[2 : len(b)-1])
-	if len(content) == 0 {
-		return false
-	}
-
-	// First character must be a digit
-	return content[0] >= '0' && content[0] <= '9'
-}
-
 // kittySequence generates the Kitty protocol sequence for this key
 func (k Key) kittySequence(protocol emu.KeyProtocol) string {
-	if k.Code == 0 {
-		return ""
-	}
-
 	var (
 		keycode   = k.Code
 		modifiers = int(k.Mod)
@@ -251,67 +223,73 @@ func (k Key) kittySequence(protocol emu.KeyProtocol) string {
 	}
 }
 
+var (
+	invalidKittyErr = fmt.Errorf("not a valid Kitty sequence")
+)
+
+func getInt(b []byte) (result int) {
+	if len(b) == 0 {
+		return 0
+	}
+
+	result, _ = strconv.Atoi(string(b))
+	return
+}
+
 // parseKittySequence parses a Kitty protocol key sequence
 // Format: ESC [ {keycode} [; {modifiers} [; {event_type} [; {text}]]] u
-func parseKittySequence(b []byte) (Key, int, error) {
-	if !isKittySequence(b) {
-		return Key{}, 0, fmt.Errorf("not a valid Kitty sequence")
+func parseKittySequence(b []byte) (key Key, width int, err error) {
+	err = invalidKittyErr
+
+	matches := kittyRe.FindSubmatch(b)
+	if len(matches) == 0 {
+		return
 	}
 
-	// Extract the content between '[' and 'u'
-	content := string(b[2 : len(b)-1])
-	parts := strings.Split(content, ";")
+	var (
+		code     = getInt(matches[kittyRe.SubexpIndex("code")])
+		shifted  = getInt(matches[kittyRe.SubexpIndex("shifted")])
+		base     = getInt(matches[kittyRe.SubexpIndex("base")])
+		modifier = getInt(matches[kittyRe.SubexpIndex("modifier")])
+		type_    = getInt(matches[kittyRe.SubexpIndex("type")])
+		// might be several code points
+		text = string(matches[kittyRe.SubexpIndex("text")])
+	)
 
-	if len(parts) == 0 {
-		return Key{}, 0, fmt.Errorf("empty key sequence")
+	key.Code = rune(code)
+	key.Shifted = rune(shifted)
+	key.Base = rune(base)
+
+	// In the escape code, the modifier value is encoded as a decimal number
+	// which is 1 + actual modifiers
+	if modifier > 0 {
+		modifier--
 	}
 
-	// Parse keycode (required)
-	keycode, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return Key{}, 0, fmt.Errorf("invalid keycode: %v", err)
+	if modifier >= 256 {
+		modifier = 255
 	}
 
-	key := Key{
-		Code: rune(keycode),
-		Type: KeyEventPress, // Default to press event
+	key.Mod = KeyModifiers(modifier)
+
+	if type_ == 0 {
+		type_ = 1
 	}
 
-	// Parse modifiers (optional)
-	if len(parts) > 1 && parts[1] != "" {
-		modifierBits, err := strconv.Atoi(parts[1])
-		if err != nil {
-			return Key{}, 0, fmt.Errorf("invalid modifiers: %v", err)
+	key.Type = KeyEventType(type_ - 1)
+
+	if len(text) > 0 {
+		r := []rune{}
+		for s := range strings.SplitSeq(text, ":") {
+			num, _ := strconv.Atoi(string(s))
+			r = append(r, rune(num))
 		}
-		key.Mod = KeyModifiers(modifierBits)
+		key.Text = string(r)
 	}
 
-	// Parse event type (optional)
-	if len(parts) > 2 && parts[2] != "" {
-		eventTypeBits, err := strconv.Atoi(parts[2])
-		if err != nil {
-			return Key{}, 0, fmt.Errorf("invalid event type: %v", err)
-		}
-
-		// Map event type bits to KittyKeyEventType
-		switch eventTypeBits {
-		case 0:
-			key.Type = KeyEventPress
-		case 1:
-			key.Type = KeyEventRepeat
-		case 2:
-			key.Type = KeyEventRelease
-		default:
-			return Key{}, 0, fmt.Errorf("unknown event type: %d", eventTypeBits)
-		}
-	}
-
-	// Parse associated text (optional)
-	if len(parts) > 3 && parts[3] != "" {
-		key.Text = parts[3]
-	}
-
-	return key, len(b), nil
+	width = len(matches[0])
+	err = nil
+	return
 }
 
 // GenerateKittyEnableSequence generates the escape sequence to enable Kitty protocol

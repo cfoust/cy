@@ -212,33 +212,33 @@ var sequences = map[string]Key{
 	"\x1b[23;3~": kMod(KittyKeyF11, KeyModAlt), // vt100, xterm
 	"\x1b[24;3~": kMod(KittyKeyF12, KeyModAlt), // vt100, xterm
 
-	"\x1b[1;2P": k(0xE000 + 124), // F13
-	"\x1b[1;2Q": k(0xE000 + 125), // F14
+	"\x1b[1;2P": k(KittyKeyF13), // F13
+	"\x1b[1;2Q": k(KittyKeyF14), // F14
 
-	"\x1b[25~": k(0xE000 + 124), // F13, vt100, xterm, also urxvt
-	"\x1b[26~": k(0xE000 + 125), // F14, vt100, xterm, also urxvt
+	"\x1b[25~": k(KittyKeyF13), // F13, vt100, xterm, also urxvt
+	"\x1b[26~": k(KittyKeyF14), // F14, vt100, xterm, also urxvt
 
-	"\x1b[25;3~": kMod(0xE000+124, KeyModAlt), // F13, vt100, xterm
-	"\x1b[26;3~": kMod(0xE000+125, KeyModAlt), // F14, vt100, xterm
+	"\x1b[25;3~": kMod(KittyKeyF13, KeyModAlt), // F13, vt100, xterm
+	"\x1b[26;3~": kMod(KittyKeyF14, KeyModAlt), // F14, vt100, xterm
 
-	"\x1b[1;2R": k(0xE000 + 126), // F15
-	"\x1b[1;2S": k(0xE000 + 127), // F16
+	"\x1b[1;2R": k(KittyKeyF15), // F15
+	"\x1b[1;2S": k(KittyKeyF16), // F16
 
-	"\x1b[28~": k(0xE000 + 126), // F15, vt100, xterm, also urxvt
-	"\x1b[29~": k(0xE000 + 127), // F16, vt100, xterm, also urxvt
+	"\x1b[28~": k(KittyKeyF15), // F15, vt100, xterm, also urxvt
+	"\x1b[29~": k(KittyKeyF16), // F16, vt100, xterm, also urxvt
 
-	"\x1b[28;3~": kMod(0xE000+126, KeyModAlt), // F15, vt100, xterm
-	"\x1b[29;3~": kMod(0xE000+127, KeyModAlt), // F16, vt100, xterm
+	"\x1b[28;3~": kMod(KittyKeyF15, KeyModAlt), // F15, vt100, xterm
+	"\x1b[29;3~": kMod(KittyKeyF16, KeyModAlt), // F16, vt100, xterm
 
-	"\x1b[15;2~": k(0xE000 + 128), // F17
-	"\x1b[17;2~": k(0xE000 + 129), // F18
-	"\x1b[18;2~": k(0xE000 + 130), // F19
-	"\x1b[19;2~": k(0xE000 + 131), // F20
+	"\x1b[15;2~": k(KittyKeyF17), // F17
+	"\x1b[17;2~": k(KittyKeyF18), // F18
+	"\x1b[18;2~": k(KittyKeyF19), // F19
+	"\x1b[19;2~": k(KittyKeyF20), // F20
 
-	"\x1b[31~": k(0xE000 + 128), // F17
-	"\x1b[32~": k(0xE000 + 129), // F18
-	"\x1b[33~": k(0xE000 + 130), // F19
-	"\x1b[34~": k(0xE000 + 131), // F20
+	"\x1b[31~": k(KittyKeyF17), // F17
+	"\x1b[32~": k(KittyKeyF18), // F18
+	"\x1b[33~": k(KittyKeyF19), // F19
+	"\x1b[34~": k(KittyKeyF20), // F20
 
 	// Powershell sequences.
 	"\x1bOA": k(KittyKeyUp),
@@ -389,11 +389,11 @@ var extSequences = func() map[string]Key {
 	s[" "] = Key{Code: ' '}
 	s["\x1b "] = Key{
 		Code: ' ',
-		Mod:   KeyModAlt,
+		Mod:  KeyModAlt,
 	}
 	s["\x1b\x1b"] = Key{
 		Code: KittyKeyEscape,
-		Mod:   KeyModAlt,
+		Mod:  KeyModAlt,
 	}
 	return s
 }()
@@ -438,16 +438,13 @@ func detectSequence(input []byte) (hasSeq bool, width int, event any) {
 // Read attempts to read a key or mouse event.
 // event can be one of:
 // - Key
-// - MouseEvent
+// - Mouse
 // - UnknownCSISequenceEvent
 // - UnknownInputEvent
 func Read(b []byte) (event any, w int) {
-	// Try Kitty protocol sequence first
-	if isKittySequence(b) {
-		key, width, err := parseKittySequence(b)
-		if err == nil {
-			return key, width
-		}
+	key, width, err := parseKittySequence(b)
+	if err == nil {
+		return key, width
 	}
 
 	// Detect mouse events.
@@ -481,8 +478,8 @@ func Read(b []byte) (event any, w int) {
 		}
 		return Key{
 			Code: 0,
-			Mod:   modifiers,
-			Type:  KeyEventPress,
+			Mod:  modifiers,
+			Type: KeyEventPress,
 		}, i + 1
 	}
 
@@ -513,7 +510,7 @@ func Read(b []byte) (event any, w int) {
 
 		return Key{
 			Code: runes[0],
-			Mod:   modifiers,
+			Mod:  modifiers,
 		}, i
 	}
 

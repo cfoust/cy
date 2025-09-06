@@ -32,9 +32,9 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 )
 
-// MouseEvent represents a mouse event, which could be a click, a scroll wheel
+// Mouse represents a mouse event, which could be a click, a scroll wheel
 // movement, a cursor movement, or a combination.
-type MouseEvent struct {
+type Mouse struct {
 	geom.Vec2
 	Type   MouseEventType
 	Button MouseButton
@@ -43,7 +43,7 @@ type MouseEvent struct {
 	Ctrl   bool
 }
 
-func (m MouseEvent) Bytes() []byte {
+func (m Mouse) Bytes() []byte {
 	var flags byte = 0
 
 	switch m.Button {
@@ -97,14 +97,14 @@ func (m MouseEvent) Bytes() []byte {
 	}
 }
 
-func (m MouseEvent) X10Bytes() []byte {
+func (m Mouse) X10Bytes() []byte {
 	b := m.Bytes()
 	b[3] &= bitsLeft | bitsMiddle | bitsRight
 	return b
 }
 
 // String returns a string representation of a mouse event.
-func (m MouseEvent) String() (s string) {
+func (m Mouse) String() (s string) {
 	if m.Ctrl {
 		s += "ctrl+"
 	}
@@ -196,9 +196,9 @@ const (
 //	ESC [M Cb Cx Cy
 //
 // See: http://www.xfree86.org/current/ctlseqs.html#Mouse%20Tracking
-func parseX10MouseEvent(buf []byte) MouseEvent {
+func parseX10MouseEvent(buf []byte) Mouse {
 	v := buf[3:6]
-	var m MouseEvent
+	var m Mouse
 	e := v[0] - byteOffset
 
 	m.Down = true
