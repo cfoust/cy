@@ -48,8 +48,28 @@ func TestDeserialize(t *testing.T) {
 		// legacy
 		in("ctrl+c", string([]rune{keyETX}), kMod('c', KeyModCtrl)),
 		in("escape", "\x1b", k(KittyKeyEscape)),
-		in("alt+o", "\x1bo", kMod('o', KeyModAlt)),
+		in("alt+o", "\x1bo", Key{
+			Code:    'o',
+			Shifted: 'O',
+			Mod:     KeyModAlt,
+			Text:    "o",
+		}),
+		in("a", "a", Key{
+			Code:    'a',
+			Shifted: 'A',
+			Text:    "a",
+		}),
+		in("shift+a", "A", Key{
+			Code:    'a',
+			Shifted: 'A',
+			Mod:     KeyModShift,
+			Text:    "A",
+		}),
 		// kitty
+		in("ru: л", "\x1b[1083::107u", Key{
+			Code: 'л',
+			Base: 'k',
+		}),
 		in("shifted a", "\x1b[97:65;2;65u", Key{
 			Code:    'a',
 			Mod:     KeyModShift,
