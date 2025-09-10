@@ -151,42 +151,52 @@ const (
 	KittyRightMeta    = 57452
 )
 
-var legacyLetter = map[string]rune{
-	// Navigation keys with letter suffixes
-	"D": KittyKeyLeft,
-	"C": KittyKeyRight,
-	"A": KittyKeyUp,
-	"B": KittyKeyDown,
-	"H": KittyKeyHome, // Alternative: "7~"
-	"F": KittyKeyEnd,  // Alternative: "8~"
-	"E": KittyKPBegin, // Alternative: "57427 ~"
-
-	// Function keys F1-F4 with letter suffixes
-	"P": KittyKeyF1, // Alternative: "11~"
-	"Q": KittyKeyF2, // Alternative: "12~"
-	"S": KittyKeyF4, // Alternative: "14~"
-}
-
-var legacyNumber = map[int]rune{
-	// Keys with ~ suffix
-	2: KittyKeyInsert,
-	3: KittyKeyDelete,
-	5: KittyKeyPageUp,
-	6: KittyKeyPageDown,
-
-	// Function keys F3,F5-F12 with ~ suffix
-	13: KittyKeyF3,
-	15: KittyKeyF5,
-	17: KittyKeyF6,
-	18: KittyKeyF7,
-	19: KittyKeyF8,
-	20: KittyKeyF9,
-	21: KittyKeyF10,
-	23: KittyKeyF11,
-	24: KittyKeyF12,
+func invertMap[S comparable, T comparable](in map[S]T) (out map[T]S) {
+	out = make(map[T]S)
+	for k, v := range in {
+		out[v] = k
+	}
+	return
 }
 
 var (
+	legacyLetter = map[string]rune{
+		// Navigation keys with letter suffixes
+		"D": KittyKeyLeft,
+		"C": KittyKeyRight,
+		"A": KittyKeyUp,
+		"B": KittyKeyDown,
+		"H": KittyKeyHome, // Alternative: "7~"
+		"F": KittyKeyEnd,  // Alternative: "8~"
+		"E": KittyKPBegin, // Alternative: "57427 ~"
+
+		// Function keys F1-F4 with letter suffixes
+		"P": KittyKeyF1, // Alternative: "11~"
+		"Q": KittyKeyF2, // Alternative: "12~"
+		"S": KittyKeyF4, // Alternative: "14~"
+	}
+	invertLegacyLetter = invertMap(legacyLetter)
+
+	legacyNumber = map[int]rune{
+		// Keys with ~ suffix
+		2: KittyKeyInsert,
+		3: KittyKeyDelete,
+		5: KittyKeyPageUp,
+		6: KittyKeyPageDown,
+
+		// Function keys F3,F5-F12 with ~ suffix
+		13: KittyKeyF3,
+		15: KittyKeyF5,
+		17: KittyKeyF6,
+		18: KittyKeyF7,
+		19: KittyKeyF8,
+		20: KittyKeyF9,
+		21: KittyKeyF10,
+		23: KittyKeyF11,
+		24: KittyKeyF12,
+	}
+	invertLegacyNumber = invertMap(legacyNumber)
+
 	invalidKittyErr = fmt.Errorf("not a valid Kitty sequence")
 )
 
@@ -305,47 +315,185 @@ func parseKittySequence(b []byte) (key Key, width int, err error) {
 	return
 }
 
-// kittySequence generates the Kitty protocol sequence for this key
-func (k Key) kittySequence(protocol emu.KeyProtocol) string {
+type kittySequence struct {
+	Code   rune
+	Suffix string // u or [~ABCDEFHPQS]
+}
+
+// Kitty has a set of legacy text keys that require special handling
+// The list of "legacy text keys" is defined here:
+// https://sw.kovidgoyal.net/kitty/keyboard-protocol/#legacy-text
+var legacyTextKeys = (func() (keys map[Key]bool) {
+	keys = make(map[Key]bool)
+	runes := []rune{
+		'`',
+		'-',
+		'=',
+		'[',
+		']',
+		'\\',
+		';',
+		'\'',
+		',',
+		'.',
+		'/',
+	}
+
+	for i := '0'; i <= '9'; i++ {
+		runes = append(runes, i)
+	}
+
+	for i := 'a'; i <= 'z'; i++ {
+		runes = append(runes, i)
+	}
+
+	modifiers := []KeyModifiers{
+		KeyModShift,
+		KeyModAlt,
+		KeyModCtrl,
+		KeyModShift | KeyModAlt,
+		KeyModCtrl | KeyModAlt,
+	}
+
+	for _, r := range runes {
+		for _, mod := range modifiers {
+			keys[Key{
+				Code: r,
+				Mod:  mod,
+			}] = true
+		}
+	}
+
+	return
+}())
+
+func isLegacyText(k Key) (yes bool) {
+	_, yes = legacyTextKeys[Key{
+		Code: k.Code,
+		Mod:  k.Mod,
+	}]
+	return
+}
+
+func runeToCodepoint(r rune) string {
+	return fmt.Sprintf("%d", r)
+}
+
+func colonSeparate(runes ...rune) string {
+	s := make([]string, 0, len(runes))
+	for _, r := range runes {
+		// we want to omit zeroes, kitty omits ones
+		if r == 0 || r == 1 {
+			continue
+		}
+
+		s = append(s, runeToCodepoint(r))
+	}
+
+	return strings.Join(
+		s,
+		":",
+	)
+}
+
+func kittyEncode(
+	k Key,
+	withEvent bool,
+	withBase bool,
+	withText bool,
+) []byte {
 	var (
-		keycode   = k.Code
-		modifiers = int(k.Mod)
-		eventType = int(k.Type)
-		// Check if event types should be reported
-		reportEventTypes = protocol&emu.KeyReportEventTypes != 0
-		// Check if associated text should be reported
-		reportText = protocol&emu.KeyReportAssociatedText != 0
-		// Determine if we should include event type in output
-		includeEventType = reportEventTypes && eventType != 0
+		parts  = []string{}
+		code   = k.Code
+		suffix = "u"
 	)
 
-	// Determine if we should include text in output
-	var text string
-	if len(k.Text) > 0 {
-		text = k.Text
+	if letter, ok := invertLegacyLetter[code]; ok {
+		code = 1
+		suffix = letter
+	} else if number, ok := invertLegacyNumber[code]; ok {
+		code = rune(number)
+		suffix = "~"
 	}
-	includeText := reportText && text != ""
 
-	if includeEventType || includeText {
-		// Extended format with event type and/or text
-		if includeText {
-			return fmt.Sprintf(
-				"\x1b[%d;%d;%d;%su",
-				keycode,
-				modifiers,
-				eventType,
-				text,
-			)
-		} else {
-			return fmt.Sprintf("\x1b[%d;%d;%du", keycode, modifiers, eventType)
-		}
-	} else if modifiers != 0 {
-		// Standard format with modifiers
-		return fmt.Sprintf("\x1b[%d;%du", keycode, modifiers)
-	} else {
-		// Minimal format
-		return fmt.Sprintf("\x1b[%du", keycode)
+	codePoints := runeToCodepoint(code)
+	if code == 1 {
+		codePoints = ""
+	} else if withBase && (k.Base != 0 || k.Shifted != 0) {
+		codePoints = colonSeparate(
+			code,
+			k.Shifted,
+			k.Base,
+		)
 	}
+
+	parts = append(parts, codePoints)
+
+	if withEvent {
+		if k.Mod == 0 && k.Type == 0 {
+			// If there's no text coming after this, don't add a
+			// blank
+			if withText {
+				parts = append(parts, "")
+			}
+		} else {
+			parts = append(parts, colonSeparate(
+				rune(k.Mod+1),
+				rune(k.Type+1),
+			))
+		}
+	} else if k.Mod != 0 {
+		parts = append(parts, runeToCodepoint(
+			rune(k.Mod+1),
+		))
+	}
+
+	if withText {
+		// Modifier wasn't reported, but we're reporting text, so this
+		// needs to be blank
+		if len(parts) == 1 {
+			parts = append(parts, "")
+		}
+
+		parts = append(parts, colonSeparate(
+			[]rune(k.Text)...,
+		))
+	}
+
+	return fmt.Appendf(
+		[]byte{},
+		"\x1b[%s%s",
+		strings.Join(parts, ";"),
+		suffix,
+	)
+}
+
+// kittySequence generates the Kitty protocol sequence for this key
+func (k Key) kittyBytes(protocol emu.KeyProtocol) (data []byte, ok bool) {
+	var (
+		haveDisambiguate = protocol&emu.KeyDisambiguate != 0
+		haveTypes        = protocol&emu.KeyReportEventTypes != 0
+		haveAlt          = protocol&emu.KeyReportAlternateKeys != 0
+		haveText         = protocol&emu.KeyReportAssociatedText != 0
+		haveAll          = protocol&emu.KeyReportAllKeys != 0
+	)
+
+	// We can only report press or repeat
+	if !haveTypes && k.Type == KeyEventRelease {
+		ok = false
+		return
+	}
+
+	if haveAll || (haveDisambiguate && isLegacyText(k)) {
+		return kittyEncode(
+			k,
+			haveTypes,
+			haveAlt,
+			haveText,
+		), true
+	}
+
+	return k.legacyBytes()
 }
 
 // GenerateKittyEnableSequence generates the escape sequence to enable Kitty protocol

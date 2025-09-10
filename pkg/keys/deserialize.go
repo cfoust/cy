@@ -517,8 +517,6 @@ func Read(b []byte) (event any, w int) {
 			shifted = code
 			code = unicode.ToLower(code)
 			modifiers |= KeyModShift
-		} else {
-			shifted = unicode.ToUpper(code)
 		}
 
 		return Key{

@@ -5,7 +5,7 @@ import (
 )
 
 // xtermSequences is an authoritative list of the byte sequences for keys to
-// be interpreted by xterm, because sequences above contains conflicting keys.
+// be interpreted by xterm, because `sequences` contains conflicting keys.
 // We probably need a better approach to this.
 var xtermSequences = map[string]Key{
 	"\x1b[A":    k(KittyKeyUp),
@@ -126,14 +126,18 @@ var inverseSequences = func() map[Key][]byte {
 }()
 
 // legacyBytes returns the traditional byte encoding for a key
-func (k Key) legacyBytes() (data []byte) {
+func (k Key) legacyBytes() (data []byte, ok bool) {
 	// We can't report non-presses
-	if k.Type != KeyEventPress {
+	if k.Type == KeyEventRelease {
+		ok = false
 		return
 	}
 
-	if sequence, ok := inverseSequences[k]; ok {
-		return []byte(sequence)
+	if sequence, ok := inverseSequences[Key{
+		Code: k.Code,
+		Mod:  k.Mod,
+	}]; ok {
+		return []byte(sequence), true
 	}
 
 	alt := k.Mod&KeyModAlt != 0
@@ -141,12 +145,12 @@ func (k Key) legacyBytes() (data []byte) {
 		data = append(data, '\x1b')
 	}
 	data = append(data, byte(k.Code))
-	return data
+	return data, true
 }
 
-func (k Key) Bytes(protocol emu.KeyProtocol) (data []byte) {
+func (k Key) Bytes(protocol emu.KeyProtocol) (data []byte, ok bool) {
 	if protocol != emu.KeyLegacy {
-		return []byte(k.kittySequence(protocol))
+		return k.kittyBytes(protocol)
 	}
 
 	return k.legacyBytes()
