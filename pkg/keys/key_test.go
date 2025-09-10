@@ -50,13 +50,11 @@ func TestDeserialize(t *testing.T) {
 		in("escape", "\x1b", k(KittyKeyEscape)),
 		in("alt+o", "\x1bo", Key{
 			Code:    'o',
-			Shifted: 'O',
 			Mod:     KeyModAlt,
 			Text:    "o",
 		}),
 		in("a", "a", Key{
 			Code:    'a',
-			Shifted: 'A',
 			Text:    "a",
 		}),
 		in("shift+a", "A", Key{
@@ -101,6 +99,8 @@ func TestDeserialize(t *testing.T) {
 			Code: KittyLeftShift,
 			Type: KeyEventRelease,
 		}),
+
+		// TODO(cfoust): 09/08/25 Test for multiple codepoints in text
 	}
 
 	for _, test := range cases {
@@ -117,40 +117,96 @@ func TestDeserialize(t *testing.T) {
 	}
 }
 
-type outCase struct {
-	name     string
-	msg      any
+type output struct {
 	protocol emu.KeyProtocol
-	output   string
+	text     string
 }
 
-func out(name string, input string, msg any) outCase {
-	return outCase{
-		name:   name,
-		msg:    msg,
-		output: input,
+type outCase struct {
+	name    string
+	key     Key
+	outputs []output
+}
+
+func out(
+	name string,
+	key Key,
+	cases ...any,
+) (o outCase) {
+	o.name = name
+	o.key = key
+
+	for i := 0; i < len(cases); i += 2 {
+		o.outputs = append(o.outputs, output{
+			protocol: cases[i].(emu.KeyProtocol),
+			text:     cases[i+1].(string),
+		})
 	}
+
+	return
 }
 
 func TestKeys(t *testing.T) {
-	var cases []outCase
+	const (
+		legacy       = emu.KeyLegacy
+		disambiguate = emu.KeyDisambiguate
+		types        = emu.KeyReportEventTypes
+		alt          = emu.KeyReportAlternateKeys
+		text         = emu.KeyReportAssociatedText
+		all          = emu.KeyReportAllKeys
+	)
+
+	cases := []outCase{
+		out(
+			"rune",
+			Key{
+				Code:    'o',
+				Shifted: 'O',
+				Text:    "o",
+			},
+			legacy, "o",
+			// do nothing without all
+			types, "o",
+			alt, "o",
+			disambiguate, "o", // not a legacy key combo
+			all, "\x1b[111u",
+			all|alt, "\x1b[111:79u",
+			all|text, "\x1b[111;;111u",
+			all|types, "\x1b[111u",
+			all|text|types, "\x1b[111;;111u",
+		),
+		out(
+			"legacy text key",
+			Key{
+				Code:    'c',
+				Shifted: 'C',
+				Mod:     KeyModCtrl,
+				Text:    "c",
+			},
+			legacy, string(keyETX), // ctrl+c
+			disambiguate, "\x1b[99;5u",
+			all, "\x1b[99;5u",
+			all|text|types, "\x1b[99;5;99u",
+		),
+	}
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			var data []byte
-			switch msg := test.msg.(type) {
-			case Mouse:
-				data = msg.Bytes()
-			case Key:
-				data = msg.Bytes(test.protocol)
+			for _, o := range test.outputs {
+				t.Run(o.protocol.String(), func(t *testing.T) {
+					data, ok := test.key.Bytes(o.protocol)
+					assert.True(
+						t,
+						ok || len(o.text) == 0,
+					)
+					assert.Equal(
+						t,
+						[]byte(o.text),
+						data,
+						"Key produced invalid output",
+					)
+				})
 			}
-
-			assert.Equal(
-				t,
-				[]byte(test.output),
-				data,
-				"Key produced invalid output",
-			)
 		})
 	}
 }

@@ -86,7 +86,7 @@ type Key struct {
 	Base    rune
 	Type    KeyEventType // Press/repeat/release
 	Mod     KeyModifiers // Combined modifier flags
-	Text    string       // Can be distinct from Runes
+	Text    string
 }
 
 // String returns a friendly string representation for a key. It's safe (and
