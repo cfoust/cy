@@ -304,12 +304,14 @@ func parseKittySequence(b []byte) (key Key, width int, err error) {
 
 	if match := kittyLegacy.FindSubmatch(b); len(match) > 0 {
 		width = len(match[0])
-		return parseKittyLegacy(match)
+		key, _, err = parseKittyLegacy(match)
+		return
 	}
 
 	if match := kittyRe.FindSubmatch(b); len(match) > 0 {
 		width = len(match[0])
-		return parseKittyPrimary(match)
+		key, _, err = parseKittyPrimary(match)
+		return
 	}
 
 	return

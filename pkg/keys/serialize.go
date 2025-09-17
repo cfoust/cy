@@ -129,7 +129,6 @@ var inverseSequences = func() map[Key][]byte {
 func (k Key) legacyBytes() (data []byte, ok bool) {
 	// We can't report non-presses
 	if k.Type == KeyEventRelease {
-		ok = false
 		return
 	}
 
@@ -140,11 +139,22 @@ func (k Key) legacyBytes() (data []byte, ok bool) {
 		return []byte(sequence), true
 	}
 
+	// We can't encode anything above this, probably an internal key code
+	if k.Code >= KittyKeyHome {
+		return
+	}
+
 	alt := k.Mod&KeyModAlt != 0
 	if alt {
 		data = append(data, '\x1b')
 	}
-	data = append(data, byte(k.Code))
+
+	if len(k.Text) > 0 {
+		data = append(data, []byte(k.Text)...)
+	} else {
+		data = append(data, byte(k.Code))
+	}
+
 	return data, true
 }
 
