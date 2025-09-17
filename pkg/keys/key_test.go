@@ -49,13 +49,13 @@ func TestDeserialize(t *testing.T) {
 		in("ctrl+c", string([]rune{keyETX}), kMod('c', KeyModCtrl)),
 		in("escape", "\x1b", k(KittyKeyEscape)),
 		in("alt+o", "\x1bo", Key{
-			Code:    'o',
-			Mod:     KeyModAlt,
-			Text:    "o",
+			Code: 'o',
+			Mod:  KeyModAlt,
+			Text: "o",
 		}),
 		in("a", "a", Key{
-			Code:    'a',
-			Text:    "a",
+			Code: 'a',
+			Text: "a",
 		}),
 		in("shift+a", "A", Key{
 			Code:    'a',
@@ -146,6 +146,35 @@ func out(
 	return
 }
 
+type legacyOutput struct {
+	mod  KeyModifiers
+	text string
+}
+
+type legacyCase struct {
+	name    string
+	r       rune
+	outputs []legacyOutput
+}
+
+func legacyOut(
+	name string,
+	r rune,
+	cases ...any,
+) (o legacyCase) {
+	o.name = name
+	o.r = r
+
+	for i := 0; i < len(cases); i += 2 {
+		o.outputs = append(o.outputs, legacyOutput{
+			mod:  cases[i].(KeyModifiers),
+			text: cases[i+1].(string),
+		})
+	}
+
+	return
+}
+
 func TestKeys(t *testing.T) {
 	const (
 		legacy       = emu.KeyLegacy
@@ -188,17 +217,72 @@ func TestKeys(t *testing.T) {
 			all, "\x1b[99;5u",
 			all|text|types, "\x1b[99;5;99u",
 		),
+		out(
+			"shift+rune",
+			Key{
+				Code:    'o',
+				Shifted: 'O',
+				Text:    "O",
+				Mod:     KeyModShift,
+			},
+			legacy, "O",
+		),
+	}
+
+	for _, c := range []legacyCase{
+		legacyOut(
+			"tab",
+			KittyKeyTab,
+			KeyModifiers(0), "\x09",
+			KeyModCtrl, "\x09",
+			KeyModAlt, "\x1b\x09",
+			KeyModShift, "\x1b[Z",
+			KeyModAlt|KeyModShift, "\x1b\x1b[Z",
+			KeyModAlt|KeyModCtrl, "\x1b\x09",
+		),
+		legacyOut(
+			"modifier key alone",
+			KittyLeftControl,
+			KeyModifiers(0), "",
+		),
+	} {
+		for _, o := range c.outputs {
+			cases = append(cases, outCase{
+				name: c.name,
+				key: Key{
+					Code: c.r,
+					Mod:  o.mod,
+				},
+				outputs: []output{
+					{
+						protocol: legacy,
+						text:     o.text,
+					},
+				},
+			})
+		}
 	}
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			for _, o := range test.outputs {
 				t.Run(o.protocol.String(), func(t *testing.T) {
-					data, ok := test.key.Bytes(o.protocol)
+					var (
+						isNothing = len(o.text) == 0
+						data, ok  = test.key.Bytes(
+							o.protocol,
+						)
+					)
 					assert.True(
 						t,
-						ok || len(o.text) == 0,
+						ok || isNothing,
 					)
+
+					if isNothing {
+						assert.Len(t, data, 0)
+						return
+					}
+
 					assert.Equal(
 						t,
 						[]byte(o.text),
