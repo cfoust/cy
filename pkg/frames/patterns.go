@@ -144,9 +144,14 @@ var DotBricks = createPattern(`
 ---+---+---+---+
  o | o   o | o  `, "", 0, 0)
 
+ var Grid = createPattern(`
+┼──┼──┼──
+┼──┼──┼──`, "", 0, 0)
+
 func init() {
 	registerFrame("big-hex", BigHex)
 	registerFrame("brick", Brick)
+	registerFrame("grid", Grid)
 	registerFrame("cheerios", Cheerios)
 	registerFrame("cross", Cross)
 	registerFrame("cross-stitch", CrossStitch)
