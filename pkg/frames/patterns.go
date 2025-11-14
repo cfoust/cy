@@ -144,7 +144,7 @@ var DotBricks = createPattern(`
 ---+---+---+---+
  o | o   o | o  `, "", 0, 0)
 
- var Grid = createPattern(`
+var Grid = createPattern(`
 ┼──┼──┼──
 ┼──┼──┼──`, "", 0, 0)
 
