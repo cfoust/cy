@@ -60,8 +60,9 @@ func (f *flowMovement) highlightRow(
 	}
 
 	for col := startCol; col <= endCol; col++ {
-		row[col].FG = highlight.FG
-		row[col].BG = highlight.BG
+		if highlight.Style != nil {
+			highlight.Style.Apply(&row[col])
+		}
 	}
 }
 
@@ -137,9 +138,7 @@ func (f *flowMovement) View(
 
 	// Renders "[1/N]" text in the top-right corner that looks just like
 	// tmux's copy mode, but works on physical lines instead.
-	offsetStyle := f.render.NewStyle().
-		Foreground(params.ReplaySelectionFg()).
-		Background(params.ReplaySelectionBg())
+	offsetStyle := params.ReplaySelectionStyle().Style
 
 	r.RenderAt(
 		state.Image,

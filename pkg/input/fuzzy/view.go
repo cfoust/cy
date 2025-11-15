@@ -2,6 +2,7 @@ package fuzzy
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/cfoust/cy/pkg/emu"
@@ -12,6 +13,98 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 )
+
+// highlightMatches applies highlighting to matched characters in text
+func (f *Fuzzy) highlightMatches(
+	text string,
+	matchIndices *[]int,
+	highlightStyle, baseStyle lipgloss.Style,
+) string {
+	if matchIndices == nil || len(*matchIndices) == 0 {
+		return baseStyle.Render(text)
+	}
+
+	runes := []rune(text)
+	if len(runes) == 0 {
+		return baseStyle.Render(text)
+	}
+
+	// Sort indices to process in order
+	indices := make([]int, len(*matchIndices))
+	copy(indices, *matchIndices)
+	sort.Ints(indices)
+
+	// Build highlighted string
+	var result strings.Builder
+	lastIdx := 0
+
+	for _, idx := range indices {
+		if idx < 0 || idx >= len(runes) {
+			continue
+		}
+
+		// Style text before the match
+		if idx > lastIdx {
+			result.WriteString(baseStyle.Render(string(runes[lastIdx:idx])))
+		}
+
+		// Style the highlighted character
+		char := string(runes[idx])
+		result.WriteString(highlightStyle.Render(char))
+
+		lastIdx = idx + 1
+	}
+
+	// Style the rest
+	if lastIdx < len(runes) {
+		result.WriteString(baseStyle.Render(string(runes[lastIdx:])))
+	}
+
+	return result.String()
+}
+
+// highlightColumnMatches applies highlighting to a specific column based on match indices
+// from the combined search string (columns joined by '|')
+func (f *Fuzzy) highlightColumnMatches(
+	columns []string,
+	columnIndex int,
+	matchIndices *[]int,
+	highlightStyle, baseStyle lipgloss.Style,
+) string {
+	if matchIndices == nil || len(*matchIndices) == 0 ||
+		columnIndex >= len(columns) {
+		return baseStyle.Render(columns[columnIndex])
+	}
+
+	// Calculate the offset for this column in the combined search string
+	offset := 0
+	for i := 0; i < columnIndex; i++ {
+		offset += len([]rune(columns[i])) + 1 // +1 for the '|' separator
+	}
+
+	columnText := columns[columnIndex]
+	columnRunes := []rune(columnText)
+	columnEnd := offset + len(columnRunes)
+
+	// Filter match indices to only include those within this column
+	var columnIndices []int
+	for _, idx := range *matchIndices {
+		if idx >= offset && idx < columnEnd {
+			columnIndices = append(columnIndices, idx-offset)
+		}
+	}
+
+	if len(columnIndices) == 0 {
+		return baseStyle.Render(columnText)
+	}
+
+	return f.highlightMatches(
+		columnText,
+		&columnIndices,
+		highlightStyle,
+		baseStyle,
+	)
+}
 
 // Return an image representing the contents of the preview window.
 func (f *Fuzzy) getPreviewContents() (preview image.Image) {
@@ -76,18 +169,15 @@ func (f *Fuzzy) renderOptions(
 	prompt = prompt.Width(0)
 
 	p := f.params
-	rowStyle := f.render.NewStyle()
-	inactive := rowStyle.
-		Background(p.InputFindInactiveBg()).
-		Foreground(p.InputFindInactiveFg())
-	active := rowStyle.
-		Background(p.InputFindActiveBg()).
-		Foreground(p.InputFindActiveFg())
+	inactive := p.InputFindInactiveStyle().Style
+	active := p.InputFindActiveStyle().Style
+	highlightStyle := p.InputFindHighlightStyle().Style
 
 	var rows [][]string
 
 	headers := f.headers
 	haveHeaders := len(f.headers) != 0
+
 	// The table library requires headers, even if we skip them
 	if len(headers) == 0 {
 		headers = []string{""}
@@ -111,8 +201,37 @@ func (f *Fuzzy) renderOptions(
 			option.Columns...,
 		)
 
+		// Determine the base style for this row
+		var baseStyle lipgloss.Style
+		if windowOffset+index == f.selected {
+			baseStyle = active
+		} else {
+			baseStyle = inactive
+		}
+
 		if len(columns) == 0 {
-			columns = []string{option.Text}
+			text := option.Text
+			if option.Match != nil {
+				text = f.highlightMatches(
+					text,
+					option.Match.Index,
+					highlightStyle,
+					baseStyle,
+				)
+			} else {
+				text = baseStyle.Render(text)
+			}
+			columns = []string{text}
+		} else {
+			if option.Match != nil {
+				for i := range columns {
+					columns[i] = f.highlightColumnMatches(option.Columns, i, option.Match.Index, highlightStyle, baseStyle)
+				}
+			} else {
+				for i := range columns {
+					columns[i] = baseStyle.Render(columns[i])
+				}
+			}
 		}
 
 		// Add in the > in front of each row
@@ -139,6 +258,7 @@ func (f *Fuzzy) renderOptions(
 			}
 		}).
 		Headers(headers...).
+		Wrap(false).
 		Width(common.GetWidth() + 2 + geom.Max(numColumns-1, 0)).
 		Rows(rows...)
 
@@ -200,9 +320,7 @@ func (f *Fuzzy) renderPrompt(prompt lipgloss.Style) string {
 func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
 	p := f.params
 	commonStyle := f.render.NewStyle().Width(size.C)
-	promptStyle := commonStyle.
-		Background(p.InputPromptBg()).
-		Foreground(p.InputPromptFg())
+	promptStyle := p.InputPromptStyle().Width(size.C)
 
 	// TODO(cfoust): 07/20/24 handle this more gracefully
 	if size.R < 2 {
@@ -228,10 +346,10 @@ func (f *Fuzzy) renderMatchWindow(size geom.Size) image.Image {
 		Render("~>")
 
 	inputStyle := f.render.NewStyle().
-		Background(p.InputPromptFg()).
-		Foreground(p.InputFindActiveBg())
+		Background(p.InputPromptStyle().GetForeground()).
+		Foreground(p.InputFindActiveStyle().GetBackground())
 	f.textInput.Cursor.Style = f.render.NewStyle().
-		Background(p.InputFindActiveBg())
+		Background(p.InputFindActiveStyle().GetBackground())
 	f.textInput.TextStyle = inputStyle
 	f.textInput.Cursor.TextStyle = inputStyle
 

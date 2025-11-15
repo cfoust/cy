@@ -39,16 +39,13 @@ func (t *Thumbs) renderMatch(
 			glyph.Char = hintRunes[index]
 			glyph.Mode = emu.AttrBold
 
-			glyph.FG = p.InputThumbsHintFg().Emu()
-			glyph.BG = p.InputThumbsHintBg().Emu()
-
 			if isCorrect {
-				glyph.FG = p.InputThumbsPartialFg().Emu()
-				glyph.BG = p.InputThumbsPartialBg().Emu()
+				p.InputThumbsPartialStyle().Apply(&glyph)
+			} else {
+				p.InputThumbsHintStyle().Apply(&glyph)
 			}
 		} else {
-			glyph.FG = p.InputThumbsMatchFg().Emu()
-			glyph.BG = p.InputThumbsMatchBg().Emu()
+			p.InputThumbsMatchStyle().Apply(&glyph)
 		}
 
 		i[cell.R][cell.C] = glyph

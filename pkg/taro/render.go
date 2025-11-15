@@ -55,14 +55,14 @@ func (r *Renderer) RenderImage(value string) image.Image {
 	return result
 }
 
-func (r *Renderer) ConvertLipgloss(color lipgloss.Color) emu.Color {
+func (r *Renderer) LipglossToEmu(color lipgloss.Color) emu.Color {
 	switch c := r.ColorProfile().Color(string(color)).(type) {
 	case termenv.ANSIColor:
 		return emu.ANSIColor(int(c))
 	case termenv.ANSI256Color:
 		return emu.XTermColor(int(c))
 	case termenv.RGBColor:
-		r, g, b, _ := termenv.ConvertToRGB(c).RGBA()
+		r, g, b := termenv.ConvertToRGB(c).RGB255()
 		return emu.RGBColor(int(r), int(g), int(b))
 	}
 

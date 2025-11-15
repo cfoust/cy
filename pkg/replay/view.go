@@ -9,6 +9,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/charmbracelet/lipgloss"
@@ -21,20 +22,10 @@ func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 	}
 
 	p := r.params
-	activeFg := r.render.ConvertLipgloss(
-		p.ReplayMatchActiveFg().Color,
-	)
-	activeBg := r.render.ConvertLipgloss(
-		p.ReplayMatchActiveBg().Color,
-	)
-	inactiveFg := r.render.ConvertLipgloss(
-		p.ReplayMatchInactiveFg().Color,
-	)
-	inactiveBg := r.render.ConvertLipgloss(
-		p.ReplayMatchInactiveBg().Color,
-	)
+	activeStyle := p.ReplayMatchActiveStyle()
+	inactiveStyle := p.ReplayMatchInactiveStyle()
 
-	var fg, bg emu.Color
+	var currentStyle *style.Style
 	location := r.Location()
 	for _, match := range matches {
 		// This match is not on the screen
@@ -43,11 +34,9 @@ func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 		}
 
 		if location.Equal(match.Begin) {
-			fg = activeFg
-			bg = activeBg
+			currentStyle = activeStyle
 		} else {
-			fg = inactiveFg
-			bg = inactiveBg
+			currentStyle = inactiveStyle
 		}
 
 		for _, appearance := range match.Appearances {
@@ -61,8 +50,7 @@ func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 					Screen: true,
 					From:   appearance.From,
 					To:     appearance.To,
-					FG:     fg,
-					BG:     bg,
+					Style:  currentStyle,
 				},
 			)
 			break
@@ -92,35 +80,26 @@ func (r *Replay) getCommand() (command detect.Command, ok bool) {
 func (r *Replay) getLeftStatusStyle() lipgloss.Style {
 	p := r.params
 
-	statusFg := p.ReplayTimeFg()
-	statusBg := p.ReplayTimeBg()
+	var statusStyle = p.ReplayTimeStyle()
 	if r.isCopyMode() {
-		statusFg = p.ReplayCopyFg()
-		statusBg = p.ReplayCopyBg()
+		statusStyle = p.ReplayCopyStyle()
 
 		if r.isSelecting {
-			statusFg = p.ReplayVisualFg()
-			statusBg = p.ReplayVisualBg()
+			statusStyle = p.ReplayVisualStyle()
 		}
 	}
 	if r.isPlaying {
-		statusFg = p.ReplayPlayFg()
-		statusBg = p.ReplayPlayBg()
+		statusStyle = p.ReplayPlayStyle()
 	}
 
-	return r.render.NewStyle().
-		Foreground(statusFg).
-		Background(statusBg).
-		Padding(0, 1)
+	return statusStyle.Padding(0, 1)
 }
 
 func (r *Replay) drawStatusBar(state *tty.State) {
 	p := r.params
 	size := state.Image.Size()
 
-	statusBarStyle := r.render.NewStyle().
-		Foreground(r.params.ReplayStatusBarFg()).
-		Background(r.params.ReplayStatusBarBg())
+	statusBarStyle := r.params.ReplayStatusBarStyle().Style
 
 	statusText := p.ReplayTextTimeMode()
 	if r.isCopyMode() {
@@ -237,7 +216,7 @@ func (r *Replay) renderIncremental(
 	)
 
 	r.input.Cursor.Style = r.render.NewStyle().
-		Background(p.ReplayStatusBarFg())
+		Background(p.ReplayStatusBarStyle().GetForeground())
 	r.input.TextStyle = statusBarStyle
 	r.input.Cursor.TextStyle = statusBarStyle
 
@@ -273,14 +252,12 @@ func (r *Replay) renderSearch(
 	)
 
 	r.input.Cursor.Style = r.render.NewStyle().
-		Background(p.ReplayStatusBarFg())
+		Background(p.ReplayStatusBarStyle().GetForeground())
 	r.input.TextStyle = statusBarStyle
 	r.input.Cursor.TextStyle = statusBarStyle
 
 	if r.isWaiting {
-		emptyStyle := r.render.NewStyle().
-			Foreground(p.ReplayTimeFg()).
-			Background(p.ReplayTimeBg())
+		emptyStyle := p.ReplayTimeStyle().Style
 		filledStyle := r.render.NewStyle().
 			Background(emptyStyle.GetForeground()).
 			Foreground(emptyStyle.GetBackground())
@@ -413,14 +390,9 @@ func (r *Replay) View(state *tty.State) {
 		highlights = append(
 			highlights,
 			movement.Highlight{
-				From: r.selectStart,
-				To:   r.movement.Cursor(),
-				FG: r.render.ConvertLipgloss(
-					p.ReplaySelectionFg().Color,
-				),
-				BG: r.render.ConvertLipgloss(
-					p.ReplaySelectionBg().Color,
-				),
+				From:  r.selectStart,
+				To:    r.movement.Cursor(),
+				Style: p.ReplaySelectionStyle(),
 			},
 		)
 	}
@@ -434,12 +406,7 @@ func (r *Replay) View(state *tty.State) {
 					R: highlight.R,
 					C: highlight.C1 - 1,
 				},
-				FG: r.render.ConvertLipgloss(
-					p.ReplayIncrementalFg().Color,
-				),
-				BG: r.render.ConvertLipgloss(
-					p.ReplayIncrementalBg().Color,
-				),
+				Style: p.ReplayIncrementalStyle(),
 			},
 		)
 	}
@@ -447,18 +414,16 @@ func (r *Replay) View(state *tty.State) {
 	// Only used for development (for now)
 	if r.isFlowMode() && r.showCommands {
 		commands := r.Commands()
+		outputStyle := style.NewStyle(style.LightRed, style.NewColor("113"))
+		inputStyle := style.NewStyle(style.LightRed, style.NewColor("160"))
+
 		for _, command := range commands {
 			highlights = append(
 				highlights,
 				movement.Highlight{
-					From: command.Output.From,
-					To:   command.Output.To,
-					FG: r.render.ConvertLipgloss(
-						lipgloss.Color("9"),
-					),
-					BG: r.render.ConvertLipgloss(
-						lipgloss.Color("113"),
-					),
+					From:  command.Output.From,
+					To:    command.Output.To,
+					Style: outputStyle,
 				},
 			)
 
@@ -466,14 +431,9 @@ func (r *Replay) View(state *tty.State) {
 				highlights = append(
 					highlights,
 					movement.Highlight{
-						From: input.From,
-						To:   input.To,
-						FG: r.render.ConvertLipgloss(
-							lipgloss.Color("9"),
-						),
-						BG: r.render.ConvertLipgloss(
-							lipgloss.Color("160"),
-						),
+						From:  input.From,
+						To:    input.To,
+						Style: inputStyle,
 					},
 				)
 			}

@@ -19,6 +19,9 @@ const (
 
 var initReplay stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	server, client, screen, err := createStory(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	// All filler text here is courtesy Wikipedia.
 	events := sessions.NewSimulator().

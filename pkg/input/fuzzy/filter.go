@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cfoust/cy/pkg/input/fuzzy/fzf"
-	"github.com/cfoust/cy/pkg/input/fuzzy/fzf/util"
 	"github.com/cfoust/cy/pkg/input/fuzzy/preview"
 	"github.com/cfoust/cy/pkg/janet"
+
+	"github.com/sahilm/fuzzy"
 )
 
 type Match struct {
@@ -19,15 +19,12 @@ type Option struct {
 	Text    string
 	Columns []string
 	Preview any
-	Chars   *util.Chars
 	Match   *Match
 	Result  any
 }
 
 func (o *Option) setText(text string) {
-	chars := util.ToChars([]byte(text))
 	o.Text = text
-	o.Chars = &chars
 }
 
 type tupleInput struct {
@@ -49,10 +46,8 @@ type tripleInput struct {
 }
 
 func NewOption(text string, result any) Option {
-	chars := util.ToChars([]byte(text))
 	return Option{
 		Text:   text,
-		Chars:  &chars,
 		Result: result,
 	}
 }
@@ -155,31 +150,51 @@ func UnmarshalOptions(input *janet.Value) (result []Option, err error) {
 	return
 }
 
+// optionSource implements fuzzy.Source for matching Option slices
+type optionSource struct {
+	options       []Option
+	caseSensitive bool
+}
+
+func (s optionSource) String(i int) string {
+	text := s.options[i].Text
+	if s.caseSensitive {
+		return text
+	}
+	return strings.ToLower(text)
+}
+
+func (s optionSource) Len() int {
+	return len(s.options)
+}
+
 func Filter(
 	options []Option,
 	search string,
 	caseSensitive bool,
 ) []Option {
-	matches := make([]Option, 0)
-	for _, option := range options {
-		result, pos := fzf.FuzzyMatchV2(
-			caseSensitive,
-			true,
-			true,
-			option.Chars,
-			[]rune(search),
-			true,
-			nil,
-		)
+	if len(search) == 0 {
+		return options
+	}
 
-		if result.Score == 0 {
-			continue
-		}
+	source := optionSource{
+		options:       options,
+		caseSensitive: caseSensitive,
+	}
 
-		newOption := option
+	searchPattern := search
+	if !caseSensitive {
+		searchPattern = strings.ToLower(search)
+	}
+
+	results := fuzzy.FindFrom(searchPattern, source)
+
+	matches := make([]Option, 0, len(results))
+	for _, result := range results {
+		newOption := options[result.Index]
 		newOption.Match = &Match{
 			Score: result.Score,
-			Index: pos,
+			Index: &result.MatchedIndexes,
 		}
 		matches = append(matches, newOption)
 	}

@@ -14,7 +14,7 @@ import (
 
 func TestColorConvert(t *testing.T) {
 	og := lipgloss.Color("#1d1f21")
-	emuColor := lipglossToEmu(og)
+	emuColor := renderer.LipglossToEmu(og)
 	r, g, b, ok := emuColor.RGB()
 	require.True(t, ok)
 	require.Equal(t, 29, r)
@@ -55,7 +55,7 @@ func TestColormap(t *testing.T) {
 	colorMap.Apply(image)
 
 	for i := 0; i < 16; i++ {
-		color := lipglossToEmu(colorMap.mapping[lipgloss.Color(
+		color := renderer.LipglossToEmu(colorMap.mapping[lipgloss.Color(
 			fmt.Sprintf("%d", i),
 		)])
 		require.Equal(t, color, image[0][i].FG)

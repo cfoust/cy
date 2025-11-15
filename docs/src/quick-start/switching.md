@@ -4,7 +4,7 @@
 
 `cy` allows you to quickly jump between panes using a built-in fuzzy finder. Try it out by hitting {{bind :root ctrl+a ;}}, which presents you with a list of all of the running panes.
 
-The controls should be familiar to you if you have ever used [fzf](https://github.com/junegunn/fzf):
+The controls should be familiar to you if you have ever used fuzzy finder tools:
 
 - Typing filters the list.
 - Use <kbd>ctrl+j</kbd> and <kbd>ctrl+k</kbd> (or the arrow keys) to move up and down.

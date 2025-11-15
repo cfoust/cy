@@ -10,6 +10,7 @@ import (
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/replay/replayable"
 	"github.com/cfoust/cy/pkg/sessions/search"
+	"github.com/cfoust/cy/pkg/style"
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/charmbracelet/lipgloss"
@@ -37,18 +38,16 @@ func NewScrollback(
 	}
 
 	render := taro.NewRenderer()
-	fgColor := render.ConvertLipgloss(lipgloss.Color("1"))
-	bgColor := render.ConvertLipgloss(lipgloss.Color("14"))
+	highlightStyle := style.NewStyle(style.Red, style.LightCyan)
 
 	var highlights []movement.Highlight
 	for _, highlight := range args.Highlights {
 		highlights = append(
 			highlights,
 			movement.Highlight{
-				From: highlight.From,
-				To:   highlight.To,
-				FG:   fgColor,
-				BG:   bgColor,
+				From:  highlight.From,
+				To:    highlight.To,
+				Style: highlightStyle,
 			},
 		)
 	}

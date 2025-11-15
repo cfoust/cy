@@ -121,4 +121,30 @@ Time values are structs with the following properties:
 
 For specifics on the range of each scalar property, consult the documentation for Go's [time package](https://pkg.go.dev/time), such as for [time.Weekday()](https://pkg.go.dev/time#Time.Weekday).
 
+#### Style
+
+A style struct is used with {{api style/render}} to apply styling effects to text. Style structs can contain any of the following properties:
+
+- `:fg`: The foreground [color](/api.md#color) of the text.
+- `:bg`: The background [color](/api.md#color) of the text.
+- `:width`: The number of horizontal cells the text should occupy. Padding is added if this value exceeds the length of the text.
+- `:height`: The number of vertical cells the text should occupy. Padding is added if this value exceeds the height of the text.
+- `:align-horizontal`: One of `:left`, `:center`, or `:right`. If `:width` is greater than the length of the text, the text will be aligned according to this property.
+- `:align-vertical`: One of `:top`, `:center`, or `:bottom`. If `:height` is greater than the height of the text, the text will be aligned according to this property.
+- `:bold`: A boolean indicating whether the text should be bolded.
+- `:italic`: A boolean indicating whether the text should be italic.
+- `:underline`: A boolean indicating whether the text should be underlined.
+- `:strikethrough`: A boolean indicating whether the text should be struck through.
+- `:reverse`: A boolean indicating whether the foreground and background color should be reversed.
+- `:blink`: A boolean indicating whether the text should blink.
+- `:faint`: A boolean indicating whether the text should be faint.
+
+For example:
+
+```janet
+{:bg "4"
+ :bold true
+ :width 15}
+```
+
 {{gendoc api}}

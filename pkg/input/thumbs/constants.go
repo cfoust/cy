@@ -60,6 +60,8 @@ var DefaultPatterns = []string{
 	`0x[0-9a-fA-F]+`,
 	// number
 	`[0-9]{4,}`,
+	// stash
+	`stash@\{[0-9]+\}`,
 }
 
 // Default alphabet for generating hints (qwerty layout)
