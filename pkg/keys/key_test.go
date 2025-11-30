@@ -227,6 +227,28 @@ func TestKeys(t *testing.T) {
 			},
 			legacy, "O",
 		),
+		out(
+			"rune release no modifier",
+			Key{
+				Code:    'o',
+				Shifted: 'O',
+				Text:    "o",
+				Type:    KeyEventRelease,
+			},
+			all|types, "\x1b[111;1:3u",
+			all|types|text, "\x1b[111;1:3;111u",
+		),
+		out(
+			"rune repeat no modifier",
+			Key{
+				Code:    'o',
+				Shifted: 'O',
+				Text:    "o",
+				Type:    KeyEventRepeat,
+			},
+			all|types, "\x1b[111;1:2u",
+			all|types|text, "\x1b[111;1:2;111u",
+		),
 	}
 
 	for _, c := range []legacyCase{

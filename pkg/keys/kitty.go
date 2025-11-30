@@ -384,25 +384,26 @@ func runeToCodepoint(r rune) string {
 func colonSeparate(runes ...rune) string {
 	s := make([]string, 0, len(runes))
 	for _, r := range runes {
-		// we want to omit zeroes, kitty omits ones
-		if r == 0 || r == 1 {
-			continue
-		}
-
 		s = append(s, runeToCodepoint(r))
 	}
+	return strings.Join(s, ":")
+}
 
-	return strings.Join(
-		s,
-		":",
-	)
+func omitTrailing(omit rune, runes ...rune) []rune {
+	for i := len(runes) - 1; i >= 0; i-- {
+		if runes[i] != omit {
+			return runes[:i+1]
+		}
+	}
+
+	return []rune{}
 }
 
 func kittyEncode(
 	k Key,
-	withEvent bool,
-	withBase bool,
-	withText bool,
+	haveTypes bool,
+	haveAlt bool,
+	haveText bool,
 ) []byte {
 	var (
 		parts  = []string{}
@@ -421,27 +422,33 @@ func kittyEncode(
 	codePoints := runeToCodepoint(code)
 	if code == 1 {
 		codePoints = ""
-	} else if withBase && (k.Base != 0 || k.Shifted != 0) {
+	} else if haveAlt && (k.Base != 0 || k.Shifted != 0) {
 		codePoints = colonSeparate(
-			code,
-			k.Shifted,
-			k.Base,
+			omitTrailing(
+				rune(0),
+				code,
+				k.Shifted,
+				k.Base,
+			)...,
 		)
 	}
 
 	parts = append(parts, codePoints)
 
-	if withEvent {
+	if haveTypes {
 		if k.Mod == 0 && k.Type == 0 {
 			// If there's no text coming after this, don't add a
 			// blank
-			if withText {
+			if haveText {
 				parts = append(parts, "")
 			}
 		} else {
 			parts = append(parts, colonSeparate(
-				rune(k.Mod+1),
-				rune(k.Type+1),
+				omitTrailing(
+					rune(1),
+					rune(k.Mod+1),
+					rune(k.Type+1),
+				)...,
 			))
 		}
 	} else if k.Mod != 0 {
@@ -450,7 +457,7 @@ func kittyEncode(
 		))
 	}
 
-	if withText {
+	if haveText {
 		// Modifier wasn't reported, but we're reporting text, so this
 		// needs to be blank
 		if len(parts) == 1 {
