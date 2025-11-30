@@ -28,12 +28,7 @@ func (t *Text) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			C: geom.Clamp(t.location.C, 0, size.C-1),
 		}
 	case taro.KeyMsg:
-		keyMsg, ok := msg.Tea()
-		if !ok {
-			break
-		}
-
-		switch keyMsg.Type {
+		switch msg.Type {
 		case tea.KeyEsc, tea.KeyCtrlC:
 			if t.result != nil {
 				t.result <- nil
@@ -49,8 +44,8 @@ func (t *Text) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return t.quit()
 		default:
 			// In single character mode, accept any printable character immediately
-			if t.isSingle && keyMsg.Type == tea.KeyRunes {
-				runes := keyMsg.Runes
+			if t.isSingle && msg.Type == tea.KeyRunes {
+				runes := msg.Runes
 				char := string(runes)
 				if len(char) == 1 {
 					t.result <- char
@@ -62,12 +57,7 @@ func (t *Text) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 	// Only update the text input if not in single character mode
 	if !t.isSingle {
-		inputMsg := msg
-		// We need to translate taro.KeyMsg to tea.KeyMsg (for now)
-		if key, ok := msg.(taro.KeyMsg); ok {
-			inputMsg, _ = key.Tea()
-		}
-		t.textInput, cmd = t.textInput.Update(inputMsg)
+		t.textInput, cmd = t.textInput.Update(msg)
 		cmds = append(cmds, cmd)
 	}
 

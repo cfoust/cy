@@ -131,7 +131,7 @@ func (t *Terminal) Send(msg mux.Msg) {
 	)
 
 	switch msg := msg.(type) {
-	case taro.KeyMsg:
+	case taro.KittyKeyMsg:
 		// Use the Key's Bytes() method which handles both legacy and Kitty protocol
 		protocol := t.terminal.KeyState()
 		input, ok = keys.Key(msg).Bytes(protocol)

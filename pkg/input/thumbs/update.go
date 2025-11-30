@@ -23,16 +23,11 @@ func (t *Thumbs) resolveMatch(match Match) string {
 }
 
 func (t *Thumbs) handleKey(msg taro.KeyMsg) (taro.Model, tea.Cmd) {
-	teaMsg, ok := msg.Tea()
-	if !ok {
-		return t, nil
-	}
-
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
 	// Update text input
-	t.textInput, cmd = t.textInput.Update(teaMsg)
+	t.textInput, cmd = t.textInput.Update(msg)
 	cmds = append(cmds, cmd)
 
 	// Get current input value after update
@@ -76,12 +71,7 @@ func (t *Thumbs) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case taro.ScreenUpdate:
 		return t, msg.Wait()
 	case taro.KeyMsg:
-		keyMsg, ok := msg.Tea()
-		if !ok {
-			break
-		}
-
-		switch keyMsg.Type {
+		switch msg.Type {
 		case tea.KeyEsc, tea.KeyCtrlC:
 			if t.result != nil {
 				t.result <- nil

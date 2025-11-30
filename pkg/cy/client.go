@@ -189,7 +189,7 @@ func (c *Client) pollEvents() {
 
 			// We only consider key presses to be an interaction
 			// We don't want mouse motion to trigger this
-			if _, ok := event.(taro.KeyMsg); ok {
+			if _, ok := event.(taro.KittyKeyMsg); ok {
 				c.RLock()
 				node := c.node
 				c.RUnlock()

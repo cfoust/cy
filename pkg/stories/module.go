@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/taro"
 
@@ -44,20 +45,19 @@ func Wait(duration time.Duration) WaitEvent {
 const TYPE_DELAY = 100 * time.Millisecond
 
 // Simulate typing.
-func Type(msgs ...string) (result []interface{}) {
+func Type(msgs ...string) (result []any) {
 	for _, key := range taro.KeysToMsg(msgs...) {
-		runes := key.Runes
-		if len(runes) == 0 {
+		if key.Code != keys.KeyText {
 			result = append(result, key, Wait(TYPE_DELAY))
 			continue
 		}
 
-		for _, r := range runes {
+		for _, r := range key.Text {
 			newKey := key
-			newKey.Runes = []rune{r}
+			newKey.Text = string(r)
 			result = append(
 				result,
-				taro.KeyMsg(newKey),
+				taro.KittyKeyMsg(newKey),
 				Wait(TYPE_DELAY),
 			)
 		}

@@ -33,19 +33,14 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			C: geom.Clamp(f.location.C, 0, size.C-1),
 		}
 	case taro.KeyMsg:
-		keyMsg, ok := msg.Tea()
-		if !ok {
-			break
-		}
-
-		switch keyMsg.Type {
+		switch msg.Type {
 		case tea.KeyEsc, tea.KeyCtrlC:
 			if f.result != nil {
 				f.result <- nil
 			}
 			return f.quit()
 		case tea.KeyHome, tea.KeyEnd:
-			isTop := keyMsg.Type == tea.KeyHome
+			isTop := msg.Type == tea.KeyHome
 			last := len(f.getOptions()) - 1
 
 			var index int
@@ -60,7 +55,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				return f, nil
 			}
 
-			if keyMsg.Type == tea.KeyPgUp {
+			if msg.Type == tea.KeyPgUp {
 				delta *= -1
 			}
 
@@ -72,7 +67,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case tea.KeyDown, tea.KeyCtrlJ, tea.KeyUp, tea.KeyCtrlK:
 			f.haveMoved = true
 			upwards := false
-			switch keyMsg.Type {
+			switch msg.Type {
 			case tea.KeyUp, tea.KeyCtrlK:
 				upwards = true
 			}
@@ -101,12 +96,7 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		}
 	}
 
-	inputMsg := msg
-	// We need to translate taro.KeyMsg to tea.KeyMsg (for now)
-	if key, ok := msg.(taro.KeyMsg); ok {
-		inputMsg, _ = key.Tea()
-	}
-	f.textInput, cmd = f.textInput.Update(inputMsg)
+	f.textInput, cmd = f.textInput.Update(msg)
 	cmds = append(cmds, cmd)
 
 	value := f.textInput.Value()

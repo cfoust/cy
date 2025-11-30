@@ -15,12 +15,7 @@ func (r *Replay) handleIncrementalInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return r, nil
 		}
 	case taro.KeyMsg:
-		keyMsg, ok := msg.Tea()
-		if !ok {
-			break
-		}
-
-		switch keyMsg.Type {
+		switch msg.Type {
 		case tea.KeyEsc, tea.KeyCtrlC:
 			r.incr.Cancel(r.movement)
 			return r, nil
@@ -31,11 +26,7 @@ func (r *Replay) handleIncrementalInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 	}
 
 	var cmd tea.Cmd
-	inputMsg := msg
-	if key, ok := msg.(taro.KeyMsg); ok {
-		inputMsg, _ = key.Tea()
-	}
-	r.input, cmd = r.input.Update(inputMsg)
+	r.input, cmd = r.input.Update(msg)
 	r.incr.Pattern(r.movement, r.input.Value())
 	return r, cmd
 }

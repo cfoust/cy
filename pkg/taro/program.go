@@ -38,6 +38,7 @@ import (
 	"github.com/cfoust/cy/pkg/events"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -85,6 +86,10 @@ type Program struct {
 
 	// In stories we want to be able to run a model that has already been initialized.
 	skipInit bool
+
+	// Whether the Program should use key.Key events or bubbletea.Key
+	// events.
+	useKittyKeys bool
 
 	// These let us keep track of how many messages and commands are in
 	// flight.
@@ -290,6 +295,18 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 						C: msg.Width,
 						R: msg.Height,
 					})
+				}
+			}
+
+			if !p.useKittyKeys {
+				if key, ok := msg.(KittyKeyMsg); ok {
+					teaKey, ok := keys.Key(key).Tea()
+					if !ok {
+						p.dec(false)
+						continue
+					}
+
+					msg = teaKey
 				}
 			}
 
@@ -503,7 +520,7 @@ func (h handlers) shutdown() {
 	wg.Wait()
 }
 
-func NewProgram(ctx context.Context, model Model) *Program {
+func newProgram(ctx context.Context, model Model) *Program {
 	in, writes := io.Pipe()
 
 	return &Program{
@@ -519,8 +536,22 @@ func NewProgram(ctx context.Context, model Model) *Program {
 	}
 }
 
-func New(ctx context.Context, model Model) *Program {
-	p := NewProgram(ctx, model)
+type Option func(p *Program)
+
+func WithExisting(p *Program) {
+	p.skipInit = true
+}
+
+func WithKittyKeys(p *Program) {
+	p.useKittyKeys = true
+}
+
+func New(ctx context.Context, model Model, options ...Option) *Program {
+	p := newProgram(ctx, model)
+
+	for _, option := range options {
+		option(p)
+	}
 
 	go func() { _, _ = p.Run() }()
 
@@ -528,13 +559,7 @@ func New(ctx context.Context, model Model) *Program {
 }
 
 func Existing(ctx context.Context, model Model) *Program {
-	p := NewProgram(ctx, model)
-
-	p.skipInit = true
-
-	go func() { _, _ = p.Run() }()
-
-	return p
+	return New(ctx, model, WithExisting)
 }
 
 type renderer struct {

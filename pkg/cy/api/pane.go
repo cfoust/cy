@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/taro"
 )
@@ -99,9 +100,9 @@ func (p *PaneModule) SendText(id *janet.Value, text string) error {
 		return err
 	}
 
-	pane.Screen().Send(taro.KeyMsg{
-		Runes: []rune(text),
-		Text:  text,
+	pane.Screen().Send(taro.KittyKeyMsg{
+		Code: keys.KeyText,
+		Text: text,
 	})
 
 	return nil

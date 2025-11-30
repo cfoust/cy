@@ -15,7 +15,7 @@ func testExecuteCommands(
 	size geom.Size,
 	cmds []tea.Cmd,
 ) geom.Size {
-	p := NewProgram(ctx, m)
+	p := newProgram(ctx, m)
 	p.isTest = true
 	p.resize(size)
 	clearc := make(chan struct{})
