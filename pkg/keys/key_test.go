@@ -178,7 +178,7 @@ func legacyOut(
 func TestKeys(t *testing.T) {
 	const (
 		legacy       = emu.KeyLegacy
-		disambiguate = emu.KeyDisambiguate
+		disambiguate = emu.KeyDisambiguateEscape
 		types        = emu.KeyReportEventTypes
 		alt          = emu.KeyReportAlternateKeys
 		text         = emu.KeyReportAssociatedText

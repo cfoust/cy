@@ -473,7 +473,7 @@ func kittyEncode(
 // kittySequence generates the Kitty protocol sequence for this key
 func (k Key) kittyBytes(protocol emu.KeyProtocol) (data []byte, ok bool) {
 	var (
-		haveDisambiguate = protocol&emu.KeyDisambiguate != 0
+		haveDisambiguate = protocol&emu.KeyDisambiguateEscape != 0
 		haveTypes        = protocol&emu.KeyReportEventTypes != 0
 		haveAlt          = protocol&emu.KeyReportAlternateKeys != 0
 		haveText         = protocol&emu.KeyReportAssociatedText != 0
