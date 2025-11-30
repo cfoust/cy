@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind/trie"
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
@@ -132,6 +133,11 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) (consumed bool) {
 
 	key, ok := in.(taro.KittyKeyMsg)
 	if !ok {
+		return
+	}
+
+	// The binding engine can only handle legacy key events, for now
+	if _, ok := keys.Key(key).Bytes(emu.KeyLegacy); !ok {
 		return
 	}
 
