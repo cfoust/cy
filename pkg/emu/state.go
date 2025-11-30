@@ -70,6 +70,8 @@ func newState(w io.Writer) *State {
 			hooks:     make(map[string]bool),
 			hookState: make([]byte, 256),
 		},
+		keyState:    NewKeyProtocolState(),
+		altKeyState: NewKeyProtocolState(),
 	}
 
 	t.parser = vtparser.New(

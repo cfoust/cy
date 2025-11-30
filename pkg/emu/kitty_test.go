@@ -12,17 +12,17 @@ func TestKittyProtocolCSI(t *testing.T) {
 		expected KeyProtocol
 	}{
 		{
-			name:     "enable protocol",
-			sequence: "\x1b[>6;1u",
-			expected: KeyDisambiguateEscape | KeyReportEventTypes,
+			name:     "set",
+			sequence: "\x1b[=1u",
+			expected: KeyDisambiguateEscape,
 		},
 		{
-			name:     "push protocol",
-			sequence: "\x1b[>14;2u",
-			expected: KeyDisambiguateEscape | KeyReportEventTypes | KeyReportAlternateKeys,
+			name:     "push 1",
+			sequence: "\x1b[>31u",
+			expected: KeyDisambiguateEscape | KeyReportEventTypes | KeyReportAlternateKeys | KeyReportAllKeys | KeyReportAssociatedText,
 		},
 		{
-			name:     "disable protocol",
+			name:     "pop 1",
 			sequence: "\x1b[<u",
 			expected: 0,
 		},
@@ -49,7 +49,7 @@ func TestKeyStateScreenSwapping(t *testing.T) {
 
 	// Enable protocol on main screen
 	mainFlags := KeyDisambiguateEscape | KeyReportEventTypes
-	term.Write([]byte("\x1b[>6;1u"))
+	term.Write([]byte("\x1b[=3u"))
 
 	if term.KeyState() != mainFlags {
 		t.Errorf(
@@ -64,7 +64,7 @@ func TestKeyStateScreenSwapping(t *testing.T) {
 
 	// Set different protocol on alt screen
 	altFlags := KeyReportAlternateKeys
-	term.Write([]byte("\x1b[>8;1u"))
+	term.Write([]byte("\x1b[=4u"))
 
 	if term.KeyState() != altFlags {
 		t.Errorf(
@@ -99,8 +99,8 @@ func TestKeyStateQuery(t *testing.T) {
 		},
 		{
 			name:     "query enabled state",
-			setup:    "\x1b[>6;1u",
-			expected: "\x1b[?6;1u",
+			setup:    "\x1b[>6u",
+			expected: "\x1b[?6u",
 		},
 		{
 			name:     "query after disable",
@@ -114,18 +114,14 @@ func TestKeyStateQuery(t *testing.T) {
 			var output bytes.Buffer
 			term := New(WithWriter(&output))
 
-			// Setup key state
 			if tt.setup != "" {
 				term.Write([]byte(tt.setup))
 			}
 
-			// Clear any previous output
 			output.Reset()
 
-			// Send query sequence
 			term.Write([]byte("\x1b[?u"))
 
-			// Check the response
 			response := output.String()
 			if response != tt.expected {
 				t.Errorf(

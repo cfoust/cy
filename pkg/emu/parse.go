@@ -342,10 +342,10 @@ func (t *State) CsiDispatch(
 	case 's': // DECSC - save cursor position (ANSI.SYS)
 		t.saveCursor()
 	case 'u': // DECRC - restore cursor position (ANSI.SYS) OR Kitty keyboard protocol
-		// Try Kitty protocol first (has intermediates or specific patterns)
-		if t.HandleKittyProtocolCSI(&c) {
+		if t.handleKittyProtocol(&c) {
 			return
 		}
+
 		// Fallback to DECRC - restore cursor position
 		t.restoreCursor(false)
 	case 'q': // DECSCUSR - set cursor style
