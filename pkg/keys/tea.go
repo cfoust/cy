@@ -111,13 +111,17 @@ func (k Key) Tea() (msg tea.KeyMsg, ok bool) {
 		return tea.KeyMsg{Type: keyType}, true
 	}
 
-	if k.Code != KeyText {
-		return
+	if k.Code == KeyText {
+		return tea.KeyMsg{
+			Type:  tea.KeyRunes,
+			Runes: []rune(k.Text),
+			Alt:   k.Mod&KeyModAlt != 0,
+		}, true
 	}
 
 	return tea.KeyMsg{
 		Type:  tea.KeyRunes,
-		Runes: []rune(k.Text),
+		Runes: []rune{k.Code},
 		Alt:   k.Mod&KeyModAlt != 0,
 	}, true
 }
