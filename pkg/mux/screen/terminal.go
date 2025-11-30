@@ -124,14 +124,17 @@ func (t *Terminal) Send(msg mux.Msg) {
 		return
 	}
 
-	input := make([]byte, 0)
-	mode := t.terminal.Mode()
+	var (
+		input = make([]byte, 0)
+		mode  = t.terminal.Mode()
+		ok    bool
+	)
 
 	switch msg := msg.(type) {
 	case taro.KeyMsg:
 		// Use the Key's Bytes() method which handles both legacy and Kitty protocol
 		protocol := t.terminal.KeyState()
-		input = keys.Key(msg).Bytes(protocol)
+		input, ok = keys.Key(msg).Bytes(protocol)
 	case taro.MouseMsg:
 		switch mode & emu.ModeMouseMask {
 		case emu.ModeMouseX10:
@@ -139,21 +142,24 @@ func (t *Terminal) Send(msg mux.Msg) {
 				return
 			}
 
-			input = keys.MouseEvent(msg).X10Bytes()
+			input = keys.Mouse(msg).X10Bytes()
+			ok = true
 		case emu.ModeMouseButton:
 			// TODO(cfoust): 08/08/23 we should still report drag
 			if msg.Type == keys.MouseMotion {
 				return
 			}
 			input = msg.Bytes()
+			ok = true
 		case emu.ModeMouseMotion, emu.ModeMouseMany:
 			input = msg.Bytes()
+			ok = true
 		case 0:
 			return
 		}
 	}
 
-	if len(input) == 0 {
+	if !ok || len(input) == 0 {
 		return
 	}
 
