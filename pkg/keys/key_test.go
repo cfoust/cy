@@ -175,7 +175,7 @@ func legacyOut(
 	return
 }
 
-func TestKeys(t *testing.T) {
+func TestSerialize(t *testing.T) {
 	const (
 		legacy       = emu.KeyLegacy
 		disambiguate = emu.KeyDisambiguateEscape
@@ -218,6 +218,15 @@ func TestKeys(t *testing.T) {
 			all|text|types, "\x1b[99;5;99u",
 		),
 		out(
+			"disambiguate",
+			Key{
+				Code: KittyKeyEscape,
+				Mod:  KeyModCtrl,
+			},
+			legacy, string(keyESC), // wrong?
+			disambiguate, "\x1b[27;5u",
+		),
+		out(
 			"shift+rune",
 			Key{
 				Code:    'o',
@@ -226,6 +235,18 @@ func TestKeys(t *testing.T) {
 				Mod:     KeyModShift,
 			},
 			legacy, "O",
+			disambiguate, "O",
+		),
+		out(
+			"shift+colon",
+			Key{
+				Code:    ';',
+				Shifted: ':',
+				Text:    ":",
+				Mod:     KeyModShift,
+			},
+			legacy, ":",
+			disambiguate, ":",
 		),
 		out(
 			"rune release no modifier",

@@ -132,9 +132,7 @@ func (t *Terminal) Send(msg mux.Msg) {
 
 	switch msg := msg.(type) {
 	case taro.KittyKeyMsg:
-		// Use the Key's Bytes() method which handles both legacy and Kitty protocol
-		protocol := t.terminal.KeyState()
-		input, ok = keys.Key(msg).Bytes(protocol)
+		input, ok = keys.Key(msg).Bytes(t.terminal.KeyState())
 	case taro.MouseMsg:
 		switch mode & emu.ModeMouseMask {
 		case emu.ModeMouseX10:

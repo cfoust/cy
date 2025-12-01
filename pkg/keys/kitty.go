@@ -350,7 +350,6 @@ var legacyTextKeys = (func() (keys map[Key]bool) {
 	}
 
 	modifiers := []KeyModifiers{
-		KeyModShift,
 		KeyModAlt,
 		KeyModCtrl,
 		KeyModShift | KeyModAlt,
@@ -366,10 +365,20 @@ var legacyTextKeys = (func() (keys map[Key]bool) {
 		}
 	}
 
+	// Escape also needs to be disambiguated
+	keys[Key{Code: KittyKeyEscape}] = true
+
+	for _, mod := range modifiers {
+		keys[Key{
+			Code: KittyKeyEscape,
+			Mod:  mod,
+		}] = true
+	}
+
 	return
 }())
 
-func isLegacyText(k Key) (yes bool) {
+func shouldDisambiguate(k Key) (yes bool) {
 	_, yes = legacyTextKeys[Key{
 		Code: k.Code,
 		Mod:  k.Mod,
@@ -493,7 +502,7 @@ func (k Key) kittyBytes(protocol emu.KeyProtocol) (data []byte, ok bool) {
 		return
 	}
 
-	if haveAll || (haveDisambiguate && isLegacyText(k)) {
+	if haveAll || (haveDisambiguate && shouldDisambiguate(k)) {
 		return kittyEncode(
 			k,
 			haveTypes,

@@ -144,15 +144,22 @@ func (k Key) legacyBytes() (data []byte, ok bool) {
 		return
 	}
 
-	alt := k.Mod&KeyModAlt != 0
-	if alt {
+	var (
+		code      = k.Code
+		haveAlt   = k.Mod&KeyModAlt != 0
+		haveShift = k.Mod&KeyModShift != 0
+	)
+	if haveAlt {
 		data = append(data, '\x1b')
+	}
+	if haveShift {
+		code = k.Shifted
 	}
 
 	if len(k.Text) > 0 {
 		data = append(data, []byte(k.Text)...)
 	} else {
-		data = append(data, byte(k.Code))
+		data = append(data, byte(code))
 	}
 
 	return data, true
