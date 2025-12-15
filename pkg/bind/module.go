@@ -138,7 +138,6 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) (consumed bool) {
 
 	// The binding engine can only handle legacy key events, for now
 	if _, ok := keys.Key(key).Bytes(emu.KeyLegacy); !ok {
-		e.clearState()
 		e.out <- in
 		return
 	}
