@@ -42,7 +42,16 @@ func Attach(
 		_ = term.Restore(int(in.Fd()), oldState)
 	}()
 
-	go func() { _, _ = io.Copy(stream, in) }()
+	protocolDetector := &kittyDetector{
+		r: in,
+		w: out,
+	}
+
+	if err := protocolDetector.Query(); err != nil {
+		return err
+	}
+
+	go func() { _, _ = io.Copy(stream, protocolDetector) }()
 	go func() { _, _ = io.Copy(out, stream) }()
 
 	// Handle window size changes
