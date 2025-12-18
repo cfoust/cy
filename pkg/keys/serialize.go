@@ -140,7 +140,7 @@ func (k Key) legacyBytes() (data []byte, ok bool) {
 	}
 
 	// We can't encode anything above this, probably an internal key code
-	if k.Code >= KittyKeyHome {
+	if k.Code >= KittyKeyHome && k.Code != KeyText {
 		return
 	}
 

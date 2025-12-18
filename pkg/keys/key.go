@@ -318,6 +318,14 @@ func FromNames(keys ...string) (msgs []Key) {
 			continue
 		}
 
+		if keyCode != -1 {
+			msgs = append(msgs, Key{
+				Code: keyCode,
+				Mod:  modifiers,
+			})
+			continue
+		}
+
 		msgs = append(msgs, Key{
 			Code: rune(key[0]),
 			Mod:  modifiers,
