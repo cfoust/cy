@@ -90,6 +90,8 @@
 
 - [API](./api.md)
 
+- [Terminal emulator features](./emulator-features.md)
+
 # Developer guide
 
 - [Contributing](./contributing.md)
