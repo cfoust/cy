@@ -1,6 +1,8 @@
 package keys
 
 import (
+	"github.com/cfoust/cy/pkg/emu"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -102,8 +104,7 @@ var teaKeyLookup = map[Key]tea.KeyType{
 }
 
 func (k Key) Tea() (msg tea.KeyMsg, ok bool) {
-	// bubbletea does not handle release/repeat events
-	if k.Type != KeyEventPress {
+	if _, ok = k.Bytes(emu.KeyLegacy); !ok {
 		return
 	}
 
