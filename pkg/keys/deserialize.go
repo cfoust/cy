@@ -348,8 +348,6 @@ func (u UnknownCSISequenceEvent) String() string {
 	return fmt.Sprintf("?CSI%+v?", []byte(u)[2:])
 }
 
-var spaceRunes = []rune{' '}
-
 var unknownCSIRe = regexp.MustCompile(
 	`^\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]`,
 )
@@ -499,7 +497,6 @@ func Read(b []byte) (event any, w int) {
 		runes = append(runes, r)
 		if alt {
 			// We only support a single rune after an escape alt modifier.
-			i += rw
 			break
 		}
 	}

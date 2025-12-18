@@ -197,7 +197,7 @@ var (
 	}
 	invertLegacyNumber = invertMap(legacyNumber)
 
-	invalidKittyErr = fmt.Errorf("not a valid Kitty sequence")
+	errInvalidKitty = fmt.Errorf("not a valid Kitty sequence")
 )
 
 func getInt(b []byte) (result int) {
@@ -230,7 +230,7 @@ func parseModifier(modifier, type_ int, key *Key) {
 }
 
 func parseKittyLegacy(match [][]byte) (key Key, width int, err error) {
-	err = invalidKittyErr
+	err = errInvalidKitty
 
 	var (
 		code     = getInt(match[kittyLegacy.SubexpIndex("code")])
@@ -300,7 +300,7 @@ func parseKittyPrimary(match [][]byte) (key Key, width int, err error) {
 // parseKittySequence parses a Kitty protocol key sequence
 // Format: ESC [ {keycode} [; {modifiers} [; {event_type} [; {text}]]] u
 func parseKittySequence(b []byte) (key Key, width int, err error) {
-	err = invalidKittyErr
+	err = errInvalidKitty
 
 	if match := kittyLegacy.FindSubmatch(b); len(match) > 0 {
 		width = len(match[0])
@@ -315,11 +315,6 @@ func parseKittySequence(b []byte) (key Key, width int, err error) {
 	}
 
 	return
-}
-
-type kittySequence struct {
-	Code   rune
-	Suffix string // u or [~ABCDEFHPQS]
 }
 
 // Kitty has a set of legacy text keys that require special handling

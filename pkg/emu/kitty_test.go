@@ -33,7 +33,7 @@ func TestKittyProtocolCSI(t *testing.T) {
 			term := New()
 
 			// Send the sequence to the terminal
-			term.Write([]byte(tt.sequence))
+			_, _ = term.Write([]byte(tt.sequence))
 
 			// Get the key state from the terminal
 			flags := term.KeyState()
@@ -49,7 +49,7 @@ func TestKeyStateScreenSwapping(t *testing.T) {
 
 	// Enable protocol on main screen
 	mainFlags := KeyDisambiguateEscape | KeyReportEventTypes
-	term.Write([]byte("\x1b[=3u"))
+	_, _ = term.Write([]byte("\x1b[=3u"))
 
 	if term.KeyState() != mainFlags {
 		t.Errorf(
@@ -60,11 +60,11 @@ func TestKeyStateScreenSwapping(t *testing.T) {
 	}
 
 	// Switch to alt screen
-	term.Write([]byte("\x1b[?1049h"))
+	_, _ = term.Write([]byte("\x1b[?1049h"))
 
 	// Set different protocol on alt screen
 	altFlags := KeyReportAlternateKeys
-	term.Write([]byte("\x1b[=4u"))
+	_, _ = term.Write([]byte("\x1b[=4u"))
 
 	if term.KeyState() != altFlags {
 		t.Errorf(
@@ -75,7 +75,7 @@ func TestKeyStateScreenSwapping(t *testing.T) {
 	}
 
 	// Switch back to main screen - should restore original key state
-	term.Write([]byte("\x1b[?1049l"))
+	_, _ = term.Write([]byte("\x1b[?1049l"))
 
 	if term.KeyState() != mainFlags {
 		t.Errorf(
@@ -115,12 +115,12 @@ func TestKeyStateQuery(t *testing.T) {
 			term := New(WithWriter(&output))
 
 			if tt.setup != "" {
-				term.Write([]byte(tt.setup))
+				_, _ = term.Write([]byte(tt.setup))
 			}
 
 			output.Reset()
 
-			term.Write([]byte("\x1b[?u"))
+			_, _ = term.Write([]byte("\x1b[?u"))
 
 			response := output.String()
 			if response != tt.expected {

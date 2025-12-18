@@ -93,7 +93,7 @@ func (t *State) handleKittyProtocol(csi *csiEscape) bool {
 			return false
 		}
 
-		fmt.Fprintf(t.w, "\x1b[?%du", state.Flags)
+		_, _ = fmt.Fprintf(t.w, "\x1b[?%du", state.Flags)
 		return true
 	case '=': // Set: CSI = flags; mode u
 		if len(args) == 0 || len(args) > 2 {
