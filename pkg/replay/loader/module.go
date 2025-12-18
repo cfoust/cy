@@ -186,7 +186,7 @@ func (l *Loader) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			_ = l.replay.Resize(l.size)
 		}
 		return l, nil
-	case replay.CopyEvent, replay.ActionEvent, replay.PlaybackRateEvent, taro.KeyMsg, taro.MouseMsg:
+	case replay.CopyEvent, replay.ActionEvent, replay.PlaybackRateEvent, taro.KeyMsg, taro.KittyKeyMsg, taro.MouseMsg:
 		if l.replay == nil {
 			return l, nil
 		}
@@ -225,5 +225,5 @@ func New(
 		options:   options,
 		timeBinds: timeBinds,
 		copyBinds: copyBinds,
-	})
+	}, taro.WithKittyKeys)
 }

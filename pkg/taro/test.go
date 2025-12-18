@@ -14,9 +14,16 @@ func testExecuteCommands(
 	m Model,
 	size geom.Size,
 	cmds []tea.Cmd,
+	options ...Option,
 ) geom.Size {
 	p := newProgram(ctx, m)
+
+	for _, option := range options {
+		option(p)
+	}
+
 	p.isTest = true
+
 	p.resize(size)
 	clearc := make(chan struct{})
 	p.clear = clearc
@@ -51,11 +58,11 @@ func testExecuteCommands(
 // one at a time. All `Cmd`s that would normally be executed in separate
 // goroutines are instead executed in the calling goroutine. This is useful
 // exclusively in testing.
-func Test(m Model) func(msgs ...interface{}) {
+func Test(m Model, options ...Option) func(msgs ...interface{}) {
 	size := geom.DEFAULT_SIZE
 
 	ctx, cancel := context.WithCancel(context.Background())
-	size = testExecuteCommands(ctx, m, size, []tea.Cmd{m.Init()})
+	size = testExecuteCommands(ctx, m, size, []tea.Cmd{m.Init()}, options...)
 	cancel()
 
 	return func(msgs ...interface{}) {
@@ -91,6 +98,6 @@ func Test(m Model) func(msgs ...interface{}) {
 			}(realMsg))
 		}
 
-		size = testExecuteCommands(ctx, m, size, cmds)
+		size = testExecuteCommands(ctx, m, size, cmds, options...)
 	}
 }

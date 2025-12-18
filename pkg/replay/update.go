@@ -125,7 +125,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.exitCopyMode()
 			return r, r.timeStep(0)
 		}
-	case taro.KeyMsg:
+	case taro.KittyKeyMsg:
 		// Clear out the "no matches" dialog
 		r.isEmpty = false
 

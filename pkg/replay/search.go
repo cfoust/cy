@@ -130,8 +130,13 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 			r.mode = ModeTime
 			return r, nil
 		}
-	case taro.KeyMsg:
-		switch msg.Type {
+	case taro.KittyKeyMsg:
+		teaMsg, ok := msg.Tea()
+		if !ok {
+			return r, nil
+		}
+
+		switch teaMsg.Type {
 		case tea.KeyEsc, tea.KeyCtrlC:
 			r.mode = ModeTime
 			return r, nil
@@ -173,8 +178,13 @@ func (r *Replay) handleSearchInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 				},
 				r.waitProgress(),
 			)
+		default:
+			var cmd tea.Cmd
+			r.input, cmd = r.input.Update(teaMsg)
+			return r, cmd
 		}
 	}
+
 	var cmd tea.Cmd
 	r.input, cmd = r.input.Update(msg)
 	return r, cmd

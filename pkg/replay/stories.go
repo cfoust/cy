@@ -46,7 +46,7 @@ func createStory(
 
 	r.searchProgress = nil
 
-	test := taro.Test(r)
+	test := taro.Test(r, taro.WithKittyKeys)
 	test(tea.WindowSizeMsg{
 		Width:  geom.DEFAULT_SIZE.C,
 		Height: geom.DEFAULT_SIZE.R,

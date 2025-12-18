@@ -66,7 +66,7 @@ func TestSearch(t *testing.T) {
 	s := createTest()
 
 	paths := createTestFiles(t)
-	test := taro.Test(s)
+	test := taro.Test(s, taro.WithKittyKeys)
 	request := Request{
 		Query:   "bar",
 		Files:   paths,
@@ -109,7 +109,7 @@ func TestPassthrough(t *testing.T) {
 
 	// We need to ensure that the request is complete before testing
 	// other things, so we use taro.Test
-	test := taro.Test(s)
+	test := taro.Test(s, taro.WithKittyKeys)
 	paths := createTestFiles(t)
 	request := Request{
 		Query:   "bar",
@@ -118,7 +118,7 @@ func TestPassthrough(t *testing.T) {
 	}
 	test(request)
 
-	program := taro.New(ctx, s)
+	program := taro.New(ctx, s, taro.WithKittyKeys)
 
 	// Reinitialize the replay watcher manually
 	program.Send(taro.NewWatcher(ctx, s.loader).Wait()())
@@ -167,6 +167,8 @@ func TestPassthrough(t *testing.T) {
 		require.Equal(t, "foo", event.Action.Tag)
 	case err := <-errors:
 		t.Fatal(err)
+	case <-time.After(3 * time.Second):
+		t.Fatal("timed out")
 	}
 
 	program.Send(replay.ActionEvent{Type: replay.ActionCursorLeft})
@@ -186,7 +188,7 @@ func TestSelected(t *testing.T) {
 	s := createTest()
 	paths := createTestFiles(t)
 
-	test := taro.Test(s)
+	test := taro.Test(s, taro.WithKittyKeys)
 	request := Request{
 		Query:   "bar",
 		Files:   paths,
@@ -217,7 +219,7 @@ func TestInput(t *testing.T) {
 	s := createTest()
 	paths := createTestFiles(t)
 
-	test := taro.Test(s)
+	test := taro.Test(s, taro.WithKittyKeys)
 	request := Request{
 		Query:   "bar",
 		Files:   paths,

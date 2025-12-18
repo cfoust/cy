@@ -89,8 +89,13 @@ func (s *Search) handleInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 			s.inputing = false
 			return s, nil
 		}
-	case taro.KeyMsg:
-		switch msg.Type {
+	case taro.KittyKeyMsg:
+		teaMsg, ok := msg.Tea()
+		if !ok {
+			return s, nil
+		}
+
+		switch teaMsg.Type {
 		case tea.KeyEsc, tea.KeyCtrlC:
 			s.inputing = false
 			return s, nil
@@ -104,6 +109,10 @@ func (s *Search) handleInput(msg tea.Msg) (taro.Model, tea.Cmd) {
 			request := *s.initialRequest
 			request.Query = s.input.Value()
 			return s.Execute(request)
+		default:
+			var cmd tea.Cmd
+			s.input, cmd = s.input.Update(teaMsg)
+			return s, cmd
 		}
 	}
 
@@ -174,7 +183,7 @@ func (s *Search) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 	// The messages below only make sense when we're not inputing
 	switch msg := msg.(type) {
-	case taro.KeyMsg:
+	case taro.KittyKeyMsg:
 		replay := s.loader
 		return s, func() tea.Msg {
 			if consumed := s.searchBinds.InputMessage(msg); consumed {

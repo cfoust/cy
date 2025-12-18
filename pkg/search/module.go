@@ -109,7 +109,7 @@ func New(
 		option(s)
 	}
 
-	program := taro.New(ctx, s)
+	program := taro.New(ctx, s, taro.WithKittyKeys)
 	go func() {
 		for {
 			select {

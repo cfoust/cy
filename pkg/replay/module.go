@@ -269,7 +269,7 @@ func New(
 		copyEngine,
 		options...,
 	)
-	program := taro.New(ctx, r)
+	program := taro.New(ctx, r, taro.WithKittyKeys)
 
 	go pollBinds(ctx, program, replayEngine)
 	go pollBinds(ctx, program, copyEngine)

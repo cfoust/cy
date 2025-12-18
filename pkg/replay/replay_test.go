@@ -53,7 +53,7 @@ func createTest(
 
 	var m taro.Model = r
 
-	test := taro.Test(m)
+	test := taro.Test(m, taro.WithKittyKeys)
 
 	return r, func(msgs ...interface{}) {
 		var realMsg tea.Msg

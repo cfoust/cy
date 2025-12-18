@@ -11,6 +11,10 @@ import (
 type KeyMsg = tea.KeyMsg
 type KittyKeyMsg keys.Key
 
+func (k KittyKeyMsg) Tea() (tea.KeyMsg, bool) {
+	return keys.Key(k).Tea()
+}
+
 // MouseMsg contains information about a mouse event and are sent to a programs
 // update function when mouse activity occurs. Note that the mouse must first
 // be enabled in order for the mouse events to be received.
