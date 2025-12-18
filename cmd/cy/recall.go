@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	// Full references contain everything necessry to refer to a command
-	// uniquely, including which cy server it's on. They can be used outside of
-	// cy.
+	// Full references contain everything necessary to refer to a command
+	// uniquely, including which cy server it's on. They can be used outside
+	// of cy.
 	FULL_REFERENCE = regexp.MustCompile(
 		`^(?P<socket>\w+):(?P<node>\d+):(?P<index>-?\d+)$`,
 	)

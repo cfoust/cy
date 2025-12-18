@@ -516,7 +516,7 @@ func (k Key) kittyBytes(protocol emu.KeyProtocol) (data []byte, ok bool) {
 
 // GenerateKittyEnableSequence generates the escape sequence to enable Kitty protocol
 func GenerateKittyEnableSequence(flags emu.KeyProtocol) string {
-	return fmt.Sprintf("\x1b[>%du", int(flags))
+	return fmt.Sprintf("\x1b[=%du", int(flags))
 }
 
 // GenerateKittyDisableSequence generates the escape sequence to disable Kitty protocol
