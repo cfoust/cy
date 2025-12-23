@@ -31,6 +31,7 @@ func (c *Cy) initAPI() error {
 		"group":      &api.GroupModule{Tree: c.tree},
 		"input":      &api.InputModule{Tree: c.tree, Server: c.muxServer},
 		"layout":     &api.LayoutModule{},
+		"llm":        &api.LLMModule{},
 		"msg":        &api.MsgModule{Server: c},
 		"key": &api.KeyModule{
 			Tree:        c.tree,
