@@ -64,6 +64,20 @@ func TestDeserialize(t *testing.T) {
 			Mod:     KeyModShift,
 			Text:    "A",
 		}),
+		de("zh", "致", Key{
+			Code: '致',
+			Text: "致",
+		}),
+		de("ru", "ж", Key{
+			Code: 'ж',
+			Text: "ж",
+		}),
+		de("ru shifted", "Ж", Key{
+			Code:    'ж',
+			Shifted: 'Ж',
+			Mod:     KeyModShift,
+			Text:    "Ж",
+		}),
 		// kitty
 		de("ru: л", "\x1b[1083::107u", Key{
 			Code: 'л',
