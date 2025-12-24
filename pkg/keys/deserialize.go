@@ -362,7 +362,7 @@ var extSequences = func() map[string]Key {
 
 	for seq, key := range sequences {
 		s[seq] = key
-		if key.Mod&KeyModAlt == 0 {
+		if !key.HasAlt() {
 			key.Mod |= KeyModAlt
 			s["\x1b"+seq] = key
 		}

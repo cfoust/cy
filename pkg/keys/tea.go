@@ -99,7 +99,6 @@ var teaKeyLookup = map[Key]tea.KeyType{
 	kMod('?', KeyModCtrl):  tea.KeyCtrlQuestionMark,
 
 	// Additional keys
-	k(' '):                         tea.KeySpace,
 	kMod(KittyKeyTab, KeyModShift): tea.KeyShiftTab,
 }
 
@@ -112,17 +111,23 @@ func (k Key) Tea() (msg tea.KeyMsg, ok bool) {
 		return tea.KeyMsg{Type: keyType}, true
 	}
 
-	if k.Code == KeyText {
+	code := k.Code
+
+	if code == KeyText {
 		return tea.KeyMsg{
 			Type:  tea.KeyRunes,
 			Runes: []rune(k.Text),
-			Alt:   k.Mod&KeyModAlt != 0,
+			Alt:   k.HasAlt(),
 		}, true
+	}
+
+	if k.HasShift() {
+		code = k.Shifted
 	}
 
 	return tea.KeyMsg{
 		Type:  tea.KeyRunes,
-		Runes: []rune{k.Code},
-		Alt:   k.Mod&KeyModAlt != 0,
+		Runes: []rune{code},
+		Alt:   k.HasAlt(),
 	}, true
 }

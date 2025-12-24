@@ -5,6 +5,7 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,14 +30,14 @@ func TestFromNames(t *testing.T) {
 	))
 }
 
-type inCase struct {
+type deCase struct {
 	name  string
 	input string
 	msg   any
 }
 
-func in(name string, input string, msg any) inCase {
-	return inCase{
+func de(name string, input string, msg any) deCase {
+	return deCase{
 		name:  name,
 		input: input,
 		msg:   msg,
@@ -44,58 +45,58 @@ func in(name string, input string, msg any) inCase {
 }
 
 func TestDeserialize(t *testing.T) {
-	cases := []inCase{
+	cases := []deCase{
 		// legacy
-		in("ctrl+c", string([]rune{keyETX}), kMod('c', KeyModCtrl)),
-		in("escape", "\x1b", k(KittyKeyEscape)),
-		in("alt+o", "\x1bo", Key{
+		de("ctrl+c", string([]rune{keyETX}), kMod('c', KeyModCtrl)),
+		de("escape", "\x1b", k(KittyKeyEscape)),
+		de("alt+o", "\x1bo", Key{
 			Code: 'o',
 			Mod:  KeyModAlt,
 			Text: "o",
 		}),
-		in("a", "a", Key{
+		de("a", "a", Key{
 			Code: 'a',
 			Text: "a",
 		}),
-		in("shift+a", "A", Key{
+		de("shift+a", "A", Key{
 			Code:    'a',
 			Shifted: 'A',
 			Mod:     KeyModShift,
 			Text:    "A",
 		}),
 		// kitty
-		in("ru: л", "\x1b[1083::107u", Key{
+		de("ru: л", "\x1b[1083::107u", Key{
 			Code: 'л',
 			Base: 'k',
 		}),
-		in("shifted a", "\x1b[97:65;2;65u", Key{
+		de("shifted a", "\x1b[97:65;2;65u", Key{
 			Code:    'a',
 			Mod:     KeyModShift,
 			Shifted: 'A',
 			Text:    "A",
 		}),
-		in("esc press", "\x1b[27u", Key{
+		de("esc press", "\x1b[27u", Key{
 			Code: KittyKeyEscape,
 		}),
-		in("home", "\x1b[H", Key{
+		de("home", "\x1b[H", Key{
 			Code: KittyKeyHome,
 		}),
-		in("home release", "\x1b[;1:3H", Key{
+		de("home release", "\x1b[;1:3H", Key{
 			Code: KittyKeyHome,
 			Type: KeyEventRelease,
 		}),
-		in("f5", "\x1b[15~", Key{
+		de("f5", "\x1b[15~", Key{
 			Code: KittyKeyF5,
 		}),
-		in("f5 release", "\x1b[15;1:3~", Key{
+		de("f5 release", "\x1b[15;1:3~", Key{
 			Code: KittyKeyF5,
 			Type: KeyEventRelease,
 		}),
-		in("left shift", "\x1b[57441;2u", Key{
+		de("left shift", "\x1b[57441;2u", Key{
 			Code: KittyLeftShift,
 			Mod:  KeyModShift,
 		}),
-		in("left shift release", "\x1b[57441;1:3u", Key{
+		de("left shift release", "\x1b[57441;1:3u", Key{
 			Code: KittyLeftShift,
 			Type: KeyEventRelease,
 		}),
@@ -122,17 +123,17 @@ type output struct {
 	text     string
 }
 
-type outCase struct {
+type seCase struct {
 	name    string
 	key     Key
 	outputs []output
 }
 
-func out(
+func se(
 	name string,
 	key Key,
 	cases ...any,
-) (o outCase) {
+) (o seCase) {
 	o.name = name
 	o.key = key
 
@@ -185,8 +186,8 @@ func TestSerialize(t *testing.T) {
 		all          = emu.KeyReportAllKeys
 	)
 
-	cases := []outCase{
-		out(
+	cases := []seCase{
+		se(
 			"rune",
 			Key{
 				Code:    'o',
@@ -204,7 +205,7 @@ func TestSerialize(t *testing.T) {
 			all|types, "\x1b[111u",
 			all|text|types, "\x1b[111;;111u",
 		),
-		out(
+		se(
 			"legacy text key",
 			Key{
 				Code:    'c',
@@ -217,7 +218,7 @@ func TestSerialize(t *testing.T) {
 			all, "\x1b[99;5u",
 			all|text|types, "\x1b[99;5;99u",
 		),
-		out(
+		se(
 			"disambiguate",
 			Key{
 				Code: KittyKeyEscape,
@@ -226,7 +227,7 @@ func TestSerialize(t *testing.T) {
 			legacy, string(keyESC), // wrong?
 			disambiguate, "\x1b[27;5u",
 		),
-		out(
+		se(
 			"shift+rune",
 			Key{
 				Code:    'o',
@@ -237,7 +238,7 @@ func TestSerialize(t *testing.T) {
 			legacy, "O",
 			disambiguate, "O",
 		),
-		out(
+		se(
 			"shift+colon",
 			Key{
 				Code:    ';',
@@ -248,7 +249,7 @@ func TestSerialize(t *testing.T) {
 			legacy, ":",
 			disambiguate, ":",
 		),
-		out(
+		se(
 			"rune release no modifier",
 			Key{
 				Code:    'o',
@@ -259,7 +260,7 @@ func TestSerialize(t *testing.T) {
 			all|types, "\x1b[111;1:3u",
 			all|types|text, "\x1b[111;1:3;111u",
 		),
-		out(
+		se(
 			"rune repeat no modifier",
 			Key{
 				Code:    'o',
@@ -290,7 +291,7 @@ func TestSerialize(t *testing.T) {
 		),
 	} {
 		for _, o := range c.outputs {
-			cases = append(cases, outCase{
+			cases = append(cases, seCase{
 				name: c.name,
 				key: Key{
 					Code: c.r,
@@ -334,6 +335,86 @@ func TestSerialize(t *testing.T) {
 					)
 				})
 			}
+		})
+	}
+}
+
+type teaCase struct {
+	name     string
+	key      Key
+	expected tea.KeyMsg
+}
+
+func te(name string, key Key, msg tea.KeyMsg) teaCase {
+	return teaCase{
+		name:     name,
+		key:      key,
+		expected: msg,
+	}
+}
+
+func TestTea(t *testing.T) {
+	cases := []teaCase{
+		te(
+			"space",
+			Key{
+				Code: ' ',
+				Text: " ",
+			},
+			tea.KeyMsg{
+				Type:  tea.KeyRunes,
+				Runes: []rune{' '},
+			},
+		),
+		te(
+			"lookup",
+			Key{
+				Code: ']',
+				Mod:  KeyModCtrl,
+			},
+			tea.KeyMsg{
+				Type: tea.KeyCtrlCloseBracket,
+			},
+		),
+		te(
+			"shift+a",
+			Key{
+				Code:    'a',
+				Shifted: 'A',
+				Mod:     KeyModShift,
+				Text:    "A",
+			},
+			tea.KeyMsg{
+				Type:  tea.KeyRunes,
+				Runes: []rune{'A'},
+			},
+		),
+		te(
+			"alt+shift+a",
+			Key{
+				Code:    'a',
+				Shifted: 'A',
+				Mod:     KeyModShift | KeyModAlt,
+				Text:    "A",
+			},
+			tea.KeyMsg{
+				Type:  tea.KeyRunes,
+				Runes: []rune{'A'},
+				Alt:   true,
+			},
+		),
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			var (
+				actual, _ = test.key.Tea()
+			)
+			assert.Equal(
+				t,
+				test.expected,
+				actual,
+				"Conversion to KeyMsg was incorrect",
+			)
 		})
 	}
 }

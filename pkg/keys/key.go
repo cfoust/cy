@@ -98,22 +98,22 @@ type Key struct {
 func (k Key) String() (str string) {
 	var modParts []string
 
-	if k.Mod&KeyModSuper != 0 {
+	if k.HasSuper() {
 		modParts = append(modParts, "super")
 	}
-	if k.Mod&KeyModHyper != 0 {
+	if k.HasHyper() {
 		modParts = append(modParts, "hyper")
 	}
-	if k.Mod&KeyModMeta != 0 {
+	if k.HasMeta() {
 		modParts = append(modParts, "meta")
 	}
-	if k.Mod&KeyModCtrl != 0 {
+	if k.HasCtrl() {
 		modParts = append(modParts, "ctrl")
 	}
-	if k.Mod&KeyModAlt != 0 {
+	if k.HasAlt() {
 		modParts = append(modParts, "alt")
 	}
-	if k.Mod&KeyModShift != 0 {
+	if k.HasShift() {
 		modParts = append(modParts, "shift")
 	}
 
