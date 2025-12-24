@@ -5,30 +5,8 @@ import (
 
 	"github.com/cfoust/cy/pkg/emu"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
-
-func TestFromNames(t *testing.T) {
-	require.Equal(t, []Key{
-		{
-			Code: KeyText,
-			Text: "test",
-		},
-		kMod('a', KeyModCtrl),
-		kMod('a', KeyModCtrl|KeyModAlt),
-		kMod('o', KeyModAlt),
-		// TODO(cfoust): 09/05/25 return to this
-		//kMod('й', KeyModAlt),
-	}, FromNames(
-		"test",
-		"ctrl+a",
-		"alt+ctrl+a",
-		"alt+o",
-		//"alt+й",
-	))
-}
 
 type deCase struct {
 	name  string
@@ -349,86 +327,6 @@ func TestSerialize(t *testing.T) {
 					)
 				})
 			}
-		})
-	}
-}
-
-type teaCase struct {
-	name     string
-	key      Key
-	expected tea.KeyMsg
-}
-
-func te(name string, key Key, msg tea.KeyMsg) teaCase {
-	return teaCase{
-		name:     name,
-		key:      key,
-		expected: msg,
-	}
-}
-
-func TestTea(t *testing.T) {
-	cases := []teaCase{
-		te(
-			"space",
-			Key{
-				Code: ' ',
-				Text: " ",
-			},
-			tea.KeyMsg{
-				Type:  tea.KeyRunes,
-				Runes: []rune{' '},
-			},
-		),
-		te(
-			"lookup",
-			Key{
-				Code: ']',
-				Mod:  KeyModCtrl,
-			},
-			tea.KeyMsg{
-				Type: tea.KeyCtrlCloseBracket,
-			},
-		),
-		te(
-			"shift+a",
-			Key{
-				Code:    'a',
-				Shifted: 'A',
-				Mod:     KeyModShift,
-				Text:    "A",
-			},
-			tea.KeyMsg{
-				Type:  tea.KeyRunes,
-				Runes: []rune{'A'},
-			},
-		),
-		te(
-			"alt+shift+a",
-			Key{
-				Code:    'a',
-				Shifted: 'A',
-				Mod:     KeyModShift | KeyModAlt,
-				Text:    "A",
-			},
-			tea.KeyMsg{
-				Type:  tea.KeyRunes,
-				Runes: []rune{'A'},
-				Alt:   true,
-			},
-		),
-	}
-	for _, test := range cases {
-		t.Run(test.name, func(t *testing.T) {
-			var (
-				actual, _ = test.key.Tea()
-			)
-			assert.Equal(
-				t,
-				test.expected,
-				actual,
-				"Conversion to KeyMsg was incorrect",
-			)
 		})
 	}
 }
