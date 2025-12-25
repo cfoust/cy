@@ -166,7 +166,10 @@ func (k Key) legacyBytes() (data []byte, ok bool) {
 }
 
 func (k Key) Bytes(protocol emu.KeyProtocol) (data []byte, ok bool) {
-	if protocol != emu.KeyLegacy {
+	// Even with the protocol enabled, kitty encodes pastes (which we
+	// represent with KeyText) as standard UTF-8. This is absent from the
+	// specification, but we replicate that behavior.
+	if protocol != emu.KeyLegacy && k.Code != KeyText {
 		return k.kittyBytes(protocol)
 	}
 

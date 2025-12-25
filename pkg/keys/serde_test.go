@@ -274,6 +274,15 @@ func TestSerialize(t *testing.T) {
 			all|types, "\x1b[111;1:2u",
 			all|types|text, "\x1b[111;1:2;111u",
 		),
+		se(
+			"text",
+			Key{
+				Code: KeyText,
+				Text: "test",
+			},
+			legacy, "test",
+			all, "test",
+		),
 	}
 
 	for _, c := range []legacyCase{
