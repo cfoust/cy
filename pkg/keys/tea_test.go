@@ -82,6 +82,29 @@ func TestTea(t *testing.T) {
 				Runes: []rune{'致'},
 			},
 		),
+		te(
+			"repeat",
+			Key{
+				Code:    'a',
+				Shifted: 'A',
+				Text:    "a",
+				Type:    KeyEventRepeat,
+			},
+			tea.KeyMsg{
+				Type:  tea.KeyRunes,
+				Runes: []rune{'a'},
+			},
+		),
+		te(
+			"repeat backspace",
+			Key{
+				Code: KittyKeyBackspace,
+				Type: KeyEventRepeat,
+			},
+			tea.KeyMsg{
+				Type: tea.KeyBackspace,
+			},
+		),
 	}
 
 	for _, test := range cases {
