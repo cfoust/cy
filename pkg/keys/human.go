@@ -46,6 +46,7 @@ var (
 
 		// handle duplicates
 		result[KittyKeyEnter] = "enter"
+		result[KittyKeyEscape] = "esc"
 
 		return
 	}()
@@ -93,7 +94,7 @@ var (
 )
 
 // FromHuman translates human-readable key specifiers (such as "ctrl+a", "up",
-// etc) into Keys. Unrecognized strings are represented as regular characters.
+// etc) into Keys.
 func FromHuman(human string) (key Key, ok bool) {
 	var (
 		modifiers KeyModifiers
@@ -198,18 +199,21 @@ func (k Key) String() (str string) {
 	if k.HasAlt() {
 		modParts = append(modParts, "alt")
 	}
-	if k.HasShift() {
+	if k.Shifted == 0 && k.HasShift() {
 		modParts = append(modParts, "shift")
 	}
 
-	var modifiers string
+	var (
+		keyName   = k.Text
+		modifiers string
+	)
 	if len(modParts) > 0 {
 		modifiers = strings.Join(modParts, "+") + "+"
 	}
 
-	if name, haveHuman := inverseHumanKeys[k.Code]; haveHuman {
-		return modifiers + name
+	if hardcoded, haveHuman := inverseHumanKeys[k.Code]; haveHuman {
+		keyName = hardcoded
 	}
 
-	return modifiers + k.Text
+	return modifiers + keyName
 }

@@ -7,18 +7,30 @@ import (
 )
 
 func TestFromHuman(t *testing.T) {
-	type nameCase struct {
+	type fromCase struct {
 		input string
 		key   Key
 		ok    bool
 	}
 
-	cases := []nameCase{
+	cases := []fromCase{
 		{
 			"test",
+			Key{},
+			false,
+		},
+		{
+			"esc",
 			Key{
-				Code: KeyText,
-				Text: "test",
+				Code: KittyKeyEscape,
+			},
+			true,
+		},
+		{
+			"ctrl+esc",
+			Key{
+				Code: KittyKeyEscape,
+				Mod:  KeyModCtrl,
 			},
 			true,
 		},
@@ -62,6 +74,16 @@ func TestFromHuman(t *testing.T) {
 			true,
 		},
 		{
+			"A",
+			Key{
+				Code:    'a',
+				Shifted: 'A',
+				Mod:     KeyModShift,
+				Text:    "A",
+			},
+			true,
+		},
+		{
 			"?",
 			Key{
 				Code:    '/',
@@ -72,12 +94,12 @@ func TestFromHuman(t *testing.T) {
 			true,
 		},
 		{
-			"A",
+			"ctrl+@",
 			Key{
-				Code:    'a',
-				Shifted: 'A',
-				Mod:     KeyModShift,
-				Text:    "A",
+				Code:    '2',
+				Shifted: '@',
+				Mod:     KeyModCtrl | KeyModShift,
+				Text:    "@",
 			},
 			true,
 		},
@@ -102,6 +124,53 @@ func TestFromHuman(t *testing.T) {
 				test.key,
 				key,
 				"Incorrect translation from string to key",
+			)
+		})
+	}
+}
+
+func TestToString(t *testing.T) {
+	type toCase struct {
+		key    Key
+		output string
+	}
+
+	cases := []toCase{
+		{
+			Key{
+				Code:    '2',
+				Shifted: '@',
+				Mod:     KeyModShift,
+				Text:    "@",
+			},
+			"@",
+		},
+		{
+			Key{
+				Code:    'h',
+				Shifted: 'H',
+				Text:    "h",
+			},
+			"h",
+		},
+		{
+			Key{
+				Code:    'h',
+				Shifted: 'H',
+				Mod:     KeyModShift,
+				Text:    "H",
+			},
+			"H",
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.output, func(t *testing.T) {
+			assert.Equal(
+				t,
+				test.output,
+				test.key.String(),
+				"Incorrect translation from key to string",
 			)
 		})
 	}
