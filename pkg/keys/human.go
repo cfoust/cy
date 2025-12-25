@@ -224,12 +224,17 @@ func (k Key) String() (str string) {
 		keyName   = k.Text
 		modifiers string
 	)
+
 	if len(modParts) > 0 {
 		modifiers = strings.Join(modParts, "+") + "+"
 	}
 
 	if hardcoded, haveHuman := inverseHumanKeys[k.Code]; haveHuman {
 		keyName = hardcoded
+	}
+
+	if len(k.Text) == 0 {
+		keyName = string(k.Code)
 	}
 
 	return modifiers + keyName

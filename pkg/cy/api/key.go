@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/bind/trie"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
 )
 
@@ -34,13 +35,16 @@ func getKeySequence(value *janet.Value) (result []interface{}, err error) {
 	for i, item := range array {
 		strErr := item.Unmarshal(&str)
 		if strErr == nil {
-			// TODO(cfoust): 07/14/24 this is probably not the best place to do this
-			switch str {
-			case "ctrl+i":
-				str = "tab"
+			key, ok := keys.FromHuman(str)
+			if !ok {
+				err = fmt.Errorf(
+					"invalid key specifier %s",
+					str,
+				)
+				return
 			}
 
-			result = append(result, str)
+			result = append(result, key.String())
 			continue
 		}
 

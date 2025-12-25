@@ -11,4 +11,5 @@
 
 (test "(key/bind)"
       (key/bind :root ["alt+o"] (fn []))
-      (key/bind :root ["alt+ctrl+a"] (fn [])))
+      (key/bind :root ["alt+ctrl+a"] (fn []))
+      (expect-error (key/bind :root ["alt+"] (fn []))))

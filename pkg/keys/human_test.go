@@ -181,6 +181,13 @@ func TestToString(t *testing.T) {
 			},
 			"Й",
 		},
+		{
+			Key{
+				Code: 'a',
+				Mod:  KeyModCtrl,
+			},
+			"ctrl+a",
+		},
 	}
 
 	for _, test := range cases {

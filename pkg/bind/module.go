@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind/trie"
+	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
@@ -134,9 +136,8 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) (consumed bool) {
 		return
 	}
 
-	// The binding engine can only handle legacy bubbletea events, for now
-	teaMsg, ok := key.Tea()
-	if !ok {
+	// For now, we only support legacy keys
+	if _, canEncode := keys.Key(key).Bytes(emu.KeyLegacy); !canEncode {
 		e.out <- in
 		return
 	}
@@ -146,7 +147,7 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) (consumed bool) {
 	scopes := e.scopes
 	e.RUnlock()
 
-	sequence := append(state, teaMsg.String())
+	sequence := append(state, keys.Key(key).String())
 
 	// Later scopes override earlier ones
 	for i := len(scopes) - 1; i >= 0; i-- {
