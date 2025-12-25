@@ -80,6 +80,9 @@ type Program struct {
 
 	initialModel Model
 
+	// Enable debug printing selectively.
+	isDebug bool
+
 	// When testing, we need to be sure that all messages and commands
 	// have finished being processed and executed (respectively) before
 	// checking the state of the Model, among other things.
@@ -309,6 +312,10 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 					msg = teaKey
 				}
+			}
+
+			if p.isDebug {
+				log.Info().Msgf("%#T %#v", model, msg)
 			}
 
 			var cmd Cmd
@@ -545,6 +552,10 @@ func WithExisting(p *Program) {
 
 func WithKittyKeys(p *Program) {
 	p.useKittyKeys = true
+}
+
+func WithDebug(p *Program) {
+	p.isDebug = true
 }
 
 func New(ctx context.Context, model Model, options ...Option) *Program {
