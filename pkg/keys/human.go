@@ -1,6 +1,7 @@
 package keys
 
 import (
+	"github.com/rs/zerolog/log"
 	"strings"
 	"unicode"
 )
@@ -136,6 +137,8 @@ func FromHuman(human string) (key Key, ok bool) {
 		msg, numRead  = Read(b)
 		keyMsg, isKey = msg.(Key)
 	)
+
+	log.Info().Msgf("%#v %+v %+v", keyMsg, numRead, len(b))
 
 	// We don't want partial reads to produce valid keys
 	if numRead < len(b) || !isKey {

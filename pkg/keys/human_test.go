@@ -74,6 +74,16 @@ func TestFromHuman(t *testing.T) {
 			true,
 		},
 		{
+			"Й",
+			Key{
+				Code:    'й',
+				Shifted: 'Й',
+				Mod:     KeyModShift,
+				Text:    "Й",
+			},
+			true,
+		},
+		{
 			"A",
 			Key{
 				Code:    'a',
@@ -161,6 +171,15 @@ func TestToString(t *testing.T) {
 				Text:    "H",
 			},
 			"H",
+		},
+		{
+			Key{
+				Code:    'й',
+				Shifted: 'Й',
+				Mod:     KeyModShift,
+				Text:    "Й",
+			},
+			"Й",
 		},
 	}
 

@@ -521,7 +521,7 @@ func Read(b []byte) (event any, w int) {
 			Shifted: shifted,
 			Mod:     modifiers,
 			Text:    string(runes[0]),
-		}, 1
+		}, utf8.RuneLen(code)
 	}
 
 	// We didn't find an escape sequence, nor a valid rune. Was this a
