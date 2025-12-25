@@ -1,7 +1,6 @@
 package keys
 
 import (
-	"github.com/rs/zerolog/log"
 	"strings"
 	"unicode"
 )
@@ -94,6 +93,38 @@ var (
 	}()
 )
 
+func unshift(code rune) (normal, shifted rune, isShift, ok bool) {
+	var (
+		upper, isLowerShift = shiftToUpper[code]
+		lower, isUpperShift = shiftToLower[code]
+		isUpper             = unicode.IsUpper(code)
+		isLower             = unicode.IsLower(code)
+	)
+
+	if isUpper || isUpperShift {
+		if isUpper {
+			lower = unicode.ToLower(code)
+		}
+
+		normal = lower
+		shifted = code
+		isShift = true
+		ok = true
+		return
+	} else if isLower || isLowerShift {
+		if isLower {
+			upper = unicode.ToUpper(code)
+		}
+
+		normal = code
+		shifted = upper
+		ok = true
+		return
+	}
+
+	return
+}
+
 // FromHuman translates human-readable key specifiers (such as "ctrl+a", "up",
 // etc) into Keys.
 func FromHuman(human string) (key Key, ok bool) {
@@ -138,37 +169,20 @@ func FromHuman(human string) (key Key, ok bool) {
 		keyMsg, isKey = msg.(Key)
 	)
 
-	log.Info().Msgf("%#v %+v %+v", keyMsg, numRead, len(b))
-
 	// We don't want partial reads to produce valid keys
-	if numRead < len(b) || !isKey {
+	if numRead < len(b) || !isKey || keyMsg.Code == KeyText {
 		return
 	}
 
 	keyMsg.Mod |= modifiers
 
-	var (
-		code                = keyMsg.Code
-		upper, isLowerShift = shiftToUpper[code]
-		lower, isUpperShift = shiftToLower[code]
-		isUpper             = unicode.IsUpper(code)
-		isLower             = unicode.IsLower(code)
-	)
+	if normal, shifted, mod, ok := unshift(keyMsg.Code); ok {
+		keyMsg.Code = normal
+		keyMsg.Shifted = shifted
 
-	if isUpper || isUpperShift {
-		if isUpper {
-			lower = unicode.ToLower(code)
+		if mod {
+			keyMsg.Mod |= KeyModShift
 		}
-
-		keyMsg.Shifted = keyMsg.Code
-		keyMsg.Code = lower
-		keyMsg.Mod |= KeyModShift
-	} else if isLower || isLowerShift {
-		if isLower {
-			upper = unicode.ToUpper(code)
-		}
-
-		keyMsg.Shifted = upper
 	}
 
 	if keyMsg.Mod == KeyModShift {

@@ -28,13 +28,15 @@ func TestDeserialize(t *testing.T) {
 		de("ctrl+c", string([]rune{keyETX}), kMod('c', KeyModCtrl)),
 		de("escape", "\x1b", k(KittyKeyEscape)),
 		de("alt+o", "\x1bo", Key{
-			Code: 'o',
-			Mod:  KeyModAlt,
-			Text: "o",
+			Code:    'o',
+			Shifted: 'O',
+			Mod:     KeyModAlt,
+			Text:    "o",
 		}),
 		de("a", "a", Key{
-			Code: 'a',
-			Text: "a",
+			Code:    'a',
+			Shifted: 'A',
+			Text:    "a",
 		}),
 		de("shift+a", "A", Key{
 			Code:    'a',
@@ -47,14 +49,25 @@ func TestDeserialize(t *testing.T) {
 			Text: "致",
 		}),
 		de("ru", "ж", Key{
-			Code: 'ж',
-			Text: "ж",
+			Code:    'ж',
+			Shifted: 'Ж',
+			Text:    "ж",
 		}),
 		de("ru shifted", "Ж", Key{
 			Code:    'ж',
 			Shifted: 'Ж',
 			Mod:     KeyModShift,
 			Text:    "Ж",
+		}),
+		de("shift+semicolon", ":", Key{
+			Code:    ';',
+			Shifted: ':',
+			Mod:     KeyModShift,
+			Text:    ":",
+		}),
+		de("text", "test", Key{
+			Code: KeyText,
+			Text: "test",
 		}),
 		// kitty
 		de("ru: л", "\x1b[1083::107u", Key{
@@ -92,8 +105,6 @@ func TestDeserialize(t *testing.T) {
 			Code: KittyLeftShift,
 			Type: KeyEventRelease,
 		}),
-
-		// TODO(cfoust): 09/08/25 Test for multiple codepoints in text
 	}
 
 	for _, test := range cases {
