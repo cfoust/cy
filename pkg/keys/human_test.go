@@ -25,18 +25,20 @@ func TestFromHuman(t *testing.T) {
 		{
 			"ctrl+a",
 			Key{
-				Code: 'a',
-				Mod:  KeyModCtrl,
-				Text: "a",
+				Code:    'a',
+				Shifted: 'A',
+				Mod:     KeyModCtrl,
+				Text:    "a",
 			},
 			true,
 		},
 		{
 			"alt+ctrl+a",
 			Key{
-				Code: 'a',
-				Mod:  KeyModCtrl | KeyModAlt,
-				Text: "a",
+				Code:    'a',
+				Shifted: 'A',
+				Mod:     KeyModCtrl | KeyModAlt,
+				Text:    "a",
 			},
 			true,
 		},
@@ -47,6 +49,25 @@ func TestFromHuman(t *testing.T) {
 				Shifted: 'A',
 				Mod:     KeyModShift,
 				Text:    "A",
+			},
+			true,
+		},
+		{
+			"a",
+			Key{
+				Code:    'a',
+				Shifted: 'A',
+				Text:    "a",
+			},
+			true,
+		},
+		{
+			"?",
+			Key{
+				Code:    '/',
+				Shifted: '?',
+				Mod:     KeyModShift,
+				Text:    "?",
 			},
 			true,
 		},
@@ -62,6 +83,11 @@ func TestFromHuman(t *testing.T) {
 		},
 		{
 			"alt+",
+			Key{},
+			false,
+		},
+		{
+			"t\x1b[?u",
 			Key{},
 			false,
 		},

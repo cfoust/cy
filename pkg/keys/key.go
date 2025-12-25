@@ -28,11 +28,6 @@ SOFTWARE.
 
 package keys
 
-import (
-	"fmt"
-	"strings"
-)
-
 // KeyEventType represents the type of key event (press/repeat/release)
 type KeyEventType int
 
@@ -87,86 +82,6 @@ type Key struct {
 	Type    KeyEventType // Press/repeat/release
 	Mod     KeyModifiers // Combined modifier flags
 	Text    string
-}
-
-// String returns a friendly string representation for a key. It's safe (and
-// encouraged) for use in key comparison.
-//
-//	k := Key{KeyCode: KittyKeyEnter}
-//	fmt.Println(k)
-//	// Output: enter
-func (k Key) String() (str string) {
-	var modParts []string
-
-	if k.HasSuper() {
-		modParts = append(modParts, "super")
-	}
-	if k.HasHyper() {
-		modParts = append(modParts, "hyper")
-	}
-	if k.HasMeta() {
-		modParts = append(modParts, "meta")
-	}
-	if k.HasCtrl() {
-		modParts = append(modParts, "ctrl")
-	}
-	if k.HasAlt() {
-		modParts = append(modParts, "alt")
-	}
-	if k.HasShift() {
-		modParts = append(modParts, "shift")
-	}
-
-	var keyPart string
-	if k.Code == 0 {
-		keyPart = "unknown"
-	} else {
-		keyCode := k.Code
-		switch keyCode {
-		case KittyKeyEscape:
-			keyPart = "escape"
-		case KittyKeyEnter:
-			keyPart = "enter"
-		case KittyKeyTab:
-			keyPart = "tab"
-		case KittyKeyBackspace:
-			keyPart = "backspace"
-		case KittyKeyInsert:
-			keyPart = "insert"
-		case KittyKeyDelete:
-			keyPart = "delete"
-		case KittyKeyHome:
-			keyPart = "home"
-		case KittyKeyEnd:
-			keyPart = "end"
-		case KittyKeyPageUp:
-			keyPart = "pgup"
-		case KittyKeyPageDown:
-			keyPart = "pgdown"
-		case KittyKeyLeft:
-			keyPart = "left"
-		case KittyKeyUp:
-			keyPart = "up"
-		case KittyKeyRight:
-			keyPart = "right"
-		case KittyKeyDown:
-			keyPart = "down"
-		case KittyKeyF1, KittyKeyF2, KittyKeyF3, KittyKeyF4, KittyKeyF5, KittyKeyF6,
-			KittyKeyF7, KittyKeyF8, KittyKeyF9, KittyKeyF10, KittyKeyF11, KittyKeyF12:
-			keyPart = fmt.Sprintf("f%d", keyCode-KittyKeyF1+1)
-		default:
-			if keyCode <= 0x10FFFF {
-				keyPart = string(rune(keyCode))
-			} else {
-				keyPart = fmt.Sprintf("unknown(%d)", keyCode)
-			}
-		}
-	}
-
-	if len(modParts) > 0 {
-		return strings.Join(modParts, "+") + "+" + keyPart
-	}
-	return keyPart
 }
 
 // IsPress returns true if this is a key press event (default for legacy keys)

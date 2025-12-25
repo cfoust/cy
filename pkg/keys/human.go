@@ -2,6 +2,7 @@ package keys
 
 import (
 	"strings"
+	"unicode"
 )
 
 var (
@@ -37,6 +38,18 @@ var (
 		"space":     ' ',
 	}
 
+	inverseHumanKeys = func() (result map[rune]string) {
+		result = make(map[rune]string)
+		for name, r := range humanKeys {
+			result[r] = name
+		}
+
+		// handle duplicates
+		result[KittyKeyEnter] = "enter"
+
+		return
+	}()
+
 	humanModifiers = map[string]KeyModifiers{
 		"alt":   KeyModAlt,
 		"ctrl":  KeyModCtrl,
@@ -45,6 +58,38 @@ var (
 		"hyper": KeyModHyper,
 		"meta":  KeyModMeta,
 	}
+
+	shiftToUpper = map[rune]rune{
+		'`':  '~',
+		'1':  '!',
+		'2':  '@',
+		'3':  '#',
+		'4':  '$',
+		'5':  '%',
+		'6':  '^',
+		'7':  '&',
+		'8':  '*',
+		'9':  '(',
+		'0':  ')',
+		'-':  '_',
+		'=':  '+',
+		'[':  '{',
+		']':  '}',
+		'\\': '|',
+		';':  ':',
+		'\'': '"',
+		',':  '<',
+		'.':  '>',
+		'/':  '?',
+	}
+
+	shiftToLower = func() (result map[rune]rune) {
+		result = make(map[rune]rune)
+		for name, r := range shiftToUpper {
+			result[r] = name
+		}
+		return
+	}()
 )
 
 // FromHuman translates human-readable key specifiers (such as "ctrl+a", "up",
@@ -86,9 +131,8 @@ func FromHuman(human string) (key Key, ok bool) {
 	}
 
 	var (
-		i             = 0
 		b             = []byte(human)
-		msg, numRead  = Read(b[i:])
+		msg, numRead  = Read(b)
 		keyMsg, isKey = msg.(Key)
 	)
 
@@ -98,5 +142,74 @@ func FromHuman(human string) (key Key, ok bool) {
 	}
 
 	keyMsg.Mod |= modifiers
+
+	var (
+		code                = keyMsg.Code
+		upper, isLowerShift = shiftToUpper[code]
+		lower, isUpperShift = shiftToLower[code]
+		isUpper             = unicode.IsUpper(code)
+		isLower             = unicode.IsLower(code)
+	)
+
+	if isUpper || isUpperShift {
+		if isUpper {
+			lower = unicode.ToLower(code)
+		}
+
+		keyMsg.Shifted = keyMsg.Code
+		keyMsg.Code = lower
+		keyMsg.Mod |= KeyModShift
+	} else if isLower || isLowerShift {
+		if isLower {
+			upper = unicode.ToUpper(code)
+		}
+
+		keyMsg.Shifted = upper
+	}
+
+	if keyMsg.Mod == KeyModShift {
+		keyMsg.Text = string(keyMsg.Shifted)
+	}
+
 	return keyMsg, true
+}
+
+// String returns a friendly string representation for a key. It's safe (and
+// encouraged) for use in key comparison.
+//
+//	k := Key{KeyCode: KittyKeyEnter}
+//	fmt.Println(k)
+//	// Output: enter
+func (k Key) String() (str string) {
+	var modParts []string
+
+	if k.HasSuper() {
+		modParts = append(modParts, "super")
+	}
+	if k.HasHyper() {
+		modParts = append(modParts, "hyper")
+	}
+	if k.HasMeta() {
+		modParts = append(modParts, "meta")
+	}
+	if k.HasCtrl() {
+		modParts = append(modParts, "ctrl")
+	}
+	if k.HasAlt() {
+		modParts = append(modParts, "alt")
+	}
+	if k.HasShift() {
+		modParts = append(modParts, "shift")
+	}
+
+	var modifiers string
+	if len(modParts) > 0 {
+		modifiers = strings.Join(modParts, "+") + "+"
+	}
+
+	if name, haveHuman := inverseHumanKeys[k.Code]; haveHuman {
+		return modifiers + name
+	}
+
+	return modifiers + k.Text
 }
