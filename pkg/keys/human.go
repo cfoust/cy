@@ -231,9 +231,7 @@ func (k Key) String() (str string) {
 
 	if hardcoded, haveHuman := inverseHumanKeys[k.Code]; haveHuman {
 		keyName = hardcoded
-	}
-
-	if len(k.Text) == 0 {
+	} else if len(k.Text) == 0 {
 		keyName = string(k.Code)
 	}
 
