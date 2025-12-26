@@ -119,7 +119,6 @@ func (c *City) Init(start image.Image) {
 
 	c.seed = int64(rand.Int())
 	c.rand = rand.New(rand.NewSource(c.seed))
-	c.rand.Seed(c.seed)
 }
 
 func lerp(t, a, b float64) float64 {
