@@ -31,4 +31,4 @@ It can be useful to store a value across `cy` sessions. For this purpose, `cy` p
 
 The values you set using `:persist` are serialized using Janet's [marshal](https://janet-lang.org/api/index.html#marshal) function, so you can store any Janet value, even functions.
 
-The location of the database used by `:persist` is stored in `$XDG_STATE_HOME/cy`.
+The database used by `:persist` is stored in `$XDG_STATE_HOME/cy`.
