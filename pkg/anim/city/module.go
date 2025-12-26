@@ -119,6 +119,7 @@ func (c *City) Init(start image.Image) {
 
 	c.seed = int64(rand.Int())
 	c.rand = rand.New(rand.NewSource(c.seed))
+	c.rand.Seed(c.seed)
 }
 
 func lerp(t, a, b float64) float64 {
@@ -133,15 +134,16 @@ func (c *City) Update(delta time.Duration) image.Image {
 
 	c.last = delta
 
-	t := time.Since(c.start).Seconds() / 3
-	r := c.rCtx
-	d := math.Min(lerp(t/5.0, 0, 5.0), 5.0)
-	camera := r.Camera()
-
+	var (
+		t      = (time.Since(c.start).Seconds() / 7)
+		r      = c.rCtx
+		d      = math.Min(lerp(t/5.0, 0, 5.0), 5.0)
+		camera = r.Camera()
+	)
 	camera.View = gl.LookAtV(
 		gl.Vec3{
 			(float32(math.Sin(t) * d)),
-			5.,
+			(float32(math.Sin(t) * 3)) + 5,
 			(float32(math.Cos(t) * d)),
 		},
 		gl.Vec3{0, 0, 0},
