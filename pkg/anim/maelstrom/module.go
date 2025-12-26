@@ -1,4 +1,4 @@
-package midjo
+package maelstrom
 
 import (
 	"math"
@@ -8,19 +8,20 @@ import (
 	"github.com/cfoust/cy/pkg/anim/meta"
 	"github.com/cfoust/cy/pkg/geom/image"
 	R "github.com/cfoust/cy/pkg/rasterion"
+
 	gl "github.com/go-gl/mathgl/mgl32"
 )
 
-type Midjo struct {
+type Maelstrom struct {
 	in  image.Image
 	out image.Image
 
 	center gl.Vec2
 }
 
-var _ meta.Animation = (*Midjo)(nil)
+var _ meta.Animation = (*Maelstrom)(nil)
 
-func (m *Midjo) Init(start image.Image) {
+func (m *Maelstrom) Init(start image.Image) {
 	m.in = start.Clone()
 	m.out = start
 
@@ -42,10 +43,10 @@ func fromDevice(v *gl.Vec2) {
 	v[1] = 1 - ((v.Y() + 1) / 2)
 }
 
-func (mid *Midjo) Update(delta time.Duration) image.Image {
+func (m *Maelstrom) Update(delta time.Duration) image.Image {
 	var (
 		elapsed = delta.Seconds()
-		size    = mid.out.Size()
+		size    = m.out.Size()
 		v       gl.Vec2
 		angle   float32
 	)
@@ -55,12 +56,14 @@ func (mid *Midjo) Update(delta time.Duration) image.Image {
 			v[0] = float32(col) / float32(size.C)
 			v[1] = float32(row) / float32(size.R)
 			toDevice(&v)
+			v = v.Sub(m.center)
 			angle = float32((0.1 * elapsed) / math.Max(0.1, float64(v.Len())))
 			v = gl.Rotate2D(angle).Mul2x1(v)
+			v = v.Add(m.center)
 			fromDevice(&v)
-			mid.out[row][col] = R.Sample2D(mid.in, v)
+			m.out[row][col] = R.Sample2D(m.in, v)
 		}
 	}
 
-	return mid.out
+	return m.out
 }

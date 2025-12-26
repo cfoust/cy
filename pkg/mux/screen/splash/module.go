@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cfoust/cy/pkg/anim"
-	"github.com/cfoust/cy/pkg/anim/midjo"
+	"github.com/cfoust/cy/pkg/anim/maelstrom"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
@@ -113,7 +113,7 @@ func New(
 	if shouldAnimate {
 		bg = anim.NewAnimator(
 			lifetime.Ctx(),
-			&midjo.Midjo{},
+			&maelstrom.Maelstrom{},
 			initial,
 			23,
 		)
