@@ -381,10 +381,7 @@ def transform_bind(
     ]:
         source = match.group(1)
         sequence = match.group(2).split(' ')
-        sequence = list(map(
-            lambda a: ' ' if a == 'space' else a,
-            sequence,
-        ))
+        sequence = list(sequence)
 
         binding: Optional[Binding] = None
         for bind in bindings:
