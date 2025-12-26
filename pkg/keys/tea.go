@@ -108,10 +108,10 @@ func (k Key) Tea() (msg tea.KeyMsg, ok bool) {
 	}
 
 	// Press and repeat should still query the same key
-	query := k
-	query.Type = KeyEventPress
-
-	if keyType, ok := teaKeyLookup[query]; ok {
+	if keyType, ok := teaKeyLookup[Key{
+		Code: k.Code,
+		Mod:  k.Mod,
+	}]; ok {
 		return tea.KeyMsg{Type: keyType}, true
 	}
 

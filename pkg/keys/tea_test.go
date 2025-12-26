@@ -45,6 +45,17 @@ func TestTea(t *testing.T) {
 			},
 		),
 		te(
+			"ctrl+c",
+			Key{
+				Code:    'c',
+				Shifted: 'C',
+				Mod:     KeyModCtrl,
+			},
+			tea.KeyMsg{
+				Type: tea.KeyCtrlC,
+			},
+		),
+		te(
 			"shift+a",
 			Key{
 				Code:    'a',

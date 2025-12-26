@@ -80,6 +80,18 @@ func TranslateMouseMessage(msg Msg, dx, dy int) Msg {
 func KeysToMsg(strs ...string) (msgs []KittyKeyMsg) {
 	for _, s := range strs {
 		key, ok := keys.FromHuman(s)
+		if ok {
+			msgs = append(msgs, KittyKeyMsg(key))
+			continue
+		}
+
+		// probably a sequence of characters
+		textKey, w := keys.Read([]byte(s))
+		if w == 0 {
+			continue
+		}
+
+		key, ok = textKey.(keys.Key)
 		if !ok {
 			continue
 		}
