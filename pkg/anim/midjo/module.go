@@ -39,7 +39,7 @@ func toDevice(v *gl.Vec2) {
 // fromDevice performs the inverse of toDevice.
 func fromDevice(v *gl.Vec2) {
 	v[0] = (v.X() + 1) / 2
-	v[1] = (v.Y() + 1) / 2
+	v[1] = 1 - ((v.Y() + 1) / 2)
 }
 
 func (mid *Midjo) Update(delta time.Duration) image.Image {
@@ -47,23 +47,16 @@ func (mid *Midjo) Update(delta time.Duration) image.Image {
 		elapsed = delta.Seconds()
 		size    = mid.out.Size()
 		v       gl.Vec2
+		angle   float32
 	)
 
 	for row := 0; row < size.R; row++ {
 		for col := 0; col < size.C; col++ {
 			v[0] = float32(col) / float32(size.C)
 			v[1] = float32(row) / float32(size.R)
-
 			toDevice(&v)
-
-			var (
-				l = ((0.1 * elapsed) / math.Max(0.1, float64(v.Len())))
-				f = float32(math.Sin(l))
-				b = float32(math.Cos(l))
-				u = v.X()*f - v.Y()*b
-			)
-			v[0] = v.X()*b + v.Y()*f
-			v[1] = u
+			angle = float32((0.1 * elapsed) / math.Max(0.1, float64(v.Len())))
+			v = gl.Rotate2D(angle).Mul2x1(v)
 			fromDevice(&v)
 			mid.out[row][col] = R.Sample2D(mid.in, v)
 		}
