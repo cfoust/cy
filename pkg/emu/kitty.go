@@ -15,7 +15,7 @@ const (
 	KeyReportAlternateKeys
 	KeyReportAllKeys
 	KeyReportAssociatedText
-	KeyReportAll = KeyDisambiguateEscape | KeyReportEventTypes | KeyReportAlternateKeys | KeyReportAllKeys
+	KeyReportAll = KeyDisambiguateEscape | KeyReportEventTypes | KeyReportAlternateKeys | KeyReportAllKeys | KeyReportAssociatedText
 )
 
 func (k KeyProtocol) String() string {
