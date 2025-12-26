@@ -85,7 +85,7 @@ Here are some examples:
         # An animation preview
         ["this is an animation" {
             :type :animation
-            :name "midjo"} 2]
+            :name "maelstrom"} 2]
         # A frame preview
         ["this is a frame" {:type :frame :name "puzzle"} 2]
     ])

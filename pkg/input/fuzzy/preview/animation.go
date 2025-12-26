@@ -19,7 +19,7 @@ func NewAnimation(
 ) mux.Screen {
 	animation, ok := anim.Animations[args.Name]
 	if !ok {
-		animation = anim.Animations["midjo"]
+		animation = anim.Animations["maelstrom"]
 	}
 
 	return anim.NewAnimator(
