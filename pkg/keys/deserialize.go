@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -487,64 +488,70 @@ func Read(b []byte) (event any, w int) {
 	for rw := 0; i < len(b); i += rw {
 		var r rune
 		r, rw = utf8.DecodeRune(b[i:])
-		if r == utf8.RuneError || r <= rune(keyUS) || r == rune(keyDEL) {
-			// Rune errors are handled below; control characters and spaces will
-			// be handled by detectSequence in the next call to detectOneMsg.
+		isControl := r == utf8.RuneError || r <= rune(keyUS) ||
+			r == rune(keyDEL)
+		if isControl && !unicode.IsSpace(r) {
+			// Rune errors are handled below; control characters and
+			// spaces will be handled by detectSequence in the next
+			// call to detectOneMsg.
 			break
 		}
 		runes = append(runes, r)
 		if alt {
-			// We only support a single rune after an escape alt modifier.
+			// We only support a single rune after an escape alt
+			// modifier.
 			break
 		}
 	}
-	if len(runes) > 0 {
-		var (
-			code      = runes[0]
-			modifiers KeyModifiers
-		)
-		if alt {
-			modifiers |= KeyModAlt
+	if len(runes) == 0 {
+		// We didn't find an escape sequence, nor a valid rune. Was this a
+		// lone escape character at the end of the input?
+		if alt && len(b) == 1 {
+			return k(KittyKeyEscape), 1
 		}
 
-		if len(runes) > 1 {
-			return Key{
-				Code: KeyText,
-				Mod:  modifiers,
-				Text: string(runes),
-			}, i + 1
-		}
+		// The character at the current position is neither an escape
+		// sequence, a valid rune start or a sole escape character. Report
+		// it as an invalid byte.
+		return UnknownInputEvent(b[0]), 1
+	}
 
-		key := Key{
-			Code: code,
+	var (
+		code      = runes[0]
+		modifiers KeyModifiers
+	)
+
+	if alt {
+		modifiers |= KeyModAlt
+	}
+
+	if len(runes) > 1 {
+		return Key{
+			Code: KeyText,
 			Mod:  modifiers,
-			Text: string(code),
-		}
-
-		if normal, shifted, isShift, ok := unshift(code); ok {
-			key.Code = normal
-			key.Shifted = shifted
-
-			if isShift {
-				key.Mod |= KeyModShift
-			}
-		}
-
-		if key.Mod == KeyModShift {
-			key.Text = string(key.Shifted)
-		}
-
-		return key, i + 1
+			Text: string(runes),
+		}, i + 1
 	}
 
-	// We didn't find an escape sequence, nor a valid rune. Was this a
-	// lone escape character at the end of the input?
-	if alt && len(b) == 1 {
-		return k(KittyKeyEscape), 1
+	key = Key{
+		Code: code,
+		Mod:  modifiers,
+		Text: string(code),
 	}
 
-	// The character at the current position is neither an escape
-	// sequence, a valid rune start or a sole escape character. Report
-	// it as an invalid byte.
-	return UnknownInputEvent(b[0]), 1
+	if normal, shifted, isShift, ok := unshift(code); ok {
+		key.Code = normal
+		key.Shifted = shifted
+
+		if isShift {
+			key.Mod |= KeyModShift
+		}
+	}
+
+	if key.Mod == KeyModShift {
+		key.Text = string(key.Shifted)
+	}
+
+	return key, i + 1
+
 }
