@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"regexp"
+	"time"
 
 	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/geom"
@@ -15,6 +16,7 @@ import (
 	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/util"
 )
 
@@ -33,6 +35,11 @@ type FuzzyParams struct {
 	Headers       *[]string
 	Width         *int
 	Height        *int
+}
+
+func getAnimStart(p *params.Parameters) time.Time {
+	delay := time.Duration(geom.Max(0, p.AnimateDelay()))
+	return time.Now().Add(delay * time.Second)
 }
 
 func (i *InputModule) Find(
@@ -125,7 +132,13 @@ func (i *InputModule) Find(
 		creator := animations[rand.Int()%len(animations)]
 		settings = append(
 			settings,
-			fuzzy.WithAnimation(initial, creator),
+			fuzzy.WithAnimation(
+				initial,
+				creator,
+				anim.WithStartTime(
+					getAnimStart(client.Params()),
+				),
+			),
 		)
 	}
 
@@ -243,7 +256,13 @@ func (i *InputModule) Text(
 		creator := animations[rand.Int()%len(animations)]
 		settings = append(
 			settings,
-			text.WithAnimation(state.Image, creator),
+			text.WithAnimation(
+				state.Image,
+				creator,
+				anim.WithStartTime(
+					getAnimStart(client.Params()),
+				),
+			),
 		)
 	}
 

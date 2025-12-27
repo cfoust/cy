@@ -205,7 +205,11 @@ func WithInitial(initial image.Image) Setting {
 }
 
 // WithAnimation provides a specific animation to render in the background.
-func WithAnimation(initial image.Image, creator anim.Creator) Setting {
+func WithAnimation(
+	initial image.Image,
+	creator anim.Creator,
+	options ...anim.Option,
+) Setting {
 	return func(ctx context.Context, f *Fuzzy) {
 		f.initial = initial
 		f.anim = anim.NewAnimator(
@@ -213,6 +217,7 @@ func WithAnimation(initial image.Image, creator anim.Creator) Setting {
 			creator(),
 			initial,
 			23,
+			options...,
 		)
 	}
 }

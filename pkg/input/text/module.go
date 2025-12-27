@@ -68,13 +68,18 @@ type AcceptedEvent struct {
 
 type Setting func(context.Context, *Text)
 
-func WithAnimation(image image.Image, creator anim.Creator) Setting {
+func WithAnimation(
+	image image.Image,
+	creator anim.Creator,
+	options ...anim.Option,
+) Setting {
 	return func(ctx context.Context, t *Text) {
 		t.anim = anim.NewAnimator(
 			ctx,
 			creator(),
 			image,
 			23,
+			options...,
 		)
 	}
 }

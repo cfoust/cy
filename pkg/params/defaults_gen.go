@@ -10,6 +10,7 @@ import (
 
 const (
 	ParamAnimate                  = "animate"
+	ParamAnimateDelay             = "animate-delay"
 	ParamAnimations               = "animations"
 	ParamColorError               = "color-error"
 	ParamColorInfo                = "color-info"
@@ -67,6 +68,24 @@ func (p *Parameters) Animate() bool {
 
 func (p *Parameters) SetAnimate(value bool) {
 	p.set(ParamAnimate, value)
+}
+
+func (p *Parameters) AnimateDelay() int {
+	value, ok := p.Get(ParamAnimateDelay)
+	if !ok {
+		return defaults.AnimateDelay
+	}
+
+	realValue, ok := value.(int)
+	if !ok {
+		return defaults.AnimateDelay
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetAnimateDelay(value int) {
+	p.set(ParamAnimateDelay, value)
 }
 
 func (p *Parameters) Animations() []string {
@@ -775,6 +794,8 @@ func (p *Parameters) isDefault(key string) bool {
 	switch key {
 	case ParamAnimate:
 		return true
+	case ParamAnimateDelay:
+		return true
 	case ParamAnimations:
 		return true
 	case ParamColorError:
@@ -862,6 +883,8 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 	switch key {
 	case ParamAnimate:
 		return defaults.Animate, true
+	case ParamAnimateDelay:
+		return defaults.AnimateDelay, true
 	case ParamAnimations:
 		return defaults.Animations, true
 	case ParamColorError:
@@ -963,6 +986,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		if err != nil {
 			janetValue.Free()
 			return fmt.Errorf("invalid value for :animate: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamAnimateDelay:
+		if !janetOk {
+			realValue, ok := value.(int)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamAnimateDelay, should be int")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated int
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :animate-delay: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -1711,6 +1753,11 @@ func init() {
 			Name:      "animate",
 			Docstring: "Whether to enable animation.",
 			Default:   defaults.Animate,
+		},
+		{
+			Name:      "animate-delay",
+			Docstring: "The delay (in seconds) before animations should begin. This is useful\nif you like cy's animations but find them distracting when working\nquickly. This only applies to the animations that play when using the\n(input/*) family of functions.",
+			Default:   defaults.AnimateDelay,
 		},
 		{
 			Name:      "animations",

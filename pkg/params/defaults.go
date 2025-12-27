@@ -34,6 +34,11 @@ func IsDefaultParam(key string) bool {
 type defaultParams struct {
 	// Whether to enable animation.
 	Animate bool
+	// The delay (in seconds) before animations should begin. This is useful
+	// if you like cy's animations but find them distracting when working
+	// quickly. This only applies to the animations that play when using the
+	// (input/*) family of functions.
+	AnimateDelay int
 	// A list of all of the enabled animations that will be used by
 	// (input/find). If this is an empty array, all built-in animations
 	// will be enabled.
@@ -146,6 +151,7 @@ type defaultParams struct {
 var (
 	defaults = defaultParams{
 		Animate:            true,
+		AnimateDelay:       0,
 		DataDirectory:      "",
 		DefaultFrame:       "",
 		DefaultShell:       "/bin/bash",
