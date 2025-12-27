@@ -69,6 +69,10 @@ func TestDeserialize(t *testing.T) {
 			Code: KeyText,
 			Text: "test",
 		}),
+		de("text with spaces", "foo bar baz", Key{
+			Code: KeyText,
+			Text: "foo bar baz",
+		}),
 		// kitty
 		de("ru: л", "\x1b[1083::107u", Key{
 			Code: 'л',

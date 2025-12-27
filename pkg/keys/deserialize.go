@@ -487,8 +487,7 @@ func Read(b []byte) (event any, w int) {
 	for rw := 0; i < len(b); i += rw {
 		var r rune
 		r, rw = utf8.DecodeRune(b[i:])
-		if r == utf8.RuneError || r <= rune(keyUS) || r == rune(keyDEL) ||
-			r == ' ' {
+		if r == utf8.RuneError || r <= rune(keyUS) || r == rune(keyDEL) {
 			// Rune errors are handled below; control characters and spaces will
 			// be handled by detectSequence in the next call to detectOneMsg.
 			break
