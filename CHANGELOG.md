@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.9.0 - 2025-12-27
+
+- Add full support for the [kitty keyboard protocol](https://sw.kovidgoyal.net/kitty/keyboard-protocol/#disambiguate-escape-codes)
+- Clean up of most existing animations
+- New parameter: `:animate-delay` to delay the beginning of all animations
+
+## 1.8.0 - 2025-11-15
+
+- Matched cells are now highlighted in `(input/find)` searches
+- Add a thumbs pattern for matching Git stashes
+- New frame: `grid`
+- Remove `CLAUDE.md`: AI bubble pop imminent
+
 ## 1.7.0 - 2025-08-11
 
 - Use OSC-52 sequences for `(clipboard/set)`
@@ -80,20 +93,20 @@
 
 ## 0.8.0 - 2024-08-17
 
-* New layout node: `:bar`, which lets you make tmux-like status lines
+- New layout node: `:bar`, which lets you make tmux-like status lines
 
 ## 0.7.0 - 2024-08-10
 
-* New layout node: `:tabs`
+- New layout node: `:tabs`
 
 ## 0.6.0 - 2024-08-08
 
-* API functions for styling text for use in layouts or other parts of the UI
-* Convenience functions for creating layouts
+- API functions for styling text for use in layouts or other parts of the UI
+- Convenience functions for creating layouts
 
 ## 0.5.0 - 2024-08-03
 
-* New layout node: `:borders`
+- New layout node: `:borders`
 
 ## 0.4.0 - 2024-08-01
 
