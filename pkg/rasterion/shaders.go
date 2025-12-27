@@ -3,6 +3,7 @@ package rasterion
 import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/image"
+	"math"
 
 	gl "github.com/go-gl/mathgl/mgl32"
 )
@@ -124,8 +125,8 @@ func Sample2D(texture image.Image, uv gl.Vec2) emu.Glyph {
 	uv[0] = gl.Clamp(uv[0], 0, 1.0)
 	uv[1] = gl.Clamp(uv[1], 0, 1.0)
 
-	col := int(uv[0] * float32(size.C-1))
-	row := int(uv[1] * float32(size.R-1))
+	col := int(math.Round(float64(uv[0] * float32(size.C))))
+	row := int(math.Round(float64(uv[1] * float32(size.R))))
 
 	if col >= size.C || row >= size.R {
 		return emu.EmptyGlyph()
