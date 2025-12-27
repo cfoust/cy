@@ -9,7 +9,6 @@ import (
 	"github.com/cfoust/cy/pkg/anim/fluid"
 	"github.com/cfoust/cy/pkg/anim/maelstrom"
 	"github.com/cfoust/cy/pkg/anim/meta"
-	"github.com/cfoust/cy/pkg/anim/musicforprogramming"
 	"github.com/cfoust/cy/pkg/anim/perlin"
 	"github.com/cfoust/cy/pkg/anim/slime"
 )
@@ -49,9 +48,6 @@ func init() {
 	})
 	registerAnimation("maelstrom", func() Animation {
 		return &maelstrom.Maelstrom{}
-	})
-	registerAnimation("musicforprogramming", func() Animation {
-		return musicforprogramming.New()
 	})
 	registerAnimation("slime", func() Animation {
 		return &slime.Slime{}
