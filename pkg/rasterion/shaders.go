@@ -1,9 +1,10 @@
 package rasterion
 
 import (
+	"math"
+
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom/image"
-	"math"
 
 	gl "github.com/go-gl/mathgl/mgl32"
 )
