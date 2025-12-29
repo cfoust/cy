@@ -324,7 +324,7 @@ func (c *Client) initialize(options ClientOptions) error {
 		c.outerLayers,
 	)
 
-	c.clipboard = clipboard.NewOSC52Clipboard(c)
+	c.clipboard = clipboard.NewOSC52Clipboard(c.renderer.Writer())
 
 	if isClientSSH {
 		c.params.SetAnimate(false)
