@@ -15,6 +15,7 @@ import (
 	"github.com/cfoust/cy/pkg/taro"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -133,6 +134,12 @@ func (t *Terminal) Send(msg mux.Msg) {
 	switch msg := msg.(type) {
 	case taro.KittyKeyMsg:
 		input, ok = keys.Key(msg).Bytes(mode, t.terminal.KeyState())
+		if ok {
+			log.Info().
+				Str("type", "output").
+				Str("protocol", t.terminal.KeyState().String()).
+				Msgf("key: %#v bytes: %+v", keys.Key(msg), input)
+		}
 	case taro.MouseMsg:
 		switch mode & emu.ModeMouseMask {
 		case emu.ModeMouseX10:
