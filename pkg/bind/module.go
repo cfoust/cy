@@ -10,6 +10,7 @@ import (
 	"github.com/cfoust/cy/pkg/taro"
 	"github.com/cfoust/cy/pkg/util"
 
+	"github.com/rs/zerolog/log"
 	"github.com/sasha-s/go-deadlock"
 )
 
@@ -234,6 +235,12 @@ func (e *Engine[T]) Input(data []byte) {
 	for i, w := 0, 0; i < len(data); i += w {
 		var msg taro.Msg
 		msg, w = taro.DetectOneMsg(data[i:])
+		if _, ok := msg.(taro.KittyKeyMsg); ok {
+			log.Info().
+				Str("type", "input").
+				Bytes("bytes", data[i:]).
+				Msgf("input key: %#v", msg)
+		}
 		e.in <- msg
 	}
 }
