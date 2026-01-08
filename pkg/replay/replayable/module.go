@@ -30,11 +30,11 @@ type Replayable struct {
 	*mux.UpdatePublisher
 	params *params.Parameters
 
-	size        geom.Size
-	cmd, stream mux.Stream
-	terminal    *S.Terminal
-	replay      *taro.Program
-	player      *player.Player
+	size     geom.Size
+	cmd      mux.Stream
+	terminal *S.Terminal
+	replay   *taro.Program
+	player   *player.Player
 
 	timeBinds, copyBinds *bind.BindScope
 }
@@ -45,10 +45,6 @@ var _ style.Unfiltered = (*Replayable)(nil)
 
 func (r *Replayable) Kill() {
 	r.Cancel()
-}
-
-func (r *Replayable) Stream() mux.Stream {
-	return r.stream
 }
 
 // TODO(cfoust): 04/07/24 This is a dirty hack specifically for (cmd/path).
@@ -227,7 +223,6 @@ func New(
 		timeBinds:       timeBinds,
 		copyBinds:       copyBinds,
 		cmd:             cmd,
-		stream:          stream,
 		player:          player.New(options...),
 	}
 	r.terminal = S.NewTerminal(
