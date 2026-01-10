@@ -73,8 +73,10 @@ func (f *flowMovement) View(
 ) {
 	r := f.render
 
+	screenRoot := f.Root()
+
 	flow := f.Flow(f.viewport, f.root)
-	screen := f.Flow(f.Size(), f.Root())
+	screen := f.Flow(f.Size(), screenRoot)
 	if !flow.OK || !screen.OK {
 		return
 	}
@@ -132,13 +134,31 @@ func (f *flowMovement) View(
 		}
 	}
 
-	if f.root.R >= f.Root().R {
+	if f.root.R >= screenRoot.R {
 		return
 	}
 
 	// Renders "[1/N]" text in the top-right corner that looks just like
 	// tmux's copy mode, but works on physical lines instead.
 	offsetStyle := params.ReplaySelectionStyle().Style
+
+	firstLine := 0
+	if f.IsAltMode() {
+		firstLine = f.getFirstLine()
+	} else {
+		history := f.History()
+		firstLine = screenRoot.R - len(history)
+		if len(history) > 0 && history[len(history)-1].IsWrapped() {
+			firstLine++
+		}
+	}
+
+	num := screenRoot.R - f.root.R
+	den := screenRoot.R - firstLine
+	if den < 1 {
+		den = 1
+	}
+	num = geom.Clamp(num, 0, den)
 
 	r.RenderAt(
 		state.Image,
@@ -149,8 +169,8 @@ func (f *flowMovement) View(
 			lipgloss.Right,
 			offsetStyle.Render(fmt.Sprintf(
 				"[%d/%d]",
-				f.Root().R-f.root.R,
-				f.Root().R,
+				num,
+				den,
 			)),
 		),
 	)
