@@ -340,6 +340,7 @@ type TerminalInfo struct {
 	w              io.Writer
 	cols, rows     int
 	disableHistory bool
+	historyLimit   int
 }
 
 func WithWriter(w io.Writer) TerminalOption {
@@ -359,6 +360,15 @@ func WithSize(size geom.Vec2) TerminalOption {
 // reduces the amount of memory a Terminal uses.
 var WithoutHistory TerminalOption = func(info *TerminalInfo) {
 	info.disableHistory = true
+}
+
+// WithHistoryLimit limits the number of physical lines kept in the scrollback
+// buffer. Older lines are discarded, but the coordinate system remains global.
+// A non-positive limit disables this behavior.
+func WithHistoryLimit(limit int) TerminalOption {
+	return func(info *TerminalInfo) {
+		info.historyLimit = limit
+	}
 }
 
 // New returns a new virtual terminal emulator.

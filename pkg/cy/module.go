@@ -425,6 +425,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 		logs,
 		timeBinds,
 		copyBinds,
+		"",
 	)
 	logPane := t.Root().NewPane(cy.Ctx(), logScreen)
 	logPane.SetName("logs")

@@ -40,6 +40,11 @@ type State struct {
 
 	screen, altScreen   []Line
 	history, altHistory []Line
+	// The number of physical lines dropped from the beginning of history,
+	// for both the primary and alternate screens. This allows the terminal
+	// to keep a bounded scrollback buffer without breaking the coordinate
+	// system used by Flow and Root.
+	historyOffset, altHistoryOffset int
 	// Whether the last cell of history _continues to wrap onto the screen_.
 	// This is only used when `disableHistory` is true, since we still need
 	// the wrapping behavior to be correct.
@@ -58,6 +63,9 @@ type State struct {
 
 	// whether scrolling up should send lines to the scrollback buffer
 	disableHistory bool
+	// The maximum number of physical lines to keep in history.
+	// A non-positive value disables pruning.
+	historyLimit int
 
 	parser *vtparser.Parser
 }
@@ -377,6 +385,7 @@ func (t *State) resize(size geom.Vec2) {
 		} else {
 			t.history = newHistory
 		}
+		t.pruneHistory()
 
 		if t.disableHistory {
 			if IsAltMode(t.mode) {
@@ -482,6 +491,8 @@ func (t *State) moveTo(x, y int) {
 func (t *State) swapScreen() {
 	t.screen, t.altScreen = t.altScreen, t.screen
 	t.history, t.altHistory = t.altHistory, t.history
+	t.historyOffset, t.altHistoryOffset = t.altHistoryOffset, t.historyOffset
+	t.wrapped, t.altWrapped = t.altWrapped, t.wrapped
 	t.keyState, t.altKeyState = t.altKeyState, t.keyState
 	t.mode ^= ModeAltScreen
 	t.dirtyAll()
@@ -531,6 +542,31 @@ func IsAltMode(mode ModeFlag) bool {
 	return (mode & ModeAltScreen) != 0
 }
 
+func (t *State) pruneHistory() {
+	if t.historyLimit <= 0 || t.disableHistory {
+		return
+	}
+
+	if IsAltMode(t.mode) {
+		if len(t.altHistory) <= t.historyLimit {
+			return
+		}
+
+		drop := len(t.altHistory) - t.historyLimit
+		t.altHistory = t.altHistory[drop:]
+		t.altHistoryOffset += drop
+		return
+	}
+
+	if len(t.history) <= t.historyLimit {
+		return
+	}
+
+	drop := len(t.history) - t.historyLimit
+	t.history = t.history[drop:]
+	t.historyOffset += drop
+}
+
 func (t *State) scrollDown(orig, n int) {
 	n = clamp(n, 0, t.bottom-orig+1)
 
@@ -560,6 +596,7 @@ func (t *State) scrollUp(orig, n int) {
 				continue
 			}
 			t.history = appendWrapped(t.history, t.screen[i])
+			t.pruneHistory()
 		}
 	}
 
@@ -845,10 +882,14 @@ func (t *State) Root() geom.Vec2 {
 	defer t.RUnlock()
 
 	_, history, _ := t.getFlowTarget()
+	offset := t.historyOffset
+	if IsAltMode(t.mode) {
+		offset = t.altHistoryOffset
+	}
 
 	numHistory := len(history)
 	root := geom.Vec2{
-		R: numHistory,
+		R: offset + numHistory,
 	}
 
 	if !isWrappedLines(history) {
@@ -856,7 +897,7 @@ func (t *State) Root() geom.Vec2 {
 	}
 
 	return geom.Vec2{
-		R: numHistory - 1,
+		R: offset + numHistory - 1,
 		C: len(history[numHistory-1]),
 	}
 }

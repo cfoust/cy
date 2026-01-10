@@ -59,6 +59,91 @@ func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 	return
 }
 
+func (r *Replay) drawLazyStatusBar(state *tty.State) {
+	p := r.params
+	size := state.Image.Size()
+
+	statusBarStyle := p.ReplayStatusBarStyle().Style
+	leftStatusStyle := r.getLeftStatusStyle()
+
+	statusText := p.ReplayTextTimeMode()
+	if r.isCopyMode() {
+		statusText = p.ReplayTextCopyMode()
+
+		if r.isSelecting {
+			statusText = p.ReplayTextVisualMode()
+		}
+	}
+	if r.isPlaying {
+		statusText = p.ReplayTextPlayMode()
+	}
+
+	leftStatus := leftStatusStyle.Render(statusText)
+
+	message := "scroll or use time controls to load history"
+	if r.loadErr != nil {
+		message = "error loading recording"
+	}
+
+	rightWidth := geom.Max(size.C-lipgloss.Width(leftStatus), 0)
+	right := statusBarStyle.
+		Width(rightWidth).
+		Padding(0, 1).
+		Render(message)
+
+	statusBar := statusBarStyle.
+		Width(size.C).
+		Height(1).
+		Render(lipgloss.JoinHorizontal(lipgloss.Left,
+			leftStatus,
+			right,
+		))
+
+	r.render.RenderAt(state.Image, size.R-1, 0, statusBar)
+}
+
+func (r *Replay) renderLoadError(state *tty.State) {
+	if r.loadErr == nil {
+		return
+	}
+
+	p := r.params
+	size := state.Image.Size()
+	width := geom.Min(size.C, 60)
+
+	borderColor := p.ColorError().Color
+	boxContents := lipgloss.JoinVertical(
+		lipgloss.Left,
+		r.render.NewStyle().
+			Foreground(borderColor).
+			Bold(true).
+			Render("error loading recording"),
+		r.render.NewStyle().
+			Width(width).
+			Render(r.loadErr.Error()),
+	)
+
+	boxStyle := r.render.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(borderColor).
+		BorderTop(true).
+		BorderLeft(true).
+		BorderRight(true).
+		BorderBottom(true)
+
+	boxText := boxStyle.Render(boxContents)
+	boxSize := taro.GetSize(boxText)
+
+	box := image.New(boxSize)
+	r.render.RenderAt(
+		box,
+		0,
+		0,
+		boxText,
+	)
+	image.Copy(size.Center(boxSize), state.Image, box)
+}
+
 // getCommand gets the command at the current location of the cursor, if any.
 func (r *Replay) getCommand() (command detect.Command, ok bool) {
 	cursor := r.movement.Cursor()
@@ -377,6 +462,10 @@ func (r *Replay) View(state *tty.State) {
 		return
 	}
 
+	if r.movement == nil {
+		r.initializeMovement()
+	}
+
 	highlights := r.getSearchHighlights()
 
 	// Add in highlights provided with WithHighlights
@@ -409,6 +498,24 @@ func (r *Replay) View(state *tty.State) {
 				Style: p.ReplayIncrementalStyle(),
 			},
 		)
+	}
+
+	// When history is loaded on-demand, still allow copy-mode browsing using
+	// in-memory scrollback until the user asks to move in time (or scroll past
+	// the scrollback limit).
+	if !r.historyLoaded {
+		viewport := tty.New(r.viewport)
+		r.movement.View(r.params, viewport, highlights)
+		tty.Copy(geom.Vec2{}, state, viewport)
+
+		state.CursorVisible = true
+		if r.incr.IsActive() || r.mode == ModeInput {
+			state.CursorVisible = false
+		}
+
+		r.drawLazyStatusBar(state)
+		r.renderLoadError(state)
+		return
 	}
 
 	// Only used for development (for now)

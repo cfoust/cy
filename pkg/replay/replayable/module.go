@@ -2,12 +2,14 @@ package replayable
 
 import (
 	"context"
+	"io"
 
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
@@ -35,6 +37,7 @@ type Replayable struct {
 	terminal *S.Terminal
 	replay   *taro.Program
 	player   *player.Player
+	borgPath string
 
 	timeBinds, copyBinds *bind.BindScope
 }
@@ -61,7 +64,49 @@ func (r *Replayable) Commands() []detect.Command {
 }
 
 func (r *Replayable) Output(start, end int) (data []byte, ok bool) {
-	return r.player.Output(start, end)
+	if len(r.borgPath) == 0 {
+		return r.player.Output(start, end)
+	}
+
+	// Disk-backed output retrieval. This avoids keeping session output in
+	// memory, at the cost of reading the .borg sequentially.
+	if start < 0 || end < 0 || end < start {
+		return nil, false
+	}
+
+	reader, err := sessions.Open(r.borgPath)
+	if err != nil {
+		return nil, false
+	}
+
+	index := 0
+	for {
+		if index >= end {
+			break
+		}
+
+		event, err := reader.Read()
+		if err == io.EOF || err == io.ErrUnexpectedEOF {
+			break
+		}
+		if err != nil {
+			return nil, false
+		}
+
+		if index >= start {
+			if msg, ok := event.Message.(P.OutputMessage); ok {
+				data = append(data, msg.Data...)
+			}
+		}
+
+		index++
+	}
+
+	if index < end {
+		return nil, false
+	}
+
+	return data, true
 }
 
 func (r *Replayable) Preview(
@@ -157,6 +202,9 @@ func (r *Replayable) Send(msg mux.Msg) {
 			mouse.Button == keys.MouseWheelUp
 		if isMouseUp && !r.terminal.IsAltMode() {
 			r.EnterReplay()
+			// Forward the scroll event into replay mode so it can trigger
+			// on-demand history loading.
+			r.Send(msg)
 			return
 		}
 	}
@@ -175,10 +223,26 @@ func (r *Replayable) EnterReplay(options ...replay.Option) {
 		return
 	}
 
-	r.player.Acquire()
+	acquired := false
+
+	// If this pane is recording to disk, load history on demand from the
+	// .borg file instead of keeping a full replay player in memory.
+	if len(r.borgPath) > 0 {
+		snapshot := r.terminal.State().Clone()
+		options = append(options,
+			replay.WithBorgPath(r.borgPath),
+			replay.WithSnapshot(snapshot),
+		)
+	} else {
+		r.player.Acquire()
+		acquired = true
+	}
+
+	replayPlayer := r.player
+
 	replay := replay.New(
 		r.Ctx(),
-		r.player,
+		replayPlayer,
 		r.timeBinds,
 		r.copyBinds,
 		options...,
@@ -203,7 +267,9 @@ func (r *Replayable) EnterReplay(options ...replay.Option) {
 		<-replay.Ctx().Done()
 		r.Lock()
 		r.replay = nil
-		r.player.Release()
+		if acquired {
+			r.player.Release()
+		}
 		r.Unlock()
 	}()
 }
@@ -213,9 +279,19 @@ func New(
 	params *params.Parameters,
 	cmd, stream mux.Stream,
 	timeBinds, copyBinds *bind.BindScope,
+	borgPath string,
 	options ...detect.Option,
 ) *Replayable {
 	lifetime := util.NewLifetime(ctx)
+	p := player.New(options...)
+
+	// When recording to disk, avoid keeping a full copy of the session output
+	// in memory. Replay mode will load the history from the .borg file on demand.
+	if len(borgPath) > 0 {
+		p.SetHistoryLimit(5000)
+		p.SetRetainOutputData(false)
+	}
+
 	r := &Replayable{
 		Lifetime:        lifetime,
 		UpdatePublisher: mux.NewPublisher(),
@@ -223,7 +299,8 @@ func New(
 		timeBinds:       timeBinds,
 		copyBinds:       copyBinds,
 		cmd:             cmd,
-		player:          player.New(options...),
+		player:          p,
+		borgPath:        borgPath,
 	}
 	r.terminal = S.NewTerminal(
 		lifetime.Ctx(),

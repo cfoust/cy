@@ -7,6 +7,7 @@ import (
 	"github.com/cfoust/cy/pkg/bind"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
+	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay/motion"
 	"github.com/cfoust/cy/pkg/replay/movement"
@@ -99,6 +100,22 @@ type Replay struct {
 	wasJumpForward bool
 	// Whether that jump was "to" or up until
 	wasJumpTo bool
+
+	// borgPath is the path of the on-disk recording to load on demand.
+	borgPath string
+	// Whether the replay history has been loaded from disk.
+	historyLoaded bool
+	// loadingHistory indicates a background disk load is in progress.
+	loadingHistory bool
+	// pendingMsg is replayed after history is loaded.
+	pendingMsg tea.Msg
+	// loadErr is set if loading the recording failed.
+	loadErr error
+	// snapshot is the state shown before history is loaded.
+	snapshot *tty.State
+	// loadRestore captures view state that should be restored after history is
+	// loaded from disk.
+	loadRestore *loadRestoreState
 }
 
 var _ taro.Model = (*Replay)(nil)
@@ -154,6 +171,7 @@ func newReplay(
 		searchProgress: make(chan int),
 		skipInactivity: true,
 		params:         params.New(),
+		historyLoaded:  true,
 	}
 
 	for _, option := range options {
@@ -176,11 +194,15 @@ func WithNoQuit(r *Replay) {
 
 // WithCopyMode puts Replay immediately into copy mode.
 func WithCopyMode(r *Replay) {
-	r.postSeekOptions = append(r.postSeekOptions,
-		func(r *Replay) {
-			r.enterCopyMode()
-		},
-	)
+	// Always enter copy mode immediately when possible, but also reapply after
+	// any initial seek completes (since seeking resets the view state).
+	r.mode = ModeCopy
+	if r.movement != nil {
+		r.movement.Snap()
+	}
+	r.postSeekOptions = append(r.postSeekOptions, func(r *Replay) {
+		r.enterCopyMode()
+	})
 }
 
 // WithHighlights provides highlights to apply to the screen on creation.
@@ -231,6 +253,23 @@ func WithLocation(location geom.Vec2) Option {
 func WithParams(params *params.Parameters) Option {
 	return func(r *Replay) {
 		r.params = params
+	}
+}
+
+// WithBorgPath enables on-demand loading of replay history from a .borg file.
+func WithBorgPath(path string) Option {
+	return func(r *Replay) {
+		r.borgPath = path
+		r.historyLoaded = false
+		// Avoid an initial seek; it would require history to be loaded.
+		r.initialCmd = func() tea.Msg { return nil }
+	}
+}
+
+// WithSnapshot provides the state to show before history is loaded.
+func WithSnapshot(state *tty.State) Option {
+	return func(r *Replay) {
+		r.snapshot = state
 	}
 }
 
