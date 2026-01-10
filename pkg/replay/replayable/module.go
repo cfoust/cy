@@ -32,12 +32,13 @@ type Replayable struct {
 	*mux.UpdatePublisher
 	params *params.Parameters
 
-	size     geom.Size
-	cmd      mux.Stream
-	terminal *S.Terminal
-	replay   *taro.Program
-	player   *player.Player
-	borgPath string
+	size      geom.Size
+	cmd       mux.Stream
+	terminal  *S.Terminal
+	replay    *taro.Program
+	player    *player.Player
+	borgPath  string
+	borgFlush func(context.Context) error
 
 	timeBinds, copyBinds *bind.BindScope
 }
@@ -226,10 +227,11 @@ func (r *Replayable) EnterReplay(options ...replay.Option) {
 	// .borg file instead of keeping a full replay player in memory.
 	if len(r.borgPath) > 0 {
 		snapshot := r.terminal.State().Clone()
-		options = append(options,
-			replay.WithBorgPath(r.borgPath),
-			replay.WithSnapshot(snapshot),
-		)
+		options = append(options, replay.WithBorgPath(r.borgPath))
+		if r.borgFlush != nil {
+			options = append(options, replay.WithBorgFlush(r.borgFlush))
+		}
+		options = append(options, replay.WithSnapshot(snapshot))
 	} else {
 		r.player.Acquire()
 		acquired = true
@@ -298,6 +300,13 @@ func New(
 		cmd:             cmd,
 		player:          p,
 		borgPath:        borgPath,
+	}
+	if len(borgPath) > 0 {
+		if flusher, ok := stream.(interface {
+			Flush(context.Context) error
+		}); ok {
+			r.borgFlush = flusher.Flush
+		}
 	}
 	r.terminal = S.NewTerminal(
 		lifetime.Ctx(),

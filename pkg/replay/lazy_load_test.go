@@ -117,3 +117,63 @@ func TestLazyLoadMissingBorgDoesNotHang(t *testing.T) {
 	require.False(t, r.historyLoaded)
 	require.Error(t, r.loadErr)
 }
+
+func TestLazyLoadFlushIsCancelable(t *testing.T) {
+	termSize := geom.Size{R: 3, C: 50}
+
+	sim := sessions.NewSimulator().
+		Add(
+			termSize,
+			emu.LineFeedMode,
+			"hello\nworld\n",
+		)
+
+	borgPath := filepath.Join(t.TempDir(), "test.borg")
+	require.NoError(t, sim.WriteBorg(borgPath))
+
+	p := player.New()
+	p.SetHistoryLimit(5)
+	p.SetRetainOutputData(false)
+
+	for _, event := range sim.Events() {
+		require.NoError(t, p.Process(event))
+	}
+
+	flushed := make(chan struct{}, 1)
+	flush := func(ctx context.Context) error {
+		flushed <- struct{}{}
+		<-ctx.Done()
+		return ctx.Err()
+	}
+
+	r := newReplay(
+		context.Background(),
+		p,
+		bind.NewEngine[bind.Action](),
+		bind.NewEngine[bind.Action](),
+		WithBorgPath(borgPath),
+		WithBorgFlush(flush),
+	)
+
+	r.input.Cursor.SetMode(cursor.CursorHide)
+
+	var m taro.Model = r
+	run := taro.Test(m, taro.WithKittyKeys)
+
+	run(geom.Size{R: termSize.R + 1, C: termSize.C})
+
+	run(
+		ActionEvent{Type: ActionTimeStepBack},
+		ActionEvent{Type: ActionQuit},
+	)
+
+	select {
+	case <-flushed:
+	default:
+		require.Fail(t, "expected flush to run")
+	}
+
+	require.False(t, r.isSeeking)
+	require.False(t, r.historyLoaded)
+	require.Nil(t, r.loadErr)
+}

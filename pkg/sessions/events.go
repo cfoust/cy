@@ -75,6 +75,18 @@ func (s *EventStream) Resize(size stream.Size) error {
 	return nil
 }
 
+// Flush flushes the underlying handler, if it supports it, and returns early
+// if ctx is canceled.
+func (s *EventStream) Flush(ctx context.Context) error {
+	if flusher, ok := s.handler.(interface {
+		Flush(context.Context) error
+	}); ok {
+		return flusher.Flush(ctx)
+	}
+
+	return nil
+}
+
 func NewEventStream(stream stream.Stream, handler EventHandler) *EventStream {
 	return &EventStream{
 		stream:  stream,
@@ -110,20 +122,45 @@ func NewMemoryRecorder() *MemoryRecorder {
 
 // A FileRecorder writes incoming events to a file.
 type FileRecorder struct {
-	eventc chan Event
-	flushc chan struct{}
+	ops  chan recordOp
+	done <-chan struct{}
 }
 
 var _ EventHandler = (*FileRecorder)(nil)
 
 func (f *FileRecorder) Process(event Event) error {
-	f.eventc <- event
-	return nil
+	select {
+	case <-f.done:
+		return context.Canceled
+	case f.ops <- recordOp{event: event}:
+		return nil
+	}
 }
 
-func (f *FileRecorder) Flush() error {
-	f.flushc <- struct{}{}
-	return nil
+func (f *FileRecorder) Flush(ctx context.Context) error {
+	done := make(chan error, 1)
+
+	select {
+	case <-f.done:
+		return context.Canceled
+	case <-ctx.Done():
+		return ctx.Err()
+	case f.ops <- recordOp{flushDone: done}:
+	}
+
+	select {
+	case <-f.done:
+		return context.Canceled
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-done:
+		return err
+	}
+}
+
+type recordOp struct {
+	event     Event
+	flushDone chan error
 }
 
 func NewFileRecorder(
@@ -131,8 +168,8 @@ func NewFileRecorder(
 	filename string,
 ) (*FileRecorder, error) {
 	f := &FileRecorder{
-		eventc: make(chan Event, 100),
-		flushc: make(chan struct{}),
+		ops:  make(chan recordOp, 100),
+		done: ctx.Done(),
 	}
 
 	w, err := Create(filename)
@@ -145,10 +182,12 @@ func NewFileRecorder(
 		for {
 			// TODO(cfoust): 09/19/23 error handling
 			select {
-			case event := <-f.eventc:
-				_ = w.Write(event)
-			case <-f.flushc:
-				_ = w.Flush()
+			case op := <-f.ops:
+				if op.flushDone != nil {
+					op.flushDone <- w.Flush()
+					continue
+				}
+				_ = w.Write(op.event)
 			case <-ctx.Done():
 				return
 			}

@@ -53,7 +53,7 @@ func New(
 	handler := func(c detect.Command) {
 		// Flush the .borg to disk so that other cy servers can read
 		// it if necessary
-		_ = recorder.Flush()
+		_ = recorder.Flush(ctx)
 
 		r.Publish(C.CommandEvent{
 			Command: c,
