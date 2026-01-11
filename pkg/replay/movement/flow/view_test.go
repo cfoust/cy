@@ -21,7 +21,7 @@ func TestFlowLineIndicatorShowsQuestionMarkWhenHistoryPruned(t *testing.T) {
 	_, _ = term.Write([]byte(emu.LineFeedMode))
 
 	for i := 0; i < 20; i++ {
-		_, _ = term.Write([]byte(fmt.Sprintf("line %02d\n", i)))
+		_, _ = fmt.Fprintf(term, "line %02d\n", i)
 	}
 
 	f := createFlowTest(term, termSize)
@@ -45,7 +45,9 @@ func TestFlowLineIndicatorShowsQuestionMarkWhenHistoryPruned(t *testing.T) {
 	require.True(t, strings.Contains(row, "?]"), row)
 }
 
-func TestFlowLineIndicatorDoesNotShowQuestionMarkWhenHistoryNotPruned(t *testing.T) {
+func TestFlowLineIndicatorDoesNotShowQuestionMarkWhenHistoryNotPruned(
+	t *testing.T,
+) {
 	termSize := geom.Size{R: 3, C: 40}
 
 	term := emu.New(emu.WithHistoryLimit(1000))
@@ -53,7 +55,7 @@ func TestFlowLineIndicatorDoesNotShowQuestionMarkWhenHistoryNotPruned(t *testing
 	_, _ = term.Write([]byte(emu.LineFeedMode))
 
 	for i := 0; i < 20; i++ {
-		_, _ = term.Write([]byte(fmt.Sprintf("line %02d\n", i)))
+		_, _ = fmt.Fprintf(term, "line %02d\n", i)
 	}
 
 	f := createFlowTest(term, termSize)
@@ -76,4 +78,3 @@ func TestFlowLineIndicatorDoesNotShowQuestionMarkWhenHistoryNotPruned(t *testing
 	require.Contains(t, row, "[")
 	require.NotContains(t, row, "?]")
 }
-

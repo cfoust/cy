@@ -47,6 +47,11 @@ type defaultParams struct {
 	// on startup](/replay-mode.md#recording-to-disk). If
 	// set to an empty string, recording to disk is disabled.
 	DataDirectory string
+	// The maximum number of physical lines kept in memory for a pane's
+	// scrollback buffer. When recording to disk, this is the amount of
+	// scrollback available in copy mode before cy loads the full history from
+	// the .borg file. A non-positive value disables pruning.
+	HistoryLimit int
 	// The default shell with which to start panes. Defaults to the value
 	// of `$SHELL` on startup.
 	DefaultShell string
@@ -153,6 +158,7 @@ var (
 		Animate:            true,
 		AnimateDelay:       0,
 		DataDirectory:      "",
+		HistoryLimit:       5000,
 		DefaultFrame:       "",
 		DefaultShell:       "/bin/bash",
 		skipInput:          false,
