@@ -157,28 +157,3 @@ func NewFileRecorder(
 
 	return f, nil
 }
-
-// A MultiplexHandler chains multiple EventHandlers together in sequence, but
-// returns a single EventHandler.
-type MultiplexHandler struct {
-	handlers []EventHandler
-}
-
-var _ EventHandler = (*MultiplexHandler)(nil)
-
-func (m *MultiplexHandler) Process(event Event) error {
-	for _, handler := range m.handlers {
-		err := handler.Process(event)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func NewMultiplexHandler(handlers ...EventHandler) *MultiplexHandler {
-	return &MultiplexHandler{
-		handlers: handlers,
-	}
-}
