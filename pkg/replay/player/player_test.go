@@ -80,7 +80,11 @@ func TestReleaseProgress(t *testing.T) {
 
 	require.GreaterOrEqual(t, len(updates), 2)
 	require.Equal(t, update{done: 0, total: len(events)}, updates[0])
-	require.Equal(t, update{done: len(events), total: len(events)}, updates[len(updates)-1])
+	require.Equal(
+		t,
+		update{done: len(events), total: len(events)},
+		updates[len(updates)-1],
+	)
 
 	for i := 1; i < len(updates); i++ {
 		require.GreaterOrEqual(t, updates[i].done, updates[i-1].done)

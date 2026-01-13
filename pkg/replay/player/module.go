@@ -108,7 +108,7 @@ func (p *Player) ReleaseProgress(update func(done, total int)) {
 	var (
 		done        int
 		total       int
-		lastPercent int = -1
+		lastPercent = -1
 	)
 
 	p.mu.RLock()

@@ -106,7 +106,9 @@ func (c *CyModule) MemoryProfile(user interface{}) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	// Run GC to get more accurate heap snapshot
 	runtime.GC()
