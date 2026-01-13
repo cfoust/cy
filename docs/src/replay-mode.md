@@ -6,7 +6,7 @@ Using **replay mode** you can record, play back, and search through everything t
 
 ## Recording to disk
 
-`cy` records the output of each terminal session to a file on your filesystem. Replay mode loads this recording on demand as you start navigating through time/history.
+The history of a pane is not only stored in memory; it is also written to a file on your filesystem. This means that you (and only you--`cy` is careful to make sure the directory is only readable by you) can play back any session, even if it is no longer running in a `cy` instance.
 
 By default, `cy` records all of the activity that occurs in a terminal session to `.borg` files, which it stores in one of the following locations:
 
