@@ -52,24 +52,16 @@ func (s *Search) renderProgressBar(state *tty.State) {
 	}
 
 	p := s.params
-	bar := renderBar(
-		s.render,
+	emptyStyle := s.getBarStyle()
+
+	bar := s.render.ProgressBar(
+		emptyStyle,
+		size.C,
 		fmt.Sprintf(
 			p.SearchTextSearching()+": '%s'",
 			s.pendingQuery,
 		),
 		fmt.Sprintf("[%d/%d]", numComplete, numFiles),
-		size.C,
-	)
-
-	emptyStyle := s.getBarStyle()
-	filledStyle := s.render.NewStyle().
-		Background(emptyStyle.GetForeground()).
-		Foreground(emptyStyle.GetBackground())
-
-	bar = taro.Progress(
-		filledStyle, emptyStyle,
-		bar,
 		float64(numComplete)/float64(numFiles),
 	)
 

@@ -448,8 +448,7 @@ func (r *Replay) renderSearch(
 		r.render.RenderAt(
 			state.Image,
 			size.R-1, 0,
-			RenderProgressBar(
-				r.render,
+			r.render.ProgressBar(
 				statusBarStyle,
 				size.C,
 				"searching...",
@@ -537,8 +536,7 @@ func (r *Replay) renderSeek(state *tty.State) {
 	r.render.RenderAt(
 		state.Image,
 		stateSize.R-1, 0,
-		RenderProgressBar(
-			r.render,
+		r.render.ProgressBar(
 			emptyStyle,
 			stateSize.C,
 			leftText,

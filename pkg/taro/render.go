@@ -6,6 +6,7 @@ import (
 	"github.com/cfoust/cy/pkg/geom/image"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/muesli/termenv"
 	"github.com/xo/terminfo"
 )
@@ -80,6 +81,34 @@ func NewRenderer() *Renderer {
 	}
 }
 
+// formatProgressText formats left and right text for a progress bar, ensuring
+// they fit within the specified width. The right text is right-aligned and the
+// left text is truncated if necessary.
+func formatProgressText(left, right string, width int) string {
+	if width <= 0 {
+		return ""
+	}
+
+	if lipgloss.Width(right) > width {
+		right = ansi.Truncate(right, width, "…")
+	}
+
+	rightWidth := lipgloss.Width(right)
+	leftWidth := width - rightWidth
+	if leftWidth < 0 {
+		leftWidth = 0
+	}
+
+	left = ansi.Truncate(left, leftWidth, "…")
+	left = lipgloss.PlaceHorizontal(leftWidth, lipgloss.Left, left)
+
+	return lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		left,
+		right,
+	)
+}
+
 // Progress applies a lipgloss.Style to a percentage of the input text.
 func Progress(
 	filledStyle, emptyStyle lipgloss.Style,
@@ -117,5 +146,31 @@ func Progress(
 		lipgloss.Left,
 		left,
 		right,
+	)
+}
+
+// ProgressBar renders a single-line progress bar with left and right text.
+// The returned string will have a width of `width` (or less if width is <= 0).
+// The filled portion uses inverted colors from the empty style.
+func (r *Renderer) ProgressBar(
+	emptyStyle lipgloss.Style,
+	width int,
+	leftText, rightText string,
+	percent float64,
+) string {
+	if width <= 0 {
+		return ""
+	}
+
+	filledStyle := r.NewStyle().
+		Background(emptyStyle.GetForeground()).
+		Foreground(emptyStyle.GetBackground())
+
+	text := formatProgressText(leftText, rightText, width)
+	return Progress(
+		filledStyle,
+		emptyStyle,
+		text,
+		percent,
 	)
 }

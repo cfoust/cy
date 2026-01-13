@@ -162,8 +162,7 @@ func (r *Replayable) State() *tty.State {
 		render.RenderAt(
 			newImage,
 			0, 0,
-			replay.RenderProgressBar(
-				render,
+			render.ProgressBar(
 				r.params.ReplayStatusBarStyle().Style,
 				size.C,
 				"catching up...",
