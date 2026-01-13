@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"runtime"
 	"runtime/pprof"
 	"runtime/trace"
 	"time"
@@ -81,6 +82,43 @@ func (c *CyModule) CpuProfile(user interface{}) error {
 			Message: "finished cpu profile: " + path,
 		})
 	}()
+	return nil
+}
+
+func (c *CyModule) MemoryProfile(user interface{}) error {
+	client, ok := user.(*Client)
+	if !ok {
+		return fmt.Errorf("no user")
+	}
+
+	socketPath := c.cy.options.SocketPath
+	if len(socketPath) == 0 {
+		return fmt.Errorf("no socket path")
+	}
+
+	path := fmt.Sprintf(
+		"%s-memory-%s.prof",
+		socketPath,
+		time.Now().Format("2006.01.02.15.04.05"),
+	)
+
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Run GC to get more accurate heap snapshot
+	runtime.GC()
+
+	if err := pprof.WriteHeapProfile(f); err != nil {
+		return err
+	}
+
+	client.Toast(toasts.Toast{
+		Message: "saved memory profile: " + path,
+	})
+
 	return nil
 }
 

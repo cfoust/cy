@@ -381,6 +381,11 @@ For example:
   (cy/cpu-profile))
 
 (key/action
+  action/memory-profile
+  "Save a memory profile to cy's socket directory."
+  (cy/memory-profile))
+
+(key/action
   action/trace
   "Save a trace to cy's socket directory."
   (cy/trace))
