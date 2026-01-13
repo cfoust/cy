@@ -14,7 +14,7 @@ const (
 
 func (f *flowMovement) ScrollTop() {
 	f.haveMoved = true
-	f.scrollToLine(geom.Vec2{R: 0, C: 0}, ScrollPositionTop)
+	f.scrollToLine(geom.Vec2{R: f.getFirstLine(), C: 0}, ScrollPositionTop)
 	f.cursor.C = f.resolveScreenColumn(f.cursor.R)
 }
 
@@ -81,9 +81,33 @@ func (f *flowMovement) ScrollXDelta(delta int) {
 	// no-op in this mode
 }
 
+func (f *flowMovement) getFirstLine() int {
+	// When history is pruned, the coordinate system remains global but we can
+	// only access the lines still retained in memory. Find the first accessible
+	// physical line via binary search.
+	low := 0
+	high := geom.Max(f.Root().R, 0)
+
+	for low < high {
+		mid := low + (high-low)/2
+		if len(f.GetLines(mid, mid)) > 0 {
+			high = mid
+		} else {
+			low = mid + 1
+		}
+	}
+
+	return low
+}
+
 func (f *flowMovement) scrollToLine(dest geom.Vec2, position ScrollPosition) {
 	if dest.R < 0 || dest.C < 0 {
 		return
+	}
+
+	firstLine := f.getFirstLine()
+	if dest.R < firstLine {
+		dest = geom.Vec2{R: firstLine, C: 0}
 	}
 
 	if dest.R > f.getLastLine() {

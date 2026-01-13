@@ -1,6 +1,8 @@
 package replay
 
 import (
+	"context"
+	"errors"
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
@@ -36,6 +38,62 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	viewport := r.viewport
 
 	switch msg := msg.(type) {
+	case loadDoneEvent:
+		r.loadingHistory = false
+
+		// Stop showing the seek UI used for loading.
+		if r.seekState != nil {
+			r.seekState.Cancel()
+			r.seekState = nil
+		}
+		r.isSeeking = false
+		r.showSeek = false
+
+		pending := r.pendingMsg
+		r.pendingMsg = nil
+
+		if msg.err != nil {
+			r.loadRestore = nil
+
+			// A cancelled load is not an error to the user.
+			if errors.Is(msg.err, context.Canceled) {
+				r.loadErr = nil
+				return r, nil
+			}
+
+			r.loadErr = msg.err
+			return r, nil
+		}
+
+		r.loadErr = nil
+		if msg.player != nil {
+			r.Player = msg.player
+			r.historyLoaded = true
+			r.snapshot = nil
+
+			r.initializeMovement()
+			r.restoreLoadRestore()
+
+			events := r.Events()
+			index := r.Location().Index
+			if index >= 0 && index < len(events) {
+				r.currentTime = events[index].Stamp
+			}
+
+			if r.postSeekOptions != nil {
+				for _, option := range r.postSeekOptions {
+					option(r)
+				}
+				r.postSeekOptions = nil
+			}
+		}
+
+		if pending == nil {
+			return r, nil
+		}
+
+		// Re-run whatever user input triggered loading.
+		return r, func() tea.Msg { return pending }
 	case ApplyOptionsEvent:
 		for _, option := range msg.Options {
 			option(r)
@@ -96,6 +154,9 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			R: msg.Height,
 			C: msg.Width,
 		})
+		if r.movement == nil {
+			r.initializeMovement()
+		}
 		return r, nil
 	case SearchResultEvent:
 		return r, r.handleSearchResult(msg)
@@ -114,6 +175,20 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	// These events do not stop playback
 	switch msg := msg.(type) {
 	case ActionEvent:
+		if r.isSeeking {
+			break
+		}
+
+		if !r.historyLoaded && len(r.borgPath) > 0 {
+			switch msg.Type {
+			case ActionTimePlay:
+				r.pendingMsg = msg
+				r.loadErr = nil
+				r.captureLoadRestore()
+				return r, r.loadHistory()
+			}
+		}
+
 		switch msg.Type {
 		case ActionTimePlay:
 			r.isPlaying = !r.isPlaying
@@ -152,8 +227,18 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		return r, nil
 	}
 
-	// Don't allow user input while we're seeking
+	// Don't allow user input while we're seeking. While loading history from
+	// disk, allow ActionQuit to cancel.
 	if r.isSeeking {
+		if r.loadingHistory {
+			if action, ok := msg.(ActionEvent); ok && action.Type == ActionQuit {
+				r.pendingMsg = nil
+				r.loadRestore = nil
+				if r.seekState != nil {
+					r.seekState.Cancel()
+				}
+			}
+		}
 		return r, nil
 	}
 
@@ -163,7 +248,30 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case taro.MouseMsg:
 		switch msg.Button {
 		case keys.MouseWheelUp:
+			beforeCursor := r.movement.Cursor()
+			beforeRoot := beforeCursor
+			if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
+				beforeRoot = lines[0].Root()
+			}
+
 			r.scrollYDelta(-1)
+
+			if !r.historyLoaded && len(r.borgPath) > 0 {
+				afterCursor := r.movement.Cursor()
+				afterRoot := afterCursor
+				if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
+					afterRoot = lines[0].Root()
+				}
+
+				// If the scroll didn't move anywhere, we've hit the scrollback
+				// limit and should load history from disk.
+				if beforeCursor == afterCursor && beforeRoot == afterRoot {
+					r.pendingMsg = msg
+					r.loadErr = nil
+					r.captureLoadRestore()
+					return r, r.loadHistory()
+				}
+			}
 		case keys.MouseWheelDown:
 			r.scrollYDelta(+1)
 		case keys.MouseWheelLeft:
@@ -197,6 +305,29 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			}
 		}
 	case ActionEvent:
+		if !r.historyLoaded && len(r.borgPath) > 0 {
+			shouldLoad := false
+			switch msg.Type {
+			case ActionBeginning, ActionEnd:
+				shouldLoad = !r.isCopyMode()
+			case ActionSearchForward, ActionSearchBackward, ActionSearchAgain, ActionSearchReverse:
+				shouldLoad = !r.isCopyMode()
+			case ActionTimeStepBack, ActionTimeStepForward:
+				shouldLoad = true
+			case ActionTimePlay:
+				shouldLoad = true
+			case ActionCommandForward, ActionCommandBackward:
+				shouldLoad = !r.isCopyMode()
+			}
+
+			if shouldLoad && msg.Type != ActionQuit {
+				r.pendingMsg = msg
+				r.loadErr = nil
+				r.captureLoadRestore()
+				return r, r.loadHistory()
+			}
+		}
+
 		r.isPlaying = false
 		switch msg.Type {
 		case ActionQuit:
@@ -218,7 +349,28 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return r.quit()
 		case ActionBeginning:
 			if r.isCopyMode() {
+				beforeCursor := r.movement.Cursor()
+				beforeRoot := beforeCursor
+				if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
+					beforeRoot = lines[0].Root()
+				}
+
 				r.movement.ScrollTop()
+
+				if !r.historyLoaded && len(r.borgPath) > 0 {
+					afterCursor := r.movement.Cursor()
+					afterRoot := afterCursor
+					if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
+						afterRoot = lines[0].Root()
+					}
+
+					if beforeCursor == afterCursor && beforeRoot == afterRoot {
+						r.pendingMsg = msg
+						r.loadErr = nil
+						r.captureLoadRestore()
+						return r, r.loadHistory()
+					}
+				}
 				return r, nil
 			}
 
@@ -267,11 +419,53 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case ActionTimeStepForward:
 			return r, r.gotoIndex(r.Location().Index+1, -1)
 		case ActionScrollUpHalf:
+			beforeCursor := r.movement.Cursor()
+			beforeRoot := beforeCursor
+			if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
+				beforeRoot = lines[0].Root()
+			}
+
 			r.moveCursorY(-(viewport.R / 2))
+
+			if !r.historyLoaded && len(r.borgPath) > 0 {
+				afterCursor := r.movement.Cursor()
+				afterRoot := afterCursor
+				if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
+					afterRoot = lines[0].Root()
+				}
+
+				if beforeCursor == afterCursor && beforeRoot == afterRoot {
+					r.pendingMsg = msg
+					r.loadErr = nil
+					r.captureLoadRestore()
+					return r, r.loadHistory()
+				}
+			}
 		case ActionScrollDownHalf:
 			r.moveCursorY((viewport.R / 2))
 		case ActionScrollUp:
+			beforeCursor := r.movement.Cursor()
+			beforeRoot := beforeCursor
+			if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
+				beforeRoot = lines[0].Root()
+			}
+
 			r.scrollYDelta(-1)
+
+			if !r.historyLoaded && len(r.borgPath) > 0 {
+				afterCursor := r.movement.Cursor()
+				afterRoot := afterCursor
+				if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
+					afterRoot = lines[0].Root()
+				}
+
+				if beforeCursor == afterCursor && beforeRoot == afterRoot {
+					r.pendingMsg = msg
+					r.loadErr = nil
+					r.captureLoadRestore()
+					return r, r.loadHistory()
+				}
+			}
 		case ActionScrollDown:
 			r.scrollYDelta(+1)
 		case ActionCursorDown:

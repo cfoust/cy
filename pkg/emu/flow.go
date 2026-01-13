@@ -35,6 +35,7 @@ func (s *State) accessPhysicalLines() (getLines func(int) (Line, bool), numLines
 	screen, history, _ := s.getFlowTarget()
 
 	var (
+		historyOffset = s.historyOffset
 		numHistory     = len(history)
 		isWrapped      = false
 		screenPhysical = unwrapLines(screen)
@@ -42,7 +43,11 @@ func (s *State) accessPhysicalLines() (getLines func(int) (Line, bool), numLines
 		screenStart    = 0
 	)
 
-	numLines = numHistory + len(screenLines)
+	if IsAltMode(s.mode) {
+		historyOffset = s.altHistoryOffset
+	}
+
+	localNumLines := numHistory + len(screenLines)
 
 	if numHistory > 0 {
 		isWrapped = history[numHistory-1].IsWrapped()
@@ -51,33 +56,36 @@ func (s *State) accessPhysicalLines() (getLines func(int) (Line, bool), numLines
 	// If the last line of history continues onto the screen, we have one
 	// less line
 	if isWrapped {
-		numLines--
+		localNumLines--
 		screenStart = 1
 	}
 
 	lastHistory := numHistory - screenStart
 	getLines = func(index int) (line Line, ok bool) {
-		if index < 0 || index >= numLines {
+		localIndex := index - historyOffset
+		if localIndex < 0 || localIndex >= localNumLines {
 			return
 		}
 
 		ok = true
 
-		if index < lastHistory {
-			line = history[index]
+		if localIndex < lastHistory {
+			line = history[localIndex]
 			return
 		}
 
 		// special case: history line continues onto screen
-		if isWrapped && index == lastHistory {
+		if isWrapped && localIndex == lastHistory {
 			line = history[len(history)-1].Clone()
 			line = append(line, screenLines[0]...)
 			return
 		}
 
-		line = screenLines[index-lastHistory]
+		line = screenLines[localIndex-lastHistory]
 		return
 	}
+
+	numLines = historyOffset + localNumLines
 	return
 }
 

@@ -34,6 +34,7 @@ func New(
 			cmd,
 			timeBinds,
 			copyBinds,
+			"",
 		)
 		return replayable, nil
 	}
@@ -67,6 +68,7 @@ func New(
 		sessions.NewEventStream(cmd, recorder),
 		timeBinds,
 		copyBinds,
+		borgPath,
 		detect.WithHandler(handler),
 		detect.WithDirectoryProvider(func() string {
 			cwd, _ := cmd.Path()

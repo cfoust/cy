@@ -25,6 +25,9 @@ type Player struct {
 
 	inUse bool
 
+	retainOutputData bool
+	historyLimit     int
+
 	location   search.Address
 	buffer     []sessions.Event
 	events     []sessions.Event
@@ -40,15 +43,58 @@ func (p *Player) Acquire() {
 }
 
 func (p *Player) resetTerminal() {
-	p.Terminal = emu.New()
+	options := make([]emu.TerminalOption, 0, 1)
+	if p.historyLimit > 0 {
+		options = append(options, emu.WithHistoryLimit(p.historyLimit))
+	}
+
+	p.Terminal = emu.New(options...)
 	p.Terminal.Changes().SetHooks([]string{detect.CY_HOOK})
 }
 
 func (p *Player) consume(event sessions.Event) {
+	if p.retainOutputData {
+		p.mu.Lock()
+		p.events = append(p.events, event)
+		p.mu.Unlock()
+		p.Goto(len(p.events)-1, -1)
+		return
+	}
+
 	p.mu.Lock()
-	p.events = append(p.events, event)
-	p.mu.Unlock()
-	p.Goto(len(p.events)-1, -1)
+	defer p.mu.Unlock()
+
+	stored := event
+	var outputData []byte
+	switch e := event.Message.(type) {
+	case P.OutputMessage:
+		outputData = e.Data
+		stored.Message = P.OutputMessage{Data: nil}
+	}
+
+	p.events = append(p.events, stored)
+	index := len(p.events) - 1
+
+	switch e := event.Message.(type) {
+	case P.OutputMessage:
+		if len(outputData) == 0 {
+			break
+		}
+
+		// Need to clear dirty state before every write so that the detector works.
+		p.Terminal.Changes().Reset()
+		p.Parse(outputData)
+
+		if index >= p.nextDetect {
+			p.detector.Detect(p.Terminal, p.events)
+			p.nextDetect = index + 1
+		}
+	case P.SizeMessage:
+		p.Resize(e.Vec())
+	}
+
+	p.location.Index = index
+	p.location.Offset = -1
 }
 
 func (p *Player) Release() {
@@ -171,9 +217,37 @@ func (p *Player) Preview(
 }
 
 func New(options ...detect.Option) *Player {
-	p := &Player{detector: detect.New(options...)}
+	p := &Player{
+		detector:         detect.New(options...),
+		retainOutputData: true,
+	}
 	p.resetTerminal()
 	return p
+}
+
+// SetRetainOutputData controls whether output bytes are kept in memory as part
+// of the player's event log. Disabling this prevents seeking and Output()
+// from working, but reduces memory usage when the recording is already
+// persisted to disk.
+func (p *Player) SetRetainOutputData(retain bool) {
+	p.mu.Lock()
+	p.retainOutputData = retain
+	p.mu.Unlock()
+}
+
+// SetHistoryLimit bounds the amount of terminal scrollback kept in memory.
+// This method is destructive and is intended to be called before any events
+// are processed.
+func (p *Player) SetHistoryLimit(limit int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.historyLimit = limit
+	p.events = nil
+	p.buffer = nil
+	p.location = search.Address{}
+	p.nextDetect = 0
+	p.resetTerminal()
 }
 
 func FromEvents(events []sessions.Event) *Player {
