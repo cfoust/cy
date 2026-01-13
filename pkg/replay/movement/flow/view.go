@@ -160,6 +160,11 @@ func (f *flowMovement) View(
 	}
 	num = geom.Clamp(num, 0, den)
 
+	suffix := ""
+	if firstLine > 0 {
+		suffix = "?"
+	}
+
 	r.RenderAt(
 		state.Image,
 		0,
@@ -168,9 +173,10 @@ func (f *flowMovement) View(
 			size.C,
 			lipgloss.Right,
 			offsetStyle.Render(fmt.Sprintf(
-				"[%d/%d]",
+				"[%d/%d%s]",
 				num,
 				den,
+				suffix,
 			)),
 		),
 	)
