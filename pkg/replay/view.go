@@ -171,17 +171,17 @@ func (r *Replay) drawLazyStatusBar(state *tty.State) {
 	if progressWidth > 0 {
 		if len(events) == 0 || index < 0 {
 			progressBar = strings.Repeat("?", progressWidth)
+		} else if len(events) <= 1 {
+			progressBar = strings.Repeat("▒", progressWidth)
 		} else {
-			percent := int(
-				(float64(index) / float64(len(events))) * float64(progressWidth),
-			)
-			for i := 0; i < progressWidth; i++ {
-				if i <= percent {
-					progressBar += "▒"
-				} else {
-					progressBar += "-"
-				}
-			}
+			maxIndex := len(events) - 1
+			filledCells := int(
+				(float64(index)/float64(maxIndex))*float64(progressWidth-1),
+			) + 1
+			filledCells = geom.Clamp(filledCells, 1, progressWidth)
+
+			progressBar = strings.Repeat("▒", filledCells) +
+				strings.Repeat("-", progressWidth-filledCells)
 		}
 	}
 
@@ -357,19 +357,25 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	)
 
 	progressWidth := size.C - lipgloss.Width(leftSide) - 3
-	percent := int(
-		(float64(r.Location().Index) / float64(len(events))) * float64(
-			progressWidth,
-		),
-	)
-	progressBar := ""
-	for i := 0; i < progressWidth; i++ {
-		if i <= percent {
-			progressBar += "▒"
+	if progressWidth < 0 {
+		progressWidth = 0
+	}
+
+	filledCells := 0
+	if progressWidth > 0 {
+		if len(events) <= 1 {
+			filledCells = progressWidth
 		} else {
-			progressBar += "-"
+			maxIndex := len(events) - 1
+			filledCells = int(
+				(float64(index)/float64(maxIndex))*float64(progressWidth-1),
+			) + 1
+			filledCells = geom.Clamp(filledCells, 1, progressWidth)
 		}
 	}
+
+	progressBar := strings.Repeat("▒", filledCells) +
+		strings.Repeat("-", progressWidth-filledCells)
 
 	progressBar = "[" + progressBar + "]"
 	progressBar = statusBarStyle.
