@@ -98,14 +98,69 @@ func (p *Player) consume(event sessions.Event) {
 }
 
 func (p *Player) Release() {
-	p.mu.Lock()
-	p.inUse = false
-	buffer := p.buffer
-	p.buffer = make([]sessions.Event, 0)
-	p.mu.Unlock()
+	p.ReleaseProgress(nil)
+}
 
-	for _, event := range buffer {
-		p.consume(event)
+// ReleaseProgress releases the player from replay mode and replays any events
+// that were buffered while it was acquired. If update is non-nil, it will be
+// called with (done,total) as buffered events are processed.
+func (p *Player) ReleaseProgress(update func(done, total int)) {
+	var (
+		done        int
+		total       int
+		lastPercent int = -1
+	)
+
+	p.mu.RLock()
+	total = len(p.buffer)
+	p.mu.RUnlock()
+
+	maybeUpdate := func(force bool) {
+		if update == nil || total <= 0 {
+			return
+		}
+
+		percent := done * 100 / total
+		if !force && percent == lastPercent {
+			return
+		}
+
+		update(done, total)
+		lastPercent = percent
+	}
+
+	maybeUpdate(true)
+
+	for {
+		p.mu.Lock()
+		buffer := p.buffer
+		p.buffer = nil
+		p.mu.Unlock()
+
+		if len(buffer) == 0 {
+			p.mu.Lock()
+			if len(p.buffer) == 0 {
+				p.inUse = false
+				p.mu.Unlock()
+				break
+			}
+			p.mu.Unlock()
+			continue
+		}
+
+		total = done + len(buffer)
+		maybeUpdate(true)
+
+		for _, event := range buffer {
+			p.consume(event)
+			done++
+			maybeUpdate(false)
+		}
+	}
+
+	if update != nil && done > 0 {
+		total = done
+		update(done, total)
 	}
 }
 

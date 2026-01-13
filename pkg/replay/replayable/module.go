@@ -2,6 +2,7 @@ package replayable
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/cfoust/cy/pkg/bind"
@@ -36,9 +37,14 @@ type Replayable struct {
 	cmd       mux.Stream
 	terminal  *S.Terminal
 	replay    *taro.Program
+	render    *taro.Renderer
 	player    *player.Player
 	borgPath  string
 	borgFlush func(context.Context) error
+
+	catchUpActive bool
+	catchUpDone   int
+	catchUpTotal  int
 
 	timeBinds, copyBinds *bind.BindScope
 }
@@ -142,6 +148,31 @@ func (r *Replayable) State() *tty.State {
 	state := r.getState()
 	newImage := image.New(state.Image.Size())
 	image.Copy(geom.Vec2{}, newImage, state.Image)
+
+	r.RLock()
+	catchUpActive := r.catchUpActive
+	catchUpDone := r.catchUpDone
+	catchUpTotal := r.catchUpTotal
+	render := r.render
+	r.RUnlock()
+
+	if catchUpActive && catchUpTotal > 0 && render != nil {
+		size := newImage.Size()
+		percent := float64(catchUpDone) / float64(catchUpTotal)
+		render.RenderAt(
+			newImage,
+			0, 0,
+			replay.RenderProgressBar(
+				render,
+				r.params.ReplayStatusBarStyle().Style,
+				size.C,
+				"catching up...",
+				fmt.Sprintf("[%d/%d]", catchUpDone, catchUpTotal),
+				percent,
+			),
+		)
+	}
+
 	r.params.ColorMap().Apply(newImage)
 	state.Image = newImage
 	return state
@@ -264,12 +295,42 @@ func (r *Replayable) EnterReplay(options ...replay.Option) {
 
 	go func() {
 		<-replay.Ctx().Done()
+
 		r.Lock()
 		r.replay = nil
-		if acquired {
-			r.player.Release()
-		}
 		r.Unlock()
+		r.Notify()
+
+		if !acquired {
+			return
+		}
+
+		lastPercent := -1
+		r.player.ReleaseProgress(func(done, total int) {
+			if total <= 0 {
+				return
+			}
+
+			percent := done * 100 / total
+			if percent == lastPercent && done != total {
+				return
+			}
+			lastPercent = percent
+
+			r.Lock()
+			r.catchUpActive = true
+			r.catchUpDone = done
+			r.catchUpTotal = total
+			r.Unlock()
+			r.Notify()
+		})
+
+		r.Lock()
+		r.catchUpActive = false
+		r.catchUpDone = 0
+		r.catchUpTotal = 0
+		r.Unlock()
+		r.Notify()
 	}()
 }
 
@@ -298,6 +359,7 @@ func New(
 		timeBinds:       timeBinds,
 		copyBinds:       copyBinds,
 		cmd:             cmd,
+		render:          taro.NewRenderer(),
 		player:          p,
 		borgPath:        borgPath,
 	}

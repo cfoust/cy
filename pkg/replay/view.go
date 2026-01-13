@@ -444,23 +444,16 @@ func (r *Replay) renderSearch(
 	r.input.Cursor.TextStyle = statusBarStyle
 
 	if r.isWaiting {
-		emptyStyle := p.ReplayTimeStyle().Style
-		filledStyle := r.render.NewStyle().
-			Background(emptyStyle.GetForeground()).
-			Foreground(emptyStyle.GetBackground())
-
 		percent := float64(r.progressPercent) / 100
 		r.render.RenderAt(
 			state.Image,
 			size.R-1, 0,
-			taro.Progress(
-				filledStyle,
-				emptyStyle,
-				lipgloss.PlaceHorizontal(
-					size.C,
-					lipgloss.Left,
-					"searching...",
-				),
+			RenderProgressBar(
+				r.render,
+				statusBarStyle,
+				size.C,
+				"searching...",
+				fmt.Sprintf("[%d%%]", r.progressPercent),
 				percent,
 			),
 		)
@@ -508,7 +501,6 @@ func (r *Replay) renderSeek(state *tty.State) {
 		return
 	}
 
-	size := r.bg.Size()
 	screen := seekState.screen
 	if screen != nil {
 		tty.Copy(
@@ -535,20 +527,24 @@ func (r *Replay) renderSeek(state *tty.State) {
 		}
 	}
 
-	percent := int((float64(seekState.percent) / 100.) * float64(size.C))
-	progressBar := ""
-	for i := 0; i < size.C; i++ {
-		if i <= percent {
-			progressBar += "█"
-		} else {
-			progressBar += "▒"
-		}
+	emptyStyle := r.params.ReplayStatusBarStyle().Style
+	leftText := "seeking..."
+	if r.loadingHistory {
+		leftText = "loading history..."
 	}
 
+	percent := float64(seekState.percent) / 100
 	r.render.RenderAt(
 		state.Image,
-		state.Image.Size().R-1, 0,
-		progressBar,
+		stateSize.R-1, 0,
+		RenderProgressBar(
+			r.render,
+			emptyStyle,
+			stateSize.C,
+			leftText,
+			fmt.Sprintf("[%d%%]", seekState.percent),
+			percent,
+		),
 	)
 }
 
