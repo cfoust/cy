@@ -19,6 +19,7 @@ const (
 	ParamDataDirectory            = "data-directory"
 	ParamDefaultFrame             = "default-frame"
 	ParamDefaultShell             = "default-shell"
+	ParamHistoryLimit             = "history-limit"
 	ParamInputFindActiveStyle     = "input-find-active-style"
 	ParamInputFindHighlightStyle  = "input-find-highlight-style"
 	ParamInputFindInactiveStyle   = "input-find-inactive-style"
@@ -230,6 +231,24 @@ func (p *Parameters) DefaultShell() string {
 
 func (p *Parameters) SetDefaultShell(value string) {
 	p.set(ParamDefaultShell, value)
+}
+
+func (p *Parameters) HistoryLimit() int {
+	value, ok := p.Get(ParamHistoryLimit)
+	if !ok {
+		return defaults.HistoryLimit
+	}
+
+	realValue, ok := value.(int)
+	if !ok {
+		return defaults.HistoryLimit
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetHistoryLimit(value int) {
+	p.set(ParamHistoryLimit, value)
 }
 
 func (p *Parameters) InputFindActiveStyle() *style.Style {
@@ -812,6 +831,8 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamDefaultShell:
 		return true
+	case ParamHistoryLimit:
+		return true
 	case ParamInputFindActiveStyle:
 		return true
 	case ParamInputFindHighlightStyle:
@@ -901,6 +922,8 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.DefaultFrame, true
 	case ParamDefaultShell:
 		return defaults.DefaultShell, true
+	case ParamHistoryLimit:
+		return defaults.HistoryLimit, true
 	case ParamInputFindActiveStyle:
 		return defaults.InputFindActiveStyle, true
 	case ParamInputFindHighlightStyle:
@@ -1157,6 +1180,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		if err != nil {
 			janetValue.Free()
 			return fmt.Errorf("invalid value for :default-shell: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamHistoryLimit:
+		if !janetOk {
+			realValue, ok := value.(int)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamHistoryLimit, should be int")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated int
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :history-limit: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -1798,6 +1840,11 @@ func init() {
 			Name:      "default-shell",
 			Docstring: "The default shell with which to start panes. Defaults to the value\nof `$SHELL` on startup.",
 			Default:   defaults.DefaultShell,
+		},
+		{
+			Name:      "history-limit",
+			Docstring: "The maximum number of physical lines kept in memory for a pane's\nscrollback buffer. When recording to disk, this is the amount of\nscrollback available in copy mode before cy loads the full history from\nthe .borg file. A non-positive value disables pruning.",
+			Default:   defaults.HistoryLimit,
 		},
 		{
 			Name:      "input-find-active-style",

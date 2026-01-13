@@ -287,7 +287,7 @@ func New(
 	// When recording to disk, avoid keeping a full copy of the session output
 	// in memory. Replay mode will load the history from the .borg file on demand.
 	if len(borgPath) > 0 {
-		p.SetHistoryLimit(5000)
+		p.SetHistoryLimit(params.HistoryLimit())
 		p.SetRetainOutputData(false)
 	}
 

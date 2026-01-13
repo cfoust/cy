@@ -2,6 +2,7 @@ package replay
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
@@ -77,26 +78,121 @@ func (r *Replay) drawLazyStatusBar(state *tty.State) {
 	if r.isPlaying {
 		statusText = p.ReplayTextPlayMode()
 	}
+	if !r.isCopyMode() && r.playbackRate != 1 {
+		statusText += fmt.Sprintf(" %dx", r.playbackRate)
+	}
 
 	leftStatus := leftStatusStyle.Render(statusText)
 
-	message := "scroll or use time controls to load history"
+	// If loading failed, show a simple message.
 	if r.loadErr != nil {
-		message = "error loading recording"
+		rightWidth := geom.Max(size.C-lipgloss.Width(leftStatus), 0)
+		right := statusBarStyle.
+			Width(rightWidth).
+			Padding(0, 1).
+			Render("error loading recording")
+
+		statusBar := statusBarStyle.
+			Width(size.C).
+			Height(1).
+			Render(lipgloss.JoinHorizontal(lipgloss.Left,
+				leftStatus,
+				right,
+			))
+
+		r.render.RenderAt(state.Image, size.R-1, 0, statusBar)
+		return
 	}
 
-	rightWidth := geom.Max(size.C-lipgloss.Width(leftStatus), 0)
-	right := statusBarStyle.
-		Width(rightWidth).
-		Padding(0, 1).
-		Render(message)
+	// Match normal replay status bar behavior for search/incremental prompts.
+	if r.incr.IsActive() {
+		r.renderIncremental(state, statusBarStyle)
+		return
+	}
+	if r.mode == ModeInput || r.isWaiting || r.isEmpty {
+		r.renderSearch(state, statusBarStyle)
+		return
+	}
+
+	// In copy mode, keep the right side blank (or command text in flow mode).
+	if r.isCopyMode() {
+		rightStyle := statusBarStyle.
+			Width(geom.Max(size.C-lipgloss.Width(leftStatus), 0)).
+			Padding(0, 1)
+
+		rightText := ""
+		if r.isFlowMode() {
+			if command, ok := r.getCommand(); ok {
+				rightText = command.Text
+			}
+		}
+
+		statusBar := lipgloss.JoinHorizontal(lipgloss.Left,
+			leftStatus,
+			rightStyle.Render(rightText),
+		)
+
+		r.render.RenderAt(state.Image, size.R-1, 0, statusBar)
+		return
+	}
+
+	// In time mode, render an approximation of the normal time status bar using
+	// whatever information is available. Unknown parts are filled with '?'.
+	index := r.Location().Index
+	events := r.Events()
+
+	timestamp := ""
+	timestampFormat := r.params.TimestampFormat()
+	if index >= 0 && index < len(events) {
+		timestamp = events[index].Stamp.Format(timestampFormat)
+	} else if r.currentTime.IsZero() {
+		placeholderWidth := len(timestampFormat)
+		if placeholderWidth < 1 {
+			placeholderWidth = 1
+		}
+		timestamp = strings.Repeat("?", placeholderWidth)
+	} else {
+		timestamp = r.currentTime.Format(timestampFormat)
+	}
+
+	leftSide := lipgloss.JoinHorizontal(lipgloss.Top,
+		leftStatus,
+		statusBarStyle.
+			Padding(0, 1).
+			Render(timestamp),
+	)
+
+	progressWidth := size.C - lipgloss.Width(leftSide) - 3
+	if progressWidth < 0 {
+		progressWidth = 0
+	}
+
+	progressBar := ""
+	if progressWidth > 0 {
+		if len(events) == 0 || index < 0 {
+			progressBar = strings.Repeat("?", progressWidth)
+		} else {
+			percent := int(
+				(float64(index) / float64(len(events))) * float64(progressWidth),
+			)
+			for i := 0; i < progressWidth; i++ {
+				if i <= percent {
+					progressBar += "▒"
+				} else {
+					progressBar += "-"
+				}
+			}
+		}
+	}
+
+	progressBar = statusBarStyle.Render("[" + progressBar + "]")
 
 	statusBar := statusBarStyle.
 		Width(size.C).
 		Height(1).
 		Render(lipgloss.JoinHorizontal(lipgloss.Left,
-			leftStatus,
-			right,
+			leftSide,
+			progressBar,
 		))
 
 	r.render.RenderAt(state.Image, size.R-1, 0, statusBar)
