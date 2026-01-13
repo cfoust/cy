@@ -22,6 +22,38 @@ func (r *Replay) quit() (taro.Model, tea.Cmd) {
 	return r, tea.Quit
 }
 
+// rootPosition captures the current position for detecting viewport movement
+type rootPosition struct {
+	cursor geom.Vec2
+	root   geom.Vec2
+}
+
+// getRoot returns the current cursor position and the root of the first viewport line
+func (r *Replay) getRoot() rootPosition {
+	cursor := r.movement.Cursor()
+	root := cursor
+	if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
+		root = lines[0].Root()
+	}
+	return rootPosition{cursor: cursor, root: root}
+}
+
+// checkAndLoadHistory compares before/after positions and triggers history load if unchanged
+func (r *Replay) checkAndLoadHistory(before, after rootPosition, msg tea.Msg) (taro.Model, tea.Cmd) {
+	if r.historyLoaded || len(r.borgPath) == 0 {
+		return r, nil
+	}
+
+	if before.cursor != after.cursor || before.root != after.root {
+		return r, nil
+	}
+
+	r.pendingMsg = msg
+	r.loadErr = nil
+	r.captureLoadRestore()
+	return r, r.loadHistory()
+}
+
 type ApplyOptionsEvent struct {
 	Options []Option
 }
@@ -249,29 +281,14 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	case taro.MouseMsg:
 		switch msg.Button {
 		case keys.MouseWheelUp:
-			beforeCursor := r.movement.Cursor()
-			beforeRoot := beforeCursor
-			if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
-				beforeRoot = lines[0].Root()
-			}
-
+			before := r.getRoot()
 			r.scrollYDelta(-1)
+			after := r.getRoot()
 
-			if !r.historyLoaded && len(r.borgPath) > 0 {
-				afterCursor := r.movement.Cursor()
-				afterRoot := afterCursor
-				if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
-					afterRoot = lines[0].Root()
-				}
-
-				// If the scroll didn't move anywhere, we've hit the scrollback
-				// limit and should load history from disk.
-				if beforeCursor == afterCursor && beforeRoot == afterRoot {
-					r.pendingMsg = msg
-					r.loadErr = nil
-					r.captureLoadRestore()
-					return r, r.loadHistory()
-				}
+			// If the scroll didn't move anywhere, we've hit the scrollback
+			// limit and should load history from disk.
+			if model, cmd := r.checkAndLoadHistory(before, after, msg); cmd != nil {
+				return model, cmd
 			}
 		case keys.MouseWheelDown:
 			r.scrollYDelta(+1)
@@ -350,27 +367,12 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return r.quit()
 		case ActionBeginning:
 			if r.isCopyMode() {
-				beforeCursor := r.movement.Cursor()
-				beforeRoot := beforeCursor
-				if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
-					beforeRoot = lines[0].Root()
-				}
-
+				before := r.getRoot()
 				r.movement.ScrollTop()
+				after := r.getRoot()
 
-				if !r.historyLoaded && len(r.borgPath) > 0 {
-					afterCursor := r.movement.Cursor()
-					afterRoot := afterCursor
-					if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
-						afterRoot = lines[0].Root()
-					}
-
-					if beforeCursor == afterCursor && beforeRoot == afterRoot {
-						r.pendingMsg = msg
-						r.loadErr = nil
-						r.captureLoadRestore()
-						return r, r.loadHistory()
-					}
+				if model, cmd := r.checkAndLoadHistory(before, after, msg); cmd != nil {
+					return model, cmd
 				}
 				return r, nil
 			}
@@ -420,78 +422,35 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case ActionTimeStepForward:
 			return r, r.gotoIndex(r.Location().Index+1, -1)
 		case ActionScrollUpHalf:
-			beforeCursor := r.movement.Cursor()
-			beforeRoot := beforeCursor
-			if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
-				beforeRoot = lines[0].Root()
-			}
-
+			before := r.getRoot()
 			r.moveCursorY(-(viewport.R / 2))
+			after := r.getRoot()
 
-			if !r.historyLoaded && len(r.borgPath) > 0 {
-				afterCursor := r.movement.Cursor()
-				afterRoot := afterCursor
-				if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
-					afterRoot = lines[0].Root()
-				}
-
-				if beforeCursor == afterCursor && beforeRoot == afterRoot {
-					r.pendingMsg = msg
-					r.loadErr = nil
-					r.captureLoadRestore()
-					return r, r.loadHistory()
-				}
+			if model, cmd := r.checkAndLoadHistory(before, after, msg); cmd != nil {
+				return model, cmd
 			}
 		case ActionScrollDownHalf:
 			r.moveCursorY((viewport.R / 2))
 		case ActionScrollUp:
-			beforeCursor := r.movement.Cursor()
-			beforeRoot := beforeCursor
-			if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
-				beforeRoot = lines[0].Root()
-			}
-
+			before := r.getRoot()
 			r.scrollYDelta(-1)
+			after := r.getRoot()
 
-			if !r.historyLoaded && len(r.borgPath) > 0 {
-				afterCursor := r.movement.Cursor()
-				afterRoot := afterCursor
-				if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
-					afterRoot = lines[0].Root()
-				}
-
-				if beforeCursor == afterCursor && beforeRoot == afterRoot {
-					r.pendingMsg = msg
-					r.loadErr = nil
-					r.captureLoadRestore()
-					return r, r.loadHistory()
-				}
+			if model, cmd := r.checkAndLoadHistory(before, after, msg); cmd != nil {
+				return model, cmd
 			}
 		case ActionScrollDown:
 			r.scrollYDelta(+1)
 		case ActionCursorDown:
 			r.moveCursorY(1)
 		case ActionCursorUp:
-			beforeCursor := r.movement.Cursor()
-			beforeRoot := beforeCursor
-			if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
-				beforeRoot = lines[0].Root()
-			}
-
+			before := r.getRoot()
 			r.moveCursorY(-1)
 
-			if r.isFlowMode() && !r.historyLoaded && len(r.borgPath) > 0 {
-				afterCursor := r.movement.Cursor()
-				afterRoot := afterCursor
-				if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
-					afterRoot = lines[0].Root()
-				}
-
-				if beforeCursor == afterCursor && beforeRoot == afterRoot {
-					r.pendingMsg = msg
-					r.loadErr = nil
-					r.captureLoadRestore()
-					return r, r.loadHistory()
+			if r.isFlowMode() {
+				after := r.getRoot()
+				if model, cmd := r.checkAndLoadHistory(before, after, msg); cmd != nil {
+					return model, cmd
 				}
 			}
 		case ActionCursorLeft:
