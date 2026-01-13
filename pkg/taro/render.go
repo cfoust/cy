@@ -23,6 +23,7 @@ func GetSize(text string) geom.Vec2 {
 type Renderer struct {
 	*lipgloss.Renderer
 	info *terminfo.Terminfo
+	term emu.Terminal
 }
 
 // RenderAtSize renders the given string at (row, col) in `state` with a
@@ -33,14 +34,16 @@ func (r *Renderer) RenderAtSize(
 	rows, cols int,
 	value string,
 ) {
-	term := emu.New()
-	_, _ = term.Write([]byte(emu.LineFeedMode)) // set CRLF mode
-	term.Resize(geom.Size{C: cols, R: rows})
-	r.info.Fprintf(term, terminfo.ClearScreen)
-	r.info.Fprintf(term, terminfo.CursorHome)
-	_, _ = term.Write([]byte(value))
-
-	image.Compose(geom.Vec2{R: row, C: col}, state, term.Screen())
+	_, _ = r.term.Write([]byte("\033[2J"))        // clear screen
+	_, _ = r.term.Write([]byte(emu.LineFeedMode)) // set CRLF mode
+	size := r.term.Size()
+	if cols > size.C || rows > size.R {
+		r.term.Resize(geom.Size{C: cols, R: rows})
+	}
+	r.info.Fprintf(r.term, terminfo.ClearScreen)
+	r.info.Fprintf(r.term, terminfo.CursorHome)
+	_, _ = r.term.Write([]byte(value))
+	image.Compose(geom.Vec2{R: row, C: col}, state, r.term.Screen())
 }
 
 // RenderAt renders the given string at (row, col) in `state`.
@@ -78,6 +81,7 @@ func NewRenderer() *Renderer {
 	return &Renderer{
 		info:     info,
 		Renderer: renderer,
+		term:     emu.New(),
 	}
 }
 
