@@ -40,7 +40,7 @@ func (r *Replay) getRoot() rootPosition {
 
 // checkAndLoadHistory compares before/after positions and triggers history load if unchanged
 func (r *Replay) checkAndLoadHistory(before, after rootPosition, msg tea.Msg) (taro.Model, tea.Cmd) {
-	if r.historyLoaded || len(r.borgPath) == 0 {
+	if r.historyLoaded || len(r.borgPath) == 0 || !r.isFlowMode() {
 		return r, nil
 	}
 
@@ -446,12 +446,10 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case ActionCursorUp:
 			before := r.getRoot()
 			r.moveCursorY(-1)
+			after := r.getRoot()
 
-			if r.isFlowMode() {
-				after := r.getRoot()
-				if model, cmd := r.checkAndLoadHistory(before, after, msg); cmd != nil {
-					return model, cmd
-				}
+			if model, cmd := r.checkAndLoadHistory(before, after, msg); cmd != nil {
+				return model, cmd
 			}
 		case ActionCursorLeft:
 			r.moveCursorX(-1)
