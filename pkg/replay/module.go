@@ -103,6 +103,8 @@ type Replay struct {
 
 	// borgPath is the path of the on-disk recording to load on demand.
 	borgPath string
+	// borgFlush flushes the on-disk recording before loading it, if set.
+	borgFlush func(context.Context) error
 	// Whether the replay history has been loaded from disk.
 	historyLoaded bool
 	// loadingHistory indicates a background disk load is in progress.
@@ -263,6 +265,15 @@ func WithBorgPath(path string) Option {
 		r.historyLoaded = false
 		// Avoid an initial seek; it would require history to be loaded.
 		r.initialCmd = func() tea.Msg { return nil }
+	}
+}
+
+// WithBorgFlush sets a callback that is invoked before loading history from the
+// .borg file. This is used to ensure any buffered writes are flushed to disk
+// so the loader sees the latest output.
+func WithBorgFlush(flush func(context.Context) error) Option {
+	return func(r *Replay) {
+		r.borgFlush = flush
 	}
 }
 

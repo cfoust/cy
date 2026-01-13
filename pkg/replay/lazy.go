@@ -42,6 +42,15 @@ func (r *Replay) loadHistory() tea.Cmd {
 
 	return tea.Batch(
 		func() tea.Msg {
+			if r.borgFlush != nil {
+				if err := r.borgFlush(seekState.Ctx()); err != nil {
+					return loadDoneEvent{
+						player: nil,
+						err:    err,
+					}
+				}
+			}
+
 			p, err := player.FromBorgContext(
 				seekState.Ctx(),
 				r.borgPath,
