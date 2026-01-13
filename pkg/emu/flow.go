@@ -35,7 +35,7 @@ func (s *State) accessPhysicalLines() (getLines func(int) (Line, bool), numLines
 	screen, history, _ := s.getFlowTarget()
 
 	var (
-		historyOffset = s.historyOffset
+		historyOffset  = s.historyOffset
 		numHistory     = len(history)
 		isWrapped      = false
 		screenPhysical = unwrapLines(screen)

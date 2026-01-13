@@ -80,10 +80,7 @@ func (r *Replayable) Output(start, end int) (data []byte, ok bool) {
 	}
 
 	index := 0
-	for {
-		if index >= end {
-			break
-		}
+	for index < end {
 
 		event, err := reader.Read()
 		if err == io.EOF || err == io.ErrUnexpectedEOF {

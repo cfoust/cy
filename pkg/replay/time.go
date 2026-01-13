@@ -85,7 +85,10 @@ func (r *Replay) waitSeekProgress() tea.Cmd {
 		select {
 		case <-seekState.Ctx().Done():
 			return nil
-		case p := <-seekState.progress:
+		case p, ok := <-seekState.progress:
+			if !ok {
+				return nil
+			}
 			if r.seekDelay > 0 {
 				time.Sleep(r.seekDelay)
 			}

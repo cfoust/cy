@@ -231,7 +231,8 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	// disk, allow ActionQuit to cancel.
 	if r.isSeeking {
 		if r.loadingHistory {
-			if action, ok := msg.(ActionEvent); ok && action.Type == ActionQuit {
+			if action, ok := msg.(ActionEvent); ok &&
+				action.Type == ActionQuit {
 				r.pendingMsg = nil
 				r.loadRestore = nil
 				if r.seekState != nil {
@@ -471,7 +472,28 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 		case ActionCursorDown:
 			r.moveCursorY(1)
 		case ActionCursorUp:
+			beforeCursor := r.movement.Cursor()
+			beforeRoot := beforeCursor
+			if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
+				beforeRoot = lines[0].Root()
+			}
+
 			r.moveCursorY(-1)
+
+			if r.isFlowMode() && !r.historyLoaded && len(r.borgPath) > 0 {
+				afterCursor := r.movement.Cursor()
+				afterRoot := afterCursor
+				if lines, _, _ := r.movement.Viewport(); len(lines) > 0 {
+					afterRoot = lines[0].Root()
+				}
+
+				if beforeCursor == afterCursor && beforeRoot == afterRoot {
+					r.pendingMsg = msg
+					r.loadErr = nil
+					r.captureLoadRestore()
+					return r, r.loadHistory()
+				}
+			}
 		case ActionCursorLeft:
 			r.moveCursorX(-1)
 		case ActionCursorRight:
