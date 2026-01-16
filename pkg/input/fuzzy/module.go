@@ -216,7 +216,6 @@ func WithAnimation(
 			ctx,
 			creator(),
 			initial,
-			23,
 			options...,
 		)
 	}

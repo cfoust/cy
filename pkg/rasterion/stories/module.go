@@ -41,7 +41,6 @@ func createStory(drawing Drawing) stories.InitFunc {
 			ctx,
 			&Drawer{drawing: drawing},
 			image.New(geom.DEFAULT_SIZE.Scalar(2)),
-			anim.DEFAULT_FPS,
 		)
 		return animator, nil
 	}

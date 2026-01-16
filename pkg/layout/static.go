@@ -49,7 +49,7 @@ func (s *Static) resetScreen(size geom.Vec2) taro.Cmd {
 			s.Ctx(),
 			&static.Static{},
 			initial,
-			1,
+			anim.WithFPS(1),
 		)
 	} else {
 		bg = frames.NewFramer(

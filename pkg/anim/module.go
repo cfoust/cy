@@ -13,7 +13,7 @@ import (
 	"github.com/cfoust/cy/pkg/anim/slime"
 )
 
-const DEFAULT_FPS = 30
+const DEFAULT_FPS = 23
 
 type Creator = meta.Creator
 type Animation = meta.Animation

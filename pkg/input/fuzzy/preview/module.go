@@ -3,6 +3,7 @@ package preview
 import (
 	"context"
 
+	"github.com/cfoust/cy/pkg/anim"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
@@ -31,7 +32,12 @@ func New(
 	case FrameType:
 		return NewFrame(ctx, args)
 	case AnimationType:
-		return NewAnimation(ctx, initial, args)
+		return NewAnimation(
+			ctx,
+			initial,
+			args,
+			anim.WithFPS(params.AnimationFps()),
+		)
 	case LayoutType:
 		return NewLayout(
 			ctx,

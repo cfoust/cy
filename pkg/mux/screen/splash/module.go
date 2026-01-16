@@ -115,7 +115,6 @@ func New(
 			lifetime.Ctx(),
 			&maelstrom.Maelstrom{},
 			initial,
-			23,
 		)
 	} else {
 		bg = frames.NewFramer(

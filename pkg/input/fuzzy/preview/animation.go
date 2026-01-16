@@ -16,6 +16,7 @@ func NewAnimation(
 	ctx context.Context,
 	initial image.Image,
 	args AnimationType,
+	options ...anim.Option,
 ) mux.Screen {
 	animation, ok := anim.Animations[args.Name]
 	if !ok {
@@ -26,6 +27,6 @@ func NewAnimation(
 		ctx,
 		animation(),
 		initial,
-		anim.DEFAULT_FPS,
+		options...,
 	)
 }

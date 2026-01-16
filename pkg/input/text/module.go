@@ -78,7 +78,6 @@ func WithAnimation(
 			ctx,
 			creator(),
 			image,
-			23,
 			options...,
 		)
 	}

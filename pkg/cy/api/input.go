@@ -38,7 +38,7 @@ type FuzzyParams struct {
 }
 
 func getAnimStart(p *params.Parameters) time.Time {
-	delay := time.Duration(geom.Max(0, p.AnimateDelay()))
+	delay := time.Duration(geom.Max(0, p.AnimationDelay()))
 	return time.Now().Add(delay * time.Second)
 }
 
@@ -135,6 +135,7 @@ func (i *InputModule) Find(
 			fuzzy.WithAnimation(
 				initial,
 				creator,
+				anim.WithFPS(client.Params().AnimationFps()),
 				anim.WithStartTime(
 					getAnimStart(client.Params()),
 				),
@@ -259,6 +260,7 @@ func (i *InputModule) Text(
 			text.WithAnimation(
 				state.Image,
 				creator,
+				anim.WithFPS(client.Params().AnimationFps()),
 				anim.WithStartTime(
 					getAnimStart(client.Params()),
 				),

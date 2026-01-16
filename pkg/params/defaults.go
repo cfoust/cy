@@ -38,11 +38,13 @@ type defaultParams struct {
 	// if you like cy's animations but find them distracting when working
 	// quickly. This only applies to the animations that play when using the
 	// (input/*) family of functions.
-	AnimateDelay int
+	AnimationDelay int
 	// A list of all of the enabled animations that will be used by
 	// (input/find). If this is an empty array, all built-in animations
 	// will be enabled.
 	Animations []string
+	// The target frames per second (FPS) for animations.
+	AnimationFps int
 	// The directory in which .borg files will be saved. This is [inferred
 	// on startup](/replay-mode.md#recording-to-disk). If
 	// set to an empty string, recording to disk is disabled.
@@ -156,7 +158,8 @@ type defaultParams struct {
 var (
 	defaults = defaultParams{
 		Animate:            true,
-		AnimateDelay:       0,
+		AnimationDelay:     0,
+		AnimationFps:       23,
 		DataDirectory:      "",
 		HistoryLimit:       5000,
 		DefaultFrame:       "",

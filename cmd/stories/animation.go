@@ -50,7 +50,6 @@ func (s *AnimationStory) initialize(size geom.Size) {
 		s.Ctx(),
 		s.creator(),
 		createInitial(size),
-		23,
 	)
 	_ = s.animator.Resize(size)
 }

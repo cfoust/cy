@@ -76,25 +76,31 @@ func WithStartTime(start time.Time) Option {
 	}
 }
 
+func WithFPS(fps int) Option {
+	return func(a *Animator) {
+		if fps > 0 {
+			a.fps = fps
+		}
+	}
+}
+
 func NewAnimator(
 	ctx context.Context,
 	animation Animation,
 	initial image.Image,
-	fps int,
 	options ...Option,
 ) *taro.Program {
-	frameDuration := time.Second / time.Duration(fps)
-
 	a := &Animator{
-		animation:     animation,
-		start:         time.Now(),
-		fps:           fps,
-		frameDuration: frameDuration,
+		animation: animation,
+		start:     time.Now(),
+		fps:       DEFAULT_FPS,
 	}
 
 	for _, option := range options {
 		option(a)
 	}
+
+	a.frameDuration = time.Second / time.Duration(a.fps)
 
 	animation.Init(initial)
 

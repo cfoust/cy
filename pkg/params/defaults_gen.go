@@ -10,7 +10,8 @@ import (
 
 const (
 	ParamAnimate                  = "animate"
-	ParamAnimateDelay             = "animate-delay"
+	ParamAnimationDelay           = "animation-delay"
+	ParamAnimationFps             = "animation-fps"
 	ParamAnimations               = "animations"
 	ParamColorError               = "color-error"
 	ParamColorInfo                = "color-info"
@@ -71,22 +72,40 @@ func (p *Parameters) SetAnimate(value bool) {
 	p.set(ParamAnimate, value)
 }
 
-func (p *Parameters) AnimateDelay() int {
-	value, ok := p.Get(ParamAnimateDelay)
+func (p *Parameters) AnimationDelay() int {
+	value, ok := p.Get(ParamAnimationDelay)
 	if !ok {
-		return defaults.AnimateDelay
+		return defaults.AnimationDelay
 	}
 
 	realValue, ok := value.(int)
 	if !ok {
-		return defaults.AnimateDelay
+		return defaults.AnimationDelay
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetAnimateDelay(value int) {
-	p.set(ParamAnimateDelay, value)
+func (p *Parameters) SetAnimationDelay(value int) {
+	p.set(ParamAnimationDelay, value)
+}
+
+func (p *Parameters) AnimationFps() int {
+	value, ok := p.Get(ParamAnimationFps)
+	if !ok {
+		return defaults.AnimationFps
+	}
+
+	realValue, ok := value.(int)
+	if !ok {
+		return defaults.AnimationFps
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetAnimationFps(value int) {
+	p.set(ParamAnimationFps, value)
 }
 
 func (p *Parameters) Animations() []string {
@@ -813,7 +832,9 @@ func (p *Parameters) isDefault(key string) bool {
 	switch key {
 	case ParamAnimate:
 		return true
-	case ParamAnimateDelay:
+	case ParamAnimationDelay:
+		return true
+	case ParamAnimationFps:
 		return true
 	case ParamAnimations:
 		return true
@@ -904,8 +925,10 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 	switch key {
 	case ParamAnimate:
 		return defaults.Animate, true
-	case ParamAnimateDelay:
-		return defaults.AnimateDelay, true
+	case ParamAnimationDelay:
+		return defaults.AnimationDelay, true
+	case ParamAnimationFps:
+		return defaults.AnimationFps, true
 	case ParamAnimations:
 		return defaults.Animations, true
 	case ParamColorError:
@@ -1013,11 +1036,11 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
-	case ParamAnimateDelay:
+	case ParamAnimationDelay:
 		if !janetOk {
 			realValue, ok := value.(int)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamAnimateDelay, should be int")
+				return fmt.Errorf("invalid value for ParamAnimationDelay, should be int")
 			}
 			p.set(key, realValue)
 			return nil
@@ -1027,7 +1050,26 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :animate-delay: %s", err)
+			return fmt.Errorf("invalid value for :animation-delay: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamAnimationFps:
+		if !janetOk {
+			realValue, ok := value.(int)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamAnimationFps, should be int")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated int
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :animation-fps: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -1797,9 +1839,14 @@ func init() {
 			Default:   defaults.Animate,
 		},
 		{
-			Name:      "animate-delay",
+			Name:      "animation-delay",
 			Docstring: "The delay (in seconds) before animations should begin. This is useful\nif you like cy's animations but find them distracting when working\nquickly. This only applies to the animations that play when using the\n(input/*) family of functions.",
-			Default:   defaults.AnimateDelay,
+			Default:   defaults.AnimationDelay,
+		},
+		{
+			Name:      "animation-fps",
+			Docstring: "The target frames per second (FPS) for animations.",
+			Default:   defaults.AnimationFps,
 		},
 		{
 			Name:      "animations",
