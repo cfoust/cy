@@ -294,10 +294,10 @@ var controlToKey = map[rune]Key{
 	// keyCR: kMod('m', KeyModCtrl) | k(KittyKeyEnter)
 	// keyESC: kMod('[', KeyModCtrl) | k(KittyKeyEscape)
 	// keyDEL: kMod('?', KeyModCtrl) | k(KittyKeyBackspace)
-	keyCR:  k(KittyKeyEnter),
-	keyDEL: k(KittyKeyBackspace),
-	keyHT:  k(KittyKeyTab),
-	keyESC: k(KittyKeyEscape),
+	keyCR:  kMod('m', KeyModCtrl),
+	keyDEL: kMod('?', KeyModCtrl),
+	keyHT:  kMod('i', KeyModCtrl),
+	keyESC: kMod('[', KeyModCtrl),
 	keyNUL: kMod('@', KeyModCtrl),
 	keySOH: kMod('a', KeyModCtrl),
 	keySTX: kMod('b', KeyModCtrl),
@@ -369,6 +369,10 @@ var extSequences = func() map[string]Key {
 	}
 
 	for i := keyNUL + 1; i <= keyDEL; i++ {
+		// ESC is skipped because \x1b is both the escape key AND
+		// a prefix for alt+letter sequences. Adding it here would
+		// break alt+letter detection. ESC is handled separately
+		// via the sequences map.
 		if i == keyESC {
 			continue
 		}
@@ -391,8 +395,8 @@ var extSequences = func() map[string]Key {
 		Mod:  KeyModAlt,
 	}
 	s["\x1b\x1b"] = Key{
-		Code: KittyKeyEscape,
-		Mod:  KeyModAlt,
+		Code: '[',
+		Mod:  KeyModCtrl | KeyModAlt,
 	}
 	return s
 }()
@@ -507,7 +511,7 @@ func Read(b []byte) (event any, w int) {
 		// We didn't find an escape sequence, nor a valid rune. Was this a
 		// lone escape character at the end of the input?
 		if alt && len(b) == 1 {
-			return k(KittyKeyEscape), 1
+			return controlToKey[keyESC], 1
 		}
 
 		// The character at the current position is neither an escape

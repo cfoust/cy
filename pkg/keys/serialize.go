@@ -108,7 +108,7 @@ var xtermSequences = map[string]Key{
 	"\x1b[29~": k(KittyKeyF16), // F16 - vt100, xterm, also urxvt
 
 	// Guaranteed mappings
-	"\x1b": k(KittyKeyEscape),
+	"\x1b": kMod('[', KeyModCtrl),
 }
 
 // inverseSequences is a mapping from a Key to its byte sequence.

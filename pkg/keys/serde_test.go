@@ -26,7 +26,10 @@ func TestDeserialize(t *testing.T) {
 	cases := []deCase{
 		// legacy
 		de("ctrl+c", string([]rune{keyETX}), kMod('c', KeyModCtrl)),
-		de("escape", "\x1b", k(KittyKeyEscape)),
+		de("ctrl+[", "\x1b", kMod('[', KeyModCtrl)),
+		de("ctrl+m", "\x0d", kMod('m', KeyModCtrl)),
+		de("ctrl+i", "\x09", kMod('i', KeyModCtrl)),
+		de("ctrl+?", "\x7f", kMod('?', KeyModCtrl)),
 		de("alt+o", "\x1bo", Key{
 			Code:    'o',
 			Shifted: 'O',
@@ -230,13 +233,25 @@ func TestSerialize(t *testing.T) {
 			all|text|types, "\x1b[99;5;99u",
 		),
 		se(
-			"disambiguate",
-			Key{
-				Code: KittyKeyEscape,
-				Mod:  KeyModCtrl,
-			},
-			legacy, string(keyESC), // wrong?
-			disambiguate, "\x1b[27;5u",
+			"ctrl+[ (escape)",
+			kMod('[', KeyModCtrl),
+			legacy, string(keyESC),
+			disambiguate, "\x1b[91;5u",
+		),
+		se(
+			"ctrl+m (enter)",
+			kMod('m', KeyModCtrl),
+			legacy, string(keyCR),
+		),
+		se(
+			"ctrl+i (tab)",
+			kMod('i', KeyModCtrl),
+			legacy, string(keyHT),
+		),
+		se(
+			"ctrl+? (backspace)",
+			kMod('?', KeyModCtrl),
+			legacy, string(keyDEL),
 		),
 		se(
 			"shift+rune",
