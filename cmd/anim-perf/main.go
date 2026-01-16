@@ -29,12 +29,6 @@ var CLI struct {
 }
 
 func main() {
-	consoleWriter := zerolog.ConsoleWriter{
-		Out:        os.Stdout,
-		TimeFormat: time.RFC3339,
-	}
-	log.Logger = log.Output(consoleWriter)
-
 	kong.Parse(&CLI,
 		kong.Name("anim-perf"),
 		kong.Description("Measure performance characteristics of cy's animations."),
@@ -43,6 +37,17 @@ func main() {
 			Compact: true,
 			Summary: true,
 		}))
+
+	// Set up logging - disable for JSON-only output to keep stdout clean
+	if CLI.Format == "json" {
+		zerolog.SetGlobalLevel(zerolog.Disabled)
+	} else {
+		consoleWriter := zerolog.ConsoleWriter{
+			Out:        os.Stderr,
+			TimeFormat: time.RFC3339,
+		}
+		log.Logger = log.Output(consoleWriter)
+	}
 
 	// Validate configuration
 	if CLI.Rows <= 0 || CLI.Cols <= 0 {
