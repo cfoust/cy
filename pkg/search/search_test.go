@@ -120,8 +120,14 @@ func TestPassthrough(t *testing.T) {
 
 	program := taro.New(ctx, s, taro.WithKittyKeys)
 
-	// Reinitialize the replay watcher manually
-	program.Send(taro.NewWatcher(ctx, s.loader).Wait()())
+	// Reinitialize the replay watcher manually in a goroutine to avoid
+	// blocking the test goroutine
+	go func() {
+		msg := taro.NewWatcher(ctx, s.loader).Wait()()
+		if msg != nil {
+			program.Send(msg)
+		}
+	}()
 
 	actions := make(chan bind.BindEvent)
 	copies := make(chan replay.CopyEvent)
@@ -174,12 +180,12 @@ func TestPassthrough(t *testing.T) {
 	program.Send(replay.ActionEvent{Type: replay.ActionCursorLeft})
 	program.Send(replay.ActionEvent{Type: replay.ActionSelect})
 	program.Send(replay.CopyEvent{})
-	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	copyCtx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 	select {
 	case _copy := <-copies:
 		require.Equal(t, "r", _copy.Text)
-	case <-ctx.Done():
+	case <-copyCtx.Done():
 		t.Fatalf("timeout waiting for copy")
 	}
 }
