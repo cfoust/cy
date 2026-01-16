@@ -7,6 +7,9 @@ install:
 test *args:
   go test ./pkg/... ./cmd/... {{args}}
 
+test-race *args:
+  go test -race ./pkg/... ./cmd/... {{args}}
+
 stories *args:
   go run ./cmd/stories/... {{args}}
 
