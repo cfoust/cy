@@ -152,7 +152,7 @@ func (k Key) legacyBytes() (data []byte, ok bool) {
 	if haveAlt {
 		data = append(data, '\x1b')
 	}
-	if haveShift {
+	if haveShift && k.Shifted != 0 {
 		code = k.Shifted
 	}
 

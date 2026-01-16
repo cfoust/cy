@@ -254,6 +254,22 @@ func TestSerialize(t *testing.T) {
 			legacy, string(keyDEL),
 		),
 		se(
+			"shift+space",
+			Key{
+				Code: ' ',
+				Mod:  KeyModShift,
+			},
+			legacy, " ",
+		),
+		se(
+			"shift+enter",
+			Key{
+				Code: 13,
+				Mod:  KeyModShift,
+			},
+			legacy, string(keyCR),
+		),
+		se(
 			"shift+rune",
 			Key{
 				Code:    'o',
