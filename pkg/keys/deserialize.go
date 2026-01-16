@@ -1,12 +1,48 @@
 package keys
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
 	"sort"
 	"unicode"
 	"unicode/utf8"
 )
+
+// Bracketed paste mode sequences
+var (
+	bracketedPasteStart = []byte("\x1b[200~")
+	bracketedPasteEnd   = []byte("\x1b[201~")
+)
+
+// parseBracketedPaste checks if input starts with a bracketed paste sequence.
+// Returns the paste content as a Key with KeyText, the total bytes consumed,
+// and whether a bracketed paste was found.
+func parseBracketedPaste(b []byte) (key Key, width int, ok bool) {
+	if !bytes.HasPrefix(b, bracketedPasteStart) {
+		return Key{}, 0, false
+	}
+
+	// Find the end marker
+	endIdx := bytes.Index(b[len(bracketedPasteStart):], bracketedPasteEnd)
+	if endIdx == -1 {
+		// No end marker found - incomplete paste, don't consume anything
+		return Key{}, 0, false
+	}
+
+	// Extract the pasted text (between start and end markers)
+	pasteStart := len(bracketedPasteStart)
+	pasteEnd := pasteStart + endIdx
+	pastedText := string(b[pasteStart:pasteEnd])
+
+	// Total width includes both markers and the content
+	width = pasteEnd + len(bracketedPasteEnd)
+
+	return Key{
+		Code: KeyText,
+		Text: pastedText,
+	}, width, true
+}
 
 func k(r rune) Key {
 	return Key{
@@ -447,6 +483,11 @@ func detectSequence(input []byte) (hasSeq bool, width int, event any) {
 func Read(b []byte) (event any, w int) {
 	key, width, err := parseKittySequence(b)
 	if err == nil {
+		return key, width
+	}
+
+	// Detect bracketed paste sequences.
+	if key, width, ok := parseBracketedPaste(b); ok {
 		return key, width
 	}
 

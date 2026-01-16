@@ -80,6 +80,23 @@ func TestDeserialize(t *testing.T) {
 			Code: KeyText,
 			Text: "foo\nbar",
 		}),
+		// bracketed paste
+		de("bracketed paste", "\x1b[200~hello world\x1b[201~", Key{
+			Code: KeyText,
+			Text: "hello world",
+		}),
+		de(
+			"bracketed paste with newlines",
+			"\x1b[200~line1\nline2\nline3\x1b[201~",
+			Key{
+				Code: KeyText,
+				Text: "line1\nline2\nline3",
+			},
+		),
+		de("bracketed paste empty", "\x1b[200~\x1b[201~", Key{
+			Code: KeyText,
+			Text: "",
+		}),
 		// kitty
 		de("ru: л", "\x1b[1083::107u", Key{
 			Code: 'л',
