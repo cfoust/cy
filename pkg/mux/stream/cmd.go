@@ -91,6 +91,18 @@ func (c *Cmd) setStatus(status CmdStatus) {
 	c.statusUpdates.Publish(status)
 }
 
+func (c *Cmd) Status() CmdStatus {
+	c.RLock()
+	defer c.RUnlock()
+	return c.status
+}
+
+func (c *Cmd) ExitError() error {
+	c.RLock()
+	defer c.RUnlock()
+	return c.exitError
+}
+
 func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 	started := make(chan error)
 	done := make(chan error)

@@ -24,7 +24,7 @@ func TestHealthy(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	require.Equal(t, CmdStatusHealthy, cmd.status)
+	require.Equal(t, CmdStatusHealthy, cmd.Status())
 }
 
 func TestFailLoop(t *testing.T) {
@@ -43,7 +43,7 @@ func TestFailLoop(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	require.Equal(t, CmdStatusFailed, cmd.status)
+	require.Equal(t, CmdStatusFailed, cmd.Status())
 }
 
 func TestComplete(t *testing.T) {
@@ -61,7 +61,7 @@ func TestComplete(t *testing.T) {
 
 	time.Sleep(1*time.Second + 250*time.Millisecond)
 
-	require.Equal(t, CmdStatusComplete, cmd.status)
+	require.Equal(t, CmdStatusComplete, cmd.Status())
 }
 
 func TestKilled(t *testing.T) {
@@ -82,7 +82,7 @@ func TestKilled(t *testing.T) {
 	cancel()
 	time.Sleep(250 * time.Millisecond)
 
-	require.Equal(t, CmdStatusKilled, cmd.status)
+	require.Equal(t, CmdStatusKilled, cmd.Status())
 }
 
 func TestFailed(t *testing.T) {
@@ -107,8 +107,8 @@ func TestFailed(t *testing.T) {
 
 	time.Sleep(250 * time.Millisecond)
 
-	require.Equal(t, CmdStatusFailed, cmd.status)
+	require.Equal(t, CmdStatusFailed, cmd.Status())
 	err := <-errc
 	require.Error(t, err)
-	require.Error(t, cmd.exitError)
+	require.Error(t, cmd.ExitError())
 }

@@ -164,7 +164,8 @@ func execute(
 
 func (s *Search) waitResult() tea.Cmd {
 	lifetime := s.searchLifetime
-	if s.resultc == nil || lifetime == nil {
+	resultc := s.resultc
+	if resultc == nil || lifetime == nil {
 		return nil
 	}
 
@@ -172,7 +173,7 @@ func (s *Search) waitResult() tea.Cmd {
 		select {
 		case <-lifetime.Ctx().Done():
 			return nil
-		case result, more := <-s.resultc:
+		case result, more := <-resultc:
 			if !more {
 				return nil
 			}
