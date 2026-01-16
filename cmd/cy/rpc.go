@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cfoust/cy/pkg/cy/api"
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -145,10 +146,16 @@ func (s *Server) callRPC(
 		}
 
 		var context interface{} = nil
-		if client, found := s.cy.InferClient(
-			tree.NodeID(args.Node),
-		); found {
-			context = client
+		sourceNodeID := tree.NodeID(args.Node)
+		if client, found := s.cy.InferClient(sourceNodeID); found {
+			if args.Node != 0 {
+				context = &api.ExecContext{
+					Client:     client,
+					SourceNode: &sourceNodeID,
+				}
+			} else {
+				context = client
+			}
 		}
 
 		result, err := s.cy.ExecuteCall(

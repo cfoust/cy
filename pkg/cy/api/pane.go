@@ -46,6 +46,12 @@ func (p *PaneModule) HistoryBackward(context interface{}) error {
 }
 
 func (p *PaneModule) Current(context interface{}) *tree.NodeID {
+	// If exec context has a source node, return that
+	if sourceNode := getSourceNode(context); sourceNode != nil {
+		return sourceNode
+	}
+
+	// Fall back to client's currently viewed node
 	client, ok := context.(Client)
 	if !ok {
 		return nil

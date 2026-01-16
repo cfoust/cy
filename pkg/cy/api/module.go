@@ -37,7 +37,28 @@ type Server interface {
 	RerenderClients()
 }
 
+// ExecContext wraps a Client with the source node where execution originated.
+// This is used when code is executed via `cy exec` to preserve the pane ID
+// from which the command was invoked.
+type ExecContext struct {
+	Client
+	SourceNode *tree.NodeID
+}
+
+// getSourceNode returns the source node from context if available.
+func getSourceNode(context interface{}) *tree.NodeID {
+	if exec, ok := context.(*ExecContext); ok {
+		return exec.SourceNode
+	}
+	return nil
+}
+
 func getClient(context interface{}) (Client, error) {
+	// Unwrap ExecContext if present
+	if exec, ok := context.(*ExecContext); ok {
+		return exec.Client, nil
+	}
+
 	client, ok := context.(Client)
 	if !ok {
 		return nil, fmt.Errorf(

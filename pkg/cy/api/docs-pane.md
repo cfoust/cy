@@ -6,7 +6,7 @@ Attach to `pane`, which is a [NodeID](/api.md#nodeid) that must correspond to a 
 
 # doc: Current
 
-Get the [NodeID](/api.md#nodeid) of the current pane.
+Get the [NodeID](/api.md#nodeid) of the current pane. When called from `cy exec`, returns the pane where the command was invoked. When called from a keybinding or action, returns the pane the client is viewing.
 
 # doc: Screen
 
