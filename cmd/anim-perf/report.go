@@ -25,7 +25,8 @@ func printTableReport(report Report) {
 
 	// Print results
 	for _, result := range report.Results {
-		fmt.Printf("%-12s %7.2fms %7.2fms %7.2fms %7.2fms %7.2fms %7.2fms %10.1f\n",
+		fmt.Printf(
+			"%-12s %7.2fms %7.2fms %7.2fms %7.2fms %7.2fms %7.2fms %10.1f\n",
 			truncate(result.Name, 12),
 			result.Stats.MinMs,
 			result.Stats.MaxMs,

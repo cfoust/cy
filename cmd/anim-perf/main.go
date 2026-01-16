@@ -29,14 +29,18 @@ var CLI struct {
 }
 
 func main() {
-	kong.Parse(&CLI,
+	kong.Parse(
+		&CLI,
 		kong.Name("anim-perf"),
-		kong.Description("Measure performance characteristics of cy's animations."),
+		kong.Description(
+			"Measure performance characteristics of cy's animations.",
+		),
 		kong.UsageOnError(),
 		kong.ConfigureHelp(kong.HelpOptions{
 			Compact: true,
 			Summary: true,
-		}))
+		}),
+	)
 
 	// Set up logging - disable for JSON-only output to keep stdout clean
 	if CLI.Format == "json" {
@@ -70,7 +74,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Error creating CPU profile: %v\n", err)
 			os.Exit(1)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 
 		if err := pprof.StartCPUProfile(f); err != nil {
 			fmt.Fprintf(os.Stderr, "Error starting CPU profile: %v\n", err)
@@ -85,7 +89,11 @@ func main() {
 	if CLI.AnimationID != "" {
 		// Validate the animation ID
 		if _, ok := anim.Animations[CLI.AnimationID]; !ok {
-			fmt.Fprintf(os.Stderr, "Error: unknown animation '%s'\n\n", CLI.AnimationID)
+			fmt.Fprintf(
+				os.Stderr,
+				"Error: unknown animation '%s'\n\n",
+				CLI.AnimationID,
+			)
 			fmt.Fprintf(os.Stderr, "Available animations:\n")
 			availableNames := make([]string, 0, len(anim.Animations))
 			for name := range anim.Animations {
@@ -150,10 +158,10 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Error creating memory profile: %v\n", err)
 			os.Exit(1)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 
 		// Run GC before taking heap snapshot
-		pprof.Lookup("heap").WriteTo(f, 0)
+		_ = pprof.Lookup("heap").WriteTo(f, 0)
 		log.Info().Msgf("Memory profile saved: %s", CLI.Memory)
 	}
 
@@ -204,7 +212,11 @@ type Report struct {
 }
 
 // runBenchmark executes a benchmark for a single animation
-func runBenchmark(animation anim.Animation, name string, config Config) (Result, error) {
+func runBenchmark(
+	animation anim.Animation,
+	name string,
+	config Config,
+) (Result, error) {
 	// Initialize the animation with the specified size
 	initialImage := image.New(geom.Vec2{
 		R: config.Size.R,
