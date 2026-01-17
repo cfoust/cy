@@ -33,7 +33,10 @@ type InputMessage DataMessage
 func (i InputMessage) Type() MessageType { return MessageTypeInput }
 
 // Output that should be sent to the client.
-type OutputMessage DataMessage
+type OutputMessage struct {
+	Data   []byte
+	Stderr bool
+}
 
 func (i OutputMessage) Type() MessageType { return MessageTypeOutput }
 

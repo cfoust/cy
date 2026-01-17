@@ -27,13 +27,13 @@ func newExecIO(conn Connection, vm *janet.VM) (*execIO, error) {
 		done: make(chan struct{}),
 	}
 
-	go e.streamOutput(conn.Ctx(), conn, pipe.Out)
-	go e.streamOutput(conn.Ctx(), conn, pipe.Err)
+	go e.streamOutput(conn.Ctx(), conn, pipe.Out, false)
+	go e.streamOutput(conn.Ctx(), conn, pipe.Err, true)
 
 	return e, nil
 }
 
-func (e *execIO) streamOutput(ctx context.Context, conn Connection, r io.Reader) {
+func (e *execIO) streamOutput(ctx context.Context, conn Connection, r io.Reader, stderr bool) {
 	buf := make([]byte, 4096)
 	for {
 		select {
@@ -45,7 +45,8 @@ func (e *execIO) streamOutput(ctx context.Context, conn Connection, r io.Reader)
 		n, err := r.Read(buf)
 		if n > 0 {
 			_ = conn.Send(P.OutputMessage{
-				Data: buf[:n],
+				Data:   buf[:n],
+				Stderr: stderr,
 			})
 		}
 

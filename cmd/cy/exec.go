@@ -147,7 +147,11 @@ loop:
 
 			switch msg := packet.Contents.(type) {
 			case *P.OutputMessage:
-				_, _ = os.Stdout.Write(msg.Data)
+				if msg.Stderr {
+					_, _ = os.Stderr.Write(msg.Data)
+				} else {
+					_, _ = os.Stdout.Write(msg.Data)
+				}
 			case *P.RPCResponseMessage:
 				response = msg
 				break loop
