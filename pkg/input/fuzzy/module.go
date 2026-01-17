@@ -138,14 +138,18 @@ func (f *Fuzzy) setSelected(index int) taro.Cmd {
 }
 
 func (f *Fuzzy) emitOption() taro.Cmd {
-	if len(f.getOptions()) == 0 {
+	options := f.getOptions()
+	if len(options) == 0 {
 		return nil
 	}
 
+	// Capture the option now to avoid race conditions when the closure
+	// runs later
+	option := options[f.selected]
 	return func() taro.Msg {
 		return taro.PublishMsg{
 			Msg: SelectedEvent{
-				Option: f.getOptions()[f.selected],
+				Option: option,
 			},
 		}
 	}
