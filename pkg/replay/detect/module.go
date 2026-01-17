@@ -26,6 +26,16 @@ type Detector struct {
 
 	// The directory as provided by OSC-7 at the last prompt
 	lastDir string
+
+	// OSC 133 semantic prompt detection state
+	// Whether we've detected OSC 133 sequences and should prefer them over
+	// CY_HOOK
+	useOSC133 bool
+	// Whether we have a pending exit code from an OSC 133 D marker
+	hasLastExitCode bool
+	// The most recent exit code from an OSC 133 D marker (only valid if
+	// hasLastExitCode is true)
+	lastExitCode int
 }
 
 func (d *Detector) getLine(

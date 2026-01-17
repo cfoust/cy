@@ -24,6 +24,11 @@ type Command struct {
 	// not be valid.
 	Pending bool
 
+	// Whether the exit code is known (OSC 133 provides it, CY_HOOK does not)
+	HasExitCode bool
+	// The exit code of the command (only valid if HasExitCode is true)
+	ExitCode int
+
 	// Used only to allow us to skip some work for subsequent commands,
 	// since there is no direct association between WriteIDs and indices
 	promptedWrite emu.WriteID

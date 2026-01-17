@@ -3,6 +3,7 @@ package emu
 import (
 	"encoding/base64"
 	"fmt"
+	"strconv"
 
 	"github.com/mattn/go-runewidth"
 )
@@ -180,6 +181,8 @@ func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
 		}
 	case 52: // clipboard operations
 		t.handleOSC52(s)
+	case 133: // semantic prompt (FinalTerm/iTerm2 shell integration)
+		t.handleOSC133(s)
 	default:
 		t.logf("unknown OSC command %d\n", d)
 		// TODO: s.dump()
@@ -448,4 +451,41 @@ func (t *State) handleOSC52(s strEscape) {
 	}
 
 	// TODO(cfoust): 08/10/25 publish event
+}
+
+// handleOSC133 processes OSC 133 semantic prompt sequences.
+//
+// Format: OSC 133 ; <marker> [; <params>] ST
+//   - A: Prompt started
+//   - B: Command started (user input begins)
+//   - C: Command executed
+//   - D[;<exit-code>]: Command finished with optional exit code
+func (t *State) handleOSC133(s strEscape) {
+	if len(s.args) < 2 {
+		return
+	}
+
+	marker := s.argString(1, "")
+	if len(marker) == 0 {
+		return
+	}
+
+	writeID := t.dirty.LastWrite()
+
+	switch marker[0] {
+	case 'A': // Prompt started
+		t.dirty.AddSemanticPrompt(PromptStart, writeID, nil)
+	case 'B': // Command started (user input begins)
+		t.dirty.AddSemanticPrompt(CommandStart, writeID, nil)
+	case 'C': // Command executed
+		t.dirty.AddSemanticPrompt(CommandExecuted, writeID, nil)
+	case 'D': // Command finished with optional exit code
+		var exitCode *int
+		if len(s.args) >= 3 {
+			if code, err := strconv.Atoi(s.argString(2, "")); err == nil {
+				exitCode = &code
+			}
+		}
+		t.dirty.AddSemanticPrompt(CommandFinished, writeID, exitCode)
+	}
 }

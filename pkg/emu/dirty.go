@@ -4,6 +4,27 @@ import (
 	"github.com/cfoust/cy/pkg/geom"
 )
 
+// SemanticPromptType represents the type of OSC 133 semantic prompt marker.
+type SemanticPromptType int
+
+const (
+	// PromptStart indicates OSC 133 ; A - prompt started
+	PromptStart SemanticPromptType = iota
+	// CommandStart indicates OSC 133 ; B - command input started
+	CommandStart
+	// CommandExecuted indicates OSC 133 ; C - command executed
+	CommandExecuted
+	// CommandFinished indicates OSC 133 ; D - command finished with exit code
+	CommandFinished
+)
+
+// SemanticPromptEvent represents an OSC 133 semantic prompt event.
+type SemanticPromptEvent struct {
+	Type     SemanticPromptType
+	WriteID  WriteID
+	ExitCode *int // Only set for CommandFinished (D marker)
+}
+
 type Scroll struct {
 	Up            bool
 	Origin, Count int
@@ -34,6 +55,10 @@ type Dirty struct {
 	Cleared bool
 
 	Flag ChangeFlag
+
+	// SemanticPrompts contains OSC 133 semantic prompt events since the
+	// last Reset().
+	SemanticPrompts []SemanticPromptEvent
 }
 
 func (t *State) Changes() *Dirty {
@@ -78,6 +103,31 @@ func (t *State) markDirtyLine(row int) {
 	t.dirty.Lines[index] = true
 }
 
+// AddSemanticPrompt records an OSC 133 semantic prompt event.
+func (d *Dirty) AddSemanticPrompt(
+	promptType SemanticPromptType,
+	writeID WriteID,
+	exitCode *int,
+) {
+	d.SemanticPrompts = append(d.SemanticPrompts, SemanticPromptEvent{
+		Type:     promptType,
+		WriteID:  writeID,
+		ExitCode: exitCode,
+	})
+}
+
+// HasSemanticPrompt returns true if any OSC 133 events have been recorded
+// since the last Reset().
+func (d *Dirty) HasSemanticPrompt() bool {
+	return len(d.SemanticPrompts) > 0
+}
+
+// GetSemanticPrompts returns all OSC 133 events recorded since the last
+// Reset().
+func (d *Dirty) GetSemanticPrompts() []SemanticPromptEvent {
+	return d.SemanticPrompts
+}
+
 // Reset the change mask and dirtiness.
 func (d *Dirty) Reset() {
 	d.Lines = make(map[int]bool)
@@ -90,6 +140,8 @@ func (d *Dirty) Reset() {
 	for hook := range d.hooks {
 		d.hooks[hook] = false
 	}
+
+	d.SemanticPrompts = d.SemanticPrompts[:0]
 }
 
 func (d *Dirty) ScreenChanged() bool {

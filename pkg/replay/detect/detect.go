@@ -20,10 +20,57 @@ func (d *Detector) Detect(
 		return
 	}
 
+	// Check for OSC 133 semantic prompt events first
+	semanticPrompts := dirty.GetSemanticPrompts()
+	if len(semanticPrompts) > 0 {
+		d.detectOSC133(term, events, dirty, semanticPrompts)
+		return
+	}
+
+	// Fall back to CY_HOOK detection if we're not using OSC 133
+	if d.useOSC133 {
+		return
+	}
+
 	if prompted, _ := dirty.Hook(CY_HOOK); !prompted {
 		return
 	}
 
+	d.handlePrompt(term, events, dirty)
+}
+
+// detectOSC133 processes OSC 133 semantic prompt events for command detection.
+func (d *Detector) detectOSC133(
+	term emu.Terminal,
+	events []sessions.Event,
+	dirty *emu.Dirty,
+	semanticPrompts []emu.SemanticPromptEvent,
+) {
+	// Mark that we're using OSC 133 to avoid mixing detection methods
+	d.useOSC133 = true
+
+	for _, event := range semanticPrompts {
+		switch event.Type {
+		case emu.PromptStart:
+			d.handlePrompt(term, events, dirty)
+		case emu.CommandFinished:
+			// Capture exit code for the next command completion
+			if event.ExitCode != nil {
+				d.hasLastExitCode = true
+				d.lastExitCode = *event.ExitCode
+			} else {
+				d.hasLastExitCode = false
+			}
+		}
+	}
+}
+
+// handlePrompt processes a detected prompt (from either CY_HOOK or OSC 133).
+func (d *Detector) handlePrompt(
+	term emu.Terminal,
+	events []sessions.Event,
+	dirty *emu.Dirty,
+) {
 	flow := term.Flow(term.Size(), term.Root())
 	if !flow.OK || !flow.CursorOK {
 		return
@@ -32,8 +79,7 @@ func (d *Detector) Detect(
 	oldDir := d.lastDir
 	newDir := term.Directory()
 
-	// Defaults to OSC-7, if available, otherwise tries to use other
-	// method
+	// Defaults to OSC-7, if available, otherwise tries to use other method
 	if len(newDir) == 0 && d.getDirectory != nil {
 		newDir = d.getDirectory()
 	}
@@ -78,6 +124,13 @@ func (d *Detector) Detect(
 
 	command.Directory = oldDir
 	command.Completed = nextPromptIndex - 1
+
+	// Set exit code from OSC 133 D marker if available
+	if d.hasLastExitCode {
+		command.HasExitCode = true
+		command.ExitCode = d.lastExitCode
+		d.hasLastExitCode = false
+	}
 
 	ok = d.completeCommand(term, events, &command)
 	if !ok {
