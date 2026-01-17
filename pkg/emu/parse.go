@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/cfoust/cy/pkg/geom"
+
 	"github.com/mattn/go-runewidth"
 )
 
@@ -454,22 +456,28 @@ func (t *State) handleOSC133(s strEscape) {
 		return
 	}
 
-	writeID := t.dirty.LastWrite()
+	event := SemanticPromptEvent{
+		WriteID:  t.dirty.LastWrite(),
+		Position: geom.Vec2{R: t.cur.R, C: t.cur.C},
+	}
 
 	switch marker[0] {
 	case 'A': // Prompt started
-		t.dirty.AddSemanticPrompt(PromptStart, writeID, nil)
+		event.Type = PromptStart
 	case 'B': // Command started (user input begins)
-		t.dirty.AddSemanticPrompt(CommandStart, writeID, nil)
+		event.Type = CommandStart
 	case 'C': // Command executed
-		t.dirty.AddSemanticPrompt(CommandExecuted, writeID, nil)
+		event.Type = CommandExecuted
 	case 'D': // Command finished with optional exit code
-		var exitCode *int
+		event.Type = CommandFinished
 		if len(s.args) >= 3 {
 			if code, err := strconv.Atoi(s.argString(2, "")); err == nil {
-				exitCode = &code
+				event.ExitCode = &code
 			}
 		}
-		t.dirty.AddSemanticPrompt(CommandFinished, writeID, exitCode)
+	default:
+		return
 	}
+
+	t.dirty.AddSemanticPrompt(event)
 }

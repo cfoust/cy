@@ -99,12 +99,12 @@ func TestOSC133BellTerminated(t *testing.T) {
 func TestOSC133MultipleEvents(t *testing.T) {
 	term := New()
 	// Simulate a full command cycle
-	_, _ = term.Write([]byte("\x1b]133;A\x1b\\"))  // Prompt start
-	_, _ = term.Write([]byte("$ "))                // Prompt text
-	_, _ = term.Write([]byte("\x1b]133;B\x1b\\"))  // Command start
-	_, _ = term.Write([]byte("ls"))                // User types command
-	_, _ = term.Write([]byte("\x1b]133;C\x1b\\"))  // Command executed
-	_, _ = term.Write([]byte("file1 file2\n"))     // Output
+	_, _ = term.Write([]byte("\x1b]133;A\x1b\\"))   // Prompt start
+	_, _ = term.Write([]byte("$ "))                 // Prompt text
+	_, _ = term.Write([]byte("\x1b]133;B\x1b\\"))   // Command start
+	_, _ = term.Write([]byte("ls"))                 // User types command
+	_, _ = term.Write([]byte("\x1b]133;C\x1b\\"))   // Command executed
+	_, _ = term.Write([]byte("file1 file2\n"))      // Output
 	_, _ = term.Write([]byte("\x1b]133;D;0\x1b\\")) // Command finished
 
 	dirty := term.Changes()

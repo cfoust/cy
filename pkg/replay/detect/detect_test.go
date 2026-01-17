@@ -96,11 +96,11 @@ func TestSimple(t *testing.T) {
 		// Prompt with A + "$ " + B
 		emu.OSC133Prompt,
 		// User types command + C marker + newline (bundled)
-		"command" + emu.OSC133CommandExec + "\n",
+		"command"+emu.OSC133CommandExec+"\n",
 		"foo\n",
 		"bar\n",
 		// Last output + D marker (bundled)
-		"baz\n" + emu.OSC133CommandDone,
+		"baz\n"+emu.OSC133CommandDone,
 		// Next prompt
 		emu.OSC133Prompt,
 	)
@@ -132,8 +132,8 @@ func TestExitCodeNonZero(t *testing.T) {
 		},
 		[]Option{},
 		emu.OSC133Prompt,
-		"failing-cmd" + emu.OSC133CommandExec + "\n",
-		"error\n" + emu.OSC133CommandDone1,
+		"failing-cmd"+emu.OSC133CommandExec+"\n",
+		"error\n"+emu.OSC133CommandDone1,
 		emu.OSC133Prompt,
 	)
 }
@@ -164,8 +164,8 @@ func TestNoExitCode(t *testing.T) {
 		},
 		[]Option{},
 		emu.OSC133Prompt,
-		"command" + emu.OSC133CommandExec + "\n",
-		"foo\n" + emu.OSC133CommandDoneNoEC,
+		"command"+emu.OSC133CommandExec+"\n",
+		"foo\n"+emu.OSC133CommandDoneNoEC,
 		emu.OSC133Prompt,
 	)
 }
@@ -215,11 +215,11 @@ func TestTwoCommands(t *testing.T) {
 		},
 		[]Option{},
 		emu.OSC133Prompt,
-		"first" + emu.OSC133CommandExec + "\n",
-		"foo\n" + emu.OSC133CommandDone,
+		"first"+emu.OSC133CommandExec+"\n",
+		"foo\n"+emu.OSC133CommandDone,
 		emu.OSC133Prompt,
-		"second" + emu.OSC133CommandExec + "\n",
-		"bar\n" + emu.OSC133CommandDone1,
+		"second"+emu.OSC133CommandExec+"\n",
+		"bar\n"+emu.OSC133CommandDone1,
 		emu.OSC133Prompt,
 	)
 }
@@ -250,7 +250,7 @@ func TestNoOutput(t *testing.T) {
 		},
 		[]Option{},
 		emu.OSC133Prompt,
-		"command" + emu.OSC133CommandExec + "\n" + emu.OSC133CommandDone,
+		"command"+emu.OSC133CommandExec+"\n"+emu.OSC133CommandDone,
 		emu.OSC133Prompt,
 	)
 }
@@ -282,10 +282,10 @@ func TestEndSameLine(t *testing.T) {
 		},
 		[]Option{},
 		emu.OSC133Prompt,
-		"command" + emu.OSC133CommandExec + "\n",
+		"command"+emu.OSC133CommandExec+"\n",
 		"foo\n",
 		"bar\n",
-		"baz" + emu.OSC133CommandDone, emu.OSC133Prompt,
+		"baz"+emu.OSC133CommandDone, emu.OSC133Prompt,
 	)
 }
 
@@ -318,10 +318,10 @@ func TestDirectory(t *testing.T) {
 		// set the directory with OSC-7
 		"\033]7;test\033\\",
 		emu.OSC133Prompt,
-		"command" + emu.OSC133CommandExec + "\n",
+		"command"+emu.OSC133CommandExec+"\n",
 		"foo\n",
 		"bar\n",
-		"baz\n" + emu.OSC133CommandDone,
+		"baz\n"+emu.OSC133CommandDone,
 		emu.OSC133Prompt,
 	)
 }
@@ -397,17 +397,17 @@ func TestDirectoryChange(t *testing.T) {
 		// set dir before first
 		"\033]7;test\033\\",
 		emu.OSC133Prompt,
-		"command" + emu.OSC133CommandExec + "\n",
-		"foo\n" + emu.OSC133CommandDone,
+		"command"+emu.OSC133CommandExec+"\n",
+		"foo\n"+emu.OSC133CommandDone,
 		emu.OSC133Prompt,
-		"command" + emu.OSC133CommandExec + "\n",
+		"command"+emu.OSC133CommandExec+"\n",
 		// set dir during the second
 		"\033]7;test2\033\\",
-		"foo\n" + emu.OSC133CommandDone,
+		"foo\n"+emu.OSC133CommandDone,
 		// occurred in test2
 		emu.OSC133Prompt,
-		"command" + emu.OSC133CommandExec + "\n",
-		"foo\n" + emu.OSC133CommandDone,
+		"command"+emu.OSC133CommandExec+"\n",
+		"foo\n"+emu.OSC133CommandDone,
 		emu.OSC133Prompt,
 	)
 }
@@ -418,7 +418,7 @@ func TestIgnored(t *testing.T) {
 		[]Command{},
 		[]Option{},
 		emu.OSC133Prompt,
-		"command^C" + emu.OSC133CommandExec + "\n" + emu.OSC133CommandDone,
+		"command^C"+emu.OSC133CommandExec+"\n"+emu.OSC133CommandDone,
 		emu.OSC133Prompt,
 	)
 }
@@ -457,10 +457,10 @@ func TestDirectoryProvider(t *testing.T) {
 		options,
 		"",
 		emu.OSC133Prompt,
-		"command" + emu.OSC133CommandExec + "\n",
+		"command"+emu.OSC133CommandExec+"\n",
 		"foo\n",
 		"bar\n",
-		"baz\n" + emu.OSC133CommandDone,
+		"baz\n"+emu.OSC133CommandDone,
 		emu.OSC133Prompt,
 	)
 }
@@ -505,8 +505,8 @@ func TestMulti(t *testing.T) {
 		emu.OSC133Prompt, "command\n",
 		"> ", "foo\n",
 		"> ", "\n",
-		"> ", "baz" + emu.OSC133CommandExec + "\n",
-		"output\n" + emu.OSC133CommandDone,
+		"> ", "baz"+emu.OSC133CommandExec+"\n",
+		"output\n"+emu.OSC133CommandDone,
 		emu.OSC133Prompt,
 	)
 }
@@ -536,7 +536,7 @@ func TestPending(t *testing.T) {
 		},
 		[]Option{},
 		emu.OSC133Prompt,
-		"command" + emu.OSC133CommandExec + "\n",
+		"command"+emu.OSC133CommandExec+"\n",
 		"foo",
 	)
 }
@@ -580,7 +580,7 @@ func TestPendingMulti(t *testing.T) {
 		emu.OSC133Prompt, "command\n",
 		"> ", "foo\n",
 		"> ", "\n",
-		"> ", "baz" + emu.OSC133CommandExec + "\n",
+		"> ", "baz"+emu.OSC133CommandExec+"\n",
 		"output\n",
 	)
 }

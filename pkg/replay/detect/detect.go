@@ -22,8 +22,8 @@ func (d *Detector) Detect(
 
 	for _, event := range dirty.GetSemanticPrompts() {
 		switch event.Type {
-		case emu.PromptStart:
-			d.handlePrompt(term, events, dirty)
+		case emu.CommandStart:
+			d.handlePrompt(term, events, dirty, event)
 		case emu.CommandFinished:
 			// Capture exit code for the next command completion
 			if event.ExitCode != nil {
@@ -41,6 +41,7 @@ func (d *Detector) handlePrompt(
 	term emu.Terminal,
 	events []sessions.Event,
 	dirty *emu.Dirty,
+	event emu.SemanticPromptEvent,
 ) {
 	flow := term.Flow(term.Size(), term.Root())
 	if !flow.OK || !flow.CursorOK {
@@ -62,7 +63,7 @@ func (d *Detector) handlePrompt(
 		return
 	}
 
-	toID := dirty.LastWrite()
+	toID := event.WriteID
 
 	// If the prompt didn't produce any characters, we have no way of
 	// knowing where the prompt was. This will only be the case if the most

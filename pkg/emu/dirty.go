@@ -22,7 +22,8 @@ const (
 type SemanticPromptEvent struct {
 	Type     SemanticPromptType
 	WriteID  WriteID
-	ExitCode *int // Only set for CommandFinished (D marker)
+	Position geom.Vec2 // Cursor position when marker was received
+	ExitCode *int      // Only set for CommandFinished (D marker)
 }
 
 type Scroll struct {
@@ -77,16 +78,8 @@ func (t *State) markDirtyLine(row int) {
 }
 
 // AddSemanticPrompt records an OSC 133 semantic prompt event.
-func (d *Dirty) AddSemanticPrompt(
-	promptType SemanticPromptType,
-	writeID WriteID,
-	exitCode *int,
-) {
-	d.SemanticPrompts = append(d.SemanticPrompts, SemanticPromptEvent{
-		Type:     promptType,
-		WriteID:  writeID,
-		ExitCode: exitCode,
-	})
+func (d *Dirty) AddSemanticPrompt(event SemanticPromptEvent) {
+	d.SemanticPrompts = append(d.SemanticPrompts, event)
 }
 
 // HasSemanticPrompt returns true if any OSC 133 events have been recorded
