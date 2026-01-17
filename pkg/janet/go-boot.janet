@@ -61,8 +61,13 @@
 
 (defn go/evaluate
   "Compile and evaluate a script and return its environment."
-  [user-script source-env &opt source]
+  [user-script source-env &opt source dyns]
   (def env (make-env source-env))
+
+  # Put dyns into environment so run-context child fiber can access them
+  (when dyns
+    (eachk k dyns
+      (put env k (get dyns k))))
 
   (var err nil)
   (var err-fiber nil)
