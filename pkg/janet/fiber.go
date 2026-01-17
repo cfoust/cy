@@ -31,6 +31,7 @@ type Params struct {
 	Context context.Context
 	User    interface{}
 	Result  chan Result
+	Dyns    map[Keyword]interface{}
 }
 
 // Make new Params with an overwritten Result channel.
@@ -39,6 +40,7 @@ func (p Params) Pipe() Params {
 		Context: p.Context,
 		User:    p.User,
 		Result:  make(chan Result),
+		Dyns:    p.Dyns,
 	}
 }
 
@@ -114,17 +116,28 @@ type fiberRequest struct {
 	In *Value
 }
 
-func (v *VM) createFiber(fun *C.JanetFunction, args []C.Janet) (*Fiber, error) {
+func (v *VM) createFiber(fun *C.JanetFunction, args []C.Janet, dyns map[Keyword]interface{}) (*Fiber, error) {
 	argPtr := unsafe.Pointer(nil)
 	if len(args) > 0 {
 		argPtr = unsafe.Pointer(&args[0])
 	}
 
-	arity := C.get_arity(fun)
-	if int(arity) != len(args) {
+	// Check arity - for variadic functions, check against min/max arity
+	minArity := int(fun.def.min_arity)
+	maxArity := int(fun.def.max_arity)
+
+	if len(args) < minArity {
 		return nil, fmt.Errorf(
-			"function takes %d args, got %d",
-			arity,
+			"function takes at least %d args, got %d",
+			minArity,
+			len(args),
+		)
+	}
+
+	if maxArity >= 0 && len(args) > maxArity {
+		return nil, fmt.Errorf(
+			"function takes at most %d args, got %d",
+			maxArity,
 			len(args),
 		)
 	}
@@ -135,6 +148,19 @@ func (v *VM) createFiber(fun *C.JanetFunction, args []C.Janet) (*Fiber, error) {
 		C.int(len(args)),
 		(*C.Janet)(argPtr),
 	)
+
+	// Set dynamic bindings on the fiber if provided
+	if len(dyns) > 0 {
+		fiber.env = C.janet_table(C.int(len(dyns)))
+		for name, value := range dyns {
+			marshaled, err := v.marshal(value)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal dyn %s: %w", name, err)
+			}
+			key := wrapKeyword(string(name))
+			C.janet_table_put(fiber.env, key, marshaled)
+		}
+	}
 
 	return &Fiber{
 		Value: v.value(C.janet_wrap_fiber(fiber)),

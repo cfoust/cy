@@ -151,6 +151,22 @@ func (v *VM) poll(ctx context.Context, ready chan bool) {
 				}
 
 				req.result <- v.value(value)
+			case wrapFileRequest:
+				select {
+				case <-req.ctx.Done():
+					req.result <- req.ctx.Err()
+					continue
+				default:
+				}
+
+				value, err := v.wrapFile(req.file, req.flags)
+
+				if err != nil {
+					req.result <- err
+					continue
+				}
+
+				req.result <- value
 			}
 		}
 	}
