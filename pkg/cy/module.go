@@ -94,6 +94,9 @@ type Cy struct {
 
 	log zerolog.Logger
 
+	// logPipe redirects Janet print/eprint output to the logs pane
+	logPipe *logPipe
+
 	options Options
 
 	toast        *ToastLogger
@@ -107,7 +110,22 @@ type Cy struct {
 }
 
 func (c *Cy) ExecuteJanet(path string) error {
-	return c.ExecuteFile(c.Ctx(), path)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	call := janet.Call{
+		Code:       data,
+		SourcePath: path,
+		Options: janet.CallOptions{
+			UpdateEnv: true,
+			Dyns:      c.logPipe.Dyns(),
+		},
+	}
+
+	_, err = c.ExecuteCall(c.Ctx(), nil, call)
+	return err
 }
 
 func (c *Cy) Log(level zerolog.Level, message string) {
@@ -115,7 +133,28 @@ func (c *Cy) Log(level zerolog.Level, message string) {
 }
 
 func (c *Cy) loadConfig() error {
-	err := c.ExecuteFile(c.Ctx(), c.options.Config)
+	data, err := os.ReadFile(c.options.Config)
+	if err != nil {
+		c.log.Error().Err(err).Msg("failed to read config")
+		message := fmt.Sprintf(
+			"failed to read %s: %s",
+			c.options.Config,
+			err.Error(),
+		)
+		c.toast.Error(message)
+		return err
+	}
+
+	call := janet.Call{
+		Code:       data,
+		SourcePath: c.options.Config,
+		Options: janet.CallOptions{
+			UpdateEnv: true,
+			Dyns:      c.logPipe.Dyns(),
+		},
+	}
+
+	_, err = c.ExecuteCall(c.Ctx(), nil, call)
 
 	if err == nil {
 		return nil
@@ -446,6 +485,14 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 		)
 	}
 	cy.VM = vm
+
+	cy.logPipe, err = newLogPipe(ctx, vm, logs.Writer())
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error initializing log pipe: %w",
+			err,
+		)
+	}
 
 	stateDir := options.StateDir
 	if stateDir != "" {
