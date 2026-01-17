@@ -74,12 +74,9 @@ func newState(w io.Writer) *State {
 	t := &State{
 		w:             w,
 		colorOverride: make(map[Color]Color),
-		dirty: &Dirty{
-			hooks:     make(map[string]bool),
-			hookState: make([]byte, 256),
-		},
-		keyState:    NewKeyProtocolState(),
-		altKeyState: NewKeyProtocolState(),
+		dirty:         &Dirty{},
+		keyState:      NewKeyProtocolState(),
+		altKeyState:   NewKeyProtocolState(),
 	}
 
 	t.parser = vtparser.New(

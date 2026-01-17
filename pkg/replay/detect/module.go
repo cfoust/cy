@@ -9,11 +9,6 @@ import (
 	"github.com/sasha-s/go-deadlock"
 )
 
-const (
-	CY_HOOK     = "cy"
-	TEST_PROMPT = "\033Pcy\033\\$ "
-)
-
 type Detector struct {
 	mu       deadlock.RWMutex
 	commands []Command
@@ -28,9 +23,6 @@ type Detector struct {
 	lastDir string
 
 	// OSC 133 semantic prompt detection state
-	// Whether we've detected OSC 133 sequences and should prefer them over
-	// CY_HOOK
-	useOSC133 bool
 	// Whether we have a pending exit code from an OSC 133 D marker
 	hasLastExitCode bool
 	// The most recent exit code from an OSC 133 D marker (only valid if

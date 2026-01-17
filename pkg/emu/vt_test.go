@@ -96,19 +96,6 @@ func TestRoot(t *testing.T) {
 	}, term.Root())
 }
 
-func TestPrompt(t *testing.T) {
-	term := New()
-	dirty := term.Changes()
-	dirty.SetHooks([]string{"cy"})
-
-	_, err := term.Write([]byte("\033Pcy\033\\"))
-	require.NoError(t, err)
-
-	value, ok := dirty.Hook("cy")
-	require.True(t, value)
-	require.True(t, ok)
-}
-
 func TestTabsBug(t *testing.T) {
 	term := New()
 	// This is the simplest example of a bug that I encountered with tabs.

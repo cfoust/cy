@@ -49,7 +49,6 @@ func (p *Player) resetTerminal() {
 	}
 
 	p.Terminal = emu.New(options...)
-	p.Terminal.Changes().SetHooks([]string{detect.CY_HOOK})
 }
 
 func (p *Player) consume(event sessions.Event) {

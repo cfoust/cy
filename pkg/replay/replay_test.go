@@ -9,7 +9,6 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/keys"
-	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/player"
 	"github.com/cfoust/cy/pkg/sessions"
 	"github.com/cfoust/cy/pkg/taro"
@@ -381,11 +380,11 @@ func TestJumpCommand(t *testing.T) {
 		Add(
 			emu.LineFeedMode,
 			geom.Size{R: 10, C: 10},
-			detect.TEST_PROMPT, "command\n",
-			"foo\n",
-			detect.TEST_PROMPT, "command\n",
-			"foo\n",
-			detect.TEST_PROMPT,
+			emu.OSC133Prompt, "command"+emu.OSC133CommandExec+"\n",
+			"foo\n"+emu.OSC133CommandDone,
+			emu.OSC133Prompt, "command"+emu.OSC133CommandExec+"\n",
+			"foo\n"+emu.OSC133CommandDone,
+			emu.OSC133Prompt,
 		)
 
 	r, i := createTest(s.Events())

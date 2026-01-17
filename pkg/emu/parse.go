@@ -62,37 +62,21 @@ func (t *State) Execute(b byte) {
 	}
 }
 
+// Put handles bytes within a Device Control String (DCS) sequence.
 func (t *State) Put(b byte) {
-	t.dirty.hookState[t.dirty.hookCount] = b
-	t.dirty.hookCount++
-	// TODO(cfoust): 08/10/23
-	//fmt.Printf("[Put] %02x\n", b)
 }
 
+// Unhook handles the end of a Device Control String (DCS) sequence.
 func (t *State) Unhook() {
-	hook := string(t.dirty.hookState[0:t.dirty.hookCount])
-
-	_, ok := t.dirty.hooks[hook]
-	if !ok {
-		return
-	}
-
-	t.dirty.hooks[hook] = true
-
-	// TODO(cfoust): 08/10/23
-	//fmt.Printf("[Unhook]\n")
 }
 
+// Hook handles the start of a Device Control String (DCS) sequence.
 func (t *State) Hook(
 	params []int64,
 	intermediates []byte,
 	ignore bool,
 	r rune,
 ) {
-	t.dirty.hookCount = 1
-	t.dirty.hookState[0] = byte(r)
-	// TODO(cfoust): 08/10/23
-	//fmt.Printf("[Hook] params=%v, intermediates=%v, ignore=%v, r=%v\n", params, intermediates, ignore, r)
 }
 
 func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {

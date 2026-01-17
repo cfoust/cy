@@ -13,9 +13,8 @@ import (
 	"github.com/cfoust/cy/pkg/stories"
 )
 
-const (
-	REPLAY_PROMPT = "\033Pcy\033\\\033[0;31m▸▸cy▹\033[0m \033[0;31m\033[0m\033[00m"
-)
+// REPLAY_PROMPT is an OSC 133 prompt with a styled visible prompt
+const REPLAY_PROMPT = emu.OSC133PromptStart + "\033[0;31m▸▸cy▹\033[0m " + emu.OSC133CommandStart
 
 var initReplay stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	server, client, screen, err := createStory(ctx)
@@ -33,35 +32,35 @@ var initReplay stories.InitFunc = func(ctx context.Context) (mux.Screen, error) 
 			time.Second/4,
 			REPLAY_PROMPT,
 		).
-		AddTime(time.Second/4, "summarize tolstoy").
+		AddTime(time.Second/4, "summarize tolstoy"+emu.OSC133CommandExec).
 		AddTime(time.Second/4, "\n").
 		AddTime(
 			time.Second/4,
 			`Born into an aristocratic family, Tolstoy's notable works include the novels War and Peace (1869) and Anna Karenina (1878),[5] often cited as pinnacles of realist fiction,[2] and two of the greatest books of all time.[3][4] He first achieved literary acclaim in his twenties with his semi-autobiographical trilogy, Childhood, Boyhood, and Youth (1852–1856), and Sevastopol Sketches (1855), based upon his experiences in the Crimean War. His fiction includes dozens of short stories such as "After the Ball" (1911), and several novellas such as The Death of Ivan Ilyich (1886), Family Happiness (1859) and Hadji Murad (1912). He also wrote plays and essays concerning philosophical, moral and religious themes.`,
 		).
-		Add("\n").
+		Add("\n" + emu.OSC133CommandDone).
 		AddTime(
 			time.Second/4,
 			REPLAY_PROMPT,
 		).
-		AddTime(time.Second/4, "summarize cao xueqin").
+		AddTime(time.Second/4, "summarize cao xueqin"+emu.OSC133CommandExec).
 		AddTime(time.Second/4, "\n").
 		AddTime(
 			time.Second/4,
 			`Cao Xueqin was born to a Han Chinese clan[5] that was brought into personal service (as booi aha or bondservants of Cigu Niru) to the Manchu royalty in the late 1610s.[6] His ancestors distinguished themselves through military service in the Plain White Banner of the Eight Banners and subsequently held posts as officials which brought both prestige and wealth.`,
 		).
-		Add("\n").
+		Add("\n" + emu.OSC133CommandDone).
 		AddTime(
 			time.Second/4,
 			REPLAY_PROMPT,
 		).
-		AddTime(time.Second/4, "summarize marshall mcluhan").
+		AddTime(time.Second/4, "summarize marshall mcluhan"+emu.OSC133CommandExec).
 		AddTime(time.Second/4, "\n").
 		AddTime(
 			time.Second/4,
 			`McLuhan was born on July 21, 1911, in Edmonton, Alberta, and was named "Marshall" from his maternal grandmother's surname. His brother, Maurice, was born two years later. His parents were both also born in Canada: his mother, Elsie Naomi (née Hall), was a Baptist school teacher who later became an actress; and his father, Herbert Ernest McLuhan, was a Methodist with a real-estate business in Edmonton. When the business failed at the start of World War I, McLuhan's father enlisted in the Canadian Army. After a year of service, he contracted influenza and remained in Canada, away from the front lines. After Herbert's discharge from the army in 1915, the McLuhan family moved to Winnipeg, Manitoba, where Marshall grew up and went to school, attending Kelvin Technical School before enrolling in the University of Manitoba in 1928.`,
 		).
-		Add("\n").
+		Add("\n" + emu.OSC133CommandDone).
 		AddTime(
 			time.Second/4,
 			REPLAY_PROMPT,

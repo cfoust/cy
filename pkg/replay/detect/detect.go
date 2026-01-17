@@ -20,36 +20,7 @@ func (d *Detector) Detect(
 		return
 	}
 
-	// Check for OSC 133 semantic prompt events first
-	semanticPrompts := dirty.GetSemanticPrompts()
-	if len(semanticPrompts) > 0 {
-		d.detectOSC133(term, events, dirty, semanticPrompts)
-		return
-	}
-
-	// Fall back to CY_HOOK detection if we're not using OSC 133
-	if d.useOSC133 {
-		return
-	}
-
-	if prompted, _ := dirty.Hook(CY_HOOK); !prompted {
-		return
-	}
-
-	d.handlePrompt(term, events, dirty)
-}
-
-// detectOSC133 processes OSC 133 semantic prompt events for command detection.
-func (d *Detector) detectOSC133(
-	term emu.Terminal,
-	events []sessions.Event,
-	dirty *emu.Dirty,
-	semanticPrompts []emu.SemanticPromptEvent,
-) {
-	// Mark that we're using OSC 133 to avoid mixing detection methods
-	d.useOSC133 = true
-
-	for _, event := range semanticPrompts {
+	for _, event := range dirty.GetSemanticPrompts() {
 		switch event.Type {
 		case emu.PromptStart:
 			d.handlePrompt(term, events, dirty)
@@ -65,7 +36,7 @@ func (d *Detector) detectOSC133(
 	}
 }
 
-// handlePrompt processes a detected prompt (from either CY_HOOK or OSC 133).
+// handlePrompt processes a detected prompt from OSC 133.
 func (d *Detector) handlePrompt(
 	term emu.Terminal,
 	events []sessions.Event,
