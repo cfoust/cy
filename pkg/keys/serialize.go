@@ -165,7 +165,10 @@ func (k Key) legacyBytes() (data []byte, ok bool) {
 	return data, true
 }
 
-func (k Key) Bytes(protocol emu.KeyProtocol) (data []byte, ok bool) {
+func (k Key) Bytes(
+	mode emu.ModeFlag,
+	protocol emu.KeyProtocol,
+) (data []byte, ok bool) {
 	// Even with the protocol enabled, kitty encodes pastes (which we
 	// represent with KeyText) as standard UTF-8. This is absent from the
 	// specification, but we replicate that behavior.
@@ -173,5 +176,20 @@ func (k Key) Bytes(protocol emu.KeyProtocol) (data []byte, ok bool) {
 		return k.kittyBytes(protocol)
 	}
 
-	return k.legacyBytes()
+	data, ok = k.legacyBytes()
+	if !ok {
+		return
+	}
+
+	// Wrap text in bracketed paste markers if the target terminal has
+	// bracketed paste mode enabled and there's actual text to paste
+	if k.Code == KeyText && len(k.Text) > 0 &&
+		mode&emu.ModeBracketedPaste != 0 {
+		data = append(
+			append([]byte("\x1b[200~"), data...),
+			[]byte("\x1b[201~")...,
+		)
+	}
+
+	return
 }

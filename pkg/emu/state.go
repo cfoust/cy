@@ -707,6 +707,8 @@ func (t *State) setMode(priv bool, set bool, args []int) {
 			case 1015:
 				// urxvt mangled mouse mode; incompatiblt and can be mistaken
 				// for other control codes
+			case 2004: // bracketed paste mode
+				t.modMode(set, ModeBracketedPaste)
 			default:
 				t.logf("unknown private set/reset mode %d\n", a)
 			}

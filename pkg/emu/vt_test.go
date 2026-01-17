@@ -131,3 +131,20 @@ func TestResizeBug(t *testing.T) {
 	term.Resize(geom.Vec2{C: 6, R: 1})
 	term.Resize(geom.Vec2{C: 6, R: 2})
 }
+
+func TestBracketedPasteMode(t *testing.T) {
+	term := New()
+
+	// Initially bracketed paste should be off
+	require.Equal(t, ModeFlag(0), term.Mode()&ModeBracketedPaste)
+
+	// Enable bracketed paste mode with CSI ?2004h
+	_, err := term.Write([]byte("\x1b[?2004h"))
+	require.NoError(t, err)
+	require.Equal(t, ModeBracketedPaste, term.Mode()&ModeBracketedPaste)
+
+	// Disable bracketed paste mode with CSI ?2004l
+	_, err = term.Write([]byte("\x1b[?2004l"))
+	require.NoError(t, err)
+	require.Equal(t, ModeFlag(0), term.Mode()&ModeBracketedPaste)
+}

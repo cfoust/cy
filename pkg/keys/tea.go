@@ -103,7 +103,7 @@ var teaKeyLookup = map[Key]tea.KeyType{
 }
 
 func (k Key) Tea() (msg tea.KeyMsg, ok bool) {
-	if _, ok = k.Bytes(emu.KeyLegacy); !ok {
+	if _, ok = k.Bytes(emu.DefaultMode, emu.KeyLegacy); !ok {
 		return
 	}
 

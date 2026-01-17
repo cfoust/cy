@@ -382,6 +382,7 @@ func TestSerialize(t *testing.T) {
 					var (
 						isNothing = len(o.text) == 0
 						data, ok  = test.key.Bytes(
+							emu.DefaultMode,
 							o.protocol,
 						)
 					)
@@ -405,4 +406,71 @@ func TestSerialize(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBracketedPasteSerialization(t *testing.T) {
+	textKey := Key{
+		Code: KeyText,
+		Text: "hello world",
+	}
+
+	// Without bracketed paste mode, text should be returned as-is
+	t.Run("without bracketed paste mode", func(t *testing.T) {
+		data, ok := textKey.Bytes(emu.DefaultMode, emu.KeyLegacy)
+		assert.True(t, ok)
+		assert.Equal(t, []byte("hello world"), data)
+	})
+
+	// With bracketed paste mode enabled, text should be wrapped
+	t.Run("with bracketed paste mode", func(t *testing.T) {
+		data, ok := textKey.Bytes(emu.ModeBracketedPaste, emu.KeyLegacy)
+		assert.True(t, ok)
+		assert.Equal(
+			t,
+			[]byte("\x1b[200~hello world\x1b[201~"),
+			data,
+		)
+	})
+
+	// Non-text keys should not be affected by bracketed paste mode
+	t.Run("non-text key with bracketed paste mode", func(t *testing.T) {
+		key := Key{
+			Code:    'a',
+			Shifted: 'A',
+			Text:    "a",
+		}
+		data, ok := key.Bytes(emu.ModeBracketedPaste, emu.KeyLegacy)
+		assert.True(t, ok)
+		assert.Equal(t, []byte("a"), data)
+	})
+
+	// Empty text should not be wrapped (nothing to paste)
+	t.Run("empty text with bracketed paste mode", func(t *testing.T) {
+		emptyKey := Key{
+			Code: KeyText,
+			Text: "",
+		}
+		data, ok := emptyKey.Bytes(emu.ModeBracketedPaste, emu.KeyLegacy)
+		assert.True(t, ok)
+		// Empty text is not wrapped - wrapping makes no sense for empty paste
+		assert.NotContains(t, string(data), "\x1b[200~")
+	})
+
+	// Text with newlines should be wrapped
+	t.Run("text with newlines and bracketed paste mode", func(t *testing.T) {
+		multilineKey := Key{
+			Code: KeyText,
+			Text: "line1\nline2\nline3",
+		}
+		data, ok := multilineKey.Bytes(
+			emu.ModeBracketedPaste,
+			emu.KeyLegacy,
+		)
+		assert.True(t, ok)
+		assert.Equal(
+			t,
+			[]byte("\x1b[200~line1\nline2\nline3\x1b[201~"),
+			data,
+		)
+	})
 }

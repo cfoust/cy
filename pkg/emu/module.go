@@ -34,7 +34,8 @@ type ModeFlag uint32
 
 // Terminal modes
 const (
-	ModeWrap ModeFlag = 1 << iota
+	DefaultMode ModeFlag = 0
+	ModeWrap    ModeFlag = 1 << iota
 	ModeInsert
 	ModeAppKeypad
 	ModeAltScreen
@@ -53,6 +54,7 @@ const (
 	ModeFocus
 	ModeMouseX10
 	ModeMouseMany
+	ModeBracketedPaste
 	ModeMouseMask = ModeMouseButton | ModeMouseMotion | ModeMouseX10 | ModeMouseMany
 )
 

@@ -31,6 +31,7 @@ func Attach(
 
 	output.AltScreen()
 	output.EnableMouseAllMotion()
+	output.EnableBracketedPaste()
 	oldState, err := term.MakeRaw(int(in.Fd()))
 	if err != nil {
 		return err
@@ -38,6 +39,7 @@ func Attach(
 	defer func() {
 		output.ExitAltScreen()
 		output.DisableMouseAllMotion()
+		output.DisableBracketedPaste()
 		info.Fprintf(out, terminfo.CursorVisible)
 		_ = term.Restore(int(in.Fd()), oldState)
 	}()

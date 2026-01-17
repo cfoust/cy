@@ -132,7 +132,7 @@ func (t *Terminal) Send(msg mux.Msg) {
 
 	switch msg := msg.(type) {
 	case taro.KittyKeyMsg:
-		input, ok = keys.Key(msg).Bytes(t.terminal.KeyState())
+		input, ok = keys.Key(msg).Bytes(mode, t.terminal.KeyState())
 	case taro.MouseMsg:
 		switch mode & emu.ModeMouseMask {
 		case emu.ModeMouseX10:

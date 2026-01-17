@@ -137,7 +137,7 @@ func (e *Engine[T]) processKey(ctx context.Context, in input) (consumed bool) {
 	}
 
 	// For now, we only support legacy keys
-	if _, canEncode := keys.Key(key).Bytes(emu.KeyLegacy); !canEncode {
+	if _, canEncode := keys.Key(key).Bytes(emu.DefaultMode, emu.KeyLegacy); !canEncode {
 		e.out <- in
 		return
 	}
