@@ -108,10 +108,23 @@ func (s *Server) HandleWSClient(conn Connection) {
 
 	wsClient := &Client{conn: conn}
 
+	// Tracks the current streaming exec session, if any.
+	var execSession *execIO
+	var execDone <-chan struct{}
+
 	for {
 		select {
 		case <-conn.Ctx().Done():
+			if execSession != nil {
+				execSession.Close()
+			}
 			return
+		case <-execDone:
+			if execSession != nil {
+				execSession.Close()
+			}
+			execSession = nil
+			execDone = nil
 		case msg := <-events:
 			switch msg := msg.Contents.(type) {
 			case *P.HandshakeMessage:
@@ -124,8 +137,38 @@ func (s *Server) HandleWSClient(conn Connection) {
 					return
 				}
 				return
+			case *P.InputMessage:
+				// Forward client input to the running exec's stdin.
+				if execSession != nil {
+					_ = execSession.Write(msg.Data)
+				}
 			case *P.RPCRequestMessage:
-				s.HandleRPC(conn, msg)
+				// RPCExec is handled specially to set up streaming I/O
+				// before execution, allowing Janet code to read from :in
+				// and write to :out/:err.
+				if msg.Name != RPCExec {
+					go s.HandleRPC(conn, msg)
+					continue
+				}
+
+				if execSession != nil {
+					execSession.Close()
+				}
+
+				var err error
+				execSession, err = newExecIO(conn, s.cy.VM)
+				if err != nil {
+					_ = conn.Send(P.RPCResponseMessage{
+						Errored: true,
+						Error:   err.Error(),
+					})
+					execSession = nil
+					execDone = nil
+					continue
+				}
+
+				execDone = execSession.Done()
+				go s.streamingExec(conn, msg, execSession)
 			}
 		}
 	}

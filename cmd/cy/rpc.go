@@ -129,76 +129,14 @@ func RPC[S any, T any](
 }
 
 // callRPC executes an RPC call and returns the result.
+// Note: RPCExec is handled separately in HandleWSClient via streamingExec.
 func (s *Server) callRPC(
 	conn Connection,
 	request *P.RPCRequestMessage,
-) (interface{}, error) {
+) (any, error) {
 	handle := new(codec.MsgpackHandle)
 
 	switch request.Name {
-	case RPCExec:
-		var args RPCExecArgs
-		if err := codec.NewDecoderBytes(
-			request.Args,
-			handle,
-		).Decode(&args); err != nil {
-			return nil, err
-		}
-
-		var context interface{} = nil
-		sourceNodeID := tree.NodeID(args.Node)
-		if client, found := s.cy.InferClient(sourceNodeID); found {
-			if args.Node != 0 {
-				context = &api.ExecContext{
-					Client:     client,
-					SourceNode: &sourceNodeID,
-				}
-			} else {
-				context = client
-			}
-		}
-
-		result, err := s.cy.ExecuteCall(
-			conn.Ctx(),
-			context,
-			janet.Call{
-				Code:       args.Code,
-				SourcePath: args.Source,
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
-		response := RPCExecResponse{}
-
-		if result.Yield == nil {
-			return response, nil
-		}
-
-		defer result.Yield.Free()
-
-		switch args.Format {
-		case OutputFormatRaw:
-			response.Data, err = result.Yield.Raw()
-			if err != nil {
-				return nil, err
-			}
-			return response, nil
-		case OutputFormatJanet:
-			response.Data = []byte(result.Yield.String())
-			return response, nil
-		case OutputFormatJSON:
-			response.Data, err = result.Yield.JSON()
-			if err != nil {
-				return nil, err
-			}
-			return response, nil
-		default:
-			return nil, fmt.Errorf(
-				"unknown output format: %d",
-				args.Format,
-			)
-		}
 	case RPCOutput:
 		var args RPCOutputArgs
 		if err := codec.NewDecoderBytes(
@@ -222,6 +160,76 @@ func (s *Server) callRPC(
 	}
 
 	return nil, fmt.Errorf("unknown RPC: %s", request.Name)
+}
+
+// execCode runs Janet code and returns the result. If stream is non-nil,
+// Janet's :in/:out/:err dynamic variables are bound to it for streaming I/O.
+func (s *Server) execCode(
+	conn Connection,
+	args RPCExecArgs,
+	stream *execIO,
+) (RPCExecResponse, error) {
+	response := RPCExecResponse{}
+
+	var context interface{} = nil
+	sourceNodeID := tree.NodeID(args.Node)
+	if client, found := s.cy.InferClient(sourceNodeID); found {
+		if args.Node != 0 {
+			context = &api.ExecContext{
+				Client:     client,
+				SourceNode: &sourceNodeID,
+			}
+		} else {
+			context = client
+		}
+	}
+
+	options := janet.DEFAULT_CALL_OPTIONS
+	if stream != nil {
+		options.Dyns = stream.Dyns()
+	}
+
+	result, err := s.cy.ExecuteCall(
+		conn.Ctx(),
+		context,
+		janet.Call{
+			Code:       args.Code,
+			SourcePath: args.Source,
+			Options:    options,
+		},
+	)
+	if err != nil {
+		return response, err
+	}
+
+	if result.Yield == nil {
+		return response, nil
+	}
+
+	defer result.Yield.Free()
+
+	switch args.Format {
+	case OutputFormatRaw:
+		response.Data, err = result.Yield.Raw()
+		if err != nil {
+			return response, err
+		}
+		return response, nil
+	case OutputFormatJanet:
+		response.Data = []byte(result.Yield.String())
+		return response, nil
+	case OutputFormatJSON:
+		response.Data, err = result.Yield.JSON()
+		if err != nil {
+			return response, err
+		}
+		return response, nil
+	default:
+		return response, fmt.Errorf(
+			"unknown output format: %d",
+			args.Format,
+		)
+	}
 }
 
 // HandleRPC handles an RPC request, calling the appropriate function and
@@ -263,4 +271,58 @@ func (s *Server) HandleRPC(conn Connection, request *P.RPCRequestMessage) {
 	}
 
 	_ = conn.Send(msg)
+}
+
+// streamingExec handles an exec RPC with streaming I/O. Unlike HandleRPC,
+// this binds Janet's :in/:out/:err to pipes connected to the client, allowing
+// the executed code to perform interactive I/O.
+func (s *Server) streamingExec(
+	conn Connection,
+	request *P.RPCRequestMessage,
+	stream *execIO,
+) {
+	handle := new(codec.MsgpackHandle)
+	args := RPCExecArgs{}
+	err := codec.NewDecoderBytes(
+		request.Args,
+		handle,
+	).Decode(&args)
+	if err != nil {
+		_ = conn.Send(P.RPCResponseMessage{
+			Errored: true,
+			Error:   err.Error(),
+		})
+		stream.Finish()
+		return
+	}
+
+	response, err := s.execCode(conn, args, stream)
+
+	if err != nil {
+		_ = conn.Send(P.RPCResponseMessage{
+			Errored: err != nil,
+			Error:   err.Error(),
+		})
+		stream.Finish()
+		return
+	}
+
+	var responseBytes []byte
+	enc := codec.NewEncoderBytes(
+		&responseBytes,
+		new(codec.MsgpackHandle),
+	)
+	err = enc.Encode(response)
+
+	msg := P.RPCResponseMessage{
+		Errored:  err != nil,
+		Response: responseBytes,
+	}
+
+	if err != nil {
+		msg.Error = err.Error()
+	}
+
+	_ = conn.Send(msg)
+	stream.Finish()
 }

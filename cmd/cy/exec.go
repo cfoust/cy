@@ -5,8 +5,12 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"sync"
 
 	"github.com/cfoust/cy/pkg/cy"
+	P "github.com/cfoust/cy/pkg/io/protocol"
+
+	"github.com/ugorji/go/codec"
 )
 
 func getContext() (socket string, id int, ok bool) {
@@ -84,20 +88,101 @@ func execCommand() error {
 		)
 	}
 
-	response, err := RPC[RPCExecArgs, RPCExecResponse](
-		conn,
-		RPCExec,
-		RPCExecArgs{
-			Source: source,
-			Code:   code,
-			Node:   id,
-			Format: format,
-		},
+	payload := make([]byte, 0)
+	enc := codec.NewEncoderBytes(
+		&payload,
+		new(codec.MsgpackHandle),
 	)
-	if err != nil || len(response.Data) == 0 {
+	err = enc.Encode(RPCExecArgs{
+		Source: source,
+		Code:   code,
+		Node:   id,
+		Format: format,
+	})
+	if err != nil {
 		return err
 	}
 
-	_, err = os.Stdout.Write(response.Data)
+	if err := conn.Send(P.RPCRequestMessage{
+		Name: RPCExec,
+		Args: payload,
+	}); err != nil {
+		return err
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		buf := make([]byte, 4096)
+		for {
+			select {
+			case <-conn.Ctx().Done():
+				return
+			default:
+			}
+
+			n, err := os.Stdin.Read(buf)
+			if n > 0 {
+				_ = conn.Send(P.InputMessage{Data: buf[:n]})
+			}
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	var response *P.RPCResponseMessage
+
+loop:
+	for {
+		select {
+		case <-conn.Ctx().Done():
+			break loop
+		case packet := <-conn.Receive():
+			if packet.Error != nil {
+				err = packet.Error
+				break loop
+			}
+
+			switch msg := packet.Contents.(type) {
+			case *P.OutputMessage:
+				_, _ = os.Stdout.Write(msg.Data)
+			case *P.RPCResponseMessage:
+				response = msg
+				break loop
+			}
+		}
+	}
+
+	_ = conn.Close()
+	wg.Wait()
+
+	if err != nil {
+		return err
+	}
+
+	if response == nil {
+		return fmt.Errorf("connection closed by server")
+	}
+
+	if response.Errored {
+		return fmt.Errorf(response.Error)
+	}
+
+	execResponse := RPCExecResponse{}
+	dec := codec.NewDecoderBytes(
+		response.Response,
+		new(codec.MsgpackHandle),
+	)
+	if err := dec.Decode(&execResponse); err != nil {
+		return err
+	}
+
+	if len(execResponse.Data) == 0 {
+		return nil
+	}
+
+	_, err = os.Stdout.Write(execResponse.Data)
 	return err
 }
