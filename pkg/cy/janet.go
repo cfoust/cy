@@ -100,7 +100,10 @@ func (c *Cy) initAPI() error {
 		_, err = c.ExecuteCall(c.Ctx(), nil, janet.Call{
 			Code:       data,
 			SourcePath: path,
-			Options:    janet.DEFAULT_CALL_OPTIONS,
+			Options: janet.CallOptions{
+				UpdateEnv: true,
+				Dyns:      c.logPipe.Dyns(),
+			},
 		})
 		if err != nil {
 			return fmt.Errorf(
