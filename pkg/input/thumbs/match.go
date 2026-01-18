@@ -60,6 +60,16 @@ func getRegions(i image.Image) (regions []search.Selection) {
 		regions = append(regions, pane)
 	}
 
+	// Sort regions by their From position (row first, then column) to ensure
+	// deterministic ordering since Go map iteration order is not guaranteed
+	sort.Slice(regions[1:], func(i, j int) bool {
+		a, b := regions[i+1], regions[j+1]
+		if a.From.R != b.From.R {
+			return a.From.R < b.From.R
+		}
+		return a.From.C < b.From.C
+	})
+
 	return
 }
 
