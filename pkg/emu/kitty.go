@@ -83,7 +83,7 @@ func (t *State) handleKittyProtocol(csi *csiEscape) bool {
 		intermediates = csi.intermediates
 	)
 
-	if len(intermediates) > 1 {
+	if len(intermediates) != 1 {
 		return false
 	}
 

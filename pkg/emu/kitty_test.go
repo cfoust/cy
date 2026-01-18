@@ -26,6 +26,12 @@ func TestKittyProtocolCSI(t *testing.T) {
 			sequence: "\x1b[<u",
 			expected: 0,
 		},
+		{
+			// Plain CSI u with no intermediates is DECRC, not Kitty
+			name:     "no intermediates",
+			sequence: "\x1b[u",
+			expected: 0,
+		},
 	}
 
 	for _, tt := range tests {
