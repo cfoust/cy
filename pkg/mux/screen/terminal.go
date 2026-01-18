@@ -137,6 +137,7 @@ func (t *Terminal) Send(msg mux.Msg) {
 		if ok {
 			log.Info().
 				Str("type", "output").
+				Uint32("mode", uint32(mode)).
 				Str("protocol", t.terminal.KeyState().String()).
 				Msgf("key: %#v bytes: %+v", keys.Key(msg), input)
 		}
