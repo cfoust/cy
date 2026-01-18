@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.10.0 - 2026-01-18
+
+- Significant improvements in memory usage: `.borg` files are now loaded on demand in replay mode
+- Command detection now uses [OSC-133 escape sequences](https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md).
+- New parameter: `:animation-fps` to limit animation FPS
+- Fix: `(pane/current)` reports the correct pane when invoked from `cy exec`
+- Support for [bracketed paste](https://en.wikipedia.org/wiki/Bracketed-paste)
+- Fix for a range of poorly-handled key sequences
+
+## 1.9.1 - 2025-12-28
+
+- Fix for copying to clipboard using OSC-52
+
 ## 1.9.0 - 2025-12-27
 
 - Add full support for the [kitty keyboard protocol](https://sw.kovidgoyal.net/kitty/keyboard-protocol/#disambiguate-escape-codes)
