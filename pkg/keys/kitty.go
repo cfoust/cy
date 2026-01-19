@@ -481,7 +481,17 @@ func kittyEncode(
 	)
 }
 
-// kittySequence generates the Kitty protocol sequence for this key
+func doesNotGenerateText(k Key) bool {
+	// These are specifically called out as exceptions in the spec
+	switch k.Code {
+	case KittyKeyEnter, KittyKeyTab, KittyKeyBackspace:
+		return k.Mod != 0
+	}
+
+	return len(k.Text) == 0
+}
+
+// kittyBytes generates the Kitty protocol sequence for this key
 func (k Key) kittyBytes(protocol emu.KeyProtocol) (data []byte, ok bool) {
 	var (
 		haveDisambiguate = protocol&emu.KeyDisambiguateEscape != 0
@@ -497,7 +507,15 @@ func (k Key) kittyBytes(protocol emu.KeyProtocol) (data []byte, ok bool) {
 		return
 	}
 
-	if haveAll || (haveDisambiguate && shouldDisambiguate(k)) {
+	// Use CSI encoding if:
+	// 1. KeyReportAllKeys is enabled, OR
+	// 2. KeyDisambiguateEscape is enabled AND:
+	//    a. key needs disambiguation (legacy text keys with modifiers), OR
+	//    b. key does not generate text
+	needsCSI := haveAll ||
+		(haveDisambiguate && (shouldDisambiguate(k) || doesNotGenerateText(k)))
+
+	if needsCSI {
 		return kittyEncode(
 			k,
 			haveTypes,

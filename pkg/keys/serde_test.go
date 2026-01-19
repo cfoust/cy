@@ -278,13 +278,103 @@ func TestSerialize(t *testing.T) {
 			},
 			legacy, " ",
 		),
+		// Enter, Tab, Backspace WITH modifiers should use CSI encoding
+		// because they don't generate text (no Text field)
 		se(
 			"shift+enter",
 			Key{
-				Code: 13,
+				Code: KittyKeyEnter,
 				Mod:  KeyModShift,
 			},
 			legacy, string(keyCR),
+			disambiguate, "\x1b[13;2u",
+		),
+		se(
+			"ctrl+enter",
+			Key{
+				Code: KittyKeyEnter,
+				Mod:  KeyModCtrl,
+			},
+			legacy, string(keyCR),
+			disambiguate, "\x1b[13;5u",
+		),
+		se(
+			"alt+enter",
+			Key{
+				Code: KittyKeyEnter,
+				Mod:  KeyModAlt,
+			},
+			legacy, "\x1b\r",
+			disambiguate, "\x1b[13;3u",
+		),
+		se(
+			"ctrl+shift+enter",
+			Key{
+				Code: KittyKeyEnter,
+				Mod:  KeyModCtrl | KeyModShift,
+			},
+			legacy, string(keyCR),
+			disambiguate, "\x1b[13;6u",
+		),
+		se(
+			"shift+tab",
+			Key{
+				Code: KittyKeyTab,
+				Mod:  KeyModShift,
+			},
+			legacy, "\x1b[Z",
+			disambiguate, "\x1b[9;2u",
+		),
+		se(
+			"ctrl+backspace",
+			Key{
+				Code: KittyKeyBackspace,
+				Mod:  KeyModCtrl,
+			},
+			legacy, "\x7f",
+			disambiguate, "\x1b[127;5u",
+		),
+		se(
+			"shift+escape",
+			Key{
+				Code: KittyKeyEscape,
+				Mod:  KeyModShift,
+			},
+			legacy, "\x1b",
+			disambiguate, "\x1b[27;2u",
+		),
+		se(
+			"enter no modifier",
+			Key{
+				Code: KittyKeyEnter,
+			},
+			legacy, string(keyCR),
+			disambiguate, string(keyCR), // stays legacy per spec
+		),
+		se(
+			"tab no modifier",
+			Key{
+				Code: KittyKeyTab,
+			},
+			legacy, "\x09",
+			disambiguate, "\x09", // stays legacy per spec
+		),
+		se(
+			"backspace no modifier",
+			Key{
+				Code: KittyKeyBackspace,
+			},
+			legacy, "\x7f",
+			disambiguate, "\x7f", // stays legacy per spec
+		),
+		// Escape without modifiers IS disambiguated (it's in legacyTextKeys)
+		se(
+			"escape no modifier",
+			Key{
+				Code: KittyKeyEscape,
+			},
+			legacy, "\x1b",
+			disambiguate, "\x1b[27u",
 		),
 		se(
 			"shift+rune",
