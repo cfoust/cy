@@ -431,6 +431,64 @@ func TestSerialize(t *testing.T) {
 		),
 	}
 
+	// Modifier-only keys should only be reported with KeyReportAllKeys (flag 8)
+	// Per the Kitty keyboard protocol: "Additionally, with this mode, events
+	// for pressing modifier keys are reported"
+	modifierOnlyTests := []seCase{
+		se(
+			"left shift press",
+			Key{
+				Code: KittyLeftShift,
+				Mod:  KeyModShift,
+			},
+			legacy, "", // not reported
+			disambiguate, "", // not reported
+			types, "", // not reported
+			alt, "", // not reported
+			all, "\x1b[57441;2u", // reported only with flag 8
+			all|types, "\x1b[57441;2u",
+		),
+		se(
+			"left control press",
+			Key{
+				Code: KittyLeftControl,
+				Mod:  KeyModCtrl,
+			},
+			legacy, "",
+			disambiguate, "",
+			all, "\x1b[57442;5u",
+		),
+		se(
+			"left alt press",
+			Key{
+				Code: KittyLeftAlt,
+				Mod:  KeyModAlt,
+			},
+			legacy, "",
+			disambiguate, "",
+			all, "\x1b[57443;3u",
+		),
+		se(
+			"right shift press",
+			Key{
+				Code: KittyRightShift,
+				Mod:  KeyModShift,
+			},
+			legacy, "",
+			disambiguate, "",
+			all, "\x1b[57447;2u",
+		),
+		se(
+			"modifier release with types",
+			Key{
+				Code: KittyLeftShift,
+				Type: KeyEventRelease,
+			},
+			all|types, "\x1b[57441;1:3u",
+		),
+	}
+	cases = append(cases, modifierOnlyTests...)
+
 	for _, c := range []legacyCase{
 		legacyOut(
 			"tab",

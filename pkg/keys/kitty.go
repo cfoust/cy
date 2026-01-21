@@ -491,6 +491,12 @@ func doesNotGenerateText(k Key) bool {
 	return len(k.Text) == 0
 }
 
+// isModifierKey returns true if the key code represents a modifier-only key
+// (e.g., Shift, Ctrl, Alt pressed alone).
+func isModifierKey(code rune) bool {
+	return code >= KittyLeftShift && code <= KittyRightMeta
+}
+
 // kittyBytes generates the Kitty protocol sequence for this key
 func (k Key) kittyBytes(protocol emu.KeyProtocol) (data []byte, ok bool) {
 	var (
@@ -501,9 +507,13 @@ func (k Key) kittyBytes(protocol emu.KeyProtocol) (data []byte, ok bool) {
 		haveAll          = protocol&emu.KeyReportAllKeys != 0
 	)
 
+	// Bare modifier keys shouldn't be reported
+	if isModifierKey(k.Code) && !haveAll {
+		return
+	}
+
 	// We can only report press or repeat
-	if !haveTypes && k.Type == KeyEventRelease {
-		ok = false
+	if k.Type == KeyEventRelease && !haveTypes {
 		return
 	}
 
