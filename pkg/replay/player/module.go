@@ -55,8 +55,9 @@ func (p *Player) consume(event sessions.Event) {
 	if p.retainOutputData {
 		p.mu.Lock()
 		p.events = append(p.events, event)
+		index := len(p.events) - 1
 		p.mu.Unlock()
-		p.Goto(len(p.events)-1, -1)
+		p.Goto(index, -1)
 		return
 	}
 
