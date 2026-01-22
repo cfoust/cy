@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.1 - 2026-01-22
+
+- A pile of fixes for the kitty keyboard protocol
+
 ## 1.10.0 - 2026-01-18
 
 - Significant improvements in memory usage: `.borg` files are now loaded on demand in replay mode
