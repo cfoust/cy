@@ -9,9 +9,18 @@ import (
 	"runtime/trace"
 	"time"
 
+	"github.com/cfoust/cy/pkg/cy/api"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 )
+
+func getClient(context interface{}) (*Client, error) {
+	client, ok := context.(*Client)
+	if !ok {
+		return nil, api.ErrMissingClient
+	}
+	return client, nil
+}
 
 type CyModule struct {
 	cy *Cy
@@ -164,6 +173,15 @@ func (c *CyModule) Trace(user interface{}) error {
 		})
 	}()
 	return nil
+}
+
+func (c *CyModule) Id(user interface{}) (int, error) {
+	client, err := getClient(user)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(client.id), nil
 }
 
 func (c *CyModule) Paste(user interface{}, register string) error {

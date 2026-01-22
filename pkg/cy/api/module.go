@@ -1,7 +1,7 @@
 package api
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/cfoust/cy/pkg/clipboard"
 	"github.com/cfoust/cy/pkg/frames"
@@ -12,6 +12,12 @@ import (
 	"github.com/cfoust/cy/pkg/params"
 
 	"github.com/rs/zerolog"
+)
+
+// ErrMissingClient is returned when an API function requiring a client context
+// is called outside of a keybinding or action.
+var ErrMissingClient = errors.New(
+	"missing client: this functionality can only be accessed in a keybinding or action, see https://cfoust.github.io/cy/configuration.html#execution-context for more information",
 )
 
 type Client interface {
@@ -54,16 +60,14 @@ func getSourceNode(context interface{}) *tree.NodeID {
 }
 
 func getClient(context interface{}) (Client, error) {
-	// Unwrap ExecContext if present
+	// just used by "cy exec" to resolve the pane ID correctly
 	if exec, ok := context.(*ExecContext); ok {
 		return exec.Client, nil
 	}
 
 	client, ok := context.(Client)
 	if !ok {
-		return nil, fmt.Errorf(
-			"this functionality can only be accessed in a keybinding or action, see https://cfoust.github.io/cy/configuration.html#execution-context for more information",
-		)
+		return nil, ErrMissingClient
 	}
 
 	return client, nil

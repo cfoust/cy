@@ -21,3 +21,7 @@ Save a 15-second trace captured with [runtime/trace](https://pkg.go.dev/runtime/
 # doc: CpuProfile
 
 Save a 15-second CPU profile captured with [pprof](https://go.dev/blog/pprof) to the socket directory. This is only useful for debugging.
+
+# doc: Id
+
+Get the unique integer identifier for the current client.
