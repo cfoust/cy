@@ -468,6 +468,87 @@ For example, when moving vertically upwards, for a vertical split node this func
   (layout/attach layout path))
 
 (defn
+  layout/grid
+  ````Arrange nodes in a grid layout.
+
+Takes an array of layout nodes and arranges them in a grid pattern using nested splits. The grid dimensions are calculated to be roughly square, preferring wider layouts over taller ones.
+
+Any additional named parameters are passed through to the split nodes (e.g., :border, :border-fg, :border-bg).
+
+Example:
+```janet
+# Create a 2x2 grid of panes
+(layout/set
+  (layout/new
+    (layout/grid @[(attach :id 1)
+                   (pane :id 2)
+                   (pane :id 3)
+                   (pane :id 4)]
+                 :border :rounded)))
+```
+  ````
+  [nodes &keys args]
+  # Handle nil case
+  (when (nil? nodes)
+    (break nil))
+
+  # Ensure nodes is an array
+  (def node-array (if (and (indexed? nodes) (not (string? nodes)))
+                    nodes
+                    @[nodes]))
+
+  (when (empty? node-array)
+    (break nil))
+
+  (when (= (length node-array) 1)
+    (break (node-array 0)))
+
+  # Calculate grid dimensions
+  (def count (length node-array))
+  (def cols (math/ceil (math/sqrt count)))
+  (def rows (math/ceil (/ count cols)))
+
+  # Helper to create a split with provided properties
+  (defn make-split [a b vertical]
+    (layout/split a b
+                  :vertical vertical
+                  :border (args :border)
+                  :border-fg (args :border-fg)
+                  :border-bg (args :border-bg)))
+
+  # Build a single row of horizontal splits
+  (defn build-row [start-idx row-cols]
+    (def end-idx (min (+ start-idx row-cols) count))
+    (def row-nodes (array/slice node-array start-idx end-idx))
+
+    (when (empty? row-nodes)
+      (break nil))
+
+    (when (= (length row-nodes) 1)
+      (break (row-nodes 0)))
+
+    # Build horizontal splits for this row (left to right)
+    (var result (row-nodes 0))
+    (for i 1 (length row-nodes)
+      (set result (make-split result (row-nodes i) false)))
+    result)
+
+  # Build all rows and combine with vertical splits
+  (var layout nil)
+  (var idx 0)
+
+  (for row 0 rows
+    (def row-node-count (min cols (- count idx)))
+    (when (> row-node-count 0)
+      (def row-layout (build-row idx row-node-count))
+      (if (nil? layout)
+        (set layout row-layout)
+        (set layout (make-split layout row-layout true)))
+      (+= idx row-node-count)))
+
+  layout)
+
+(defn
   layout/map
   ```Pass all nodes in the tree into a mapping function.```
   [mapping layout]

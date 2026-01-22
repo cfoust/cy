@@ -523,3 +523,46 @@
       (action/toggle-margins)
       (def {:border borders} (layout/get))
       (assert (= borders :rounded)))
+
+(test "layout/grid empty"
+      (assert (nil? (layout/grid @[])))
+      (assert (nil? (layout/grid nil))))
+
+(test "layout/grid single node"
+      (def result (layout/new (layout/grid @[(pane :id 1)])))
+      (assert (= (result :type) :pane))
+      (assert (= (result :id) 1)))
+
+(test "layout/grid two nodes"
+      (def result (layout/new (layout/grid @[(pane :id 1) (pane :id 2)])))
+      (assert (= (result :type) :split))
+      (assert (not (result :vertical))))
+
+(test "layout/grid three nodes"
+      # 2 columns × 2 rows (last row has 1 node)
+      (def result (layout/new (layout/grid @[(pane :id 1)
+                                             (pane :id 2)
+                                             (pane :id 3)])))
+      (assert (= (result :type) :split))
+      (assert (result :vertical))
+      (def top-row (result :a))
+      (assert (= (top-row :type) :split))
+      (assert (not (top-row :vertical)))
+      (def bottom-row (result :b))
+      (assert (= (bottom-row :type) :pane))
+      (assert (= (bottom-row :id) 3)))
+
+(test "layout/grid four nodes"
+      # 2×2 grid
+      (def result (layout/new (layout/grid @[(pane :id 1)
+                                             (pane :id 2)
+                                             (pane :id 3)
+                                             (pane :id 4)])))
+      (assert (= (result :type) :split))
+      (assert (result :vertical))
+      (def top-row (result :a))
+      (assert (= (top-row :type) :split))
+      (assert (not (top-row :vertical)))
+      (def bottom-row (result :b))
+      (assert (= (bottom-row :type) :split))
+      (assert (not (bottom-row :vertical))))
