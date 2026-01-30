@@ -343,7 +343,7 @@ func (v *VM) ExecuteFunction(
 		return err
 	}
 
-	return fun.CallContext(ctx, user, params...)
+	return fun.Call(ctx, user, Params{}, params...)
 }
 
 func (v *VM) Execute(ctx context.Context, code string) error {

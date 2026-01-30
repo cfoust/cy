@@ -43,7 +43,7 @@ func runTestFile(t *testing.T, file string) (failures []testFailure) {
 		// Clears out and resets the node tree on every run
 		defer server.tree.Reset()
 
-		err := callback.CallContext(server.Ctx(), callContext)
+		err := callback.Call(server.Ctx(), callContext, janet.Params{})
 		if err == nil {
 			return
 		}

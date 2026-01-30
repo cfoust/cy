@@ -71,6 +71,7 @@ func (v *Value) JSON() ([]byte, error) {
 	out, err := v.vm.jsonEncode.CallResult(
 		context.Background(),
 		nil,
+		Params{},
 		v,
 	)
 	if err != nil {
@@ -96,6 +97,7 @@ func (v *Value) Raw() ([]byte, error) {
 	out, err := v.vm.raw.CallResult(
 		context.Background(),
 		nil,
+		Params{},
 		v,
 	)
 	if err != nil {
@@ -127,6 +129,7 @@ func (v *Value) Bytes() ([]byte, error) {
 	out, err := v.vm.marshalFn.CallResult(
 		context.Background(),
 		nil,
+		Params{},
 		v,
 	)
 	if err != nil {
@@ -153,6 +156,7 @@ func (vm *VM) FromBytes(data []byte) (*Value, error) {
 	out, err := vm.unmarshalFn.CallResult(
 		context.Background(),
 		nil,
+		Params{},
 		data,
 	)
 	if err != nil {
@@ -170,6 +174,7 @@ func (v *Value) String() string {
 	out, err := v.vm.format.CallResult(
 		context.Background(),
 		nil,
+		Params{},
 		"%j",
 		v,
 	)
@@ -243,46 +248,43 @@ type functionRequest struct {
 	Function *Function
 }
 
-func (f *Function) CallContext(
+func (f *Function) call(
 	ctx context.Context,
 	user interface{},
-	params ...interface{},
-) error {
+	params Params,
+	args ...interface{},
+) functionRequest {
 	result := make(chan Result)
 	req := functionRequest{
-		Args:     params,
+		Args:     args,
 		Function: f,
 		Params: Params{
 			Context: ctx,
 			User:    user,
 			Result:  result,
+			Dyns:    params.Dyns,
 		},
 	}
 	f.vm.requests <- req
+	return req
+}
 
+func (f *Function) Call(
+	ctx context.Context,
+	user interface{},
+	params Params,
+	args ...interface{},
+) error {
+	req := f.call(ctx, user, params, args...)
 	return req.WaitErr()
 }
 
 func (f *Function) CallResult(
 	ctx context.Context,
 	user interface{},
-	params ...interface{},
+	params Params,
+	args ...interface{},
 ) (*Value, error) {
-	result := make(chan Result)
-	req := functionRequest{
-		Args:     params,
-		Function: f,
-		Params: Params{
-			Context: ctx,
-			User:    user,
-			Result:  result,
-		},
-	}
-	f.vm.requests <- req
-
+	req := f.call(ctx, user, params, args...)
 	return req.WaitOut()
-}
-
-func (f *Function) Call(ctx context.Context, params ...interface{}) error {
-	return f.CallContext(ctx, nil, params...)
 }

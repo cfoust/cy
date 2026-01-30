@@ -141,6 +141,7 @@ func (p *Prop[T]) Get(
 	janetValue, err := p.dynamic.CallResult(
 		ctx,
 		context,
+		janet.Params{},
 		params...,
 	)
 	if err != nil {

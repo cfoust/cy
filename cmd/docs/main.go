@@ -76,6 +76,8 @@ func getParams() (params []Param, err error) {
 	for _, param := range P.DefaultParams() {
 		err = handlerFunc.Call(
 			context.Background(),
+			nil,
+			janet.Params{},
 			param,
 		)
 		if err != nil {

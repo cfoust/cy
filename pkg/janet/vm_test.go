@@ -107,7 +107,7 @@ func TestVM(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, fun)
 
-		err = fun.Call(ctx, "2312", 2)
+		err = fun.Call(ctx, nil, Params{}, "2312", 2)
 		require.NoError(t, err)
 	})
 

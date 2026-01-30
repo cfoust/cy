@@ -149,9 +149,10 @@ func (c *Client) runAction(event bind.BindEvent) {
 		args = append(args, arg)
 	}
 
-	err := event.Action.Callback.CallContext(
+	err := event.Action.Callback.Call(
 		c.Ctx(),
 		c,
+		janet.Params{Dyns: c.cy.logPipe.Dyns()},
 		args...,
 	)
 	if err == nil || err == context.Canceled {
