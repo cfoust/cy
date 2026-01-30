@@ -147,7 +147,9 @@ func (v *VM) runCode(params Params, call Call) {
 		for name, value := range params.Dyns {
 			marshaled, err := v.marshal(value)
 			if err != nil {
-				params.Error(fmt.Errorf("failed to marshal dyn %s: %w", name, err))
+				params.Error(
+					fmt.Errorf("failed to marshal dyn %s: %w", name, err),
+				)
 				return
 			}
 			key := wrapKeyword(string(name))
@@ -285,7 +287,11 @@ func (v *VM) wrapFile(file *os.File, flags int32) (*Value, error) {
 // WrapFile converts an *os.File into a Janet file value that can be used as a
 // dynamic stream (eg :in, :out, :err). The underlying file descriptor is not
 // closed by Janet; callers are responsible for closing it.
-func (v *VM) WrapFile(ctx context.Context, file *os.File, flags int32) (*Value, error) {
+func (v *VM) WrapFile(
+	ctx context.Context,
+	file *os.File,
+	flags int32,
+) (*Value, error) {
 	if file == nil {
 		return nil, fmt.Errorf("file is nil")
 	}

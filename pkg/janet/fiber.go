@@ -116,7 +116,11 @@ type fiberRequest struct {
 	In *Value
 }
 
-func (v *VM) createFiber(fun *C.JanetFunction, args []C.Janet, dyns map[Keyword]interface{}) (*Fiber, error) {
+func (v *VM) createFiber(
+	fun *C.JanetFunction,
+	args []C.Janet,
+	dyns map[Keyword]interface{},
+) (*Fiber, error) {
 	argPtr := unsafe.Pointer(nil)
 	if len(args) > 0 {
 		argPtr = unsafe.Pointer(&args[0])
@@ -155,7 +159,11 @@ func (v *VM) createFiber(fun *C.JanetFunction, args []C.Janet, dyns map[Keyword]
 		for name, value := range dyns {
 			marshaled, err := v.marshal(value)
 			if err != nil {
-				return nil, fmt.Errorf("failed to marshal dyn %s: %w", name, err)
+				return nil, fmt.Errorf(
+					"failed to marshal dyn %s: %w",
+					name,
+					err,
+				)
 			}
 			key := wrapKeyword(string(name))
 			C.janet_table_put(fiber.env, key, marshaled)

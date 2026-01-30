@@ -22,7 +22,7 @@ func TestWrapFile(t *testing.T) {
 
 		file, err := os.Open(tmpFile)
 		require.NoError(t, err)
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 
 		wrapped, err := vm.WrapFile(ctx, file, FileFlagRead)
 		require.NoError(t, err)
@@ -36,7 +36,7 @@ func TestWrapFile(t *testing.T) {
 
 		file, err := os.Create(tmpFile)
 		require.NoError(t, err)
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 
 		wrapped, err := vm.WrapFile(ctx, file, FileFlagWrite)
 		require.NoError(t, err)
@@ -56,7 +56,7 @@ func TestPrint(t *testing.T) {
 
 		file, err := os.Create(outFile)
 		require.NoError(t, err)
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 
 		wrapped, err := vm.WrapFile(ctx, file, FileFlagWrite)
 		require.NoError(t, err)
@@ -72,7 +72,7 @@ func TestPrint(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
-		file.Close()
+		_ = file.Close()
 		content, err := os.ReadFile(outFile)
 		require.NoError(t, err)
 		require.Equal(t, "hello from print\n", string(content))
@@ -84,7 +84,7 @@ func TestPrint(t *testing.T) {
 
 		file, err := os.Create(errFile)
 		require.NoError(t, err)
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 
 		wrapped, err := vm.WrapFile(ctx, file, FileFlagWrite)
 		require.NoError(t, err)
@@ -100,7 +100,7 @@ func TestPrint(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
-		file.Close()
+		_ = file.Close()
 		content, err := os.ReadFile(errFile)
 		require.NoError(t, err)
 		require.Equal(t, "error from eprint\n", string(content))
