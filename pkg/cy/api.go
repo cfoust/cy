@@ -15,6 +15,13 @@ import (
 )
 
 func getClient(context interface{}) (*Client, error) {
+	// just used by "cy exec" to resolve the pane ID correctly
+	if exec, ok := context.(*api.ExecContext); ok {
+		if client, ok := exec.Client.(*Client); ok {
+			return client, nil
+		}
+	}
+
 	client, ok := context.(*Client)
 	if !ok {
 		return nil, api.ErrMissingClient
@@ -176,6 +183,7 @@ func (c *CyModule) Trace(user interface{}) error {
 }
 
 func (c *CyModule) Id(user interface{}) (int, error) {
+
 	client, err := getClient(user)
 	if err != nil {
 		return 0, err
