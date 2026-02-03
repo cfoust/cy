@@ -240,6 +240,29 @@ const (
 	ActionBigWordEndForward
 	// gE
 	ActionBigWordEndBackward
+
+	// Text objects
+	//////////////
+	// viw
+	ActionSelectInnerWord
+	// viW
+	ActionSelectInnerBigWord
+
+	// Screen position motions
+	/////////////////////////
+	// H
+	ActionScreenTop
+	// M
+	ActionScreenMiddle
+	// L
+	ActionScreenBottom
+
+	// Visual line motions
+	//////////////////////
+	// gj
+	ActionCursorDownScreen
+	// gk
+	ActionCursorUpScreen
 )
 
 var MOTIONS = map[ActionType]motion.Motion{
@@ -248,9 +271,14 @@ var MOTIONS = map[ActionType]motion.Motion{
 	ActionEndOfLine:           motion.EndOfLine,
 	ActionLastNonBlank:        motion.LastNonBlank,
 	ActionStartOfScreenLine:   motion.StartOfScreenLine,
-	ActionFirstNonBlankScreen: motion.StartOfScreenLine,
+	ActionFirstNonBlankScreen: motion.FirstNonBlankScreen,
 	ActionMiddleOfScreenLine:  motion.MiddleOfScreenLine,
 	ActionMiddleOfLine:        motion.MiddleOfLine,
 	ActionEndOfScreenLine:     motion.EndOfScreenLine,
-	ActionLastNonBlankScreen:  motion.StartOfScreenLine,
+	ActionLastNonBlankScreen:  motion.LastNonBlankScreen,
+	ActionScreenTop:           motion.ScreenTop,
+	ActionScreenMiddle:        motion.ScreenMiddle,
+	ActionScreenBottom:        motion.ScreenBottom,
+	ActionCursorDownScreen:    motion.CursorDownScreen,
+	ActionCursorUpScreen:      motion.CursorUpScreen,
 }

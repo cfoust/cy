@@ -270,6 +270,34 @@ func (m *ReplayModule) BigWordEndBackward(context interface{}) error {
 	return m.sendAction(context, replay.ActionBigWordEndBackward)
 }
 
+func (m *ReplayModule) SelectInnerWord(context interface{}) error {
+	return m.sendAction(context, replay.ActionSelectInnerWord)
+}
+
+func (m *ReplayModule) SelectInnerBigWord(context interface{}) error {
+	return m.sendAction(context, replay.ActionSelectInnerBigWord)
+}
+
+func (m *ReplayModule) ScreenTop(context interface{}) error {
+	return m.sendAction(context, replay.ActionScreenTop)
+}
+
+func (m *ReplayModule) ScreenMiddle(context interface{}) error {
+	return m.sendAction(context, replay.ActionScreenMiddle)
+}
+
+func (m *ReplayModule) ScreenBottom(context interface{}) error {
+	return m.sendAction(context, replay.ActionScreenBottom)
+}
+
+func (m *ReplayModule) CursorDownScreen(context interface{}) error {
+	return m.sendAction(context, replay.ActionCursorDownScreen)
+}
+
+func (m *ReplayModule) CursorUpScreen(context interface{}) error {
+	return m.sendAction(context, replay.ActionCursorUpScreen)
+}
+
 type OpenBorgParams struct {
 	AltScreen  *bool
 	Focus      *geom.Vec2

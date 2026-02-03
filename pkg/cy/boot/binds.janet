@@ -138,6 +138,11 @@
                    ["down"] replay/scroll-down
                    ["j"] replay/cursor-down
                    ["k"] replay/cursor-up
+                   ["g" "j"] replay/cursor-down-screen
+                   ["g" "k"] replay/cursor-up-screen
+                   ["H"] replay/screen-top
+                   ["M"] replay/screen-middle
+                   ["L"] replay/screen-bottom
                    ["n"] replay/search-again
                    ["N"] replay/search-reverse
                    ["s"] replay/swap-screen
@@ -149,6 +154,8 @@
                    ["B"] replay/big-word-backward
                    ["E"] replay/big-word-end-forward
                    ["g" "E"] replay/big-word-end-backward
+                   ["v" "i" "w"] replay/select-inner-word
+                   ["v" "i" "W"] replay/select-inner-big-word
                    ["]" "c"] replay/command-forward
                    ["[" "c"] replay/command-backward
                    ["]" "C"] replay/command-select-forward
@@ -158,6 +165,7 @@
                    ["g" "M"] replay/middle-of-line
                    ["$"] replay/end-of-line
                    ["^"] replay/first-non-blank
+                   ["_"] replay/first-non-blank
                    ["g" "_"] replay/last-non-blank
                    ["g" "0"] replay/start-of-screen-line
                    ["g" "home"] replay/start-of-screen-line

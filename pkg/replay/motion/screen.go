@@ -81,3 +81,68 @@ var EndOfScreenLine = screenLineMotion(
 		return line.C1 - 1
 	},
 )
+
+func screenPosition(m Movable, getRow func(numLines int) int) {
+	screen, _, _ := m.Viewport()
+	if len(screen) == 0 {
+		return
+	}
+
+	line := screen[getRow(len(screen))]
+	first, _ := line.Chars.Whitespace()
+	m.Goto(geom.Vec2{
+		R: line.R,
+		C: line.C0 + first,
+	})
+}
+
+// ScreenTop corresponds to vim's `H` (jump to top of screen).
+func ScreenTop(m Movable) {
+	screenPosition(m, func(n int) int { return 0 })
+}
+
+// ScreenMiddle corresponds to vim's `M` (jump to middle of screen).
+func ScreenMiddle(m Movable) {
+	screenPosition(m, func(n int) int { return n / 2 })
+}
+
+// ScreenBottom corresponds to vim's `L` (jump to bottom of screen).
+func ScreenBottom(m Movable) {
+	screenPosition(m, func(n int) int { return n - 1 })
+}
+
+func cursorScreenLine(m Movable, delta int) {
+	screen, _, cursor := m.Viewport()
+	targetRow := cursor.R + delta
+
+	if len(screen) == 0 || targetRow < 0 || targetRow >= len(screen) {
+		return
+	}
+
+	currentLine := screen[cursor.R]
+	targetLine := screen[targetRow]
+
+	cursorPos := m.Cursor()
+	visualCol := cursorPos.C - currentLine.C0
+
+	newCol := geom.Clamp(
+		targetLine.C0+visualCol,
+		targetLine.C0,
+		targetLine.C1-1,
+	)
+
+	m.Goto(geom.Vec2{
+		R: targetLine.R,
+		C: newCol,
+	})
+}
+
+// CursorDownScreen corresponds to vim's `gj` (move down by visual line).
+func CursorDownScreen(m Movable) {
+	cursorScreenLine(m, 1)
+}
+
+// CursorUpScreen corresponds to vim's `gk` (move up by visual line).
+func CursorUpScreen(m Movable) {
+	cursorScreenLine(m, -1)
+}

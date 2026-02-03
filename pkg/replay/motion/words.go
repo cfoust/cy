@@ -148,3 +148,31 @@ func WORD(m Movable, isForward, isEnd bool) {
 
 	m.Goto(dest)
 }
+
+// InnerWord finds the word boundaries around the cursor and returns
+// the start and end positions. This is used for vim's "iw" text object.
+func InnerWord(m Movable, isBig bool) (start, end geom.Vec2, ok bool) {
+	pattern := WORD_REGEX
+	if isBig {
+		pattern = NON_WHITESPACE_REGEX
+	}
+
+	cursor := m.Cursor()
+	matches, matchOk := getLineMatches(m, pattern, cursor.R)
+	if !matchOk {
+		return
+	}
+
+	for _, match := range matches {
+		matchStart := match[0]
+		matchEnd := match[1] - 1
+
+		if cursor.C >= matchStart && cursor.C <= matchEnd {
+			return geom.Vec2{R: cursor.R, C: matchStart},
+				geom.Vec2{R: cursor.R, C: matchEnd},
+				true
+		}
+	}
+
+	return
+}

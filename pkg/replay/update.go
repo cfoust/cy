@@ -511,6 +511,17 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				isEnd,
 			)
 			return r, nil
+		case ActionSelectInnerWord, ActionSelectInnerBigWord:
+			isBig := msg.Type == ActionSelectInnerBigWord
+			start, end, ok := motion.InnerWord(r.movement, isBig)
+			if !ok {
+				return r, nil
+			}
+			r.mode = ModeCopy
+			r.isSelecting = true
+			r.selectStart = start
+			r.movement.Goto(end)
+			return r, nil
 		case ActionCommandForward, ActionCommandBackward:
 			isForward := msg.Type == ActionCommandForward
 			if !r.isCopyMode() {
