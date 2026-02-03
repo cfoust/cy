@@ -140,6 +140,47 @@ func TestLastNonBlankScreen(t *testing.T) {
 	}
 }
 
+func TestScreenPosition(t *testing.T) {
+	// Test with viewport larger than content (10 rows, 3 content lines)
+	m := fromLinesViewport(10,
+		"  first",
+		"  second",
+		"  third",
+	)
+
+	// H - targets row 0, has content -> row 0
+	ScreenTop(m)
+	require.Equal(t, geom.Vec2{R: 0, C: 2}, m.Cursor())
+
+	// M - targets row 5 (middle of viewport), no content there,
+	// finds closest content line (row 2)
+	ScreenMiddle(m)
+	require.Equal(t, geom.Vec2{R: 2, C: 2}, m.Cursor())
+
+	// L - targets row 9 (bottom of viewport), no content there,
+	// finds closest content line (row 2)
+	ScreenBottom(m)
+	require.Equal(t, geom.Vec2{R: 2, C: 2}, m.Cursor())
+}
+
+func TestScreenPositionFullViewport(t *testing.T) {
+	// Test with viewport exactly matching content
+	m := fromLines(
+		"  first",
+		"  second",
+		"  third",
+	)
+
+	ScreenTop(m)
+	require.Equal(t, geom.Vec2{R: 0, C: 2}, m.Cursor())
+
+	ScreenMiddle(m)
+	require.Equal(t, geom.Vec2{R: 1, C: 2}, m.Cursor())
+
+	ScreenBottom(m)
+	require.Equal(t, geom.Vec2{R: 2, C: 2}, m.Cursor())
+}
+
 func TestFindNext(t *testing.T) {
 	m := fromLines(
 		"foofoofoo",

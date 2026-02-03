@@ -88,7 +88,31 @@ func screenPosition(m Movable, getRow func(numLines int) int) {
 		return
 	}
 
-	line := screen[getRow(len(screen))]
+	targetRow := getRow(len(screen))
+
+	// If target row has no content, find the closest row that does
+	if len(screen[targetRow].Chars) == 0 {
+		// Search outward from target to find closest content line
+		for delta := 1; delta < len(screen); delta++ {
+			// Check above
+			if targetRow-delta >= 0 && len(screen[targetRow-delta].Chars) > 0 {
+				targetRow = targetRow - delta
+				break
+			}
+			// Check below
+			if targetRow+delta < len(screen) && len(screen[targetRow+delta].Chars) > 0 {
+				targetRow = targetRow + delta
+				break
+			}
+		}
+	}
+
+	// Still no content found
+	if len(screen[targetRow].Chars) == 0 {
+		return
+	}
+
+	line := screen[targetRow]
 	first, _ := line.Chars.Whitespace()
 	m.Goto(geom.Vec2{
 		R: line.R,

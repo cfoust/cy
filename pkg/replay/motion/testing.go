@@ -65,3 +65,42 @@ func fromLines(lines ...string) *testMovable {
 		lines: screenLines,
 	}
 }
+
+// fromLinesViewport creates a testMovable with content lines and additional
+// empty lines to simulate a viewport larger than the content.
+func fromLinesViewport(viewportRows int, lines ...string) *testMovable {
+	var screenLines []emu.ScreenLine
+	width := 0
+	for i, line := range lines {
+		chars := emu.LineFromString(line)
+		width = geom.Max(width, len(chars))
+		screenLines = append(
+			screenLines,
+			emu.ScreenLine{
+				R:     i,
+				C1:    len(chars),
+				Chars: chars,
+			},
+		)
+	}
+
+	// Add empty lines to fill the viewport
+	for i := len(lines); i < viewportRows; i++ {
+		screenLines = append(
+			screenLines,
+			emu.ScreenLine{
+				R:     i,
+				C1:    0,
+				Chars: nil,
+			},
+		)
+	}
+
+	return &testMovable{
+		size: geom.Vec2{
+			R: viewportRows,
+			C: width,
+		},
+		lines: screenLines,
+	}
+}
