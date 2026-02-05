@@ -10,9 +10,13 @@ Just like `tmux`, `cy` supports running multiple servers at once. All subcommand
 
 ## Subcommands
 
-### connect
+### connect (alias: attach)
 
 `cy connect` connects to a `cy` server, starting a new one if there isn't one already running. It is similar to `tmux attach`.
+
+`connect` supports the following flags:
+
+- `--config`: Provide a path to a Janet configuration file to use on startup instead of the default `~/.cyrc.janet`.
 
 ### exec
 
@@ -68,6 +72,10 @@ $ cy exec -c "(yield (layout/get))" -f json | jq
 ##### `janet`
 
 The `janet` format prints the `(yield)`ed value as a valid Janet expression. This is useful for debugging and for passing Janet values between `cy` and other Janet programs. However, just like `json`, the `janet` formatter does not support printing complex values like functions.
+
+### kill-server
+
+`cy kill-server` kills the `cy` server, if one is running. This sends a `SIGTERM` signal to the server process and cleans up the socket.
 
 ### recall
 
