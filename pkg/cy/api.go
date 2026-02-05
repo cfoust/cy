@@ -11,7 +11,9 @@ import (
 
 	"github.com/cfoust/cy/pkg/cy/api"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
+	"github.com/cfoust/cy/pkg/taro"
 )
 
 func getClient(context interface{}) (*Client, error) {
@@ -198,25 +200,28 @@ func (c *CyModule) Paste(user interface{}, register string) error {
 		return fmt.Errorf("no user")
 	}
 
+	var text string
 	if register != "+" {
-		buffer := client.buffer
-		if len(buffer) == 0 {
-			return nil
+		text = client.buffer
+	} else {
+		// + reads from the system clipboard instead
+		data, err := c.cy.options.Clipboard.Read()
+		if err != nil {
+			return fmt.Errorf(
+				"failed to read system clipboard: %w",
+				err,
+			)
 		}
+		text = data
+	}
 
-		client.binds.Input([]byte(buffer))
+	if len(text) == 0 {
 		return nil
 	}
 
-	// + reads from the system clipboard instead
-	data, err := c.cy.options.Clipboard.Read()
-	if err != nil {
-		return fmt.Errorf(
-			"failed to read system clipboard: %w",
-			err,
-		)
-	}
-
-	client.binds.Input([]byte(data))
+	client.renderer.Send(taro.KittyKeyMsg{
+		Code: keys.KeyText,
+		Text: text,
+	})
 	return nil
 }
