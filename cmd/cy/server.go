@@ -132,6 +132,13 @@ func (s *Server) HandleWSClient(conn Connection) {
 
 }
 
+func getConfig() string {
+	if CLI.Connect.Config != "" {
+		return CLI.Connect.Config
+	}
+	return cy.FindConfig()
+}
+
 func serve(path string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -146,7 +153,7 @@ func serve(path string) error {
 	cy, err := cy.Start(context.Background(), cy.Options{
 		SocketPath: path,
 		SocketName: CLI.Socket,
-		Config:     cy.FindConfig(),
+		Config:     getConfig(),
 		DataDir:    cy.FindDataDir(),
 		StateDir:   cy.FindStateDir(),
 		Shell:      getShell(),
