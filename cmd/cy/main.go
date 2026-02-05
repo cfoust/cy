@@ -31,6 +31,8 @@ var CLI struct {
 		CPU    string `help:"Save a CPU performance report to the given path." name:"perf-file" optional:"" default:""`
 		Trace  string `help:"Save a trace report to the given path." name:"trace-file" optional:"" default:""`
 	} `cmd:"" default:"1" aliases:"attach" help:"Connect to the cy server, starting one if necessary."`
+
+	KillServer struct{} `cmd:"" name:"kill-server" help:"Kill the cy server."`
 }
 
 func writeError(err error) {
@@ -110,6 +112,11 @@ func main() {
 		}
 	case "connect":
 		err := connectCommand()
+		if err != nil {
+			writeError(err)
+		}
+	case "kill-server":
+		err := killServerCommand()
 		if err != nil {
 			writeError(err)
 		}

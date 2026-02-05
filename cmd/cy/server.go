@@ -19,6 +19,10 @@ func getLockPath(socketPath string) string {
 	return socketPath + ".lock"
 }
 
+func getPidPath(socketPath string) string {
+	return socketPath + ".pid"
+}
+
 type Server struct {
 	cy *cy.Cy
 }
@@ -146,6 +150,16 @@ func getConfig() (string, error) {
 }
 
 func serve(path string) error {
+	pidPath := getPidPath(path)
+	if err := os.WriteFile(
+		pidPath,
+		[]byte(fmt.Sprintf("%d", os.Getpid())),
+		0600,
+	); err != nil {
+		return err
+	}
+	defer func() { _ = os.Remove(pidPath) }()
+
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err
