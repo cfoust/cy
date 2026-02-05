@@ -132,15 +132,26 @@ func (s *Server) HandleWSClient(conn Connection) {
 
 }
 
-func getConfig() string {
+func getConfig() (string, error) {
 	if CLI.Connect.Config != "" {
-		return CLI.Connect.Config
+		if _, err := os.Stat(CLI.Connect.Config); err != nil {
+			return "", fmt.Errorf(
+				"config file does not exist: %s",
+				CLI.Connect.Config,
+			)
+		}
+		return CLI.Connect.Config, nil
 	}
-	return cy.FindConfig()
+	return cy.FindConfig(), nil
 }
 
 func serve(path string) error {
 	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	config, err := getConfig()
 	if err != nil {
 		return err
 	}
@@ -153,7 +164,7 @@ func serve(path string) error {
 	cy, err := cy.Start(context.Background(), cy.Options{
 		SocketPath: path,
 		SocketName: CLI.Socket,
-		Config:     getConfig(),
+		Config:     config,
 		DataDir:    cy.FindDataDir(),
 		StateDir:   cy.FindStateDir(),
 		Shell:      getShell(),
