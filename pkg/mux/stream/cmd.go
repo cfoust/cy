@@ -73,15 +73,30 @@ func (c *Cmd) Options() CmdOptions {
 	return c.options
 }
 
-func (c *Cmd) Path() (string, error) {
+func (c *Cmd) getProc() (*os.Process, error) {
 	c.RLock()
 	proc := c.proc
 	c.RUnlock()
 	if proc == nil {
-		return "", fmt.Errorf("process not yet started")
+		return nil, fmt.Errorf("process not yet started")
 	}
+	return proc, nil
+}
 
+func (c *Cmd) Path() (string, error) {
+	proc, err := c.getProc()
+	if err != nil {
+		return "", err
+	}
 	return dir.ForPid(proc.Pid)
+}
+
+func (c *Cmd) Pid() (int, error) {
+	proc, err := c.getProc()
+	if err != nil {
+		return 0, err
+	}
+	return proc.Pid, nil
 }
 
 func (c *Cmd) setStatus(status CmdStatus) {

@@ -28,6 +28,12 @@ Get the working directory of the program running in the pane pane specified by `
 
 Get the terminal title of the pane specified by `target`. Returns the title as set by the program running in the terminal (e.g. via OSC escape sequences). `target` is a [NodeID](/api.md#nodeid).
 
+# doc: Pid
+
+(cmd/pid target)
+
+Get the process ID (PID) of the command running in the pane specified by `target`. `target` is a [NodeID](/api.md#nodeid).
+
 # doc: Commands
 
 (cmd/commands target)

@@ -92,10 +92,11 @@ func (c *CmdModule) New(
 	return pane.Id(), nil
 }
 
-func (c *CmdModule) Path(id *janet.Value) (*string, error) {
-	defer id.Free()
-
-	pane, err := resolvePane(c.Tree, id)
+func resolveCmd(
+	tree *tree.Tree,
+	id *janet.Value,
+) (*stream.Cmd, error) {
+	pane, err := resolvePane(tree, id)
 	if err != nil {
 		return nil, err
 	}
@@ -108,6 +109,17 @@ func (c *CmdModule) Path(id *janet.Value) (*string, error) {
 	cmd, ok := r.Cmd().(*stream.Cmd)
 	if !ok {
 		return nil, fmt.Errorf("pane was not a cmd")
+	}
+
+	return cmd, nil
+}
+
+func (c *CmdModule) Path(id *janet.Value) (*string, error) {
+	defer id.Free()
+
+	cmd, err := resolveCmd(c.Tree, id)
+	if err != nil {
+		return nil, err
 	}
 
 	path, err := cmd.Path()
@@ -118,22 +130,28 @@ func (c *CmdModule) Path(id *janet.Value) (*string, error) {
 	return &path, nil
 }
 
+func (c *CmdModule) Pid(id *janet.Value) (*int, error) {
+	defer id.Free()
+
+	cmd, err := resolveCmd(c.Tree, id)
+	if err != nil {
+		return nil, err
+	}
+
+	pid, err := cmd.Pid()
+	if err != nil {
+		return nil, err
+	}
+
+	return &pid, nil
+}
+
 func (c *CmdModule) Kill(id *janet.Value) error {
 	defer id.Free()
 
-	pane, err := resolvePane(c.Tree, id)
+	cmd, err := resolveCmd(c.Tree, id)
 	if err != nil {
 		return err
-	}
-
-	r, ok := pane.Screen().(*replayable.Replayable)
-	if !ok {
-		return fmt.Errorf("pane was not a cmd")
-	}
-
-	cmd, ok := r.Cmd().(*stream.Cmd)
-	if !ok {
-		return fmt.Errorf("pane was not a cmd")
 	}
 
 	cmd.Kill()
