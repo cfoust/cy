@@ -431,6 +431,47 @@ See [the layouts chapter](/layouts.md#api) for more information.
   (layout/assoc layout stack-path
                 (assoc stack-node :leaves new-leaves)))
 
+(defn-
+  activate-tab
+  ```After moving attachment within a tabs node, ensure the tab containing the attached pane is marked :active.```
+  [layout]
+  (def path (layout/attach-path layout))
+  (if (nil? path) (break layout))
+
+  (def tabs-path (layout/find-last
+                   layout path
+                   |(layout/type? :tabs $)))
+  (if (nil? tabs-path) (break layout))
+
+  (def tabs-node (layout/path layout tabs-path))
+  (def {:tabs tabs} tabs-node)
+
+  # Figure out which tab index contains the attached pane
+  (var active-index nil)
+  (each [i tab] (pairs tabs)
+    (if (layout/attached? (tab :node))
+      (set active-index i)))
+
+  (if (nil? active-index) (break layout))
+
+  # Check if the correct tab is already active
+  (if (get-in tabs [active-index :active]) (break layout))
+
+  # Find the previously active tab
+  (var prev-active nil)
+  (each [i tab] (pairs tabs)
+    (if (tab :active) (set prev-active i)))
+
+  (def new-tabs
+    (seq [[i tab] :in (pairs tabs)]
+      (cond
+        (= i active-index) (assoc tab :active true)
+        (= i prev-active) (assoc tab :active false)
+        tab)))
+
+  (layout/assoc layout tabs-path
+                (assoc tabs-node :tabs new-tabs)))
+
 (defn
   layout/move
   ```This function attaches to the pane nearest to the one the user is currently attached to along an axis. It returns a new copy of layout with the attachment point changed or returns the same layout if no motion could be completed.
@@ -484,10 +525,11 @@ For example, when moving vertically upwards, for a vertical split node this func
     (def [nearest] (successors node))
     @[;nearest ;(find-nearest (layout/path node nearest))])
 
-  (activate-stack-leaf
-    (layout/attach
-      layout
-      @[;full-path ;(find-nearest (layout/path layout full-path))])))
+  (activate-tab
+    (activate-stack-leaf
+      (layout/attach
+        layout
+        @[;full-path ;(find-nearest (layout/path layout full-path))]))))
 
 (defn
   layout/move-up
@@ -517,7 +559,9 @@ For example, when moving vertically upwards, for a vertical split node this func
   [layout]
   (layout/move
     layout
-    |(and (layout/type? :split $) (not ($ :vertical)))
+    |(or
+       (and (layout/type? :split $) (not ($ :vertical)))
+       (layout/type? :tabs $))
     |(identity (reverse (layout/successors $)))))
 
 (defn
@@ -526,7 +570,9 @@ For example, when moving vertically upwards, for a vertical split node this func
   [layout]
   (layout/move
     layout
-    |(and (layout/type? :split $) (not ($ :vertical)))
+    |(or
+       (and (layout/type? :split $) (not ($ :vertical)))
+       (layout/type? :tabs $))
     |(identity (layout/successors $))))
 
 (defn
@@ -1188,7 +1234,7 @@ Example:
   (switch-leaf-delta -1))
 
 (key/action
-  action/new-stack-leaf
+  action/new-leaf
   "Create a new leaf in the stack."
   (def layout (layout/get))
   (def shell (shell/new))
@@ -1222,7 +1268,7 @@ Example:
   (layout/set new-layout))
 
 (key/action
-  action/close-stack-leaf
+  action/close-leaf
   "Close the current leaf in the stack."
   (def layout (layout/get))
   (def stack-path (layout/find-last
@@ -1262,6 +1308,35 @@ Example:
                               (assoc _ :active true)
                               (assoc _ :node (layout/attach-first (_ :node))))
                        (assoc ($ 1) :active false)))))))
+
+  (layout/set new-layout))
+
+(key/action
+  action/rename-leaf
+  "Rename the current leaf in the stack."
+  (def layout (layout/get))
+  (def path (layout/attach-path layout))
+  (def stack-path (layout/find-last layout path |(layout/type? :stack $)))
+  (if (nil? stack-path) (break))
+  (def stack (layout/path layout stack-path))
+  (def active-path (find
+                     |((layout/path stack (array/slice $ 0 2)) :active)
+                     (layout/successors stack)))
+
+  (def leaf-path (array/slice active-path 0 2))
+  (def active (layout/path stack leaf-path))
+  (def new-title (input/text
+                   "set the leaf title"
+                   :preset (or (active :title) "")
+                   :animated false))
+
+  (if (or (nil? new-title) (= 0 (length new-title))) (break))
+
+  (def new-layout
+    (layout/assoc
+      layout
+      @[;stack-path ;leaf-path]
+      (assoc active :title new-title)))
 
   (layout/set new-layout))
 

@@ -68,8 +68,9 @@ You can click on a collapsed leaf row to switch to that leaf.
 
 - {{api action/next-leaf}}
 - {{api action/prev-leaf}}
-- {{api action/new-stack-leaf}}
-- {{api action/close-stack-leaf}}
+- {{api action/new-leaf}}
+- {{api action/close-leaf}}
+- {{api action/rename-leaf}}
 
 ### Dynamic
 

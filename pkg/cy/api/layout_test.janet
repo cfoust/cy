@@ -535,6 +535,87 @@
 
       (assert (deep= (layout/move-down layout) layout)))
 
+(test "layout/move-right tabs"
+      (def layout
+        (layout/new
+          (tabs
+            @[(active-tab "a" (attach))
+              (tab "b" (pane :id 1))])))
+
+      (assert (deep=
+                (layout/move-right layout)
+                {:type :tabs
+                 :tabs @[{:name "a"
+                          :node (layout/pane)
+                          :active false}
+                         {:name "b"
+                          :node {:type :pane :id 1 :attached true}
+                          :active true}]})))
+
+(test "layout/move-left tabs"
+      (def layout
+        {:type :tabs
+         :tabs @[{:name "a"
+                  :node (layout/pane :id 1)
+                  :active false}
+                 {:name "b"
+                  :node {:type :pane :attached true}
+                  :active true}]})
+
+      (assert (deep=
+                (layout/move-left layout)
+                {:type :tabs
+                 :tabs @[{:name "a"
+                          :node {:type :pane :id 1 :attached true}
+                          :active true}
+                         {:name "b"
+                          :node (layout/pane)
+                          :active false}]})))
+
+(test "layout/move-right tabs three tabs"
+      (def layout
+        {:type :tabs
+         :tabs @[{:name "a"
+                  :node (layout/pane :id 1)
+                  :active false}
+                 {:name "b"
+                  :node {:type :pane :attached true}
+                  :active true}
+                 {:name "c"
+                  :node (layout/pane :id 2)
+                  :active false}]})
+
+      (assert (deep=
+                (layout/move-right layout)
+                {:type :tabs
+                 :tabs @[{:name "a"
+                          :node (layout/pane :id 1)
+                          :active false}
+                         {:name "b"
+                          :node (layout/pane)
+                          :active false}
+                         {:name "c"
+                          :node {:type :pane :id 2 :attached true}
+                          :active true}]})))
+
+(test "layout/move-right tabs at end"
+      (def layout
+        (layout/new
+          (tabs
+            @[(tab "a" (pane :id 1))
+              (active-tab "b" (attach))])))
+
+      (assert (deep= (layout/move-right layout) layout)))
+
+(test "layout/move-left tabs at start"
+      (def layout
+        (layout/new
+          (tabs
+            @[(active-tab "a" (attach))
+              (tab "b" (pane :id 1))])))
+
+      (assert (deep= (layout/move-left layout) layout)))
+
 (test "layout/move-left"
       (assert (deep=
                 (layout/move-left
