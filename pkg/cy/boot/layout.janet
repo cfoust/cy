@@ -188,8 +188,15 @@ For example:
 (defn
   layout/stack
   ```Convenience function for creating a new :stack node.```
-  [leaves]
+  [leaves
+   &named
+   border
+   border-fg
+   border-bg]
   {:type :stack
+   :border border
+   :border-fg border-fg
+   :border-bg border-bg
    :leaves leaves})
 
 (defn

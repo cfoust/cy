@@ -7,6 +7,9 @@ A `:stack` node contains multiple leaves stacked vertically, only one of which i
 ```janet
 {
     :type :stack
+    :border :rounded # border type, dynamic, optional
+    :border-fg nil # color, dynamic, optional
+    :border-bg nil # color, dynamic, optional
     :leaves @[] # list of leaves
 }
 
@@ -15,9 +18,9 @@ A `:stack` node contains multiple leaves stacked vertically, only one of which i
     :active false # boolean, optional
     :title nil # string or nil, dynamic, optional
     :title-bottom nil # string or nil, dynamic, optional
-    :border :rounded # border type, dynamic, optional
-    :border-fg nil # color, dynamic, optional
-    :border-bg nil # color, dynamic, optional
+    :border :rounded # border type, dynamic, optional (overrides stack)
+    :border-fg nil # color, dynamic, optional (overrides stack)
+    :border-bg nil # color, dynamic, optional (overrides stack)
     :node {} # a node
 }
 ```
@@ -29,6 +32,16 @@ There are some important constraints on the `:leaves` property:
 - You must provide at least one leaf.
 - There must be exactly one leaf with `:active` set to `true`.
 
+### Stack properties
+
+`:border`
+
+The default [border style](/layouts/appearance.md#borders) for all leaves.
+
+`:border-fg` and `:border-bg`
+
+The default foreground and background [color](/api.md#color) of the border for all leaves.
+
 ### Leaf properties
 
 `:title` and `:title-bottom`
@@ -37,11 +50,11 @@ These strings will be rendered on the top and bottom borders of the active leaf,
 
 `:border`
 
-The [border style](/layouts/appearance.md#borders) for this leaf.
+The [border style](/layouts/appearance.md#borders) for this leaf. Overrides the stack-level `:border` if set.
 
 `:border-fg` and `:border-bg`
 
-The foreground and background [color](/api.md#color) of the border. Each leaf can have its own border style and colors.
+The foreground and background [color](/api.md#color) of the border for this leaf. Override the stack-level values if set.
 
 `:node`
 

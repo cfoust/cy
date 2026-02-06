@@ -33,7 +33,10 @@ type Leaf struct {
 }
 
 type StackNode struct {
-	Leaves []Leaf
+	Border   *prop.Border
+	BorderFg *prop.Color
+	BorderBg *prop.Color
+	Leaves   []Leaf
 }
 
 var _ Node = (*StackNode)(nil)
@@ -133,10 +136,16 @@ func (n *StackNode) MarshalJanet() interface{} {
 		Node        interface{}
 	}
 	type_ := struct {
-		Type   janet.Keyword
-		Leaves []leafArg
+		Type     janet.Keyword
+		Border   *prop.Border
+		BorderFg *prop.Color
+		BorderBg *prop.Color
+		Leaves   []leafArg
 	}{
-		Type: NodeKeywordStack,
+		Type:     NodeKeywordStack,
+		Border:   n.Border,
+		BorderFg: n.BorderFg,
+		BorderBg: n.BorderBg,
 	}
 
 	for _, leaf := range n.Leaves {
@@ -168,7 +177,10 @@ func (n *StackNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 		Node        *janet.Value
 	}
 	type stackArgs struct {
-		Leaves []leafArg
+		Border   *prop.Border
+		BorderFg *prop.Color
+		BorderBg *prop.Color
+		Leaves   []leafArg
 	}
 	args := stackArgs{}
 	err := value.Unmarshal(&args)
@@ -176,7 +188,11 @@ func (n *StackNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 		return nil, err
 	}
 
-	type_ := StackNode{}
+	type_ := StackNode{
+		Border:   args.Border,
+		BorderFg: args.BorderFg,
+		BorderBg: args.BorderBg,
+	}
 
 	for i, leaf := range args.Leaves {
 		newLeaf := Leaf{
@@ -281,11 +297,13 @@ func (s *Stack) Kill() {
 }
 
 func (s *Stack) getLeafBorder(leaf Leaf) lipgloss.Border {
-	borderStyle := lipgloss.RoundedBorder()
 	if value, ok := leaf.Border.GetPreset(); ok {
-		borderStyle = value.Border
+		return value.Border
 	}
-	return borderStyle
+	if value, ok := s.config.Border.GetPreset(); ok {
+		return value.Border
+	}
+	return lipgloss.RoundedBorder()
 }
 
 func (s *Stack) getLeafBorderStyle(
@@ -295,8 +313,13 @@ func (s *Stack) getLeafBorderStyle(
 
 	if value, ok := leaf.BorderFg.GetPreset(); ok {
 		borderFg = value
+	} else if value, ok := s.config.BorderFg.GetPreset(); ok {
+		borderFg = value
 	}
+
 	if value, ok := leaf.BorderBg.GetPreset(); ok {
+		borderBg = value
+	} else if value, ok := s.config.BorderBg.GetPreset(); ok {
 		borderBg = value
 	}
 
@@ -407,8 +430,12 @@ func (s *Stack) State() *tty.State {
 
 	if value, ok := activeLeaf.BorderFg.GetPreset(); ok {
 		boxStyle = boxStyle.BorderForeground(value.Color)
+	} else if value, ok := config.BorderFg.GetPreset(); ok {
+		boxStyle = boxStyle.BorderForeground(value.Color)
 	}
 	if value, ok := activeLeaf.BorderBg.GetPreset(); ok {
+		boxStyle = boxStyle.BorderBackground(value.Color)
+	} else if value, ok := config.BorderBg.GetPreset(); ok {
 		boxStyle = boxStyle.BorderBackground(value.Color)
 	}
 
@@ -512,6 +539,19 @@ func (s *Stack) Apply(node Node) (bool, error) {
 
 	activeLeaf := config.Active()
 	layout := New(activeLeaf.Node)
+
+	for _, p := range []prop.Presettable{
+		config.Border,
+		config.BorderFg,
+		config.BorderBg,
+	} {
+		p.Preset(
+			s.Ctx(),
+			s.Context.Context(),
+			&layout,
+		)
+		p.SetLogger(s.Logger)
+	}
 
 	for _, leaf := range config.Leaves {
 		for _, p := range []prop.Presettable{
