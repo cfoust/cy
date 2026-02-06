@@ -39,7 +39,7 @@ func (p Params) Pipe() Params {
 	return Params{
 		Context: p.Context,
 		User:    p.User,
-		Result:  make(chan Result),
+		Result:  make(chan Result, 1),
 		Dyns:    p.Dyns,
 	}
 }

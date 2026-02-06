@@ -253,8 +253,8 @@ func (f *Function) call(
 	user interface{},
 	params Params,
 	args ...interface{},
-) functionRequest {
-	result := make(chan Result)
+) (functionRequest, error) {
+	result := make(chan Result, 1)
 	req := functionRequest{
 		Args:     args,
 		Function: f,
@@ -265,8 +265,12 @@ func (f *Function) call(
 			Dyns:    params.Dyns,
 		},
 	}
-	f.vm.requests <- req
-	return req
+	select {
+	case f.vm.requests <- req:
+		return req, nil
+	case <-ctx.Done():
+		return req, ctx.Err()
+	}
 }
 
 func (f *Function) Call(
@@ -275,7 +279,10 @@ func (f *Function) Call(
 	params Params,
 	args ...interface{},
 ) error {
-	req := f.call(ctx, user, params, args...)
+	req, err := f.call(ctx, user, params, args...)
+	if err != nil {
+		return err
+	}
 	return req.WaitErr()
 }
 
@@ -285,6 +292,9 @@ func (f *Function) CallResult(
 	params Params,
 	args ...interface{},
 ) (*Value, error) {
-	req := f.call(ctx, user, params, args...)
+	req, err := f.call(ctx, user, params, args...)
+	if err != nil {
+		return nil, err
+	}
 	return req.WaitOut()
 }

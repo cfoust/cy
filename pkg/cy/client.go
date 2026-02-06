@@ -2,7 +2,9 @@ package cy
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
@@ -121,7 +123,34 @@ func (c *Cy) NewClient(
 		Message: "a client joined the server",
 	})
 
+	go c.runHook(client, "hook/init")
+
 	return client, nil
+}
+
+// runHook attempts to run a hook function by name in the client's context.
+// If the hook is not defined, no error is reported. Other errors are logged
+// and displayed as a toast.
+func (c *Cy) runHook(client *Client, funcName string) {
+	// Use a timeout to ensure hook doesn't block indefinitely
+	ctx, cancel := context.WithTimeout(client.Ctx(), 5*time.Second)
+	defer cancel()
+
+	err := c.ExecuteFunction(ctx, client, funcName)
+	if err == nil || errors.Is(err, context.Canceled) ||
+		errors.Is(err, context.DeadlineExceeded) {
+		return
+	}
+	// Ignore "unknown symbol" errors - hooks are optional
+	if strings.Contains(err.Error(), "unknown symbol") {
+		return
+	}
+	c.log.Error().Err(err).Msg("error in " + funcName)
+	client.toast.Error(fmt.Sprintf(
+		"error in %s: %s",
+		funcName,
+		err.Error(),
+	))
 }
 
 func (c *Client) Kill() {
