@@ -92,6 +92,27 @@ func TestKeyStateScreenSwapping(t *testing.T) {
 	}
 }
 
+func TestKeyStateReset(t *testing.T) {
+	term := New()
+
+	// Enable kitty protocol with stack
+	_, _ = term.Write([]byte("\x1b[>3u"))  // Push flags=3
+	_, _ = term.Write([]byte("\x1b[>15u")) // Push flags=15
+	_, _ = term.Write([]byte("\x1b[=31u")) // Set flags=31
+
+	if term.KeyState() != KeyReportAll {
+		t.Errorf("Expected flags=%d, got %d", KeyReportAll, term.KeyState())
+	}
+
+	// Send RIS (Reset to Initial State) - ESC c
+	_, _ = term.Write([]byte("\x1bc"))
+
+	// Key state should be reset to 0
+	if term.KeyState() != 0 {
+		t.Errorf("Expected flags=0 after reset, got %d", term.KeyState())
+	}
+}
+
 func TestKeyStateQuery(t *testing.T) {
 	var tests = []struct {
 		name     string

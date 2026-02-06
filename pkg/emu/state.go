@@ -289,6 +289,8 @@ func (t *State) reset() {
 	t.mode = ModeWrap
 	t.clear(0, 0, t.cols-1, t.rows-1)
 	t.moveTo(0, 0)
+	t.keyState.Reset()
+	t.altKeyState.Reset()
 }
 
 // TODO: definitely can improve allocs

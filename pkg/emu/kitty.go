@@ -72,6 +72,12 @@ func (k *KeyProtocolState) Pop() {
 	k.Stack = k.Stack[:len(k.Stack)-1]
 }
 
+// Reset clears all kitty protocol state
+func (k *KeyProtocolState) Reset() {
+	k.Flags = 0
+	k.Stack = k.Stack[:0]
+}
+
 func clampFlags(flags int) int {
 	return geom.Clamp(flags, 0, 31)
 }
