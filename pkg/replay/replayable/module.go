@@ -251,7 +251,9 @@ func (r *Replayable) EnterReplay(options ...replay.Option) {
 		return
 	}
 
-	acquired := false
+	// Acquire the player to freeze the terminal state. Events will be
+	// buffered instead of consumed while replay is active.
+	r.player.Acquire()
 
 	// If this pane is recording to disk, load history on demand from the
 	// .borg file instead of keeping a full replay player in memory.
@@ -262,9 +264,6 @@ func (r *Replayable) EnterReplay(options ...replay.Option) {
 			options = append(options, replay.WithBorgFlush(r.borgFlush))
 		}
 		options = append(options, replay.WithSnapshot(snapshot))
-	} else {
-		r.player.Acquire()
-		acquired = true
 	}
 
 	replayPlayer := r.player
@@ -299,10 +298,6 @@ func (r *Replayable) EnterReplay(options ...replay.Option) {
 		r.replay = nil
 		r.Unlock()
 		r.Notify()
-
-		if !acquired {
-			return
-		}
 
 		lastPercent := -1
 		r.player.ReleaseProgress(func(done, total int) {
