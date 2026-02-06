@@ -239,7 +239,7 @@ func (v *VM) ExecuteCall(
 	user interface{},
 	call Call,
 ) (*Result, error) {
-	result := make(chan Result)
+	result := make(chan Result, 1)
 	req := callRequest{
 		Params: Params{
 			Context: ctx,
@@ -249,7 +249,11 @@ func (v *VM) ExecuteCall(
 		},
 		Call: call,
 	}
-	v.requests <- req
+	select {
+	case v.requests <- req:
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 	return req.WaitResult()
 }
 
