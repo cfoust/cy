@@ -8,6 +8,7 @@ const (
 	NodeTypeTabs
 	NodeTypeBar
 	NodeTypeColorMap
+	NodeTypeStack
 )
 const (
 	NodeKeywordPane     = "pane"
@@ -17,6 +18,7 @@ const (
 	NodeKeywordMargins  = "margins"
 	NodeKeywordSplit    = "split"
 	NodeKeywordTabs     = "tabs"
+	NodeKeywordStack    = "stack"
 )
 
 var janetTypes = map[string]Node{
@@ -27,4 +29,5 @@ var janetTypes = map[string]Node{
 	NodeKeywordMargins:  &MarginsNode{},
 	NodeKeywordSplit:    &SplitNode{},
 	NodeKeywordTabs:     &TabsNode{},
+	NodeKeywordStack:    &StackNode{},
 }

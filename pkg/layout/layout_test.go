@@ -41,12 +41,73 @@ func TestAttachFirst(t *testing.T) {
 	)
 }
 
+func TestAttachFirstStack(t *testing.T) {
+	require.Equal(t, &StackNode{
+		Leaves: []Leaf{
+			{
+				Active: true,
+				Node: &PaneNode{
+					Attached: true,
+				},
+			},
+		},
+	}, AttachFirst(&StackNode{
+		Leaves: []Leaf{
+			{
+				Active: true,
+				Node: &PaneNode{
+					Attached: false,
+				},
+			},
+		},
+	}))
+}
+
 func TestRemoveAttached(t *testing.T) {
 	require.Equal(t,
 		&MarginsNode{Node: &PaneNode{Attached: true}},
 		RemoveAttached(&SplitNode{
 			A: &MarginsNode{Node: &PaneNode{}},
 			B: &PaneNode{Attached: true},
+		}),
+	)
+}
+
+func TestRemoveAttachedStack(t *testing.T) {
+	// With two leaves, removing the attached one should return
+	// a stack with the remaining leaf (now active and attached)
+	require.Equal(t,
+		&StackNode{
+			Leaves: []Leaf{
+				{
+					Active: true,
+					Node:   &PaneNode{Attached: true},
+				},
+			},
+		},
+		RemoveAttached(&StackNode{
+			Leaves: []Leaf{
+				{
+					Active: true,
+					Node:   &PaneNode{Attached: true},
+				},
+				{
+					Node: &PaneNode{},
+				},
+			},
+		}),
+	)
+
+	// With one leaf, removing should unwrap (preserving attached state)
+	require.Equal(t,
+		&PaneNode{Attached: true},
+		RemoveAttached(&StackNode{
+			Leaves: []Leaf{
+				{
+					Active: true,
+					Node:   &PaneNode{Attached: true},
+				},
+			},
 		}),
 	)
 }

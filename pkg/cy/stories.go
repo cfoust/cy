@@ -858,6 +858,72 @@ func init() {
 		return screen, err
 	}, stories.Config{})
 
+	stories.Register("layout/stack", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		if err != nil {
+			return nil, err
+		}
+		err = client.execute(`
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(def cmd3 (shell/new))
+(layout/set (layout/new
+  (stack
+    @[(leaf (pane :id cmd1) :title "leaf 1")
+      (active-leaf (attach :id cmd2)
+                   :title "leaf 2"
+                   :title-bottom "subtitle")
+      (leaf (pane :id cmd3) :title "leaf 3")])))
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("layout/stack/many", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		if err != nil {
+			return nil, err
+		}
+		err = client.execute(`
+(def cmd1 (shell/new))
+(layout/set (layout/new
+  (stack
+    @[(leaf (pane) :title "first")
+      (leaf (pane) :title "second")
+      (active-leaf (attach :id cmd1) :title "active" :title-bottom "bottom")
+      (leaf (pane) :title "fourth")
+      (leaf (pane) :title "fifth")])))
+		`)
+		return screen, err
+	}, stories.Config{})
+
+	stories.Register("layout/stack/styled", func(ctx context.Context) (
+		mux.Screen,
+		error,
+	) {
+		_, client, screen, err := createStory(ctx)
+		if err != nil {
+			return nil, err
+		}
+		err = client.execute(`
+(def cmd1 (shell/new))
+(def cmd2 (shell/new))
+(layout/set (layout/new
+  (stack
+    @[(leaf (pane :id cmd1) :title "inactive" :border-fg "5")
+      (active-leaf (attach :id cmd2)
+                   :title (style/text "active" :fg "0" :bg "6")
+                   :title-bottom (style/text "subtitle" :fg "0" :bg "6")
+                   :border-fg "6")])))
+		`)
+		return screen, err
+	}, stories.Config{})
+
 	stories.Register("layout/bar", func(ctx context.Context) (
 		mux.Screen,
 		error,

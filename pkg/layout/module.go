@@ -138,6 +138,35 @@ func RemoveAttached(node Node) Node {
 		newNode := node
 		newNode.Tabs = newTabs
 		return newNode
+	case *StackNode:
+		leaves := node.Leaves
+		if len(leaves) == 1 {
+			return leaves[0].Node
+		}
+
+		var attached = -1
+		for i, leaf := range leaves {
+			if !leaf.Node.IsAttached() {
+				continue
+			}
+			attached = i
+			break
+		}
+
+		newLeaves := append([]Leaf{}, leaves[0:attached]...)
+		if attached < len(leaves)-1 {
+			newLeaves = append(
+				newLeaves,
+				leaves[attached+1:]...,
+			)
+		}
+
+		newLeaves[0].Active = true
+		newLeaves[0].Node = AttachFirst(newLeaves[0].Node)
+
+		newNode := node
+		newNode.Leaves = newLeaves
+		return newNode
 	default:
 		for i, child := range node.Children() {
 			node.SetChild(i, RemoveAttached(child))

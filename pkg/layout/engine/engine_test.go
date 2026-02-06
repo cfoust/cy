@@ -269,6 +269,55 @@ func TestPaneRemoval(t *testing.T) {
 	}
 }
 
+func TestClickStack(t *testing.T) {
+	size := geom.DEFAULT_SIZE
+	l := New(
+		context.Background(),
+		T.NewTree(),
+		server.New(),
+	)
+	_ = l.Resize(size)
+
+	err := l.Set(L.New(
+		&L.StackNode{
+			Leaves: []L.Leaf{
+				{
+					Active: true,
+					Node:   &L.PaneNode{Attached: true},
+				},
+				{
+					Node: &L.PaneNode{},
+				},
+			},
+		},
+	))
+	require.NoError(t, err)
+
+	// Force state computation
+	l.State()
+
+	click := func(loc geom.Vec2) {
+		l.Send(taro.MouseMsg{
+			Vec2:   loc,
+			Type:   keys.MousePress,
+			Button: keys.MouseLeft,
+		})
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	// Click on the collapsed leaf below (last row area)
+	// With 2 leaves and active=0, the layout is:
+	// row 0: top border of active
+	// rows 1..R-3: inner content
+	// row R-2: bottom border of active
+	// row R-1: collapsed leaf 1 (below)
+	click(geom.Vec2{R: size.R - 1, C: 5})
+	result := l.Get().Root.(*L.StackNode)
+	require.False(t, result.Leaves[0].Active)
+	require.True(t, result.Leaves[1].Active)
+	require.True(t, result.Leaves[1].Node.IsAttached())
+}
+
 func TestClickTabs(t *testing.T) {
 	size := geom.DEFAULT_SIZE
 	l := New(

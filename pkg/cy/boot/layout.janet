@@ -43,6 +43,12 @@ For example:
                                   (node :tabs)
                                   (length)
                                   (range)))
+    (layout/type? :stack node) (map
+                                 |[:leaves $ :node]
+                                 (->
+                                   (node :leaves)
+                                   (length)
+                                   (range)))
     (or
       (layout/type? :margins node)
       (layout/type? :bar node)
@@ -161,6 +167,32 @@ For example:
    :bottom bottom})
 
 (defn
+  layout/leaf
+  ```Convenience function for creating a new leaf (inside of a :stack node).```
+  [node
+   &named
+   active
+   title
+   title-bottom
+   border
+   border-fg
+   border-bg]
+  {:node node
+   :active active
+   :title title
+   :title-bottom title-bottom
+   :border border
+   :border-fg border-fg
+   :border-bg border-bg})
+
+(defn
+  layout/stack
+  ```Convenience function for creating a new :stack node.```
+  [leaves]
+  {:type :stack
+   :leaves leaves})
+
+(defn
   layout/bar
   ```Convenience function for creating a new :bar node.```
   [text node &named bottom]
@@ -182,15 +214,18 @@ For example:
   ```Macro for quickly creating layouts. layout/new replaces shorthand versions of node creation functions with their longform versions and also includes a few abbreviations that do not exist elsewhere in the API.
 
 Supported short forms:
+* active-leaf: A :leaf with :active=true inside of a :stack node.
 * active-tab: A :tab with :active=true inside of a :tabs node.
 * attach: An attached :pane node.
 * bar: A :bar node.
 * borders: A :borders node.
 * color-map: A :color-map node.
 * hsplit: A :split node with :vertical=false.
+* leaf: A :leaf inside of a :stack node.
 * margins: A :margins node.
 * pane: A detached :pane node.
 * split: A :split node.
+* stack: A :stack node.
 * tab: A :tab inside of a :tabs node.
 * tabs: A :tabs node.
 * vsplit: A :split node with :vertical=true.
@@ -206,6 +241,15 @@ See [the layouts chapter](/layouts.md#api) for more information.
   (defn active-tab
     [name node]
     (layout/tab name node :active true))
+  (defn active-leaf
+    [node &named title title-bottom border border-fg border-bg]
+    (layout/leaf node
+                 :active true
+                 :title title
+                 :title-bottom title-bottom
+                 :border border
+                 :border-fg border-fg
+                 :border-bg border-bg))
 
   ~(do
      (def pane ,layout/pane)
@@ -220,6 +264,9 @@ See [the layouts chapter](/layouts.md#api) for more information.
      (def active-tab ,active-tab)
      (def bar ,layout/bar)
      (def color-map ,layout/color-map)
+     (def stack ,layout/stack)
+     (def leaf ,layout/leaf)
+     (def active-leaf ,active-leaf)
      ,body))
 
 (defn
@@ -594,6 +641,19 @@ Example:
 
                   (assoc parent :tabs @[new-head ;rest]))
       (layout/type?
+        :stack
+        parent) (do
+                  (def [head & rest] (filter
+                                       |(not (layout/attached? ($ :node)))
+                                       (parent :leaves)))
+
+                  (def new-head
+                    (as?-> head _
+                           (assoc _ :node (layout/attach-first (_ :node)))
+                           (assoc _ :active true)))
+
+                  (assoc parent :leaves @[new-head ;rest]))
+      (layout/type?
         :split
         parent) (do
                   (def {:a a :b b} parent)
@@ -706,6 +766,10 @@ Example:
                                     (tabs
                                       [(active-tab "new tab" $)]
                                       :bottom true))]
+               [":stack" |(layout/new
+                            (stack
+                              [(active-leaf $
+                                           :title "leaf 1")]))]
                [":split (horizontal)" |(struct :type :split
 
                                                :a $
@@ -1017,6 +1081,128 @@ Example:
              (->>
                (pairs existing-tabs)
                # Remove the old tab
+               (filter |(not= active-index ($ 0)))
+               (map |(if (= new-index ($ 0))
+                       (as?-> ($ 1) _
+                              (assoc _ :active true)
+                              (assoc _ :node (layout/attach-first (_ :node))))
+                       (assoc ($ 1) :active false)))))))
+
+  (layout/set new-layout))
+
+(defn-
+  switch-leaf-delta
+  [delta]
+  (def layout (layout/get))
+  (def stack-path (layout/find-last
+                    layout
+                    (layout/attach-path layout)
+                    |(layout/type? :stack $)))
+  (if (nil? stack-path) (break))
+
+  (def detached (layout/detach layout))
+  (def node (layout/path detached stack-path))
+  (def [_ active-index] (find
+                          |((layout/path node (array/slice $ 0 2)) :active)
+                          (layout/successors node)))
+
+  (def {:leaves existing-leaves} node)
+  (def new-index (mod (+ active-index delta) (length existing-leaves)))
+
+  (def new-layout
+    (layout/assoc
+      detached
+      stack-path
+      (assoc node :leaves
+             (->>
+               (pairs existing-leaves)
+               (map |(if (= new-index ($ 0))
+                       (as?-> ($ 1) _
+                              (assoc _ :active true)
+                              (assoc _ :node (layout/attach-first (_ :node))))
+                       (assoc ($ 1) :active false)))))))
+
+  (layout/set new-layout))
+
+(key/action
+  action/next-leaf
+  "Switch to the next leaf in a stack."
+  (switch-leaf-delta 1))
+
+(key/action
+  action/prev-leaf
+  "Switch to the previous leaf in a stack."
+  (switch-leaf-delta -1))
+
+(key/action
+  action/new-stack-leaf
+  "Create a new leaf in the stack."
+  (def layout (layout/get))
+  (def shell (shell/new))
+  (def new-leaf (layout/new
+                  (active-leaf (attach :id shell)
+                               :title "new leaf")))
+
+  (def detached (layout/detach layout))
+
+  (def stack-path (layout/find-last
+                    layout
+                    (layout/attach-path layout)
+                    |(layout/type? :stack $)))
+
+  (def new-layout (if (nil? stack-path)
+                    (layout/new
+                      (stack
+                        @[(leaf detached :title "leaf")
+                          new-leaf]))
+
+                    (do
+                      (def node (layout/path detached stack-path))
+                      (def {:leaves existing-leaves} node)
+                      (layout/assoc
+                        detached
+                        stack-path
+                        (assoc node :leaves
+                               @[;(map |(assoc $ :active false) existing-leaves)
+                                 new-leaf])))))
+
+  (layout/set new-layout))
+
+(key/action
+  action/close-stack-leaf
+  "Close the current leaf in the stack."
+  (def layout (layout/get))
+  (def stack-path (layout/find-last
+                    layout
+                    (layout/attach-path layout)
+                    |(layout/type? :stack $)))
+  (if (nil? stack-path) (break))
+
+  (def detached (layout/detach layout))
+  (def stack-node (layout/path detached stack-path))
+  (if
+    (= (length (stack-node :leaves)) 1)
+    (do
+      (def {:leaves [{:node node}]} (layout/path layout stack-path))
+      (layout/set (layout/assoc detached stack-path node))
+      (break)))
+
+  (def [_ active-index] (find
+                          |((layout/path stack-node (array/slice $ 0 2)) :active)
+                          (layout/successors stack-node)))
+
+  (def {:leaves existing-leaves} stack-node)
+  (def new-num-leaves (- (length existing-leaves) 1))
+  (def new-index (min active-index (- new-num-leaves 1)))
+
+  (def new-layout
+    (layout/assoc
+      detached
+      stack-path
+      (assoc stack-node :leaves
+             (->>
+               (pairs existing-leaves)
+               # Remove the old leaf
                (filter |(not= active-index ($ 0)))
                (map |(if (= new-index ($ 0))
                        (as?-> ($ 1) _
