@@ -62,6 +62,7 @@
     - [Margins](./layouts/nodes/margins.md)
     - [Pane](./layouts/nodes/pane.md)
     - [Split](./layouts/nodes/split.md)
+    - [Stack](./layouts/nodes/stack.md)
     - [Tabs](./layouts/nodes/tabs.md)
 
   - [Appearance](./layouts/appearance.md)
