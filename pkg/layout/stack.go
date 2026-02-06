@@ -628,7 +628,7 @@ func (s *Stack) Send(msg mux.Msg) {
 	bottomBorderRow := numAbove + 1 + inner.Size.R
 	belowStart := bottomBorderRow + 1
 
-	var leafIndex int = -1
+	leafIndex := -1
 	if clickRow < numAbove {
 		// Clicked on a collapsed leaf above
 		leafIndex = clickRow
