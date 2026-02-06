@@ -65,7 +65,32 @@ The Janet code executed in `cy` can be executed in two different contexts:
 
 Because of this, _some API functionality can only be used in a keybinding or action._ This is because some kinds of state, such as the state that `(layout/*)` family of functions uses to work, only makes sense in the context of a user.
 
-This is a confusing aspect of `cy` that I plan to improve over time, such as by letting you execute custom code in the context of a client whenever one connects.
+To run code in the context of a client when it first connects, you can use [hooks](#hooks).
+
+## Hooks
+
+Hooks allow you to run Janet code in response to events in `cy`. If you define a function with a specific name, `cy` will call it automatically when the corresponding event occurs.
+
+### `hook/init`
+
+The `hook/init` function is called when a new client connects to the server. It runs in the context of that client, so you can use client-specific API functions like {{api cy/id}} and {{api layout/set}}.
+
+This is useful for:
+
+- Setting client-specific parameters
+- Displaying a welcome message
+- Customizing the layout for each client
+
+```janet
+(defn hook/init []
+  # Show a welcome message
+  (msg/toast :info (string "Welcome, client #" (cy/id) "!"))
+
+  # Disable animations for this client
+  (param/set :client :animate false))
+```
+
+If `hook/init` is not defined, no error occurs; hooks are optional.
 
 ## Error handling
 
