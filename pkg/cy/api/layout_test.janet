@@ -451,6 +451,90 @@
                  :a (layout/pane)
                  :b {:type :margins :node {:type :pane :attached true}}})))
 
+(test "layout/move-down stack"
+      # Move down from the first leaf to the second;
+      # both :attached and :active should move
+      (assert (deep=
+                (layout/move-down
+                  (layout/new
+                    (stack
+                      @[(active-leaf (attach))
+                        (leaf (pane))])))
+
+                (layout/new
+                  (stack
+                    @[(leaf (pane))
+                      (active-leaf (pane :attached true))])))))
+
+(test "layout/move-up stack"
+      # Move up from the second leaf to the first;
+      # both :attached and :active should move
+      (assert (deep=
+                (layout/move-up
+                  (layout/new
+                    (stack
+                      @[(leaf (pane))
+                        (active-leaf (attach))])))
+
+                (layout/new
+                  (stack
+                    @[(active-leaf (pane :attached true))
+                      (leaf (pane))])))))
+
+(test "layout/move-down stack three leaves"
+      # Move down from first leaf, should land on second;
+      # :active moves with :attached
+      (assert (deep=
+                (layout/move-down
+                  (layout/new
+                    (stack
+                      @[(active-leaf (attach))
+                        (leaf (pane :id 2))
+                        (leaf (pane :id 3))])))
+
+                (layout/new
+                  (stack
+                    @[(leaf (pane))
+                      (active-leaf (pane :id 2 :attached true))
+                      (leaf (pane :id 3))])))))
+
+(test "layout/move-up stack three leaves"
+      # Move up from third leaf, should land on second;
+      # :active moves with :attached
+      (assert (deep=
+                (layout/move-up
+                  (layout/new
+                    (stack
+                      @[(leaf (pane :id 1))
+                        (leaf (pane :id 2))
+                        (active-leaf (attach))])))
+
+                (layout/new
+                  (stack
+                    @[(leaf (pane :id 1))
+                      (active-leaf (pane :id 2 :attached true))
+                      (leaf (pane))])))))
+
+(test "layout/move-up stack at top"
+      # Already at the top leaf, should not change
+      (def layout
+        (layout/new
+          (stack
+            @[(active-leaf (attach))
+              (leaf (pane :id 2))])))
+
+      (assert (deep= (layout/move-up layout) layout)))
+
+(test "layout/move-down stack at bottom"
+      # Already at the bottom leaf, should not change
+      (def layout
+        (layout/new
+          (stack
+            @[(leaf (pane :id 1))
+              (active-leaf (attach))])))
+
+      (assert (deep= (layout/move-down layout) layout)))
+
 (test "layout/move-left"
       (assert (deep=
                 (layout/move-left

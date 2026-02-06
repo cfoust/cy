@@ -390,6 +390,47 @@ See [the layouts chapter](/layouts.md#api) for more information.
     path
     |(layout/pane :attached true :id ($ :id))))
 
+(defn-
+  activate-stack-leaf
+  ```After moving attachment within a stack, ensure the leaf containing the attached pane is marked :active.```
+  [layout]
+  (def path (layout/attach-path layout))
+  (if (nil? path) (break layout))
+
+  (def stack-path (layout/find-last
+                    layout path
+                    |(layout/type? :stack $)))
+  (if (nil? stack-path) (break layout))
+
+  (def stack-node (layout/path layout stack-path))
+  (def {:leaves leaves} stack-node)
+
+  # Figure out which leaf index contains the attached pane
+  (var active-index nil)
+  (each [i leaf] (pairs leaves)
+    (if (layout/attached? (leaf :node))
+      (set active-index i)))
+
+  (if (nil? active-index) (break layout))
+
+  # Check if the correct leaf is already active
+  (if (get-in leaves [active-index :active]) (break layout))
+
+  # Find the previously active leaf
+  (var prev-active nil)
+  (each [i leaf] (pairs leaves)
+    (if (leaf :active) (set prev-active i)))
+
+  (def new-leaves
+    (seq [[i leaf] :in (pairs leaves)]
+      (cond
+        (= i active-index) (assoc leaf :active true)
+        (= i prev-active) (assoc leaf :active nil)
+        leaf)))
+
+  (layout/assoc layout stack-path
+                (assoc stack-node :leaves new-leaves)))
+
 (defn
   layout/move
   ```This function attaches to the pane nearest to the one the user is currently attached to along an axis. It returns a new copy of layout with the attachment point changed or returns the same layout if no motion could be completed.
@@ -443,9 +484,10 @@ For example, when moving vertically upwards, for a vertical split node this func
     (def [nearest] (successors node))
     @[;nearest ;(find-nearest (layout/path node nearest))])
 
-  (layout/attach
-    layout
-    @[;full-path ;(find-nearest (layout/path layout full-path))]))
+  (activate-stack-leaf
+    (layout/attach
+      layout
+      @[;full-path ;(find-nearest (layout/path layout full-path))])))
 
 (defn
   layout/move-up
@@ -453,7 +495,9 @@ For example, when moving vertically upwards, for a vertical split node this func
   [layout]
   (layout/move
     layout
-    |(and (layout/type? :split $) ($ :vertical))
+    |(or
+       (and (layout/type? :split $) ($ :vertical))
+       (layout/type? :stack $))
     |(identity (reverse (layout/successors $)))))
 
 (defn
@@ -462,7 +506,9 @@ For example, when moving vertically upwards, for a vertical split node this func
   [layout]
   (layout/move
     layout
-    |(and (layout/type? :split $) ($ :vertical))
+    |(or
+       (and (layout/type? :split $) ($ :vertical))
+       (layout/type? :stack $))
     |(identity (layout/successors $))))
 
 (defn
