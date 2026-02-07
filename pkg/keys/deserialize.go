@@ -492,6 +492,13 @@ func Read(b []byte) (event any, w int) {
 	}
 
 	// Detect mouse events.
+	// SGR (mode 1006) must be checked first since its prefix ESC [ <
+	// is also a valid start for CSI sequences.
+	if isSGRMouseEvent(b) {
+		if m, consumed, ok := parseSGRMouseEvent(b); ok {
+			return m, consumed
+		}
+	}
 	if isMouseEvent(b) {
 		return parseX10MouseEvent(b), 6
 	}

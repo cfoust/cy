@@ -134,27 +134,7 @@ func (t *Terminal) Send(msg mux.Msg) {
 	case taro.KittyKeyMsg:
 		input, ok = keys.Key(msg).Bytes(mode, t.terminal.KeyState())
 	case taro.MouseMsg:
-		switch mode & emu.ModeMouseMask {
-		case emu.ModeMouseX10:
-			if msg.Type != keys.MousePress {
-				return
-			}
-
-			input = keys.Mouse(msg).X10Bytes()
-			ok = true
-		case emu.ModeMouseButton:
-			// TODO(cfoust): 08/08/23 we should still report drag
-			if msg.Type == keys.MouseMotion {
-				return
-			}
-			input = msg.Bytes()
-			ok = true
-		case emu.ModeMouseMotion, emu.ModeMouseMany:
-			input = msg.Bytes()
-			ok = true
-		case 0:
-			return
-		}
+		input, ok = keys.Mouse(msg).Bytes(mode)
 	}
 
 	if !ok || len(input) == 0 {

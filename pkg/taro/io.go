@@ -25,10 +25,6 @@ func (m MouseMsg) String() string {
 	return keys.Mouse(m).String()
 }
 
-func (m MouseMsg) Bytes() []byte {
-	return keys.Mouse(m).Bytes()
-}
-
 func DetectOneMsg(b []byte) (msg Msg, w int) {
 	var event any
 	event, w = keys.Read(b)
