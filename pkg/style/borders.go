@@ -113,12 +113,12 @@ type Border struct {
 	isNone bool
 	lipgloss.Border
 	// Pre-computed rune values to avoid []rune() conversions in hot paths
-	leftRune        rune
-	topRune         rune
-	middleRune      rune
-	middleLeftRune  rune
-	middleRightRune rune
-	middleTopRune   rune
+	leftRune         rune
+	topRune          rune
+	middleRune       rune
+	middleLeftRune   rune
+	middleRightRune  rune
+	middleTopRune    rune
 	middleBottomRune rune
 }
 
