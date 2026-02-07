@@ -18,14 +18,8 @@ func NewPublisher[T any]() *Publisher[T] {
 }
 
 func (p *Publisher[T]) Publish(value T) {
-	subscribers := make([]*Subscriber[T], 0)
-	p.m.Lock()
+	p.m.RLock()
 	for subscriber := range p.subscribers {
-		subscribers = append(subscribers, subscriber)
-	}
-	p.m.Unlock()
-
-	for _, subscriber := range subscribers {
 		subscriber.m.RLock()
 		active := subscriber.active
 		subscriber.m.RUnlock()
@@ -33,17 +27,15 @@ func (p *Publisher[T]) Publish(value T) {
 			continue
 		}
 
-		// Blocking when publishing can cause all kinds of trouble. We
-		// don't want one bad subscriber to bring entire Screens to a
-		// halt.
-		go func(subscriber *Subscriber[T], value T) {
-			select {
-			case <-subscriber.Ctx().Done():
-				subscriber.Done()
-			case subscriber.channel <- value:
-			}
-		}(subscriber, value)
+		// Non-blocking send: if the subscriber isn't keeping up,
+		// skip this update. This is safe because subscribers
+		// re-read full state on wakeup anyway.
+		select {
+		case subscriber.channel <- value:
+		default:
+		}
 	}
+	p.m.RUnlock()
 }
 
 type Subscriber[T any] struct {
@@ -55,7 +47,7 @@ type Subscriber[T any] struct {
 }
 
 func (t *Publisher[T]) Subscribe(ctx context.Context) *Subscriber[T] {
-	channel := make(chan T)
+	channel := make(chan T, 1)
 	s := &Subscriber[T]{
 		Lifetime:  NewLifetime(ctx),
 		channel:   channel,

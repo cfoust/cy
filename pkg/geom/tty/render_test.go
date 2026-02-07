@@ -8,7 +8,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 	"github.com/stretchr/testify/require"
-	"github.com/xo/terminfo"
 )
 
 func testBytes(
@@ -16,13 +15,11 @@ func testBytes(
 	name string,
 	bytes []byte,
 ) {
-	info, _ := terminfo.Load("xterm-256color")
 	termA := emu.New()
 	_, _ = termA.Write(bytes)
 
 	termB := emu.New()
 	newBytes := swapImage(
-		info,
 		termB.Screen(),
 		termA.Screen(),
 	)

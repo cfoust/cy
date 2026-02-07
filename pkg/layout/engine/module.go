@@ -146,7 +146,7 @@ func (l *LayoutEngine) State() *tty.State {
 				style.FillBorder(
 					state.Image,
 					row, col, size.R, size.C,
-					style.Borders[i],
+					&style.Borders[i],
 				)
 			}
 		}

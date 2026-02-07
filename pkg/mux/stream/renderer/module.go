@@ -74,7 +74,6 @@ func (r *Renderer) poll(ctx context.Context) error {
 
 	for {
 		changes := tty.Swap(
-			r.info,
 			tty.Capture(r.raw),
 			r.screen.State(),
 		)

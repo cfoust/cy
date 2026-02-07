@@ -51,39 +51,37 @@ var borderMap = map[janet.Keyword]lipgloss.Border{
 func FillBorder(
 	image image.Image,
 	row, col, rows, cols int,
-	border Border,
+	border *Border,
 ) {
-	leftChar := []rune(border.Left)[0]
-	topChar := []rune(border.Top)[0]
 	char := image[row][col].Char
-	if char != leftChar && char != topChar {
+	if char != border.leftRune && char != border.topRune {
 		return
 	}
 
 	var top, left, bottom, right bool
 	switch char {
-	case leftChar:
+	case border.leftRune:
 		top = true
 		bottom = true
-	case topChar:
+	case border.topRune:
 		left = true
 		right = true
 	}
 
 	if !left && col > 0 {
-		left = image[row][col-1].Char == []rune(border.Top)[0]
+		left = image[row][col-1].Char == border.topRune
 	}
 
 	if !right && col < cols-1 {
-		right = image[row][col+1].Char == []rune(border.Top)[0]
+		right = image[row][col+1].Char == border.topRune
 	}
 
 	if !top && row > 0 {
-		top = image[row-1][col].Char == []rune(border.Left)[0]
+		top = image[row-1][col].Char == border.leftRune
 	}
 
 	if !bottom && row < rows-1 {
-		bottom = image[row+1][col].Char == []rune(border.Left)[0]
+		bottom = image[row+1][col].Char == border.leftRune
 	}
 
 	if !left && !right && top && bottom {
@@ -95,15 +93,15 @@ func FillBorder(
 	}
 
 	if left && right && top && bottom {
-		char = []rune(border.Middle)[0]
+		char = border.middleRune
 	} else if !left && right && top && bottom {
-		char = []rune(border.MiddleLeft)[0]
+		char = border.middleLeftRune
 	} else if left && !right && top && bottom {
-		char = []rune(border.MiddleRight)[0]
+		char = border.middleRightRune
 	} else if left && right && !top && !bottom {
-		char = []rune(border.MiddleTop)[0]
+		char = border.middleTopRune
 	} else if left && right && top && !bottom {
-		char = []rune(border.MiddleBottom)[0]
+		char = border.middleBottomRune
 	}
 
 	image[row][col].Char = char
@@ -114,6 +112,14 @@ type Border struct {
 	// supported in some layout nodes
 	isNone bool
 	lipgloss.Border
+	// Pre-computed rune values to avoid []rune() conversions in hot paths
+	leftRune        rune
+	topRune         rune
+	middleRune      rune
+	middleLeftRune  rune
+	middleRightRune rune
+	middleTopRune   rune
+	middleBottomRune rune
 }
 
 // None reports whether this Border is none, or should not be rendered.
@@ -137,8 +143,24 @@ func (b Border) Smoothable() bool {
 	return true
 }
 
+func firstRune(s string) rune {
+	for _, r := range s {
+		return r
+	}
+	return 0
+}
+
 func NewBorder(border lipgloss.Border) Border {
-	return Border{Border: border}
+	return Border{
+		Border:           border,
+		leftRune:         firstRune(border.Left),
+		topRune:          firstRune(border.Top),
+		middleRune:       firstRune(border.Middle),
+		middleLeftRune:   firstRune(border.MiddleLeft),
+		middleRightRune:  firstRune(border.MiddleRight),
+		middleTopRune:    firstRune(border.MiddleTop),
+		middleBottomRune: firstRune(border.MiddleBottom),
+	}
 }
 
 var DefaultBorder = NewBorder(lipgloss.RoundedBorder())
@@ -179,7 +201,7 @@ func (b *Border) UnmarshalJanet(value *janet.Value) (err error) {
 		)
 	}
 
-	b.Border = border
+	*b = NewBorder(border)
 	return nil
 }
 

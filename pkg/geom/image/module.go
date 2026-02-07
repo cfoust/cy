@@ -24,16 +24,14 @@ func (i Image) Cell(x, y int) emu.Glyph {
 }
 
 func New(size geom.Vec2) Image {
-	image := Image{}
-
+	image := make(Image, size.R)
 	for y := 0; y < size.R; y++ {
-		line := make([]emu.Glyph, 0)
-		for x := 0; x < size.C; x++ {
-			line = append(line, emu.EmptyGlyph())
+		line := make(emu.Line, size.C)
+		for x := range line {
+			line[x] = emu.EmptyGlyph()
 		}
-		image = append(image, line)
+		image[y] = line
 	}
-
 	return image
 }
 
