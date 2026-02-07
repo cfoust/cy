@@ -370,6 +370,9 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 				err := c.ExecuteFunction(
 					ctx,
 					client,
+					janet.Params{
+						Dyns: c.logPipe.Dyns(),
+					},
 					"register/set",
 					event.Register,
 					event.Text,

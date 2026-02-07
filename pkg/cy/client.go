@@ -136,7 +136,12 @@ func (c *Cy) runHook(client *Client, funcName string) {
 	ctx, cancel := context.WithTimeout(client.Ctx(), 5*time.Second)
 	defer cancel()
 
-	err := c.ExecuteFunction(ctx, client, funcName)
+	err := c.ExecuteFunction(
+		ctx,
+		client,
+		janet.Params{Dyns: c.logPipe.Dyns()},
+		funcName,
+	)
 	if err == nil || errors.Is(err, context.Canceled) ||
 		errors.Is(err, context.DeadlineExceeded) {
 		return
@@ -403,6 +408,7 @@ func (c *Client) findNewPane() error {
 	return c.cy.ExecuteFunction(
 		c.Ctx(),
 		c,
+		janet.Params{Dyns: c.cy.logPipe.Dyns()},
 		"shell/attach",
 		cwd,
 	)

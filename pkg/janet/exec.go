@@ -327,16 +327,22 @@ func (v *VM) WrapFile(
 func (v *VM) ExecuteFunction(
 	ctx context.Context,
 	user interface{},
+	params Params,
 	funcName string,
-	params ...interface{},
+	args ...interface{},
 ) error {
 	out, err := v.ExecuteCall(
 		ctx,
 		nil,
-		CallString(fmt.Sprintf(
-			`(yield %s)`,
-			funcName,
-		)),
+		Call{
+			Code: []byte(fmt.Sprintf(
+				`(yield %s)`,
+				funcName,
+			)),
+			Options: CallOptions{
+				Dyns: params.Dyns,
+			},
+		},
 	)
 	if err != nil {
 		return err
@@ -348,7 +354,7 @@ func (v *VM) ExecuteFunction(
 		return err
 	}
 
-	return fun.Call(ctx, user, Params{}, params...)
+	return fun.Call(ctx, user, params, args...)
 }
 
 func (v *VM) Execute(ctx context.Context, code string) error {

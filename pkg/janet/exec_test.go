@@ -16,12 +16,12 @@ func TestExecuteFunction(t *testing.T) {
 		err := vm.Execute(ctx, `(defn test-add [a b] (+ a b))`)
 		require.NoError(t, err)
 
-		err = vm.ExecuteFunction(ctx, nil, "test-add", 2, 3)
+		err = vm.ExecuteFunction(ctx, nil, Params{}, "test-add", 2, 3)
 		require.NoError(t, err)
 	})
 
 	t.Run("non-existent function", func(t *testing.T) {
-		err := vm.ExecuteFunction(ctx, nil, "non-existent-function")
+		err := vm.ExecuteFunction(ctx, nil, Params{}, "non-existent-function")
 		require.Error(t, err)
 	})
 
@@ -29,7 +29,10 @@ func TestExecuteFunction(t *testing.T) {
 		err := vm.Execute(ctx, `(defn test-params [num str bool]
 			(print "num:" num "str:" str "bool:" bool))`)
 		require.NoError(t, err)
-		err = vm.ExecuteFunction(ctx, nil, "test-params", 42, "hello", true)
+		err = vm.ExecuteFunction(
+			ctx, nil, Params{},
+			"test-params", 42, "hello", true,
+		)
 		require.NoError(t, err)
 	})
 
@@ -37,7 +40,7 @@ func TestExecuteFunction(t *testing.T) {
 		err := vm.Execute(ctx, `(defn test-no-params [] (print "no params"))`)
 		require.NoError(t, err)
 
-		err = vm.ExecuteFunction(ctx, nil, "test-no-params")
+		err = vm.ExecuteFunction(ctx, nil, Params{}, "test-no-params")
 		require.NoError(t, err)
 	})
 
@@ -45,7 +48,7 @@ func TestExecuteFunction(t *testing.T) {
 		err := vm.Execute(ctx, `(defn test-error [] (error "test error"))`)
 		require.NoError(t, err)
 
-		err = vm.ExecuteFunction(ctx, nil, "test-error")
+		err = vm.ExecuteFunction(ctx, nil, Params{}, "test-error")
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "test error")
 	})
@@ -63,7 +66,7 @@ func TestExecuteFunction(t *testing.T) {
 		err = vm.Execute(ctx, `(defn test-with-user [] (test-user-context))`)
 		require.NoError(t, err)
 		testUser := "test-user"
-		err = vm.ExecuteFunction(ctx, testUser, "test-with-user")
+		err = vm.ExecuteFunction(ctx, testUser, Params{}, "test-with-user")
 		require.NoError(t, err)
 		require.Equal(t, testUser, receivedUser)
 	})
@@ -75,7 +78,7 @@ func TestExecuteFunction(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		err = vm.ExecuteFunction(ctx, nil, "test-var-fn")
+		err = vm.ExecuteFunction(ctx, nil, Params{}, "test-var-fn")
 		require.NoError(t, err)
 	})
 
@@ -86,19 +89,22 @@ func TestExecuteFunction(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		err = vm.ExecuteFunction(ctx, nil, "test-complex-return")
+		err = vm.ExecuteFunction(ctx, nil, Params{}, "test-complex-return")
 		require.NoError(t, err)
 	})
 
 	t.Run("built-in function", func(t *testing.T) {
-		err = vm.ExecuteFunction(ctx, nil, "length", []int{1, 2, 3, 4})
+		err = vm.ExecuteFunction(
+			ctx, nil, Params{},
+			"length", []int{1, 2, 3, 4},
+		)
 		require.NoError(t, err)
 	})
 
 	t.Run("wrong parameter count", func(t *testing.T) {
 		err := vm.Execute(ctx, `(defn test-param-count [a b] (+ a b))`)
 		require.NoError(t, err)
-		err = vm.ExecuteFunction(ctx, nil, "test-param-count", 1)
+		err = vm.ExecuteFunction(ctx, nil, Params{}, "test-param-count", 1)
 		require.Error(t, err)
 	})
 
@@ -109,7 +115,7 @@ func TestExecuteFunction(t *testing.T) {
 		cancelledCtx, cancel := context.WithCancel(ctx)
 		cancel()
 
-		err = vm.ExecuteFunction(cancelledCtx, nil, "test-slow")
+		err = vm.ExecuteFunction(cancelledCtx, nil, Params{}, "test-slow")
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "context canceled")
 	})
