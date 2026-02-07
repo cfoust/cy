@@ -17,7 +17,8 @@ type kittyDetector struct {
 	w io.Writer
 	r io.Reader
 
-	gotResponse bool
+	gotResponse    bool
+	kittySupported bool
 }
 
 var _ io.Reader = (*kittyDetector)(nil)
@@ -46,6 +47,7 @@ func (k *kittyDetector) Read(p []byte) (n int, err error) {
 
 	if contains(KITTY_RESPONSE, p[:n]) {
 		k.gotResponse = true
+		k.kittySupported = true
 		_, err = k.w.Write([]byte(keys.GenerateKittyEnableSequence(
 			emu.KeyReportAll,
 		)))

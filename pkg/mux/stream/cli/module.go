@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/mux"
 
 	"github.com/muesli/termenv"
@@ -54,6 +55,14 @@ func Attach(
 	if err := protocolDetector.Query(); err != nil {
 		return err
 	}
+
+	defer func() {
+		if !protocolDetector.kittySupported {
+			return
+		}
+
+		_, _ = out.WriteString(keys.GenerateKittyDisableSequence())
+	}()
 
 	go func() { _, _ = io.Copy(stream, protocolDetector) }()
 	go func() { _, _ = io.Copy(out, stream) }()
