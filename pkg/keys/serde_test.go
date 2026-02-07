@@ -622,3 +622,35 @@ func TestBracketedPasteSerialization(t *testing.T) {
 		)
 	})
 }
+
+func TestHasIncompleteBracketedPaste(t *testing.T) {
+	// Complete paste is not incomplete
+	assert.False(t, HasIncompleteBracketedPaste(
+		[]byte("\x1b[200~hello\x1b[201~"),
+	))
+
+	// Start marker without end marker is incomplete
+	assert.True(t, HasIncompleteBracketedPaste(
+		[]byte("\x1b[200~hello"),
+	))
+
+	// No paste markers at all
+	assert.False(t, HasIncompleteBracketedPaste(
+		[]byte("hello world"),
+	))
+
+	// Just the start marker
+	assert.True(t, HasIncompleteBracketedPaste(
+		[]byte("\x1b[200~"),
+	))
+
+	// Data before the start marker, no end
+	assert.True(t, HasIncompleteBracketedPaste(
+		[]byte("abc\x1b[200~hello"),
+	))
+
+	// Data before the start marker, with end
+	assert.False(t, HasIncompleteBracketedPaste(
+		[]byte("abc\x1b[200~hello\x1b[201~"),
+	))
+}

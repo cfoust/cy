@@ -11,27 +11,43 @@ import (
 
 // Bracketed paste mode sequences
 var (
-	bracketedPasteStart = []byte("\x1b[200~")
+	BracketedPasteStart = []byte("\x1b[200~")
 	bracketedPasteEnd   = []byte("\x1b[201~")
 )
+
+// HasIncompleteBracketedPaste returns true when b contains the start
+// of a bracketed paste sequence (\x1b[200~) but no matching end
+// marker (\x1b[201~). This indicates the paste was split across
+// multiple Write calls.
+func HasIncompleteBracketedPaste(b []byte) bool {
+	start := bytes.Index(b, BracketedPasteStart)
+	if start == -1 {
+		return false
+	}
+	end := bytes.Index(
+		b[start+len(BracketedPasteStart):],
+		bracketedPasteEnd,
+	)
+	return end == -1
+}
 
 // parseBracketedPaste checks if input starts with a bracketed paste sequence.
 // Returns the paste content as a Key with KeyText, the total bytes consumed,
 // and whether a bracketed paste was found.
 func parseBracketedPaste(b []byte) (key Key, width int, ok bool) {
-	if !bytes.HasPrefix(b, bracketedPasteStart) {
+	if !bytes.HasPrefix(b, BracketedPasteStart) {
 		return Key{}, 0, false
 	}
 
 	// Find the end marker
-	endIdx := bytes.Index(b[len(bracketedPasteStart):], bracketedPasteEnd)
+	endIdx := bytes.Index(b[len(BracketedPasteStart):], bracketedPasteEnd)
 	if endIdx == -1 {
 		// No end marker found - incomplete paste, don't consume anything
 		return Key{}, 0, false
 	}
 
 	// Extract the pasted text (between start and end markers)
-	pasteStart := len(bracketedPasteStart)
+	pasteStart := len(BracketedPasteStart)
 	pasteEnd := pasteStart + endIdx
 	pastedText := string(b[pasteStart:pasteEnd])
 

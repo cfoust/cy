@@ -1,6 +1,7 @@
 package bind
 
 import (
+	"bytes"
 	"context"
 	"time"
 
@@ -61,6 +62,9 @@ type Engine[T any] struct {
 
 	// Holds the sequence of keys the user has entered
 	state []string
+
+	// Buffered bytes from an incomplete bracketed paste
+	pasteLeftover []byte
 }
 
 func NewEngine[T any]() *Engine[T] {
@@ -230,10 +234,42 @@ func (e *Engine[T]) Poll(ctx context.Context) {
 }
 
 // Process input and produce events.
+//
+// Bracketed paste sequences (\x1b[200~...\x1b[201~) require both
+// markers to be present for the parser to recognize them. Some
+// terminal emulators split the paste across multiple Write calls, so
+// the start and end markers arrive in separate Input invocations.
+// Without buffering, the orphaned start marker would be consumed as
+// an UnknownCSISequenceEvent and the paste content would be
+// misinterpreted as individual key events. To handle this, when we
+// see a start marker with no matching end marker, we save the
+// trailing bytes and prepend them to the next call.
 func (e *Engine[T]) Input(data []byte) {
+	e.Lock()
+	if len(e.pasteLeftover) > 0 {
+		data = append(e.pasteLeftover, data...)
+		e.pasteLeftover = nil
+	}
+	e.Unlock()
+
 	for i, w := 0, 0; i < len(data); i += w {
+		remaining := data[i:]
+		if bytes.HasPrefix(
+			remaining,
+			keys.BracketedPasteStart,
+		) && keys.HasIncompleteBracketedPaste(remaining) {
+			e.Lock()
+			e.pasteLeftover = make(
+				[]byte,
+				len(remaining),
+			)
+			copy(e.pasteLeftover, remaining)
+			e.Unlock()
+			return
+		}
+
 		var msg taro.Msg
-		msg, w = taro.DetectOneMsg(data[i:])
+		msg, w = taro.DetectOneMsg(remaining)
 		e.in <- msg
 	}
 }
