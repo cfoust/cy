@@ -724,34 +724,41 @@ Example:
 
   (def parent (layout/path layout parent-path))
 
+  (defn remove-attached-child [parent key]
+    (def children (parent key))
+    (var attached-idx 0)
+    (for i 0 (length children)
+      (when (layout/attached?
+              ((children i) :node))
+        (set attached-idx i)
+        (break)))
+    (def remaining
+      (filter
+        |(not (layout/attached? ($ :node)))
+        children))
+    (def new-idx
+      (min attached-idx
+           (- (length remaining) 1)))
+    (assoc parent key
+           (seq [[i child] :pairs remaining]
+             (if (= i new-idx)
+               (as?-> child _
+                      (assoc _ :node
+                             (layout/attach-first
+                               (_ :node)))
+                      (assoc _ :active true))
+               child))))
+
   (def new-parent
     (cond
       (layout/type?
         :tabs
-        parent) (do
-                  (def [head & rest] (filter
-                                       |(not (layout/attached? ($ :node)))
-                                       (parent :tabs)))
-
-                  (def new-head
-                    (as?-> head _
-                           (assoc _ :node (layout/attach-first (_ :node)))
-                           (assoc _ :active true)))
-
-                  (assoc parent :tabs @[new-head ;rest]))
+        parent) (remove-attached-child
+                  parent :tabs)
       (layout/type?
         :stack
-        parent) (do
-                  (def [head & rest] (filter
-                                       |(not (layout/attached? ($ :node)))
-                                       (parent :leaves)))
-
-                  (def new-head
-                    (as?-> head _
-                           (assoc _ :node (layout/attach-first (_ :node)))
-                           (assoc _ :active true)))
-
-                  (assoc parent :leaves @[new-head ;rest]))
+        parent) (remove-attached-child
+                  parent :leaves)
       (layout/type?
         :split
         parent) (do

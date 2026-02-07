@@ -132,8 +132,12 @@ func RemoveAttached(node Node) Node {
 			newTabs = append(newTabs, tabs[attached+1:]...)
 		}
 
-		newTabs[0].Active = true
-		newTabs[0].Node = AttachFirst(newTabs[0].Node)
+		newIndex := attached
+		if newIndex >= len(newTabs) {
+			newIndex = len(newTabs) - 1
+		}
+		newTabs[newIndex].Active = true
+		newTabs[newIndex].Node = AttachFirst(newTabs[newIndex].Node)
 
 		newNode := node
 		newNode.Tabs = newTabs
@@ -161,8 +165,12 @@ func RemoveAttached(node Node) Node {
 			)
 		}
 
-		newLeaves[0].Active = true
-		newLeaves[0].Node = AttachFirst(newLeaves[0].Node)
+		newIndex := attached
+		if newIndex >= len(newLeaves) {
+			newIndex = len(newLeaves) - 1
+		}
+		newLeaves[newIndex].Active = true
+		newLeaves[newIndex].Node = AttachFirst(newLeaves[newIndex].Node)
 
 		newNode := node
 		newNode.Leaves = newLeaves

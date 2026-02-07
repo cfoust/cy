@@ -674,7 +674,37 @@
 
                 (layout/new
                   (tabs
-                    @[(active-tab "tab" (attach :id 2))])))))
+                    @[(active-tab "tab" (attach :id 2))]))))
+
+      # Removing the last tab activates the previous one
+      (assert (deep=
+                (layout/remove-attached
+                  (layout/new
+                    (tabs
+                      @[(tab "a" (pane :id 1))
+                        (tab "b" (pane :id 2))
+                        (active-tab "c" (attach))])))
+
+                (layout/new
+                  (tabs
+                    @[(tab "a" (pane :id 1))
+                      (active-tab "b"
+                                  (attach :id 2))]))))
+
+      # Removing a middle tab activates the next one
+      (assert (deep=
+                (layout/remove-attached
+                  (layout/new
+                    (tabs
+                      @[(tab "a" (pane :id 1))
+                        (active-tab "b" (attach))
+                        (tab "c" (pane :id 3))])))
+
+                (layout/new
+                  (tabs
+                    @[(tab "a" (pane :id 1))
+                      (active-tab "c"
+                                  (attach :id 3))])))))
 
 (test "margins actions"
       (layout/set
