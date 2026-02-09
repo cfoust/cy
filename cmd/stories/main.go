@@ -146,11 +146,14 @@ func main() {
 			panic(fmt.Errorf("story %s not found", CLI.Single))
 		}
 
-		screen = ui.NewViewer(
+		screen, err = ui.NewViewer(
 			ctx,
 			story,
 			!haveCast,
 		)
+		if err != nil {
+			panic(err)
+		}
 
 		if haveCast && !story.Config.HasInputs() {
 			go func() {

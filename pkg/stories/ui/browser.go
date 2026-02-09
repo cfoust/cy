@@ -11,6 +11,7 @@ import (
 	"github.com/cfoust/cy/pkg/util"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/rs/zerolog/log"
 )
 
 // A Browser lets the user switch between different stories.
@@ -52,7 +53,13 @@ func (s *Browser) loadViewer(story S.Story) tea.Cmd {
 	size.C -= 30
 	return func() tea.Msg {
 		lifetime := util.NewLifetime(s.Ctx())
-		viewer := NewViewer(lifetime.Ctx(), story, true)
+		viewer, err := NewViewer(lifetime.Ctx(), story, true)
+		if err != nil {
+			log.Error().Err(err).Msgf(
+				"failed loading story",
+			)
+			return nil
+		}
 		watcher := taro.NewWatcher(lifetime.Ctx(), viewer)
 		_ = viewer.Resize(size)
 		return loadedViewer{

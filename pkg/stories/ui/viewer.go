@@ -34,7 +34,10 @@ type Viewer struct {
 var _ taro.Model = (*Viewer)(nil)
 
 func (v *Viewer) Init() tea.Cmd {
-	return v.loadStory()
+	return tea.Batch(
+		v.sendInputs,
+		taro.WaitScreens(v.Ctx(), v.screen, v.keys),
+	)
 }
 
 type loadedScreen struct {
@@ -80,36 +83,41 @@ func (v *Viewer) sendInputs() tea.Msg {
 	return reloadScreen{}
 }
 
-func (v *Viewer) loadStory() tea.Cmd {
-	story := v.story
-	config := story.Config
-
-	return func() tea.Msg {
-		lifetime := util.NewLifetime(v.Ctx())
-		screen, err := story.Init(lifetime.Ctx())
-		if err != nil {
-			log.Error().Err(err).Msgf("failed loading story")
-			return nil
-		}
-
-		if !config.Size.IsZero() {
-			_ = screen.Resize(config.Size)
-		}
-
-		keys := NewKeys(lifetime.Ctx())
-		msg := loadedScreen{
-			lifetime: lifetime,
-			screen:   screen,
-			keys:     keys,
-		}
-
-		if config.IsSnapshot {
-			msg.capture = screen.State()
-		}
-
-		return msg
+func (v *Viewer) initScreen() (loadedScreen, error) {
+	lifetime := util.NewLifetime(v.Ctx())
+	screen, err := v.story.Init(lifetime.Ctx())
+	if err != nil {
+		lifetime.Cancel()
+		return loadedScreen{}, err
 	}
 
+	config := v.story.Config
+	if !config.Size.IsZero() {
+		_ = screen.Resize(config.Size)
+	}
+
+	msg := loadedScreen{
+		screen:   screen,
+		keys:     NewKeys(lifetime.Ctx()),
+		lifetime: lifetime,
+	}
+
+	if config.IsSnapshot {
+		msg.capture = screen.State()
+	}
+
+	return msg, nil
+}
+
+func (v *Viewer) applyScreen(msg loadedScreen) {
+	if v.screen != nil {
+		v.screenLifetime.Cancel()
+	}
+
+	v.screen = msg.screen
+	v.keys = msg.keys
+	v.screenLifetime = msg.lifetime
+	v.capture = msg.capture
 }
 
 func (v *Viewer) showKeys() bool {
@@ -118,6 +126,11 @@ func (v *Viewer) showKeys() bool {
 }
 
 func (v *Viewer) View(state *tty.State) {
+	if v.screen == nil {
+		state.CursorVisible = false
+		return
+	}
+
 	// Show an obvious background
 	size := state.Image.Size()
 	for row := 0; row < size.R; row++ {
@@ -127,11 +140,6 @@ func (v *Viewer) View(state *tty.State) {
 			glyph.Char = '-'
 			state.Image[row][col] = glyph
 		}
-	}
-
-	if v.screen == nil {
-		state.CursorVisible = false
-		return
 	}
 
 	contents := v.screen.State()
@@ -184,17 +192,18 @@ func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			return v, tea.Quit
 		}
 
-		return v, v.loadStory()
-	case loadedScreen:
-		if v.screen != nil {
-			v.screenLifetime.Cancel()
-			v.screen = nil
+		return v, func() tea.Msg {
+			loaded, err := v.initScreen()
+			if err != nil {
+				log.Error().Err(err).Msgf(
+					"failed loading story",
+				)
+				return nil
+			}
+			return loaded
 		}
-
-		v.capture = msg.capture
-		v.screen = msg.screen
-		v.keys = msg.keys
-		v.screenLifetime = msg.lifetime
+	case loadedScreen:
+		v.applyScreen(msg)
 		v.resize(v.size)
 
 		return v, tea.Batch(
@@ -229,14 +238,20 @@ func NewViewer(
 	ctx context.Context,
 	story stories.Story,
 	shouldLoop bool,
-) *taro.Program {
+) (*taro.Program, error) {
 	viewer := &Viewer{
 		Lifetime:   util.NewLifetime(ctx),
 		story:      story,
 		shouldLoop: shouldLoop,
 	}
 
-	program := taro.New(ctx, viewer)
+	loaded, err := viewer.initScreen()
+	if err != nil {
+		viewer.Cancel()
+		return nil, err
+	}
+	viewer.applyScreen(loaded)
 
-	return program
+	program := taro.New(ctx, viewer)
+	return program, nil
 }
