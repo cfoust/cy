@@ -286,10 +286,26 @@ func (s *Simulator) resolveCollisions(dt number) {
 			s.particles[i].X += boundaryMul * (boundaryMaxX - p.X)
 		}
 
-		if p.Y < boundaryMinY {
-			s.particles[i].Y += boundaryMul * (boundaryMinY - p.Y)
-		} else if p.Y > boundaryMaxY {
-			s.particles[i].Y += boundaryMul * (boundaryMaxY - p.Y)
+		inBottomHole := s.drainEnabled &&
+			p.X >= s.bottomHoleMinX &&
+			p.X <= s.bottomHoleMaxX
+
+		if inBottomHole && p.Y > boundaryMaxY {
+			// Map X proportionally from bottom hole to top hole
+			t := (p.X - s.bottomHoleMinX) /
+				(s.bottomHoleMaxX - s.bottomHoleMinX)
+			s.particles[i].X = s.topHoleMinX +
+				t*(s.topHoleMaxX-s.topHoleMinX)
+			s.particles[i].prevX = s.particles[i].X
+			// Wrap to top
+			s.particles[i].Y = boundaryMinY + FLUID_PADDING
+			s.particles[i].prevY = s.particles[i].Y
+		} else {
+			if p.Y < boundaryMinY {
+				s.particles[i].Y += boundaryMul * (boundaryMinY - p.Y)
+			} else if p.Y > boundaryMaxY {
+				s.particles[i].Y += boundaryMul * (boundaryMaxY - p.Y)
+			}
 		}
 	}
 }

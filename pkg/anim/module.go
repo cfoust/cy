@@ -40,8 +40,11 @@ func init() {
 	registerAnimation("cy", func() Animation {
 		return &cy.Cyform{}
 	})
+	registerAnimation("drain", func() Animation {
+		return fluid.NewAnimation(fluid.WithDrain())
+	})
 	registerAnimation("fluid", func() Animation {
-		return &fluid.Fluid{}
+		return fluid.NewAnimation()
 	})
 	registerAnimation("perlin", func() Animation {
 		return perlin.New()

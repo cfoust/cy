@@ -13,6 +13,7 @@ type Fluid struct {
 	sim     *Simulator
 	start   image.Image
 	current image.Image
+	options []Option
 }
 
 var _ meta.Animation = (*Fluid)(nil)
@@ -20,6 +21,10 @@ var _ meta.Animation = (*Fluid)(nil)
 const (
 	POSITION_FACTOR = 10
 )
+
+func NewAnimation(options ...Option) *Fluid {
+	return &Fluid{options: options}
+}
 
 func (f *Fluid) Init(start image.Image) {
 	f.start = start
@@ -45,6 +50,7 @@ func (f *Fluid) Init(start image.Image) {
 		float64(size.C)*POSITION_FACTOR,
 		float64(size.R)*POSITION_FACTOR,
 		particles,
+		f.options...,
 	)
 }
 
