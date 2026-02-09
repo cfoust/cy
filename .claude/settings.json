@@ -1,0 +1,42 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-lint.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(just build)",
+      "Bash(just test:*)",
+      "Bash(just format:*)",
+      "Bash(just lint:*)",
+      "Bash(just lint-fix:*)",
+      "Bash(just generate:*)",
+      "Bash(just api:*)",
+      "Bash(just sqlc:*)",
+      "Bash(just docs:*)",
+      "Bash(go build:*)",
+      "Bash(go test:*)",
+      "Bash(go fmt:*)",
+      "Bash(go generate:*)",
+      "Bash(go mod:*)",
+      "Bash(go run:*)",
+      "Bash(go tool golangci-lint:*)",
+      "Bash(gofmt:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./.env.local)"
+    ]
+  }
+}
