@@ -708,6 +708,8 @@ func (t *State) setMode(priv bool, set bool, args []int) {
 				// for other control codes
 			case 2004: // bracketed paste mode
 				t.modMode(set, ModeBracketedPaste)
+			case 2026: // synchronized update mode
+				t.modMode(set, ModeSyncUpdate)
 			default:
 				t.logf("unknown private set/reset mode %d\n", a)
 			}

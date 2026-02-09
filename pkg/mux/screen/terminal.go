@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"time"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
@@ -34,6 +35,9 @@ type Terminal struct {
 	size      geom.Size
 	exited    bool
 	exitError error
+
+	syncTimerMu deadlock.Mutex
+	syncTimer   *time.Timer
 }
 
 var _ Screen = (*Terminal)(nil)
@@ -146,15 +150,45 @@ func (t *Terminal) Send(msg mux.Msg) {
 }
 
 func (t *Terminal) Write(p []byte) (n int, err error) {
-	n, err = t.terminal.Write(p)
+	n, syncing, err := t.terminal.WriteSync(p)
 	if err != nil {
 		return 0, err
 	}
 
-	// Let any clients know that this pane changed
-	t.Notify()
+	if syncing {
+		t.ensureSyncTimeout()
+	} else {
+		t.cancelSyncTimeout()
+		t.Notify()
+	}
 
-	return n, err
+	return n, nil
+}
+
+func (t *Terminal) ensureSyncTimeout() {
+	t.syncTimerMu.Lock()
+	defer t.syncTimerMu.Unlock()
+	if t.syncTimer != nil {
+		return
+	}
+	t.syncTimer = time.AfterFunc(
+		200*time.Millisecond,
+		func() {
+			t.syncTimerMu.Lock()
+			t.syncTimer = nil
+			t.syncTimerMu.Unlock()
+			t.Notify()
+		},
+	)
+}
+
+func (t *Terminal) cancelSyncTimeout() {
+	t.syncTimerMu.Lock()
+	defer t.syncTimerMu.Unlock()
+	if t.syncTimer != nil {
+		t.syncTimer.Stop()
+		t.syncTimer = nil
+	}
 }
 
 func NewTerminal(

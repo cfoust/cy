@@ -23,6 +23,8 @@ var (
 	italicMode     = []byte("\033[3m")
 	blinkMode      = []byte("\033[5m")
 	strikeOff      = []byte("\033[29m")
+	syncBegin      = []byte("\033[?2026h")
+	syncEnd        = []byte("\033[?2026l")
 )
 
 // writeInt writes a non-negative integer to the buffer without allocations.
@@ -179,6 +181,7 @@ func Swap(
 	dst, src *State,
 ) []byte {
 	data := new(bytes.Buffer)
+	data.Write(syncBegin)
 	data.Write(swapImage(dst.Image, src.Image))
 
 	dstCursor := dst.Cursor
@@ -198,6 +201,8 @@ func Swap(
 	} else {
 		data.Write(cursorHide)
 	}
+
+	data.Write(syncEnd)
 
 	return data.Bytes()
 }

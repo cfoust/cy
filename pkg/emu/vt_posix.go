@@ -44,6 +44,14 @@ func (t *terminal) Write(p []byte) (int, error) {
 	return w, nil
 }
 
+func (t *terminal) WriteSync(p []byte) (int, bool, error) {
+	t.Lock()
+	w := t.Parse(p)
+	syncing := t.mode&ModeSyncUpdate != 0
+	t.Unlock()
+	return w, syncing, nil
+}
+
 func (t *terminal) Resize(size geom.Vec2) {
 	t.Lock()
 	defer t.Unlock()

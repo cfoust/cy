@@ -55,6 +55,7 @@ const (
 	ModeMouseX10
 	ModeMouseMany
 	ModeBracketedPaste
+	ModeSyncUpdate
 	ModeMouseMask = ModeMouseButton | ModeMouseMotion | ModeMouseX10 | ModeMouseMany
 )
 
@@ -254,6 +255,10 @@ type Terminal interface {
 
 	// Write does the same as Parse, but locks first.
 	io.Writer
+
+	// WriteSync writes data and returns whether a synchronized update is in
+	// progress (= the terminal should not be rendered.)
+	WriteSync(p []byte) (int, bool, error)
 }
 
 // View represents the view of the virtual terminal emulator.
