@@ -59,6 +59,7 @@ Where {{api input/find}} really shines, however, is in its ability to show a pre
 - **Text:** Render some text.
 - **Animations:** Show one of `cy`'s [animations](/animations.md).
 - **Frames:** Show one of `cy`'s [frames](/frames.md).
+- **Layouts:** Show a preview of a [layout](/layouts.md).
 
 Options with previews are passed to {{api input/find}} as Janet tuples with three elements:
 
@@ -88,6 +89,8 @@ Here are some examples:
             :name "maelstrom"} 2]
         # A frame preview
         ["this is a frame" {:type :frame :name "puzzle"} 2]
+        # A layout preview
+        ["this is a layout" {:type :layout :layout (layout/get)} 2]
     ])
 ```
 
