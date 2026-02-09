@@ -11,11 +11,11 @@ This function supports a range of named parameters that adjust its functionality
 - `:animated` (boolean): Enable and disable background animation.
 - `:case-sensitive` (boolean): Whether the matching algorithm should respect differences in case. The default is `false`.
 - `:full` (boolean): If true, occupy the entire screen.
-- `:headers` ([]string): Provide a title for each column. This mostly used for filtering tabular data.
+- `:headers` ([]string): Provide a title for each column. This is mostly used for filtering tabular data.
 - `:prompt` (string): The text that will be shown beneath the search window.
 - `:reverse` (boolean): Display from the top of the screen (rather than the bottom.)
 - `:width` (int): Set the width of the match window (if not in full screen mode.)
-- `:height` (int): Set the maximum height of the match window. This applies bth in full screen and floating mode.
+- `:height` (int): Set the maximum height of the match window. This applies both in full screen and floating mode.
 
 # doc: Text
 

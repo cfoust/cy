@@ -8,7 +8,7 @@ A **pane** refers to a terminal window with a process running inside it, typical
 
 ## Groups
 
-Every pane `cy` belongs to a **group**. A group has a name and children, which consist of either panes or other groups.
+Every pane in `cy` belongs to a **group**. A group has a name and children, which consist of either panes or other groups.
 
 Groups also have two unique features:
 

@@ -52,7 +52,7 @@ You must explicitly configure your shell (or any other program) to emit OSC-7 se
 
 ## How does it work?
 
-A terminal multiplexer is like a proxy: it is an intermediary between your actual terminal and one or more virtual terminals that it controls. It also responsible for passing the output a program (such as a shell) produces to its corresponding terminal. This control means that your terminal multiplexer can do whatever calculations it wants on that output, including (in `cy`'s case) recording it.
+A terminal multiplexer is like a proxy: it is an intermediary between your actual terminal and one or more virtual terminals that it controls. It is also responsible for passing the output that a program (such as a shell) produces to its corresponding terminal. This control means that your terminal multiplexer can do whatever calculations it wants on that output, including (in `cy`'s case) recording it.
 
 `cy` uses this ability to observe the state of the terminal before and after interpreting the output of the underlying process (otherwise known as a write made to standard output or error).
 

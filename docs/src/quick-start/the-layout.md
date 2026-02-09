@@ -14,7 +14,7 @@ The layout shown above has a single pane that has its horizontal size fixed to 8
 
 {{story cast quick-start/layout --width 120 --height 26}}
 
-`cy`'s has pane and split functionality that should feel familiar to users of tmux. Like other terminal multiplexers, in `cy` you can divide your screen up into any number of panes. This can be done with {{bind :root ctrl+a -}} to split the current pane along a horizontal line and {{bind :root ctrl+a |}} to split along a vertical one.
+`cy` has pane and split functionality that should feel familiar to users of tmux. Like other terminal multiplexers, in `cy` you can divide your screen up into any number of panes. This can be done with {{bind :root ctrl+a -}} to split the current pane along a horizontal line and {{bind :root ctrl+a |}} to split along a vertical one.
 
 After creating a few, you can move between them using directional keys:
 

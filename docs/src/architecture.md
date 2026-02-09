@@ -80,7 +80,7 @@ This is useful because you can represent lots of things as a `Stream`:
 
 Streams can be composed and form pipes of arbitrary complexity. For example, `cy` records terminal sessions by proxying a `Stream` (sort of like `tee`.)
 
-However, for a terminal multiplexer this is clearly not enough. A `Stream` is stateless. In other words, there is no way to know what the state of the terminal that is attached to that `Stream`. That's where `Screen`s come in.
+However, for a terminal multiplexer this is clearly not enough. A `Stream` is stateless. In other words, there is no way to know the state of the terminal that is attached to that `Stream`. That's where `Screen`s come in.
 
 ### Screen
 
@@ -142,7 +142,7 @@ The flow for client input works like this:
 
 The flow for client output is somewhat simpler:
 
-1. Whenever the `Screen` the `Client` is attached to changes in some way (in other words, it produces an event that is published to its subscribers via `Subscribe`).
+1. The `Screen` the `Client` is attached to changes in some way (in other words, it produces an event that is published to its subscribers via `Subscribe`).
 2. The client's [`Renderer`](https://github.com/cfoust/cy/blob/main/pkg/mux/stream/renderer/module.go?plain=1#L24) receives this event and calls `State()` on the client's `Screen`, which produces a `tty.State`. The `Renderer` then calculates the sequence of bytes necessary to transform the actual client's terminal screen to match the `cy` server's state.
 3. This byte string is sent via the aforementioned WebSocket connection.
 4. It is ultimately `Read` by the user's terminal and written to standard output, thus triggering the visual changes the user expects.

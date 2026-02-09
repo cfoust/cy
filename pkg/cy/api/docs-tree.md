@@ -32,7 +32,7 @@ Get the path of `node`, which is a [NodeID](/api.md#nodeid).
 
 (tree/parent node)
 
-Get the [NodeID](/api.md#nodeid) for the parent of `node`. If `node` is `:root`, return `(tree/parent)` returns `nil`.
+Get the [NodeID](/api.md#nodeid) for the parent of `node`. If `node` is `:root`, `(tree/parent)` returns `nil`.
 
 # doc: Rm
 

@@ -76,7 +76,7 @@ Move cursor up one cell.
 
 Set the playback rate to `rate`. Positive numbers indicate a multiplier of real time moving _forwards_, negative numbers, _backwards_. For example, a rate of `2` means that time will advance at twice the normal speed; `-2` means that time will go backwards at -2x.
 
-`rate` is clamped to the range [10, 10].
+`rate` is clamped to the range [-10, 10].
 
 # doc: Copy
 
@@ -116,7 +116,7 @@ Jump to the cell before `char` after the cursor on the current line.
 
 (replay/jump-to-backward char)
 
-Jump to the cell before `char` after the cursor on the current line.
+Jump to the cell after `char` before the cursor on the current line.
 
 # doc: Open
 

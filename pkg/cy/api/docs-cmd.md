@@ -20,7 +20,7 @@ Some examples:
 
 (cmd/path target)
 
-Get the working directory of the program running in the pane pane specified by `target`. `target` is a [NodeID](/api.md#nodeid).
+Get the working directory of the program running in the pane specified by `target`. `target` is a [NodeID](/api.md#nodeid).
 
 # doc: Title
 
@@ -42,7 +42,7 @@ Get the commands executed in a particular pane. Returns an array of [Commands](/
 
 # doc: Query
 
-Query all of the commands stored in the [commmand database](/command-history.md).
+Query all of the commands stored in the [command database](/command-history.md).
 
 # doc: Kill
 
