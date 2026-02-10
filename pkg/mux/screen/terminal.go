@@ -47,15 +47,15 @@ func (t *Terminal) Kill() {
 }
 
 func (t *Terminal) State() *tty.State {
-	state := tty.Capture(t.terminal)
-	size := state.Image.Size()
-
 	t.RLock()
+	state := tty.Capture(t.terminal)
 	var (
 		exited    = t.exited
 		exitError = t.exitError
 	)
 	t.RUnlock()
+
+	size := state.Image.Size()
 
 	if !exited {
 		return state
@@ -150,7 +150,9 @@ func (t *Terminal) Send(msg mux.Msg) {
 }
 
 func (t *Terminal) Write(p []byte) (n int, err error) {
+	t.Lock()
 	n, syncing, err := t.terminal.WriteSync(p)
+	t.Unlock()
 	if err != nil {
 		return 0, err
 	}

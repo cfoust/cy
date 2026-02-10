@@ -95,11 +95,11 @@ func (c *Cy) NewClient(
 
 	client.params.SetParent(c.tree.Root().Params())
 
+	client.id = c.nextClientID.Add(1)
+
 	c.Lock()
 	c.clients = append(c.clients, client)
 	c.Unlock()
-
-	client.id = c.nextClientID.Add(1)
 
 	go client.pollEvents()
 	go client.binds.Poll(client.Ctx())
