@@ -96,13 +96,14 @@ func (t *Terminal) State() *tty.State {
 
 func (t *Terminal) Resize(size Size) error {
 	t.Lock()
-	defer t.Unlock()
 	if size == t.size {
+		t.Unlock()
 		return nil
 	}
 
 	t.size = size
 	t.terminal.Resize(size)
+	t.Unlock()
 
 	if t.stream != nil {
 		err := t.stream.Resize(size)
