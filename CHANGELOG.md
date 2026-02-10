@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.11.0 - 2026-02-10
+
+- New layout node: [`:stack`](https://cfoust.github.io/cy/layouts/nodes/stack.html)
+- New animation: `drain`
+- Performance improvements
+- New API functions: `(cmd/pid)`, `(cy/id)`
+- Hooks: you can now run Janet code when a client connects
+- `--config` argument for `cy connect`
+- Fix: Janet output now correctly appears in `/logs`
+- Other miscellaneous fixes and improvements
+
 ## 1.10.1 - 2026-01-22
 
 - A pile of fixes for the kitty keyboard protocol
