@@ -63,8 +63,10 @@ func TestSGRMouse(t *testing.T) {
 	testSGRMouseInput(t, "\x1b[<64;10;10M")
 	// Wheel down
 	testSGRMouseInput(t, "\x1b[<65;10;10M")
-	// Motion with left button
+	// Motion with left button (drag)
 	testSGRMouseInput(t, "\x1b[<32;15;25M")
+	// Motion without button
+	testSGRMouseInput(t, "\x1b[<35;15;25M")
 	// Ctrl+left click
 	testSGRMouseInput(t, "\x1b[<16;5;5M")
 	// Alt+left click
@@ -75,7 +77,8 @@ func TestSGRMouse(t *testing.T) {
 
 func TestMouseFiltering(t *testing.T) {
 	press := Mouse{Type: MousePress, Button: MouseLeft, Down: true}
-	motion := Mouse{Type: MouseMotion, Down: true}
+	drag := Mouse{Type: MouseMotion, Button: MouseLeft, Down: true}
+	motion := Mouse{Type: MouseMotion, Down: false}
 
 	// No mouse mode → not reported.
 	_, ok := press.Bytes(0)
@@ -84,16 +87,28 @@ func TestMouseFiltering(t *testing.T) {
 	// X10 only reports presses.
 	_, ok = press.Bytes(emu.ModeMouseX10)
 	assert.True(t, ok)
-	_, ok = motion.Bytes(emu.ModeMouseX10)
+	_, ok = drag.Bytes(emu.ModeMouseX10)
 	assert.False(t, ok)
 
-	// Button mode drops pure motion.
+	// Button mode drops all motion.
 	_, ok = press.Bytes(emu.ModeMouseButton)
 	assert.True(t, ok)
+	_, ok = drag.Bytes(emu.ModeMouseButton)
+	assert.False(t, ok)
 	_, ok = motion.Bytes(emu.ModeMouseButton)
 	assert.False(t, ok)
 
+	// Motion mode (1002) reports drag but not no-button motion.
+	_, ok = press.Bytes(emu.ModeMouseMotion)
+	assert.True(t, ok)
+	_, ok = drag.Bytes(emu.ModeMouseMotion)
+	assert.True(t, ok)
+	_, ok = motion.Bytes(emu.ModeMouseMotion)
+	assert.False(t, ok)
+
 	// Many mode reports everything.
+	_, ok = drag.Bytes(emu.ModeMouseMany)
+	assert.True(t, ok)
 	_, ok = motion.Bytes(emu.ModeMouseMany)
 	assert.True(t, ok)
 }

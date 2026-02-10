@@ -117,9 +117,11 @@ func (m Mouse) x10Bytes() []byte {
 func (m Mouse) sgrBytes() []byte {
 	flags := m.mouseFlags()
 
-	// SGR doesn't use bitsRelease; instead the suffix encodes
-	// press vs release.
-	if !m.Down {
+	// For press events, SGR uses the 'm' suffix to indicate
+	// release, so bitsRelease should be cleared from the flags.
+	// For motion events, bitsRelease in the flags byte indicates
+	// no button is held and must be preserved.
+	if m.Type == MousePress && !m.Down {
 		flags &^= bitsRelease
 	}
 
@@ -152,8 +154,14 @@ func (m Mouse) Bytes(mode emu.ModeFlag) ([]byte, bool) {
 		if m.Type == MouseMotion {
 			return nil, false
 		}
-	case emu.ModeMouseMotion, emu.ModeMouseMany:
-		// Report everything.
+	case emu.ModeMouseMotion:
+		// Mode 1002: report press, release, and motion with
+		// button held (drag). Filter out no-button motion.
+		if m.Type == MouseMotion && !m.Down {
+			return nil, false
+		}
+	case emu.ModeMouseMany:
+		// Mode 1003: report everything.
 	default:
 		return nil, false
 	}
