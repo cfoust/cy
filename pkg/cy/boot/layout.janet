@@ -859,6 +859,44 @@ Example:
   "Move right to the next pane."
   (layout/set (layout/move-right (layout/get))))
 
+(defn-
+  resize-pane
+  ```Find the nearest parent split of the attached pane and adjust its size.
+direction should be 1 (grow) or -1 (shrink).```
+  [direction]
+  (def layout (layout/get))
+  (def path (layout/attach-path layout))
+  (if (nil? path) (break))
+  (def split-path (layout/find-last layout path |(layout/type? :split $)))
+  (if (nil? split-path) (break))
+  (def split-node (layout/path layout split-path))
+
+  # Determine which side the attached pane is on
+  (def side (get path (length split-path)))
+
+  # If on side B, flip direction since percent/cells refers to side A
+  (def sign (if (= side :b) (- direction) direction))
+
+  (def new-split
+    (if (not (nil? (split-node :cells)))
+      (assoc split-node :cells
+             (max 1 (+ (split-node :cells) (* sign 3))))
+      (let [current (or (split-node :percent) 50)]
+        (assoc split-node :percent
+               (max 1 (min 99 (+ current (* sign 10))))))))
+
+  (layout/set (layout/assoc layout split-path new-split)))
+
+(key/action
+  action/grow-split
+  "Grow the current pane within its split."
+  (resize-pane 1))
+
+(key/action
+  action/shrink-split
+  "Shrink the current pane within its split."
+  (resize-pane -1))
+
 (key/action
   action/add-node
   "Add a node to the layout."

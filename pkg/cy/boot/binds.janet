@@ -38,6 +38,8 @@
                    [prefix "L"] action/move-right
                    [prefix "K"] action/move-up
                    [prefix "J"] action/move-down
+                   [prefix "+"] action/grow-split
+                   [prefix "_"] action/shrink-split
                    [prefix "t"] action/new-tab
                    [prefix "tab"] action/next-tab
                    [prefix "shift+tab"] action/prev-tab
