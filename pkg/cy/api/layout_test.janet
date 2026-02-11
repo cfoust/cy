@@ -761,3 +761,98 @@
       (def bottom-row (result :b))
       (assert (= (bottom-row :type) :split))
       (assert (not (bottom-row :vertical))))
+
+(test "action/new-tab auto-numbering"
+      # First call wraps into tabs with "1" and "2"
+      (action/new-tab)
+      (do
+        (def {:tabs tabs} (layout/get))
+        (assert (= (length tabs) 2))
+        (assert (= ((tabs 0) :name) "1"))
+        (assert (= ((tabs 1) :name) "2"))
+        (assert ((tabs 1) :active)))
+
+      # Second call adds tab "3"
+      (action/new-tab)
+      (do
+        (def {:tabs tabs} (layout/get))
+        (assert (= (length tabs) 3))
+        (assert (= ((tabs 0) :name) "1"))
+        (assert (= ((tabs 1) :name) "2"))
+        (assert (= ((tabs 2) :name) "3"))
+        (assert ((tabs 2) :active)))
+
+      # Close the active tab ("3"), then close "2"
+      (action/close-tab)
+      (action/close-tab)
+
+      # Only tab "1" left
+      (do
+        (def {:tabs tabs} (layout/get))
+        (assert (= (length tabs) 1))
+        (assert (= ((tabs 0) :name) "1")))
+
+      # Adding a tab should reuse "2" since it's now free
+      (action/new-tab)
+      (do
+        (def {:tabs tabs} (layout/get))
+        (assert (= (length tabs) 2))
+        (assert (= ((tabs 0) :name) "1"))
+        (assert (= ((tabs 1) :name) "2"))))
+
+(test "action/grow-split and action/shrink-split"
+      # Percent: side A grow/shrink
+      (layout/set (layout/new (split (attach) (pane))))
+      (action/grow-split)
+      (assert (= ((layout/get) :percent) 60))
+
+      (layout/set (layout/new (split (attach) (pane))))
+      (action/shrink-split)
+      (assert (= ((layout/get) :percent) 40))
+
+      # Percent: side B flips direction
+      (layout/set (layout/new (split (pane) (attach))))
+      (action/grow-split)
+      (assert (= ((layout/get) :percent) 40))
+
+      (layout/set (layout/new (split (pane) (attach))))
+      (action/shrink-split)
+      (assert (= ((layout/get) :percent) 60))
+
+      # Cells mode
+      (layout/set (layout/new (split (attach) (pane) :cells 20)))
+      (action/grow-split)
+      (assert (= ((layout/get) :cells) 23))
+
+      (layout/set (layout/new (split (attach) (pane) :cells 20)))
+      (action/shrink-split)
+      (assert (= ((layout/get) :cells) 17))
+
+      # Percent clamping
+      (layout/set (layout/new (split (attach) (pane) :percent 95)))
+      (action/grow-split)
+      (assert (= ((layout/get) :percent) 99))
+
+      (layout/set (layout/new (split (attach) (pane) :percent 5)))
+      (action/shrink-split)
+      (assert (= ((layout/get) :percent) 1))
+
+      # Cells clamping
+      (layout/set (layout/new (split (attach) (pane) :cells 2)))
+      (action/shrink-split)
+      (assert (= ((layout/get) :cells) 1))
+
+      # No parent split - no-op
+      (layout/set (layout/new (margins (attach))))
+      (def layout-before (layout/get))
+      (action/grow-split)
+      (assert (deep= layout-before (layout/get)))
+
+      # Nested: affects innermost split
+      (layout/set
+        (layout/new
+          (split
+            (pane)
+            (vsplit (attach) (pane) :percent 30))))
+      (action/grow-split)
+      (assert (= (((layout/get) :b) :percent) 40)))

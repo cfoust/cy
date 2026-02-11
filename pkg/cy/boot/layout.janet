@@ -1113,13 +1113,21 @@ direction should be 1 (grow) or -1 (shrink).```
                      :prompt "choose a border style")
          (layout/set _)))
 
+(defn-
+  next-tab-name
+  ```Find the lowest unused positive integer name among the given tabs.```
+  [tabs]
+  (def used @{})
+  (each tab tabs (put used (tab :name) true))
+  (var i 1)
+  (while (in used (string i)) (++ i))
+  (string i))
+
 (key/action
   action/new-tab
   "Create a new tab."
   (def layout (layout/get))
   (def shell (shell/new))
-  (def new-tab (layout/new
-                 (tab "new tab" (attach :id shell) :active true)))
 
   (def detached (layout/detach layout))
 
@@ -1128,21 +1136,27 @@ direction should be 1 (grow) or -1 (shrink).```
                    (layout/attach-path layout)
                    |(layout/type? :tabs $)))
 
-  (def new-layout (if (nil? tabs-path)
-                    (layout/new
-                      (tabs
-                        @[(tab "new tab" detached)
-                          new-tab]))
+  (def new-layout
+    (if (nil? tabs-path)
+      (let [name (next-tab-name @[])]
+        (layout/new
+          (tabs
+            @[(tab "1" detached)
+              (tab "2" (attach :id shell) :active true)])))
 
-                    (do
-                      (def node (layout/path detached tabs-path))
-                      (def {:tabs existing-tabs} node)
-                      (layout/assoc
-                        detached
-                        tabs-path
-                        (assoc node :tabs
-                               @[;(map |(assoc $ :active false) existing-tabs)
-                                 new-tab])))))
+      (do
+        (def node (layout/path detached tabs-path))
+        (def {:tabs existing-tabs} node)
+        (def name (next-tab-name existing-tabs))
+        (def new-tab
+          (layout/new
+            (tab name (attach :id shell) :active true)))
+        (layout/assoc
+          detached
+          tabs-path
+          (assoc node :tabs
+                 @[;(map |(assoc $ :active false) existing-tabs)
+                   new-tab])))))
 
   (layout/set new-layout))
 
