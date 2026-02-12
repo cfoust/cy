@@ -100,7 +100,8 @@ func screenPosition(m Movable, getRow func(numLines int) int) {
 				break
 			}
 			// Check below
-			if targetRow+delta < len(screen) && len(screen[targetRow+delta].Chars) > 0 {
+			if targetRow+delta < len(screen) &&
+				len(screen[targetRow+delta].Chars) > 0 {
 				targetRow = targetRow + delta
 				break
 			}
