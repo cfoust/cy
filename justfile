@@ -1,8 +1,15 @@
+version_pkg := "github.com/cfoust/cy/pkg/version"
+version := `git describe --tags --always --dirty 2>/dev/null || echo "development"`
+go_version := `go version | awk '{print $3}'`
+git_commit := `git rev-parse --short HEAD 2>/dev/null || echo "unknown"`
+build_time := `date -u '+%Y-%m-%dT%H:%M:%SZ'`
+ldflags := "-X " + version_pkg + ".Version=" + version + " -X " + version_pkg + ".GoVersion=" + go_version + " -X " + version_pkg + ".GitCommit=" + git_commit + " -X " + version_pkg + ".BuildTime=" + build_time
+
 build:
-  go build -o ./cy ./cmd/cy/...
+  go build -ldflags "{{ldflags}}" -o ./cy ./cmd/cy/...
 
 install:
-  go install ./cmd/cy/...
+  go install -ldflags "{{ldflags}}" ./cmd/cy/...
 
 test *args:
   go test ./pkg/... ./cmd/... {{args}}
@@ -26,7 +33,7 @@ generate:
   go generate ./pkg/... ./cmd/...
 
 run:
-  go run ./cmd/cy/... -L dev
+  go run -ldflags "{{ldflags}}" ./cmd/cy/... -L dev
 
 docs:
   cd docs && mdbook serve
