@@ -22,6 +22,15 @@ Save a 15-second trace captured with [runtime/trace](https://pkg.go.dev/runtime/
 
 Save a 15-second CPU profile captured with [pprof](https://go.dev/blog/pprof) to the socket directory. This is only useful for debugging.
 
+# doc: Version
+
+Get version information about the cy server. Returns a struct with the following fields:
+
+- `:version`: The cy version string.
+- `:go-version`: The Go version used to build the server.
+- `:git-commit`: The Git commit hash of the build.
+- `:build-time`: The time the server was built.
+
 # doc: Id
 
 Get the unique integer identifier for the current client.

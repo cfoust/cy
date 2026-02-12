@@ -14,6 +14,7 @@ import (
 	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/taro"
+	"github.com/cfoust/cy/pkg/version"
 )
 
 func getClient(context interface{}) (*Client, error) {
@@ -182,6 +183,22 @@ func (c *CyModule) Trace(user interface{}) error {
 		})
 	}()
 	return nil
+}
+
+type VersionInfo struct {
+	Version   string
+	GoVersion string
+	GitCommit string
+	BuildTime string
+}
+
+func (c *CyModule) Version() VersionInfo {
+	return VersionInfo{
+		Version:   version.Version,
+		GoVersion: version.GoVersion,
+		GitCommit: version.GitCommit,
+		BuildTime: version.BuildTime,
+	}
 }
 
 func (c *CyModule) Id(user interface{}) (int, error) {
