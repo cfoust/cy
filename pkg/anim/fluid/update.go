@@ -291,15 +291,21 @@ func (s *Simulator) resolveCollisions(dt number) {
 			p.X <= s.bottomHoleMaxX
 
 		if inBottomHole && p.Y > boundaryMaxY {
+			// Save velocity (encoded as position delta)
+			dvx := p.X - p.prevX
+			dvy := p.Y - p.prevY
+
 			// Map X proportionally from bottom hole to top hole
 			t := (p.X - s.bottomHoleMinX) /
 				(s.bottomHoleMaxX - s.bottomHoleMinX)
 			s.particles[i].X = s.topHoleMinX +
 				t*(s.topHoleMaxX-s.topHoleMinX)
-			s.particles[i].prevX = s.particles[i].X
 			// Wrap to top
 			s.particles[i].Y = boundaryMinY + FLUID_PADDING
-			s.particles[i].prevY = s.particles[i].Y
+
+			// Restore velocity through the drain
+			s.particles[i].prevX = s.particles[i].X - dvx
+			s.particles[i].prevY = s.particles[i].Y - dvy
 		} else {
 			if p.Y < boundaryMinY {
 				s.particles[i].Y += boundaryMul * (boundaryMinY - p.Y)
