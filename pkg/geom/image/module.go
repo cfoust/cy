@@ -44,6 +44,9 @@ func (i Image) Clone() Image {
 
 func (i Image) Clear(region geom.Rect) {
 	size := i.Size()
+	if size.IsZero() {
+		return
+	}
 
 	min := geom.Vec2{
 		R: geom.Clamp(region.Position.R, 0, size.R-1),
