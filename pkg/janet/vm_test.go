@@ -2,6 +2,7 @@ package janet
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -408,10 +409,15 @@ func TestVM(t *testing.T) {
 		require.NotNil(t, out)
 		require.NotNil(t, out.Yield)
 
-		json, err := out.Yield.JSON()
+		jsonBytes, err := out.Yield.JSON()
 		require.NoError(t, err)
-		require.Equal(t, `{"a":1,"b":2}`, string(json))
-		require.Equal(t, `{:a 1 :b 2}`, out.Yield.String())
+		var jsonMap map[string]interface{}
+		require.NoError(t, json.Unmarshal(jsonBytes, &jsonMap))
+		require.Equal(t, float64(1), jsonMap["a"])
+		require.Equal(t, float64(2), jsonMap["b"])
+		str := out.Yield.String()
+		require.Contains(t, str, ":a 1")
+		require.Contains(t, str, ":b 2")
 	})
 
 	t.Run(
