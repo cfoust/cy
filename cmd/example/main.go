@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -19,7 +20,7 @@ func main() {
 		panic(err)
 	}
 
-	buffer := make([]byte, 8192)
+	reader := bufio.NewReader(os.Stdin)
 
 	_, _ = fmt.Fprintln(os.Stdout, "ready")
 
@@ -29,7 +30,7 @@ func main() {
 			panic(err)
 		}
 
-		n, err := os.Stdin.Read(buffer)
+		data, err := reader.ReadBytes(0)
 		if err == io.EOF {
 			os.Exit(0)
 			return
@@ -38,7 +39,10 @@ func main() {
 			panic(err)
 		}
 
-		call := janet.CallBytes(buffer[:n])
+		// Trim the null byte delimiter
+		code := data[:len(data)-1]
+
+		call := janet.CallBytes(code)
 		call.Options.UpdateEnv = false
 		_, err = server.ExecuteCall(
 			context.Background(),

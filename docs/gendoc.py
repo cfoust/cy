@@ -519,7 +519,7 @@ def transform_examples(runner: subprocess.Popen) -> Transformer:
                 "runner not initialized",
             )
 
-        runner.stdin.write(example_code)
+        runner.stdin.write(example_code + "\x00")
         runner.stdin.flush()
 
         output_lines = []
