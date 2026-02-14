@@ -56,6 +56,9 @@ go test -v ./pkg/cy -run TestSpecificTest
 
 # Run tests in a specific package
 go test ./pkg/mux/...
+
+# Run Janet API tests (tests in *_test.janet files)
+go test -v ./pkg/cy -run TestAPI
 ```
 
 ### Building

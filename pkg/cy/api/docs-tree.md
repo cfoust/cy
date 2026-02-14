@@ -40,6 +40,12 @@ Get the [NodeID](/api.md#nodeid) for the parent of `node`. If `node` is `:root`,
 
 Remove the `node` and all of its child nodes. This will halt execution of any descendant panes. `node` is a [NodeID](/api.md#nodeid).
 
+# doc: Id
+
+(tree/id group path)
+
+Get the [NodeID](/api.md#nodeid) of the node at the end of `path` from the perspective of `group`. Throws an error if any part of the path does not exist.
+
 # doc: Root
 
 Get the [NodeID](/api.md#nodeid) that corresponds to the root node.

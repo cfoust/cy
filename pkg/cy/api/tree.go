@@ -114,6 +114,47 @@ func (t *TreeModule) Rm(id *janet.Value) error {
 	return t.Tree.RemoveNode(node.Id())
 }
 
+func (t *TreeModule) Id(
+	parentId *janet.Value,
+	path string,
+) (tree.NodeID, error) {
+	defer parentId.Free()
+
+	group, err := resolveGroup(t.Tree, parentId)
+	if err != nil {
+		return 0, err
+	}
+
+	parts, err := validatePath(path)
+	if err != nil {
+		return 0, err
+	}
+
+	var current tree.Node = group
+	var pathSoFar string
+	for _, part := range parts {
+		pathSoFar += "/" + part
+
+		parent, ok := current.(*tree.Group)
+		if !ok {
+			return 0, fmt.Errorf(
+				"%s: not a group",
+				pathSoFar,
+			)
+		}
+
+		current, ok = parent.ChildByName(part)
+		if !ok {
+			return 0, fmt.Errorf(
+				"%s: not found",
+				pathSoFar,
+			)
+		}
+	}
+
+	return current.Id(), nil
+}
+
 func (t *TreeModule) Root() tree.NodeID {
 	return t.Tree.Root().Id()
 }
