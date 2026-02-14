@@ -143,6 +143,10 @@ For example:
   "Create a new project."
   (def path (cmd/path (pane/current)))
   (def projects (group/mkdir :root "/projects"))
+  # Remove existing projects for this path
+  (->> (group/children projects)
+       (filter |(= (path/base path) (tree/name $)))
+       (map tree/rm))
   (def project (group/new projects :name (path/base path)))
   (def editor
     (cmd/new project

@@ -21,6 +21,15 @@
       (group/new group)
       (assert (= (length (group/children group)) 3)))
 
+(test "(action/new-project) replaces existing"
+      (def initial (cmd/new :root :path (os/cwd)))
+      (pane/attach initial)
+      (action/new-project)
+      (def projects (group/mkdir :root "/projects"))
+      (assert (= (length (group/children projects)) 1))
+      (action/new-project)
+      (assert (= (length (group/children projects)) 1)))
+
 (test "(group/leaves)"
       (def group (group/new :root))
       (def subgroup (group/new group))
