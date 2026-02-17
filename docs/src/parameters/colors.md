@@ -6,7 +6,7 @@ Parameters that affect visual styling work in the same way all parameters do: se
 
 ### Color maps
 
-Color maps are similar to color schemes. A color map is a mapping from one color to another. When `cy` renders a pane, it can use a color map that you define to translate the colors on the screen to change their appearance. This translation *does not affect the underlying recording for a pane*.
+Color maps are similar to color schemes. A color map is a mapping from one color to another. When `cy` renders a pane, it can use a color map that you define to translate the colors on the screen to change their appearance. This translation _does not affect the underlying recording for a pane_.
 
 Most terminal programs only use 16 ANSI colors. All of `cy`'s built-in interfaces also obey this rule. Terminal emulators support color schemes by allowing the user to set the actual RGB colors used to represent those 16 colors on the screen.
 
@@ -45,7 +45,7 @@ The important distinction between a color map and a color scheme is that color m
   "123" "1"})
 ```
 
-`cy` comes with several hundred built-in color maps from the [tinted-theming project](https://github.com/tinted-theming/home). You can see a gallery of them [here](https://tinted-theming.github.io/base16-gallery/). Every built-in color map is identified by a unique keyword ID such as `:google-dark`.
+`cy` comes with several hundred built-in color maps from the [tinted-theming project](https://github.com/tinted-theming/home). You can see a gallery of them [here](https://tinted-theming.github.io/tinted-gallery/). Every built-in color map is identified by a unique keyword ID such as `:google-dark`.
 
 #### API
 
