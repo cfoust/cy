@@ -30,6 +30,25 @@
       (action/new-project)
       (assert (= (length (group/children projects)) 1)))
 
+(test "(action/close-project)"
+      (def initial (cmd/new :root))
+      (pane/attach initial)
+      (action/new-project)
+      (def projects (group/mkdir :root "/projects"))
+      (assert (= (length (group/children projects)) 1))
+      # Attach to a pane inside the project
+      (def project-panes (group/leaves projects))
+      (pane/attach (project-panes 0))
+      (action/close-project)
+      (assert (= (length (group/children projects)) 0)))
+
+(test "(action/close-project) not in project"
+      (def pane (cmd/new :root))
+      (pane/attach pane)
+      # Should be a no-op when not inside a project
+      (action/close-project)
+      (assert (= (pane/current) pane)))
+
 (test "(group/leaves)"
       (def group (group/new :root))
       (def subgroup (group/new group))

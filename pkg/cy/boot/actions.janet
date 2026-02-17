@@ -180,6 +180,24 @@ For example:
          (pane/attach _)))
 
 (key/action
+  action/close-project
+  "Close the current project."
+  (def projects (group/mkdir :root "/projects"))
+  (def id (pane/current))
+  (if (nil? id) (break))
+  # Walk up the tree to find the project group
+  (var project nil)
+  (var node id)
+  (while (not (nil? node))
+    (def [ok parent] (protect (tree/parent node)))
+    (if (not ok) (break))
+    (if (= projects parent)
+      (do (set project node) (break)))
+    (set node parent))
+  (if (nil? project) (break))
+  (tree/rm project))
+
+(key/action
   action/jump-shell
   "Jump to a shell."
   (def shells (group/mkdir :root "/shells"))
