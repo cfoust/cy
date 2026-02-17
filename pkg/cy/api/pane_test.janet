@@ -1,63 +1,63 @@
 (test "(pane/attach)"
-      (pane/attach (cmd/new :root)))
+  (pane/attach (cmd/new :root)))
 
 (test-no-context "(pane/attach) no client"
-                 (expect-error (pane/attach (cmd/new :root))))
+  (expect-error (pane/attach (cmd/new :root))))
 
 (test "(pane/current)"
-      (def cmd (cmd/new :root))
-      (pane/attach cmd)
-      (assert (= (pane/current) cmd)))
+  (def cmd (cmd/new :root))
+  (pane/attach cmd)
+  (assert (= (pane/current) cmd)))
 
 (test "history"
-      (def cmd1 (cmd/new :root))
-      (def cmd2 (cmd/new :root))
-      (def cmd3 (cmd/new :root))
+  (def cmd1 (cmd/new :root))
+  (def cmd2 (cmd/new :root))
+  (def cmd3 (cmd/new :root))
 
-      (pane/attach cmd1)
-      (pane/attach cmd2)
-      (pane/attach cmd3)
+  (pane/attach cmd1)
+  (pane/attach cmd2)
+  (pane/attach cmd3)
 
-      (pane/history-backward)
-      (assert (= (pane/current) cmd2))
-      (pane/history-backward)
-      (assert (= (pane/current) cmd1))
+  (pane/history-backward)
+  (assert (= (pane/current) cmd2))
+  (pane/history-backward)
+  (assert (= (pane/current) cmd1))
 
-      (pane/history-forward)
-      (assert (= (pane/current) cmd2))
+  (pane/history-forward)
+  (assert (= (pane/current) cmd2))
 
-      (pane/history-forward)
-      (assert (= (pane/current) cmd3))
+  (pane/history-forward)
+  (assert (= (pane/current) cmd3))
 
-      (tree/rm cmd2)
-      (pane/history-backward)
-      (assert (= (pane/current) cmd1))
+  (tree/rm cmd2)
+  (pane/history-backward)
+  (assert (= (pane/current) cmd1))
 
-      (pane/history-forward)
-      (assert (= (pane/current) cmd3)))
+  (pane/history-forward)
+  (assert (= (pane/current) cmd3)))
 
 # TODO(cfoust): 07/11/24 screen test is more complicated
 
 (test "(action/next-pane) and (action/prev-pane)"
-      (def group (group/mkdir :root "/group"))
-      (def cmd1 (cmd/new group))
-      (def cmd2 (cmd/new group))
-      (def cmd3 (cmd/new group))
-      (pane/attach cmd2)
+  (def group (group/mkdir :root "/group"))
+  (def cmd1 (cmd/new group))
+  (def cmd2 (cmd/new group))
+  (def cmd3 (cmd/new group))
+  (pane/attach cmd2)
 
-      (action/next-pane)
-      (assert (= (pane/current) cmd3))
+  (action/next-pane)
+  (assert (= (pane/current) cmd3))
 
-      (action/next-pane)
-      (assert (= (pane/current) cmd1))
+  (action/next-pane)
+  (assert (= (pane/current) cmd1))
 
-      (action/prev-pane)
-      (assert (= (pane/current) cmd3))
+  (action/prev-pane)
+  (assert (= (pane/current) cmd3))
 
-      (action/prev-pane)
-      (assert (= (pane/current) cmd2)))
+  (action/prev-pane)
+  (assert (= (pane/current) cmd2)))
 
 (test "(pane/send-keys)"
-      (def cmd (cmd/new :root))
-      (pane/send-keys cmd @["test"
-                            "ctrl+a"]))
+  (def cmd (cmd/new :root))
+  (pane/send-keys cmd @["test"
+                        "ctrl+a"]))

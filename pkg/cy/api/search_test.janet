@@ -1,2 +1,2 @@
 (test "(search/new)"
-      (search/new :root "test"))
+  (search/new :root "test"))

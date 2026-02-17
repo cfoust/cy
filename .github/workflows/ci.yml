@@ -24,7 +24,7 @@ jobs:
       - name: Generate and format code
         run: |
           go generate ./cmd/... ./pkg/...
-          go fmt ./cmd/... ./pkg/...
+          just format
           go mod tidy
           git add .
           git diff HEAD

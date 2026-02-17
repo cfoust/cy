@@ -913,7 +913,7 @@ direction should be 1 (grow) or -1 (shrink).```
                [":stack" |(layout/new
                             (stack
                               [(active-leaf $
-                                           :title "leaf 1")]))]
+                                            :title "leaf 1")]))]
                [":split (horizontal)" |(struct :type :split
 
                                                :a $

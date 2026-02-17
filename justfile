@@ -22,6 +22,7 @@ stories *args:
 
 format:
   go fmt ./pkg/... ./cmd/...
+  go run ./cmd/janet-format/... $(find pkg cmd -name '*.janet')
 
 lint:
   go tool golangci-lint run
