@@ -15,21 +15,27 @@ import (
 )
 
 func main() {
+	// Save stdout for protocol messages, then redirect os.Stdout
+	// to stderr so that server log output doesn't corrupt the
+	// protocol between this process and gendoc.py.
+	protocol := os.Stdout
+	os.Stdout = os.Stderr
+
 	server, create, err := cy.NewTestServer()
+	if err != nil {
+		panic(err)
+	}
+
+	client, err := create(geom.DEFAULT_SIZE)
 	if err != nil {
 		panic(err)
 	}
 
 	reader := bufio.NewReader(os.Stdin)
 
-	_, _ = fmt.Fprintln(os.Stdout, "ready")
+	_, _ = fmt.Fprintln(protocol, "ready")
 
 	for {
-		client, err := create(geom.DEFAULT_SIZE)
-		if err != nil {
-			panic(err)
-		}
-
 		data, err := reader.ReadBytes(0)
 		if err == io.EOF {
 			os.Exit(0)
@@ -49,13 +55,12 @@ func main() {
 			client,
 			call,
 		)
-		client.Cancel()
 		if err != nil {
-			_, _ = fmt.Fprintf(os.Stdout, "%+v\n", err)
-			_, _ = fmt.Fprintf(os.Stdout, "error\n")
+			_, _ = fmt.Fprintf(protocol, "%+v\n", err)
+			_, _ = fmt.Fprintf(protocol, "error\n")
 			continue
 		}
 
-		_, _ = fmt.Fprintf(os.Stdout, "ok\n")
+		_, _ = fmt.Fprintf(protocol, "ok\n")
 	}
 }
