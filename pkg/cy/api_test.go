@@ -25,6 +25,7 @@ var API_TEST_FILE []byte
 func runTestFile(t *testing.T, file string) (failures []testFailure) {
 	server, create, err := NewTestServer()
 	require.NoError(t, err)
+	defer server.Cancel()
 
 	_ = server.Callback("run-test", "", func(
 		name string,
@@ -102,6 +103,7 @@ func TestAPI(t *testing.T) {
 func TestImport(t *testing.T) {
 	server, _, err := NewTestServer()
 	require.NoError(t, err)
+	defer server.Cancel()
 
 	d := t.TempDir()
 	mainFile := filepath.Join(d, "main.janet")
