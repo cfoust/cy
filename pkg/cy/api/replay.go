@@ -290,6 +290,18 @@ func (m *ReplayModule) ScreenBottom(context interface{}) error {
 	return m.sendAction(context, replay.ActionScreenBottom)
 }
 
+func (m *ReplayModule) ScrollCursorTop(context interface{}) error {
+	return m.sendAction(context, replay.ActionScrollCursorTop)
+}
+
+func (m *ReplayModule) ScrollCursorCenter(context interface{}) error {
+	return m.sendAction(context, replay.ActionScrollCursorCenter)
+}
+
+func (m *ReplayModule) ScrollCursorBottom(context interface{}) error {
+	return m.sendAction(context, replay.ActionScrollCursorBottom)
+}
+
 func (m *ReplayModule) CursorDownScreen(context interface{}) error {
 	return m.sendAction(context, replay.ActionCursorDownScreen)
 }

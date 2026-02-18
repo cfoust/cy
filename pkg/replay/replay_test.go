@@ -2,6 +2,7 @@ package replay
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -475,4 +476,49 @@ func TestPlayback(t *testing.T) {
 	i(ActionTimePlay)
 	require.Equal(t, 0, r.Location().Index)
 	require.False(t, r.isPlaying)
+}
+
+func TestScrollCursorPosition(t *testing.T) {
+	s := sessions.NewSimulator().
+		Add(
+			geom.Size{R: 26, C: 80},
+			emu.LineFeedMode,
+		)
+	for j := 0; j < 100; j++ {
+		s.Add(fmt.Sprintf("line %02d\n", j))
+	}
+
+	size := geom.Size{R: 26, C: 80}
+	usableRows := 25 // -1 for status bar
+
+	r, send := createTest(s.Events())
+	send(size)
+	r.enterCopyMode()
+	send(ActionBeginning)
+
+	// Move cursor far enough that all three commands can freely
+	// reposition the viewport
+	for j := 0; j < 40; j++ {
+		send(ActionCursorDown)
+	}
+
+	cursor := r.movement.Cursor()
+
+	// zt: cursor to top of viewport
+	send(ActionScrollCursorTop)
+	_, _, vc := r.movement.Viewport()
+	require.Equal(t, 0, vc.R)
+	require.Equal(t, cursor, r.movement.Cursor())
+
+	// zb: cursor to bottom of viewport
+	send(ActionScrollCursorBottom)
+	_, _, vc = r.movement.Viewport()
+	require.Equal(t, usableRows-1, vc.R)
+	require.Equal(t, cursor, r.movement.Cursor())
+
+	// zz: cursor to center of viewport
+	send(ActionScrollCursorCenter)
+	_, _, vc = r.movement.Viewport()
+	require.Equal(t, usableRows/2, vc.R)
+	require.Equal(t, cursor, r.movement.Cursor())
 }

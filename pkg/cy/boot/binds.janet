@@ -175,6 +175,9 @@
                    ["g" "$"] replay/end-of-screen-line
                    ["g" "^"] replay/first-non-blank-screen
                    ["g" "end"] replay/last-non-blank-screen
+                   ["z" "t"] replay/scroll-cursor-top
+                   ["z" "z"] replay/scroll-cursor-center
+                   ["z" "b"] replay/scroll-cursor-bottom
                    [";"] replay/jump-again
                    [","] replay/jump-reverse
                    ["f" [:re "."]] replay/jump-forward

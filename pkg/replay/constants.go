@@ -257,6 +257,15 @@ const (
 	// L
 	ActionScreenBottom
 
+	// Scroll cursor position motions
+	/////////////////////////////////
+	// zt
+	ActionScrollCursorTop
+	// zz
+	ActionScrollCursorCenter
+	// zb
+	ActionScrollCursorBottom
+
 	// Visual line motions
 	//////////////////////
 	// gj

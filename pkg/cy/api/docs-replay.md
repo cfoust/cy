@@ -238,3 +238,15 @@ Move to the end of the next WORD. Equivalent to vim's `E`.
 # doc: BigWordEndBackward
 
 Move to the end of the previous WORD. Equivalent to vim's `gE`.
+
+# doc: ScrollCursorTop
+
+Scroll the viewport so the cursor line is at the top of the screen. Equivalent to vim's `zt`.
+
+# doc: ScrollCursorCenter
+
+Scroll the viewport so the cursor line is at the center of the screen. Equivalent to vim's `zz`.
+
+# doc: ScrollCursorBottom
+
+Scroll the viewport so the cursor line is at the bottom of the screen. Equivalent to vim's `zb`.

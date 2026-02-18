@@ -444,6 +444,15 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			}
 		case ActionScrollDown:
 			r.scrollYDelta(+1)
+		case ActionScrollCursorTop:
+			_, _, cursor := r.movement.Viewport()
+			r.scrollYDelta(cursor.R)
+		case ActionScrollCursorCenter:
+			_, _, cursor := r.movement.Viewport()
+			r.scrollYDelta(cursor.R - viewport.R/2)
+		case ActionScrollCursorBottom:
+			_, _, cursor := r.movement.Viewport()
+			r.scrollYDelta(cursor.R - (viewport.R - 1))
 		case ActionCursorDown:
 			r.moveCursorY(1)
 		case ActionCursorUp:
