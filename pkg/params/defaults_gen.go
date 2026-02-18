@@ -24,6 +24,7 @@ const (
 	ParamInputFindActiveStyle     = "input-find-active-style"
 	ParamInputFindHighlightStyle  = "input-find-highlight-style"
 	ParamInputFindInactiveStyle   = "input-find-inactive-style"
+	ParamInputFindWrap            = "input-find-wrap"
 	ParamInputPreviewBorder       = "input-preview-border"
 	ParamInputPreviewBorderFg     = "input-preview-border-fg"
 	ParamInputPromptStyle         = "input-prompt-style"
@@ -322,6 +323,24 @@ func (p *Parameters) InputFindInactiveStyle() *style.Style {
 
 func (p *Parameters) SetInputFindInactiveStyle(value *style.Style) {
 	p.set(ParamInputFindInactiveStyle, value)
+}
+
+func (p *Parameters) InputFindWrap() bool {
+	value, ok := p.Get(ParamInputFindWrap)
+	if !ok {
+		return defaults.InputFindWrap
+	}
+
+	realValue, ok := value.(bool)
+	if !ok {
+		return defaults.InputFindWrap
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetInputFindWrap(value bool) {
+	p.set(ParamInputFindWrap, value)
 }
 
 func (p *Parameters) InputPreviewBorder() *style.Border {
@@ -860,6 +879,8 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamInputFindInactiveStyle:
 		return true
+	case ParamInputFindWrap:
+		return true
 	case ParamInputPreviewBorder:
 		return true
 	case ParamInputPreviewBorderFg:
@@ -953,6 +974,8 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.InputFindHighlightStyle, true
 	case ParamInputFindInactiveStyle:
 		return defaults.InputFindInactiveStyle, true
+	case ParamInputFindWrap:
+		return defaults.InputFindWrap, true
 	case ParamInputPreviewBorder:
 		return defaults.InputPreviewBorder, true
 	case ParamInputPreviewBorderFg:
@@ -1298,6 +1321,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		if err != nil {
 			janetValue.Free()
 			return fmt.Errorf("invalid value for :input-find-inactive-style: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
+	case ParamInputFindWrap:
+		if !janetOk {
+			realValue, ok := value.(bool)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamInputFindWrap, should be bool")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated bool
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :input-find-wrap: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -1907,6 +1949,11 @@ func init() {
 			Name:      "input-find-inactive-style",
 			Docstring: "The [style](/api.md#style) of the inactive row in (input/find).",
 			Default:   defaults.InputFindInactiveStyle,
+		},
+		{
+			Name:      "input-find-wrap",
+			Docstring: "Whether (input/find) should wrap around when moving past the\nfirst or last option.",
+			Default:   defaults.InputFindWrap,
 		},
 		{
 			Name:      "input-preview-border",

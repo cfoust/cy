@@ -10,6 +10,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var smallOptions []Option = []Option{
+	NewOption("foo", 0),
+	NewOption("bar", 1),
+	NewOption("baz", 2),
+}
+
 var simpleOptions []Option = []Option{
 	NewOption("foo", 0),
 	NewOption("bar", 1),
@@ -58,6 +64,36 @@ func TestSmall(t *testing.T) {
 		R: 1,
 		C: 20,
 	})
+}
+
+func TestWrap(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Wrapping is on by default
+	f := newFuzzy(ctx, smallOptions)
+	test := taro.Test(f)
+
+	// In isUp mode (default), "up" increases index, "down" decreases
+	// Navigate up past the last item, should wrap to first
+	test("up", "up", "up")
+	require.Equal(t, 0, f.selected)
+
+	// Navigate down from first item, should wrap to last
+	test("down")
+	require.Equal(t, 2, f.selected)
+
+	// Disable wrapping
+	f.params.SetInputFindWrap(false)
+	f.selected = 0
+
+	// Navigate down from first item, should clamp to 0
+	test("down")
+	require.Equal(t, 0, f.selected)
+
+	// Navigate to end, then past it, should clamp
+	test("up", "up", "up")
+	require.Equal(t, 2, f.selected)
 }
 
 func TestPaging(t *testing.T) {

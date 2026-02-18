@@ -95,6 +95,19 @@ var CommandTable stories.InitFunc = func(ctx context.Context) (mux.Screen, error
 	), nil
 }
 
+var Wrap stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
+	return New(
+		ctx,
+		[]Option{
+			NewOption("apple", 0),
+			NewOption("banana", 1),
+			NewOption("cherry", 2),
+			NewOption("date", 3),
+			NewOption("elderberry", 4),
+		},
+	), nil
+}
+
 func init() {
 	config := stories.Config{
 		Size: geom.DEFAULT_SIZE,
@@ -148,4 +161,29 @@ func init() {
 	stories.Register("input/find/table/full-bottom", FullBottomTable, config)
 	stories.Register("input/find/table/top-left", TopLeftTable, config)
 	stories.Register("input/find/table/command", CommandTable, config)
+
+	wrapInputs := []interface{}{}
+	// Navigate up past the last item to wrap around
+	for i := 0; i < 7; i++ {
+		wrapInputs = append(
+			wrapInputs,
+			stories.Type("ctrl+k"),
+			stories.Wait(stories.Some),
+		)
+	}
+	// Then back down past the first to wrap the other way
+	for i := 0; i < 7; i++ {
+		wrapInputs = append(
+			wrapInputs,
+			stories.Type("ctrl+j"),
+			stories.Wait(stories.Some),
+		)
+	}
+	stories.Register("input/find/wrap", Wrap, stories.Config{
+		Size: geom.Size{
+			R: 10,
+			C: 40,
+		},
+		Input: wrapInputs,
+	})
 }

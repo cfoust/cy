@@ -80,7 +80,13 @@ func (f *Fuzzy) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				delta = 1
 			}
 
-			return f, f.setSelected(f.selected + delta)
+			index := f.selected + delta
+			numOptions := len(f.getOptions())
+			if numOptions > 0 && f.params.InputFindWrap() {
+				index = ((index % numOptions) + numOptions) % numOptions
+			}
+
+			return f, f.setSelected(index)
 		case tea.KeyEnter:
 			if f.isSticky {
 				return f, nil

@@ -108,6 +108,9 @@ type defaultParams struct {
 	InputFindInactiveStyle *style.Style
 	// The [style](/api.md#style) of highlighted characters in (input/find).
 	InputFindHighlightStyle *style.Style
+	// Whether (input/find) should wrap around when moving past the
+	// first or last option.
+	InputFindWrap bool
 	// The [style](/api.md#style) of match text in (input/thumbs).
 	InputThumbsMatchStyle *style.Style
 	// The [style](/api.md#style) of hint text in (input/thumbs).
@@ -178,6 +181,7 @@ var (
 		InputPreviewBorder:      &style.Borders[0],
 		InputPromptStyle:        style.NewStyle(style.Black, style.Yellow),
 		InputFindActiveStyle:    style.NewStyle(style.Black, style.White),
+		InputFindWrap:           true,
 		InputFindInactiveStyle:  style.NewStyle(style.Black, style.LightGrey),
 		InputFindHighlightStyle: style.NewStyle(style.White, style.Red),
 		InputThumbsMatchStyle:   style.NewStyle(style.Red, style.Black),
