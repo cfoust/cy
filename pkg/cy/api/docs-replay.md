@@ -86,6 +86,10 @@ Yank the selection into the copy buffer.
 
 Enter visual select mode.
 
+# doc: SelectLine
+
+Enter visual line select mode.
+
 # doc: JumpAgain
 
 Repeat the last character jump.

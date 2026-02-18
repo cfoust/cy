@@ -111,6 +111,7 @@
 
 (key/bind-many-tag :copy "general"
                    ["v"] replay/select
+                   ["V"] replay/select-line
                    ["y"] replay/copy-default
                    ["\"" "+" "y"] replay/copy-clipboard
                    ["\"" [:re "[a-zA-Z0-9]"] "y"] replay/copy)

@@ -159,7 +159,7 @@ func TestMouseClickAndDrag(t *testing.T) {
 	}
 	i(clickMsg)
 
-	require.True(t, r.isSelecting)
+	require.True(t, r.isSelecting())
 
 	dragMsg := taro.MouseMsg{
 		Vec2:   geom.Vec2{R: 1, C: 5},
@@ -169,7 +169,7 @@ func TestMouseClickAndDrag(t *testing.T) {
 	}
 	i(dragMsg)
 
-	require.True(t, r.isSelecting)
+	require.True(t, r.isSelecting())
 
 	releaseMsg := taro.MouseMsg{
 		Vec2:   geom.Vec2{R: 1, C: 5},
@@ -179,7 +179,7 @@ func TestMouseClickAndDrag(t *testing.T) {
 	}
 	i(releaseMsg)
 
-	require.True(t, r.isSelecting)
+	require.True(t, r.isSelecting())
 }
 
 func TestMouseClickOutsideCopyMode(t *testing.T) {
@@ -205,7 +205,7 @@ func TestMouseClickOutsideCopyMode(t *testing.T) {
 	}
 	i(clickMsg)
 
-	require.True(t, r.isSelecting)
+	require.True(t, r.isSelecting())
 }
 
 func TestTime(t *testing.T) {
@@ -411,12 +411,12 @@ func TestJumpCommand(t *testing.T) {
 
 	// Selection
 	i(ActionCommandSelectBackward)
-	require.True(t, r.isSelecting)
+	require.True(t, r.isSelecting())
 	require.Equal(t, geom.Vec2{R: 1, C: 0}, r.movement.Cursor())
 	require.Equal(t, geom.Vec2{R: 1, C: 3}, r.selectStart)
 
 	i(ActionCommandSelectForward)
-	require.True(t, r.isSelecting)
+	require.True(t, r.isSelecting())
 	require.Equal(t, geom.Vec2{R: 3, C: 0}, r.movement.Cursor())
 	require.Equal(t, geom.Vec2{R: 3, C: 3}, r.selectStart)
 }
@@ -455,6 +455,53 @@ func TestIncremental(t *testing.T) {
 	// Next
 	i(ActionSearchAgain)
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.movement.Cursor())
+}
+
+func TestSelectLine(t *testing.T) {
+	events := sim().
+		Add(
+			geom.Size{R: 5, C: 10},
+			emu.LineFeedMode,
+			"hello world\nthis is a test\nfoobar baz",
+		).
+		Events()
+
+	r, i := createTest(events)
+	i(geom.Size{R: 5, C: 10})
+	r.enterCopyMode()
+
+	// No-op outside copy mode is tested implicitly: ActionSelectLine
+	// requires copy mode (tested via the guard in update.go)
+
+	// V toggles line selection on/off
+	i(ActionSelectLine)
+	require.Equal(t, SelectLine, r.selection)
+	i(ActionSelectLine)
+	require.Equal(t, SelectNone, r.selection)
+
+	// v -> V switches to line mode preserving selectStart
+	i(ActionSelect)
+	require.Equal(t, SelectChar, r.selection)
+	start := r.selectStart
+	i(ActionSelectLine)
+	require.Equal(t, SelectLine, r.selection)
+	require.Equal(t, start, r.selectStart)
+
+	// V -> v switches back to char mode preserving selectStart
+	i(ActionSelect)
+	require.Equal(t, SelectChar, r.selection)
+	require.Equal(t, start, r.selectStart)
+
+	// Quit clears selection but stays in copy mode
+	i(ActionSelectLine)
+	i(ActionQuit)
+	require.Equal(t, SelectNone, r.selection)
+	require.True(t, r.isCopyMode())
+
+	// Copy in line mode clears selection
+	i(ActionSelectLine, ActionCursorDown)
+	i(CopyEvent{Register: ""})
+	require.Equal(t, SelectNone, r.selection)
 }
 
 func TestPlayback(t *testing.T) {

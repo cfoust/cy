@@ -312,7 +312,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 					r.mode = ModeCopy
 				}
 
-				r.isSelecting = true
+				r.selection = SelectChar
 				r.movement.Goto(coord)
 				r.selectStart = coord
 			case keys.MouseMotion:
@@ -320,7 +320,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 					break
 				}
 
-				if msg.Down && r.isSelecting {
+				if msg.Down && r.isSelecting() {
 					r.movement.Goto(coord)
 				}
 			}
@@ -359,8 +359,8 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			}
 
 			if r.isCopyMode() {
-				if r.isSelecting {
-					r.isSelecting = false
+				if r.isSelecting() {
+					r.selection = SelectNone
 				} else {
 					r.exitCopyMode()
 				}
@@ -463,13 +463,29 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				return r, nil
 			}
 
-			if r.isSelecting {
-				r.isSelecting = false
+			switch r.selection {
+			case SelectChar:
+				r.selection = SelectNone
+			case SelectLine:
+				r.selection = SelectChar
+			default:
+				r.selection = SelectChar
+				r.selectStart = r.movement.Cursor()
+			}
+		case ActionSelectLine:
+			if !r.isCopyMode() {
 				return r, nil
 			}
 
-			r.isSelecting = true
-			r.selectStart = r.movement.Cursor()
+			switch r.selection {
+			case SelectLine:
+				r.selection = SelectNone
+			case SelectChar:
+				r.selection = SelectLine
+			default:
+				r.selection = SelectLine
+				r.selectStart = r.movement.Cursor()
+			}
 		case ActionJumpReverse, ActionJumpAgain:
 			if len(r.jumpChar) == 0 {
 				return r, nil
@@ -518,7 +534,7 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				return r, nil
 			}
 			r.mode = ModeCopy
-			r.isSelecting = true
+			r.selection = SelectChar
 			r.selectStart = start
 			r.movement.Goto(end)
 			return r, nil

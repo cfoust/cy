@@ -1,6 +1,7 @@
 package replay
 
 import (
+	"math"
 	"math/rand"
 
 	"github.com/cfoust/cy/pkg/geom"
@@ -79,12 +80,22 @@ func (r *Replay) handleJump(needle string, isForward bool, isTo bool) {
 }
 
 func (r *Replay) handleCopy(register string) (taro.Model, tea.Cmd) {
-	if !r.isCopyMode() || !r.isSelecting {
+	if !r.isCopyMode() || !r.isSelecting() {
 		return r, nil
 	}
 
-	r.isSelecting = false
-	text := r.movement.ReadString(r.selectStart, r.movement.Cursor())
+	isLine := r.selection == SelectLine
+	r.selection = SelectNone
+	start := r.selectStart
+	end := r.movement.Cursor()
+	if isLine {
+		if start.R > end.R || (start.R == end.R && start.C > end.C) {
+			start, end = end, start
+		}
+		start.C = 0
+		end.C = math.MaxInt32
+	}
+	text := r.movement.ReadString(start, end)
 	return r, func() tea.Msg {
 		return taro.PublishMsg{
 			Msg: CopyEvent{
@@ -117,7 +128,7 @@ func (r *Replay) initializeMovement() {
 
 func (r *Replay) exitCopyMode() {
 	r.mode = ModeTime
-	r.isSelecting = false
+	r.selection = SelectNone
 	r.isSwapped = false
 	r.initializeMovement()
 }

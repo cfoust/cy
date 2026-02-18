@@ -141,6 +141,8 @@ type defaultParams struct {
 	ReplayTextCopyMode string
 	// The text shown in the status bar when in visual mode.
 	ReplayTextVisualMode string
+	// The text shown in the status bar when in visual line mode.
+	ReplayTextVisualLineMode string
 
 	// The [style](/api.md#style) of the status bar in replay mode.
 	ReplayStatusBarStyle *style.Style
@@ -199,6 +201,7 @@ var (
 		ReplayTextPlayMode:       "⏸",
 		ReplayTextCopyMode:       "COPY",
 		ReplayTextVisualMode:     "VISUAL",
+		ReplayTextVisualLineMode: "VISUAL LINE",
 		SearchStatusBarStyle:     style.NewStyle(style.White, style.Blue),
 		SearchTextSearching:      "searching",
 		SearchTextNoMatchesFound: "no matches found for",

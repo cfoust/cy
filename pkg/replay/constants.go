@@ -58,6 +58,14 @@ const (
 	ModeInput
 )
 
+type SelectionMode uint8
+
+const (
+	SelectNone SelectionMode = iota
+	SelectChar
+	SelectLine
+)
+
 const (
 	ActionQuit ActionType = iota
 
@@ -180,6 +188,7 @@ const (
 	// search-forward-text <for>
 	// search-reverse                               N               N
 	// select-line                                  V
+	ActionSelectLine
 	// select-word
 	// set-mark                                     X               X
 	// start-of-line                                0               C-a

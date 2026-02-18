@@ -42,6 +42,7 @@ const (
 	ParamReplayTextCopyMode       = "replay-text-copy-mode"
 	ParamReplayTextPlayMode       = "replay-text-play-mode"
 	ParamReplayTextTimeMode       = "replay-text-time-mode"
+	ParamReplayTextVisualLineMode = "replay-text-visual-line-mode"
 	ParamReplayTextVisualMode     = "replay-text-visual-mode"
 	ParamReplayTimeStyle          = "replay-time-style"
 	ParamReplayVisualStyle        = "replay-visual-style"
@@ -648,6 +649,24 @@ func (p *Parameters) SetReplayTextTimeMode(value string) {
 	p.set(ParamReplayTextTimeMode, value)
 }
 
+func (p *Parameters) ReplayTextVisualLineMode() string {
+	value, ok := p.Get(ParamReplayTextVisualLineMode)
+	if !ok {
+		return defaults.ReplayTextVisualLineMode
+	}
+
+	realValue, ok := value.(string)
+	if !ok {
+		return defaults.ReplayTextVisualLineMode
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayTextVisualLineMode(value string) {
+	p.set(ParamReplayTextVisualLineMode, value)
+}
+
 func (p *Parameters) ReplayTextVisualMode() string {
 	value, ok := p.Get(ParamReplayTextVisualMode)
 	if !ok {
@@ -896,6 +915,8 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamReplayTextTimeMode:
 		return true
+	case ParamReplayTextVisualLineMode:
+		return true
 	case ParamReplayTextVisualMode:
 		return true
 	case ParamReplayTimeStyle:
@@ -989,6 +1010,8 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.ReplayTextPlayMode, true
 	case ParamReplayTextTimeMode:
 		return defaults.ReplayTextTimeMode, true
+	case ParamReplayTextVisualLineMode:
+		return defaults.ReplayTextVisualLineMode, true
 	case ParamReplayTextVisualMode:
 		return defaults.ReplayTextVisualMode, true
 	case ParamReplayTimeStyle:
@@ -1644,6 +1667,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
+	case ParamReplayTextVisualLineMode:
+		if !janetOk {
+			realValue, ok := value.(string)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayTextVisualLineMode, should be string")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated string
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-text-visual-line-mode: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
 	case ParamReplayTextVisualMode:
 		if !janetOk {
 			realValue, ok := value.(string)
@@ -1997,6 +2039,11 @@ func init() {
 			Name:      "replay-text-time-mode",
 			Docstring: "The text shown in the status bar when in time mode.",
 			Default:   defaults.ReplayTextTimeMode,
+		},
+		{
+			Name:      "replay-text-visual-line-mode",
+			Docstring: "The text shown in the status bar when in visual line mode.",
+			Default:   defaults.ReplayTextVisualLineMode,
 		},
 		{
 			Name:      "replay-text-visual-mode",

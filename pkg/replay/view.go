@@ -2,6 +2,7 @@ package replay
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/cfoust/cy/pkg/emu"
@@ -71,8 +72,11 @@ func (r *Replay) drawLazyStatusBar(state *tty.State) {
 	if r.isCopyMode() {
 		statusText = p.ReplayTextCopyMode()
 
-		if r.isSelecting {
+		if r.isSelecting() {
 			statusText = p.ReplayTextVisualMode()
+			if r.selection == SelectLine {
+				statusText = p.ReplayTextVisualLineMode()
+			}
 		}
 	}
 	if r.isPlaying {
@@ -265,7 +269,7 @@ func (r *Replay) getLeftStatusStyle() lipgloss.Style {
 	if r.isCopyMode() {
 		statusStyle = p.ReplayCopyStyle()
 
-		if r.isSelecting {
+		if r.isSelecting() {
 			statusStyle = p.ReplayVisualStyle()
 		}
 	}
@@ -286,8 +290,11 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 	if r.isCopyMode() {
 		statusText = p.ReplayTextCopyMode()
 
-		if r.isSelecting {
+		if r.isSelecting() {
 			statusText = p.ReplayTextVisualMode()
+			if r.selection == SelectLine {
+				statusText = p.ReplayTextVisualLineMode()
+			}
 		}
 	}
 	if r.isPlaying {
@@ -571,12 +578,21 @@ func (r *Replay) View(state *tty.State) {
 
 	// Show the selection state
 	////////////////////////////
-	if r.isCopyMode() && r.isSelecting {
+	if r.isCopyMode() && r.isSelecting() {
+		from := r.selectStart
+		to := r.movement.Cursor()
+		if r.selection == SelectLine {
+			if from.R > to.R || (from.R == to.R && from.C > to.C) {
+				from, to = to, from
+			}
+			from.C = 0
+			to.C = math.MaxInt32
+		}
 		highlights = append(
 			highlights,
 			movement.Highlight{
-				From:  r.selectStart,
-				To:    r.movement.Cursor(),
+				From:  from,
+				To:    to,
 				Style: p.ReplaySelectionStyle(),
 			},
 		)

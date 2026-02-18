@@ -103,7 +103,7 @@ func (r *Replay) jumpSelectCommand(isForward bool) (taro.Model, tea.Cmd) {
 	if !ok {
 		return r, nil
 	}
-	r.isSelecting = true
+	r.selection = SelectChar
 	r.selectStart = command.Output.To
 	r.movement.Goto(command.Output.From)
 	return r, nil
