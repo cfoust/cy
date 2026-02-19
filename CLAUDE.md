@@ -145,6 +145,7 @@ Tests are colocated with implementation files (`*_test.go`). Janet tests use `.j
 
 - Max line length: 80 characters (enforced by golines)
 - Import grouping: standard library → cy packages → third-party (enforced by gci)
+- Group sequential local variable declarations into a single `var ()` block instead of using separate `:=` or `=` lines
 - The codebase uses `sasha-s/go-deadlock` for deadlock detection during development
 
 ## Stories System
