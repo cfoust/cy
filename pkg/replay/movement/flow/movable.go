@@ -120,6 +120,10 @@ func (f *flowMovement) ReadString(
 			parts []string
 		)
 		for _, line := range lines {
+			if len(line) == 0 {
+				parts = append(parts, "")
+				continue
+			}
 			lineMinC := geom.Clamp(minC, 0, len(line)-1)
 			lineMaxC := geom.Min(maxC+1, len(line))
 			if lineMinC >= lineMaxC {

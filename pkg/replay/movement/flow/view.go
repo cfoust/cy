@@ -70,7 +70,12 @@ func (f *flowMovement) highlightRow(
 	// line
 	endCol = geom.Min(endCol, screenLine.C1-screenLine.C0-1)
 
-	// Also bound this by the end of the line as a safety measure
+	// Bail out if the highlight ends before or starts after the row
+	if endCol < 0 || startCol >= len(row) {
+		return
+	}
+
+	startCol = geom.Clamp(startCol, 0, len(row)-1)
 	endCol = geom.Clamp(endCol, 0, len(row)-1)
 
 	if startCol > endCol {

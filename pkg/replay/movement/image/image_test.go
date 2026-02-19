@@ -70,6 +70,198 @@ func TestReadStringImage(t *testing.T) {
 	))
 }
 
+func TestReadStringLine(t *testing.T) {
+	s := sessions.NewSimulator().
+		Add(
+			geom.Size{R: 5, C: 10},
+			emu.LineFeedMode,
+			"foo\n",
+			"你好\n",
+			"bar\n",
+			"\n",
+			"baz",
+		)
+
+	r := createImageTest(s.Terminal(), geom.Size{R: 5, C: 10})
+
+	// SelectLine expands to full line width regardless of column
+	require.Equal(t, "foo", r.ReadString(
+		geom.Vec2{R: 0, C: 1},
+		geom.Vec2{R: 0, C: 1},
+		movement.SelectLine,
+	))
+
+	// Multi-line
+	require.Equal(t, "foo\n你好", r.ReadString(
+		geom.Vec2{R: 0, C: 2},
+		geom.Vec2{R: 1, C: 0},
+		movement.SelectLine,
+	))
+
+	// Includes empty line
+	require.Equal(t, "bar\n\nbaz", r.ReadString(
+		geom.Vec2{R: 2, C: 1},
+		geom.Vec2{R: 4, C: 0},
+		movement.SelectLine,
+	))
+
+	// Inverted range
+	require.Equal(t, "foo\n你好", r.ReadString(
+		geom.Vec2{R: 1, C: 0},
+		geom.Vec2{R: 0, C: 2},
+		movement.SelectLine,
+	))
+}
+
+func TestReadStringBlock(t *testing.T) {
+	s := sessions.NewSimulator().
+		Add(
+			geom.Size{R: 4, C: 10},
+			emu.LineFeedMode,
+			"abcde\n",
+			"fghij\n",
+			"klmno\n",
+			"pqrst",
+		)
+
+	r := createImageTest(s.Terminal(), geom.Size{R: 4, C: 10})
+
+	// Block: rectangular region cols 1-3
+	require.Equal(t, "bcd\nghi\nlmn\nqrs", r.ReadString(
+		geom.Vec2{R: 0, C: 1},
+		geom.Vec2{R: 3, C: 3},
+		movement.SelectChar,
+	))
+
+	// Single column
+	require.Equal(t, "a\nf\nk\np", r.ReadString(
+		geom.Vec2{R: 0, C: 0},
+		geom.Vec2{R: 3, C: 0},
+		movement.SelectChar,
+	))
+
+	// Inverted columns (image normalizes via normalizeBoxRange)
+	require.Equal(t, "bcd\nghi\nlmn\nqrs", r.ReadString(
+		geom.Vec2{R: 0, C: 3},
+		geom.Vec2{R: 3, C: 1},
+		movement.SelectChar,
+	))
+}
+
+func TestImageLineHighlight(t *testing.T) {
+	s := sessions.NewSimulator()
+	s.Add(
+		geom.Size{R: 5, C: 5},
+		emu.LineFeedMode,
+		"xxxxx\nxxxxx\nxxxxx\nxxxxx\nxxxxx",
+	)
+
+	size := geom.Size{R: 3, C: 3}
+	i := createImageTest(s.Terminal(), size)
+	i.ScrollTop()
+	i.ScrollXDelta(-10)
+
+	// SelectLine highlights full rows regardless of column
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
+			{
+				Selection: movement.SelectLine,
+				From:      geom.Vec2{R: 1, C: 2},
+				To:        geom.Vec2{R: 2, C: 1},
+			},
+		},
+		"000",
+		"111",
+		"111",
+	)
+
+	// Single line
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
+			{
+				Selection: movement.SelectLine,
+				From:      geom.Vec2{R: 0, C: 3},
+				To:        geom.Vec2{R: 0, C: 3},
+			},
+		},
+		"111",
+		"000",
+		"000",
+	)
+
+	// Inverted range
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
+			{
+				Selection: movement.SelectLine,
+				From:      geom.Vec2{R: 2, C: 0},
+				To:        geom.Vec2{R: 1, C: 0},
+			},
+		},
+		"000",
+		"111",
+		"111",
+	)
+
+	// Line highlight with viewport scrolled horizontally
+	i.ScrollXDelta(2)
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
+			{
+				Selection: movement.SelectLine,
+				From:      geom.Vec2{R: 0, C: 0},
+				To:        geom.Vec2{R: 0, C: 0},
+			},
+		},
+		"111",
+		"000",
+		"000",
+	)
+}
+
+func TestImageBlockHighlight(t *testing.T) {
+	s := sessions.NewSimulator()
+	s.Add(
+		geom.Size{R: 5, C: 5},
+		emu.LineFeedMode,
+		"xxxxx\nxxxxx\nxxxxx\nxxxxx\nxxxxx",
+	)
+
+	size := geom.Size{R: 3, C: 3}
+	i := createImageTest(s.Terminal(), size)
+	i.ScrollTop()
+	i.ScrollXDelta(-10)
+
+	// Image mode already treats non-Screen highlights as boxes,
+	// so SelectBlock should behave the same as default
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
+			{
+				Selection: movement.SelectBlock,
+				From:      geom.Vec2{R: 0, C: 1},
+				To:        geom.Vec2{R: 2, C: 2},
+			},
+		},
+		"011",
+		"011",
+		"011",
+	)
+
+	// Inverted columns
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
+			{
+				Selection: movement.SelectBlock,
+				From:      geom.Vec2{R: 0, C: 2},
+				To:        geom.Vec2{R: 2, C: 1},
+			},
+		},
+		"011",
+		"011",
+		"011",
+	)
+}
+
 func TestInteractions(t *testing.T) {
 	s := sim().
 		Add(

@@ -463,12 +463,13 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				return r, nil
 			}
 
-			if r.selection == SelectChar {
+			switch r.selection {
+			case SelectChar:
 				r.selection = SelectNone
-			} else if r.selection == SelectNone {
+			case SelectNone:
 				r.selection = SelectChar
 				r.selectStart = r.movement.Cursor()
-			} else {
+			default:
 				r.selection = SelectChar
 			}
 		case ActionSelectLine:
@@ -476,12 +477,13 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				return r, nil
 			}
 
-			if r.selection == SelectLine {
+			switch r.selection {
+			case SelectLine:
 				r.selection = SelectNone
-			} else if r.selection == SelectNone {
+			case SelectNone:
 				r.selection = SelectLine
 				r.selectStart = r.movement.Cursor()
-			} else {
+			default:
 				r.selection = SelectLine
 			}
 		case ActionSelectBlock:
@@ -489,12 +491,13 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 				return r, nil
 			}
 
-			if r.selection == SelectBlock {
+			switch r.selection {
+			case SelectBlock:
 				r.selection = SelectNone
-			} else if r.selection == SelectNone {
+			case SelectNone:
 				r.selection = SelectBlock
 				r.selectStart = r.movement.Cursor()
-			} else {
+			default:
 				r.selection = SelectBlock
 			}
 		case ActionJumpReverse, ActionJumpAgain:

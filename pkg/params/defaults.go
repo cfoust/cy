@@ -196,8 +196,11 @@ var (
 			style.LightRed,
 			style.DarkGrey,
 		),
-		ReplayIncrementalStyle:    style.NewStyle(style.Black, style.Yellow),
-		ReplayMatchActiveStyle:    style.NewStyle(style.Red, style.LightMagenta),
+		ReplayIncrementalStyle: style.NewStyle(style.Black, style.Yellow),
+		ReplayMatchActiveStyle: style.NewStyle(
+			style.Red,
+			style.LightMagenta,
+		),
 		ReplayMatchInactiveStyle:  style.NewStyle(style.Red, style.LightCyan),
 		ReplayTextTimeMode:        "⏵",
 		ReplayTextPlayMode:        "⏸",
