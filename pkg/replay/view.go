@@ -2,13 +2,13 @@ package replay
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/replay/detect"
 	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/style"
@@ -16,6 +16,17 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 )
+
+func (r *Replay) selectionModeText(p *params.Parameters) string {
+	switch r.selection {
+	case SelectLine:
+		return p.ReplayTextVisualLineMode()
+	case SelectBlock:
+		return p.ReplayTextVisualBlockMode()
+	default:
+		return p.ReplayTextVisualMode()
+	}
+}
 
 func (r *Replay) getSearchHighlights() (highlights []movement.Highlight) {
 	matches := r.matches
@@ -73,10 +84,7 @@ func (r *Replay) drawLazyStatusBar(state *tty.State) {
 		statusText = p.ReplayTextCopyMode()
 
 		if r.isSelecting() {
-			statusText = p.ReplayTextVisualMode()
-			if r.selection == SelectLine {
-				statusText = p.ReplayTextVisualLineMode()
-			}
+			statusText = r.selectionModeText(p)
 		}
 	}
 	if r.isPlaying {
@@ -291,10 +299,7 @@ func (r *Replay) drawStatusBar(state *tty.State) {
 		statusText = p.ReplayTextCopyMode()
 
 		if r.isSelecting() {
-			statusText = p.ReplayTextVisualMode()
-			if r.selection == SelectLine {
-				statusText = p.ReplayTextVisualLineMode()
-			}
+			statusText = r.selectionModeText(p)
 		}
 	}
 	if r.isPlaying {
@@ -579,21 +584,13 @@ func (r *Replay) View(state *tty.State) {
 	// Show the selection state
 	////////////////////////////
 	if r.isCopyMode() && r.isSelecting() {
-		from := r.selectStart
-		to := r.movement.Cursor()
-		if r.selection == SelectLine {
-			if from.R > to.R || (from.R == to.R && from.C > to.C) {
-				from, to = to, from
-			}
-			from.C = 0
-			to.C = math.MaxInt32
-		}
 		highlights = append(
 			highlights,
 			movement.Highlight{
-				From:  from,
-				To:    to,
-				Style: p.ReplaySelectionStyle(),
+				Selection: r.selection,
+				From:      r.selectStart,
+				To:        r.movement.Cursor(),
+				Style:     p.ReplaySelectionStyle(),
 			},
 		)
 	}

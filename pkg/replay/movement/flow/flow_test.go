@@ -393,30 +393,36 @@ func TestReadString(t *testing.T) {
 	require.Equal(t, "foobar", r.ReadString(
 		geom.Vec2{R: 0, C: 0},
 		geom.Vec2{R: 0, C: 5},
+		movement.SelectChar,
 	))
 
 	require.Equal(t, "\ntest", r.ReadString(
 		geom.Vec2{R: 2, C: 0},
 		geom.Vec2{R: 3, C: 3},
+		movement.SelectChar,
 	))
 
 	require.Equal(t, "baz\n\ntest", r.ReadString(
 		geom.Vec2{R: 1, C: 0},
 		geom.Vec2{R: 3, C: 3},
+		movement.SelectChar,
 	))
 
 	require.Equal(t, "foobar\nbaz\n\ntest", r.ReadString(
 		geom.Vec2{R: 0, C: 0},
 		geom.Vec2{R: 3, C: 3},
+		movement.SelectChar,
 	))
 
 	require.Equal(t, "oobar\nbaz\n\ntest", r.ReadString(
 		geom.Vec2{R: 0, C: 1},
 		geom.Vec2{R: 3, C: 3},
+		movement.SelectChar,
 	))
 	require.Equal(t, "test", r.ReadString(
 		geom.Vec2{R: 3, C: 0},
 		geom.Vec2{R: 3, C: 4},
+		movement.SelectChar,
 	))
 }
 

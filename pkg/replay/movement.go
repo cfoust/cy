@@ -1,7 +1,6 @@
 package replay
 
 import (
-	"math"
 	"math/rand"
 
 	"github.com/cfoust/cy/pkg/geom"
@@ -84,18 +83,13 @@ func (r *Replay) handleCopy(register string) (taro.Model, tea.Cmd) {
 		return r, nil
 	}
 
-	isLine := r.selection == SelectLine
+	var (
+		sel   = r.selection
+		start = r.selectStart
+		end   = r.movement.Cursor()
+	)
 	r.selection = SelectNone
-	start := r.selectStart
-	end := r.movement.Cursor()
-	if isLine {
-		if start.R > end.R || (start.R == end.R && start.C > end.C) {
-			start, end = end, start
-		}
-		start.C = 0
-		end.C = math.MaxInt32
-	}
-	text := r.movement.ReadString(start, end)
+	text := r.movement.ReadString(start, end, sel)
 	return r, func() tea.Msg {
 		return taro.PublishMsg{
 			Msg: CopyEvent{

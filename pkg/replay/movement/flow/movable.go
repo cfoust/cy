@@ -1,8 +1,12 @@
 package flow
 
 import (
+	"math"
+	"strings"
+
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/replay/movement"
 )
 
 func (f *flowMovement) Line(row int) (line emu.Line, ok bool) {
@@ -92,13 +96,42 @@ func (f *flowMovement) Viewport() (
 	return result.Lines, f.viewport, f.cursor
 }
 
-func (f *flowMovement) ReadString(start, end geom.Vec2) (result string) {
+func (f *flowMovement) ReadString(
+	start, end geom.Vec2,
+	mode movement.SelectionMode,
+) (result string) {
 	start, end = geom.NormalizeRange(start, end)
+
+	if mode == movement.SelectLine {
+		start.C = 0
+		end.C = math.MaxInt32
+	}
 
 	numLines := end.R - start.R + 1
 	lines := f.GetLines(start.R, end.R)
 	if len(lines) != numLines {
 		return
+	}
+
+	if mode == movement.SelectBlock {
+		var (
+			minC  = geom.Min(start.C, end.C)
+			maxC  = geom.Max(start.C, end.C)
+			parts []string
+		)
+		for _, line := range lines {
+			lineMinC := geom.Clamp(minC, 0, len(line)-1)
+			lineMaxC := geom.Min(maxC+1, len(line))
+			if lineMinC >= lineMaxC {
+				parts = append(parts, "")
+			} else {
+				parts = append(
+					parts,
+					line[lineMinC:lineMaxC].String(),
+				)
+			}
+		}
+		return strings.Join(parts, "\n")
 	}
 
 	if start.R == end.R {

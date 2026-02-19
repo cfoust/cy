@@ -9,50 +9,51 @@ import (
 )
 
 const (
-	ParamAnimate                  = "animate"
-	ParamAnimationDelay           = "animation-delay"
-	ParamAnimationFps             = "animation-fps"
-	ParamAnimations               = "animations"
-	ParamColorError               = "color-error"
-	ParamColorInfo                = "color-info"
-	ParamColorMap                 = "color-map"
-	ParamColorWarn                = "color-warn"
-	ParamDataDirectory            = "data-directory"
-	ParamDefaultFrame             = "default-frame"
-	ParamDefaultShell             = "default-shell"
-	ParamHistoryLimit             = "history-limit"
-	ParamInputFindActiveStyle     = "input-find-active-style"
-	ParamInputFindHighlightStyle  = "input-find-highlight-style"
-	ParamInputFindInactiveStyle   = "input-find-inactive-style"
-	ParamInputPreviewBorder       = "input-preview-border"
-	ParamInputPreviewBorderFg     = "input-preview-border-fg"
-	ParamInputPromptStyle         = "input-prompt-style"
-	ParamInputThumbsHintStyle     = "input-thumbs-hint-style"
-	ParamInputThumbsMatchStyle    = "input-thumbs-match-style"
-	ParamInputThumbsPartialStyle  = "input-thumbs-partial-style"
-	ParamNumSearchWorkers         = "num-search-workers"
-	ParamRemovePaneOnExit         = "remove-pane-on-exit"
-	ParamReplayCopyStyle          = "replay-copy-style"
-	ParamReplayIncrementalStyle   = "replay-incremental-style"
-	ParamReplayMatchActiveStyle   = "replay-match-active-style"
-	ParamReplayMatchInactiveStyle = "replay-match-inactive-style"
-	ParamReplayPlayStyle          = "replay-play-style"
-	ParamReplaySelectionStyle     = "replay-selection-style"
-	ParamReplayStatusBarStyle     = "replay-status-bar-style"
-	ParamReplayTextCopyMode       = "replay-text-copy-mode"
-	ParamReplayTextPlayMode       = "replay-text-play-mode"
-	ParamReplayTextTimeMode       = "replay-text-time-mode"
-	ParamReplayTextVisualLineMode = "replay-text-visual-line-mode"
-	ParamReplayTextVisualMode     = "replay-text-visual-mode"
-	ParamReplayTimeStyle          = "replay-time-style"
-	ParamReplayVisualStyle        = "replay-visual-style"
-	ParamSearchStatusBarStyle     = "search-status-bar-style"
-	ParamSearchTextNoMatchesFound = "search-text-no-matches-found"
-	ParamSearchTextSearching      = "search-text-searching"
-	ParamSkipInput                = "---skip-input"
-	ParamTerminalTextExited       = "terminal-text-exited"
-	ParamTimestampFormat          = "timestamp-format"
-	ParamUseSystemClipboard       = "use-system-clipboard"
+	ParamAnimate                   = "animate"
+	ParamAnimationDelay            = "animation-delay"
+	ParamAnimationFps              = "animation-fps"
+	ParamAnimations                = "animations"
+	ParamColorError                = "color-error"
+	ParamColorInfo                 = "color-info"
+	ParamColorMap                  = "color-map"
+	ParamColorWarn                 = "color-warn"
+	ParamDataDirectory             = "data-directory"
+	ParamDefaultFrame              = "default-frame"
+	ParamDefaultShell              = "default-shell"
+	ParamHistoryLimit              = "history-limit"
+	ParamInputFindActiveStyle      = "input-find-active-style"
+	ParamInputFindHighlightStyle   = "input-find-highlight-style"
+	ParamInputFindInactiveStyle    = "input-find-inactive-style"
+	ParamInputPreviewBorder        = "input-preview-border"
+	ParamInputPreviewBorderFg      = "input-preview-border-fg"
+	ParamInputPromptStyle          = "input-prompt-style"
+	ParamInputThumbsHintStyle      = "input-thumbs-hint-style"
+	ParamInputThumbsMatchStyle     = "input-thumbs-match-style"
+	ParamInputThumbsPartialStyle   = "input-thumbs-partial-style"
+	ParamNumSearchWorkers          = "num-search-workers"
+	ParamRemovePaneOnExit          = "remove-pane-on-exit"
+	ParamReplayCopyStyle           = "replay-copy-style"
+	ParamReplayIncrementalStyle    = "replay-incremental-style"
+	ParamReplayMatchActiveStyle    = "replay-match-active-style"
+	ParamReplayMatchInactiveStyle  = "replay-match-inactive-style"
+	ParamReplayPlayStyle           = "replay-play-style"
+	ParamReplaySelectionStyle      = "replay-selection-style"
+	ParamReplayStatusBarStyle      = "replay-status-bar-style"
+	ParamReplayTextCopyMode        = "replay-text-copy-mode"
+	ParamReplayTextPlayMode        = "replay-text-play-mode"
+	ParamReplayTextTimeMode        = "replay-text-time-mode"
+	ParamReplayTextVisualBlockMode = "replay-text-visual-block-mode"
+	ParamReplayTextVisualLineMode  = "replay-text-visual-line-mode"
+	ParamReplayTextVisualMode      = "replay-text-visual-mode"
+	ParamReplayTimeStyle           = "replay-time-style"
+	ParamReplayVisualStyle         = "replay-visual-style"
+	ParamSearchStatusBarStyle      = "search-status-bar-style"
+	ParamSearchTextNoMatchesFound  = "search-text-no-matches-found"
+	ParamSearchTextSearching       = "search-text-searching"
+	ParamSkipInput                 = "---skip-input"
+	ParamTerminalTextExited        = "terminal-text-exited"
+	ParamTimestampFormat           = "timestamp-format"
+	ParamUseSystemClipboard        = "use-system-clipboard"
 )
 
 func (p *Parameters) Animate() bool {
@@ -649,6 +650,24 @@ func (p *Parameters) SetReplayTextTimeMode(value string) {
 	p.set(ParamReplayTextTimeMode, value)
 }
 
+func (p *Parameters) ReplayTextVisualBlockMode() string {
+	value, ok := p.Get(ParamReplayTextVisualBlockMode)
+	if !ok {
+		return defaults.ReplayTextVisualBlockMode
+	}
+
+	realValue, ok := value.(string)
+	if !ok {
+		return defaults.ReplayTextVisualBlockMode
+	}
+
+	return realValue
+}
+
+func (p *Parameters) SetReplayTextVisualBlockMode(value string) {
+	p.set(ParamReplayTextVisualBlockMode, value)
+}
+
 func (p *Parameters) ReplayTextVisualLineMode() string {
 	value, ok := p.Get(ParamReplayTextVisualLineMode)
 	if !ok {
@@ -915,6 +934,8 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamReplayTextTimeMode:
 		return true
+	case ParamReplayTextVisualBlockMode:
+		return true
 	case ParamReplayTextVisualLineMode:
 		return true
 	case ParamReplayTextVisualMode:
@@ -1010,6 +1031,8 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.ReplayTextPlayMode, true
 	case ParamReplayTextTimeMode:
 		return defaults.ReplayTextTimeMode, true
+	case ParamReplayTextVisualBlockMode:
+		return defaults.ReplayTextVisualBlockMode, true
 	case ParamReplayTextVisualLineMode:
 		return defaults.ReplayTextVisualLineMode, true
 	case ParamReplayTextVisualMode:
@@ -1667,6 +1690,25 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
+	case ParamReplayTextVisualBlockMode:
+		if !janetOk {
+			realValue, ok := value.(string)
+			if !ok {
+				return fmt.Errorf("invalid value for ParamReplayTextVisualBlockMode, should be string")
+			}
+			p.set(key, realValue)
+			return nil
+		}
+
+		var translated string
+		err := janetValue.Unmarshal(&translated)
+		if err != nil {
+			janetValue.Free()
+			return fmt.Errorf("invalid value for :replay-text-visual-block-mode: %s", err)
+		}
+		p.set(key, translated)
+		return nil
+
 	case ParamReplayTextVisualLineMode:
 		if !janetOk {
 			realValue, ok := value.(string)
@@ -2039,6 +2081,11 @@ func init() {
 			Name:      "replay-text-time-mode",
 			Docstring: "The text shown in the status bar when in time mode.",
 			Default:   defaults.ReplayTextTimeMode,
+		},
+		{
+			Name:      "replay-text-visual-block-mode",
+			Docstring: "The text shown in the status bar when in visual block mode.",
+			Default:   defaults.ReplayTextVisualBlockMode,
 		},
 		{
 			Name:      "replay-text-visual-line-mode",

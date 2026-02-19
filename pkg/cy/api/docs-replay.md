@@ -90,6 +90,10 @@ Enter visual select mode.
 
 Enter visual line select mode.
 
+# doc: SelectBlock
+
+Enter visual block select mode.
+
 # doc: JumpAgain
 
 Repeat the last character jump.

@@ -457,7 +457,7 @@ func TestIncremental(t *testing.T) {
 	require.Equal(t, geom.Vec2{R: 0, C: 0}, r.movement.Cursor())
 }
 
-func TestSelectLine(t *testing.T) {
+func TestVisualModes(t *testing.T) {
 	events := sim().
 		Add(
 			geom.Size{R: 5, C: 10},
@@ -470,30 +470,32 @@ func TestSelectLine(t *testing.T) {
 	i(geom.Size{R: 5, C: 10})
 	r.enterCopyMode()
 
-	// No-op outside copy mode is tested implicitly: ActionSelectLine
-	// requires copy mode (tested via the guard in update.go)
+	// Each mode toggles itself on/off
+	for _, action := range []ActionType{
+		ActionSelectLine,
+		ActionSelectBlock,
+	} {
+		i(action)
+		require.True(t, r.isSelecting())
+		i(action)
+		require.Equal(t, SelectNone, r.selection)
+	}
 
-	// V toggles line selection on/off
-	i(ActionSelectLine)
-	require.Equal(t, SelectLine, r.selection)
-	i(ActionSelectLine)
-	require.Equal(t, SelectNone, r.selection)
-
-	// v -> V switches to line mode preserving selectStart
+	// Switching between all three modes preserves selectStart
 	i(ActionSelect)
-	require.Equal(t, SelectChar, r.selection)
 	start := r.selectStart
 	i(ActionSelectLine)
 	require.Equal(t, SelectLine, r.selection)
 	require.Equal(t, start, r.selectStart)
-
-	// V -> v switches back to char mode preserving selectStart
+	i(ActionSelectBlock)
+	require.Equal(t, SelectBlock, r.selection)
+	require.Equal(t, start, r.selectStart)
 	i(ActionSelect)
 	require.Equal(t, SelectChar, r.selection)
 	require.Equal(t, start, r.selectStart)
 
-	// Quit clears selection but stays in copy mode
-	i(ActionSelectLine)
+	// Quit clears any visual mode but stays in copy mode
+	i(ActionSelectBlock)
 	i(ActionQuit)
 	require.Equal(t, SelectNone, r.selection)
 	require.True(t, r.isCopyMode())

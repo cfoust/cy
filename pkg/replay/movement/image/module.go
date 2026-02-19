@@ -191,7 +191,14 @@ func (i *imageMovement) ScrollXDelta(delta int) {
 }
 
 // Read a starting from `start` to `end`, inclusive.
-func (i *imageMovement) ReadString(start, end geom.Vec2) (result string) {
+func (i *imageMovement) ReadString(
+	start, end geom.Vec2,
+	mode movement.SelectionMode,
+) (result string) {
+	if mode == movement.SelectLine {
+		start.C = 0
+		end.C = i.Size().C - 1
+	}
 	start = i.clampToTerminal(start)
 	end = i.clampToTerminal(end)
 	start, end = geom.NormalizeRange(start, end)
@@ -314,11 +321,18 @@ func (i *imageMovement) View(
 	state *tty.State,
 	highlights []movement.Highlight,
 ) {
-	for i, highlight := range highlights {
+	termSize := i.Size()
+	for idx, highlight := range highlights {
 		var (
 			from = highlight.From
 			to   = highlight.To
 		)
+
+		if highlight.Selection == movement.SelectLine {
+			from.C = 0
+			to.C = termSize.C - 1
+		}
+
 		from, to = geom.NormalizeRange(from, to)
 
 		if !highlight.Screen {
@@ -327,11 +341,10 @@ func (i *imageMovement) View(
 
 		highlight.From = from
 		highlight.To = to
-		highlights[i] = highlight
+		highlights[idx] = highlight
 	}
 
 	screen := i.Screen()
-	termSize := i.Size()
 	var point geom.Vec2
 	var glyph emu.Glyph
 	var start, end geom.Vec2

@@ -2,6 +2,7 @@ package flow
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
@@ -25,27 +26,44 @@ func (f *flowMovement) highlightRow(
 	)
 	from, to = geom.NormalizeRange(from, to)
 
-	//-e |     |
-	//   |     | s-
-	if from.GTE(end) || to.LT(start) {
+	if highlight.Selection == movement.SelectLine {
+		from.C = 0
+		to.C = math.MaxInt32
+	}
+
+	// Row must be in range
+	if from.R > start.R || to.R < start.R {
 		return
 	}
 
 	var startCol, endCol int
 
-	//   |  s--|-
-	if from.LT(end) && from.GTE(start) {
-		startCol = from.C - screenLine.C0
-	}
+	if highlight.Selection == movement.SelectBlock {
+		// Block (rectangular) selection: use the column
+		// bounds on every row
+		startCol = geom.Min(from.C, to.C) - screenLine.C0
+		endCol = geom.Max(from.C, to.C) - screenLine.C0
+	} else {
+		//-e |     |
+		//   |     | s-
+		if from.GTE(end) || to.LT(start) {
+			return
+		}
 
-	//  -|--e  |
-	if to.GTE(start) || to.LT(end) {
-		endCol = to.C - screenLine.C0
-	}
+		//   |  s--|-
+		if from.LT(end) && from.GTE(start) {
+			startCol = from.C - screenLine.C0
+		}
 
-	//   |-----|-e
-	if to.GTE(end) {
-		endCol = len(row) - 1
+		//  -|--e  |
+		if to.GTE(start) || to.LT(end) {
+			endCol = to.C - screenLine.C0
+		}
+
+		//   |-----|-e
+		if to.GTE(end) {
+			endCol = len(row) - 1
+		}
 	}
 
 	// Flow does not highlight past the last non-whitespace cell in the

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/replay/motion"
+	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
@@ -58,12 +59,13 @@ const (
 	ModeInput
 )
 
-type SelectionMode uint8
+type SelectionMode = movement.SelectionMode
 
 const (
-	SelectNone SelectionMode = iota
-	SelectChar
-	SelectLine
+	SelectNone  = movement.SelectNone
+	SelectChar  = movement.SelectChar
+	SelectLine  = movement.SelectLine
+	SelectBlock = movement.SelectBlock
 )
 
 const (
@@ -189,6 +191,7 @@ const (
 	// search-reverse                               N               N
 	// select-line                                  V
 	ActionSelectLine
+	ActionSelectBlock
 	// select-word
 	// set-mark                                     X               X
 	// start-of-line                                0               C-a

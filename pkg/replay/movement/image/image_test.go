@@ -48,21 +48,25 @@ func TestReadStringImage(t *testing.T) {
 	require.Equal(t, `foo`, r.ReadString(
 		geom.Vec2{R: 0, C: 0},
 		geom.Vec2{R: 0, C: 2},
+		movement.SelectChar,
 	))
 
 	require.Equal(t, "fo\n你", r.ReadString(
 		geom.Vec2{R: 0, C: 0},
 		geom.Vec2{R: 1, C: 1},
+		movement.SelectChar,
 	))
 
 	require.Equal(t, "foo\n你好", r.ReadString(
 		geom.Vec2{R: 0, C: 0},
 		geom.Vec2{R: 1, C: 2},
+		movement.SelectChar,
 	))
 
 	require.Equal(t, "bar\n\nbaz", r.ReadString(
 		geom.Vec2{R: 2, C: 0},
 		geom.Vec2{R: 4, C: 2},
+		movement.SelectChar,
 	))
 }
 
