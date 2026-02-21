@@ -82,6 +82,9 @@ type Replay struct {
 	selection SelectionMode
 	// The location in terminal space where the select began
 	selectStart geom.Vec2
+	// mouseDown tracks whether a mouse button is pressed, used to
+	// distinguish clicks from drags.
+	mouseDown bool
 
 	isForward bool
 	isWaiting bool

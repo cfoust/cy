@@ -304,25 +304,26 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 
 			switch msg.Type {
 			case keys.MousePress:
-				if !msg.Down {
-					break
-				}
+				if msg.Down {
+					if !r.isCopyMode() {
+						r.mode = ModeCopy
+					}
 
-				if !r.isCopyMode() {
-					r.mode = ModeCopy
-				}
-
-				r.selection = SelectChar
-				r.movement.Goto(coord)
-				r.selectStart = coord
-			case keys.MouseMotion:
-				if !r.isCopyMode() {
-					break
-				}
-
-				if msg.Down && r.isSelecting() {
+					r.mouseDown = true
 					r.movement.Goto(coord)
+					r.selectStart = coord
+				} else {
+					r.mouseDown = false
 				}
+			case keys.MouseMotion:
+				if !r.isCopyMode() || !msg.Down || !r.mouseDown {
+					break
+				}
+
+				if !r.isSelecting() {
+					r.selection = SelectChar
+				}
+				r.movement.Goto(coord)
 			}
 		}
 	case ActionEvent:

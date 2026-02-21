@@ -152,6 +152,7 @@ func TestMouseClickAndDrag(t *testing.T) {
 	i(ActionBeginning)
 	r.enterCopyMode()
 
+	// Click without dragging should NOT enter visual mode
 	clickMsg := taro.MouseMsg{
 		Vec2:   geom.Vec2{R: 1, C: 2},
 		Type:   keys.MousePress,
@@ -160,7 +161,21 @@ func TestMouseClickAndDrag(t *testing.T) {
 	}
 	i(clickMsg)
 
-	require.True(t, r.isSelecting())
+	require.False(t, r.isSelecting())
+
+	releaseMsg := taro.MouseMsg{
+		Vec2:   geom.Vec2{R: 1, C: 2},
+		Type:   keys.MousePress,
+		Button: keys.MouseLeft,
+		Down:   false,
+	}
+	i(releaseMsg)
+
+	require.False(t, r.isSelecting())
+
+	// Click and drag SHOULD enter visual mode
+	i(clickMsg)
+	require.False(t, r.isSelecting())
 
 	dragMsg := taro.MouseMsg{
 		Vec2:   geom.Vec2{R: 1, C: 5},
@@ -172,13 +187,13 @@ func TestMouseClickAndDrag(t *testing.T) {
 
 	require.True(t, r.isSelecting())
 
-	releaseMsg := taro.MouseMsg{
+	releaseMsg2 := taro.MouseMsg{
 		Vec2:   geom.Vec2{R: 1, C: 5},
 		Type:   keys.MousePress,
 		Button: keys.MouseLeft,
 		Down:   false,
 	}
-	i(releaseMsg)
+	i(releaseMsg2)
 
 	require.True(t, r.isSelecting())
 }
@@ -198,6 +213,7 @@ func TestMouseClickOutsideCopyMode(t *testing.T) {
 	i(ActionBeginning)
 	require.False(t, r.isCopyMode())
 
+	// Click enters copy mode but not visual mode
 	clickMsg := taro.MouseMsg{
 		Vec2:   geom.Vec2{R: 1, C: 2},
 		Type:   keys.MousePress,
@@ -205,6 +221,18 @@ func TestMouseClickOutsideCopyMode(t *testing.T) {
 		Down:   true,
 	}
 	i(clickMsg)
+
+	require.True(t, r.isCopyMode())
+	require.False(t, r.isSelecting())
+
+	// Drag enters visual mode
+	dragMsg := taro.MouseMsg{
+		Vec2:   geom.Vec2{R: 1, C: 5},
+		Type:   keys.MouseMotion,
+		Button: keys.MouseLeft,
+		Down:   true,
+	}
+	i(dragMsg)
 
 	require.True(t, r.isSelecting())
 }
