@@ -62,10 +62,11 @@ const (
 type SelectionMode = movement.SelectionMode
 
 const (
-	SelectNone  = movement.SelectNone
-	SelectChar  = movement.SelectChar
-	SelectLine  = movement.SelectLine
-	SelectBlock = movement.SelectBlock
+	SelectNone   = movement.SelectNone
+	SelectChar   = movement.SelectChar
+	SelectLine   = movement.SelectLine
+	SelectBlock  = movement.SelectBlock
+	SelectCircle = movement.SelectCircle
 )
 
 const (
@@ -192,6 +193,7 @@ const (
 	// select-line                                  V
 	ActionSelectLine
 	ActionSelectBlock
+	ActionSelectCircle
 	// select-word
 	// set-mark                                     X               X
 	// start-of-line                                0               C-a

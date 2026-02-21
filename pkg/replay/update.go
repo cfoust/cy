@@ -500,6 +500,20 @@ func (r *Replay) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 			default:
 				r.selection = SelectBlock
 			}
+		case ActionSelectCircle:
+			if !r.isCopyMode() {
+				return r, nil
+			}
+
+			switch r.selection {
+			case SelectCircle:
+				r.selection = SelectNone
+			case SelectNone:
+				r.selection = SelectCircle
+				r.selectStart = r.movement.Cursor()
+			default:
+				r.selection = SelectCircle
+			}
 		case ActionJumpReverse, ActionJumpAgain:
 			if len(r.jumpChar) == 0 {
 				return r, nil

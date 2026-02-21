@@ -427,71 +427,87 @@ func TestReadString(t *testing.T) {
 }
 
 func TestReadStringModes(t *testing.T) {
-	size := geom.Size{R: 4, C: 3}
-	s := sessions.NewSimulator()
-	s.Add(size, emu.LineFeedMode, "foobar\nbaz\n\ntest")
-
-	r := createFlowTest(s.Terminal(), size)
-	r.ScrollTop()
-
-	cases := []struct {
+	type testCase struct {
 		name     string
-		from, to geom.Vec2
+		size     geom.Size
+		content  string
+		from     geom.Vec2
+		to       geom.Vec2
 		mode     movement.SelectionMode
 		expected string
-	}{
+	}
+
+	cases := []testCase{
 		{
-			"line single",
+			"line single", geom.Size{R: 4, C: 3}, "foobar\nbaz\n\ntest",
 			geom.Vec2{R: 0, C: 2},
 			geom.Vec2{R: 0, C: 2},
 			movement.SelectLine,
 			"foobar",
 		},
 		{
-			"line multi",
+			"line multi", geom.Size{R: 4, C: 3}, "foobar\nbaz\n\ntest",
 			geom.Vec2{R: 0, C: 3},
 			geom.Vec2{R: 1, C: 1},
 			movement.SelectLine,
 			"foobar\nbaz",
 		},
 		{
-			"line with empty",
+			"line with empty", geom.Size{R: 4, C: 3}, "foobar\nbaz\n\ntest",
 			geom.Vec2{R: 1, C: 2},
 			geom.Vec2{R: 3, C: 0},
 			movement.SelectLine,
 			"baz\n\ntest",
 		},
 		{
-			"line inverted",
+			"line inverted", geom.Size{R: 4, C: 3}, "foobar\nbaz\n\ntest",
 			geom.Vec2{R: 1, C: 1},
 			geom.Vec2{R: 0, C: 3},
 			movement.SelectLine,
 			"foobar\nbaz",
 		},
 		{
-			"block rect",
+			"block rect", geom.Size{R: 4, C: 3}, "foobar\nbaz\n\ntest",
 			geom.Vec2{R: 0, C: 1},
 			geom.Vec2{R: 3, C: 2},
 			movement.SelectBlock,
 			"oo\naz\n\nes",
 		},
 		{
-			"block single col",
+			"block single col", geom.Size{R: 4, C: 3}, "foobar\nbaz\n\ntest",
 			geom.Vec2{R: 0, C: 0},
 			geom.Vec2{R: 3, C: 0},
 			movement.SelectBlock,
 			"f\nb\n\nt",
 		},
 		{
-			"block inverted cols",
+			"block inverted cols", geom.Size{R: 4, C: 3}, "foobar\nbaz\n\ntest",
 			geom.Vec2{R: 0, C: 2},
 			geom.Vec2{R: 3, C: 1},
 			movement.SelectBlock,
 			"oo\naz\n\nes",
 		},
+		{
+			"circle 5x5", geom.Size{R: 5, C: 5}, "abcde\nfghij\nklmno\npqrst\nuvwxy",
+			geom.Vec2{R: 0, C: 0},
+			geom.Vec2{R: 4, C: 4},
+			movement.SelectCircle,
+			" bcd\nfghij\nklmno\npqrst\n vwx",
+		},
+		{
+			"circle 5x5 early end", geom.Size{R: 5, C: 5}, "a\nfghij\nklmno\npqrst\nuvwxy",
+			geom.Vec2{R: 0, C: 0},
+			geom.Vec2{R: 4, C: 4},
+			movement.SelectCircle,
+			" \nfghij\nklmno\npqrst\n vwx",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			s := sessions.NewSimulator()
+			s.Add(tc.size, emu.LineFeedMode, tc.content)
+			r := createFlowTest(s.Terminal(), tc.size)
+			r.ScrollTop()
 			require.Equal(t, tc.expected, r.ReadString(tc.from, tc.to, tc.mode))
 		})
 	}
@@ -569,6 +585,15 @@ func TestSelectionHighlight(t *testing.T) {
 				To:        geom.Vec2{R: 0, C: 5},
 			},
 			[]string{"011", "111", "000"},
+		},
+		{
+			"circle 5x5", geom.Size{R: 5, C: 5}, "xxxxx\nxxxxx\nxxxxx\nxxxxx\nxxxxx",
+			movement.Highlight{
+				Selection: movement.SelectCircle,
+				From:      geom.Vec2{R: 0, C: 0},
+				To:        geom.Vec2{R: 4, C: 4},
+			},
+			[]string{"01110", "11111", "11111", "11111", "01110"},
 		},
 	}
 	for _, tc := range cases {

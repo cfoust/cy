@@ -262,6 +262,54 @@ func TestImageBlockHighlight(t *testing.T) {
 	)
 }
 
+func TestImageCircleHighlight(t *testing.T) {
+	s := sessions.NewSimulator()
+	s.Add(
+		geom.Size{R: 5, C: 5},
+		emu.LineFeedMode,
+		"xxxxx\nxxxxx\nxxxxx\nxxxxx\nxxxxx",
+	)
+
+	size := geom.Size{R: 5, C: 5}
+	i := createImageTest(s.Terminal(), size)
+	i.ScrollTop()
+	i.ScrollXDelta(-10)
+
+	movement.TestHighlight(t, i, size,
+		[]movement.Highlight{
+			{
+				Selection: movement.SelectCircle,
+				From:      geom.Vec2{R: 0, C: 0},
+				To:        geom.Vec2{R: 4, C: 4},
+			},
+		},
+		"01110",
+		"11111",
+		"11111",
+		"11111",
+		"01110",
+	)
+
+	// 3x3 circle
+	size3 := geom.Size{R: 3, C: 3}
+	i3 := createImageTest(s.Terminal(), size3)
+	i3.ScrollTop()
+	i3.ScrollXDelta(-10)
+
+	movement.TestHighlight(t, i3, size3,
+		[]movement.Highlight{
+			{
+				Selection: movement.SelectCircle,
+				From:      geom.Vec2{R: 0, C: 0},
+				To:        geom.Vec2{R: 2, C: 2},
+			},
+		},
+		"010",
+		"111",
+		"010",
+	)
+}
+
 func TestInteractions(t *testing.T) {
 	s := sim().
 		Add(

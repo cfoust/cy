@@ -474,6 +474,7 @@ func TestVisualModes(t *testing.T) {
 	for _, action := range []ActionType{
 		ActionSelectLine,
 		ActionSelectBlock,
+		ActionSelectCircle,
 	} {
 		i(action)
 		require.True(t, r.isSelecting())
@@ -490,12 +491,15 @@ func TestVisualModes(t *testing.T) {
 	i(ActionSelectBlock)
 	require.Equal(t, SelectBlock, r.selection)
 	require.Equal(t, start, r.selectStart)
+	i(ActionSelectCircle)
+	require.Equal(t, SelectCircle, r.selection)
+	require.Equal(t, start, r.selectStart)
 	i(ActionSelect)
 	require.Equal(t, SelectChar, r.selection)
 	require.Equal(t, start, r.selectStart)
 
 	// Quit clears any visual mode but stays in copy mode
-	i(ActionSelectBlock)
+	i(ActionSelectCircle)
 	i(ActionQuit)
 	require.Equal(t, SelectNone, r.selection)
 	require.True(t, r.isCopyMode())

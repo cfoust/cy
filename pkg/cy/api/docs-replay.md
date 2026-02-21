@@ -94,6 +94,10 @@ Enter visual line select mode.
 
 Enter visual block select mode.
 
+# doc: SelectCircle
+
+Enter visual circle select mode. Selects cells within a filled circle inscribed in the bounding box of the two selection endpoints.
+
 # doc: JumpAgain
 
 Repeat the last character jump.

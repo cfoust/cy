@@ -15,6 +15,7 @@ const (
 	SelectChar
 	SelectLine
 	SelectBlock
+	SelectCircle
 )
 
 type Highlight struct {

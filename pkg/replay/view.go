@@ -23,6 +23,8 @@ func (r *Replay) selectionModeText(p *params.Parameters) string {
 		return p.ReplayTextVisualLineMode()
 	case SelectBlock:
 		return p.ReplayTextVisualBlockMode()
+	case SelectCircle:
+		return p.ReplayTextVisualCircleMode()
 	default:
 		return p.ReplayTextVisualMode()
 	}

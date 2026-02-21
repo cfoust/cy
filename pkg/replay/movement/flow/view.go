@@ -14,6 +14,27 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// movementToScreen converts a movement-space coordinate to a screen-space
+// coordinate using the given flow lines. Returns the screen position and
+// whether the coordinate was found on screen.
+func movementToScreen(
+	lines []emu.ScreenLine,
+	coord geom.Vec2,
+) (geom.Vec2, bool) {
+	for row, line := range lines {
+		if line.R != coord.R {
+			continue
+		}
+		if coord.C >= line.C0 && coord.C < line.C1 {
+			return geom.Vec2{
+				R: row,
+				C: coord.C - line.C0,
+			}, true
+		}
+	}
+	return geom.Vec2{}, false
+}
+
 func (f *flowMovement) highlightRow(
 	row emu.Line,
 	start, end geom.Vec2,
@@ -24,6 +45,11 @@ func (f *flowMovement) highlightRow(
 		from = highlight.From
 		to   = highlight.To
 	)
+	// Circle highlights are handled separately in screen space
+	if highlight.Selection == movement.SelectCircle {
+		return
+	}
+
 	from, to = geom.NormalizeRange(from, to)
 
 	if highlight.Selection == movement.SelectLine {
@@ -155,6 +181,49 @@ func (f *flowMovement) View(
 				highlight,
 			)
 		}
+	}
+
+	// Circle highlights operate in screen space
+	for _, highlight := range highlights {
+		if highlight.Selection != movement.SelectCircle {
+			continue
+		}
+
+		fromScreen, fromOK := movementToScreen(
+			flow.Lines,
+			highlight.From,
+		)
+		toScreen, toOK := movementToScreen(
+			flow.Lines,
+			highlight.To,
+		)
+		if !fromOK || !toOK {
+			continue
+		}
+
+		geom.FilledCircleSpans(
+			fromScreen, toScreen,
+			func(row, left, right int) {
+				if row < 0 || row >= size.R {
+					return
+				}
+				left = geom.Clamp(left, 0, size.C-1)
+				right = geom.Clamp(right, 0, size.C-1)
+				// Clamp to non-whitespace end of the line
+				if row < len(flow.Lines) {
+					lineEnd := flow.Lines[row].C1 -
+						flow.Lines[row].C0 - 1
+					right = geom.Min(right, lineEnd)
+				}
+				for col := left; col <= right; col++ {
+					if highlight.Style != nil {
+						highlight.Style.Apply(
+							&image[row][col],
+						)
+					}
+				}
+			},
+		)
 	}
 
 	if f.root.R >= screenRoot.R {

@@ -1,6 +1,8 @@
 package image
 
 import (
+	"strings"
+
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/tty"
@@ -195,6 +197,10 @@ func (i *imageMovement) ReadString(
 	start, end geom.Vec2,
 	mode movement.SelectionMode,
 ) (result string) {
+	if mode == movement.SelectCircle {
+		return i.readStringCircle(start, end)
+	}
+
 	if mode == movement.SelectLine {
 		start.C = 0
 		end.C = i.Size().C - 1
@@ -221,6 +227,92 @@ func (i *imageMovement) ReadString(
 	}
 
 	return
+}
+
+func (i *imageMovement) readStringCircle(
+	start, end geom.Vec2,
+) string {
+	// Convert to viewport space
+	fromScreen := i.termToViewport(start)
+	toScreen := i.termToViewport(end)
+
+	screen := i.Screen()
+	termSize := i.Size()
+
+	type spanInfo struct {
+		left  int
+		text  string
+		valid bool
+	}
+	var spans []spanInfo
+	minLeft := termSize.C
+
+	geom.FilledCircleSpans(
+		fromScreen, toScreen,
+		func(row, left, right int) {
+			if row < 0 || row >= i.viewport.R {
+				spans = append(spans, spanInfo{})
+				return
+			}
+			left = geom.Clamp(left, 0, i.viewport.C-1)
+			right = geom.Clamp(
+				right, 0, i.viewport.C-1,
+			)
+
+			// Map back to terminal coordinates
+			termR := i.offset.R + row
+			termLeft := i.offset.C + left
+			termRight := i.offset.C + right
+
+			if termR < 0 || termR >= termSize.R {
+				spans = append(spans, spanInfo{
+					left: left,
+				})
+				return
+			}
+
+			termLeft = geom.Clamp(
+				termLeft, 0, termSize.C-1,
+			)
+			termRight = geom.Clamp(
+				termRight, 0, termSize.C-1,
+			)
+
+			if termLeft > termRight {
+				spans = append(spans, spanInfo{
+					left: left,
+				})
+				return
+			}
+
+			line := screen[termR][termLeft : termRight+1]
+			text := ""
+			if line.Length() > 0 {
+				_, lastChar := line.Whitespace()
+				text = line[:lastChar+1].String()
+			}
+
+			if left < minLeft {
+				minLeft = left
+			}
+			spans = append(spans, spanInfo{
+				left:  left,
+				text:  text,
+				valid: true,
+			})
+		},
+	)
+
+	var parts []string
+	for _, s := range spans {
+		if !s.valid {
+			parts = append(parts, "")
+			continue
+		}
+		pad := strings.Repeat(" ", s.left-minLeft)
+		parts = append(parts, pad+s.text)
+	}
+	return strings.Join(parts, "\n")
 }
 
 func (i *imageMovement) Resize(size geom.Vec2) {
@@ -259,6 +351,11 @@ func (i *imageMovement) highlightRow(
 	start, end geom.Vec2,
 	highlight movement.Highlight,
 ) {
+	// Circle highlights are handled separately in screen space
+	if highlight.Selection == movement.SelectCircle {
+		return
+	}
+
 	var (
 		from = highlight.From
 		to   = highlight.To
@@ -381,6 +478,37 @@ func (i *imageMovement) View(
 		for _, highlight := range highlights {
 			i.highlightRow(image[row], start, end, highlight)
 		}
+	}
+
+	// Circle highlights operate in screen (viewport) space
+	for _, highlight := range highlights {
+		if highlight.Selection != movement.SelectCircle {
+			continue
+		}
+
+		// Convert from movement (terminal) space to viewport space
+		fromScreen := i.termToViewport(highlight.From)
+		toScreen := i.termToViewport(highlight.To)
+
+		geom.FilledCircleSpans(
+			fromScreen, toScreen,
+			func(row, left, right int) {
+				if row < 0 || row >= i.viewport.R {
+					return
+				}
+				left = geom.Clamp(left, 0, i.viewport.C-1)
+				right = geom.Clamp(
+					right, 0, i.viewport.C-1,
+				)
+				for col := left; col <= right; col++ {
+					if highlight.Style != nil {
+						highlight.Style.Apply(
+							&image[row][col],
+						)
+					}
+				}
+			},
+		)
 	}
 
 	termCursor := i.termToViewport(getTerminalCursor(i.Terminal))
