@@ -175,7 +175,10 @@ func (p *Program) dec(cmd bool) {
 	p.mu.Unlock()
 
 	if sum == 0 && p.clear != nil {
-		p.clear <- struct{}{}
+		select {
+		case p.clear <- struct{}{}:
+		case <-p.Ctx().Done():
+		}
 	}
 }
 
@@ -256,7 +259,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 					if cmd != nil {
 						p.inc(true)
 					}
-					cmds <- cmd
+					select {
+					case cmds <- cmd:
+					case <-p.Ctx().Done():
+						return model, nil
+					}
 				}
 				p.dec(false)
 				continue
@@ -323,7 +330,11 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			if cmd != nil {
 				p.inc(true)
 			}
-			cmds <- cmd // process command (if any)
+			select {
+			case cmds <- cmd: // process command (if any)
+			case <-p.Ctx().Done():
+				return model, nil
+			}
 			frameStart := time.Now()
 			p.write(model) // send view to renderer
 			frameTime := time.Since(frameStart)
@@ -375,7 +386,11 @@ func (p *Program) readLoop() {
 		}
 
 		for _, msg := range msgs {
-			p.msgs <- msg
+			select {
+			case p.msgs <- msg:
+			case <-p.Ctx().Done():
+				return
+			}
 		}
 	}
 }
