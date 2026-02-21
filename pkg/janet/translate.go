@@ -2,7 +2,6 @@ package janet
 
 /*
 #cgo CFLAGS: -std=c99
-#cgo LDFLAGS: -lm -ldl
 
 #include <stdlib.h>
 #include <janet.h>
