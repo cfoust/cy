@@ -8,12 +8,23 @@ import (
 	"github.com/cfoust/cy/pkg/style"
 )
 
+type SelectionMode uint8
+
+const (
+	SelectNone SelectionMode = iota
+	SelectChar
+	SelectLine
+	SelectBlock
+	SelectCircle
+)
+
 type Highlight struct {
 	// Whether this Highlight is in screen space or in the reference frame
 	// of the Movement.
-	Screen   bool
-	From, To geom.Vec2
-	Style    *style.Style
+	Screen    bool
+	Selection SelectionMode
+	From, To  geom.Vec2
+	Style     *style.Style
 }
 
 type Movement interface {
@@ -37,8 +48,11 @@ type Movement interface {
 	MoveCursorY(delta int)
 
 	// ReadString reads string data between two coordinates `start` and
-	// `end` in the reference frame of the Movement.
-	ReadString(start, end geom.Vec2) string
+	// `end` in the reference frame of the Movement. The SelectionMode
+	// controls how the range is interpreted: SelectChar spans lines,
+	// SelectLine expands to full lines, and SelectBlock reads a
+	// rectangular column range.
+	ReadString(start, end geom.Vec2, mode SelectionMode) string
 
 	// Resize resizes the Movement and makes any necessary viewport
 	// adjustments.

@@ -144,6 +144,12 @@ type defaultParams struct {
 	ReplayTextCopyMode string
 	// The text shown in the status bar when in visual mode.
 	ReplayTextVisualMode string
+	// The text shown in the status bar when in visual line mode.
+	ReplayTextVisualLineMode string
+	// The text shown in the status bar when in visual block mode.
+	ReplayTextVisualBlockMode string
+	// The text shown in the status bar when in visual circle mode.
+	ReplayTextVisualCircleMode string
 
 	// The [style](/api.md#style) of the status bar in replay mode.
 	ReplayStatusBarStyle *style.Style
@@ -196,16 +202,22 @@ var (
 			style.LightRed,
 			style.DarkGrey,
 		),
-		ReplayIncrementalStyle:   style.NewStyle(style.Black, style.Yellow),
-		ReplayMatchActiveStyle:   style.NewStyle(style.Red, style.LightMagenta),
-		ReplayMatchInactiveStyle: style.NewStyle(style.Red, style.LightCyan),
-		ReplayTextTimeMode:       "⏵",
-		ReplayTextPlayMode:       "⏸",
-		ReplayTextCopyMode:       "COPY",
-		ReplayTextVisualMode:     "VISUAL",
-		SearchStatusBarStyle:     style.NewStyle(style.White, style.Blue),
-		SearchTextSearching:      "searching",
-		SearchTextNoMatchesFound: "no matches found for",
-		TerminalTextExited:       "exited",
+		ReplayIncrementalStyle: style.NewStyle(style.Black, style.Yellow),
+		ReplayMatchActiveStyle: style.NewStyle(
+			style.Red,
+			style.LightMagenta,
+		),
+		ReplayMatchInactiveStyle:   style.NewStyle(style.Red, style.LightCyan),
+		ReplayTextTimeMode:         "⏵",
+		ReplayTextPlayMode:         "⏸",
+		ReplayTextCopyMode:         "COPY",
+		ReplayTextVisualMode:       "VISUAL",
+		ReplayTextVisualLineMode:   "VISUAL LINE",
+		ReplayTextVisualBlockMode:  "VISUAL BLOCK",
+		ReplayTextVisualCircleMode: "VISUAL CIRCLE",
+		SearchStatusBarStyle:       style.NewStyle(style.White, style.Blue),
+		SearchTextSearching:        "searching",
+		SearchTextNoMatchesFound:   "no matches found for",
+		TerminalTextExited:         "exited",
 	}
 )

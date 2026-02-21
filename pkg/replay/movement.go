@@ -79,12 +79,17 @@ func (r *Replay) handleJump(needle string, isForward bool, isTo bool) {
 }
 
 func (r *Replay) handleCopy(register string) (taro.Model, tea.Cmd) {
-	if !r.isCopyMode() || !r.isSelecting {
+	if !r.isCopyMode() || !r.isSelecting() {
 		return r, nil
 	}
 
-	r.isSelecting = false
-	text := r.movement.ReadString(r.selectStart, r.movement.Cursor())
+	var (
+		sel   = r.selection
+		start = r.selectStart
+		end   = r.movement.Cursor()
+	)
+	r.selection = SelectNone
+	text := r.movement.ReadString(start, end, sel)
 	return r, func() tea.Msg {
 		return taro.PublishMsg{
 			Msg: CopyEvent{
@@ -117,7 +122,7 @@ func (r *Replay) initializeMovement() {
 
 func (r *Replay) exitCopyMode() {
 	r.mode = ModeTime
-	r.isSelecting = false
+	r.selection = SelectNone
 	r.isSwapped = false
 	r.initializeMovement()
 }

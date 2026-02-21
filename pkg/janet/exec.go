@@ -2,7 +2,6 @@ package janet
 
 /*
 #cgo CFLAGS: -std=c99
-#cgo LDFLAGS: -lm -ldl
 
 #define _POSIX_C_SOURCE 200809L
 #include <janet.h>

@@ -4,7 +4,7 @@ import "github.com/cfoust/cy/pkg/geom"
 
 type loadRestoreState struct {
 	mode        Mode
-	isSelecting bool
+	selection   SelectionMode
 	selectStart geom.Vec2
 
 	cursor geom.Vec2
@@ -14,7 +14,7 @@ type loadRestoreState struct {
 func (r *Replay) captureLoadRestore() {
 	restore := &loadRestoreState{
 		mode:        r.mode,
-		isSelecting: r.isSelecting,
+		selection:   r.selection,
 		selectStart: r.selectStart,
 	}
 
@@ -39,7 +39,7 @@ func (r *Replay) restoreLoadRestore() {
 	}
 
 	r.mode = restore.mode
-	r.isSelecting = restore.isSelecting
+	r.selection = restore.selection
 	r.selectStart = restore.selectStart
 
 	if r.movement == nil {

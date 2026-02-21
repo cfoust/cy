@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/replay/motion"
+	"github.com/cfoust/cy/pkg/replay/movement"
 	"github.com/cfoust/cy/pkg/sessions/search"
 )
 
@@ -56,6 +57,16 @@ const (
 	ModeCopy
 	// Input mode is used for searching
 	ModeInput
+)
+
+type SelectionMode = movement.SelectionMode
+
+const (
+	SelectNone   = movement.SelectNone
+	SelectChar   = movement.SelectChar
+	SelectLine   = movement.SelectLine
+	SelectBlock  = movement.SelectBlock
+	SelectCircle = movement.SelectCircle
 )
 
 const (
@@ -180,6 +191,9 @@ const (
 	// search-forward-text <for>
 	// search-reverse                               N               N
 	// select-line                                  V
+	ActionSelectLine
+	ActionSelectBlock
+	ActionSelectCircle
 	// select-word
 	// set-mark                                     X               X
 	// start-of-line                                0               C-a

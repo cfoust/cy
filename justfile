@@ -44,3 +44,11 @@ api:
 
 sqlc:
   cd pkg/db/ && sqlc generate
+
+ci:
+  just generate
+  just format
+  go mod tidy
+  just lint
+  just build
+  just test-race

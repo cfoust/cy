@@ -79,7 +79,7 @@ type Replay struct {
 	skipInactivity bool
 
 	// Whether the user has started selecting.
-	isSelecting bool
+	selection SelectionMode
 	// The location in terminal space where the select began
 	selectStart geom.Vec2
 
@@ -126,6 +126,10 @@ func (r *Replay) isCopyMode() bool {
 	return r.mode == ModeCopy
 }
 
+func (r *Replay) isSelecting() bool {
+	return r.selection != SelectNone
+}
+
 func (r *Replay) enterCopyMode() {
 	r.mode = ModeCopy
 	r.movement.Snap()
@@ -138,7 +142,7 @@ func (r *Replay) swapScreen() {
 
 	r.mode = ModeCopy
 	r.isSwapped = !r.isSwapped
-	r.isSelecting = false
+	r.selection = SelectNone
 	r.initializeMovement()
 }
 

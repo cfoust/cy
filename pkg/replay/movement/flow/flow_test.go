@@ -393,31 +393,221 @@ func TestReadString(t *testing.T) {
 	require.Equal(t, "foobar", r.ReadString(
 		geom.Vec2{R: 0, C: 0},
 		geom.Vec2{R: 0, C: 5},
+		movement.SelectChar,
 	))
 
 	require.Equal(t, "\ntest", r.ReadString(
 		geom.Vec2{R: 2, C: 0},
 		geom.Vec2{R: 3, C: 3},
+		movement.SelectChar,
 	))
 
 	require.Equal(t, "baz\n\ntest", r.ReadString(
 		geom.Vec2{R: 1, C: 0},
 		geom.Vec2{R: 3, C: 3},
+		movement.SelectChar,
 	))
 
 	require.Equal(t, "foobar\nbaz\n\ntest", r.ReadString(
 		geom.Vec2{R: 0, C: 0},
 		geom.Vec2{R: 3, C: 3},
+		movement.SelectChar,
 	))
 
 	require.Equal(t, "oobar\nbaz\n\ntest", r.ReadString(
 		geom.Vec2{R: 0, C: 1},
 		geom.Vec2{R: 3, C: 3},
+		movement.SelectChar,
 	))
 	require.Equal(t, "test", r.ReadString(
 		geom.Vec2{R: 3, C: 0},
 		geom.Vec2{R: 3, C: 4},
+		movement.SelectChar,
 	))
+}
+
+func TestReadStringModes(t *testing.T) {
+	type testCase struct {
+		name     string
+		size     geom.Size
+		content  string
+		from     geom.Vec2
+		to       geom.Vec2
+		mode     movement.SelectionMode
+		expected string
+	}
+
+	cases := []testCase{
+		{
+			"line single", geom.Size{R: 4, C: 3}, "foobar\nbaz\n\ntest",
+			geom.Vec2{R: 0, C: 2},
+			geom.Vec2{R: 0, C: 2},
+			movement.SelectLine,
+			"foobar",
+		},
+		{
+			"line multi", geom.Size{R: 4, C: 3}, "foobar\nbaz\n\ntest",
+			geom.Vec2{R: 0, C: 3},
+			geom.Vec2{R: 1, C: 1},
+			movement.SelectLine,
+			"foobar\nbaz",
+		},
+		{
+			"line with empty", geom.Size{R: 4, C: 3}, "foobar\nbaz\n\ntest",
+			geom.Vec2{R: 1, C: 2},
+			geom.Vec2{R: 3, C: 0},
+			movement.SelectLine,
+			"baz\n\ntest",
+		},
+		{
+			"line inverted", geom.Size{R: 4, C: 3}, "foobar\nbaz\n\ntest",
+			geom.Vec2{R: 1, C: 1},
+			geom.Vec2{R: 0, C: 3},
+			movement.SelectLine,
+			"foobar\nbaz",
+		},
+		{
+			"block rect", geom.Size{R: 4, C: 3}, "foobar\nbaz\n\ntest",
+			geom.Vec2{R: 0, C: 1},
+			geom.Vec2{R: 3, C: 2},
+			movement.SelectBlock,
+			"oo\naz\n\nes",
+		},
+		{
+			"block single col", geom.Size{R: 4, C: 3}, "foobar\nbaz\n\ntest",
+			geom.Vec2{R: 0, C: 0},
+			geom.Vec2{R: 3, C: 0},
+			movement.SelectBlock,
+			"f\nb\n\nt",
+		},
+		{
+			"block inverted cols", geom.Size{R: 4, C: 3}, "foobar\nbaz\n\ntest",
+			geom.Vec2{R: 0, C: 2},
+			geom.Vec2{R: 3, C: 1},
+			movement.SelectBlock,
+			"oo\naz\n\nes",
+		},
+		{
+			"circle 5x5", geom.Size{R: 5, C: 5}, "abcde\nfghij\nklmno\npqrst\nuvwxy",
+			geom.Vec2{R: 0, C: 0},
+			geom.Vec2{R: 4, C: 4},
+			movement.SelectCircle,
+			" bcd\nfghij\nklmno\npqrst\n vwx",
+		},
+		{
+			"circle 5x5 early end", geom.Size{R: 5, C: 5}, "a\nfghij\nklmno\npqrst\nuvwxy",
+			geom.Vec2{R: 0, C: 0},
+			geom.Vec2{R: 4, C: 4},
+			movement.SelectCircle,
+			" \nfghij\nklmno\npqrst\n vwx",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := sessions.NewSimulator()
+			s.Add(tc.size, emu.LineFeedMode, tc.content)
+			r := createFlowTest(s.Terminal(), tc.size)
+			r.ScrollTop()
+			require.Equal(t, tc.expected, r.ReadString(tc.from, tc.to, tc.mode))
+		})
+	}
+}
+
+func TestSelectionHighlight(t *testing.T) {
+	type testCase struct {
+		name    string
+		size    geom.Size
+		content string
+		h       movement.Highlight
+		lines   []string
+	}
+
+	cases := []testCase{
+		{
+			"line multi", geom.Size{R: 4, C: 10}, "foo\nbar\nbaz\nblah",
+			movement.Highlight{
+				Selection: movement.SelectLine,
+				From:      geom.Vec2{R: 1, C: 1},
+				To:        geom.Vec2{R: 2, C: 1},
+			},
+			[]string{"0000000000", "1110000000", "1110000000", "0000000000"},
+		},
+		{
+			"line single", geom.Size{R: 4, C: 10}, "foo\nbar\nbaz\nblah",
+			movement.Highlight{
+				Selection: movement.SelectLine,
+				From:      geom.Vec2{R: 0, C: 2},
+				To:        geom.Vec2{R: 0, C: 2},
+			},
+			[]string{"1110000000", "0000000000", "0000000000", "0000000000"},
+		},
+		{
+			"line inverted", geom.Size{R: 4, C: 10}, "foo\nbar\nbaz\nblah",
+			movement.Highlight{
+				Selection: movement.SelectLine,
+				From:      geom.Vec2{R: 2, C: 0},
+				To:        geom.Vec2{R: 1, C: 0},
+			},
+			[]string{"0000000000", "1110000000", "1110000000", "0000000000"},
+		},
+		{
+			"block rect", geom.Size{R: 4, C: 10}, "foo\nbar\nbaz\nblah",
+			movement.Highlight{
+				Selection: movement.SelectBlock,
+				From:      geom.Vec2{R: 0, C: 1},
+				To:        geom.Vec2{R: 2, C: 2},
+			},
+			[]string{"0110000000", "0110000000", "0110000000", "0000000000"},
+		},
+		{
+			"block single col", geom.Size{R: 4, C: 10}, "foo\nbar\nbaz\nblah",
+			movement.Highlight{
+				Selection: movement.SelectBlock,
+				From:      geom.Vec2{R: 0, C: 0},
+				To:        geom.Vec2{R: 3, C: 0},
+			},
+			[]string{"1000000000", "1000000000", "1000000000", "1000000000"},
+		},
+		{
+			"block inverted cols", geom.Size{R: 4, C: 10}, "foo\nbar\nbaz\nblah",
+			movement.Highlight{
+				Selection: movement.SelectBlock,
+				From:      geom.Vec2{R: 0, C: 2},
+				To:        geom.Vec2{R: 2, C: 1},
+			},
+			[]string{"0110000000", "0110000000", "0110000000", "0000000000"},
+		},
+		{
+			"block wrapped", geom.Size{R: 3, C: 3}, "foobarbaz",
+			movement.Highlight{
+				Selection: movement.SelectBlock,
+				From:      geom.Vec2{R: 0, C: 1},
+				To:        geom.Vec2{R: 0, C: 5},
+			},
+			[]string{"011", "111", "000"},
+		},
+		{
+			"circle 5x5", geom.Size{R: 5, C: 5}, "xxxxx\nxxxxx\nxxxxx\nxxxxx\nxxxxx",
+			movement.Highlight{
+				Selection: movement.SelectCircle,
+				From:      geom.Vec2{R: 0, C: 0},
+				To:        geom.Vec2{R: 4, C: 4},
+			},
+			[]string{"01110", "11111", "11111", "11111", "01110"},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := sessions.NewSimulator()
+			s.Add(tc.size, emu.LineFeedMode, tc.content)
+			r := createFlowTest(s.Terminal(), tc.size)
+			r.ScrollTop()
+			movement.TestHighlight(t, r, tc.size,
+				[]movement.Highlight{tc.h},
+				tc.lines...,
+			)
+		})
+	}
 }
 
 func TestScrollPast(t *testing.T) {

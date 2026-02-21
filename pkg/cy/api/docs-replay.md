@@ -86,6 +86,18 @@ Yank the selection into the copy buffer.
 
 Enter visual select mode.
 
+# doc: SelectLine
+
+Enter visual line select mode.
+
+# doc: SelectBlock
+
+Enter visual block select mode.
+
+# doc: SelectCircle
+
+Enter visual circle select mode. Selects cells within a filled circle inscribed in the bounding box of the two selection endpoints.
+
 # doc: JumpAgain
 
 Repeat the last character jump.

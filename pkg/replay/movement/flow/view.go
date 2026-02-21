@@ -2,6 +2,7 @@ package flow
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
@@ -13,6 +14,27 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// movementToScreen converts a movement-space coordinate to a screen-space
+// coordinate using the given flow lines. Returns the screen position and
+// whether the coordinate was found on screen.
+func movementToScreen(
+	lines []emu.ScreenLine,
+	coord geom.Vec2,
+) (geom.Vec2, bool) {
+	for row, line := range lines {
+		if line.R != coord.R {
+			continue
+		}
+		if coord.C >= line.C0 && coord.C < line.C1 {
+			return geom.Vec2{
+				R: row,
+				C: coord.C - line.C0,
+			}, true
+		}
+	}
+	return geom.Vec2{}, false
+}
+
 func (f *flowMovement) highlightRow(
 	row emu.Line,
 	start, end geom.Vec2,
@@ -23,36 +45,63 @@ func (f *flowMovement) highlightRow(
 		from = highlight.From
 		to   = highlight.To
 	)
+	// Circle highlights are handled separately in screen space
+	if highlight.Selection == movement.SelectCircle {
+		return
+	}
+
 	from, to = geom.NormalizeRange(from, to)
 
-	//-e |     |
-	//   |     | s-
-	if from.GTE(end) || to.LT(start) {
+	if highlight.Selection == movement.SelectLine {
+		from.C = 0
+		to.C = math.MaxInt32
+	}
+
+	// Row must be in range
+	if from.R > start.R || to.R < start.R {
 		return
 	}
 
 	var startCol, endCol int
 
-	//   |  s--|-
-	if from.LT(end) && from.GTE(start) {
-		startCol = from.C - screenLine.C0
-	}
+	if highlight.Selection == movement.SelectBlock {
+		// Block (rectangular) selection: use the column
+		// bounds on every row
+		startCol = geom.Min(from.C, to.C) - screenLine.C0
+		endCol = geom.Max(from.C, to.C) - screenLine.C0
+	} else {
+		//-e |     |
+		//   |     | s-
+		if from.GTE(end) || to.LT(start) {
+			return
+		}
 
-	//  -|--e  |
-	if to.GTE(start) || to.LT(end) {
-		endCol = to.C - screenLine.C0
-	}
+		//   |  s--|-
+		if from.LT(end) && from.GTE(start) {
+			startCol = from.C - screenLine.C0
+		}
 
-	//   |-----|-e
-	if to.GTE(end) {
-		endCol = len(row) - 1
+		//  -|--e  |
+		if to.GTE(start) || to.LT(end) {
+			endCol = to.C - screenLine.C0
+		}
+
+		//   |-----|-e
+		if to.GTE(end) {
+			endCol = len(row) - 1
+		}
 	}
 
 	// Flow does not highlight past the last non-whitespace cell in the
 	// line
 	endCol = geom.Min(endCol, screenLine.C1-screenLine.C0-1)
 
-	// Also bound this by the end of the line as a safety measure
+	// Bail out if the highlight ends before or starts after the row
+	if endCol < 0 || startCol >= len(row) {
+		return
+	}
+
+	startCol = geom.Clamp(startCol, 0, len(row)-1)
 	endCol = geom.Clamp(endCol, 0, len(row)-1)
 
 	if startCol > endCol {
@@ -132,6 +181,49 @@ func (f *flowMovement) View(
 				highlight,
 			)
 		}
+	}
+
+	// Circle highlights operate in screen space
+	for _, highlight := range highlights {
+		if highlight.Selection != movement.SelectCircle {
+			continue
+		}
+
+		fromScreen, fromOK := movementToScreen(
+			flow.Lines,
+			highlight.From,
+		)
+		toScreen, toOK := movementToScreen(
+			flow.Lines,
+			highlight.To,
+		)
+		if !fromOK || !toOK {
+			continue
+		}
+
+		geom.FilledCircleSpans(
+			fromScreen, toScreen,
+			func(row, left, right int) {
+				if row < 0 || row >= size.R {
+					return
+				}
+				left = geom.Clamp(left, 0, size.C-1)
+				right = geom.Clamp(right, 0, size.C-1)
+				// Clamp to non-whitespace end of the line
+				if row < len(flow.Lines) {
+					lineEnd := flow.Lines[row].C1 -
+						flow.Lines[row].C0 - 1
+					right = geom.Min(right, lineEnd)
+				}
+				for col := left; col <= right; col++ {
+					if highlight.Style != nil {
+						highlight.Style.Apply(
+							&image[row][col],
+						)
+					}
+				}
+			},
+		)
 	}
 
 	if f.root.R >= screenRoot.R {

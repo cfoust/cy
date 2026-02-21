@@ -158,6 +158,18 @@ func (m *ReplayModule) Select(context interface{}) error {
 	return m.sendAction(context, replay.ActionSelect)
 }
 
+func (m *ReplayModule) SelectLine(context interface{}) error {
+	return m.sendAction(context, replay.ActionSelectLine)
+}
+
+func (m *ReplayModule) SelectBlock(context interface{}) error {
+	return m.sendAction(context, replay.ActionSelectBlock)
+}
+
+func (m *ReplayModule) SelectCircle(context interface{}) error {
+	return m.sendAction(context, replay.ActionSelectCircle)
+}
+
 func (m *ReplayModule) JumpAgain(context interface{}) error {
 	return m.sendAction(context, replay.ActionJumpAgain)
 }
