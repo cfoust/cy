@@ -229,7 +229,7 @@ func (r *Replayable) Send(msg mux.Msg) {
 		isMouseUp := mouse.Type == keys.MousePress &&
 			mouse.Button == keys.MouseWheelUp
 		if isMouseUp && !r.terminal.IsAltMode() {
-			r.EnterReplay()
+			r.EnterReplay(replay.WithParams(r.params))
 			// Forward the scroll event into replay mode so it can trigger
 			// on-demand history loading.
 			r.Send(msg)
