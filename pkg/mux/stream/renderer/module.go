@@ -114,5 +114,16 @@ func NewRenderer(
 
 	go func() { _ = renderer.poll(ctx) }()
 
+	// Close both pipe ends when context is canceled so that
+	// poll()'s blocked Write and any caller's blocked Read are
+	// unblocked. io.Pipe is synchronous—writes block until a
+	// matching read—so without this, poll() hangs forever if
+	// nothing is reading from the Renderer.
+	go func() {
+		<-ctx.Done()
+		r.Close()
+		w.Close()
+	}()
+
 	return renderer
 }
