@@ -332,7 +332,7 @@ func (t *Tabs) State() *tty.State {
 		Background(activeBg)
 
 	inactiveFg := lipgloss.Color("0")
-	if value, ok := config.InactiveBg.GetPreset(); ok {
+	if value, ok := config.InactiveFg.GetPreset(); ok {
 		inactiveFg = value.Color
 	}
 
