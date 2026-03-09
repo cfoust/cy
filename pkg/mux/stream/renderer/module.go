@@ -121,8 +121,8 @@ func NewRenderer(
 	// nothing is reading from the Renderer.
 	go func() {
 		<-ctx.Done()
-		r.Close()
-		w.Close()
+		_ = r.Close()
+		_ = w.Close()
 	}()
 
 	return renderer
