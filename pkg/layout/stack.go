@@ -554,6 +554,7 @@ func (s *Stack) Apply(node Node) (bool, error) {
 	}
 
 	for _, leaf := range config.Leaves {
+		layout := New(leaf.Node)
 		for _, p := range []prop.Presettable{
 			leaf.Border,
 			leaf.BorderFg,
