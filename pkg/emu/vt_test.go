@@ -119,6 +119,23 @@ func TestResizeBug(t *testing.T) {
 	term.Resize(geom.Vec2{C: 6, R: 2})
 }
 
+func TestSGRManyParams(t *testing.T) {
+	// Regression test for https://github.com/cfoust/cy/issues/46
+	// SGR sequences with >16 params should not be ignored.
+	term := New()
+
+	// 17-param SGR: 0;4;4;7;1;3;9;38;2;255;200;0;48;2;0;0;200
+	_, err := term.Write([]byte(
+		"\033[0;4;4;7;1;3;9;38;2;255;200;0;48;2;0;0;200m text\033[m",
+	))
+	require.NoError(t, err)
+
+	// The text should have styling applied (bold, in this case)
+	attr := term.Cell(1, 0)
+	require.NotEqual(t, DefaultFG, attr.FG,
+		"17-param SGR should apply foreground color")
+}
+
 func TestBracketedPasteMode(t *testing.T) {
 	term := New()
 

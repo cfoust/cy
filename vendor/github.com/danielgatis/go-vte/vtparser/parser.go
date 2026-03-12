@@ -14,7 +14,7 @@ type Action = byte
 
 const maxIntermediates = 2
 const maxOscRaw = 1024
-const maxParams = 16
+const maxParams = 32
 
 type printCallback func(char rune)
 type execCallback func(b byte)
