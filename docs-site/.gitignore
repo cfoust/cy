@@ -11,6 +11,9 @@
 # Generated story assets
 /static/images
 
+# Built storybook binary
+/storybook
+
 # Generated API data (output of prebuild.py)
 /static/api-data.json
 
