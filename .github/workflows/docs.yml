@@ -22,13 +22,15 @@ jobs:
           TAG=$(git describe --tags --always --abbrev=0)
           echo "CY_VERSION=${TAG:1}" >> $GITHUB_ENV
 
-      - name: Install latest mdbook
-        run: |
-          tag="v0.4.35"
-          url="https://github.com/rust-lang/mdbook/releases/download/${tag}/mdbook-${tag}-x86_64-unknown-linux-gnu.tar.gz"
-          mkdir mdbook
-          curl -sSL $url | tar -xz --directory=./mdbook
-          echo `pwd`/mdbook >> $GITHUB_PATH
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+
+      - name: Install npm dependencies
+        run: cd docs-site && npm ci
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -48,11 +50,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -qqy vim htop libx11-dev
 
-      - name: Build
+      - name: Build storybook binary
         run: >
           go build
           -ldflags "-X github.com/cfoust/cy/pkg/version.Version=${CY_VERSION}"
-          -o docs/storybook
+          -o docs-site/storybook
           ./cmd/stories/...
 
       - name: Install the latest VHS
@@ -61,15 +63,12 @@ jobs:
           cd vhs
           git checkout 5fd3e351f336734f73aa4dd53669f7727897cb5a
           go mod tidy
-          go build -o ../vhs-bin .
+          go build -o ../docs-site/vhs .
           cd ..
           rm -r vhs
-          mv vhs-bin docs/vhs
 
-      - name: Build book
-        run: |
-          cd docs
-          mdbook build
+      - name: Build Docusaurus site
+        run: cd docs-site && npm run build
 
       - name: Setup pages
         uses: actions/configure-pages@v2
@@ -77,8 +76,7 @@ jobs:
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: "docs/book"
+          path: "docs-site/build"
 
       - name: Deploy to GitHub Pages
         id: deployment

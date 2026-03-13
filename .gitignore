@@ -10,3 +10,4 @@
 /main
 /stories
 cy-build
+**.playwright-cli

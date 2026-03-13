@@ -1,0 +1,64 @@
+/* Ayu-inspired theme for cy documentation */
+
+:root {
+  --ifm-color-primary: #e6b450;
+  --ifm-color-primary-dark: #e2aa35;
+  --ifm-color-primary-darker: #dfA428;
+  --ifm-color-primary-darkest: #b98820;
+  --ifm-color-primary-light: #eabe6b;
+  --ifm-color-primary-lighter: #ecc478;
+  --ifm-color-primary-lightest: #f2d59e;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #e6b450;
+  --ifm-color-primary-dark: #e2aa35;
+  --ifm-color-primary-darker: #dfA428;
+  --ifm-color-primary-darkest: #b98820;
+  --ifm-color-primary-light: #eabe6b;
+  --ifm-color-primary-lighter: #ecc478;
+  --ifm-color-primary-lightest: #f2d59e;
+
+  --ifm-background-color: #0f1419;
+  --ifm-background-surface-color: #131721;
+  --ifm-navbar-background-color: #0b0e12;
+  --ifm-footer-background-color: #0b0e12;
+
+  --ifm-font-color-base: #bfbdb6;
+  --ifm-heading-color: #e6e1cf;
+
+  --ifm-code-background: #1a1e28;
+  --ifm-pre-background: #131721;
+
+  --ifm-menu-color: #8b8680;
+  --ifm-menu-color-active: #e6b450;
+  --ifm-menu-color-background-active: rgba(230, 180, 80, 0.1);
+
+  --ifm-toc-link-color: #8b8680;
+
+  --ifm-link-color: #e6b450;
+  --ifm-link-hover-color: #f2d59e;
+
+  --docusaurus-highlighted-code-line-bg: rgba(230, 180, 80, 0.15);
+}
+
+[data-theme='dark'] .navbar {
+  border-bottom: 1px solid #1a1e28;
+}
+
+[data-theme='dark'] .footer {
+  border-top: 1px solid #1a1e28;
+}
+
+/* Make kbd elements look good */
+kbd {
+  background-color: var(--ifm-code-background);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 3px;
+  box-shadow: 0 1px 0 var(--ifm-color-emphasis-200);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.85em;
+  padding: 2px 6px;
+}
