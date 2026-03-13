@@ -37,10 +37,10 @@ run:
   go run -ldflags "{{ldflags}}" ./cmd/cy/... -L dev
 
 docs:
-  cd docs-site && npm start
+  cd docs && npm start
 
 docs-build:
-  cd docs-site && npm run build
+  cd docs && npm run build
 
 api:
   go run ./cmd/docs/main.go

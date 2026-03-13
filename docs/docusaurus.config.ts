@@ -41,7 +41,7 @@ const config: Config = {
         docs: {
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/cfoust/cy/tree/main/docs-site/docs/',
+          editUrl: 'https://github.com/cfoust/cy/tree/main/docs/docs/',
         },
         blog: false,
         theme: {

@@ -4,7 +4,7 @@ title: "Documentation site"
 
 # Documentation site
 
-`cy`'s documentation site lives in the repository's `docs-site` directory. It uses [Docusaurus](https://docusaurus.io/). You can serve the documentation site locally by running:
+`cy`'s documentation site lives in the repository's `docs` directory. It uses [Docusaurus](https://docusaurus.io/). You can serve the documentation site locally by running:
 
 ```bash
 just docs
@@ -16,11 +16,9 @@ For a full build including story asset generation:
 just docs-build
 ```
 
-## Pre-build script
+## Preprocessor
 
-`cy`'s documentation uses a pre-build Python script (`scripts/prebuild.py`) that transforms custom markup directives in the source markdown files. The source files live in `content/` and the transformed output is written to `docs/` (which is gitignored).
-
-The script generates content and assets on the fly with the version of `cy` currently checked out in the repository.
+`cy`'s documentation uses a Docusaurus plugin (`plugins/cy-docs`) that transforms custom markup directives in the source markdown files. The plugin generates content and assets on the fly with the version of `cy` currently checked out in the repository.
 
 All custom markup tags are enclosed in double curly brackets (e.g. `{{some-tag}}`) to avoid interfering with Markdown directives. The documentation below omits these double brackets for the sake of implementation simplicity.
 

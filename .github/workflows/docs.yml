@@ -27,10 +27,10 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: docs-site/package-lock.json
+          cache-dependency-path: docs/package-lock.json
 
       - name: Install npm dependencies
-        run: cd docs-site && npm ci
+        run: cd docs && npm ci
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -53,11 +53,11 @@ jobs:
         run: >
           go build
           -ldflags "-X github.com/cfoust/cy/pkg/version.Version=${CY_VERSION}"
-          -o docs-site/storybook
+          -o docs/storybook
           ./cmd/stories
 
       - name: Build Docusaurus site
-        run: cd docs-site && npm run build
+        run: cd docs && npm run build
 
       - name: Setup pages
         uses: actions/configure-pages@v2
@@ -65,7 +65,7 @@ jobs:
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "docs-site/build"
+          path: "docs/build"
 
       - name: Deploy to GitHub Pages
         id: deployment
