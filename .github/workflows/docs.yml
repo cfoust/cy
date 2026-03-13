@@ -37,35 +37,24 @@ jobs:
         with:
           go-version: "1.24"
 
-      - name: Install vhs dependencies
+      - name: Install agg
         run: |
-          # Install ttyd from https://github.com/tsl0922/ttyd/releases
-          curl -L -o /usr/local/bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.x86_64 && chmod +x /usr/local/bin/ttyd
-          sudo apt update
-          sudo apt install ffmpeg
+          AGG_VERSION="v1.7.0"
+          curl -L -o /usr/local/bin/agg \
+            "https://github.com/asciinema/agg/releases/download/${AGG_VERSION}/agg-x86_64-unknown-linux-gnu"
+          chmod +x /usr/local/bin/agg
 
-      - name: Install vim and htop
-        # For the "cy/project" story and "layout/dynamic/color-map" story
+      - name: Install fonts and tools
         run: |
           sudo apt-get update
-          sudo apt-get install -qqy vim htop libx11-dev
+          sudo apt-get install -qqy vim htop libx11-dev fonts-jetbrains-mono
 
       - name: Build storybook binary
         run: >
           go build
           -ldflags "-X github.com/cfoust/cy/pkg/version.Version=${CY_VERSION}"
           -o docs-site/storybook
-          ./cmd/stories/...
-
-      - name: Install the latest VHS
-        run: |
-          git clone https://github.com/charmbracelet/vhs.git
-          cd vhs
-          git checkout 5fd3e351f336734f73aa4dd53669f7727897cb5a
-          go mod tidy
-          go build -o ../docs-site/vhs .
-          cd ..
-          rm -r vhs
+          ./cmd/stories
 
       - name: Build Docusaurus site
         run: cd docs-site && npm run build

@@ -236,7 +236,7 @@ export function createPreprocessor(
           return [
             m.index,
             m.index + m[0].length,
-            `![${command}](pathname://${imagePath})`,
+            `![${command}](${imagePath})`,
           ];
         }
         const staticProp = isStatic ? ' isStatic' : '';

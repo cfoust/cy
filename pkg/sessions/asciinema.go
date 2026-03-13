@@ -11,18 +11,20 @@ import (
 // Write `events` to the given file with path `filename` in the Asciicast v2
 // format. See https://docs.asciinema.org/manual/asciicast/v2/ for more
 // information.
-func WriteAsciinema(filename string, events []Event) error {
+func WriteAsciinema(
+	filename string,
+	cols, rows int,
+	events []Event,
+) error {
 	f, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 
-	// First write the header
 	data, err := json.Marshal(map[string]interface{}{
 		"version": 2,
-		// Theoretically we could derive these, but who cares?
-		"width":  80,
-		"height": 26,
+		"width":   cols,
+		"height":  rows,
 	})
 	if err != nil {
 		return err
@@ -65,6 +67,23 @@ func WriteAsciinema(filename string, events []Event) error {
 				stamp,
 				"r",
 				fmt.Sprintf("%dx%d", event.Columns, event.Rows),
+			})
+			if err != nil {
+				return err
+			}
+			_, err = f.Write(data)
+			if err != nil {
+				return err
+			}
+		case P.CursorMessage:
+			payload := fmt.Sprintf("%d,%d", event.Row, event.Column)
+			if event.Drag {
+				payload += ",d"
+			}
+			data, err := json.Marshal([]interface{}{
+				stamp,
+				"c",
+				payload,
 			})
 			if err != nil {
 				return err

@@ -2,12 +2,14 @@ package ui
 
 import (
 	"context"
+	"math"
 	"time"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
 	"github.com/cfoust/cy/pkg/geom/tty"
+	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/stories"
 	"github.com/cfoust/cy/pkg/taro"
@@ -16,6 +18,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/rs/zerolog/log"
 )
+
+const MOUSE_STEP_DELAY = 15 * time.Millisecond
+
+// CursorHandler receives cursor position updates during story
+// playback, used for recording cursor events to cast files.
+type CursorHandler func(r, c int, drag bool)
 
 // A Viewer shows a single story.
 type Viewer struct {
@@ -29,6 +37,14 @@ type Viewer struct {
 	screenLifetime util.Lifetime
 	// Whether the viewer should reload the screen and loop, or just quit
 	shouldLoop bool
+
+	mousePos      geom.Vec2
+	hasMousePos   bool
+	cursorHandler CursorHandler
+	// The offset of the story content within the viewer, used
+	// to translate story-relative cursor positions to
+	// viewport-absolute positions for cast recording.
+	storyOffset geom.Vec2
 }
 
 var _ taro.Model = (*Viewer)(nil)
@@ -49,14 +65,54 @@ type loadedScreen struct {
 
 type reloadScreen struct{}
 
+// interpolatePath returns intermediate positions from src to dst,
+// producing a smooth path for mouse cursor animation.
+func interpolatePath(
+	src, dst geom.Vec2,
+) []geom.Vec2 {
+	dr := dst.R - src.R
+	dc := dst.C - src.C
+	steps := int(math.Max(
+		math.Abs(float64(dr)),
+		math.Abs(float64(dc)),
+	))
+	if steps == 0 {
+		return nil
+	}
+
+	var path []geom.Vec2
+	for i := 1; i <= steps; i++ {
+		t := float64(i) / float64(steps)
+		path = append(path, geom.Vec2{
+			R: src.R + int(math.Round(float64(dr)*t)),
+			C: src.C + int(math.Round(float64(dc)*t)),
+		})
+	}
+	return path
+}
+
 // If the story includes any inputs, cycle through them and
 // reload the screen when they're done
 func (v *Viewer) sendInputs() tea.Msg {
 	screen := v.screen
-	keys := v.keys
+	keyDisplay := v.keys
 	inputs := v.story.Config.Input
 	if screen == nil || len(inputs) == 0 {
 		return nil
+	}
+
+	emitCursor := func(r, c int, drag bool) {
+		if v.cursorHandler != nil {
+			v.cursorHandler(
+				r+v.storyOffset.R,
+				c+v.storyOffset.C,
+				drag,
+			)
+		}
+	}
+
+	sendMouse := func(m keys.Mouse) {
+		screen.Send(taro.MouseMsg(m))
 	}
 
 	var handleInput func(input interface{})
@@ -70,10 +126,103 @@ func (v *Viewer) sendInputs() tea.Msg {
 				handleInput(input)
 			}
 			return
+		case stories.MouseMoveEvent:
+			path := interpolatePath(
+				v.mousePos,
+				input.Vec2,
+			)
+			for _, pos := range path {
+				v.mousePos = pos
+				v.hasMousePos = true
+				sendMouse(keys.Mouse{
+					Vec2: pos,
+					Type: keys.MouseMotion,
+				})
+				time.Sleep(MOUSE_STEP_DELAY)
+			}
+			if len(path) == 0 {
+				v.mousePos = input.Vec2
+				v.hasMousePos = true
+			}
+			// Only record the final destination; the JS
+			// player interpolates smoothly between endpoints.
+			emitCursor(v.mousePos.R, v.mousePos.C, false)
+			return
+		case stories.MouseClickEvent:
+			sendMouse(keys.Mouse{
+				Vec2:   v.mousePos,
+				Type:   keys.MousePress,
+				Button: input.Button,
+				Down:   true,
+			})
+			emitCursor(v.mousePos.R, v.mousePos.C, false)
+			time.Sleep(50 * time.Millisecond)
+			sendMouse(keys.Mouse{
+				Vec2:   v.mousePos,
+				Type:   keys.MousePress,
+				Button: input.Button,
+				Down:   false,
+			})
+			return
+		case stories.MouseDragEvent:
+			// Press at current position
+			sendMouse(keys.Mouse{
+				Vec2:   v.mousePos,
+				Type:   keys.MousePress,
+				Button: keys.MouseLeft,
+				Down:   true,
+			})
+			emitCursor(v.mousePos.R, v.mousePos.C, true)
+			time.Sleep(MOUSE_STEP_DELAY)
+
+			// Move to destination with button held
+			path := interpolatePath(
+				v.mousePos,
+				input.Vec2,
+			)
+			for _, pos := range path {
+				v.mousePos = pos
+				v.hasMousePos = true
+				sendMouse(keys.Mouse{
+					Vec2: pos,
+					Type: keys.MouseMotion,
+					Down: true,
+				})
+				time.Sleep(MOUSE_STEP_DELAY)
+			}
+			if len(path) == 0 {
+				v.mousePos = input.Vec2
+				v.hasMousePos = true
+			}
+			emitCursor(v.mousePos.R, v.mousePos.C, true)
+
+			// Release
+			sendMouse(keys.Mouse{
+				Vec2:   v.mousePos,
+				Type:   keys.MousePress,
+				Button: keys.MouseLeft,
+				Down:   false,
+			})
+			// End of drag
+			emitCursor(v.mousePos.R, v.mousePos.C, false)
+			return
+		case stories.MouseScrollEvent:
+			button := keys.MouseWheelDown
+			if input.Up {
+				button = keys.MouseWheelUp
+			}
+			sendMouse(keys.Mouse{
+				Vec2:   v.mousePos,
+				Type:   keys.MousePress,
+				Button: button,
+				Down:   true,
+			})
+			emitCursor(v.mousePos.R, v.mousePos.C, false)
+			return
 		}
 
 		stories.Send(screen, input)
-		stories.Send(keys, input)
+		stories.Send(keyDisplay, input)
 	}
 
 	for _, input := range inputs {
@@ -118,6 +267,7 @@ func (v *Viewer) applyScreen(msg loadedScreen) {
 	v.keys = msg.keys
 	v.screenLifetime = msg.lifetime
 	v.capture = msg.capture
+	v.hasMousePos = false
 }
 
 func (v *Viewer) showKeys() bool {
@@ -131,16 +281,7 @@ func (v *Viewer) View(state *tty.State) {
 		return
 	}
 
-	// Show an obvious background
 	size := state.Image.Size()
-	for row := 0; row < size.R; row++ {
-		for col := 0; col < size.C; col++ {
-			glyph := emu.EmptyGlyph()
-			glyph.FG = 8
-			glyph.Char = '-'
-			state.Image[row][col] = glyph
-		}
-	}
 
 	contents := v.screen.State()
 	if v.capture != nil {
@@ -155,12 +296,38 @@ func (v *Viewer) View(state *tty.State) {
 	})
 
 	if !v.showKeys() {
+		v.storyOffset = storyPos
 		tty.Copy(storyPos, state, contents)
+		v.renderCursor(state, storyPos)
 		return
 	}
 
+	v.storyOffset = geom.Size{C: KEY_COLUMNS}
 	tty.Copy(geom.Size{C: KEY_COLUMNS}, state, contents)
 	image.Copy(geom.Size{}, state.Image, v.keys.State().Image)
+	v.renderCursor(state, geom.Size{C: KEY_COLUMNS})
+}
+
+func (v *Viewer) renderCursor(
+	state *tty.State,
+	offset geom.Vec2,
+) {
+	// When recording for cast export, the JS overlay handles
+	// the cursor; skip the in-terminal one.
+	if !v.hasMousePos || v.cursorHandler != nil {
+		return
+	}
+
+	absR := offset.R + v.mousePos.R
+	absC := offset.C + v.mousePos.C
+	imgSize := state.Image.Size()
+
+	if absR < 0 || absR >= imgSize.R ||
+		absC < 0 || absC >= imgSize.C {
+		return
+	}
+
+	state.Image[absR][absC].BG = emu.ANSIColor(5)
 }
 
 func (v *Viewer) resize(size geom.Size) {
@@ -234,15 +401,28 @@ func (v *Viewer) Update(msg tea.Msg) (taro.Model, tea.Cmd) {
 	return v, nil
 }
 
+type ViewerOption func(*Viewer)
+
+func WithCursorHandler(h CursorHandler) ViewerOption {
+	return func(v *Viewer) {
+		v.cursorHandler = h
+	}
+}
+
 func NewViewer(
 	ctx context.Context,
 	story stories.Story,
 	shouldLoop bool,
+	opts ...ViewerOption,
 ) (*taro.Program, error) {
 	viewer := &Viewer{
 		Lifetime:   util.NewLifetime(ctx),
 		story:      story,
 		shouldLoop: shouldLoop,
+	}
+
+	for _, opt := range opts {
+		opt(viewer)
 	}
 
 	loaded, err := viewer.initScreen()

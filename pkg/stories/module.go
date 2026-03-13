@@ -42,6 +42,48 @@ func Wait(duration time.Duration) WaitEvent {
 	return WaitEvent{Duration: duration}
 }
 
+// MouseMoveEvent tells the story runner to smoothly interpolate
+// the cursor from its current position to (R, C).
+type MouseMoveEvent struct {
+	geom.Vec2
+}
+
+func MouseMove(r, c int) MouseMoveEvent {
+	return MouseMoveEvent{Vec2: geom.Vec2{R: r, C: c}}
+}
+
+// MouseClickEvent clicks at the current mouse position.
+type MouseClickEvent struct {
+	Button keys.MouseButton
+}
+
+func Click() MouseClickEvent {
+	return MouseClickEvent{Button: keys.MouseLeft}
+}
+
+func RightClick() MouseClickEvent {
+	return MouseClickEvent{Button: keys.MouseRight}
+}
+
+// MouseDragEvent moves the cursor to (R, C) while holding the left
+// mouse button, triggering drag/selection behavior.
+type MouseDragEvent struct {
+	geom.Vec2
+}
+
+func Drag(r, c int) MouseDragEvent {
+	return MouseDragEvent{Vec2: geom.Vec2{R: r, C: c}}
+}
+
+// MouseScrollEvent scrolls at the current mouse position.
+type MouseScrollEvent struct {
+	Up bool
+}
+
+func Scroll(up bool) MouseScrollEvent {
+	return MouseScrollEvent{Up: up}
+}
+
 const TYPE_DELAY = 100 * time.Millisecond
 
 // Simulate typing.

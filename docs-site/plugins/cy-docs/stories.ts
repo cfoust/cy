@@ -9,18 +9,19 @@ import {
 } from 'fs';
 import {execFileSync} from 'child_process';
 import {createHash} from 'crypto';
-import {resolve} from 'path';
+import {tmpdir} from 'os';
+import {resolve, join} from 'path';
 import type {ApiData, StoryAssetType} from './types';
 
 const STORY_REGEX =
   /\{\{story (?:(\w+)\.)?(png|gif|cast|static) (.+?)\}\}/g;
 
-const COMMON_VHS = `
-Set FontSize 18
-Set Width 1300
-Set Height 650
-Set Padding 0
-`;
+const AGG_FONT_SIZE = '18';
+const AGG_LINE_HEIGHT = '1.4';
+const AGG_SPEED = '0.5';
+const AGG_FPS_CAP = '23';
+const AGG_IDLE_TIME_LIMIT = '30';
+const AGG_LAST_FRAME_DURATION = '1';
 
 export function resolveStoryFilename(
   name: string | undefined,
@@ -33,6 +34,116 @@ export function resolveStoryFilename(
     .digest('hex')
     .slice(0, 12);
   return `${hash}.${type}`;
+}
+
+function generateCast(
+  projectDir: string,
+  commandParts: string[],
+  outputPath: string,
+): void {
+  const storybook = resolve(projectDir, 'storybook');
+  execFileSync(
+    storybook,
+    ['--cast', outputPath, '-s', ...commandParts],
+    {
+      env: {
+        ...process.env,
+        TERM: 'xterm-256color',
+        EDITOR: '/usr/bin/vim',
+      },
+      stdio: ['ignore', 'ignore', 'inherit'],
+      timeout: 60_000,
+    },
+  );
+}
+
+function castHasCursorEvents(castFile: string): boolean {
+  const content = readFileSync(castFile, 'utf-8');
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    try {
+      const entry = JSON.parse(trimmed);
+      if (
+        Array.isArray(entry) &&
+        entry.length >= 2 &&
+        entry[1] === 'c'
+      ) {
+        return true;
+      }
+    } catch {
+      continue;
+    }
+  }
+  return false;
+}
+
+function generateGif(
+  projectDir: string,
+  castFile: string,
+  outputPath: string,
+): void {
+  const hasCursor = castHasCursorEvents(castFile);
+  const aggBin = process.env.CI
+    ? resolve(projectDir, 'agg')
+    : 'agg';
+  const targetGif = hasCursor ? outputPath + '.tmp.gif' : outputPath;
+
+  execFileSync(
+    aggBin,
+    [
+      castFile,
+      targetGif,
+      '--font-size',
+      AGG_FONT_SIZE,
+      '--line-height',
+      AGG_LINE_HEIGHT,
+      '--speed',
+      AGG_SPEED,
+      '--fps-cap',
+      AGG_FPS_CAP,
+      '--idle-time-limit',
+      AGG_IDLE_TIME_LIMIT,
+      '--last-frame-duration',
+      AGG_LAST_FRAME_DURATION,
+    ],
+    {stdio: ['ignore', 'ignore', 'inherit']},
+  );
+
+  if (hasCursor) {
+    const storybook = resolve(projectDir, 'storybook');
+    execFileSync(
+      storybook,
+      [
+        '--overlay',
+        '--cast',
+        castFile,
+        '--gif',
+        targetGif,
+        '--output',
+        outputPath,
+        '--font-size',
+        AGG_FONT_SIZE,
+        '--line-height',
+        AGG_LINE_HEIGHT,
+        '--speed',
+        AGG_SPEED,
+      ],
+      {stdio: ['ignore', 'ignore', 'inherit']},
+    );
+    if (existsSync(targetGif)) unlinkSync(targetGif);
+  }
+}
+
+function makeTempPath(suffix: string): string {
+  const name =
+    'cy-story-' +
+    createHash('sha256')
+      .update(String(Date.now()) + String(Math.random()))
+      .digest('hex')
+      .slice(0, 8) +
+    suffix;
+  return join(tmpdir(), name);
 }
 
 export function ensureStoryAsset(
@@ -51,76 +162,46 @@ export function ensureStoryAsset(
 
   console.error(`~> building ${filename} (${command})`);
 
-  // The command string may contain extra flags (e.g.
-  // "cy/palette --width 120 --height 26") that need to be
-  // separate argv entries.
   const commandParts = command.split(/\s+/);
 
   try {
     if (type === 'cast') {
-      const storybook = resolve(projectDir, 'storybook');
-      execFileSync(
-        storybook,
-        ['--cast', absPath, '-s', ...commandParts],
-        {
-          env: {
-            ...process.env,
-            TERM: 'xterm-256color',
-            EDITOR: '/usr/bin/vim',
-          },
-          stdio: ['ignore', 'ignore', 'inherit'],
-          timeout: 60_000,
-        },
-      );
+      generateCast(projectDir, commandParts, absPath);
       return filename;
     }
 
-    const storybookCmd = process.env.CI
-      ? resolve(projectDir, 'storybook')
-      : './storybook';
-
-    let script: string;
     if (type === 'gif') {
-      script = `${COMMON_VHS}
-Output ${absPath}
-Set Framerate 23
-Set PlaybackSpeed 0.5
-Hide
-Type "${storybookCmd} -s ${command} && clear"
-Enter
-Sleep 500ms
-Show
-Sleep 8s
-`;
-    } else {
-      script = `${COMMON_VHS}
-Hide
-Type "${storybookCmd} -s ${command} && clear"
-Enter
-Sleep 2s
-Show
-Sleep 1s
-Screenshot ${absPath}
-`;
+      const castFile = makeTempPath('.cast');
+      try {
+        generateCast(projectDir, commandParts, castFile);
+        generateGif(projectDir, castFile, absPath);
+      } finally {
+        if (existsSync(castFile)) unlinkSync(castFile);
+      }
+      return filename;
     }
 
-    const tapePath = absPath.replace(/\.(png|gif)$/, '.tape');
-    writeFileSync(tapePath, script);
-
-    const vhsBin = process.env.CI
-      ? resolve(projectDir, 'vhs')
-      : 'vhs';
-
-    execFileSync(vhsBin, ['-q', tapePath], {
-      stdio: ['ignore', 'ignore', 'inherit'],
-    });
-
-    if (existsSync(tapePath)) unlinkSync(tapePath);
-
-    if (!existsSync(absPath)) {
-      console.error(
-        `[cy-docs] warning: VHS did not produce ${filename}`,
+    // PNG: generate GIF then extract last frame
+    const castFile = makeTempPath('.cast');
+    const gifFile = makeTempPath('.gif');
+    try {
+      generateCast(projectDir, commandParts, castFile);
+      generateGif(projectDir, castFile, gifFile);
+      const storybook = resolve(projectDir, 'storybook');
+      execFileSync(
+        storybook,
+        [
+          '--extract-frame',
+          '--gif',
+          gifFile,
+          '--output',
+          absPath,
+        ],
+        {stdio: ['ignore', 'ignore', 'inherit']},
       );
+    } finally {
+      if (existsSync(castFile)) unlinkSync(castFile);
+      if (existsSync(gifFile)) unlinkSync(gifFile);
     }
   } catch (err: unknown) {
     const msg =
@@ -137,11 +218,13 @@ export function ensureStorybookBinary(
   projectDir: string,
   repoDir: string,
 ): void {
-  const storybook = resolve(projectDir, 'storybook');
-  if (existsSync(storybook)) return;
   if (process.env.CI) return;
   if (process.env.CY_SKIP_ASSETS === '1') return;
 
+  const storybook = resolve(projectDir, 'storybook');
+
+  // Always run go build — it's a no-op when sources haven't
+  // changed and avoids stale binary issues.
   console.error('Building storybook binary...');
   execFileSync(
     'go',
@@ -149,7 +232,7 @@ export function ensureStorybookBinary(
       'build',
       '-o',
       storybook,
-      resolve(repoDir, 'cmd', 'stories', '...'),
+      resolve(repoDir, 'cmd', 'stories'),
     ],
     {cwd: repoDir, stdio: 'inherit'},
   );
