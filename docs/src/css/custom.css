@@ -1,3 +1,18 @@
+/* JetBrains Mono (patched with Cozette braille) for terminal recordings */
+@font-face {
+  font-family: 'JetBrains Mono Patched';
+  src: url('/fonts/JetBrainsMonoBraille.woff2') format('woff2'),
+       url('/fonts/JetBrainsMonoBraille.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Apply patched font to asciinema player terminal text */
+.ap-player pre {
+  font-family: 'JetBrains Mono Patched', monospace !important;
+}
+
 /* Ayu-inspired theme for cy documentation */
 
 :root {

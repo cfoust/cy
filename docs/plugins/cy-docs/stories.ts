@@ -16,6 +16,7 @@ import type {ApiData, StoryAssetType} from './types';
 const STORY_REGEX =
   /\{\{story (?:(\w+)\.)?(png|gif|cast|static) (.+?)\}\}/g;
 
+const AGG_FONT_FAMILY = 'JetBrains Mono';
 const AGG_FONT_SIZE = '18';
 const AGG_LINE_HEIGHT = '1.4';
 const AGG_SPEED = '0.5';
@@ -89,11 +90,17 @@ function generateGif(
     : 'agg';
   const targetGif = hasCursor ? outputPath + '.tmp.gif' : outputPath;
 
+  const fontsDir = resolve(projectDir, 'static', 'fonts');
+
   execFileSync(
     aggBin,
     [
       castFile,
       targetGif,
+      '--font-family',
+      AGG_FONT_FAMILY,
+      '--font-dir',
+      fontsDir,
       '--font-size',
       AGG_FONT_SIZE,
       '--line-height',
