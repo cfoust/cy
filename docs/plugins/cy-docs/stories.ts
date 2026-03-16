@@ -113,6 +113,8 @@ function generateGif(
       AGG_IDLE_TIME_LIMIT,
       '--last-frame-duration',
       AGG_LAST_FRAME_DURATION,
+      '--theme',
+      'asciinema',
     ],
     {stdio: ['ignore', 'ignore', 'inherit']},
   );
@@ -312,7 +314,7 @@ export function collectAllStoryJobs(
     }
     for (const anim of apiData.animations) {
       collectStoriesFrom(
-        `{{story gif animation/${anim}}}`,
+        `{{story gif animation/${anim} --width 160 --height 48}}`,
         imagesDir,
         jobs,
       );

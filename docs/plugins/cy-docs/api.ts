@@ -158,7 +158,7 @@ export function renderAnimations(animations: string[]): string {
     output += `
 #### ${anim}
 
-{{story gif animation/${anim}}}
+{{story gif animation/${anim} --width 160 --height 48}}
 
 ---
 `;
