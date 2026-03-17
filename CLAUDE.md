@@ -38,8 +38,11 @@ just generate
 # Run cy in development mode
 just run
 
-# Serve documentation locally
+# Serve documentation locally (Docusaurus)
 just docs
+
+# Full docs build with story assets
+just docs-build
 
 # Generate API documentation
 just api

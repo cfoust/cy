@@ -7,10 +7,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/cfoust/cy/cmd/stories/overlay"
 	"github.com/cfoust/cy/pkg/anim"
 	_ "github.com/cfoust/cy/pkg/cy"
 	"github.com/cfoust/cy/pkg/frames"
 	"github.com/cfoust/cy/pkg/geom"
+	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/mux"
 	"github.com/cfoust/cy/pkg/mux/stream/cli"
 	"github.com/cfoust/cy/pkg/mux/stream/renderer"
@@ -32,6 +34,14 @@ var CLI struct {
 	Cast   string `help:"Save an asciinema cast to the given filename. Must be used in tandem with --single." name:"cast" optional:"" short:"c"`
 	Width  int    `help:"Set the width of the terminal when saving an asciinema cast." name:"width" optional:"" short:"w" default:"80"`
 	Height int    `help:"Set the height of the terminal when saving an asciinema cast." name:"height" optional:"" short:"h" default:"26"`
+
+	Overlay      bool    `help:"Overlay cursor from cast onto a GIF." name:"overlay" optional:""`
+	ExtractFrame bool    `help:"Extract the last frame of a GIF as PNG." name:"extract-frame" optional:""`
+	GIF          string  `help:"Input GIF file (for --overlay or --extract-frame)." name:"gif" optional:""`
+	Output       string  `help:"Output file path." name:"output" optional:"" short:"o"`
+	FontSize     float64 `help:"Font size used by agg (for cursor mapping)." name:"font-size" optional:"" default:"18"`
+	LineHeight   float64 `help:"Line height used by agg (for cursor mapping)." name:"line-height" optional:"" default:"1.4"`
+	Speed        float64 `help:"Playback speed used by agg (for cursor timing)." name:"speed" optional:"" default:"0.5"`
 }
 
 func main() {
@@ -43,6 +53,31 @@ func main() {
 			Compact: true,
 			Summary: true,
 		}))
+
+	if CLI.Overlay {
+		if CLI.Cast == "" || CLI.GIF == "" || CLI.Output == "" {
+			panic("--overlay requires --cast, --gif, and --output")
+		}
+		err := overlay.GIF(
+			CLI.Cast, CLI.GIF, CLI.Output,
+			CLI.FontSize, CLI.LineHeight, CLI.Speed,
+		)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	if CLI.ExtractFrame {
+		if CLI.GIF == "" || CLI.Output == "" {
+			panic("--extract-frame requires --gif and --output")
+		}
+		err := extractLastFrame(CLI.GIF, CLI.Output)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
 
 	logs, err := os.OpenFile(
 		"stories.log",
@@ -119,19 +154,6 @@ func main() {
 		panic(fmt.Errorf("to use --cast, you must provide a single story"))
 	}
 
-	var cols, rows int
-	if haveCast {
-		cols = CLI.Width
-		rows = CLI.Height
-	} else {
-		cols, rows, err = term.GetSize(int(os.Stdin.Fd()))
-		if err != nil {
-			cols, rows = 80, 26
-		}
-	}
-
-	size := geom.Size{C: cols, R: rows}
-
 	info, err := terminfo.LoadFromEnv()
 	if err != nil {
 		panic(err)
@@ -139,17 +161,42 @@ func main() {
 
 	ctx := context.Background()
 
-	var screen *taro.Program
+	var (
+		screen   *taro.Program
+		recorder *sessions.MemoryRecorder
+	)
+
+	if haveCast {
+		recorder = sessions.NewMemoryRecorder()
+	}
+
 	if len(CLI.Single) > 0 {
 		story, ok := stories.Stories[CLI.Single]
 		if !ok {
 			panic(fmt.Errorf("story %s not found", CLI.Single))
 		}
 
+		var opts []ui.ViewerOption
+		if recorder != nil {
+			opts = append(opts, ui.WithCursorHandler(
+				func(r, c int, drag bool) {
+					_ = recorder.Process(sessions.Event{
+						Stamp: time.Now(),
+						Message: P.CursorMessage{
+							Row:    r,
+							Column: c,
+							Drag:   drag,
+						},
+					})
+				},
+			))
+		}
+
 		screen, err = ui.NewViewer(
 			ctx,
 			story,
 			!haveCast,
+			opts...,
 		)
 		if err != nil {
 			panic(err)
@@ -168,6 +215,25 @@ func main() {
 		}
 	}
 
+	var size geom.Size
+	if haveCast {
+		size = geom.Size{C: CLI.Width, R: CLI.Height}
+		if len(CLI.Single) > 0 {
+			story := stories.Stories[CLI.Single]
+			if !story.Config.Size.IsZero() {
+				size = story.Config.Size
+			}
+		}
+	} else {
+		cols, rows, sizeErr := term.GetSize(
+			int(os.Stdin.Fd()),
+		)
+		if sizeErr != nil {
+			cols, rows = 80, 26
+		}
+		size = geom.Size{C: cols, R: rows}
+	}
+
 	renderer := renderer.NewRenderer(screen.Ctx(), info, size, screen)
 
 	if !haveCast {
@@ -175,16 +241,19 @@ func main() {
 		return
 	}
 
-	recorder := sessions.NewMemoryRecorder()
 	stream := sessions.NewEventStream(renderer, recorder)
 
-	// The recorder only stores data on Read() calls, so we need to drain
-	// it
+	// The recorder only stores data on Read() calls, so we need to
+	// drain it
 	go func() { _, _ = io.Copy(io.Discard, stream) }()
 	_ = stream.Resize(size)
 	<-screen.Ctx().Done()
 
-	err = sessions.WriteAsciinema(CLI.Cast, recorder.Events())
+	err = sessions.WriteAsciinema(
+		CLI.Cast,
+		size.C, size.R,
+		recorder.Events(),
+	)
 	if err != nil {
 		panic(err)
 	}

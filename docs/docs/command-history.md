@@ -1,0 +1,74 @@
+---
+title: "Command history"
+---
+
+# Command history
+
+One of `cy`'s distinguishing features is that it can detect the commands that you run. It also records:
+
+- When the command was executed
+- When it finished executing
+- All of the output the command produced (by indexing into [.borg files](/replay-mode.md#recording-to-disk))
+- The directory in which the command was run
+
+This metadata is stored in an SQLite database called `cmd.db` (in your {{param data-directory}}) and accessible in Janet via the {{api cmd/query}} API.
+
+`cy` uses this information to provide a range of functionality:
+
+- [A replacement for <kbd>ctrl+r</kbd>](/command-history/ctrl+r.md) that lets you see the context of a command when it was executed
+- [Quick shortcuts for switching panes](/command-history/switching-panes.md) based on the commands executed in them
+- Additional [features in replay mode](/command-history/replay-mode.md) for jumping between commands
+
+## Installation
+
+To enable command detection, you must configure your shell to emit [OSC 133 escape sequences](https://gitlab.freedesktop.org/Per_Bothner/specifications/blob/master/proposals/semantic-prompts.md) that mark the prompt and command boundaries. Many prompt frameworks (like [Starship](https://starship.rs/), [oh-my-posh](https://ohmyposh.dev/), and [Powerlevel10k](https://github.com/romkatv/powerlevel10k)) emit OSC 133 sequences automatically. If you use one of these, command detection should work without additional configuration.
+
+For manual configuration:
+
+<details>
+<summary>bash</summary>
+
+After installing and sourcing [bash-preexec](https://github.com/rcaloras/bash-preexec), you can use [this script](https://gitlab.freedesktop.org/Per_Bothner/specifications/-/blob/master/proposals/prompts-data/shell-integration.bash) to get Bash to emit the correct sequences.
+
+</details>
+
+<details>
+<summary>zsh</summary>
+
+For zsh, you only need to source [this script](https://gitlab.freedesktop.org/Per_Bothner/specifications/-/blob/master/proposals/prompts-data/shell-integration.zsh).
+
+</details>
+
+<details>
+<summary>fish</summary>
+
+As of 4.0.0, [fish reports OSC133 sequences automatically](https://fishshell.com/blog/new-in-40/#:~:text=Continuing%20on%20the,it%20for%20them.).
+
+</details>
+
+### Directory detection
+
+By default, `cy` detects the directory in which a command is executed by regularly getting the working directory of the process running in your terminal (such as a shell.) This produces incorrect results in cases like `ssh`, where the actual directory is distinct from the one reported by examining the process.
+
+To address this, `cy` supports the [OSC-7](https://gitlab.freedesktop.org/terminal-wg/specifications/-/issues/20) quasi-standard. OSC-7 is a custom escape sequence that allows a program to indicate its current directory to the terminal emulator.
+
+You must explicitly configure your shell (or any other program) to emit OSC-7 sequences. You can find instructions for doing so [here](https://codeberg.org/dnkl/foot/wiki#shell-integration). `cy` does not do any special processing of the string you emit using OSC-7: it need not be a valid directory.
+
+## How does it work?
+
+A terminal multiplexer is like a proxy: it is an intermediary between your actual terminal and one or more virtual terminals that it controls. It is also responsible for passing the output that a program (such as a shell) produces to its corresponding terminal. This control means that your terminal multiplexer can do whatever calculations it wants on that output, including (in `cy`'s case) recording it.
+
+`cy` uses this ability to observe the state of the terminal before and after interpreting the output of the underlying process (otherwise known as a write made to standard output or error).
+
+A terminal emulator is just a state machine that interprets a stream of bytes and adjusts the state of the screen accordingly. The screen is a grid of cells, each of which contains a Unicode character and has other styling information.
+
+When your shell emits OSC 133 sequences, `cy` receives explicit markers for:
+
+- **Prompt start**: The shell is about to display a prompt
+- **Command start**: The user has started typing a command
+- **Command executed**: The command is being executed
+- **Command finished**: The command has finished, along with its exit code
+
+By correlating these markers with actual screen cells, cy can categorize each cell.
+
+This approach has downsides. One is that `cy` is unable to distinguish between the output produced when running multiple processes at once, such as with Bash's backgrounding functionality (i.e. `&`.)

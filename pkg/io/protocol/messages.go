@@ -17,6 +17,7 @@ const (
 	MessageTypeRPCRequest
 	MessageTypeRPCResponse
 	MessageTypeClose
+	MessageTypeCursor
 )
 
 type Message interface {
@@ -87,3 +88,12 @@ type RPCResponseMessage struct {
 }
 
 func (r RPCResponseMessage) Type() MessageType { return MessageTypeRPCResponse }
+
+// CursorMessage records a mouse cursor position for story recordings.
+type CursorMessage struct {
+	Row    int
+	Column int
+	Drag   bool
+}
+
+func (c CursorMessage) Type() MessageType { return MessageTypeCursor }

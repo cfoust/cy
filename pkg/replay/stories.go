@@ -208,6 +208,19 @@ func action(event ActionType) ActionEvent {
 	}
 }
 
+var MouseSelection stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
+	_, run := createStory(
+		ctx,
+		createIncrementalSession(),
+		// Go to the beginning of the recording where the
+		// paragraph of text is visible.
+		ActionCursorUp,
+		ActionBeginning,
+	)
+
+	return run(), nil
+}
+
 func init() {
 	config := stories.Config{
 		Size: geom.DEFAULT_SIZE,
@@ -262,6 +275,17 @@ func init() {
 	stories.Register("replay/time/search-reverse", SearchTimeBackward, config)
 	stories.Register("replay/time/jump-backward", JumpBackward, config)
 	stories.Register("replay/time/search-empty", SearchEmpty, config)
+
+	stories.Register("replay/copy/mouse-selection", MouseSelection, stories.Config{
+		Size: geom.DEFAULT_SIZE,
+		Input: []any{
+			stories.Wait(stories.Some),
+			stories.MouseMove(0, 6),
+			stories.Wait(stories.ABit),
+			stories.Drag(2, 40),
+			stories.Wait(stories.More),
+		},
+	})
 
 	stories.Register("replay/time/seek", LongHistory, stories.Config{
 		Input: []any{
