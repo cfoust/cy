@@ -37,6 +37,17 @@ Send keys to the pane referred to by [NodeID](/api.md#nodeid). `keys` is an arra
 (pane/send-keys pane @["ctrl+c"])
 ```
 
+# doc: SendBytes
+
+(pane/send-bytes pane data)
+
+Send raw bytes to the pane referred to by [NodeID](/api.md#nodeid). Unlike {{api pane/send-text}}, `data` is written directly to the pane's underlying stream without bracketed paste wrapping, so escape sequences will be interpreted by the shell.
+
+```janet
+# Send an escape sequence to the current pane
+(pane/send-bytes (pane/current) "\x1b[1;6y")
+```
+
 # doc: SendText
 
 (pane/send-text pane text)

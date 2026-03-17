@@ -18,6 +18,12 @@ func (k KittyKeyMsg) Tea() (tea.KeyMsg, bool) {
 // MouseMsg contains information about a mouse event and are sent to a programs
 // update function when mouse activity occurs. Note that the mouse must first
 // be enabled in order for the mouse events to be received.
+// RawMsg sends raw bytes directly to a terminal's underlying stream
+// without bracketed paste wrapping or any other encoding.
+type RawMsg struct {
+	Data []byte
+}
+
 type MouseMsg keys.Mouse
 
 // String returns a string representation of a mouse event.

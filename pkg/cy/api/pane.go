@@ -113,3 +113,18 @@ func (p *PaneModule) SendText(id *janet.Value, text string) error {
 
 	return nil
 }
+
+func (p *PaneModule) SendBytes(id *janet.Value, data string) error {
+	defer id.Free()
+
+	pane, err := resolvePane(p.Tree, id)
+	if err != nil {
+		return err
+	}
+
+	pane.Screen().Send(taro.RawMsg{
+		Data: []byte(data),
+	})
+
+	return nil
+}
