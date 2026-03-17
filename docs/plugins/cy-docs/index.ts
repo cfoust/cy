@@ -146,9 +146,7 @@ export default async function cyDocsPlugin(
         console.error(
           `\nValidating ${blocks.length} Janet code examples...`,
         );
-        const exampleBin = process.env.CI
-          ? resolve(projectDir, 'example')
-          : resolve(projectDir, 'example');
+        const exampleBin = resolve(projectDir, 'example');
         const exampleErrors = await validateJanetBlocks(
           exampleBin,
           blocks,

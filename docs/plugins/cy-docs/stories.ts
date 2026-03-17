@@ -85,9 +85,7 @@ function generateGif(
   outputPath: string,
 ): void {
   const hasCursor = castHasCursorEvents(castFile);
-  const aggBin = process.env.CI
-    ? resolve(projectDir, 'agg')
-    : 'agg';
+  const aggBin = 'agg';
   const targetGif = hasCursor ? outputPath + '.tmp.gif' : outputPath;
 
   const fontsDir = resolve(projectDir, 'static', 'fonts');
