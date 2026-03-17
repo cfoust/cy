@@ -17,6 +17,39 @@ import type {StoryAssetType} from './types';
 
 type Replacement = [number, number, string];
 
+// Accumulated errors and Janet code blocks across all preprocessed files.
+// Read by the plugin's postBuild hook to fail the build when appropriate.
+// Uses Sets to deduplicate since Docusaurus calls the preprocessor for
+// both client and server bundles.
+const preprocessorErrors = new Set<string>();
+const janetBlockKeys = new Set<string>();
+const janetBlocks: Array<{file: string; line: number; code: string}> = [];
+
+export function getPreprocessorErrors(): string[] {
+  return [...preprocessorErrors];
+}
+
+export function getJanetBlocks(): typeof janetBlocks {
+  return janetBlocks;
+}
+
+function addError(msg: string): void {
+  if (preprocessorErrors.has(msg)) return;
+  console.error(msg);
+  preprocessorErrors.add(msg);
+}
+
+function addJanetBlock(
+  file: string,
+  line: number,
+  code: string,
+): void {
+  const key = `${file}:${line}`;
+  if (janetBlockKeys.has(key)) return;
+  janetBlockKeys.add(key);
+  janetBlocks.push({file, line, code});
+}
+
 function applyPattern(
   content: string,
   regex: RegExp,
@@ -147,9 +180,7 @@ export function createPreprocessor(
       (m) => {
         const name = m[1];
         if (!(name in symbolLookup)) {
-          console.warn(
-            `[cy-docs] ${filePath}: missing symbol: ${name}`,
-          );
+          addError(`${filePath}: missing symbol: ${name}`);
           return null;
         }
         return [
@@ -167,9 +198,7 @@ export function createPreprocessor(
       (m) => {
         const name = m[1];
         if (!(name in paramLookup)) {
-          console.warn(
-            `[cy-docs] ${filePath}: missing parameter: ${name}`,
-          );
+          addError(`${filePath}: missing parameter: ${name}`);
           return null;
         }
         return [
@@ -194,8 +223,8 @@ export function createPreprocessor(
             b.Sequence.every((k, i) => k === sequence[i]),
         );
         if (!binding?.Function) {
-          console.warn(
-            `[cy-docs] ${filePath}: missing binding: :${source} ${sequence.join(' ')}`,
+          addError(
+            `${filePath}: missing binding: :${source} ${sequence.join(' ')}`,
           );
           return null;
         }
@@ -248,15 +277,23 @@ export function createPreprocessor(
       },
     );
 
-    // Janet code blocks: strip # ignore, # {, # }
+    // Janet code blocks: collect for validation, then strip directives
     content = applyPattern(
       content,
       /```janet([^`]+)```/gm,
       (m) => {
-        const lines = m[1].trim().split('\n');
+        const rawLines = m[1].trim().split('\n');
+        const ignored = rawLines.some((l) => l === '# ignore');
+
+        if (!ignored) {
+          const line =
+            content.slice(0, m.index).split('\n').length;
+          addJanetBlock(filePath, line, rawLines.join('\n'));
+        }
+
         const filtered: string[] = [];
         let hiding = false;
-        for (const line of lines) {
+        for (const line of rawLines) {
           if (hiding) {
             if (line === '# }') hiding = false;
             continue;

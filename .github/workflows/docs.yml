@@ -56,6 +56,9 @@ jobs:
           -o docs/storybook
           ./cmd/stories
 
+      - name: Build example binary
+        run: go build -o docs/example ./cmd/example
+
       - name: Build Docusaurus site
         run: cd docs && npm run build
 

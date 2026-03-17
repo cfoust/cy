@@ -11,8 +11,9 @@
 # Generated story assets
 /static/images
 
-# Built storybook binary
+# Built Go binaries
 /storybook
+/example
 
 # Generated API data
 /static/api-data.json

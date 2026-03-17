@@ -60,7 +60,7 @@ api input/find
 
 ### Janet code
 
-All multiline Janet code blocks (e.g. those that begin with \`\`\`janet) are compiled and executed in a `cy` testing environment. An example that fails to compile or triggers an error while executing will cause documentation generation to fail. In other words, CI will not pass.
+All multiline Janet code blocks (e.g. those that begin with \`\`\`janet) are compiled and executed in a `cy` testing environment during `npm run build`. An example that fails to compile or triggers an error while executing will cause the build to fail. Set `CY_SKIP_EXAMPLES=1` to skip validation.
 
 ### Ignoring code blocks
 
