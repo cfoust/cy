@@ -25,6 +25,7 @@ require (
 	github.com/ugorji/go/codec v1.2.11
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e
 	golang.design/x/clipboard v0.7.0
+	golang.org/x/image v0.14.0
 	golang.org/x/sync v0.16.0
 	golang.org/x/term v0.33.0
 	nhooyr.io/websocket v1.8.7
@@ -238,7 +239,6 @@ require (
 	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/exp/shiny v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20250620022241-b7579e27df2b // indirect
-	golang.org/x/image v0.14.0 // indirect
 	golang.org/x/mobile v0.0.0-20231127183840-76ac6878050a // indirect
 	golang.org/x/mod v0.26.0 // indirect
 	golang.org/x/net v0.42.0 // indirect
