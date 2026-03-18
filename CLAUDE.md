@@ -68,6 +68,19 @@ go test -v ./pkg/cy -run TestAPI
 
 The main executable is `cmd/cy/main.go`. Build output goes to `./cy` in the repository root.
 
+### Validating Changes
+
+After finishing any change set, always run the following before committing:
+
+```bash
+just lint
+just format
+just build
+just docs-build
+```
+
+All four must pass.
+
 ## Code Architecture
 
 ### Core Abstractions: Screen and Stream
