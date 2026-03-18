@@ -276,16 +276,20 @@ func init() {
 	stories.Register("replay/time/jump-backward", JumpBackward, config)
 	stories.Register("replay/time/search-empty", SearchEmpty, config)
 
-	stories.Register("replay/copy/mouse-selection", MouseSelection, stories.Config{
-		Size: geom.DEFAULT_SIZE,
-		Input: []any{
-			stories.Wait(stories.Some),
-			stories.MouseMove(0, 6),
-			stories.Wait(stories.ABit),
-			stories.Drag(2, 40),
-			stories.Wait(stories.More),
+	stories.Register(
+		"replay/copy/mouse-selection",
+		MouseSelection,
+		stories.Config{
+			Size: geom.DEFAULT_SIZE,
+			Input: []any{
+				stories.Wait(stories.Some),
+				stories.MouseMove(0, 6),
+				stories.Wait(stories.ABit),
+				stories.Drag(2, 40),
+				stories.Wait(stories.More),
+			},
 		},
-	})
+	)
 
 	stories.Register("replay/time/seek", LongHistory, stories.Config{
 		Input: []any{

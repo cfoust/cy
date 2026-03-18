@@ -15,7 +15,7 @@ func extractLastFrame(gifFile, outputFile string) error {
 	if err != nil {
 		return fmt.Errorf("opening gif: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	g, err := gif.DecodeAll(f)
 	if err != nil {
@@ -47,7 +47,7 @@ func extractLastFrame(gifFile, outputFile string) error {
 	if err != nil {
 		return fmt.Errorf("creating output: %w", err)
 	}
-	defer out.Close()
+	defer func() { _ = out.Close() }()
 
 	return png.Encode(out, canvas)
 }
