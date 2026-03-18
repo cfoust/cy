@@ -167,6 +167,7 @@ For example:
   (def projects (group/mkdir :root "/projects"))
   (as?-> projects _
          (group/children _)
+         (filter |(not (empty? (group/children $))) _)
          (map
            |(tuple
               (tree/name $)
@@ -176,7 +177,7 @@ For example:
            _)
          (input/find _ :prompt "search: project")
          (group/children _)
-         (_ 0) # Gets the first index, the editor
+         (_ 0)
          (pane/attach _)))
 
 (key/action

@@ -49,6 +49,13 @@
   (action/close-project)
   (assert (= (pane/current) pane)))
 
+(test "(action/jump-project) empty project"
+  (def initial (cmd/new :root))
+  (pane/attach initial)
+  (group/mkdir :root "/projects/blah")
+  # Should not crash when a project has no children
+  (action/jump-project))
+
 (test "(group/leaves)"
   (def group (group/new :root))
   (def subgroup (group/new group))
