@@ -19,7 +19,7 @@ const config: Config = {
   projectName: 'cy',
 
   onBrokenLinks: 'throw',
-  onBrokenAnchors: 'warn',
+  onBrokenAnchors: 'throw',
   trailingSlash: false,
 
   plugins: [cyDocsPlugin],

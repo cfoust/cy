@@ -69,7 +69,7 @@ The arguments to that function vary based on the node and the property. The func
 
 In other words, these functions are only given access to the node they are passed to and the descendants of that node. They do not get to see the whole layout (though nothing stops you from calling {{api layout/get}} in a dynamic property.)
 
-To illustrate, [border nodes](/layouts/nodes.md#borders) have a property called `:title`, which is a string that is shown at the top-right of the node. The `:border-fg` property determines the color of the border surrounding the node.
+To illustrate, [border nodes](/layouts/nodes/borders.md) have a property called `:title`, which is a string that is shown at the top-right of the node. The `:border-fg` property determines the color of the border surrounding the node.
 
 By providing a function to both properties, we can change the color and title of the borders node as the user switches between panes. In this case, the functions are invoked with a single argument: the value of the `:node` property in each borders node, which contains whatever node is displayed inside of the borders.
 

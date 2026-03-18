@@ -32,7 +32,7 @@ At most one of these can be defined. Both determine the amount of space given to
 
 `:border`
 
-The [border style](#border-styles) to use for the dividing line.
+The [border style](/layouts/appearance.md#borders) to use for the dividing line.
 
 `:border-fg` and `:border-bg`
 

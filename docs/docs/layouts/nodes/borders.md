@@ -26,7 +26,7 @@ These strings will be rendered on the top and the bottom of the window, respecti
 
 `:border`
 
-The [border style](#border-styles) for this node. `:none` is not supported.
+The [border style](/layouts/appearance.md#borders) for this node. `:none` is not supported.
 
 `:border-fg` and `:border-bg`
 

@@ -28,7 +28,7 @@ These values do not work like margins do in CSS. A value of `80` for `:cols` mea
 
 `:border`
 
-The [border style](#border-styles) for the borders around the node.
+The [border style](/layouts/appearance.md#borders) for the borders around the node.
 
 `:border-fg` and `:border-bg`
 
