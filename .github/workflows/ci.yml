@@ -40,18 +40,18 @@ jobs:
       - name: Test
         run: just test-race -v
 
-      - name: Install latest mdbook
-        run: |
-          tag="v0.4.35"
-          url="https://github.com/rust-lang/mdbook/releases/download/${tag}/mdbook-${tag}-x86_64-unknown-linux-gnu.tar.gz"
-          mkdir mdbook
-          curl -sSL $url | tar -xz --directory=./mdbook
-          echo `pwd`/mdbook >> $GITHUB_PATH
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
 
-      - name: Build book
+      - name: Build docs
         run: |
           cd docs
+          npm ci
           # Building all of the assets for the docs site takes a while; we only
           # build it on release. This is just to verify that this PR/commit did
           # not break any documentation.
-          CY_SKIP_ASSETS=1 mdbook build
+          npm run build
