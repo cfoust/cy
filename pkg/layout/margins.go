@@ -307,6 +307,17 @@ func (l *Margins) Send(msg mux.Msg) {
 	l.RLock()
 	inner := l.inner
 	l.RUnlock()
+
+	mouseMsg, ok := msg.(taro.MouseMsg)
+	if !ok {
+		l.screen.Send(msg)
+		return
+	}
+
+	if !inner.Contains(mouseMsg.Vec2) {
+		return
+	}
+
 	l.screen.Send(taro.TranslateMouseMessage(
 		msg,
 		-inner.Position.C,

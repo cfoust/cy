@@ -7,16 +7,72 @@ import (
 	"time"
 
 	"github.com/cfoust/cy/pkg/geom"
+	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/keys"
 	L "github.com/cfoust/cy/pkg/layout"
+	"github.com/cfoust/cy/pkg/mux"
 	S "github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	T "github.com/cfoust/cy/pkg/mux/screen/tree"
 	"github.com/cfoust/cy/pkg/params"
 	"github.com/cfoust/cy/pkg/taro"
 
+	"github.com/sasha-s/go-deadlock"
 	"github.com/stretchr/testify/require"
 )
+
+// capScreen is a mock mux.Screen that captures all messages sent to it
+// and tracks resize events. It's used for end-to-end mouse event testing.
+type capScreen struct {
+	deadlock.Mutex
+	*mux.UpdatePublisher
+	size geom.Size
+	msgs []mux.Msg
+}
+
+var _ mux.Screen = (*capScreen)(nil)
+
+func newCapScreen() *capScreen {
+	return &capScreen{
+		UpdatePublisher: mux.NewPublisher(),
+		size:            geom.DEFAULT_SIZE,
+	}
+}
+
+func (c *capScreen) State() *tty.State {
+	c.Lock()
+	defer c.Unlock()
+	return tty.New(c.size)
+}
+
+func (c *capScreen) Resize(size geom.Size) error {
+	c.Lock()
+	c.size = size
+	c.Unlock()
+	return nil
+}
+
+func (c *capScreen) Kill() {}
+
+func (c *capScreen) Send(msg mux.Msg) {
+	c.Lock()
+	defer c.Unlock()
+	c.msgs = append(c.msgs, msg)
+}
+
+func (c *capScreen) getMsgs() []mux.Msg {
+	c.Lock()
+	defer c.Unlock()
+	out := make([]mux.Msg, len(c.msgs))
+	copy(out, c.msgs)
+	return out
+}
+
+func (c *capScreen) clearMsgs() {
+	c.Lock()
+	defer c.Unlock()
+	c.msgs = nil
+}
 
 func TestSet(t *testing.T) {
 	l := New(
@@ -459,4 +515,137 @@ func TestClickTabs(t *testing.T) {
 			},
 		},
 	}, l.Get().Root)
+}
+
+// TestMouseForwardAllRows verifies that mouse events at every row are
+// forwarded through the full layout pipeline to the final screen.
+// This is an end-to-end test: LayoutEngine → Margins → layout.Pane →
+// server.Client → tree pane's screen (capScreen).
+func TestMouseForwardAllRows(t *testing.T) {
+	var (
+		ctx  = context.Background()
+		tree = T.NewTree()
+		srv  = server.New()
+	)
+
+	testCase := func(
+		t *testing.T,
+		size geom.Size,
+		layout L.Node,
+		screen *capScreen,
+	) {
+		l := New(ctx, tree, srv)
+		require.NoError(t, l.Resize(size))
+		require.NoError(t, l.Set(L.New(layout)))
+
+		// Force state computation so server.Client computes screenPos
+		time.Sleep(100 * time.Millisecond)
+		_ = l.State()
+
+		for row := range size.R {
+			screen.clearMsgs()
+
+			l.Send(taro.MouseMsg{
+				Vec2:   geom.Vec2{R: row, C: size.C / 2},
+				Type:   keys.MousePress,
+				Button: keys.MouseLeft,
+				Down:   true,
+			})
+
+			msgs := screen.getMsgs()
+			require.Len(t, msgs, 1,
+				"row %d: expected one forwarded message", row)
+
+			mouse, ok := msgs[0].(taro.MouseMsg)
+			require.True(t, ok,
+				"row %d: should be MouseMsg", row)
+			require.Equal(t, row, mouse.R,
+				"row %d: row should be preserved", row)
+		}
+		l.Kill()
+	}
+
+	t.Run("margins-80cols-exact", func(t *testing.T) {
+		screen := newCapScreen()
+		pane := tree.Root().NewPane(ctx, screen)
+		id := pane.Id()
+		testCase(t, geom.Size{R: 26, C: 80}, &L.MarginsNode{
+			Cols: 80,
+			Node: &L.PaneNode{Attached: true, ID: &id},
+		}, screen)
+	})
+
+	t.Run("margins-80cols-wide-terminal", func(t *testing.T) {
+		screen := newCapScreen()
+		pane := tree.Root().NewPane(ctx, screen)
+		id := pane.Id()
+		testCase(t, geom.Size{R: 40, C: 160}, &L.MarginsNode{
+			Cols: 80,
+			Node: &L.PaneNode{Attached: true, ID: &id},
+		}, screen)
+	})
+
+	t.Run("margins-default-layout", func(t *testing.T) {
+		screen := newCapScreen()
+		pane := tree.Root().NewPane(ctx, screen)
+		id := pane.Id()
+		def := L.Default().Root.(*L.MarginsNode)
+		def.Node = &L.PaneNode{Attached: true, ID: &id}
+		testCase(t, geom.Size{R: 26, C: 120}, def, screen)
+	})
+
+	// When Rows is set, the pane has a fixed row count and
+	// inner.Position.R > 0. Events outside the inner area should be
+	// dropped; events inside should arrive with translated coordinates.
+	t.Run("margins-fixed-rows", func(t *testing.T) {
+		var (
+			screen = newCapScreen()
+			size   = geom.Size{R: 40, C: 120}
+		)
+		pane := tree.Root().NewPane(ctx, screen)
+		id := pane.Id()
+
+		l := New(ctx, tree, srv)
+		require.NoError(t, l.Resize(size))
+		require.NoError(t, l.Set(L.New(&L.MarginsNode{
+			Cols: 80,
+			Rows: 20,
+			Node: &L.PaneNode{Attached: true, ID: &id},
+		})))
+
+		time.Sleep(100 * time.Millisecond)
+		_ = l.State()
+
+		// inner area: 20 rows centered in 40 → rows 10..29
+		innerTop := (size.R - 20) / 2
+		innerBot := innerTop + 20
+
+		for row := range size.R {
+			screen.clearMsgs()
+
+			l.Send(taro.MouseMsg{
+				Vec2:   geom.Vec2{R: row, C: size.C / 2},
+				Type:   keys.MousePress,
+				Button: keys.MouseLeft,
+				Down:   true,
+			})
+
+			msgs := screen.getMsgs()
+
+			if row < innerTop || row >= innerBot {
+				require.Empty(t, msgs,
+					"row %d: outside inner area, should be dropped", row)
+				continue
+			}
+
+			require.Len(t, msgs, 1,
+				"row %d: inside inner area, expected one message", row)
+			mouse, ok := msgs[0].(taro.MouseMsg)
+			require.True(t, ok,
+				"row %d: should be MouseMsg", row)
+			require.Equal(t, row-innerTop, mouse.R,
+				"row %d: should be translated to inner coordinates", row)
+		}
+		l.Kill()
+	})
 }
