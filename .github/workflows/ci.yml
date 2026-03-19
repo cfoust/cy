@@ -48,6 +48,8 @@ jobs:
           cache-dependency-path: docs/package-lock.json
 
       - name: Build docs
+        env:
+          CY_SKIP_ASSETS: "1"
         run: |
           cd docs
           npm ci

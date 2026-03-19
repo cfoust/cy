@@ -249,7 +249,6 @@ export function ensureExampleBinary(
   projectDir: string,
   repoDir: string,
 ): void {
-  if (process.env.CI) return;
   if (process.env.CY_SKIP_EXAMPLES === '1') return;
 
   const example = resolve(projectDir, 'example');
