@@ -256,9 +256,11 @@ export function createPreprocessor(
             .slice(0, 12);
         }
 
-        if (!skipAssets) {
-          ensureStoryAsset(projectDir, m[1], type, command);
+        if (skipAssets) {
+          return [m.index, m.index + m[0].length, ''];
         }
+
+        ensureStoryAsset(projectDir, m[1], type, command);
 
         const imagePath = `/images/${name}.${type}`;
         if (type === 'png' || type === 'gif') {
