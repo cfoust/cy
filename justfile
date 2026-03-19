@@ -40,6 +40,7 @@ docs:
   cd docs && npm start
 
 docs-build:
+  rm -rf docs/.docusaurus
   cd docs && npm run build
 
 api:

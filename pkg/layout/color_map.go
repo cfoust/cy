@@ -20,6 +20,7 @@ import (
 type ColorMapNode struct {
 	Map  *prop.ColorMap
 	Node Node
+	Meta *janet.Value
 }
 
 var _ Node = (*ColorMapNode)(nil)
@@ -61,10 +62,12 @@ func (n *ColorMapNode) MarshalJanet() interface{} {
 		Type janet.Keyword
 		Map  *prop.ColorMap
 		Node interface{}
+		Meta *janet.Value
 	}{
 		Type: NodeKeywordColorMap,
 		Map:  n.Map,
 		Node: n.Node.MarshalJanet(),
+		Meta: n.Meta,
 	}
 }
 
@@ -72,6 +75,7 @@ func (n *ColorMapNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 	type colormapArgs struct {
 		Map  *prop.ColorMap
 		Node *janet.Value
+		Meta *janet.Value
 	}
 
 	args := colormapArgs{}
@@ -94,6 +98,7 @@ func (n *ColorMapNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 	return &ColorMapNode{
 		Map:  args.Map,
 		Node: node,
+		Meta: args.Meta,
 	}, nil
 }
 

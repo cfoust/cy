@@ -28,6 +28,7 @@ type PaneNode struct {
 	Attached     bool
 	RemoveOnExit *bool
 	ID           *tree.NodeID
+	Meta         *janet.Value
 }
 
 var _ Node = (*PaneNode)(nil)
@@ -62,11 +63,13 @@ func (p *PaneNode) MarshalJanet() interface{} {
 		Attached     bool
 		ID           *tree.NodeID
 		RemoveOnExit *bool
+		Meta         *janet.Value
 	}{
 		Type:         NodeKeywordPane,
 		Attached:     p.Attached,
 		ID:           p.ID,
 		RemoveOnExit: p.RemoveOnExit,
+		Meta:         p.Meta,
 	}
 }
 
@@ -75,6 +78,7 @@ func (p *PaneNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 		Attached     *bool
 		RemoveOnExit *bool
 		ID           *tree.NodeID
+		Meta         *janet.Value
 	}
 	args := paneArgs{}
 
@@ -83,7 +87,8 @@ func (p *PaneNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 		return nil, err
 	}
 	type_ := PaneNode{
-		ID: args.ID,
+		ID:   args.ID,
+		Meta: args.Meta,
 	}
 
 	if args.Attached != nil {

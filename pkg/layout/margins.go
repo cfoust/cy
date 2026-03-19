@@ -28,6 +28,7 @@ type MarginsNode struct {
 	BorderFg *prop.Color
 	BorderBg *prop.Color
 	Node     Node
+	Meta     *janet.Value
 }
 
 var _ Node = (*MarginsNode)(nil)
@@ -74,6 +75,7 @@ func (n *MarginsNode) MarshalJanet() interface{} {
 		BorderFg *prop.Color
 		BorderBg *prop.Color
 		Node     interface{}
+		Meta     *janet.Value
 	}{
 		Type:     NodeKeywordMargins,
 		Cols:     n.Cols,
@@ -83,6 +85,7 @@ func (n *MarginsNode) MarshalJanet() interface{} {
 		BorderFg: n.BorderFg,
 		BorderBg: n.BorderBg,
 		Node:     n.Node.MarshalJanet(),
+		Meta:     n.Meta,
 	}
 }
 
@@ -94,6 +97,7 @@ func (n *MarginsNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 		BorderBg *prop.Color
 		BorderFg *prop.Color
 		Node     *janet.Value
+		Meta     *janet.Value
 	}
 	args := marginsArgs{}
 	err := value.Unmarshal(&args)
@@ -111,6 +115,7 @@ func (n *MarginsNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 		Border:   args.Border,
 		BorderFg: args.BorderFg,
 		BorderBg: args.BorderBg,
+		Meta:     args.Meta,
 	}
 
 	if args.Border == nil {

@@ -34,6 +34,7 @@ type TabsNode struct {
 	Bg                     *prop.Color
 	Bottom                 bool
 	Tabs                   []Tab
+	Meta                   *janet.Value
 }
 
 var _ Node = (*TabsNode)(nil)
@@ -143,6 +144,7 @@ func (n *TabsNode) MarshalJanet() interface{} {
 		Bg                     *prop.Color
 		Bottom                 bool
 		Tabs                   []tabArg
+		Meta                   *janet.Value
 	}{
 		Type:       NodeKeywordTabs,
 		ActiveFg:   n.ActiveFg,
@@ -151,6 +153,7 @@ func (n *TabsNode) MarshalJanet() interface{} {
 		InactiveBg: n.InactiveBg,
 		Bg:         n.Bg,
 		Bottom:     n.Bottom,
+		Meta:       n.Meta,
 	}
 
 	for _, tab := range n.Tabs {
@@ -179,6 +182,7 @@ func (n *TabsNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 		Bg                     *prop.Color
 		Bottom                 *bool
 		Tabs                   []tabArg
+		Meta                   *janet.Value
 	}
 	args := tabsArgs{}
 	err := value.Unmarshal(&args)
@@ -192,6 +196,7 @@ func (n *TabsNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 		InactiveFg: args.InactiveFg,
 		InactiveBg: args.InactiveBg,
 		Bg:         args.Bg,
+		Meta:       args.Meta,
 	}
 
 	if args.Bottom != nil {

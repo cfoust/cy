@@ -37,6 +37,7 @@ type StackNode struct {
 	BorderFg *prop.Color
 	BorderBg *prop.Color
 	Leaves   []Leaf
+	Meta     *janet.Value
 }
 
 var _ Node = (*StackNode)(nil)
@@ -141,11 +142,13 @@ func (n *StackNode) MarshalJanet() interface{} {
 		BorderFg *prop.Color
 		BorderBg *prop.Color
 		Leaves   []leafArg
+		Meta     *janet.Value
 	}{
 		Type:     NodeKeywordStack,
 		Border:   n.Border,
 		BorderFg: n.BorderFg,
 		BorderBg: n.BorderBg,
+		Meta:     n.Meta,
 	}
 
 	for _, leaf := range n.Leaves {
@@ -181,6 +184,7 @@ func (n *StackNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 		BorderFg *prop.Color
 		BorderBg *prop.Color
 		Leaves   []leafArg
+		Meta     *janet.Value
 	}
 	args := stackArgs{}
 	err := value.Unmarshal(&args)
@@ -192,6 +196,7 @@ func (n *StackNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 		Border:   args.Border,
 		BorderFg: args.BorderFg,
 		BorderBg: args.BorderBg,
+		Meta:     args.Meta,
 	}
 
 	for i, leaf := range args.Leaves {

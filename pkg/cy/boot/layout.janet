@@ -65,17 +65,18 @@ For example:
 (defn
   layout/pane
   ```Convenience function for creating a new :pane node.```
-  [&named id attached remove-on-exit]
+  [&named id attached remove-on-exit meta]
   (default attached false)
   {:type :pane
    :id id
    :attached attached
-   :remove-on-exit remove-on-exit})
+   :remove-on-exit remove-on-exit
+   :meta meta})
 
 (defn
   layout/split
   ```Convenience function for creating a new :split node.```
-  [a b &named vertical cells percent border border-fg border-bg]
+  [a b &named vertical cells percent border border-fg border-bg meta]
   (default vertical false)
   {:type :split
    :a a
@@ -85,55 +86,60 @@ For example:
    :percent percent
    :border border
    :border-fg border-fg
-   :border-bg border-bg})
+   :border-bg border-bg
+   :meta meta})
 
 (defn
   layout/vsplit
   ```Convenience function for creating a new vertical :split node.```
-  [a b &named cells percent border border-fg border-bg]
+  [a b &named cells percent border border-fg border-bg meta]
   (layout/split a b
                 :vertical true
                 :cells cells
                 :percent percent
                 :border border
                 :border-fg border-fg
-                :border-bg border-bg))
+                :border-bg border-bg
+                :meta meta))
 
 (defn
   layout/hsplit
   ```Convenience function for creating a new horizontal :split node.```
-  [a b &named cells percent border border-fg border-bg]
+  [a b &named cells percent border border-fg border-bg meta]
   (layout/split a b
                 :vertical false
                 :cells cells
                 :percent percent
                 :border border
                 :border-fg border-fg
-                :border-bg border-bg))
+                :border-bg border-bg
+                :meta meta))
 
 (defn
   layout/margins
   ```Convenience function for creating a new :margins node.```
-  [node &named cols rows border border-fg border-bg]
+  [node &named cols rows border border-fg border-bg meta]
   {:type :margins
    :node node
    :cols cols
    :rows rows
    :border border
    :border-fg border-fg
-   :border-bg border-bg})
+   :border-bg border-bg
+   :meta meta})
 
 (defn
   layout/borders
   ```Convenience function for creating a new :borders node.```
-  [node &named title title-bottom border border-fg border-bg]
+  [node &named title title-bottom border border-fg border-bg meta]
   {:type :borders
    :node node
    :title title
    :title-bottom title-bottom
    :border border
    :border-fg border-fg
-   :border-bg border-bg})
+   :border-bg border-bg
+   :meta meta})
 
 (defn
   layout/tab
@@ -156,7 +162,8 @@ For example:
    inactive-fg
    inactive-bg
    bg
-   bottom]
+   bottom
+   meta]
   {:type :tabs
    :tabs tabs
    :active-fg active-fg
@@ -164,7 +171,8 @@ For example:
    :inactive-fg inactive-fg
    :inactive-bg inactive-bg
    :bg bg
-   :bottom bottom})
+   :bottom bottom
+   :meta meta})
 
 (defn
   layout/leaf
@@ -192,29 +200,33 @@ For example:
    &named
    border
    border-fg
-   border-bg]
+   border-bg
+   meta]
   {:type :stack
    :border border
    :border-fg border-fg
    :border-bg border-bg
-   :leaves leaves})
+   :leaves leaves
+   :meta meta})
 
 (defn
   layout/bar
   ```Convenience function for creating a new :bar node.```
-  [text node &named bottom]
+  [text node &named bottom meta]
   {:type :bar
    :node node
    :text text
-   :bottom bottom})
+   :bottom bottom
+   :meta meta})
 
 (defn
   layout/color-map
   ```Convenience function for creating a new :color-map node.```
-  [map node]
+  [map node &named meta]
   {:type :color-map
    :map map
-   :node node})
+   :node node
+   :meta meta})
 
 (defmacro
   layout/new
@@ -1398,5 +1410,23 @@ direction should be 1 (grow) or -1 (shrink).```
       (assoc active :title new-title)))
 
   (layout/set new-layout))
+
+(defn
+  layout/get-meta
+  ```Get the path and :meta value of the nearest ancestor along path that has a non-nil :meta field. The predicate is called with the node. Returns a tuple [path meta] or nil.```
+  [layout path predicate]
+  (def found (layout/find-last layout path
+                               |(and (not (nil? ($ :meta)))
+                                     (predicate $))))
+  (if (nil? found) (break nil))
+  [found ((layout/path layout found) :meta)])
+
+(defn
+  layout/set-meta
+  ```Set the :meta value of the node at path. Returns a new layout.```
+  [layout path value]
+  (def node (layout/path layout path))
+  (if (nil? node) (break layout))
+  (layout/assoc layout path (assoc node :meta value)))
 
 (merge-module root-env (curenv))

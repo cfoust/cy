@@ -22,6 +22,7 @@ type BarNode struct {
 	Text   *prop.String
 	Bottom bool
 	Node   Node
+	Meta   *janet.Value
 }
 
 var _ Node = (*BarNode)(nil)
@@ -64,11 +65,13 @@ func (n *BarNode) MarshalJanet() interface{} {
 		Text   *prop.String
 		Bottom bool
 		Node   interface{}
+		Meta   *janet.Value
 	}{
 		Type:   NodeKeywordBar,
 		Text:   n.Text,
 		Bottom: n.Bottom,
 		Node:   n.Node.MarshalJanet(),
+		Meta:   n.Meta,
 	}
 }
 
@@ -77,6 +80,7 @@ func (n *BarNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 		Text   *prop.String
 		Bottom *bool
 		Node   *janet.Value
+		Meta   *janet.Value
 	}
 	args := barArgs{}
 	err := value.Unmarshal(&args)
@@ -98,6 +102,7 @@ func (n *BarNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 	type_ := BarNode{
 		Node: node,
 		Text: args.Text,
+		Meta: args.Meta,
 	}
 
 	if args.Bottom != nil {

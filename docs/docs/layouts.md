@@ -120,6 +120,12 @@ layout from rendering. The layout will continue to render as if the function
 had returned that property's default value and an appropriate error message
 will be sent to the `/logs` pane.
 
+## Metadata
+
+All node types support an optional `:meta` property that can hold any Janet value. This is useful for attaching your own data to layout nodes without interfering with `cy`'s behavior.
+
+You can retrieve and update `:meta` values using {{api layout/get-meta}} and {{api layout/set-meta}}.
+
 ## Actions
 
 You can access some layout functionality using [actions](/keybindings.md#actions) that are available in the command palette:

@@ -166,13 +166,13 @@ func (v *VM) marshal(item interface{}) (result C.Janet, err error) {
 		switch item := item.(type) {
 		case *Value:
 			// TODO(cfoust): 02/01/24 this is spooky
-			if v == nil {
+			if v == nil || item == nil {
 				return
 			}
 			result = item.janet
 			return
 		case *Function:
-			if v == nil {
+			if v == nil || item == nil {
 				return
 			}
 			result = item.janet

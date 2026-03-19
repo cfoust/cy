@@ -28,6 +28,7 @@ type SplitNode struct {
 	BorderBg *prop.Color
 	A        Node
 	B        Node
+	Meta     *janet.Value
 }
 
 var _ Node = (*SplitNode)(nil)
@@ -87,6 +88,7 @@ func (n *SplitNode) MarshalJanet() interface{} {
 		BorderBg *prop.Color
 		A        interface{}
 		B        interface{}
+		Meta     *janet.Value
 	}
 
 	s := splitType{
@@ -99,6 +101,7 @@ func (n *SplitNode) MarshalJanet() interface{} {
 		BorderBg: n.BorderBg,
 		A:        n.A.MarshalJanet(),
 		B:        n.B.MarshalJanet(),
+		Meta:     n.Meta,
 	}
 	return s
 }
@@ -113,6 +116,7 @@ func (n *SplitNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 		Border   *prop.Border
 		BorderFg *prop.Color
 		BorderBg *prop.Color
+		Meta     *janet.Value
 	}
 	args := splitArgs{}
 	err := value.Unmarshal(&args)
@@ -144,6 +148,7 @@ func (n *SplitNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 		Border:   args.Border,
 		BorderFg: args.BorderFg,
 		BorderBg: args.BorderBg,
+		Meta:     args.Meta,
 	}
 
 	if args.Border == nil {

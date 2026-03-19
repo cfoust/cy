@@ -856,3 +856,75 @@
         (vsplit (attach) (pane) :percent 30))))
   (action/grow-split)
   (assert (= (((layout/get) :b) :percent) 40)))
+
+(test "layout/get-meta"
+  (def layout
+    {:type :margins
+     :meta "outer"
+     :node {:type :borders
+            :meta "inner"
+            :node {:type :pane :attached true}}})
+
+  (def path (layout/attach-path layout))
+
+  # returns [path meta] for the nearest ancestor with :meta
+  (assert (deep=
+            (layout/get-meta layout path (fn [&] true))
+            [@[:node] "inner"]))
+
+  # predicate can filter by type
+  (assert (deep=
+            (layout/get-meta layout path
+                             |(layout/type? :margins $))
+            [@[] "outer"]))
+
+  # returns nil when predicate matches nothing
+  (assert (nil? (layout/get-meta layout path
+                                 |(layout/type? :split $))))
+
+  # returns nil when no nodes have :meta
+  (assert (nil? (layout/get-meta
+                  {:type :margins
+                   :node {:type :pane :attached true}}
+                  @[:node]
+                  (fn [&] true)))))
+
+(test "layout/set-meta"
+  (def layout
+    {:type :margins
+     :meta "outer"
+     :node {:type :borders
+            :meta "inner"
+            :node {:type :pane :attached true}}})
+
+  # set meta by path
+  (assert (deep=
+            (layout/set-meta layout @[:node] "updated")
+            {:type :margins
+             :meta "outer"
+             :node {:type :borders
+                    :meta "updated"
+                    :node {:type :pane :attached true}}}))
+
+  (assert (deep=
+            (layout/set-meta layout @[] "updated")
+            {:type :margins
+             :meta "updated"
+             :node {:type :borders
+                    :meta "inner"
+                    :node {:type :pane :attached true}}}))
+
+  # invalid path returns original layout
+  (assert (deep= (layout/set-meta layout @[:a] "x") layout))
+
+  # round-trip with get-meta
+  (def [found-path _] (layout/get-meta layout
+                                       (layout/attach-path layout)
+                                       (fn [&] true)))
+  (assert (deep=
+            (layout/set-meta layout found-path "updated")
+            {:type :margins
+             :meta "outer"
+             :node {:type :borders
+                    :meta "updated"
+                    :node {:type :pane :attached true}}})))
