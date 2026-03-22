@@ -22,13 +22,12 @@ stories *args:
 
 format:
   go fmt ./pkg/... ./cmd/...
+  go tool golines -m 80 -w ./pkg/ ./cmd/
+  go tool gci write --custom-order -s standard -s "prefix(github.com/cfoust/cy)" -s default ./pkg/ ./cmd/
   go run ./cmd/janet-format/... $(find pkg cmd -name '*.janet')
 
 lint:
-  go tool golangci-lint run
-
-lint-fix:
-  go tool golangci-lint run --fix
+  go tool revive -config revive.toml -exclude pkg/janet/test/module.go -set_exit_status ./pkg/... ./cmd/...
 
 generate:
   go generate ./pkg/... ./cmd/...

@@ -324,10 +324,9 @@ func (t *State) CsiDispatch(
 	case 'r': // DECSTBM - set scrolling region
 		if c.priv {
 			goto unknown
-		} else {
-			t.setScroll(c.arg(0, 1)-1, c.arg(1, t.rows)-1)
-			t.moveAbsTo(0, 0)
 		}
+		t.setScroll(c.arg(0, 1)-1, c.arg(1, t.rows)-1)
+		t.moveAbsTo(0, 0)
 	case 's': // DECSC - save cursor position (ANSI.SYS)
 		t.saveCursor()
 	case 'u': // DECRC - restore cursor position (ANSI.SYS) OR Kitty keyboard protocol

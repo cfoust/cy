@@ -50,7 +50,7 @@ type Mouse struct {
 // mouseFlags computes the flags byte common to both X10 and SGR
 // encodings.
 func (m Mouse) mouseFlags() byte {
-	var flags byte = 0
+	var flags byte
 
 	switch m.Button {
 	case MouseLeft:

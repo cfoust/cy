@@ -1,0 +1,21 @@
+ignoreGeneratedHeader = false
+severity = "warning"
+errorCode = 1
+warningCode = 1
+
+[rule.context-as-argument]
+[rule.context-keys-type]
+[rule.dot-imports]
+[rule.empty-block]
+[rule.error-naming]
+[rule.error-return]
+[rule.error-strings]
+[rule.errorf]
+[rule.increment-decrement]
+[rule.indent-error-flow]
+[rule.range]
+[rule.superfluous-else]
+[rule.time-naming]
+[rule.unexported-return]
+[rule.unreachable-code]
+[rule.var-declaration]

@@ -220,7 +220,7 @@ func (v *Value) Unmarshal(dest interface{}) error {
 
 func (v *Value) Nil() bool {
 	// XXX add real support for checking nil, but this works
-	var val *int = nil
+	var val *int
 	return v.Unmarshal(&val) == nil
 }
 

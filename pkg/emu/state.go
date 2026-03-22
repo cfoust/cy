@@ -185,12 +185,14 @@ func (t *State) putTab(forward bool) {
 			return
 		}
 		for x++; x < t.cols && !t.tabs[x]; x++ {
+			continue
 		}
 	} else {
 		if x == 0 {
 			return
 		}
 		for x--; x > 0 && !t.tabs[x]; x-- {
+			continue
 		}
 	}
 	t.moveTo(x, t.cur.R)

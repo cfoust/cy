@@ -27,10 +27,10 @@ type Match struct {
 	Continuous bool
 }
 
-// searcher extracts the printable bytes from its inputs, which it processes as
+// Searcher extracts the printable bytes from its inputs, which it processes as
 // though it were a VT100 terminal, and then allows you to search through them
 // using regexp.
-type searcher struct {
+type Searcher struct {
 	buffer      bytes.Buffer
 	parser      *vtparser.Parser
 	didPrint    bool
@@ -38,7 +38,7 @@ type searcher struct {
 	sections    []section
 }
 
-func (s *searcher) Bytes() []byte {
+func (s *Searcher) Bytes() []byte {
 	return s.buffer.Bytes()
 }
 
@@ -62,7 +62,7 @@ func getAddress(s section, offset int) Address {
 	}
 }
 
-func (s *searcher) Find(re *regexp.Regexp) (result []Match) {
+func (s *Searcher) Find(re *regexp.Regexp) (result []Match) {
 	matches := re.FindAllIndex(s.buffer.Bytes(), -1)
 	if len(matches) == 0 || len(s.sections) == 0 {
 		return
@@ -113,7 +113,7 @@ func (s *searcher) Find(re *regexp.Regexp) (result []Match) {
 	return
 }
 
-func (s *searcher) parseData(index int, data []byte) {
+func (s *Searcher) parseData(index int, data []byte) {
 	isPrinted := false
 	count := 0
 	for offset, b := range data {
@@ -155,7 +155,7 @@ func (s *searcher) parseData(index int, data []byte) {
 	}
 }
 
-func (s *searcher) Parse(events []sessions.Event) {
+func (s *Searcher) Parse(events []sessions.Event) {
 	for index, event := range events {
 		output, ok := event.Message.(P.OutputMessage)
 		if !ok || len(output.Data) == 0 {
@@ -165,21 +165,21 @@ func (s *searcher) Parse(events []sessions.Event) {
 	}
 }
 
-func (s *searcher) print(c rune) {
+func (s *Searcher) print(c rune) {
 	s.buffer.Write([]byte{byte(c)})
 	s.didPrint = true
 }
 
-func (s *searcher) execute(b byte) {
+func (s *Searcher) execute(b byte) {
 }
 
-func (s *searcher) put(b byte) {
+func (s *Searcher) put(b byte) {
 }
 
-func (s *searcher) unhook() {
+func (s *Searcher) unhook() {
 }
 
-func (s *searcher) hook(
+func (s *Searcher) hook(
 	params []int64,
 	intermediates []byte,
 	ignore bool,
@@ -187,10 +187,10 @@ func (s *searcher) hook(
 ) {
 }
 
-func (s *searcher) oscDispatch(params [][]byte, bellTerminated bool) {
+func (s *Searcher) oscDispatch(params [][]byte, bellTerminated bool) {
 }
 
-func (s *searcher) csiDispatch(
+func (s *Searcher) csiDispatch(
 	params []int64,
 	intermediates []byte,
 	ignore bool,
@@ -198,11 +198,11 @@ func (s *searcher) csiDispatch(
 ) {
 }
 
-func (s *searcher) escDispatch(intermediates []byte, ignore bool, b byte) {
+func (s *Searcher) escDispatch(intermediates []byte, ignore bool, b byte) {
 }
 
-func NewSearcher() *searcher {
-	p := searcher{}
+func NewSearcher() *Searcher {
+	p := Searcher{}
 	p.parser = vtparser.New(
 		p.print,
 		p.execute,

@@ -211,10 +211,9 @@ func parseColor(p string) (r, g, b int, err error) {
 			}
 		}
 		return
-	} else {
-		err = fmt.Errorf("invalid color spec: %s", p)
-		return
 	}
+	err = fmt.Errorf("invalid color spec: %s", p)
+	return
 }
 
 func maybe(p *string) string {

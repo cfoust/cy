@@ -145,7 +145,7 @@ func (s *Server) callRPC(
 			return nil, err
 		}
 
-		var context interface{} = nil
+		var context interface{}
 		sourceNodeID := tree.NodeID(args.Node)
 		if client, found := s.cy.InferClient(sourceNodeID); found {
 			if args.Node != 0 {

@@ -78,7 +78,8 @@ func (s *Search) setSelected(index int) taro.Cmd {
 	)
 	_ = r.Resize(s.inner.Size)
 	s.loader = r
-	return taro.NewWatcher(s.loaderLifetime.Ctx(), r).Wait()
+	s.loaderWatcher = taro.NewWatcher(s.loaderLifetime.Ctx(), r)
+	return s.loaderWatcher.Wait()
 }
 
 func (s *Search) handleInput(msg tea.Msg) (taro.Model, tea.Cmd) {

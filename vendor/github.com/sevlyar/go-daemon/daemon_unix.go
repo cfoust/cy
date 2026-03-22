@@ -134,9 +134,11 @@ func (d *Context) openFiles() (err error) {
 			return err
 		}
 		if d.pidFile, err = OpenLockFile(d.PidFileName, d.PidFilePerm); err != nil {
+			err = fmt.Errorf("OpenLockFile: %s", err.Error())
 			return
 		}
 		if err = d.pidFile.Lock(); err != nil {
+			err = fmt.Errorf("Lock: %s %s", d.PidFileName, err.Error())
 			return
 		}
 		if len(d.Chroot) > 0 {

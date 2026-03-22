@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-var pokemonText []Option = []Option{
+var pokemonText = []Option{
 	NewOption("Bulbasaur", nil),
 	NewOption("Ivysaur", nil),
 	NewOption("Venusaur", nil),
@@ -164,7 +164,7 @@ func newColumnOption(columns ...string) (option Option) {
 	return
 }
 
-var pokemonTable []Option = []Option{
+var pokemonTable = []Option{
 	newColumnOption("Bulbasaur", "1", "Grass"),
 	newColumnOption("Ivysaur", "2", "Grass"),
 	newColumnOption("Venusaur", "3", "Grass"),

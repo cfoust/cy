@@ -184,7 +184,7 @@ func (f *Fuzzy) renderOptions(
 	}
 
 	if haveHeaders {
-		maxOptions -= 1
+		maxOptions--
 	}
 
 	windowOffset := geom.Clamp(

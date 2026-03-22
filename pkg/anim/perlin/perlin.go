@@ -37,8 +37,8 @@ const (
 	BM = 0xff
 )
 
-// perlin is the noise generator
-type perlin struct {
+// Perlin is the noise generator
+type Perlin struct {
 	alpha float64
 	beta  float64
 	n     int32
@@ -54,7 +54,7 @@ type perlin struct {
 // Typically it is 2, As this approaches 1 the function is noisier.
 // "beta" is the harmonic scaling/spacing, typically 2, n is the
 // number of iterations and seed is the math.rand seed value to use
-func NewPerlin(alpha, beta float64, n int32, seed int64) *perlin {
+func NewPerlin(alpha, beta float64, n int32, seed int64) *Perlin {
 	return NewPerlinRandSource(alpha, beta, n, rand.NewSource(seed))
 }
 
@@ -67,8 +67,8 @@ func NewPerlinRandSource(
 	alpha, beta float64,
 	n int32,
 	source rand.Source,
-) *perlin {
-	var p perlin
+) *Perlin {
+	var p Perlin
 	var i, j int32
 
 	p.alpha = alpha
@@ -137,7 +137,7 @@ func lerp(t, a, b float64) float64 {
 	return a + t*(b-a)
 }
 
-func (p *perlin) noise1(arg float64) float64 {
+func (p *Perlin) noise1(arg float64) float64 {
 	var vec [1]float64
 	vec[0] = arg
 
@@ -154,7 +154,7 @@ func (p *perlin) noise1(arg float64) float64 {
 	return lerp(sx, u, v)
 }
 
-func (p *perlin) noise2(vec [2]float64) float64 {
+func (p *Perlin) noise2(vec [2]float64) float64 {
 	t := vec[0] + N
 	bx0 := int32(t) & BM
 	bx1 := (bx0 + 1) & BM
@@ -193,7 +193,7 @@ func (p *perlin) noise2(vec [2]float64) float64 {
 	return lerp(sy, a, b)
 }
 
-func (p *perlin) noise3(vec [3]float64) float64 {
+func (p *Perlin) noise3(vec [3]float64) float64 {
 	t := vec[0] + N
 	bx0 := int32(t) & BM
 	bx1 := (bx0 + 1) & BM
@@ -256,7 +256,7 @@ func (p *perlin) noise3(vec [3]float64) float64 {
 }
 
 // Noise1D generates 1-dimensional Perlin Noise value
-func (p *perlin) Noise1D(x float64) float64 {
+func (p *Perlin) Noise1D(x float64) float64 {
 	var scale float64 = 1
 	var sum, val float64
 	var i int32
@@ -272,7 +272,7 @@ func (p *perlin) Noise1D(x float64) float64 {
 }
 
 // Noise2D Generates 2-dimensional Perlin Noise value
-func (p *perlin) Noise2D(x, y float64) float64 {
+func (p *Perlin) Noise2D(x, y float64) float64 {
 	var scale float64 = 1
 	var sum, val float64
 	var i int32
@@ -289,7 +289,7 @@ func (p *perlin) Noise2D(x, y float64) float64 {
 }
 
 // Noise3D Generates 3-dimensional Perlin Noise value
-func (p *perlin) Noise3D(x, y, z float64) float64 {
+func (p *Perlin) Noise3D(x, y, z float64) float64 {
 	var scale float64 = 1
 	var sum, val float64
 	var i int32

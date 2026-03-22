@@ -120,14 +120,12 @@ func TestPassthrough(t *testing.T) {
 
 	program := taro.New(ctx, s, taro.WithKittyKeys)
 
-	// Reinitialize the replay watcher manually in a goroutine to avoid
-	// blocking the test goroutine
-	go func() {
-		msg := taro.NewWatcher(ctx, s.loader).Wait()()
-		if msg != nil {
-			program.Send(msg)
-		}
-	}()
+	// Wait for the loader to finish loading the replay. The loader's
+	// View sets CursorVisible=false while loading; once the replay is
+	// ready, it copies the replay's state which has a visible cursor.
+	require.Eventually(t, func() bool {
+		return s.loader.State().CursorVisible
+	}, 5*time.Second, 5*time.Millisecond, "replay did not load in time")
 
 	actions := make(chan bind.BindEvent)
 	copies := make(chan replay.CopyEvent)
@@ -162,9 +160,6 @@ func TestPassthrough(t *testing.T) {
 		}
 	}()
 
-	// Wait for Replay to start up
-	time.Sleep(500 * time.Millisecond)
-
 	for _, key := range taro.KeysToMsg("a") {
 		program.Send(key)
 	}
@@ -180,7 +175,7 @@ func TestPassthrough(t *testing.T) {
 	program.Send(replay.ActionEvent{Type: replay.ActionCursorLeft})
 	program.Send(replay.ActionEvent{Type: replay.ActionSelect})
 	program.Send(replay.CopyEvent{})
-	copyCtx, cancel := context.WithTimeout(ctx, time.Second)
+	copyCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	select {
 	case _copy := <-copies:

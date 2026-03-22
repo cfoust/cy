@@ -1,0 +1,6 @@
+golinter
+revive
+vendor
+*.swp
+dist/
+*.log

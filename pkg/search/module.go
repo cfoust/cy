@@ -33,6 +33,7 @@ type Search struct {
 
 	loader         mux.Screen
 	loaderLifetime util.Lifetime
+	loaderWatcher  *taro.ScreenWatcher
 
 	searchBinds          *bind.Engine[bind.Action]
 	timeBinds, copyBinds *bind.BindScope
@@ -48,7 +49,11 @@ func (s *Search) Init() tea.Cmd {
 		textinput.Blink,
 	}
 
-	if s.initialRequest != nil {
+	if s.loaderWatcher != nil {
+		// Re-establish the watcher chain for an existing loader
+		// (e.g. when re-wrapping in a new program after taro.Test)
+		cmds = append(cmds, s.loaderWatcher.Wait())
+	} else if s.initialRequest != nil {
 		_, cmd := s.Execute(*s.initialRequest)
 		cmds = append(cmds, cmd)
 	}

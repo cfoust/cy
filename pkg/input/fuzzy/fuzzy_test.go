@@ -10,13 +10,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var smallOptions []Option = []Option{
+var smallOptions = []Option{
 	NewOption("foo", 0),
 	NewOption("bar", 1),
 	NewOption("baz", 2),
 }
 
-var simpleOptions []Option = []Option{
+var simpleOptions = []Option{
 	NewOption("foo", 0),
 	NewOption("bar", 1),
 	NewOption("baz", 2),

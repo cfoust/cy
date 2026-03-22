@@ -316,7 +316,7 @@ func (c *Cmd) spin(ctx context.Context) {
 				startTime = time.Now()
 			}
 
-			numErrors += 1
+			numErrors++
 
 			if elapsed < SPIN_THRESHOLD && numErrors == SPIN_NUM_TRIES {
 				c.setStatus(CmdStatusFailed)

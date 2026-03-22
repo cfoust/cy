@@ -10,8 +10,8 @@ import (
 
 var BottomRight stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	location := geom.DEFAULT_SIZE
-	location.C -= 1
-	location.R -= 1
+	location.C--
+	location.R--
 	return New(
 		ctx,
 		WithInline(location, geom.DEFAULT_SIZE),
