@@ -10,6 +10,7 @@
 
 # Generated story assets
 /static/images
+/src/images
 
 # Built Go binaries
 /storybook
