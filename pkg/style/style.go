@@ -315,7 +315,7 @@ func (s *Style) Apply(glyph *emu.Glyph) {
 		glyph.Mode |= emu.AttrItalic
 	}
 	if s.GetUnderline() {
-		glyph.Underline = emu.UnderlineSingle
+		glyph.Underline.Mode = emu.UnderlineSingle
 	}
 	if s.GetStrikethrough() {
 		glyph.Mode |= emu.AttrStrikethrough

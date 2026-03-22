@@ -173,8 +173,8 @@ func swapImage(
 				data.Write(boldMode)
 			}
 
-			if srcCell.Underline != emu.UnderlineNone {
-				data.Write(underlineModes[srcCell.Underline])
+			if srcCell.Underline.Mode != emu.UnderlineNone {
+				data.Write(underlineModes[srcCell.Underline.Mode])
 			}
 
 			if mode&emu.AttrStrikethrough != 0 {
@@ -191,7 +191,7 @@ func swapImage(
 
 			setColor(data, srcCell.FG, false)
 			setColor(data, srcCell.BG, true)
-			setUnderlineColor(data, srcCell.UL)
+			setUnderlineColor(data, srcCell.Underline.Color)
 
 			data.WriteRune(srcCell.Char)
 
