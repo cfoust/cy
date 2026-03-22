@@ -312,7 +312,7 @@ func (t *State) CsiDispatch(
 		case '>': // XTMODKEYS
 		case '?': // XTQMODKEYS
 		default:
-			t.setAttr(c.args)
+			t.setAttr(c.args, c.subArgs)
 		}
 	case 'n':
 		switch c.arg(0, 0) {

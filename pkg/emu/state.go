@@ -17,7 +17,6 @@ const (
 
 const (
 	attrReverse = 1 << iota
-	attrUnderline
 	attrBold
 	attrGfx
 	attrItalic
@@ -738,7 +737,7 @@ func (t *State) setMode(priv bool, set bool, args []int) {
 	}
 }
 
-func (t *State) setAttr(attr []int) {
+func (t *State) setAttr(attr []int, subArgs [][]int) {
 	if len(attr) == 0 {
 		attr = []int{0}
 	}
@@ -746,27 +745,38 @@ func (t *State) setAttr(attr []int) {
 		a := attr[i]
 		switch a {
 		case 0:
-			t.cur.Attr.Mode &^= attrReverse | attrStrikethrough | attrUnderline | attrBold | attrItalic | attrBlink
+			t.cur.Attr.Mode &^= attrReverse | attrStrikethrough | attrBold | attrItalic | attrBlink
 			t.cur.Attr.FG = DefaultFG
 			t.cur.Attr.BG = DefaultBG
+			t.cur.Attr.UL = DefaultFG
+			t.cur.Attr.Underline = UnderlineNone
 		case 1:
 			t.cur.Attr.Mode |= attrBold
 		case 3:
 			t.cur.Attr.Mode |= attrItalic
 		case 4:
-			t.cur.Attr.Mode |= attrUnderline
+			style := UnderlineSingle
+			if i < len(subArgs) && len(subArgs[i]) > 0 {
+				s := UnderlineStyle(subArgs[i][0])
+				if s <= UnderlineDashed {
+					style = s
+				}
+			}
+			t.cur.Attr.Underline = style
 		case 5, 6: // slow, rapid blink
 			t.cur.Attr.Mode |= attrBlink
 		case 7:
 			t.cur.Attr.Mode |= attrReverse
 		case 9:
 			t.cur.Attr.Mode |= attrStrikethrough
-		case 21, 22:
+		case 21:
+			t.cur.Attr.Underline = UnderlineDouble
+		case 22:
 			t.cur.Attr.Mode &^= attrBold
 		case 23:
 			t.cur.Attr.Mode &^= attrItalic
 		case 24:
-			t.cur.Attr.Mode &^= attrUnderline
+			t.cur.Attr.Underline = UnderlineNone
 		case 25, 26:
 			t.cur.Attr.Mode &^= attrBlink
 		case 27:
@@ -815,6 +825,27 @@ func (t *State) setAttr(attr []int) {
 			}
 		case 49:
 			t.cur.Attr.BG = DefaultBG
+		case 58:
+			if i+2 < len(attr) && attr[i+1] == 5 {
+				i += 2
+				if between(attr[i], 0, 255) {
+					t.cur.Attr.UL = XTermColor(attr[i])
+				} else {
+					t.logf("bad ulcolor %d\n", attr[i])
+				}
+			} else if i+4 < len(attr) && attr[i+1] == 2 {
+				i += 4
+				r, g, b := attr[i-2], attr[i-1], attr[i]
+				if !between(r, 0, 255) || !between(g, 0, 255) || !between(b, 0, 255) {
+					t.logf("bad ul rgb color (%d,%d,%d)\n", r, g, b)
+				} else {
+					t.cur.Attr.UL = RGBColor(r, g, b)
+				}
+			} else {
+				t.logf("gfx attr %d unknown\n", a)
+			}
+		case 59:
+			t.cur.Attr.UL = DefaultFG
 		default:
 			if between(a, 30, 37) {
 				t.cur.Attr.FG = ANSIColor(a - 30)
