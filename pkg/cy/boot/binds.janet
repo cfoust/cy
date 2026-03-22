@@ -22,8 +22,8 @@
 (key/bind-many-tag :root "panes"
                    [prefix "ctrl+i"] pane/history-forward
                    [prefix "ctrl+o"] pane/history-backward
-                   [prefix "x"] action/remove-layout-pane
-                   [prefix "X"] action/kill-layout-pane
+                   [prefix "x"] action/remove-layout-view
+                   [prefix "X"] action/kill-layout-view
                    [prefix "C"] action/jump-command
                    [prefix ":"] action/jump-screen-lines
                    [prefix "j"] action/new-shell

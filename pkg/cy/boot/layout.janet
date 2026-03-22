@@ -30,7 +30,7 @@ For example:
 ```janet
 # For a node of type :split
 @[[:a] [:b]]
-# For a node of type :pane (it has no children)
+# For a node of type :view (it has no children)
 @[]
 ```
   ````
@@ -57,17 +57,17 @@ For example:
     @[]))
 
 (defn
-  layout/pane?
-  ```Report whether node is of type :pane.```
+  layout/view?
+  ```Report whether node is of type :view.```
   [node]
-  (layout/type? :pane node))
+  (layout/type? :view node))
 
 (defn
-  layout/pane
-  ```Convenience function for creating a new :pane node.```
+  layout/view
+  ```Convenience function for creating a new :view node.```
   [&named id attached remove-on-exit meta]
   (default attached false)
-  {:type :pane
+  {:type :view
    :id id
    :attached attached
    :remove-on-exit remove-on-exit
@@ -235,14 +235,14 @@ For example:
 Supported short forms:
 * active-leaf: A :leaf with :active=true inside of a :stack node.
 * active-tab: A :tab with :active=true inside of a :tabs node.
-* attach: An attached :pane node.
+* attach: An attached :view node.
 * bar: A :bar node.
 * borders: A :borders node.
 * color-map: A :color-map node.
 * hsplit: A :split node with :vertical=false.
 * leaf: A :leaf inside of a :stack node.
 * margins: A :margins node.
-* pane: A detached :pane node.
+* view: A detached :view node.
 * split: A :split node.
 * stack: A :stack node.
 * tab: A :tab inside of a :tabs node.
@@ -254,7 +254,7 @@ See [the layouts chapter](/layouts.md#api) for more information.
   [body]
   (defn attach
     [&named id remove-on-exit]
-    (layout/pane :id id
+    (layout/view :id id
                  :remove-on-exit remove-on-exit
                  :attached true))
   (defn active-tab
@@ -271,7 +271,7 @@ See [the layouts chapter](/layouts.md#api) for more information.
                  :border-bg border-bg))
 
   ~(do
-     (def pane ,layout/pane)
+     (def view ,layout/view)
      (def attach ,attach)
      (def split ,layout/split)
      (def hsplit ,layout/hsplit)
@@ -381,7 +381,7 @@ See [the layouts chapter](/layouts.md#api) for more information.
   layout/replace-attached
   ```Replace the attached pane in this tree with a new one using the provided replacer function. This function will be invoked with a single argument, the node that is currently attached, and it should return a new node.```
   [node replacer]
-  (if (layout/pane? node) (break (replacer node)))
+  (if (layout/view? node) (break (replacer node)))
   (def path (layout/attach-path node))
   (if (nil? path) (break node))
   (def current (layout/path node path))
@@ -391,7 +391,7 @@ See [the layouts chapter](/layouts.md#api) for more information.
   layout/detach
   ```Detach the attached node in the tree.```
   [node]
-  (layout/replace-attached node |(layout/pane :id ($ :id))))
+  (layout/replace-attached node |(layout/view :id ($ :id))))
 
 (defn
   layout/attach
@@ -400,7 +400,7 @@ See [the layouts chapter](/layouts.md#api) for more information.
   (layout/replace
     (layout/detach layout)
     path
-    |(layout/pane :attached true :id ($ :id))))
+    |(layout/view :attached true :id ($ :id))))
 
 (defn-
   activate-stack-leaf
@@ -533,7 +533,7 @@ For example, when moving vertically upwards, for a vertical split node this func
   (defn
     find-nearest
     [node]
-    (if (layout/pane? node) (break @[]))
+    (if (layout/view? node) (break @[]))
     (def [nearest] (successors node))
     @[;nearest ;(find-nearest (layout/path node nearest))])
 
@@ -621,7 +621,7 @@ For example, when moving vertically upwards, for a vertical split node this func
   layout/attach-first
   ```Attach to the first pane found in the layout.```
   [layout]
-  (def path (layout/find layout layout/pane?))
+  (def path (layout/find layout layout/view?))
   (if (nil? path) (break layout))
   (layout/attach layout path))
 
@@ -639,9 +639,9 @@ Example:
 (layout/set
   (layout/new
     (layout/grid @[(attach :id 1)
-                   (pane :id 2)
-                   (pane :id 3)
-                   (pane :id 4)]
+                   (view :id 2)
+                   (view :id 3)
+                   (view :id 4)]
                  :border :rounded)))
 ```
   ````
@@ -730,9 +730,9 @@ Example:
                      |(> (length (layout/successors $)) 1)))
 
   # If there are no parents with other children, it's game over, just set the
-  # layout to a disconnected pane
+  # layout to a disconnected view
   (if (nil? parent-path)
-    (break {:type :pane :attached true}))
+    (break {:type :view :attached true}))
 
   (def parent (layout/path layout parent-path))
 
@@ -782,8 +782,8 @@ Example:
   (layout/assoc layout parent-path new-parent))
 
 (key/action
-  action/kill-layout-pane
-  "Remove the current pane from the layout and the node tree."
+  action/kill-layout-view
+  "Remove the current view from the layout and the node tree."
   (def layout (layout/get))
   (def {:id id} (layout/path layout (layout/attach-path layout)))
   (layout/set (layout/remove-attached layout))
@@ -795,8 +795,8 @@ Example:
   (cmd/kill (pane/current)))
 
 (key/action
-  action/remove-layout-pane
-  "Remove the current pane from the layout."
+  action/remove-layout-view
+  "Remove the current view from the layout."
   (layout/set (layout/remove-attached (layout/get))))
 
 (key/action
@@ -815,7 +815,7 @@ Example:
   (tree/rm id))
 
 (defmacro-
-  pane-creator
+  view-creator
   [name docstring transformer]
   ~(upscope
      (key/action
@@ -829,51 +829,51 @@ Example:
        (,layout/set
          (,transformer
            (,layout/get)
-           {:type :pane :id shell :attached true})))))
+           {:type :view :id shell :attached true})))))
 
-(pane-creator
+(view-creator
   action/split-right
-  "Split the current pane to the right."
+  "Split the current view to the right."
   layout/split-right)
 
-(pane-creator
+(view-creator
   action/split-left
-  "Split the current pane to the left."
+  "Split the current view to the left."
   layout/split-left)
 
-(pane-creator
+(view-creator
   action/split-up
-  "Split the current pane upwards."
+  "Split the current view upwards."
   layout/split-up)
 
-(pane-creator
+(view-creator
   action/split-down
-  "Split the current pane downwards."
+  "Split the current view downwards."
   layout/split-down)
 
 (key/action
   action/move-up
-  "Move up to the next pane."
+  "Move up to the next view."
   (layout/set (layout/move-up (layout/get))))
 
 (key/action
   action/move-down
-  "Move down to the next pane."
+  "Move down to the next view."
   (layout/set (layout/move-down (layout/get))))
 
 (key/action
   action/move-left
-  "Move left to the next pane."
+  "Move left to the next view."
   (layout/set (layout/move-left (layout/get))))
 
 (key/action
   action/move-right
-  "Move right to the next pane."
+  "Move right to the next view."
   (layout/set (layout/move-right (layout/get))))
 
 (defn-
-  resize-pane
-  ```Find the nearest parent split of the attached pane and adjust its size.
+  resize-view
+  ```Find the nearest parent split of the attached view and adjust its size.
 direction should be 1 (grow) or -1 (shrink).```
   [direction]
   (def layout (layout/get))
@@ -901,13 +901,13 @@ direction should be 1 (grow) or -1 (shrink).```
 
 (key/action
   action/grow-split
-  "Grow the current pane within its split."
-  (resize-pane 1))
+  "Grow the current view within its split."
+  (resize-view 1))
 
 (key/action
   action/shrink-split
-  "Shrink the current pane within its split."
-  (resize-pane -1))
+  "Shrink the current view within its split."
+  (resize-view -1))
 
 (key/action
   action/add-node
@@ -929,11 +929,11 @@ direction should be 1 (grow) or -1 (shrink).```
                [":split (horizontal)" |(struct :type :split
 
                                                :a $
-                                               :b {:type :pane})]
+                                               :b {:type :view})]
                [":split (vertical)" |(struct :type :split
                                              :vertical true
                                              :a $
-                                             :b {:type :pane})]])
+                                             :b {:type :view})]])
   (as?-> types _
          (map (fn [[name mapper]]
                 (def new-layout (layout/replace-attached layout mapper))
@@ -1009,7 +1009,7 @@ direction should be 1 (grow) or -1 (shrink).```
 (key/action
   action/clear-layout
   "Clear out the layout."
-  (layout/set {:type :pane :attached true}))
+  (layout/set {:type :view :attached true}))
 
 (var- last-margins nil)
 (defn-

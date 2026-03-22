@@ -32,7 +32,7 @@ const (
 	ParamInputThumbsMatchStyle      = "input-thumbs-match-style"
 	ParamInputThumbsPartialStyle    = "input-thumbs-partial-style"
 	ParamNumSearchWorkers           = "num-search-workers"
-	ParamRemovePaneOnExit           = "remove-pane-on-exit"
+	ParamRemoveViewOnExit           = "remove-view-on-exit"
 	ParamReplayCopyStyle            = "replay-copy-style"
 	ParamReplayIncrementalStyle     = "replay-incremental-style"
 	ParamReplayMatchActiveStyle     = "replay-match-active-style"
@@ -472,22 +472,22 @@ func (p *Parameters) SetNumSearchWorkers(value int) {
 	p.set(ParamNumSearchWorkers, value)
 }
 
-func (p *Parameters) RemovePaneOnExit() bool {
-	value, ok := p.Get(ParamRemovePaneOnExit)
+func (p *Parameters) RemoveViewOnExit() bool {
+	value, ok := p.Get(ParamRemoveViewOnExit)
 	if !ok {
-		return defaults.RemovePaneOnExit
+		return defaults.RemoveViewOnExit
 	}
 
 	realValue, ok := value.(bool)
 	if !ok {
-		return defaults.RemovePaneOnExit
+		return defaults.RemoveViewOnExit
 	}
 
 	return realValue
 }
 
-func (p *Parameters) SetRemovePaneOnExit(value bool) {
-	p.set(ParamRemovePaneOnExit, value)
+func (p *Parameters) SetRemoveViewOnExit(value bool) {
+	p.set(ParamRemoveViewOnExit, value)
 }
 
 func (p *Parameters) ReplayCopyStyle() *style.Style {
@@ -952,7 +952,7 @@ func (p *Parameters) isDefault(key string) bool {
 		return true
 	case ParamNumSearchWorkers:
 		return true
-	case ParamRemovePaneOnExit:
+	case ParamRemoveViewOnExit:
 		return true
 	case ParamReplayCopyStyle:
 		return true
@@ -1053,8 +1053,8 @@ func (p *Parameters) getDefault(key string) (value interface{}, ok bool) {
 		return defaults.InputThumbsPartialStyle, true
 	case ParamNumSearchWorkers:
 		return defaults.NumSearchWorkers, true
-	case ParamRemovePaneOnExit:
-		return defaults.RemovePaneOnExit, true
+	case ParamRemoveViewOnExit:
+		return defaults.RemoveViewOnExit, true
 	case ParamReplayCopyStyle:
 		return defaults.ReplayCopyStyle, true
 	case ParamReplayIncrementalStyle:
@@ -1546,11 +1546,11 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		p.set(key, translated)
 		return nil
 
-	case ParamRemovePaneOnExit:
+	case ParamRemoveViewOnExit:
 		if !janetOk {
 			realValue, ok := value.(bool)
 			if !ok {
-				return fmt.Errorf("invalid value for ParamRemovePaneOnExit, should be bool")
+				return fmt.Errorf("invalid value for ParamRemoveViewOnExit, should be bool")
 			}
 			p.set(key, realValue)
 			return nil
@@ -1560,7 +1560,7 @@ func (p *Parameters) setDefault(key string, value interface{}) error {
 		err := janetValue.Unmarshal(&translated)
 		if err != nil {
 			janetValue.Free()
-			return fmt.Errorf("invalid value for :remove-pane-on-exit: %s", err)
+			return fmt.Errorf("invalid value for :remove-view-on-exit: %s", err)
 		}
 		p.set(key, translated)
 		return nil
@@ -2117,9 +2117,9 @@ func init() {
 			Default:   defaults.NumSearchWorkers,
 		},
 		{
-			Name:      "remove-pane-on-exit",
-			Docstring: "If this is `true`, when a pane's process exits or its node is killed\n(such as with {{api tree/rm}}), the portion of the layout related\nto that node will be removed. This makes cy's layout functionality\nwork a bit more like tmux.",
-			Default:   defaults.RemovePaneOnExit,
+			Name:      "remove-view-on-exit",
+			Docstring: "If this is `true`, when a view's process exits or its node is killed\n(such as with {{api tree/rm}}), the portion of the layout related\nto that node will be removed. This makes cy's layout functionality\nwork a bit more like tmux.",
+			Default:   defaults.RemoveViewOnExit,
 		},
 		{
 			Name:      "replay-copy-style",

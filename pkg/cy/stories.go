@@ -93,7 +93,7 @@ func init() {
 		}
 		_ = client.execute(`
 (def cmd (cmd/new :root))
-(layout/set {:type :pane :id cmd :attached true})
+(layout/set {:type :view :id cmd :attached true})
 		`)
 		return screen, err
 	}, stories.Config{
@@ -474,8 +474,8 @@ func init() {
 (layout/set
         {:type :split
          :percent 26
-	 :a {:type :pane :id cmd1 :attached true}
-	 :b {:type :pane :id cmd2}})
+	 :a {:type :view :id cmd1 :attached true}
+	 :b {:type :view :id cmd2}})
 		`)
 		return screen, err
 	}, stories.Config{})
@@ -498,9 +498,9 @@ func init() {
 	 :vertical true
 	 :a {:type :split
 		 :percent 50
-		 :a {:type :pane :id cmd1}
-		 :b {:type :pane :id cmd2}}
-	 :b {:type :pane :id cmd3 :attached true}})
+		 :a {:type :view :id cmd1}
+		 :b {:type :view :id cmd2}}
+	 :b {:type :view :id cmd3 :attached true}})
 		`)
 		return screen, err
 	}, stories.Config{})
@@ -519,8 +519,8 @@ func init() {
 (layout/set
         {:type :split
          :cells 30
-	 :a {:type :pane :id cmd1 :attached true}
-	 :b {:type :pane :id cmd2}})
+	 :a {:type :view :id cmd1 :attached true}
+	 :b {:type :view :id cmd2}})
 		`)
 		return screen, err
 	}, stories.Config{})
@@ -539,7 +539,7 @@ func init() {
         {:type :margins
          :cols 40
 	 :rows 20
-         :node {:type :pane :id cmd1 :attached true}})
+         :node {:type :view :id cmd1 :attached true}})
 		`)
 		return screen, err
 	}, stories.Config{})
@@ -559,7 +559,7 @@ func init() {
          :cols 40
 	 :rows 20
 	 :border-fg (fn [layout] (if (nil? (layout/attach-id layout)) "4" "5"))
-         :node {:type :pane :id cmd1 :attached true}})
+         :node {:type :view :id cmd1 :attached true}})
 		`)
 		return screen, err
 	}, stories.Config{
@@ -586,8 +586,8 @@ func init() {
         {:type :split
 	 :a {:type :margins
 	     :cols 40
-	     :node {:type :pane :id cmd1 :attached true}}
-	 :b {:type :pane :id cmd2}})
+	     :node {:type :view :id cmd1 :attached true}}
+	 :b {:type :view :id cmd2}})
 		`)
 		return screen, err
 	}, stories.Config{})
@@ -632,7 +632,7 @@ func init() {
 		}
 		_ = client.execute(`
 (def cmd (cmd/new :root))
-(layout/set {:type :pane :id cmd :attached true})
+(layout/set {:type :view :id cmd :attached true})
 (tree/rm cmd)
 		`)
 		return screen, err
@@ -647,7 +647,7 @@ func init() {
 			return nil, err
 		}
 		_ = client.execute(`
-(layout/set {:type :pane :id 1234 :attached true})
+(layout/set {:type :view :id 1234 :attached true})
 		`)
 		return screen, err
 	}, stories.Config{})
@@ -662,7 +662,7 @@ func init() {
 		}
 		_ = client.execute(`
 (def group (group/mkdir :root "/foo/bar/baz"))
-(layout/set {:type :pane :id group :attached true})
+(layout/set {:type :view :id group :attached true})
 		`)
 		return screen, err
 	}, stories.Config{})
@@ -681,7 +681,7 @@ func init() {
         {:type :borders
 	 :title ":title"
 	 :title-bottom ":title-bottom"
-	 :node {:type :pane :id cmd1 :attached true}})
+	 :node {:type :view :id cmd1 :attached true}})
 		`)
 		return screen, err
 	}, stories.Config{})
@@ -707,7 +707,7 @@ func init() {
           :title (style/text "some pane" :fg "0" :bg "6")
           :title-bottom (style/text "some subtitle" :fg "0" :bg "6"))
         (borders
-          (pane :id cmd2)
+          (view :id cmd2)
           :border-fg "5"
           :title (style/text "some pane" :italic true :bg "5")
           :title-bottom (style/text "some subtitle" :italic true :bg "5"))
@@ -733,8 +733,8 @@ func init() {
 (layout/set (layout/new
   (tabs
     @[(active-tab "tab 1" (attach :id cmd1))
-      (tab "tab 2" (margins (pane :id cmd2) :cols 40))
-      (tab "tab 3" (borders (pane :id cmd3) :title "foobar"))]
+      (tab "tab 2" (margins (view :id cmd2) :cols 40))
+      (tab "tab 3" (borders (view :id cmd3) :title "foobar"))]
     :bottom false)))
 		`)
 		return screen, err
@@ -768,8 +768,8 @@ func init() {
 (layout/set (layout/new
   (tabs
     @[(active-tab "tab 1" (attach :id cmd1))
-      (tab "tab 2" (pane))
-      (tab "tab 3" (pane))]
+      (tab "tab 2" (view))
+      (tab "tab 3" (view))]
     :bottom true)))
 		`)
 		return screen, err
@@ -787,31 +787,31 @@ func init() {
 (def cmd1 (shell/new))
 (layout/set (layout/new
   (tabs
-    @[(tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
+    @[(tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
       (active-tab "tabtabtab" (attach :id cmd1))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))]
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))]
     :bottom false)))
 		`)
 		return screen, err
@@ -829,29 +829,29 @@ func init() {
 (def cmd1 (shell/new))
 (layout/set (layout/new
   (tabs
-    @[(tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
-      (tab "tabtabtab" (pane))
+    @[(tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
+      (tab "tabtabtab" (view))
       (active-tab "tabtabtab" (attach :id cmd1))]
     :bottom false)))
 		`)
@@ -872,11 +872,11 @@ func init() {
 (def cmd3 (shell/new))
 (layout/set (layout/new
   (stack
-    @[(leaf (pane :id cmd1) :title "leaf 1")
+    @[(leaf (view :id cmd1) :title "leaf 1")
       (active-leaf (attach :id cmd2)
                    :title "leaf 2"
                    :title-bottom "subtitle")
-      (leaf (pane :id cmd3) :title "leaf 3")])))
+      (leaf (view :id cmd3) :title "leaf 3")])))
 		`)
 		return screen, err
 	}, stories.Config{})
@@ -893,11 +893,11 @@ func init() {
 (def cmd1 (shell/new))
 (layout/set (layout/new
   (stack
-    @[(leaf (pane) :title "first")
-      (leaf (pane) :title "second")
+    @[(leaf (view) :title "first")
+      (leaf (view) :title "second")
       (active-leaf (attach :id cmd1) :title "active" :title-bottom "bottom")
-      (leaf (pane) :title "fourth")
-      (leaf (pane) :title "fifth")])))
+      (leaf (view) :title "fourth")
+      (leaf (view) :title "fifth")])))
 		`)
 		return screen, err
 	}, stories.Config{})
@@ -915,7 +915,7 @@ func init() {
 (def cmd2 (shell/new))
 (layout/set (layout/new
   (stack
-    @[(leaf (pane :id cmd1) :title "inactive" :border-fg "5")
+    @[(leaf (view :id cmd1) :title "inactive" :border-fg "5")
       (active-leaf (attach :id cmd2)
                    :title (style/text "active" :fg "0" :bg "6")
                    :title-bottom (style/text "subtitle" :fg "0" :bg "6")
@@ -975,11 +975,11 @@ func init() {
 		    (attach :id cmd1))
 		  (color-map
 		    theme
-		    (pane :id cmd2))
+		    (view :id cmd2))
 		  :vertical true)
                 (color-map
                   theme
-                  (pane :id cmd3)))))
+                  (view :id cmd3)))))
 		`)
 		return screen, err
 	}, stories.Config{
@@ -1045,7 +1045,7 @@ func init() {
                   :title border-title
                   :border-fg border-fg)
                 (borders
-                  (pane :id cmd2)
+                  (view :id cmd2)
                   :title border-title
                   :border-fg border-fg))))
 		`)
@@ -1096,7 +1096,7 @@ func init() {
                 bar-text
                 (split
                   (attach :id cmd1)
-                  (pane :id cmd2)))))
+                  (view :id cmd2)))))
 		`)
 		return screen, err
 	}, stories.Config{
@@ -1195,7 +1195,7 @@ func init() {
 (layout/set (layout/new
     (split
       (attach :id cmd1)
-      (pane :id %d))
+      (view :id %d))
   ))`, pane.Id()))
 		return screen, nil
 	}, stories.Config{
@@ -1252,7 +1252,7 @@ func init() {
 (layout/set (layout/new
     (split
       (attach :id cmd1)
-      (pane :id %d))
+      (view :id %d))
   ))`, pane.Id()))
 		return screen, nil
 	}, stories.Config{

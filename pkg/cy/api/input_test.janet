@@ -13,7 +13,7 @@
                          :layout {:type :borders
                                   :title "test"
                                   :border :double
-                                  :node {:type :pane :attached true}}} 2]]))
+                                  :node {:type :view :attached true}}} 2]]))
 
 (test "text"
   # In test mode, this should return "test" due to SkipInput() behavior

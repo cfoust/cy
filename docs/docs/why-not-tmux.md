@@ -36,7 +36,7 @@ Without trying it for yourself, it's hard to appreciate just how useful it is to
 
 {{story png placeholder}}
 
-`cy` has a flexible [layout system](/layouts.md). In addition, the panes you run behave like buffers in `vim`: they stick around regardless of whether they are visible on your screen. In other words, unlike `tmux`, the visual presentation of panes is unrelated to their state.
+`cy` has a flexible [layout system](/layouts.md). The panes you run behave like buffers in `vim`: they stick around regardless of whether they are visible on your screen. Unlike `tmux`, the layout is independent of pane state; a pane can exist without being shown in any [view](/layouts/nodes/view.md).
 
 Most of the time, however, you can keep things simple, because `cy` makes it easy to switch between panes using [fuzzy finding](/user-input/fuzzy-finding.md) (with previews!). It also contains a minimal, [filesystem-like abstraction](/groups-and-panes.md) for grouping panes together.
 

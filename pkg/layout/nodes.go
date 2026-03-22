@@ -1,7 +1,7 @@
 package layout
 
 const (
-	NodeTypePane NodeType = iota
+	NodeTypeView NodeType = iota
 	NodeTypeSplit
 	NodeTypeMargins
 	NodeTypeBorders
@@ -11,7 +11,7 @@ const (
 	NodeTypeStack
 )
 const (
-	NodeKeywordPane     = "pane"
+	NodeKeywordView     = "view"
 	NodeKeywordBar      = "bar"
 	NodeKeywordBorders  = "borders"
 	NodeKeywordColorMap = "color-map"
@@ -22,7 +22,7 @@ const (
 )
 
 var janetTypes = map[string]Node{
-	NodeKeywordPane:     &PaneNode{},
+	NodeKeywordView:     &ViewNode{},
 	NodeKeywordBar:      &BarNode{},
 	NodeKeywordBorders:  &BordersNode{},
 	NodeKeywordColorMap: &ColorMapNode{},

@@ -24,40 +24,40 @@ import (
 
 var nextRegionId atomic.Uint32
 
-type PaneNode struct {
+type ViewNode struct {
 	Attached     bool
 	RemoveOnExit *bool
 	ID           *tree.NodeID
 	Meta         *janet.Value
 }
 
-var _ Node = (*PaneNode)(nil)
+var _ Node = (*ViewNode)(nil)
 
-func (p *PaneNode) Type() NodeType {
-	return NodeTypePane
+func (p *ViewNode) Type() NodeType {
+	return NodeTypeView
 }
 
-func (p *PaneNode) IsAttached() bool {
+func (p *ViewNode) IsAttached() bool {
 	return p.Attached
 }
 
-func (p *PaneNode) Children() (nodes []Node) {
+func (p *ViewNode) Children() (nodes []Node) {
 	return
 }
 
-func (p *PaneNode) SetChild(index int, node Node) {
+func (p *ViewNode) SetChild(index int, node Node) {
 }
 
-func (p *PaneNode) Clone() Node {
+func (p *ViewNode) Clone() Node {
 	cloned := *p
 	return &cloned
 }
 
-func (p *PaneNode) Validate() error {
+func (p *ViewNode) Validate() error {
 	return nil
 }
 
-func (p *PaneNode) MarshalJanet() interface{} {
+func (p *ViewNode) MarshalJanet() interface{} {
 	return struct {
 		Type         janet.Keyword
 		Attached     bool
@@ -65,7 +65,7 @@ func (p *PaneNode) MarshalJanet() interface{} {
 		RemoveOnExit *bool
 		Meta         *janet.Value
 	}{
-		Type:         NodeKeywordPane,
+		Type:         NodeKeywordView,
 		Attached:     p.Attached,
 		ID:           p.ID,
 		RemoveOnExit: p.RemoveOnExit,
@@ -73,7 +73,7 @@ func (p *PaneNode) MarshalJanet() interface{} {
 	}
 }
 
-func (p *PaneNode) UnmarshalJanet(value *janet.Value) (Node, error) {
+func (p *ViewNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 	type paneArgs struct {
 		Attached     *bool
 		RemoveOnExit *bool
@@ -86,7 +86,7 @@ func (p *PaneNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	type_ := PaneNode{
+	type_ := ViewNode{
 		ID:   args.ID,
 		Meta: args.Meta,
 	}
@@ -102,22 +102,22 @@ func (p *PaneNode) UnmarshalJanet(value *janet.Value) (Node, error) {
 	return &type_, err
 }
 
-func (n *PaneNode) VisibleChildren() (nodes []Node) {
+func (n *ViewNode) VisibleChildren() (nodes []Node) {
 	return n.Children()
 }
 
-func (n *PaneNode) SetVisibleChild(index int, node Node) {
+func (n *ViewNode) SetVisibleChild(index int, node Node) {
 	n.SetChild(index, node)
 }
 
-func (n *PaneNode) Screen(
+func (n *ViewNode) Screen(
 	ctx context.Context,
 	tree *tree.Tree,
 	server *server.Server,
 	params *params.Parameters,
 	children []Reusable,
 ) Reusable {
-	return NewPane(
+	return NewView(
 		ctx,
 		tree,
 		server,
@@ -125,7 +125,7 @@ func (n *PaneNode) Screen(
 	)
 }
 
-type Pane struct {
+type View struct {
 	util.Lifetime
 	deadlock.RWMutex
 	*mux.UpdatePublisher
@@ -134,7 +134,7 @@ type Pane struct {
 	tree   *tree.Tree
 	server *server.Server
 
-	config *PaneNode
+	config *ViewNode
 
 	size geom.Size
 	id   *tree.NodeID
@@ -145,14 +145,14 @@ type Pane struct {
 	isAttached   bool
 	removeOnExit bool
 
-	// A unique ID for this Pane that is _only_ used for thumbs
+	// A unique ID for this View that is _only_ used for thumbs
 	regionId uint32
 }
 
-var _ mux.Screen = (*Pane)(nil)
-var _ Reusable = (*Pane)(nil)
+var _ mux.Screen = (*View)(nil)
+var _ Reusable = (*View)(nil)
 
-func (p *Pane) Send(msg mux.Msg) {
+func (p *View) Send(msg mux.Msg) {
 	p.RLock()
 	defer p.RUnlock()
 
@@ -182,18 +182,18 @@ func (p *Pane) Send(msg mux.Msg) {
 		return
 	}
 
-	newConfig := p.config.Clone().(*PaneNode)
+	newConfig := p.config.Clone().(*ViewNode)
 	newConfig.Attached = true
 	p.Publish(NodeChangeEvent{
 		Config: newConfig,
 	})
 }
 
-func (p *Pane) Kill() {
+func (p *View) Kill() {
 	p.Cancel()
 }
 
-func (p *Pane) State() *tty.State {
+func (p *View) State() *tty.State {
 	p.RLock()
 	defer p.RUnlock()
 
@@ -221,7 +221,7 @@ func (p *Pane) State() *tty.State {
 	return state
 }
 
-func (p *Pane) Resize(size geom.Size) error {
+func (p *View) Resize(size geom.Size) error {
 	p.Lock()
 	p.size = size
 	screen := p.screen
@@ -234,7 +234,7 @@ func (p *Pane) Resize(size geom.Size) error {
 	return screen.Resize(size)
 }
 
-func (p *Pane) attach(
+func (p *View) attach(
 	ctx context.Context,
 	id *tree.NodeID,
 ) (mux.Screen, error) {
@@ -300,7 +300,7 @@ func (p *Pane) attach(
 	return client, nil
 }
 
-func (p *Pane) setID(id *tree.NodeID) error {
+func (p *View) setID(id *tree.NodeID) error {
 	p.Lock()
 	defer p.Unlock()
 
@@ -353,19 +353,19 @@ func (p *Pane) setID(id *tree.NodeID) error {
 	return nil
 }
 
-func (p *Pane) applyConfig(config *PaneNode) {
+func (p *View) applyConfig(config *ViewNode) {
 	p.config = config
 	p.isAttached = config.Attached
 
 	if config.RemoveOnExit != nil {
 		p.removeOnExit = *config.RemoveOnExit
 	} else {
-		p.removeOnExit = p.params.RemovePaneOnExit()
+		p.removeOnExit = p.params.RemoveViewOnExit()
 	}
 }
 
-func (p *Pane) Apply(node Node) (bool, error) {
-	config, ok := node.(*PaneNode)
+func (p *View) Apply(node Node) (bool, error) {
+	config, ok := node.(*ViewNode)
 	if !ok {
 		return false, nil
 	}
@@ -391,14 +391,14 @@ func (p *Pane) Apply(node Node) (bool, error) {
 	return true, nil
 }
 
-func NewPane(
+func NewView(
 	ctx context.Context,
 	tree *tree.Tree,
 	server *server.Server,
 	params *params.Parameters,
-) *Pane {
+) *View {
 	lifetime := util.NewLifetime(ctx)
-	p := &Pane{
+	p := &View{
 		Lifetime:        lifetime,
 		UpdatePublisher: mux.NewPublisher(),
 		tree:            tree,

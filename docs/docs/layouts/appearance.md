@@ -41,7 +41,7 @@ The layout shown in the monstrosity above was generated with the following code:
           :title (style/text "some pane" :fg "0" :bg "6")
           :title-bottom (style/text "some subtitle" :fg "0" :bg "6"))
         (borders
-          (pane :id cmd2)
+          (view :id cmd2)
           :border-fg "5"
           :title (style/text "some pane" :italic true :bg "5")
           :title-bottom (style/text "some subtitle" :italic true :bg "5"))

@@ -186,7 +186,7 @@ func buildLayout(
 								Title: prop.NewStatic(
 									"left",
 								),
-								Node: &L.PaneNode{
+								Node: &L.ViewNode{
 									Attached: true,
 									ID:       ids[0],
 								},
@@ -197,7 +197,7 @@ func buildLayout(
 										"status",
 									),
 									Bottom: true,
-									Node: &L.PaneNode{
+									Node: &L.ViewNode{
 										ID: ids[1],
 									},
 								},
@@ -205,7 +205,7 @@ func buildLayout(
 									Map: prop.NewStatic(
 										colorMap,
 									),
-									Node: &L.PaneNode{
+									Node: &L.ViewNode{
 										ID: ids[2],
 									},
 								},
@@ -214,7 +214,7 @@ func buildLayout(
 					},
 					{
 						Name: "other",
-						Node: &L.PaneNode{},
+						Node: &L.ViewNode{},
 					},
 				},
 			},

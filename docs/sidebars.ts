@@ -68,7 +68,7 @@ const sidebars: SidebarsConfig = {
                 'layouts/nodes/borders',
                 'layouts/nodes/color-map',
                 'layouts/nodes/margins',
-                'layouts/nodes/pane',
+                'layouts/nodes/view',
                 'layouts/nodes/split',
                 'layouts/nodes/stack',
                 'layouts/nodes/tabs',

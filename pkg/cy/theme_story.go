@@ -72,10 +72,10 @@ var initTheme stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	err = client.SetLayout(L.New(&L.SplitNode{
 		Vertical: true,
 		Border:   prop.NewStatic(&style.DefaultBorder),
-		A: &L.PaneNode{
+		A: &L.ViewNode{
 			ID: &replayTop,
 		},
-		B: &L.PaneNode{
+		B: &L.ViewNode{
 			ID:       &replayBottom,
 			Attached: true,
 		},

@@ -84,8 +84,8 @@ func TestSet(t *testing.T) {
 	err := l.Set(L.New(
 		&L.MarginsNode{
 			Node: &L.SplitNode{
-				A: &L.PaneNode{Attached: true},
-				B: &L.PaneNode{},
+				A: &L.ViewNode{Attached: true},
+				B: &L.ViewNode{},
 			},
 		},
 	))
@@ -95,10 +95,10 @@ func TestSet(t *testing.T) {
 	err = l.Set(L.New(
 		&L.MarginsNode{
 			Node: &L.SplitNode{
-				A: &L.PaneNode{Attached: true},
+				A: &L.ViewNode{Attached: true},
 				B: &L.SplitNode{
-					A: &L.PaneNode{},
-					B: &L.PaneNode{},
+					A: &L.ViewNode{},
+					B: &L.ViewNode{},
 				},
 			},
 		},
@@ -118,8 +118,8 @@ func TestClickInactivePane(t *testing.T) {
 
 	err := l.Set(L.New(
 		&L.SplitNode{
-			A: &L.PaneNode{Attached: true},
-			B: &L.PaneNode{},
+			A: &L.ViewNode{Attached: true},
+			B: &L.ViewNode{},
 		},
 	))
 	require.NoError(t, err)
@@ -135,12 +135,12 @@ func TestClickInactivePane(t *testing.T) {
 	time.Sleep(500 * time.Millisecond)
 
 	require.Equal(t, &L.SplitNode{
-		A: &L.PaneNode{},
-		B: &L.PaneNode{Attached: true},
+		A: &L.ViewNode{},
+		B: &L.ViewNode{Attached: true},
 	}, l.Get().Root)
 }
 
-func TestPaneRemoval(t *testing.T) {
+func TestViewRemoval(t *testing.T) {
 	ctx := context.Background()
 	size := geom.DEFAULT_SIZE
 	tree := T.NewTree()
@@ -153,7 +153,7 @@ func TestPaneRemoval(t *testing.T) {
 	)
 	_ = l.Resize(size)
 
-	createPane := func() (*taro.Program, *T.Pane, *T.NodeID) {
+	createView := func() (*taro.Program, *T.Pane, *T.NodeID) {
 		static := L.NewStatic(
 			ctx,
 			false,
@@ -181,17 +181,17 @@ func TestPaneRemoval(t *testing.T) {
 
 	// First we just test killing the tree nodes
 	{
-		_, pane1, id1 := createPane()
-		_, pane2, id2 := createPane()
+		_, pane1, id1 := createView()
+		_, pane2, id2 := createView()
 
 		removeOnExit := true
 		err := l.Set(L.New(
 			&L.SplitNode{
-				A: &L.PaneNode{
+				A: &L.ViewNode{
 					Attached: true,
 					ID:       id1,
 				},
-				B: &L.PaneNode{
+				B: &L.ViewNode{
 					ID:           id2,
 					RemoveOnExit: &removeOnExit,
 				},
@@ -205,11 +205,11 @@ func TestPaneRemoval(t *testing.T) {
 
 		// The attached node should stick around
 		require.Equal(t, &L.SplitNode{
-			A: &L.PaneNode{
+			A: &L.ViewNode{
 				Attached: true,
 				ID:       nil,
 			},
-			B: &L.PaneNode{
+			B: &L.ViewNode{
 				ID:           id2,
 				RemoveOnExit: &removeOnExit,
 			},
@@ -218,10 +218,10 @@ func TestPaneRemoval(t *testing.T) {
 		// Switch attachment to B
 		require.NoError(t, l.Set(L.New(
 			&L.SplitNode{
-				A: &L.PaneNode{
+				A: &L.ViewNode{
 					ID: nil,
 				},
-				B: &L.PaneNode{
+				B: &L.ViewNode{
 					Attached:     true,
 					ID:           id2,
 					RemoveOnExit: &removeOnExit,
@@ -232,7 +232,7 @@ func TestPaneRemoval(t *testing.T) {
 		// This pane should not stick around
 		pane2.Cancel()
 		sleep()
-		require.Equal(t, &L.PaneNode{
+		require.Equal(t, &L.ViewNode{
 			Attached: true,
 			ID:       nil,
 		}, l.Get().Root)
@@ -240,16 +240,16 @@ func TestPaneRemoval(t *testing.T) {
 
 	// Next we test exiting the panes themselves
 	{
-		static1, _, id1 := createPane()
-		static2, _, id2 := createPane()
+		static1, _, id1 := createView()
+		static2, _, id2 := createView()
 
 		removeOnExit := true
 		layout := &L.SplitNode{
-			A: &L.PaneNode{
+			A: &L.ViewNode{
 				Attached: true,
 				ID:       id1,
 			},
-			B: &L.PaneNode{
+			B: &L.ViewNode{
 				ID:           id2,
 				RemoveOnExit: &removeOnExit,
 			},
@@ -262,18 +262,18 @@ func TestPaneRemoval(t *testing.T) {
 		static1.Publish(S.ExitEvent{})
 		sleep()
 		require.Equal(t, &L.SplitNode{
-			A: &L.PaneNode{
+			A: &L.ViewNode{
 				Attached: true,
 				ID:       id1,
 			},
-			B: &L.PaneNode{
+			B: &L.ViewNode{
 				ID:           id2,
 				RemoveOnExit: &removeOnExit,
 			},
 		}, l.Get().Root)
 
 		// Reset the layout to force new subscriptions
-		require.NoError(t, l.Set(L.New(&L.PaneNode{Attached: true})))
+		require.NoError(t, l.Set(L.New(&L.ViewNode{Attached: true})))
 		require.NoError(t, l.Set(L.New(layout)))
 
 		// static1 exiting with an error should still cause nothing to happen
@@ -282,40 +282,40 @@ func TestPaneRemoval(t *testing.T) {
 		})
 		sleep()
 		require.Equal(t, &L.SplitNode{
-			A: &L.PaneNode{
+			A: &L.ViewNode{
 				Attached: true,
 				ID:       id1,
 			},
-			B: &L.PaneNode{
+			B: &L.ViewNode{
 				ID:           id2,
 				RemoveOnExit: &removeOnExit,
 			},
 		}, l.Get().Root)
 
 		layout = &L.SplitNode{
-			A: &L.PaneNode{
+			A: &L.ViewNode{
 				ID: id1,
 			},
-			B: &L.PaneNode{
+			B: &L.ViewNode{
 				Attached:     true,
 				ID:           id2,
 				RemoveOnExit: &removeOnExit,
 			},
 		}
-		require.NoError(t, l.Set(L.New(&L.PaneNode{Attached: true})))
+		require.NoError(t, l.Set(L.New(&L.ViewNode{Attached: true})))
 		require.NoError(t, l.Set(L.New(layout)))
 		sleep()
 
 		// If static2 exits without an error, it should remove the node
 		static2.Publish(S.ExitEvent{})
 		sleep()
-		require.Equal(t, &L.PaneNode{
+		require.Equal(t, &L.ViewNode{
 			Attached: true,
 			ID:       id1,
 		}, l.Get().Root)
 
 		// Reset
-		require.NoError(t, l.Set(L.New(&L.PaneNode{Attached: true})))
+		require.NoError(t, l.Set(L.New(&L.ViewNode{Attached: true})))
 		require.NoError(t, l.Set(L.New(layout)))
 
 		// If static2 exits with an error, it should NOT remove the node
@@ -339,10 +339,10 @@ func TestClickStack(t *testing.T) {
 			Leaves: []L.Leaf{
 				{
 					Active: true,
-					Node:   &L.PaneNode{Attached: true},
+					Node:   &L.ViewNode{Attached: true},
 				},
 				{
-					Node: &L.PaneNode{},
+					Node: &L.ViewNode{},
 				},
 			},
 		},
@@ -390,12 +390,12 @@ func TestClickTabs(t *testing.T) {
 				{
 					Name:   name,
 					Active: true,
-					Node:   &L.PaneNode{Attached: true},
+					Node:   &L.ViewNode{Attached: true},
 				},
 				{
 					Name:   name,
 					Active: false,
-					Node:   &L.PaneNode{},
+					Node:   &L.ViewNode{},
 				},
 			},
 		},
@@ -421,12 +421,12 @@ func TestClickTabs(t *testing.T) {
 			{
 				Name:   name,
 				Active: false,
-				Node:   &L.PaneNode{},
+				Node:   &L.ViewNode{},
 			},
 			{
 				Name:   name,
 				Active: true,
-				Node:   &L.PaneNode{Attached: true},
+				Node:   &L.ViewNode{Attached: true},
 			},
 		},
 	}, l.Get().Root)
@@ -438,12 +438,12 @@ func TestClickTabs(t *testing.T) {
 			{
 				Name:   name,
 				Active: true,
-				Node:   &L.PaneNode{Attached: true},
+				Node:   &L.ViewNode{Attached: true},
 			},
 			{
 				Name:   name,
 				Active: false,
-				Node:   &L.PaneNode{},
+				Node:   &L.ViewNode{},
 			},
 		},
 	}, l.Get().Root)
@@ -455,12 +455,12 @@ func TestClickTabs(t *testing.T) {
 			{
 				Name:   name,
 				Active: true,
-				Node:   &L.PaneNode{Attached: true},
+				Node:   &L.ViewNode{Attached: true},
 			},
 			{
 				Name:   name,
 				Active: false,
-				Node:   &L.PaneNode{},
+				Node:   &L.ViewNode{},
 			},
 		},
 	}, l.Get().Root)
@@ -472,7 +472,7 @@ func TestClickTabs(t *testing.T) {
 				{
 					Name:   name,
 					Active: true,
-					Node:   &L.PaneNode{Attached: true},
+					Node:   &L.ViewNode{Attached: true},
 				},
 				{
 					Name:   name,
@@ -482,7 +482,7 @@ func TestClickTabs(t *testing.T) {
 							{
 								Name:   name,
 								Active: true,
-								Node:   &L.PaneNode{},
+								Node:   &L.ViewNode{},
 							},
 						},
 					},
@@ -498,7 +498,7 @@ func TestClickTabs(t *testing.T) {
 			{
 				Name:   name,
 				Active: false,
-				Node:   &L.PaneNode{},
+				Node:   &L.ViewNode{},
 			},
 			{
 				Name:   name,
@@ -508,7 +508,7 @@ func TestClickTabs(t *testing.T) {
 						{
 							Name:   name,
 							Active: true,
-							Node:   &L.PaneNode{Attached: true},
+							Node:   &L.ViewNode{Attached: true},
 						},
 					},
 				},
@@ -571,7 +571,7 @@ func TestMouseForwardAllRows(t *testing.T) {
 		id := pane.Id()
 		testCase(t, geom.Size{R: 26, C: 80}, &L.MarginsNode{
 			Cols: 80,
-			Node: &L.PaneNode{Attached: true, ID: &id},
+			Node: &L.ViewNode{Attached: true, ID: &id},
 		}, screen)
 	})
 
@@ -581,7 +581,7 @@ func TestMouseForwardAllRows(t *testing.T) {
 		id := pane.Id()
 		testCase(t, geom.Size{R: 40, C: 160}, &L.MarginsNode{
 			Cols: 80,
-			Node: &L.PaneNode{Attached: true, ID: &id},
+			Node: &L.ViewNode{Attached: true, ID: &id},
 		}, screen)
 	})
 
@@ -590,7 +590,7 @@ func TestMouseForwardAllRows(t *testing.T) {
 		pane := tree.Root().NewPane(ctx, screen)
 		id := pane.Id()
 		def := L.Default().Root.(*L.MarginsNode)
-		def.Node = &L.PaneNode{Attached: true, ID: &id}
+		def.Node = &L.ViewNode{Attached: true, ID: &id}
 		testCase(t, geom.Size{R: 26, C: 120}, def, screen)
 	})
 
@@ -610,7 +610,7 @@ func TestMouseForwardAllRows(t *testing.T) {
 		require.NoError(t, l.Set(L.New(&L.MarginsNode{
 			Cols: 80,
 			Rows: 20,
-			Node: &L.PaneNode{Attached: true, ID: &id},
+			Node: &L.ViewNode{Attached: true, ID: &id},
 		})))
 
 		time.Sleep(100 * time.Millisecond)

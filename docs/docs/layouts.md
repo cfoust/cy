@@ -4,7 +4,7 @@ title: "Layouts"
 
 # Layouts
 
-`cy` uses a declarative, tree-based system for defining what is shown on the screen. It refers to this as the **layout**. It is composed of **nodes** of different types such as panes, splits, and tabs.
+`cy` uses a declarative, tree-based system for defining what is shown on the screen. It refers to this as the **layout**. It is composed of **nodes** of different types such as views, splits, and tabs.
 
 The structure of a typical layout might look something like this:
 
@@ -13,46 +13,46 @@ The structure of a typical layout might look something like this:
     :type :split
     :vertical false
     :a {
-        :type :pane
+        :type :view
         :id 1
         :attached true
     }
     :b {
-        :type :pane
+        :type :view
         :id 2
     }
 }
 ```
 
-Every node consists of a Janet struct with a `:type` property indicating the type of the node and a set of properties that describe how the node should look and behave. The layout above describes a horizontal split (two nodes side by side). The client is attached to the left pane.
+Every node consists of a Janet struct with a `:type` property indicating the type of the node and a set of properties that describe how the node should look and behave. The layout above describes a horizontal split (two nodes side by side). The client is attached to the left view.
 
-A layout must have exactly one pane node where `:attached` is `true`. The attached node is the visual element to which the client's input (that does not match any bindings) is sent.
+A layout must have exactly one view node where `:attached` is `true`. The attached node is the visual element to which the client's input (that does not match any bindings) is sent.
 
 ## API
 
 Layouts are just standard Janet values. You can retrieve the current layout with {{api layout/get}} and set it with {{api layout/set}}.
 
-`cy` includes a comprehensive [Janet library](https://github.com/cfoust/cy/blob/main/pkg/cy/boot/layout.janet) with handy tools for manipulating them more easily. For example, you can quickly create nodes with a family of creation functions like {{api layout/pane}}, {{api layout/split}}, {{api layout/vsplit}}, et cetera.
+`cy` includes a comprehensive [Janet library](https://github.com/cfoust/cy/blob/main/pkg/cy/boot/layout.janet) with handy tools for manipulating them more easily. For example, you can quickly create nodes with a family of creation functions like {{api layout/view}}, {{api layout/split}}, {{api layout/vsplit}}, et cetera.
 
 There is also {{api layout/new}}, which is a Janet macro that expands shortened forms of these node creation functions into their full forms for you. This lets you describe layouts succinctly:
 
 ```janet
 (layout/new (split
-              (pane)
+              (view)
               (vsplit
                 (margins (attach))
-                (borders (pane)))))
+                (borders (view)))))
 
 # Expands to:
 {:type :split
  :vertical false
- :a {:attached false :type :pane}
+ :a {:attached false :type :view}
  :b {:type :split
      :vertical true
      :a {:type :margins
-         :node {:attached true :type :pane}}
+         :node {:attached true :type :view}}
      :b {:type :borders
-         :node {:attached false :type :pane}}}}
+         :node {:attached false :type :view}}}}
 ```
 
 ## Properties
@@ -71,7 +71,7 @@ In other words, these functions are only given access to the node they are passe
 
 To illustrate, [border nodes](/layouts/nodes/borders.md) have a property called `:title`, which is a string that is shown at the top-right of the node. The `:border-fg` property determines the color of the border surrounding the node.
 
-By providing a function to both properties, we can change the color and title of the borders node as the user switches between panes. In this case, the functions are invoked with a single argument: the value of the `:node` property in each borders node, which contains whatever node is displayed inside of the borders.
+By providing a function to both properties, we can change the color and title of the borders node as the user switches between views. In this case, the functions are invoked with a single argument: the value of the `:node` property in each borders node, which contains whatever node is displayed inside of the borders.
 
 This lets you accomplish things like this:
 
@@ -106,19 +106,19 @@ This example uses the following code:
                   :title border-title
                   :border-fg border-fg)
                 (borders
-                  (pane :id cmd2)
+                  (view :id cmd2)
                   :title border-title
                   :border-fg border-fg))))
 ```
 
-Swapping panes causes the layout to change by changing the pane where `:attached` is `true`. This causes the layout to rerender, which reruns the functions we provided when we created the borders node. Since now the `:node` that each borders node renders has changed, the `:title` and `:border-fg` properties produce different results, all without explicitly calling {{api layout/set}} again.
+Swapping views causes the layout to change by changing the view where `:attached` is `true`. This causes the layout to rerender, which reruns the functions we provided when we created the borders node. Since now the `:node` that each borders node renders has changed, the `:title` and `:border-fg` properties produce different results, all without explicitly calling {{api layout/set}} again.
 
 ### What if a function passed to a dynamic property throws an error?
 
 Errors thrown by functions passed to dynamic properties do not prevent the
 layout from rendering. The layout will continue to render as if the function
 had returned that property's default value and an appropriate error message
-will be sent to the `/logs` pane.
+will be sent to the `/logs` node.
 
 ## Metadata
 

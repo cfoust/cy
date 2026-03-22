@@ -63,5 +63,5 @@ The example at the top of the page was created with the following Janet code:
                 bar-text
                 (split
                   (attach :id cmd1)
-                  (pane :id cmd2)))))
+                  (view :id cmd2)))))
 ```

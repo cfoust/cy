@@ -185,7 +185,7 @@ func (l *LayoutEngine) Resize(size geom.Size) error {
 //
 // Some nodes need to be able to change their own configuration in response to
 // user input. A good example of this is when the user clicks on an inactive
-// pane to focus it again. The Screen at that location detects the click and
+// view to focus it again. The Screen at that location detects the click and
 // indicates to the LayoutEngine that it should attach to it.
 func (l *LayoutEngine) handleChange(
 	changedNode *screenNode,
@@ -217,9 +217,9 @@ func (l *LayoutEngine) handleChange(
 	return l.set(layout)
 }
 
-// removeAttached intelligently removes the currently attached pane from the
+// removeAttached intelligently removes the currently attached view from the
 // layout. This works in the same way tmux does, but it's more generalized. For
-// example, if the attached pane were a direct child of a split, that split
+// example, if the attached view were a direct child of a split, that split
 // would be removed and replaced by the node in that split's other "branch".
 func (l *LayoutEngine) removeAttached() error {
 	l.Lock()

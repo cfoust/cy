@@ -51,17 +51,17 @@ func Default() Layout {
 	return New(&MarginsNode{
 		Cols:   80,
 		Border: prop.NewStatic(&style.DefaultBorder),
-		Node: &PaneNode{
+		Node: &ViewNode{
 			Attached: true,
 		},
 	})
 }
 
-// getPaneNodes gets all of the panes that are descendants of the provided node,
+// getViewNodes gets all of the views that are descendants of the provided node,
 // in essence all of the leaf nodes.
-func getPaneNodes(tree Node) (panes []*PaneNode) {
-	if pane, ok := tree.(*PaneNode); ok {
-		return []*PaneNode{pane}
+func getViewNodes(tree Node) (views []*ViewNode) {
+	if view, ok := tree.(*ViewNode); ok {
+		return []*ViewNode{view}
 	}
 
 	for _, child := range tree.Children() {
@@ -69,7 +69,7 @@ func getPaneNodes(tree Node) (panes []*PaneNode) {
 			continue
 		}
 
-		panes = append(panes, getPaneNodes(child)...)
+		views = append(views, getViewNodes(child)...)
 	}
 	return
 }
@@ -77,18 +77,18 @@ func getPaneNodes(tree Node) (panes []*PaneNode) {
 // AttachFirst attaches to the first node it can find.
 func AttachFirst(node Node) Node {
 	node = node.Clone()
-	panes := getPaneNodes(node)
-	if len(panes) == 0 {
+	views := getViewNodes(node)
+	if len(views) == 0 {
 		return node
 	}
 
-	panes[0].Attached = true
+	views[0].Attached = true
 	return node
 }
 
-// getNumLeaves gets the number of leaves (panes) accessible from this node.
+// getNumLeaves gets the number of leaves (views) accessible from this node.
 func getNumLeaves(node Node) int {
-	return len(getPaneNodes(node))
+	return len(getViewNodes(node))
 }
 
 // RemoveAttached removes the attached node by replacing its nearest parent
@@ -187,9 +187,9 @@ func RemoveAttached(node Node) Node {
 func Detach(node Node) Node {
 	// TODO(cfoust): 07/07/25 this creates a lot of extra copies
 	node = node.Clone()
-	if pane, ok := node.(*PaneNode); ok {
-		pane.Attached = false
-		return pane
+	if view, ok := node.(*ViewNode); ok {
+		view.Attached = false
+		return view
 	}
 
 	for i, child := range node.Children() {
@@ -202,48 +202,48 @@ func Detach(node Node) Node {
 // Attach changes the currently attached tree node to the one specified by id.
 func Attach(node Node, id tree.NodeID) Node {
 	node = node.Clone()
-	for _, pane := range getPaneNodes(node) {
-		if !pane.Attached {
+	for _, view := range getViewNodes(node) {
+		if !view.Attached {
 			continue
 		}
 
-		pane.ID = &id
+		view.ID = &id
 		break
 	}
 
 	return node
 }
 
-// Attached returns the ID field of the attached pane in the layout.
+// Attached returns the ID field of the attached view in the layout.
 func Attached(layout Layout) *tree.NodeID {
-	for _, pane := range getPaneNodes(layout.Root) {
-		if !pane.Attached {
+	for _, view := range getViewNodes(layout.Root) {
+		if !view.Attached {
 			continue
 		}
 
-		return pane.ID
+		return view.ID
 	}
 
 	return nil
 }
 
 // ValidateTree inspects a tree and ensures that it conforms to all relevant
-// constraints, namely there should only be one PaneType with Attached=true.
+// constraints, namely there should only be one ViewNode with Attached=true.
 func ValidateTree(tree Node) error {
 	numAttached := 0
-	for _, pane := range getPaneNodes(tree) {
-		if !pane.Attached {
+	for _, view := range getViewNodes(tree) {
+		if !view.Attached {
 			continue
 		}
 		numAttached++
 	}
 
 	if numAttached > 1 {
-		return fmt.Errorf("you may only attach to one pane at once")
+		return fmt.Errorf("you may only attach to one view at once")
 	}
 
 	if numAttached == 0 {
-		return fmt.Errorf("you must attach to at least one pane")
+		return fmt.Errorf("you must attach to at least one view")
 	}
 
 	return tree.Validate()
