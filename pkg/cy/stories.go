@@ -1208,6 +1208,84 @@ func init() {
 		},
 	})
 
+	stories.Register(
+		"emu/underline-styles",
+		func(ctx context.Context) (mux.Screen, error) {
+			term := emu.New(
+				emu.WithSize(geom.Size{R: 20, C: 60}),
+			)
+			_, _ = term.Write([]byte(emu.LineFeedMode))
+
+			// Hide cursor
+			_, _ = term.Write([]byte("\033[?25l"))
+
+			// Title
+			_, _ = term.Write([]byte(
+				"\033[1mStyled Underlines\033[0m\n\n",
+			))
+
+			// Each underline mode
+			modes := []struct {
+				name string
+				seq  string
+			}{
+				{"Single", "\033[4m"},
+				{"Double", "\033[4:2m"},
+				{"Curly", "\033[4:3m"},
+				{"Dotted", "\033[4:4m"},
+				{"Dashed", "\033[4:5m"},
+			}
+
+			for _, m := range modes {
+				_, _ = fmt.Fprintf(
+					term,
+					"  %s%-8s underlined text\033[0m\n",
+					m.seq, m.name,
+				)
+			}
+
+			// Colored underlines
+			_, _ = term.Write([]byte(
+				"\n\033[1mColored Underlines\033[0m\n\n",
+			))
+
+			colors := []struct {
+				name    string
+				r, g, b int
+			}{
+				{"Red", 255, 50, 50},
+				{"Green", 50, 205, 50},
+				{"Blue", 80, 120, 255},
+				{"Yellow", 255, 215, 0},
+				{"Magenta", 255, 0, 255},
+			}
+
+			for _, c := range colors {
+				_, _ = fmt.Fprintf(
+					term,
+					"  \033[4:3;58;2;%d;%d;%dmcurly %s underline\033[0m\n",
+					c.r, c.g, c.b, c.name,
+				)
+			}
+
+			// Mixed styles with color
+			_, _ = term.Write([]byte(
+				"\n\033[1mMixed Styles + Colors\033[0m\n\n",
+			))
+			_, _ = term.Write([]byte(
+				"  \033[1;3;4:3;58;2;255;100;0mbold italic curly orange\033[0m\n",
+			))
+			_, _ = term.Write([]byte(
+				"  \033[4:5;58;2;0;200;255;38;2;255;255;255mdashed cyan on white text\033[0m\n",
+			))
+
+			return S.NewStaticTerminal(ctx, term), nil
+		},
+		stories.Config{
+			Size: geom.Size{R: 20, C: 60},
+		},
+	)
+
 	stories.Register("input/thumbs/style", func(ctx context.Context) (
 		mux.Screen,
 		error,

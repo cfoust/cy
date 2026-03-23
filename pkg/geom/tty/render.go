@@ -18,13 +18,21 @@ var (
 	cursorVVisible = []byte("\033[?12;25h")
 	sgrReset       = []byte("\033(B\033[m")
 	boldMode       = []byte("\033[1m")
-	underlineMode  = []byte("\033[4m")
-	strikeMode     = []byte("\033[9m")
-	italicMode     = []byte("\033[3m")
-	blinkMode      = []byte("\033[5m")
-	strikeOff      = []byte("\033[29m")
-	syncBegin      = []byte("\033[?2026h")
-	syncEnd        = []byte("\033[?2026l")
+	underlineModes = [6][]byte{
+		nil,                 // UnderlineNone
+		[]byte("\033[4m"),   // UnderlineSingle
+		[]byte("\033[4:2m"), // UnderlineDouble
+		[]byte("\033[4:3m"), // UnderlineCurly
+		[]byte("\033[4:4m"), // UnderlineDotted
+		[]byte("\033[4:5m"), // UnderlineDashed
+	}
+	strikeMode        = []byte("\033[9m")
+	italicMode        = []byte("\033[3m")
+	blinkMode         = []byte("\033[5m")
+	strikeOff         = []byte("\033[29m")
+	underlineColorOff = []byte("\033[59m")
+	syncBegin         = []byte("\033[?2026h")
+	syncEnd           = []byte("\033[?2026l")
 )
 
 // writeInt writes a non-negative integer to the buffer without allocations.
@@ -109,6 +117,35 @@ func setColor(
 	}
 }
 
+// setUnderlineColor writes the SGR 58 escape sequence for the
+// underline color. DefaultFG means "use foreground", so we emit
+// SGR 59 to reset the underline color.
+func setUnderlineColor(
+	buf *bytes.Buffer,
+	color emu.Color,
+) {
+	if color == emu.DefaultFG {
+		buf.Write(underlineColorOff)
+		return
+	}
+
+	if r, g, b, ok := color.RGB(); ok {
+		buf.Write(csiPrefix)
+		buf.Write([]byte("58;2;"))
+		writeInt(buf, r)
+		buf.WriteByte(';')
+		writeInt(buf, g)
+		buf.WriteByte(';')
+		writeInt(buf, b)
+		buf.WriteByte('m')
+	} else if xterm, ok := color.XTerm(); ok {
+		buf.Write(csiPrefix)
+		buf.Write([]byte("58;5;"))
+		writeInt(buf, xterm)
+		buf.WriteByte('m')
+	}
+}
+
 // Calculate the minimum string to transform `src` in to `dst`.
 func swapImage(
 	dst, src image.Image,
@@ -139,8 +176,9 @@ func swapImage(
 				data.Write(boldMode)
 			}
 
-			if mode&emu.AttrUnderline != 0 {
-				data.Write(underlineMode)
+			if srcCell.Underline.Mode != emu.UnderlineNone {
+				data.Write(underlineModes[srcCell.Underline.Mode])
+				setUnderlineColor(data, srcCell.Underline.Color)
 			}
 
 			if mode&emu.AttrStrikethrough != 0 {

@@ -196,18 +196,44 @@ func (t *State) CsiDispatch(
 	ignore bool,
 	r rune,
 ) {
-	args := make([]int, 0)
-	for _, arg := range params {
-		args = append(args, int(arg))
+	// Reconstruct args and subArgs from go-vte params.
+	// go-vte uses -1 as a sentinel for colon sub-parameter
+	// separators, e.g. "4:3" becomes [4, -1, 3].
+	var (
+		args        []int
+		subArgs     [][]int
+		inSubParams bool
+	)
+	for _, p := range params {
+		v := int(p)
+		if v == -1 {
+			inSubParams = true
+			continue
+		}
+		if inSubParams {
+			if len(subArgs) > 0 {
+				subArgs[len(subArgs)-1] = append(
+					subArgs[len(subArgs)-1],
+					v,
+				)
+			}
+			inSubParams = false
+		} else {
+			args = append(args, v)
+			subArgs = append(subArgs, nil)
+		}
 	}
 
-	// go-vte returns _always_ returns a params array (unnecessarily)
-	if len(args) == 1 && args[0] == 0 {
-		args = make([]int, 0)
+	// go-vte always returns a params array (unnecessarily)
+	if len(args) == 1 && args[0] == 0 &&
+		len(subArgs) == 1 && subArgs[0] == nil {
+		args = nil
+		subArgs = nil
 	}
 
 	c := csiEscape{
 		args:          args,
+		subArgs:       subArgs,
 		intermediates: intermediates,
 		mode:          byte(r),
 		priv:          len(intermediates) > 0 && intermediates[0] == '?',
@@ -312,7 +338,7 @@ func (t *State) CsiDispatch(
 		case '>': // XTMODKEYS
 		case '?': // XTQMODKEYS
 		default:
-			t.setAttr(c.args)
+			t.setAttr(c.args, c.subArgs)
 		}
 	case 'n':
 		switch c.arg(0, 0) {

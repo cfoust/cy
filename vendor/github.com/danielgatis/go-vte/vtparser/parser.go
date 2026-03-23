@@ -282,10 +282,19 @@ func (p *Parser) performAction(action, b byte) {
 			return
 		}
 
-		if b == ';' {
+		if b == ';' || b == ':' {
 			p.params[idx] = p.param
 			p.param = 0
 			p.numParams++
+			if b == ':' {
+				// Insert sentinel to distinguish colon
+				// sub-parameters from semicolons
+				idx = p.numParams
+				if idx < maxParams {
+					p.params[idx] = -1
+					p.numParams++
+				}
+			}
 		} else {
 			p.param = smul64(p.param, 10)
 			p.param = sadd64(p.param, int64((b - '0')))

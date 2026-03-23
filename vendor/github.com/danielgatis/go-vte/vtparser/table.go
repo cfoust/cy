@@ -376,7 +376,7 @@ var (
 			csiParamState | (paramAction << 4),          // 37
 			csiParamState | (paramAction << 4),          // 38
 			csiParamState | (paramAction << 4),          // 39
-			csiIgnoreState | (noneAction << 4),          // 3A
+			csiParamState | (paramAction << 4),          // 3A
 			csiParamState | (paramAction << 4),          // 3B
 			csiParamState | (collectAction << 4),        // 3C
 			csiParamState | (collectAction << 4),        // 3D
@@ -1150,7 +1150,7 @@ var (
 			anywhereState | (paramAction << 4),          // 37
 			anywhereState | (paramAction << 4),          // 38
 			anywhereState | (paramAction << 4),          // 39
-			csiIgnoreState | (noneAction << 4),          // 3A
+			anywhereState | (paramAction << 4),          // 3A
 			anywhereState | (paramAction << 4),          // 3B
 			csiIgnoreState | (noneAction << 4),          // 3C
 			csiIgnoreState | (noneAction << 4),          // 3D

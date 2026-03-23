@@ -122,7 +122,7 @@ func fillImage(img image.Image, pattern int, size geom.Vec2) {
 				case 1:
 					g.Mode = emu.AttrItalic
 				case 2:
-					g.Mode = emu.AttrUnderline
+					g.Underline.Mode = emu.UnderlineSingle
 				case 3:
 					g.Mode = emu.AttrStrikethrough
 				}

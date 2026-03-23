@@ -12,7 +12,6 @@ import (
 // TODO(cfoust): 05/19/23 combine this with the other declaration
 const (
 	AttrReverse = 1 << iota
-	AttrUnderline
 	AttrBold
 	AttrGfx
 	AttrItalic
@@ -22,6 +21,22 @@ const (
 	AttrBlank
 	AttrTransparent
 )
+
+type UnderlineMode uint8
+
+const (
+	UnderlineNone   UnderlineMode = 0
+	UnderlineSingle UnderlineMode = 1
+	UnderlineDouble UnderlineMode = 2
+	UnderlineCurly  UnderlineMode = 3
+	UnderlineDotted UnderlineMode = 4
+	UnderlineDashed UnderlineMode = 5
+)
+
+type UnderlineStyle struct {
+	Color Color
+	Mode  UnderlineMode
+}
 
 const (
 	cursorDefault = 1 << iota
@@ -73,10 +88,11 @@ const (
 )
 
 type Glyph struct {
-	Char   rune
-	Mode   int16
-	FG, BG Color
-	Write  WriteID
+	Char      rune
+	Mode      int16
+	FG, BG    Color
+	Write     WriteID
+	Underline UnderlineStyle
 }
 
 func (g Glyph) IsEmpty() bool {
@@ -98,13 +114,16 @@ func (g Glyph) Width() int {
 }
 
 func (g Glyph) Equal(other Glyph) bool {
-	return g.Char == other.Char && g.Mode == other.Mode && g.FG == other.FG &&
-		g.BG == other.BG
+	return g.Char == other.Char && g.Mode == other.Mode &&
+		g.FG == other.FG && g.BG == other.BG &&
+		g.Underline == other.Underline
 }
 
 // SameAttrs reports whether the two glyphs have the same visual attributes.
 func (g Glyph) SameAttrs(other Glyph) bool {
-	return g.Mode == other.Mode && g.FG == other.FG && g.BG == other.BG
+	return g.Mode == other.Mode && g.FG == other.FG &&
+		g.BG == other.BG &&
+		g.Underline == other.Underline
 }
 
 func EmptyGlyph() Glyph {
