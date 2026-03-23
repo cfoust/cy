@@ -754,6 +754,7 @@ func (t *State) setAttr(attr []int, subArgs [][]int) {
 			t.cur.Attr.FG = DefaultFG
 			t.cur.Attr.BG = DefaultBG
 			t.cur.Attr.Underline = UnderlineStyle{}
+			t.cur.Attr.Hyperlink = Hyperlink{}
 		case 1:
 			t.cur.Attr.Mode |= attrBold
 		case 2:

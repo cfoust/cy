@@ -90,12 +90,20 @@ const (
 	ChangedTitle
 )
 
+// Hyperlink represents an OSC 8 hyperlink with an optional ID for
+// grouping disjoint runs and a URI.
+type Hyperlink struct {
+	ID  string
+	URI string
+}
+
 type Glyph struct {
 	Char      rune
 	Mode      int16
 	FG, BG    Color
 	Write     WriteID
 	Underline UnderlineStyle
+	Hyperlink Hyperlink
 }
 
 func (g Glyph) IsEmpty() bool {
@@ -119,14 +127,16 @@ func (g Glyph) Width() int {
 func (g Glyph) Equal(other Glyph) bool {
 	return g.Char == other.Char && g.Mode == other.Mode &&
 		g.FG == other.FG && g.BG == other.BG &&
-		g.Underline == other.Underline
+		g.Underline == other.Underline &&
+		g.Hyperlink == other.Hyperlink
 }
 
 // SameAttrs reports whether the two glyphs have the same visual attributes.
 func (g Glyph) SameAttrs(other Glyph) bool {
 	return g.Mode == other.Mode && g.FG == other.FG &&
 		g.BG == other.BG &&
-		g.Underline == other.Underline
+		g.Underline == other.Underline &&
+		g.Hyperlink == other.Hyperlink
 }
 
 func EmptyGlyph() Glyph {

@@ -36,6 +36,8 @@ var (
 	underlineColorOff = []byte("\033[59m")
 	syncBegin         = []byte("\033[?2026h")
 	syncEnd           = []byte("\033[?2026l")
+	hyperlinkPrefix   = []byte("\033]8;;")
+	hyperlinkSuffix   = []byte("\033\\")
 )
 
 // writeInt writes a non-negative integer to the buffer without allocations.
@@ -211,7 +213,23 @@ func swapImage(
 			setColor(data, srcCell.FG, false)
 			setColor(data, srcCell.BG, true)
 
+			if srcCell.Hyperlink.URI != "" {
+				data.Write([]byte("\033]8;"))
+				if srcCell.Hyperlink.ID != "" {
+					data.WriteString("id=")
+					data.WriteString(srcCell.Hyperlink.ID)
+				}
+				data.WriteByte(';')
+				data.WriteString(srcCell.Hyperlink.URI)
+				data.Write(hyperlinkSuffix)
+			}
+
 			data.WriteRune(srcCell.Char)
+
+			if srcCell.Hyperlink.URI != "" {
+				data.Write(hyperlinkPrefix)
+				data.Write(hyperlinkSuffix)
+			}
 
 			// TODO(cfoust): 08/07/24 why does ExitAttributeMode not cover this in alacritty?
 			if mode&emu.AttrStrikethrough != 0 {

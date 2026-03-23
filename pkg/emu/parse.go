@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/cfoust/cy/pkg/geom"
 
@@ -164,6 +165,23 @@ func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
 			if d != 104 || len(s.args) > 1 {
 				t.logf("invalid color j=%d, p=%s\n", j, maybe(p))
 			}
+		}
+	case 8: // hyperlinks (OSC 8)
+		// OSC 8 ; params ; uri ST
+		// params are colon-separated key=value pairs
+		uri := s.argString(2, "")
+		var id string
+		params := s.argString(1, "")
+		if params != "" {
+			for _, kv := range strings.Split(params, ":") {
+				if strings.HasPrefix(kv, "id=") {
+					id = kv[3:]
+				}
+			}
+		}
+		t.cur.Attr.Hyperlink = Hyperlink{
+			ID:  id,
+			URI: uri,
 		}
 	case 52: // clipboard operations
 		t.handleOSC52(s)
