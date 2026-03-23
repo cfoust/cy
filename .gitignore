@@ -11,3 +11,4 @@
 /stories
 cy-build
 **.playwright-cli
+.vtdn-temp/
