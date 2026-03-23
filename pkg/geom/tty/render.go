@@ -26,12 +26,13 @@ var (
 		[]byte("\033[4:4m"), // UnderlineDotted
 		[]byte("\033[4:5m"), // UnderlineDashed
 	}
-	strikeMode = []byte("\033[9m")
-	italicMode = []byte("\033[3m")
-	blinkMode  = []byte("\033[5m")
-	strikeOff  = []byte("\033[29m")
-	syncBegin  = []byte("\033[?2026h")
-	syncEnd    = []byte("\033[?2026l")
+	strikeMode        = []byte("\033[9m")
+	italicMode        = []byte("\033[3m")
+	blinkMode         = []byte("\033[5m")
+	strikeOff         = []byte("\033[29m")
+	underlineColorOff = []byte("\033[59m")
+	syncBegin         = []byte("\033[?2026h")
+	syncEnd           = []byte("\033[?2026l")
 )
 
 // writeInt writes a non-negative integer to the buffer without allocations.
@@ -117,12 +118,14 @@ func setColor(
 }
 
 // setUnderlineColor writes the SGR 58 escape sequence for the
-// underline color. DefaultFG means "use foreground", so we skip it.
+// underline color. DefaultFG means "use foreground", so we emit
+// SGR 59 to reset the underline color.
 func setUnderlineColor(
 	buf *bytes.Buffer,
 	color emu.Color,
 ) {
 	if color == emu.DefaultFG {
+		buf.Write(underlineColorOff)
 		return
 	}
 
@@ -175,6 +178,7 @@ func swapImage(
 
 			if srcCell.Underline.Mode != emu.UnderlineNone {
 				data.Write(underlineModes[srcCell.Underline.Mode])
+				setUnderlineColor(data, srcCell.Underline.Color)
 			}
 
 			if mode&emu.AttrStrikethrough != 0 {
@@ -191,7 +195,6 @@ func swapImage(
 
 			setColor(data, srcCell.FG, false)
 			setColor(data, srcCell.BG, true)
-			setUnderlineColor(data, srcCell.Underline.Color)
 
 			data.WriteRune(srcCell.Char)
 

@@ -65,12 +65,14 @@ func TestAttributes(t *testing.T) {
 
 	// Styled underlines
 	for name, input := range map[string]string{
-		"underline-single": "\033[4mtext\033[24m rest",
-		"underline-double": "\033[4:2mtext\033[24m rest",
-		"underline-curly":  "\033[4:3mtext\033[24m rest",
-		"underline-dotted": "\033[4:4mtext\033[24m rest",
-		"underline-dashed": "\033[4:5mtext\033[24m rest",
-		"underline-color":  "\033[4:3;58;2;255;0;0mtext\033[0m rest",
+		"underline-single":           "\033[4mtext\033[24m rest",
+		"underline-double":           "\033[4:2mtext\033[24m rest",
+		"underline-curly":            "\033[4:3mtext\033[24m rest",
+		"underline-dotted":           "\033[4:4mtext\033[24m rest",
+		"underline-dashed":           "\033[4:5mtext\033[24m rest",
+		"underline-color":            "\033[4:3;58;2;255;0;0mtext\033[0m rest",
+		"underline-color-reset":      "\033[4:3;58;2;255;0;0mred\033[59m default\033[0m rest",
+		"underline-color-then-plain": "\033[4:3;58;2;255;0;0mcolored\033[0m \033[4mplain\033[0m rest",
 	} {
 		testBytes(t, name, []byte(input))
 	}
