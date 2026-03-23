@@ -63,6 +63,23 @@ func TestAttributes(t *testing.T) {
 		),
 	)
 
+	// New SGR attributes
+	for name, input := range map[string]string{
+		"dim":      "\033[2mtext\033[22m rest",
+		"hidden":   "\033[8mtext\033[28m rest",
+		"overline": "\033[53mtext\033[55m rest",
+	} {
+		testBytes(t, name, []byte(input))
+	}
+
+	// OSC 8 hyperlinks
+	for name, input := range map[string]string{
+		"hyperlink":         "\033]8;;https://example.com\033\\link\033]8;;\033\\ rest",
+		"hyperlink-with-id": "\033]8;id=foo;https://example.com\033\\link\033]8;;\033\\ rest",
+	} {
+		testBytes(t, name, []byte(input))
+	}
+
 	// Styled underlines
 	for name, input := range map[string]string{
 		"underline-single":           "\033[4mtext\033[24m rest",

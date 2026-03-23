@@ -136,6 +136,97 @@ func TestSGRManyParams(t *testing.T) {
 		"17-param SGR should apply foreground color")
 }
 
+func TestSGRDim(t *testing.T) {
+	term := New()
+	_, _ = term.Write([]byte("\033[2mfaded\033[m"))
+	attr := term.Cell(0, 0)
+	require.NotEqual(
+		t,
+		int16(0),
+		attr.Mode&attrDim,
+		"SGR 2 should set dim",
+	)
+	// After reset
+	require.Equal(
+		t,
+		int16(0),
+		term.Cell(6, 0).Mode&attrDim,
+		"SGR 0 should clear dim",
+	)
+}
+
+func TestSGRHidden(t *testing.T) {
+	term := New()
+	_, _ = term.Write([]byte("\033[8mhidden\033[m"))
+	attr := term.Cell(0, 0)
+	require.NotEqual(
+		t,
+		int16(0),
+		attr.Mode&attrHidden,
+		"SGR 8 should set hidden",
+	)
+}
+
+func TestSGROverline(t *testing.T) {
+	term := New()
+	_, _ = term.Write([]byte("\033[53mover\033[m"))
+	attr := term.Cell(0, 0)
+	require.NotEqual(
+		t,
+		int16(0),
+		attr.Mode&attrOverline,
+		"SGR 53 should set overline",
+	)
+}
+
+func TestSGR22ClearsBoldAndDim(t *testing.T) {
+	term := New()
+	// Set both bold and dim, then clear with SGR 22
+	_, _ = term.Write(
+		[]byte("\033[1;2mboth\033[22mneither\033[m"),
+	)
+	// "both" should have bold and dim
+	attr := term.Cell(0, 0)
+	require.NotEqual(t, int16(0), attr.Mode&attrBold)
+	require.NotEqual(t, int16(0), attr.Mode&attrDim)
+	// "neither" should have neither
+	attr = term.Cell(4, 0)
+	require.Equal(t, int16(0), attr.Mode&attrBold)
+	require.Equal(t, int16(0), attr.Mode&attrDim)
+}
+
+func TestSGR28ClearsHidden(t *testing.T) {
+	term := New()
+	_, _ = term.Write([]byte("\033[8mhid\033[28mvis\033[m"))
+	require.NotEqual(
+		t,
+		int16(0),
+		term.Cell(0, 0).Mode&attrHidden,
+	)
+	require.Equal(
+		t,
+		int16(0),
+		term.Cell(3, 0).Mode&attrHidden,
+	)
+}
+
+func TestSGR55ClearsOverline(t *testing.T) {
+	term := New()
+	_, _ = term.Write(
+		[]byte("\033[53mover\033[55mno\033[m"),
+	)
+	require.NotEqual(
+		t,
+		int16(0),
+		term.Cell(0, 0).Mode&attrOverline,
+	)
+	require.Equal(
+		t,
+		int16(0),
+		term.Cell(4, 0).Mode&attrOverline,
+	)
+}
+
 func TestBracketedPasteMode(t *testing.T) {
 	term := New()
 
