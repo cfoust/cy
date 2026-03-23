@@ -119,112 +119,117 @@ func TestResizeBug(t *testing.T) {
 	term.Resize(geom.Vec2{C: 6, R: 2})
 }
 
-func TestSGRManyParams(t *testing.T) {
-	// Regression test for https://github.com/cfoust/cy/issues/46
-	// SGR sequences with >16 params should not be ignored.
-	term := New()
+func TestSGR(t *testing.T) {
+	type check struct {
+		col  int
+		mode int16
+		set  bool
+		msg  string
+	}
+	type fgCheck struct {
+		col int
+		msg string
+	}
 
-	// 17-param SGR: 0;4;4;7;1;3;9;38;2;255;200;0;48;2;0;0;200
-	_, err := term.Write([]byte(
-		"\033[0;4;4;7;1;3;9;38;2;255;200;0;48;2;0;0;200m text\033[m",
-	))
-	require.NoError(t, err)
+	tests := []struct {
+		name     string
+		input    string
+		checks   []check
+		fgChecks []fgCheck
+	}{
+		{
+			name:  "many params",
+			input: "\033[0;4;4;7;1;3;9;38;2;255;200;0;48;2;0;0;200m text\033[m",
+			fgChecks: []fgCheck{
+				{1, "17-param SGR should apply foreground color"},
+			},
+		},
+		{
+			name:  "dim",
+			input: "\033[2mfaded\033[m",
+			checks: []check{
+				{0, attrDim, true, "SGR 2 should set dim"},
+				{6, attrDim, false, "SGR 0 should clear dim"},
+			},
+		},
+		{
+			name:  "hidden",
+			input: "\033[8mhidden\033[m",
+			checks: []check{
+				{0, attrHidden, true, "SGR 8 should set hidden"},
+			},
+		},
+		{
+			name:  "overline",
+			input: "\033[53mover\033[m",
+			checks: []check{
+				{0, attrOverline, true, "SGR 53 should set overline"},
+			},
+		},
+		{
+			name:  "22 clears bold and dim",
+			input: "\033[1;2mboth\033[22mneither\033[m",
+			checks: []check{
+				{0, attrBold, true, "bold should be set"},
+				{0, attrDim, true, "dim should be set"},
+				{4, attrBold, false, "SGR 22 should clear bold"},
+				{4, attrDim, false, "SGR 22 should clear dim"},
+			},
+		},
+		{
+			name:  "28 clears hidden",
+			input: "\033[8mhid\033[28mvis\033[m",
+			checks: []check{
+				{0, attrHidden, true, "hidden should be set"},
+				{3, attrHidden, false, "SGR 28 should clear hidden"},
+			},
+		},
+		{
+			name:  "55 clears overline",
+			input: "\033[53mover\033[55mno\033[m",
+			checks: []check{
+				{0, attrOverline, true, "overline should be set"},
+				{4, attrOverline, false, "SGR 55 should clear overline"},
+			},
+		},
+	}
 
-	// The text should have styling applied (bold, in this case)
-	attr := term.Cell(1, 0)
-	require.NotEqual(t, DefaultFG, attr.FG,
-		"17-param SGR should apply foreground color")
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			term := New()
+			_, err := term.Write([]byte(tt.input))
+			require.NoError(t, err)
 
-func TestSGRDim(t *testing.T) {
-	term := New()
-	_, _ = term.Write([]byte("\033[2mfaded\033[m"))
-	attr := term.Cell(0, 0)
-	require.NotEqual(
-		t,
-		int16(0),
-		attr.Mode&attrDim,
-		"SGR 2 should set dim",
-	)
-	// After reset
-	require.Equal(
-		t,
-		int16(0),
-		term.Cell(6, 0).Mode&attrDim,
-		"SGR 0 should clear dim",
-	)
-}
+			for _, c := range tt.checks {
+				attr := term.Cell(c.col, 0)
+				if c.set {
+					require.NotEqual(
+						t,
+						int16(0),
+						attr.Mode&c.mode,
+						c.msg,
+					)
+				} else {
+					require.Equal(
+						t,
+						int16(0),
+						attr.Mode&c.mode,
+						c.msg,
+					)
+				}
+			}
 
-func TestSGRHidden(t *testing.T) {
-	term := New()
-	_, _ = term.Write([]byte("\033[8mhidden\033[m"))
-	attr := term.Cell(0, 0)
-	require.NotEqual(
-		t,
-		int16(0),
-		attr.Mode&attrHidden,
-		"SGR 8 should set hidden",
-	)
-}
-
-func TestSGROverline(t *testing.T) {
-	term := New()
-	_, _ = term.Write([]byte("\033[53mover\033[m"))
-	attr := term.Cell(0, 0)
-	require.NotEqual(
-		t,
-		int16(0),
-		attr.Mode&attrOverline,
-		"SGR 53 should set overline",
-	)
-}
-
-func TestSGR22ClearsBoldAndDim(t *testing.T) {
-	term := New()
-	// Set both bold and dim, then clear with SGR 22
-	_, _ = term.Write(
-		[]byte("\033[1;2mboth\033[22mneither\033[m"),
-	)
-	// "both" should have bold and dim
-	attr := term.Cell(0, 0)
-	require.NotEqual(t, int16(0), attr.Mode&attrBold)
-	require.NotEqual(t, int16(0), attr.Mode&attrDim)
-	// "neither" should have neither
-	attr = term.Cell(4, 0)
-	require.Equal(t, int16(0), attr.Mode&attrBold)
-	require.Equal(t, int16(0), attr.Mode&attrDim)
-}
-
-func TestSGR28ClearsHidden(t *testing.T) {
-	term := New()
-	_, _ = term.Write([]byte("\033[8mhid\033[28mvis\033[m"))
-	require.NotEqual(
-		t,
-		int16(0),
-		term.Cell(0, 0).Mode&attrHidden,
-	)
-	require.Equal(
-		t,
-		int16(0),
-		term.Cell(3, 0).Mode&attrHidden,
-	)
-}
-
-func TestSGR55ClearsOverline(t *testing.T) {
-	term := New()
-	_, _ = term.Write(
-		[]byte("\033[53mover\033[55mno\033[m"),
-	)
-	require.NotEqual(
-		t,
-		int16(0),
-		term.Cell(0, 0).Mode&attrOverline,
-	)
-	require.Equal(
-		t,
-		int16(0),
-		term.Cell(4, 0).Mode&attrOverline,
-	)
+			for _, c := range tt.fgChecks {
+				attr := term.Cell(c.col, 0)
+				require.NotEqual(
+					t,
+					DefaultFG,
+					attr.FG,
+					c.msg,
+				)
+			}
+		})
+	}
 }
 
 func TestBracketedPasteMode(t *testing.T) {
