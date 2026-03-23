@@ -18,6 +18,7 @@ var (
 	cursorVVisible = []byte("\033[?12;25h")
 	sgrReset       = []byte("\033(B\033[m")
 	boldMode       = []byte("\033[1m")
+	dimMode        = []byte("\033[2m")
 	underlineModes = [6][]byte{
 		nil,                 // UnderlineNone
 		[]byte("\033[4m"),   // UnderlineSingle
@@ -26,9 +27,11 @@ var (
 		[]byte("\033[4:4m"), // UnderlineDotted
 		[]byte("\033[4:5m"), // UnderlineDashed
 	}
+	hiddenMode        = []byte("\033[8m")
 	strikeMode        = []byte("\033[9m")
 	italicMode        = []byte("\033[3m")
 	blinkMode         = []byte("\033[5m")
+	overlineMode      = []byte("\033[53m")
 	strikeOff         = []byte("\033[29m")
 	underlineColorOff = []byte("\033[59m")
 	syncBegin         = []byte("\033[?2026h")
@@ -176,9 +179,17 @@ func swapImage(
 				data.Write(boldMode)
 			}
 
+			if mode&emu.AttrDim != 0 {
+				data.Write(dimMode)
+			}
+
 			if srcCell.Underline.Mode != emu.UnderlineNone {
 				data.Write(underlineModes[srcCell.Underline.Mode])
 				setUnderlineColor(data, srcCell.Underline.Color)
+			}
+
+			if mode&emu.AttrHidden != 0 {
+				data.Write(hiddenMode)
 			}
 
 			if mode&emu.AttrStrikethrough != 0 {
@@ -191,6 +202,10 @@ func swapImage(
 
 			if mode&emu.AttrBlink != 0 {
 				data.Write(blinkMode)
+			}
+
+			if mode&emu.AttrOverline != 0 {
+				data.Write(overlineMode)
 			}
 
 			setColor(data, srcCell.FG, false)

@@ -25,6 +25,9 @@ const (
 	attrWrap
 	attrBlank
 	attrTransparent
+	attrDim
+	attrHidden
+	attrOverline
 	attrOpaque
 )
 
@@ -747,12 +750,14 @@ func (t *State) setAttr(attr []int, subArgs [][]int) {
 		a := attr[i]
 		switch a {
 		case 0:
-			t.cur.Attr.Mode &^= attrReverse | attrStrikethrough | attrBold | attrItalic | attrBlink
+			t.cur.Attr.Mode &^= attrReverse | attrStrikethrough | attrBold | attrItalic | attrBlink | attrDim | attrHidden | attrOverline
 			t.cur.Attr.FG = DefaultFG
 			t.cur.Attr.BG = DefaultBG
 			t.cur.Attr.Underline = UnderlineStyle{}
 		case 1:
 			t.cur.Attr.Mode |= attrBold
+		case 2:
+			t.cur.Attr.Mode |= attrDim
 		case 3:
 			t.cur.Attr.Mode |= attrItalic
 		case 4:
@@ -768,12 +773,14 @@ func (t *State) setAttr(attr []int, subArgs [][]int) {
 			t.cur.Attr.Mode |= attrBlink
 		case 7:
 			t.cur.Attr.Mode |= attrReverse
+		case 8:
+			t.cur.Attr.Mode |= attrHidden
 		case 9:
 			t.cur.Attr.Mode |= attrStrikethrough
 		case 21:
 			t.cur.Attr.Underline.Mode = UnderlineDouble
 		case 22:
-			t.cur.Attr.Mode &^= attrBold
+			t.cur.Attr.Mode &^= attrBold | attrDim
 		case 23:
 			t.cur.Attr.Mode &^= attrItalic
 		case 24:
@@ -782,6 +789,8 @@ func (t *State) setAttr(attr []int, subArgs [][]int) {
 			t.cur.Attr.Mode &^= attrBlink
 		case 27:
 			t.cur.Attr.Mode &^= attrReverse
+		case 28:
+			t.cur.Attr.Mode &^= attrHidden
 		case 29:
 			t.cur.Attr.Mode &^= attrStrikethrough
 		case 38:
@@ -847,6 +856,10 @@ func (t *State) setAttr(attr []int, subArgs [][]int) {
 			}
 		case 59:
 			t.cur.Attr.Underline.Color = DefaultFG
+		case 53:
+			t.cur.Attr.Mode |= attrOverline
+		case 55:
+			t.cur.Attr.Mode &^= attrOverline
 		default:
 			if between(a, 30, 37) {
 				t.cur.Attr.FG = ANSIColor(a - 30)

@@ -20,6 +20,9 @@ const (
 	AttrWrap
 	AttrBlank
 	AttrTransparent
+	AttrDim
+	AttrHidden
+	AttrOverline
 )
 
 type UnderlineMode uint8

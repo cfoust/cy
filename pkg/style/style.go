@@ -327,7 +327,7 @@ func (s *Style) Apply(glyph *emu.Glyph) {
 		glyph.Mode |= emu.AttrBlink
 	}
 
-	// TODO(cfoust): 08/16/25 ???
-	//if s.GetFaint() {
-	//}
+	if s.GetFaint() {
+		glyph.Mode |= emu.AttrDim
+	}
 }
