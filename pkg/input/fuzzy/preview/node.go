@@ -114,7 +114,12 @@ func (f *Node) View(out *tty.State) {
 	// draw a ghost cursor
 	cursor := state.Cursor
 	if state.CursorVisible {
-		style.GhostCursor(preview, cursor.R, cursor.C)
+		style.GhostCursor(
+			preview,
+			cursor.R,
+			cursor.C,
+			state.CursorColor,
+		)
 	}
 
 	if isFiltered {

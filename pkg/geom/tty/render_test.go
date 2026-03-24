@@ -94,3 +94,33 @@ func TestAttributes(t *testing.T) {
 		testBytes(t, name, []byte(input))
 	}
 }
+
+func TestCursorColor(t *testing.T) {
+	size := emu.New().Size()
+
+	// No cursor color change -> no OSC 12 emitted
+	src := New(size)
+	dst := New(size)
+	output := Swap(dst, src)
+	require.NotContains(t, string(output), "\033]12;")
+	require.NotContains(t, string(output), "\033]112")
+
+	// Set cursor color -> should emit OSC 12
+	src.CursorColor = emu.RGBColor(255, 0, 0)
+	output = Swap(dst, src)
+	require.Contains(
+		t,
+		string(output),
+		"\033]12;rgb:ff/00/00\033\\",
+	)
+
+	// Same color -> no change emitted
+	dst.CursorColor = emu.RGBColor(255, 0, 0)
+	output = Swap(dst, src)
+	require.NotContains(t, string(output), "\033]12;")
+
+	// Reset cursor color -> should emit OSC 112
+	src.CursorColor = emu.DefaultCursor
+	output = Swap(dst, src)
+	require.Contains(t, string(output), "\033]112\033\\")
+}

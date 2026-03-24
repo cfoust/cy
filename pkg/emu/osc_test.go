@@ -6,6 +6,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type writerFunc func([]byte) (int, error)
+
+func (f writerFunc) Write(p []byte) (int, error) {
+	return f(p)
+}
+
 func TestTitle(t *testing.T) {
 	term := New()
 	_, _ = term.Write([]byte("\x1b]0;test\x1b\\"))
@@ -220,6 +226,51 @@ func TestOSC8Hyperlink(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestOSC12SetCursorColor(t *testing.T) {
+	term := New()
+	// Default cursor color should be DefaultCursor
+	require.Equal(t, DefaultCursor, term.CursorColor())
+
+	// Set cursor color to red via OSC 12
+	_, _ = term.Write([]byte("\x1b]12;rgb:ff/00/00\x1b\\"))
+	require.Equal(t, RGBColor(255, 0, 0), term.CursorColor())
+
+	// Set cursor color to green via BEL terminator
+	_, _ = term.Write([]byte("\x1b]12;rgb:00/ff/00\x07"))
+	require.Equal(t, RGBColor(0, 255, 0), term.CursorColor())
+}
+
+func TestOSC12SetCursorColorHash(t *testing.T) {
+	term := New()
+	_, _ = term.Write([]byte("\x1b]12;#ff0000\x1b\\"))
+	require.Equal(t, RGBColor(255, 0, 0), term.CursorColor())
+}
+
+func TestOSC12QueryCursorColor(t *testing.T) {
+	var buf []byte
+	term := New(WithWriter(writerFunc(func(b []byte) (int, error) {
+		buf = append(buf, b...)
+		return len(b), nil
+	})))
+
+	// Set cursor color then query it
+	_, _ = term.Write([]byte("\x1b]12;rgb:ff/00/00\x1b\\"))
+	_, _ = term.Write([]byte("\x1b]12;?\x1b\\"))
+	require.Contains(t, string(buf), "\x1b]12;rgb:")
+}
+
+func TestOSC112ResetCursorColor(t *testing.T) {
+	term := New()
+
+	// Set cursor color
+	_, _ = term.Write([]byte("\x1b]12;rgb:ff/00/00\x1b\\"))
+	require.Equal(t, RGBColor(255, 0, 0), term.CursorColor())
+
+	// Reset cursor color via OSC 112
+	_, _ = term.Write([]byte("\x1b]112\x1b\\"))
+	require.Equal(t, DefaultCursor, term.CursorColor())
 }
 
 func TestOSC133Reset(t *testing.T) {

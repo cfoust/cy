@@ -132,20 +132,18 @@ func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
 			t.logf("invalid cursor color: %s\n", maybe(p))
 		}
 		// TODO: redraw when color is set
-	// case 12:
-	// if len(s.args) < 2 {
-	// 	break
-	// }
+	case 12:
+		if len(s.args) < 2 {
+			break
+		}
 
-	// c := s.argString(1, "")
-	// p := &c
-	// if p != nil && *p == "?" {
-	// 	t.oscColorResponse(int(DefaultCursor), 12)
-	// } else if err := t.setColorName(int(DefaultCursor), p); err != nil {
-	// 	t.logf("invalid background color: %s\n", p)
-	// } else {
-	// 	// TODO: redraw
-	// }
+		c := s.argString(1, "")
+		p := &c
+		if p != nil && *p == "?" {
+			t.oscColorResponse(DefaultCursor, 12)
+		} else if err := t.setColorName(DefaultCursor, p); err != nil {
+			t.logf("invalid cursor color: %s\n", maybe(p))
+		}
 	case 4: // color set
 		if len(s.args) < 3 {
 			break
@@ -185,6 +183,8 @@ func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
 		}
 	case 52: // clipboard operations
 		t.handleOSC52(s)
+	case 112: // reset cursor color
+		t.setColorName(DefaultCursor, nil)
 	case 133: // semantic prompt (FinalTerm/iTerm2 shell integration)
 		t.handleOSC133(s)
 	default:

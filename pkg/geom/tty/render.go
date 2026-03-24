@@ -151,6 +151,23 @@ func setUnderlineColor(
 	}
 }
 
+// writeCursorColor emits OSC 12 to set the cursor color, or OSC 112
+// to reset it if the color is DefaultCursor.
+func writeCursorColor(buf *bytes.Buffer, color emu.Color) {
+	if color == emu.DefaultCursor {
+		buf.Write([]byte("\033]112\033\\"))
+		return
+	}
+
+	if r, g, b, ok := color.RGB(); ok {
+		fmt.Fprintf(
+			buf,
+			"\033]12;rgb:%02x/%02x/%02x\033\\",
+			r, g, b,
+		)
+	}
+}
+
 // Calculate the minimum string to transform `src` in to `dst`.
 func swapImage(
 	dst, src image.Image,
@@ -264,6 +281,10 @@ func Swap(
 
 	if dstCursor.Style != srcCursor.Style {
 		fmt.Fprintf(data, "\x1b[%d q", int(srcCursor.Style))
+	}
+
+	if dst.CursorColor != src.CursorColor {
+		writeCursorColor(data, src.CursorColor)
 	}
 
 	// This is wasteful, we shouldn't have to include this on every frame

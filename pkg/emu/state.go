@@ -121,6 +121,18 @@ func (t *State) CursorVisible() bool {
 	return t.mode&ModeHide == 0
 }
 
+// CursorColor returns the cursor color set by OSC 12, or
+// DefaultCursor if none has been set.
+func (t *State) CursorColor() Color {
+	t.RLock()
+	defer t.RUnlock()
+	c, ok := t.colorOverride[DefaultCursor]
+	if !ok {
+		return DefaultCursor
+	}
+	return c
+}
+
 // Mode returns the current terminal mode.
 func (t *State) Mode() ModeFlag {
 	t.RLock()

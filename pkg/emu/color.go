@@ -11,6 +11,8 @@ const (
 	// RGB color. The old method meant that all RGB colors within
 	// 0x0000ff were represented incorrectly.
 	colorRGB uint32 = 1 << 26
+	// Distinguishes the default cursor color from FG and BG defaults.
+	colorCursor uint32 = 1 << 27
 
 	colorAnsi  uint32 = 0xf
 	colorXterm uint32 = 0xff
@@ -57,8 +59,9 @@ var (
 // For example, a transparent background. Otherwise, the simple case is to
 // map default colors to another color.
 const (
-	DefaultFG Color = 0
-	DefaultBG Color = Color(colorBG)
+	DefaultFG     Color = 0
+	DefaultBG     Color = Color(colorBG)
+	DefaultCursor Color = Color(colorCursor)
 )
 
 // Default reports whether this color has been set. If false, it represents

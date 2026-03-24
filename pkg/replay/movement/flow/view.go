@@ -162,6 +162,7 @@ func (f *flowMovement) View(
 				state.Image,
 				termCursor.R,
 				termCursor.C,
+				emu.DefaultCursor,
 			)
 		}
 	}

@@ -10,6 +10,7 @@ type State struct {
 	Image         image.Image
 	Cursor        emu.Cursor
 	CursorVisible bool
+	CursorColor   emu.Color
 }
 
 func (s *State) Clone() *State {
@@ -31,15 +32,18 @@ func Copy(pos geom.Vec2, dst, src *State) {
 	dst.Cursor.C += pos.C
 	dst.Cursor.R += pos.R
 	dst.CursorVisible = src.CursorVisible
+	dst.CursorColor = src.CursorColor
 }
 
 func Capture(view emu.View) *State {
 	cursor := view.Cursor()
 	cursorVisible := view.CursorVisible()
+	cursorColor := view.CursorColor()
 
 	return &State{
 		Image:         image.Capture(view),
 		Cursor:        cursor,
 		CursorVisible: cursorVisible,
+		CursorColor:   cursorColor,
 	}
 }

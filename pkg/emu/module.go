@@ -335,6 +335,10 @@ type View interface {
 	// CursorVisible returns the visible state of the cursor.
 	CursorVisible() bool
 
+	// CursorColor returns the cursor color set by OSC 12, or
+	// DefaultCursor if none has been set.
+	CursorColor() Color
+
 	// Screen gets all of the lines on the screen.
 	Screen() []Line
 

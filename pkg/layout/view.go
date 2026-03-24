@@ -205,7 +205,12 @@ func (p *View) State() *tty.State {
 	if !p.isAttached && state.CursorVisible {
 		cursor := state.Cursor
 		state.CursorVisible = false
-		style.GhostCursor(state.Image, cursor.R, cursor.C)
+		style.GhostCursor(
+			state.Image,
+			cursor.R,
+			cursor.C,
+			state.CursorColor,
+		)
 	}
 
 	// Store a unique number into the WriteID so consumers of the
