@@ -177,9 +177,13 @@ func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
 				}
 			}
 		}
-		t.cur.Attr.Hyperlink = &Hyperlink{
-			ID:  id,
-			URI: uri,
+		if uri != "" {
+			t.cur.Attr.Hyperlink = &Hyperlink{
+				ID:  id,
+				URI: uri,
+			}
+		} else {
+			t.cur.Attr.Hyperlink = nil
 		}
 	case 52: // clipboard operations
 		t.handleOSC52(s)
