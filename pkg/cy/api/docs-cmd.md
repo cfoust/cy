@@ -54,9 +54,13 @@ Kill the pane specified by target. `target` is a [NodeID](/api.md#nodeid).
 
 (cmd/execute args &named env stdin)
 
-Execute a command and return its output. This is useful for running shell commands and capturing their output directly in Janet.
+Execute a shell command and return its output.
 
-Note: Since cy does not use Janet's event loop, the built-in [`(os/execute)`](https://janet-lang.org/api/index.html#os/execute) does not work.
+:::note
+
+Since cy does not use Janet's event loop, the built-in [`(os/execute)`](https://janet-lang.org/api/index.html#os/execute) does not work.
+
+:::
 
 `args` is an array/tuple of strings where the first element is the command and the rest are arguments (same as `(os/execute)`).
 
