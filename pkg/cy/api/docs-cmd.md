@@ -50,13 +50,15 @@ Query all of the commands stored in the [command database](/command-history.md).
 
 Kill the pane specified by target. `target` is a [NodeID](/api.md#nodeid).
 
-# doc: Exec
+# doc: Execute
 
-(cmd/exec args &named env stdin)
+(cmd/execute args &named env stdin)
 
 Execute a command and return its output. This is useful for running shell commands and capturing their output directly in Janet.
 
-`args` is an array/tuple of strings where the first element is the command and the rest are arguments (same format as Janet's `os/execute`).
+Note: Since cy does not use Janet's event loop, the built-in [`(os/execute)`](https://janet-lang.org/api/index.html#os/execute) does not work.
+
+`args` is an array/tuple of strings where the first element is the command and the rest are arguments (same as `(os/execute)`).
 
 Optional named parameters:
 - `:env` (struct): Additional environment variables to set.
@@ -67,24 +69,26 @@ Returns a struct with:
 - `:stderr` (string): The command's standard error.
 - `:exit-code` (int): The exit code (0 indicates success).
 
+Subprocesses can communicate with the cy server via `cy exec`.
+
 A non-zero exit code is not treated as an error; check the `:exit-code` field to determine if the command succeeded.
 
 Some examples:
 
 ```janet
 # Run a simple command
-(def result (cmd/exec ["echo" "hello"]))
+(def result (cmd/execute ["echo" "hello"]))
 (print (result :stdout))  # => "hello\n"
 
 # Pass input via stdin
-(def result (cmd/exec ["cat"] :stdin "hello world"))
+(def result (cmd/execute ["cat"] :stdin "hello world"))
 (print (result :stdout))  # => "hello world"
 
 # Set environment variables
-(def result (cmd/exec ["sh" "-c" "echo $MY_VAR"] :env {"MY_VAR" "hello"}))
+(def result (cmd/execute ["sh" "-c" "echo $MY_VAR"] :env {"MY_VAR" "hello"}))
 (print (result :stdout))  # => "hello\n"
 
 # Check exit code
-(def result (cmd/exec ["false"]))
+(def result (cmd/execute ["false"]))
 (print (result :exit-code))  # => 1
 ```

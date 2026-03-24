@@ -247,7 +247,7 @@ type ExecResult struct {
 	ExitCode int    `janet:"exit-code"`
 }
 
-func (c *CmdModule) Exec(
+func (c *CmdModule) Execute(
 	ctx context.Context,
 	args []string,
 	params *janet.Named[ExecParams],

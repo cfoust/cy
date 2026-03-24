@@ -11,32 +11,32 @@
     ([err] (error err)))
   (cmd/kill cmd))
 
-(test "(cmd/exec) basic command"
-  (def result (cmd/exec ["echo" "hello"]))
+(test "(cmd/execute) basic command"
+  (def result (cmd/execute ["echo" "hello"]))
   (assert (= (result :stdout) "hello\n"))
   (assert (= (result :stderr) ""))
   (assert (= (result :exit-code) 0)))
 
-(test "(cmd/exec) with arguments"
-  (def result (cmd/exec ["printf" "%s %s" "foo" "bar"]))
+(test "(cmd/execute) with arguments"
+  (def result (cmd/execute ["printf" "%s %s" "foo" "bar"]))
   (assert (= (result :stdout) "foo bar"))
   (assert (= (result :exit-code) 0)))
 
-(test "(cmd/exec) with stdin"
-  (def result (cmd/exec ["cat"] :stdin "hello world"))
+(test "(cmd/execute) with stdin"
+  (def result (cmd/execute ["cat"] :stdin "hello world"))
   (assert (= (result :stdout) "hello world"))
   (assert (= (result :exit-code) 0)))
 
-(test "(cmd/exec) non-zero exit code"
-  (def result (cmd/exec ["false"]))
+(test "(cmd/execute) non-zero exit code"
+  (def result (cmd/execute ["false"]))
   (assert (not= (result :exit-code) 0)))
 
-(test "(cmd/exec) with env"
-  (def result (cmd/exec ["sh" "-c" "echo $TEST_VAR"] :env {"TEST_VAR" "test_value"}))
+(test "(cmd/execute) with env"
+  (def result (cmd/execute ["sh" "-c" "echo $TEST_VAR"] :env {"TEST_VAR" "test_value"}))
   (assert (= (result :stdout) "test_value\n"))
   (assert (= (result :exit-code) 0)))
 
-(test "(cmd/exec) captures stderr"
-  (def result (cmd/exec ["sh" "-c" "echo error >&2"]))
+(test "(cmd/execute) captures stderr"
+  (def result (cmd/execute ["sh" "-c" "echo error >&2"]))
   (assert (= (result :stderr) "error\n"))
   (assert (= (result :exit-code) 0)))
