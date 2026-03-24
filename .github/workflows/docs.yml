@@ -17,6 +17,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Store version in environment
+        run: |
+          TAG=$(git describe --tags --always --abbrev=0)
+          echo "CY_VERSION=${TAG:1}" >> $GITHUB_ENV
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
