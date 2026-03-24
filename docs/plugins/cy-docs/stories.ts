@@ -225,7 +225,6 @@ export function ensureStorybookBinary(
   projectDir: string,
   repoDir: string,
 ): void {
-  if (process.env.CI) return;
   if (process.env.CY_SKIP_ASSETS === '1') return;
 
   const storybook = resolve(projectDir, 'storybook');
