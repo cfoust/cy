@@ -120,7 +120,7 @@ func (c *Cy) ExecuteJanet(path string) error {
 		SourcePath: path,
 		Options: janet.CallOptions{
 			UpdateEnv: true,
-			Dyns:      c.logPipe.Dyns(),
+			Dyns:      c.Dyns(),
 		},
 	}
 
@@ -150,7 +150,7 @@ func (c *Cy) loadConfig() error {
 		SourcePath: c.options.Config,
 		Options: janet.CallOptions{
 			UpdateEnv: true,
-			Dyns:      c.logPipe.Dyns(),
+			Dyns:      c.Dyns(),
 		},
 	}
 
@@ -410,6 +410,12 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 
 func (c *Cy) SocketName() string {
 	return c.options.SocketName
+}
+
+// Dyns returns the dynamic bindings for Janet code execution, including
+// :out/:err for logging.
+func (c *Cy) Dyns() map[janet.Keyword]any {
+	return c.logPipe.Dyns()
 }
 
 func Start(ctx context.Context, options Options) (*Cy, error) {

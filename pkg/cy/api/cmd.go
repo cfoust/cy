@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
 	C "github.com/cfoust/cy/pkg/cmd"
@@ -27,19 +26,6 @@ type CmdParams struct {
 	Name    string
 	Path    string
 	Restart bool
-}
-
-type ExecParams struct {
-	Path    string
-	Env     *janet.Value
-	Stdin   string
-	Timeout *int
-}
-
-type ExecResult struct {
-	Stdout   string
-	Stderr   string
-	ExitCode int
 }
 
 type CommandStore interface {
@@ -250,56 +236,61 @@ func (c *CmdModule) Query() ([]C.CommandEvent, error) {
 	return commands, nil
 }
 
+type ExecParams struct {
+	Env   *janet.Value
+	Stdin string
+}
+
+type ExecResult struct {
+	Stdout   string `janet:"stdout"`
+	Stderr   string `janet:"stderr"`
+	ExitCode int    `janet:"exit-code"`
+}
+
 func (c *CmdModule) Exec(
 	ctx context.Context,
-	command string,
 	args []string,
 	params *janet.Named[ExecParams],
 ) (ExecResult, error) {
+	if len(args) < 1 {
+		return ExecResult{}, fmt.Errorf(
+			"expected at least 1 argument (the command)",
+		)
+	}
+
+	command := args[0]
+	cmdArgs := args[1:]
 	values := params.Values()
 
-	execCtx := ctx
-	if values.Timeout != nil && *values.Timeout > 0 {
-		var cancel context.CancelFunc
-		execCtx, cancel = context.WithTimeout(
-			ctx,
-			time.Duration(*values.Timeout)*time.Second,
-		)
-		defer cancel()
-	}
+	cmd := exec.CommandContext(ctx, command, cmdArgs...)
 
-	cmd := exec.CommandContext(execCtx, command, args...)
-
-	if values.Path != "" {
-		cmd.Dir = values.Path
-	}
-
+	// Set up environment with CY socket name
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, "CY="+c.Server.SocketName())
+	cmd.Env = append(cmd.Env, fmt.Sprintf("CY=%s", c.Server.SocketName()))
 
+	// Add user-provided environment variables
 	if values.Env != nil {
+		defer values.Env.Free()
+
 		var envMap map[string]string
-		err := values.Env.Unmarshal(&envMap)
-		values.Env.Free()
-		if err != nil {
-			return ExecResult{}, fmt.Errorf(
-				"invalid env: %w",
-				err,
-			)
-		}
-		for k, v := range envMap {
-			cmd.Env = append(cmd.Env, k+"="+v)
+		if err := values.Env.Unmarshal(&envMap); err == nil {
+			for k, v := range envMap {
+				cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+			}
 		}
 	}
 
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
+	// Set up stdin if provided
 	if values.Stdin != "" {
 		cmd.Stdin = strings.NewReader(values.Stdin)
 	}
 
+	// Capture stdout and stderr
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	// Run the command
 	err := cmd.Run()
 
 	result := ExecResult{
@@ -307,17 +298,13 @@ func (c *CmdModule) Exec(
 		Stderr: stderr.String(),
 	}
 
+	// Extract exit code
 	if err != nil {
-		if execCtx.Err() == context.DeadlineExceeded {
-			return result, fmt.Errorf("command timed out")
-		}
-
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			result.ExitCode = exitErr.ExitCode()
-			return result, nil
+		} else {
+			return result, err
 		}
-
-		return result, err
 	}
 
 	return result, nil

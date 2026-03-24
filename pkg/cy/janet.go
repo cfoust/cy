@@ -102,7 +102,7 @@ func (c *Cy) initAPI() error {
 			SourcePath: path,
 			Options: janet.CallOptions{
 				UpdateEnv: true,
-				Dyns:      c.logPipe.Dyns(),
+				Dyns:      c.Dyns(),
 			},
 		})
 		if err != nil {
