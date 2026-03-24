@@ -225,7 +225,6 @@ export function ensureStorybookBinary(
   projectDir: string,
   repoDir: string,
 ): void {
-  if (process.env.CI) return;
   if (process.env.CY_SKIP_ASSETS === '1') return;
 
   const storybook = resolve(projectDir, 'storybook');
@@ -233,16 +232,16 @@ export function ensureStorybookBinary(
   // Always run go build — it's a no-op when sources haven't
   // changed and avoids stale binary issues.
   console.error('Building storybook binary...');
-  execFileSync(
-    'go',
-    [
-      'build',
-      '-o',
-      storybook,
-      resolve(repoDir, 'cmd', 'stories'),
-    ],
-    {cwd: repoDir, stdio: 'inherit'},
-  );
+  const args = ['build', '-o', storybook];
+  const cyVersion = process.env.CY_VERSION;
+  if (cyVersion) {
+    args.push(
+      '-ldflags',
+      `-X github.com/cfoust/cy/pkg/version.Version=${cyVersion}`,
+    );
+  }
+  args.push(resolve(repoDir, 'cmd', 'stories'));
+  execFileSync('go', args, {cwd: repoDir, stdio: 'inherit'});
 }
 
 export function ensureExampleBinary(

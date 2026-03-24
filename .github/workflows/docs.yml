@@ -47,20 +47,10 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -qqy vim htop libx11-dev
-
-      - name: Build storybook binary
-        run: >
-          go build
-          -ldflags "-X github.com/cfoust/cy/pkg/version.Version=${CY_VERSION}"
-          -o docs/storybook
-          ./cmd/stories
-
-      - name: Build example binary
-        run: go build -o docs/example ./cmd/example
+          sudo apt-get install -qqy vim htop libx11-dev just
 
       - name: Build Docusaurus site
-        run: cd docs && npm run build
+        run: just docs-build-assets
 
       - name: Setup pages
         uses: actions/configure-pages@v2

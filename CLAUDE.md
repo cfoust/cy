@@ -41,8 +41,11 @@ just run
 # Serve documentation locally (Docusaurus)
 just docs
 
-# Full docs build with story assets
+# Build docs (without assets, fast)
 just docs-build
+
+# Full docs build with story assets (slow, used in CI)
+just docs-build-assets
 
 # Generate API documentation
 just api
