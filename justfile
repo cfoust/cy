@@ -40,6 +40,10 @@ docs:
 
 docs-build:
   rm -rf docs/.docusaurus
+  cd docs && CY_SKIP_ASSETS=1 npm run build
+
+docs-build-assets:
+  rm -rf docs/.docusaurus
   cd docs && npm run build
 
 api:
