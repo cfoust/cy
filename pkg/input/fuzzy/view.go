@@ -106,6 +106,41 @@ func (f *Fuzzy) highlightColumnMatches(
 	)
 }
 
+// computeColumnWidths calculates the max visual width for each column
+// across all options so that column sizes can be fixed at init time.
+func computeColumnWidths(options []Option, headers []string) []int {
+	var widths []int
+
+	for _, h := range headers {
+		widths = append(widths, lipgloss.Width(h))
+	}
+
+	for _, option := range options {
+		if len(option.Columns) == 0 {
+			continue
+		}
+		for len(widths) < len(option.Columns) {
+			widths = append(widths, 0)
+		}
+		for i, col := range option.Columns {
+			w := lipgloss.Width(col)
+			if i == 0 {
+				w += 2 // account for "> " prefix
+			}
+			if w > widths[i] {
+				widths[i] = w
+			}
+		}
+	}
+
+	// Add one to each width so columns have breathing room
+	for i := range widths {
+		widths[i]++
+	}
+
+	return widths
+}
+
 // Return an image representing the contents of the preview window.
 func (f *Fuzzy) getPreviewContents() (preview image.Image) {
 	options := f.getOptions()
@@ -248,14 +283,19 @@ func (f *Fuzzy) renderOptions(
 	table := table.New().
 		Border(lipgloss.Border{}).
 		StyleFunc(func(row, col int) lipgloss.Style {
+			var s lipgloss.Style
 			switch row {
 			case table.HeaderRow:
-				return prompt
+				s = prompt
 			case (f.selected - windowOffset):
-				return active
+				s = active
 			default:
-				return inactive
+				s = inactive
 			}
+			if col < len(f.columnWidths) {
+				s = s.Width(f.columnWidths[col])
+			}
+			return s
 		}).
 		Headers(headers...).
 		Wrap(false).

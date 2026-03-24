@@ -108,6 +108,29 @@ var Wrap stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
 	), nil
 }
 
+// Table with deliberately varied column widths to test that columns
+// stay stable while scrolling.
+var fixedColumnsTable = []Option{
+	newColumnOption("Kangaskhan", "100", "Fighting"),
+	newColumnOption("Jigglypuff", "101", "Normal"),
+	newColumnOption("Al", "1", "Ice"),
+	newColumnOption("Bo", "2", "Bug"),
+	newColumnOption("Ed", "3", "Ice"),
+	newColumnOption("Jo", "4", "Bug"),
+	newColumnOption("Ol", "5", "Ice"),
+	newColumnOption("Vi", "6", "Bug"),
+	newColumnOption("Butterfree", "102", "Grass"),
+	newColumnOption("Charmeleon", "103", "Fire"),
+}
+
+var FixedColumns stories.InitFunc = func(ctx context.Context) (mux.Screen, error) {
+	return New(
+		ctx,
+		fixedColumnsTable,
+		WithHeaders("Name", "#", "Type"),
+	), nil
+}
+
 func init() {
 	config := stories.Config{
 		Size: geom.DEFAULT_SIZE,
@@ -161,6 +184,23 @@ func init() {
 	stories.Register("input/find/table/full-bottom", FullBottomTable, config)
 	stories.Register("input/find/table/top-left", TopLeftTable, config)
 	stories.Register("input/find/table/command", CommandTable, config)
+
+	fixedColInputs := []interface{}{}
+	for i := 0; i < 20; i++ {
+		fixedColInputs = append(
+			fixedColInputs,
+			stories.Type("ctrl+j"),
+			stories.Wait(stories.Some),
+		)
+	}
+	stories.Register(
+		"input/find/table/fixed-columns",
+		FixedColumns,
+		stories.Config{
+			Size:  geom.Size{R: 6, C: 40},
+			Input: fixedColInputs,
+		},
+	)
 
 	wrapInputs := []interface{}{}
 	// Navigate up past the last item to wrap around

@@ -64,6 +64,9 @@ type Fuzzy struct {
 	// headers for the table
 	headers []string
 
+	// fixed column widths computed from all options at init
+	columnWidths []int
+
 	tree            *tree.Tree
 	server          *server.Server
 	client          *server.Client
@@ -329,6 +332,7 @@ func newFuzzy(
 	for _, setting := range settings {
 		setting(f.Ctx(), f)
 	}
+	f.columnWidths = computeColumnWidths(f.options, f.headers)
 	return f
 }
 
