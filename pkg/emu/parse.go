@@ -13,7 +13,7 @@ import (
 
 func (t *State) Print(c rune) {
 	if t.mode&ModeWrap != 0 && t.cur.State&cursorWrapNext != 0 {
-		t.screen[t.cur.R][t.cur.C].Mode |= attrWrap
+		t.screen[t.cur.R][t.cur.C].Mode |= AttrWrap
 		t.newline(true)
 	}
 
@@ -29,7 +29,7 @@ func (t *State) Print(c rune) {
 	// Specifically can only happen if a double-width character is printed
 	// to the final cell in a row
 	if destCol > t.cols {
-		t.screen[t.cur.R][t.cur.C].Mode |= attrWrap
+		t.screen[t.cur.R][t.cur.C].Mode |= AttrWrap
 		t.newline(true)
 		t.Print(c)
 		return
@@ -179,7 +179,7 @@ func (t *State) OscDispatch(params [][]byte, bellTerminated bool) {
 				}
 			}
 		}
-		t.cur.Attr.Hyperlink = Hyperlink{
+		t.cur.Attr.Hyperlink = &Hyperlink{
 			ID:  id,
 			URI: uri,
 		}
@@ -438,9 +438,9 @@ func (t *State) EscDispatch(intermediates []byte, ignore bool, b byte) {
 
 	// Character Sets (G0 and G1 Designators)
 	case '0': // line drawing set
-		t.cur.Attr.Mode |= attrGfx
+		t.cur.Attr.Mode |= AttrGfx
 	case 'B': // USASCII
-		t.cur.Attr.Mode &^= attrGfx
+		t.cur.Attr.Mode &^= AttrGfx
 	case 'A', // UK (ignored)
 		'<', // multinational (ignored)
 		'5', // Finnish (ignored)

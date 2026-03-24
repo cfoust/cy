@@ -9,7 +9,6 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-// TODO(cfoust): 05/19/23 combine this with the other declaration
 const (
 	AttrReverse = 1 << iota
 	AttrBold
@@ -103,7 +102,7 @@ type Glyph struct {
 	FG, BG    Color
 	Write     WriteID
 	Underline UnderlineStyle
-	Hyperlink Hyperlink
+	Hyperlink *Hyperlink
 }
 
 func (g Glyph) IsEmpty() bool {
@@ -111,11 +110,11 @@ func (g Glyph) IsEmpty() bool {
 }
 
 func (g Glyph) IsDefault() bool {
-	return g.Mode&attrBlank != 0
+	return g.Mode&AttrBlank != 0
 }
 
 func (g Glyph) Transparent() bool {
-	return g.Mode&attrTransparent != 0
+	return g.Mode&AttrTransparent != 0
 }
 
 func (g Glyph) Width() int {
@@ -124,11 +123,21 @@ func (g Glyph) Width() int {
 	return geom.Max(runewidth.RuneWidth(g.Char), 1)
 }
 
+func sameHyperlink(a, b *Hyperlink) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	return *a == *b
+}
+
 func (g Glyph) Equal(other Glyph) bool {
 	return g.Char == other.Char && g.Mode == other.Mode &&
 		g.FG == other.FG && g.BG == other.BG &&
 		g.Underline == other.Underline &&
-		g.Hyperlink == other.Hyperlink
+		sameHyperlink(g.Hyperlink, other.Hyperlink)
 }
 
 // SameAttrs reports whether the two glyphs have the same visual attributes.
@@ -136,7 +145,7 @@ func (g Glyph) SameAttrs(other Glyph) bool {
 	return g.Mode == other.Mode && g.FG == other.FG &&
 		g.BG == other.BG &&
 		g.Underline == other.Underline &&
-		g.Hyperlink == other.Hyperlink
+		sameHyperlink(g.Hyperlink, other.Hyperlink)
 }
 
 func EmptyGlyph() Glyph {
@@ -163,7 +172,7 @@ func (l Line) IsWrapped() bool {
 		return false
 	}
 
-	return (l[len(l)-1].Mode & attrWrap) != 0
+	return (l[len(l)-1].Mode & AttrWrap) != 0
 }
 
 // Length returns the physical length of the line, accounting for the width of

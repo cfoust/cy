@@ -31,10 +31,10 @@ func wrapLine(line Line, cols int) (lines physicalLine) {
 		return
 	}
 
-	// if cursor is on or directly after a non-attrBlank cell, flow it
+	// if cursor is on or directly after a non-AttrBlank cell, flow it
 	// normally
 	// if cursor is on a blank line, just do .X % cols
-	// if cursor is after end of line with non-attrBlank characters, move
+	// if cursor is after end of line with non-AttrBlank characters, move
 	// back to cell after last
 	// if cursor is after last line, move back to the first blank line
 
@@ -93,7 +93,7 @@ func resolveLine(lines []Line, screen physicalLine) (line Line) {
 
 	// Remove the wrap state
 	for i := range line {
-		line[i].Mode &= ^attrWrap
+		line[i].Mode &= ^AttrWrap
 	}
 
 	return
@@ -142,7 +142,7 @@ func getLineLength(line Line) int {
 }
 
 func getOccupiedLine(line Line) Line {
-	if line[len(line)-1].Mode == attrWrap {
+	if line[len(line)-1].Mode == AttrWrap {
 		return line
 	}
 
@@ -345,12 +345,12 @@ func reflow(
 			// Fill in any blank cells
 			for j := cols - numBlank; j < cols; j++ {
 				newLine[j] = EmptyGlyph()
-				newLine[j].Mode |= attrBlank
+				newLine[j].Mode |= AttrBlank
 			}
 
 			// Mark wrapped
 			if i != len(physical)-1 {
-				newLine[cols-1].Mode ^= attrWrap
+				newLine[cols-1].Mode ^= AttrWrap
 			}
 
 			newLines = append(newLines, newLine)

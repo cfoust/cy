@@ -130,57 +130,96 @@ func TestOSC133WriteID(t *testing.T) {
 }
 
 func TestOSC8Hyperlink(t *testing.T) {
-	term := New()
-	// OSC 8 ; ; URI ST  (no params)
-	_, _ = term.Write(
-		[]byte(
-			"\033]8;;https://example.com\033\\link\033]8;;\033\\",
-		),
-	)
-
-	// "link" glyphs should carry the URI
-	for i := 0; i < 4; i++ {
-		attr := term.Cell(i, 0)
-		require.Equal(
-			t,
-			"https://example.com",
-			attr.Hyperlink.URI,
-			"cell %d should have hyperlink URI", i,
-		)
+	tests := []struct {
+		name  string
+		input string
+		cells []struct {
+			col  int
+			uri  string
+			id   string
+			desc string
+		}
+	}{
+		{
+			name: "basic hyperlink",
+			input: "\033]8;;https://example.com" +
+				"\033\\link\033]8;;\033\\",
+			cells: []struct {
+				col  int
+				uri  string
+				id   string
+				desc string
+			}{
+				{0, "https://example.com", "", "cell 0"},
+				{1, "https://example.com", "", "cell 1"},
+				{2, "https://example.com", "", "cell 2"},
+				{3, "https://example.com", "", "cell 3"},
+				{4, "", "", "after close"},
+			},
+		},
+		{
+			name: "hyperlink with id",
+			input: "\033]8;id=foo;https://example.com" +
+				"\033\\link\033]8;;\033\\",
+			cells: []struct {
+				col  int
+				uri  string
+				id   string
+				desc string
+			}{
+				{
+					0,
+					"https://example.com",
+					"foo",
+					"should have URI and ID",
+				},
+			},
+		},
+		{
+			name: "SGR 0 clears hyperlink",
+			input: "\033]8;;https://example.com" +
+				"\033\\\033[mafter",
+			cells: []struct {
+				col  int
+				uri  string
+				id   string
+				desc string
+			}{
+				{
+					0, "", "",
+					"SGR 0 should clear hyperlink",
+				},
+			},
+		},
 	}
 
-	// Character after the close should have no hyperlink
-	attr := term.Cell(4, 0)
-	require.Equal(t, "", attr.Hyperlink.URI)
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			term := New()
+			_, _ = term.Write([]byte(tt.input))
 
-func TestOSC8HyperlinkWithID(t *testing.T) {
-	term := New()
-	_, _ = term.Write(
-		[]byte(
-			"\033]8;id=foo;https://example.com\033\\link\033]8;;\033\\",
-		),
-	)
-
-	attr := term.Cell(0, 0)
-	require.Equal(
-		t, "https://example.com", attr.Hyperlink.URI,
-	)
-	require.Equal(t, "foo", attr.Hyperlink.ID)
-}
-
-func TestOSC8HyperlinkReset(t *testing.T) {
-	term := New()
-	// Set a hyperlink, then SGR 0 should also clear it
-	_, _ = term.Write(
-		[]byte(
-			"\033]8;;https://example.com\033\\\033[mafter",
-		),
-	)
-
-	attr := term.Cell(0, 0)
-	require.Equal(t, "", attr.Hyperlink.URI,
-		"SGR 0 should clear hyperlink")
+			for _, c := range tt.cells {
+				g := term.Cell(c.col, 0)
+				var (
+					uri string
+					id  string
+				)
+				if g.Hyperlink != nil {
+					uri = g.Hyperlink.URI
+					id = g.Hyperlink.ID
+				}
+				require.Equal(
+					t, c.uri, uri, c.desc,
+				)
+				if c.id != "" {
+					require.Equal(
+						t, c.id, id,
+						c.desc,
+					)
+				}
+			}
+		})
+	}
 }
 
 func TestOSC133Reset(t *testing.T) {

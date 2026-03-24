@@ -213,7 +213,7 @@ func swapImage(
 			setColor(data, srcCell.FG, false)
 			setColor(data, srcCell.BG, true)
 
-			if srcCell.Hyperlink.URI != "" {
+			if srcCell.Hyperlink != nil && srcCell.Hyperlink.URI != "" {
 				data.Write([]byte("\033]8;"))
 				if srcCell.Hyperlink.ID != "" {
 					data.WriteString("id=")
@@ -226,7 +226,7 @@ func swapImage(
 
 			data.WriteRune(srcCell.Char)
 
-			if srcCell.Hyperlink.URI != "" {
+			if srcCell.Hyperlink != nil && srcCell.Hyperlink.URI != "" {
 				data.Write(hyperlinkPrefix)
 				data.Write(hyperlinkSuffix)
 			}

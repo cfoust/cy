@@ -148,48 +148,48 @@ func TestSGR(t *testing.T) {
 			name:  "dim",
 			input: "\033[2mfaded\033[m",
 			checks: []check{
-				{0, attrDim, true, "SGR 2 should set dim"},
-				{6, attrDim, false, "SGR 0 should clear dim"},
+				{0, AttrDim, true, "SGR 2 should set dim"},
+				{6, AttrDim, false, "SGR 0 should clear dim"},
 			},
 		},
 		{
 			name:  "hidden",
 			input: "\033[8mhidden\033[m",
 			checks: []check{
-				{0, attrHidden, true, "SGR 8 should set hidden"},
+				{0, AttrHidden, true, "SGR 8 should set hidden"},
 			},
 		},
 		{
 			name:  "overline",
 			input: "\033[53mover\033[m",
 			checks: []check{
-				{0, attrOverline, true, "SGR 53 should set overline"},
+				{0, AttrOverline, true, "SGR 53 should set overline"},
 			},
 		},
 		{
 			name:  "22 clears bold and dim",
 			input: "\033[1;2mboth\033[22mneither\033[m",
 			checks: []check{
-				{0, attrBold, true, "bold should be set"},
-				{0, attrDim, true, "dim should be set"},
-				{4, attrBold, false, "SGR 22 should clear bold"},
-				{4, attrDim, false, "SGR 22 should clear dim"},
+				{0, AttrBold, true, "bold should be set"},
+				{0, AttrDim, true, "dim should be set"},
+				{4, AttrBold, false, "SGR 22 should clear bold"},
+				{4, AttrDim, false, "SGR 22 should clear dim"},
 			},
 		},
 		{
 			name:  "28 clears hidden",
 			input: "\033[8mhid\033[28mvis\033[m",
 			checks: []check{
-				{0, attrHidden, true, "hidden should be set"},
-				{3, attrHidden, false, "SGR 28 should clear hidden"},
+				{0, AttrHidden, true, "hidden should be set"},
+				{3, AttrHidden, false, "SGR 28 should clear hidden"},
 			},
 		},
 		{
 			name:  "55 clears overline",
 			input: "\033[53mover\033[55mno\033[m",
 			checks: []check{
-				{0, attrOverline, true, "overline should be set"},
-				{4, attrOverline, false, "SGR 55 should clear overline"},
+				{0, AttrOverline, true, "overline should be set"},
+				{4, AttrOverline, false, "SGR 55 should clear overline"},
 			},
 		},
 	}

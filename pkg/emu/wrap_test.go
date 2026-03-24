@@ -13,7 +13,7 @@ func makeWrapped(lines ...string) []Line {
 	for i, str := range lines {
 		line := LineFromString(str)
 		if i != len(lines)-1 {
-			line[len(line)-1].Mode |= attrWrap
+			line[len(line)-1].Mode |= AttrWrap
 		}
 		result = append(result, line)
 	}

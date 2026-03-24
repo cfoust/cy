@@ -15,22 +15,6 @@ const (
 	tabspaces = 8
 )
 
-const (
-	attrReverse = 1 << iota
-	attrBold
-	attrGfx
-	attrItalic
-	attrStrikethrough
-	attrBlink
-	attrWrap
-	attrBlank
-	attrTransparent
-	attrDim
-	attrHidden
-	attrOverline
-	attrOpaque
-)
-
 // State represents the terminal emulation state. Use Lock/Unlock
 // methods to synchronize data access with VT.
 type State struct {
@@ -232,7 +216,7 @@ var gfxCharTable = [62]rune{
 func (t *State) setChar(c rune, attr *Glyph, x, y int) {
 	w := runewidth.RuneWidth(c)
 
-	if attr.Mode&attrGfx != 0 {
+	if attr.Mode&AttrGfx != 0 {
 		if c >= 0x41 && c <= 0x7e && gfxCharTable[c-0x41] != 0 {
 			c = gfxCharTable[c-0x41]
 		}
@@ -249,7 +233,7 @@ func (t *State) setChar(c rune, attr *Glyph, x, y int) {
 		t.screen[y][i] = *attr
 		// Every explicit character change means cell is no longer
 		// blank (important for wrapping)
-		t.screen[y][i].Mode &= ^attrBlank
+		t.screen[y][i].Mode &= ^AttrBlank
 		t.screen[y][i].Write = t.dirty.writeId
 		// super useful for debugging
 		//t.screen[y][i].BG = Color(t.dirty.writeId % 255)
@@ -261,11 +245,11 @@ func (t *State) setChar(c rune, attr *Glyph, x, y int) {
 		} else {
 			t.screen[y][i].Char = ' '
 		}
-		//if t.options.BrightBold && attr.Mode&attrBold != 0 && attr.FG < 8 {
-		if attr.Mode&attrBold != 0 && attr.FG < 8 {
+		//if t.options.BrightBold && attr.Mode&AttrBold != 0 && attr.FG < 8 {
+		if attr.Mode&AttrBold != 0 && attr.FG < 8 {
 			t.screen[y][i].FG = attr.FG + 8
 		}
-		if attr.Mode&attrReverse != 0 {
+		if attr.Mode&AttrReverse != 0 {
 			t.screen[y][i].FG = attr.BG
 			t.screen[y][i].BG = attr.FG
 		}
@@ -450,7 +434,7 @@ func (t *State) clear(x0, y0, x1, y1 int) {
 			t.screen[y][x] = t.cur.Attr
 			t.screen[y][x].Char = ' '
 			t.screen[y][x].Write = t.dirty.writeId
-			t.screen[y][x].Mode |= attrBlank
+			t.screen[y][x].Mode |= AttrBlank
 		}
 	}
 
@@ -750,17 +734,17 @@ func (t *State) setAttr(attr []int, subArgs [][]int) {
 		a := attr[i]
 		switch a {
 		case 0:
-			t.cur.Attr.Mode &^= attrReverse | attrStrikethrough | attrBold | attrItalic | attrBlink | attrDim | attrHidden | attrOverline
+			t.cur.Attr.Mode &^= AttrReverse | AttrStrikethrough | AttrBold | AttrItalic | AttrBlink | AttrDim | AttrHidden | AttrOverline
 			t.cur.Attr.FG = DefaultFG
 			t.cur.Attr.BG = DefaultBG
 			t.cur.Attr.Underline = UnderlineStyle{}
-			t.cur.Attr.Hyperlink = Hyperlink{}
+			t.cur.Attr.Hyperlink = nil
 		case 1:
-			t.cur.Attr.Mode |= attrBold
+			t.cur.Attr.Mode |= AttrBold
 		case 2:
-			t.cur.Attr.Mode |= attrDim
+			t.cur.Attr.Mode |= AttrDim
 		case 3:
-			t.cur.Attr.Mode |= attrItalic
+			t.cur.Attr.Mode |= AttrItalic
 		case 4:
 			mode := UnderlineSingle
 			if i < len(subArgs) && len(subArgs[i]) > 0 {
@@ -771,29 +755,29 @@ func (t *State) setAttr(attr []int, subArgs [][]int) {
 			}
 			t.cur.Attr.Underline.Mode = mode
 		case 5, 6: // slow, rapid blink
-			t.cur.Attr.Mode |= attrBlink
+			t.cur.Attr.Mode |= AttrBlink
 		case 7:
-			t.cur.Attr.Mode |= attrReverse
+			t.cur.Attr.Mode |= AttrReverse
 		case 8:
-			t.cur.Attr.Mode |= attrHidden
+			t.cur.Attr.Mode |= AttrHidden
 		case 9:
-			t.cur.Attr.Mode |= attrStrikethrough
+			t.cur.Attr.Mode |= AttrStrikethrough
 		case 21:
 			t.cur.Attr.Underline.Mode = UnderlineDouble
 		case 22:
-			t.cur.Attr.Mode &^= attrBold | attrDim
+			t.cur.Attr.Mode &^= AttrBold | AttrDim
 		case 23:
-			t.cur.Attr.Mode &^= attrItalic
+			t.cur.Attr.Mode &^= AttrItalic
 		case 24:
 			t.cur.Attr.Underline = UnderlineStyle{}
 		case 25, 26:
-			t.cur.Attr.Mode &^= attrBlink
+			t.cur.Attr.Mode &^= AttrBlink
 		case 27:
-			t.cur.Attr.Mode &^= attrReverse
+			t.cur.Attr.Mode &^= AttrReverse
 		case 28:
-			t.cur.Attr.Mode &^= attrHidden
+			t.cur.Attr.Mode &^= AttrHidden
 		case 29:
-			t.cur.Attr.Mode &^= attrStrikethrough
+			t.cur.Attr.Mode &^= AttrStrikethrough
 		case 38:
 			if i+2 < len(attr) && attr[i+1] == 5 {
 				i += 2
@@ -858,9 +842,9 @@ func (t *State) setAttr(attr []int, subArgs [][]int) {
 		case 59:
 			t.cur.Attr.Underline.Color = DefaultFG
 		case 53:
-			t.cur.Attr.Mode |= attrOverline
+			t.cur.Attr.Mode |= AttrOverline
 		case 55:
-			t.cur.Attr.Mode &^= attrOverline
+			t.cur.Attr.Mode &^= AttrOverline
 		default:
 			if between(a, 30, 37) {
 				t.cur.Attr.FG = ANSIColor(a - 30)
