@@ -21,7 +21,9 @@ func getContext() (socket string, id int, ok bool) {
 	}
 
 	socket = match[cy.CONTEXT_REGEX.SubexpIndex("socket")]
-	id, _ = strconv.Atoi(match[cy.CONTEXT_REGEX.SubexpIndex("id")])
+	if idStr := match[cy.CONTEXT_REGEX.SubexpIndex("id")]; idStr != "" {
+		id, _ = strconv.Atoi(idStr)
+	}
 	ok = true
 	return
 }

@@ -1,8 +1,13 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
+	"strings"
+	"time"
 
 	"github.com/cfoust/cy/pkg/bind"
 	C "github.com/cfoust/cy/pkg/cmd"
@@ -22,6 +27,19 @@ type CmdParams struct {
 	Name    string
 	Path    string
 	Restart bool
+}
+
+type ExecParams struct {
+	Path    string
+	Env     *janet.Value
+	Stdin   string
+	Timeout *int
+}
+
+type ExecResult struct {
+	Stdout   string
+	Stderr   string
+	ExitCode int
 }
 
 type CommandStore interface {
@@ -230,4 +248,77 @@ func (c *CmdModule) Query() ([]C.CommandEvent, error) {
 	}
 
 	return commands, nil
+}
+
+func (c *CmdModule) Exec(
+	ctx context.Context,
+	command string,
+	args []string,
+	params *janet.Named[ExecParams],
+) (ExecResult, error) {
+	values := params.Values()
+
+	execCtx := ctx
+	if values.Timeout != nil && *values.Timeout > 0 {
+		var cancel context.CancelFunc
+		execCtx, cancel = context.WithTimeout(
+			ctx,
+			time.Duration(*values.Timeout)*time.Second,
+		)
+		defer cancel()
+	}
+
+	cmd := exec.CommandContext(execCtx, command, args...)
+
+	if values.Path != "" {
+		cmd.Dir = values.Path
+	}
+
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "CY="+c.Server.SocketName())
+
+	if values.Env != nil {
+		var envMap map[string]string
+		err := values.Env.Unmarshal(&envMap)
+		values.Env.Free()
+		if err != nil {
+			return ExecResult{}, fmt.Errorf(
+				"invalid env: %w",
+				err,
+			)
+		}
+		for k, v := range envMap {
+			cmd.Env = append(cmd.Env, k+"="+v)
+		}
+	}
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if values.Stdin != "" {
+		cmd.Stdin = strings.NewReader(values.Stdin)
+	}
+
+	err := cmd.Run()
+
+	result := ExecResult{
+		Stdout: stdout.String(),
+		Stderr: stderr.String(),
+	}
+
+	if err != nil {
+		if execCtx.Err() == context.DeadlineExceeded {
+			return result, fmt.Errorf("command timed out")
+		}
+
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			result.ExitCode = exitErr.ExitCode()
+			return result, nil
+		}
+
+		return result, err
+	}
+
+	return result, nil
 }

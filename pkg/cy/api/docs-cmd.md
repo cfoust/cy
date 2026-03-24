@@ -49,3 +49,43 @@ Query all of the commands stored in the [command database](/command-history.md).
 (cmd/kill target)
 
 Kill the pane specified by target. `target` is a [NodeID](/api.md#nodeid).
+
+# doc: Exec
+
+(cmd/exec command args &named path env stdin timeout)
+
+Execute a command and return its output. This is useful for running shell commands and capturing their output directly in Janet.
+
+`command` is a string specifying the command to run. `args` is an array of strings to pass as arguments.
+
+Optional named parameters:
+- `:path` (string): Working directory for the command.
+- `:env` (struct): Additional environment variables to set.
+- `:stdin` (string): Input to pass to the command's standard input.
+- `:timeout` (int): Maximum seconds to wait before killing the command.
+
+Returns a struct with:
+- `:stdout` (string): The command's standard output.
+- `:stderr` (string): The command's standard error.
+- `:exit-code` (int): The exit code (0 indicates success).
+
+A non-zero exit code is not treated as an error; check the `:exit-code` field to determine if the command succeeded.
+
+Some examples:
+
+```janet
+# Run a simple command
+(def result (cmd/exec "echo" @["hello"]))
+(print (result :stdout))  # => "hello\n"
+
+# Pass input via stdin
+(def result (cmd/exec "cat" @[] :stdin "hello world"))
+(print (result :stdout))  # => "hello world"
+
+# Run in a specific directory with a timeout
+(def result (cmd/exec "ls" @["-la"] :path "/tmp" :timeout 5))
+
+# Check exit code
+(def result (cmd/exec "false" @[]))
+(print (result :exit-code))  # => 1
+```
