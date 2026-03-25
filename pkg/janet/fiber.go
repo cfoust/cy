@@ -256,7 +256,18 @@ func (v *VM) continueFiber(params Params, fiber *Fiber, in *Value) {
 			return
 		}
 
-		params.Error(fmt.Errorf("%s", errStr))
+		loc := C.fiber_source_loc(fiber.fiber)
+		if loc.source != nil && loc.line >= 0 {
+			params.Error(fmt.Errorf(
+				"%s:%d:%d: %s",
+				C.GoString(loc.source),
+				loc.line,
+				loc.column,
+				errStr,
+			))
+		} else {
+			params.Error(fmt.Errorf("%s", errStr))
+		}
 		return
 	case C.JANET_SIGNAL_USER5:
 		v.handleCallback(params, fiber, out)

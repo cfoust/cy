@@ -12,6 +12,9 @@ import (
 //go:embed boot/*.janet
 var CY_BOOT embed.FS
 
+//go:embed boot/test.janet
+var TEST_FILE []byte
+
 func (c *Cy) initAPI() error {
 	modules := map[string]interface{}{
 		"clipboard": &api.ClipboardModule{

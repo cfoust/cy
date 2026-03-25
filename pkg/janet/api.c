@@ -1,5 +1,6 @@
 #include <janet.h>
 #include <json.h>
+#include <api.h>
 
 Janet wrap_result_value(Janet value) {
     Janet parts[2] = {
@@ -49,4 +50,31 @@ JANET_API JanetTable *go_janet_core_env() {
     JanetTable *env = janet_core_env(NULL);
     module_json(env);
     return env;
+}
+
+SourceLoc fiber_source_loc(JanetFiber *fiber) {
+    SourceLoc loc = {NULL, -1, -1};
+    if (fiber == NULL) return loc;
+
+    int32_t i = fiber->frame;
+    while (i > 0) {
+        JanetStackFrame *frame = (JanetStackFrame *)(fiber->data + i - JANET_FRAME_SIZE);
+        if (frame->func != NULL) {
+            JanetFuncDef *def = frame->func->def;
+            if (def->source != NULL) {
+                loc.source = (const char *)def->source;
+            }
+            if (def->sourcemap != NULL) {
+                int32_t off = (int32_t)(frame->pc - def->bytecode);
+                if (off >= 0 && off < def->bytecode_length) {
+                    loc.line = def->sourcemap[off].line;
+                    loc.column = def->sourcemap[off].column;
+                }
+            }
+            return loc;
+        }
+        i = frame->prevframe;
+    }
+
+    return loc;
 }

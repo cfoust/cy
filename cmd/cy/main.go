@@ -33,6 +33,10 @@ var CLI struct {
 	} `cmd:"" default:"1" aliases:"attach" help:"Connect to the cy server, starting one if necessary."`
 
 	KillServer struct{} `cmd:"" name:"kill-server" help:"Kill the cy server."`
+
+	Test struct {
+		Files []string `arg:"" help:"Janet test files to run." type:"existingfile"`
+	} `cmd:"" help:"Run Janet test files."`
 }
 
 func writeError(err error) {
@@ -85,6 +89,15 @@ func main() {
 			version.BuildTime,
 		)
 		os.Exit(0)
+	}
+
+	switch ctx.Command() {
+	case "test <files>":
+		err := testCommand()
+		if err != nil {
+			writeError(err)
+		}
+		return
 	}
 
 	if !cy.SOCKET_REGEX.MatchString(CLI.Socket) {
