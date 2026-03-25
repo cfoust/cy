@@ -78,6 +78,21 @@ func (c *Cy) initAPI() error {
 		}
 	}
 
+	// Define no-op test macros so that test blocks in configuration
+	// files are silently ignored during normal operation. These are
+	// overridden by the real implementations when running `cy test`.
+	err := c.Execute(c.Ctx(), `
+(defmacro test [name & body])
+(defmacro test-no-context [name & body])
+(defmacro expect-error [& body])
+`)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to define test stubs: %s",
+			err.Error(),
+		)
+	}
+
 	// These are specified here because order matters and I think something
 	// like 01_actions.janet, 02_layout.janet is ugly
 	files := []string{

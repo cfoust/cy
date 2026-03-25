@@ -81,18 +81,24 @@ The `janet` format prints the `(yield)`ed value as a valid Janet expression. Thi
 
 `cy test` evaluates one or more Janet test files in an isolated `cy` environment. It starts an ephemeral, in-memory `cy` server, executes each test file, and reports the results. This is useful for validating your configuration or testing custom Janet code in isolation.
 
-```bash
-cy test myconfig_test.janet
-cy test test1.janet test2.janet
-```
-
-Test files use the `test` macro, which executes some code in the [context](/configuration.md#execution-context) of a default-sized client:
+Test macros like `test`, `test-no-context`, and `expect-error` are silently ignored during normal `cy` operation, so you can include tests directly in your configuration files alongside your real configuration:
 
 ```janet
-(test "parameters work"
-  (param/set :root :my-param 42)
-  (assert (= 42 (param/get :my-param))))
+# in ~/.cyrc.janet
+(param/set :root :my-param 42)
 
+(test "my-param is set correctly"
+  (assert (= 42 (param/get :my-param :target :root))))
+```
+
+```bash
+cy test ~/.cyrc.janet
+cy test file1.janet file2.janet
+```
+
+The `test` macro executes its body in the [context](/configuration.md#execution-context) of a default-sized client:
+
+```janet
 (test "groups"
   (def group (group/new :root))
   (assert (not= nil group)))
