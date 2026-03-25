@@ -62,7 +62,7 @@ Since cy does not use Janet's event loop, the built-in [`(os/execute)`](https://
 
 :::
 
-`args` is an array/tuple of strings where the first element is the command and the rest are arguments (same as `(os/execute)`).
+`args` is an array/tuple of strings. The first element is the command. The rest are arguments (just like `(os/execute)`).
 
 Optional named parameters:
 - `:env` (struct): Additional environment variables to set.
@@ -96,3 +96,5 @@ Some examples:
 (def result (cmd/execute ["false"]))
 (print (result :exit-code))  # => 1
 ```
+
+
