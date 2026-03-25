@@ -20,8 +20,7 @@ func testCommand() error {
 	for _, f := range allFailures {
 		fmt.Fprintf(
 			os.Stderr,
-			"FAIL %s: '%s': %v\n",
-			f.File,
+			"FAIL '%s': %v\n",
 			f.Name,
 			f.Error,
 		)
