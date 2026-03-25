@@ -64,6 +64,26 @@ func TestRemoveNode(t *testing.T) {
 	require.Equal(t, 2, len(g.Children()))
 }
 
+func TestRemoveGroupCleansChildren(t *testing.T) {
+	tree := NewTree()
+	g := tree.Root().NewGroup()
+	panes := make([]*Pane, 3)
+	for i := 0; i < 3; i++ {
+		panes[i] = emptyPane(g)
+	}
+
+	_ = tree.RemoveNode(g.Id())
+
+	// Children must be gone from the nodes map, not just
+	// unreachable from the root.
+	for _, p := range panes {
+		_, ok := tree.NodeById(p.Id())
+		require.False(t, ok)
+	}
+	_, ok := tree.NodeById(g.Id())
+	require.False(t, ok)
+}
+
 func TestRemoveRoot(t *testing.T) {
 	tree := NewTree()
 	require.Error(t, tree.RemoveNode(tree.Root().Id()))

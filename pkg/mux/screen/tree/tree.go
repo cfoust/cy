@@ -112,6 +112,14 @@ func (t *Tree) RemoveNode(id NodeID) error {
 		return nil
 	}
 
+	// Remove children while the group is still connected to the
+	// tree so that PathTo can find them.
+	if group, ok := node.(*Group); ok {
+		for _, child := range group.children {
+			_ = t.RemoveNode(child.Id())
+		}
+	}
+
 	parent := path[len(path)-2]
 	parent.(*Group).removeNode(node)
 
@@ -119,14 +127,9 @@ func (t *Tree) RemoveNode(id NodeID) error {
 	delete(t.nodes, id)
 	t.Unlock()
 
-	switch node := node.(type) {
-	case *Pane:
-		node.Screen().Kill()
-		node.Cancel()
-	case *Group:
-		for _, child := range node.children {
-			_ = t.RemoveNode(child.Id())
-		}
+	if pane, ok := node.(*Pane); ok {
+		pane.Screen().Kill()
+		pane.Cancel()
 	}
 
 	return nil
