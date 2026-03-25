@@ -34,6 +34,5 @@ func testCommand() error {
 		)
 	}
 
-	fmt.Println("ok")
 	return nil
 }
