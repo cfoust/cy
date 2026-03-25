@@ -1,6 +1,8 @@
 package taro
 
 import (
+	"sync"
+
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
 	"github.com/cfoust/cy/pkg/geom/image"
@@ -24,6 +26,8 @@ type Renderer struct {
 	*lipgloss.Renderer
 	info *terminfo.Terminfo
 	term emu.Terminal
+
+	colorCache sync.Map // lipgloss.Color -> emu.Color
 }
 
 // RenderAtSize renders the given string at (row, col) in `state` with a
@@ -60,17 +64,25 @@ func (r *Renderer) RenderImage(value string) image.Image {
 }
 
 func (r *Renderer) LipglossToEmu(color lipgloss.Color) emu.Color {
-	switch c := r.ColorProfile().Color(string(color)).(type) {
-	case termenv.ANSIColor:
-		return emu.ANSIColor(int(c))
-	case termenv.ANSI256Color:
-		return emu.XTermColor(int(c))
-	case termenv.RGBColor:
-		r, g, b := termenv.ConvertToRGB(c).RGB255()
-		return emu.RGBColor(int(r), int(g), int(b))
+	if cached, ok := r.colorCache.Load(color); ok {
+		return cached.(emu.Color)
 	}
 
-	return emu.DefaultFG
+	var result emu.Color
+	switch c := r.ColorProfile().Color(string(color)).(type) {
+	case termenv.ANSIColor:
+		result = emu.ANSIColor(int(c))
+	case termenv.ANSI256Color:
+		result = emu.XTermColor(int(c))
+	case termenv.RGBColor:
+		rv, g, b := termenv.ConvertToRGB(c).RGB255()
+		result = emu.RGBColor(int(rv), int(g), int(b))
+	default:
+		result = emu.DefaultFG
+	}
+
+	r.colorCache.Store(color, result)
+	return result
 }
 
 func NewRenderer() *Renderer {
