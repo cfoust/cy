@@ -118,6 +118,12 @@ func (c *Cmd) ExitError() error {
 	return c.exitError
 }
 
+func (c *Cmd) SubscribeStatus(
+	ctx context.Context,
+) *util.Subscriber[CmdStatus] {
+	return c.statusUpdates.Subscribe(ctx)
+}
+
 func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 	started := make(chan error)
 	done := make(chan error)
@@ -278,9 +284,9 @@ func (c *Cmd) runOnce(ctx context.Context) {
 		}
 
 		c.Lock()
-		c.status = CmdStatusFailed
 		c.exitError = err
 		c.Unlock()
+		c.setStatus(CmdStatusFailed)
 	}
 }
 

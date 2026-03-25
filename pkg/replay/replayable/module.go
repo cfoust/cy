@@ -70,6 +70,10 @@ func (r *Replayable) Commands() []detect.Command {
 	return r.player.Commands()
 }
 
+func (r *Replayable) Lines() string {
+	return r.player.Lines()
+}
+
 func (r *Replayable) Output(start, end int) (data []byte, ok bool) {
 	if len(r.borgPath) == 0 {
 		return r.player.Output(start, end)

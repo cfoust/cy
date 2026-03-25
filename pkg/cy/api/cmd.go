@@ -26,6 +26,7 @@ type CmdParams struct {
 	Name    string
 	Path    string
 	Restart bool
+	Temp    bool
 }
 
 type CommandStore interface {
@@ -63,6 +64,10 @@ func (c *CmdModule) New(
 	})
 
 	id, create := group.NewPaneCreator(c.Lifetime.Ctx())
+
+	if values.Temp {
+		id.Params().SetDataDirectory("")
+	}
 
 	replayable, err := cmd.New(
 		c.Lifetime.Ctx(),
@@ -308,4 +313,89 @@ func (c *CmdModule) Execute(
 	}
 
 	return result, nil
+}
+
+type WaitParams struct {
+	Remove bool
+}
+
+type WaitResult struct {
+	Output   string `janet:"output"`
+	ExitCode int    `janet:"exit-code"`
+}
+
+func (c *CmdModule) Wait(
+	ctx context.Context,
+	id *janet.Value,
+	params *janet.Named[WaitParams],
+) (WaitResult, error) {
+	defer id.Free()
+
+	pane, err := resolvePane(c.Tree, id)
+	if err != nil {
+		return WaitResult{}, err
+	}
+
+	r, ok := pane.Screen().(*replayable.Replayable)
+	if !ok {
+		return WaitResult{}, fmt.Errorf(
+			"pane was not a cmd",
+		)
+	}
+
+	cmd, ok := r.Cmd().(*stream.Cmd)
+	if !ok {
+		return WaitResult{}, fmt.Errorf(
+			"pane was not a cmd",
+		)
+	}
+
+	if cmd.Options().Restart {
+		return WaitResult{}, fmt.Errorf(
+			"cannot wait on a pane with :restart true",
+		)
+	}
+
+	values := params.Values()
+
+	sub := cmd.SubscribeStatus(ctx)
+
+	// Check if already in a terminal state
+	status := cmd.Status()
+	if status != stream.CmdStatusComplete &&
+		status != stream.CmdStatusFailed &&
+		status != stream.CmdStatusKilled {
+		// Block until terminal state
+		for {
+			select {
+			case <-ctx.Done():
+				return WaitResult{}, ctx.Err()
+			case status = <-sub.Recv():
+				if status == stream.CmdStatusComplete ||
+					status == stream.CmdStatusFailed ||
+					status == stream.CmdStatusKilled {
+					goto done
+				}
+			}
+		}
+	}
+done:
+
+	output := r.Lines()
+
+	var exitCode int
+	if exitErr := cmd.ExitError(); exitErr != nil {
+		if ee, ok := exitErr.(*exec.ExitError); ok {
+			exitCode = ee.ExitCode()
+		}
+	}
+
+	if values.Remove {
+		_ = c.Tree.RemoveNode(pane.Id())
+	}
+
+	return WaitResult{
+		Output:   output,
+		ExitCode: exitCode,
+	}, nil
 }

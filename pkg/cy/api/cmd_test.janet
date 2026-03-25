@@ -40,3 +40,26 @@
   (def result (cmd/execute ["sh" "-c" "echo error >&2"]))
   (assert (= (result :stderr) "error\n"))
   (assert (= (result :exit-code) 0)))
+
+(test "(cmd/wait) basic"
+  (def pane (cmd/new :root :command "echo" :args @["hello world"] :temp true))
+  (def result (cmd/wait pane))
+  (assert (= (result :exit-code) 0))
+  (assert (string/find "hello world" (result :output))))
+
+(test "(cmd/wait) exit code"
+  (def pane (cmd/new :root :command "sh" :args @["-c" "exit 42"] :temp true))
+  (def result (cmd/wait pane))
+  (assert (= (result :exit-code) 42)))
+
+(test "(cmd/wait) rejects restart pane"
+  (def pane (cmd/new :root :command "true" :restart true))
+  (assert (= :error
+             (try (do (cmd/wait pane) :ok)
+                  ([err] :error))))
+  (cmd/kill pane))
+
+(test "(cmd/wait) remove"
+  (def pane (cmd/new :root :command "true" :temp true))
+  (def result (cmd/wait pane :remove true))
+  (assert (= (result :exit-code) 0)))

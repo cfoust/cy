@@ -1,10 +1,12 @@
 # doc: New
 
-(cmd/new parent &named path restart command args name)
+(cmd/new parent &named path restart command args name temp)
 
 Run `command` with `args` and working directory `path` in a new pane as a child of the group specified by `parent`. You may also provide the `name` of the new pane. If `command` is not specified, `(cmd/new)` defaults to the current user's shell. `parent` is a [NodeID](/api.md#nodeid).
 
 If `restart` is `true`, when the command exits, it will be rerun. However, if the command exits with a non-zero exit code more than three times in a second, it will not be run again.
+
+If `temp` is `true`, the pane will not record to disk and will retain all output in memory. This is equivalent to setting {{param data-directory}} to `""`.
 
 Some examples:
 
@@ -49,6 +51,31 @@ Query all of the commands stored in the [command database](/command-history.md).
 (cmd/kill target)
 
 Kill the pane specified by target. `target` is a [NodeID](/api.md#nodeid).
+
+# doc: Wait
+
+(cmd/wait target &named remove)
+
+Block until the command running in the pane specified by `target` exits, then return its output and exit code. `target` is a [NodeID](/api.md#nodeid).
+
+Optional named parameters:
+- `:remove` (bool, default false): Remove the pane from the node tree after the command exits.
+
+Returns a struct with:
+- `:output` (string): The terminal output of the command.
+- `:exit-code` (int): The exit code (0 indicates success).
+
+`(cmd/wait)` cannot be used on panes created with `:restart true`.
+
+Some examples:
+
+```janet
+# Run a command in a visible pane and wait for it
+(def pane (cmd/new :root :command "echo" :args @["hello"] :temp true))
+(def result (cmd/wait pane :remove true))
+(print (result :output))
+(print (result :exit-code))  # => 0
+```
 
 # doc: Execute
 

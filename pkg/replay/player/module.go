@@ -2,6 +2,7 @@ package player
 
 import (
 	"context"
+	"strings"
 
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/geom"
@@ -230,6 +231,20 @@ func (p *Player) Commands() []detect.Command {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.detector.Commands(p.Terminal, p.events)
+}
+
+// Lines returns all Flow lines from the terminal joined into a single string.
+func (p *Player) Lines() string {
+	p.mu.RLock()
+	numLines := p.Flow(p.Size(), p.Root()).NumLines
+	lines := p.GetLines(0, numLines-1)
+	p.mu.RUnlock()
+
+	strs := make([]string, len(lines))
+	for i, line := range lines {
+		strs[i] = line.String()
+	}
+	return strings.Join(strs, "\n") + "\n"
 }
 
 // Preview captures a preview with the size `viewport` at `location` in the
