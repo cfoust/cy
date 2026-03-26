@@ -47,7 +47,8 @@
                    [prefix "left"] action/move-left
                    [prefix "right"] action/move-right
                    [prefix "up"] action/move-up
-                   [prefix "down"] action/move-down)
+                   [prefix "down"] action/move-down
+                   [prefix "z"] action/toggle-zoom)
 
 (key/bind-many-tag :root "viewport"
                    [prefix "g"] action/toggle-margins

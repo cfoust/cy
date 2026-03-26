@@ -1429,4 +1429,34 @@ direction should be 1 (grow) or -1 (shrink).```
   (if (nil? node) (break layout))
   (layout/assoc layout path (assoc node :meta value)))
 
+(defn
+  layout/zoom
+  ```Toggle zoom on the attached pane.```
+  [layout]
+  (def path (layout/attach-path layout))
+  (if (nil? path) (break layout))
+
+  # Check if we're already zoomed (root meta has :zoomed true)
+  (if (and (not (nil? (layout :meta)))
+           (get (layout :meta) :zoomed))
+    # Unzoom: restore original layout, re-attach to stored path
+    (do
+      (def {:original original :path attach-path} (layout :meta))
+      (layout/attach original attach-path))
+    # Zoom: wrap attached pane in borders, store original layout + path in meta
+    (do
+      (def attached (layout/path layout path))
+      (layout/borders
+        (layout/view :id (attached :id) :attached true)
+        :title "zoomed"
+        :border :double
+        :meta {:zoomed true
+               :original (layout/detach layout)
+               :path path}))))
+
+(key/action
+  action/toggle-zoom
+  "Toggle zoom on the current pane."
+  (layout/set (layout/zoom (layout/get))))
+
 (merge-module root-env (curenv))
