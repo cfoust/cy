@@ -56,7 +56,7 @@
   (def pane (cmd/new :root :command "true" :restart true))
   (assert (= :error
              (try (do (cmd/wait pane) :ok)
-                  ([err] :error))))
+               ([err] :error))))
   (cmd/kill pane))
 
 (test "(cmd/wait) remove"
