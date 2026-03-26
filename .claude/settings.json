@@ -15,15 +15,7 @@
   },
   "permissions": {
     "allow": [
-      "Bash(just build)",
-      "Bash(just test:*)",
-      "Bash(just format:*)",
-      "Bash(just lint:*)",
-      "Bash(just lint-fix:*)",
-      "Bash(just generate:*)",
-      "Bash(just api:*)",
-      "Bash(just sqlc:*)",
-      "Bash(just docs:*)",
+      "Bash(just:*)",
       "Bash(go build:*)",
       "Bash(go test:*)",
       "Bash(go fmt:*)",
