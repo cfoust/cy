@@ -20,6 +20,22 @@ brew install cfoust/taps/cy
 brew install cfoust/taps/cy@0.1.8
 ```
 
+### deb (Debian/Ubuntu)
+
+Download the `.deb` package from [the releases page](https://github.com/cfoust/cy/releases) and install it:
+
+```bash
+sudo dpkg -i cy_*.deb
+```
+
+### rpm (Fedora/RHEL)
+
+Download the `.rpm` package from [the releases page](https://github.com/cfoust/cy/releases) and install it:
+
+```bash
+sudo rpm -i cy-*.rpm
+```
+
 ### From binary
 
 Download the latest version of `cy` on [the releases page](https://github.com/cfoust/cy/releases) and extract the archive that corresponds to your operating system and architecture into your `$PATH`.
