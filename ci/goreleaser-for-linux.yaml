@@ -51,6 +51,18 @@ builds:
         goarch: amd64
         env:
           - CC=gcc
+nfpms:
+  - id: cy
+    package_name: cy
+    vendor: cfoust
+    homepage: "https://github.com/cfoust/cy"
+    maintainer: "Caleb Foust <cfoust@sqweebloid.com>"
+    description: "The time-traveling terminal multiplexer."
+    license: MIT
+    formats:
+      - deb
+      - rpm
+    bindir: /usr/bin
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 brews:
