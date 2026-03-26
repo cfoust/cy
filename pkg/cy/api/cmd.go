@@ -381,6 +381,10 @@ func (c *CmdModule) Wait(
 	}
 done:
 
+	// Wait for all PTY output to be drained and processed
+	// before reading lines, so we don't get partial output.
+	cmd.WaitDrained(ctx)
+
 	output := r.Lines()
 
 	var exitCode int

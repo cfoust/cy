@@ -129,6 +129,15 @@ func (c *Cmd) SubscribeStatus(
 	return c.statusUpdates.Subscribe(ctx)
 }
 
+// WaitDrained blocks until Read() has finished draining the PTY, or
+// the context is cancelled.
+func (c *Cmd) WaitDrained(ctx context.Context) {
+	select {
+	case <-c.drained:
+	case <-ctx.Done():
+	}
+}
+
 func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 	started := make(chan error)
 	done := make(chan error)
@@ -297,14 +306,6 @@ func (c *Cmd) runOnce(ctx context.Context) {
 		c.setStatus(CmdStatusKilled)
 		return
 	case err := <-errChan:
-		// Wait for Read() to drain the PTY before updating
-		// status, so consumers see all output before the
-		// status change.
-		select {
-		case <-c.drained:
-		case <-ctx.Done():
-		}
-
 		if err == nil {
 			c.setStatus(CmdStatusComplete)
 			return
