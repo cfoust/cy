@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/cfoust/cy/pkg/util"
@@ -49,6 +50,10 @@ type Cmd struct {
 	proc *os.Process
 
 	exitError error
+
+	// drained is closed when Read() has finished draining the PTY
+	drained   chan struct{}
+	drainOnce sync.Once
 }
 
 var _ Stream = (*Cmd)(nil)
@@ -175,7 +180,17 @@ func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 		c.proc = cmd.Process
 		c.Unlock()
 
-		defer func() { _ = fd.Close() }()
+		defer func() {
+			if !c.options.Restart {
+				// Wait for Read() to drain remaining
+				// PTY data before closing the fd
+				select {
+				case <-c.drained:
+				case <-ctx.Done():
+				}
+			}
+			_ = fd.Close()
+		}()
 		done <- cmd.Wait()
 	}()
 
@@ -223,6 +238,22 @@ func (c *Cmd) Read(p []byte) (n int, err error) {
 	)
 	c.RUnlock()
 
+	// Always drain the PTY before checking exit status, so that
+	// all output is captured before we signal EOF.
+	if ptmx != nil {
+		n, err = ptmx.Read(p)
+		if err != nil {
+			c.Lock()
+			c.ptmx = nil
+			c.Unlock()
+			c.drainOnce.Do(func() {
+				close(c.drained)
+			})
+			return c.Read(p)
+		}
+		return n, err
+	}
+
 	if exitError != nil {
 		return 0, exitError
 	}
@@ -231,19 +262,7 @@ func (c *Cmd) Read(p []byte) (n int, err error) {
 		return 0, io.EOF
 	}
 
-	if ptmx == nil {
-		return 0, nil
-	}
-
-	n, err = ptmx.Read(p)
-	if err == io.EOF {
-		c.Lock()
-		c.ptmx = nil
-		c.Unlock()
-		return c.Read(p)
-	}
-
-	return n, err
+	return 0, nil
 }
 
 func (c *Cmd) Write(data []byte) (n int, err error) {
@@ -278,6 +297,14 @@ func (c *Cmd) runOnce(ctx context.Context) {
 		c.setStatus(CmdStatusKilled)
 		return
 	case err := <-errChan:
+		// Wait for Read() to drain the PTY before updating
+		// status, so consumers see all output before the
+		// status change.
+		select {
+		case <-c.drained:
+		case <-ctx.Done():
+		}
+
 		if err == nil {
 			c.setStatus(CmdStatusComplete)
 			return
@@ -377,6 +404,7 @@ func NewCmd(ctx context.Context, options CmdOptions, size Size) (*Cmd, error) {
 		options:       options,
 		size:          size,
 		statusUpdates: util.NewPublisher[CmdStatus](),
+		drained:       make(chan struct{}),
 	}
 
 	if options.Restart {
