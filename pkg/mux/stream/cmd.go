@@ -372,29 +372,33 @@ func (c *Cmd) waitHealthy(ctx context.Context) error {
 
 	changes := c.statusUpdates.Subscribe(ctx)
 
-	errc := make(chan error)
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				errc <- ctx.Err()
-				return
-			case status := <-changes.Recv():
-				switch status {
-				case CmdStatusHealthy:
-					errc <- nil
-					return
-				case CmdStatusFailed:
-					errc <- fmt.Errorf(
-						"starting cmd failed: %d",
-						status,
-					)
-					return
-				}
+	// Check after subscribing so we can't miss an event:
+	// if the goroutine already published Healthy before we
+	// subscribed, we catch it here; if it publishes after,
+	// the subscription delivers it.
+	switch c.Status() {
+	case CmdStatusHealthy:
+		return nil
+	case CmdStatusFailed:
+		return fmt.Errorf("starting cmd failed")
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case status := <-changes.Recv():
+			switch status {
+			case CmdStatusHealthy:
+				return nil
+			case CmdStatusFailed:
+				return fmt.Errorf(
+					"starting cmd failed: %d",
+					status,
+				)
 			}
 		}
-	}()
-	return <-errc
+	}
 }
 
 func NewCmd(ctx context.Context, options CmdOptions, size Size) (*Cmd, error) {
