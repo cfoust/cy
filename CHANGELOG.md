@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.12.0 - 2026-03-27
+
+- Layout `pane` node renamed to `view`
+- Pane zooming: hit `ctrl+a z` to zoom in on a pane in a layout
+- Many copy mode features:
+    - Visual line and visual block selection
+    - Vim's `zt`, `zb`, `zz` scrolling commands
+    - `ctrl+y`/`ctrl+e` line scrolling
+- Styled and colored underline support
+- New API functions: `(cmd/execute)`, `(cmd/wait)`, `(tree/id)`, `(cy/version)`
+- New `:meta` property for layout nodes
+- Update Janet to 1.40.1
+- Fix: `(input/find)` no longer recalculates column sizes on every render
+- Fix: tabs `inactive-fg` not applied correctly
+- Fix: params now passed to replay opened with mousewheel
+- Other miscellaneous fixes and performance improvements
+
 ## 1.11.0 - 2026-02-10
 
 - New layout node: [`:stack`](https://cfoust.github.io/cy/layouts/nodes/stack.html)
