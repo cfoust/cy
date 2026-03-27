@@ -53,24 +53,17 @@ func (p *Player) resetTerminal() {
 }
 
 func (p *Player) consume(event sessions.Event) {
-	if p.retainOutputData {
-		p.mu.Lock()
-		p.events = append(p.events, event)
-		index := len(p.events) - 1
-		p.mu.Unlock()
-		p.Goto(index, -1)
-		return
-	}
-
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	stored := event
 	var outputData []byte
-	switch e := event.Message.(type) {
-	case P.OutputMessage:
-		outputData = e.Data
-		stored.Message = P.OutputMessage{Data: nil}
+	if !p.retainOutputData {
+		switch e := event.Message.(type) {
+		case P.OutputMessage:
+			outputData = e.Data
+			stored.Message = P.OutputMessage{Data: nil}
+		}
 	}
 
 	p.events = append(p.events, stored)
@@ -78,13 +71,17 @@ func (p *Player) consume(event sessions.Event) {
 
 	switch e := event.Message.(type) {
 	case P.OutputMessage:
-		if len(outputData) == 0 {
+		data := e.Data
+		if !p.retainOutputData {
+			data = outputData
+		}
+		if len(data) == 0 {
 			break
 		}
 
 		// Need to clear dirty state before every write so that the detector works.
 		p.Terminal.Changes().Reset()
-		p.Parse(outputData)
+		p.Parse(data)
 
 		if index >= p.nextDetect {
 			p.detector.Detect(p.Terminal, p.events)
