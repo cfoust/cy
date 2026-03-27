@@ -3,6 +3,7 @@ package stream
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"testing"
 	"time"
@@ -11,6 +12,38 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+// waitForStatus subscribes to cmd status updates and blocks until the
+// desired status is observed, or the timeout expires.
+func waitForStatus(
+	ctx context.Context,
+	cmd *Cmd,
+	want CmdStatus,
+	timeout time.Duration,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	if cmd.Status() == want {
+		return nil
+	}
+
+	changes := cmd.SubscribeStatus(ctx)
+	for {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf(
+				"timed out waiting for status %d, current: %d",
+				want,
+				cmd.Status(),
+			)
+		case status := <-changes.Recv():
+			if status == want {
+				return nil
+			}
+		}
+	}
+}
 
 func TestHealthy(t *testing.T) {
 	cmd, err := NewCmd(
@@ -47,21 +80,21 @@ func TestFailLoop(t *testing.T) {
 }
 
 func TestComplete(t *testing.T) {
+	ctx := context.Background()
 	cmd, _ := NewCmd(
-		context.Background(),
+		ctx,
 		CmdOptions{
 			Command: "/bin/sh",
 			Args: []string{
 				"-c",
-				"sleep 1 && exit 0",
+				"exit 0",
 			},
 		},
 		geom.DEFAULT_SIZE,
 	)
 
-	time.Sleep(1*time.Second + 250*time.Millisecond)
-
-	require.Equal(t, CmdStatusComplete, cmd.Status())
+	err := waitForStatus(ctx, cmd, CmdStatusComplete, 5*time.Second)
+	require.NoError(t, err)
 }
 
 func TestKilled(t *testing.T) {
@@ -78,11 +111,15 @@ func TestKilled(t *testing.T) {
 		geom.DEFAULT_SIZE,
 	)
 
-	time.Sleep(1 * time.Second)
 	cancel()
-	time.Sleep(250 * time.Millisecond)
 
-	require.Equal(t, CmdStatusKilled, cmd.Status())
+	err := waitForStatus(
+		context.Background(),
+		cmd,
+		CmdStatusKilled,
+		5*time.Second,
+	)
+	require.NoError(t, err)
 }
 
 func TestFailed(t *testing.T) {
