@@ -381,6 +381,8 @@ func (c *CmdModule) Wait(
 	}
 done:
 
+	cmd.WaitDrained(ctx)
+
 	output := r.Lines()
 
 	var exitCode int

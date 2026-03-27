@@ -2,6 +2,7 @@ package cy
 
 import (
 	"context"
+	"os/exec"
 	"testing"
 
 	"github.com/cfoust/cy/pkg/cy/cmd"
@@ -90,9 +91,14 @@ func TestClients(t *testing.T) {
 }
 
 func TestDefaultShell(t *testing.T) {
+	zshPath, err := exec.LookPath("zsh")
+	if err != nil {
+		t.Skip("zsh not installed")
+	}
+
 	ctx := context.Background()
 	cy, err := Start(ctx, Options{
-		Shell: "/bin/zsh",
+		Shell: zshPath,
 	})
 	require.NoError(t, err)
 
@@ -117,14 +123,19 @@ func TestDefaultShell(t *testing.T) {
 	require.True(t, ok)
 
 	options := cmd.Options()
-	require.Equal(t, "/bin/zsh", options.Command)
+	require.Equal(t, zshPath, options.Command)
 }
 
 func TestCwd(t *testing.T) {
+	zshPath, err := exec.LookPath("zsh")
+	if err != nil {
+		t.Skip("zsh not installed")
+	}
+
 	dir := t.TempDir()
 	ctx := context.Background()
 	cy, err := Start(ctx, Options{
-		Shell: "/bin/zsh",
+		Shell: zshPath,
 		Cwd:   dir,
 	})
 	require.NoError(t, err)

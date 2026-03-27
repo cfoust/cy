@@ -129,6 +129,14 @@ func (c *Cmd) SubscribeStatus(
 	return c.statusUpdates.Subscribe(ctx)
 }
 
+// WaitDrained blocks until Read() has finished draining the PTY.
+func (c *Cmd) WaitDrained(ctx context.Context) {
+	select {
+	case <-c.drained:
+	case <-ctx.Done():
+	}
+}
+
 func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 	started := make(chan error)
 	done := make(chan error)
@@ -297,14 +305,6 @@ func (c *Cmd) runOnce(ctx context.Context) {
 		c.setStatus(CmdStatusKilled)
 		return
 	case err := <-errChan:
-		// Wait for Read() to drain the PTY before updating
-		// status, so consumers see all output before the
-		// status change.
-		select {
-		case <-c.drained:
-		case <-ctx.Done():
-		}
-
 		if err == nil {
 			c.setStatus(CmdStatusComplete)
 			return
@@ -371,29 +371,30 @@ func (c *Cmd) waitHealthy(ctx context.Context) error {
 
 	changes := c.statusUpdates.Subscribe(ctx)
 
-	errc := make(chan error)
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				errc <- ctx.Err()
-				return
-			case status := <-changes.Recv():
-				switch status {
-				case CmdStatusHealthy:
-					errc <- nil
-					return
-				case CmdStatusFailed:
-					errc <- fmt.Errorf(
-						"starting cmd failed: %d",
-						status,
-					)
-					return
-				}
+	// Check after subscribing so we can't miss an event.
+	switch c.Status() {
+	case CmdStatusHealthy:
+		return nil
+	case CmdStatusFailed:
+		return fmt.Errorf("starting cmd failed")
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case status := <-changes.Recv():
+			switch status {
+			case CmdStatusHealthy:
+				return nil
+			case CmdStatusFailed:
+				return fmt.Errorf(
+					"starting cmd failed: %d",
+					status,
+				)
 			}
 		}
-	}()
-	return <-errc
+	}
 }
 
 func NewCmd(ctx context.Context, options CmdOptions, size Size) (*Cmd, error) {
