@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/cfoust/cy/pkg/util"
@@ -170,34 +171,58 @@ func (c *Cmd) runPty(ctx context.Context) (chan error, error) {
 			)
 		}
 
-		fd, err := pty.StartWithSize(
-			cmd,
-			&pty.Winsize{
-				Rows: uint16(size.R),
-				Cols: uint16(size.C),
-			},
-		)
+		ptmx, tty, err := pty.Open()
 		if err != nil {
 			started <- err
+			return
+		}
+
+		if err := pty.Setsize(ptmx, &pty.Winsize{
+			Rows: uint16(size.R),
+			Cols: uint16(size.C),
+		}); err != nil {
+			_ = ptmx.Close()
+			_ = tty.Close()
+			started <- err
+			return
+		}
+
+		cmd.Stdin = tty
+		cmd.Stdout = tty
+		cmd.Stderr = tty
+		if cmd.SysProcAttr == nil {
+			cmd.SysProcAttr = &syscall.SysProcAttr{}
+		}
+		cmd.SysProcAttr.Setsid = true
+		cmd.SysProcAttr.Setctty = true
+
+		if err := cmd.Start(); err != nil {
+			_ = ptmx.Close()
+			_ = tty.Close()
+			started <- err
+			return
 		}
 
 		started <- nil
 
 		c.Lock()
-		c.ptmx = fd
+		c.ptmx = ptmx
 		c.proc = cmd.Process
 		c.Unlock()
 
 		defer func() {
+			// Close the slave before draining so the
+			// master gets EOF, but after the process
+			// exits so buffered PTY data is preserved.
+			_ = tty.Close()
+
 			if !c.options.Restart {
-				// Wait for Read() to drain remaining
-				// PTY data before closing the fd
 				select {
 				case <-c.drained:
 				case <-ctx.Done():
 				}
 			}
-			_ = fd.Close()
+			_ = ptmx.Close()
 		}()
 		done <- cmd.Wait()
 	}()
