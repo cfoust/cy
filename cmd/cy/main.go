@@ -35,7 +35,7 @@ var CLI struct {
 	KillServer struct{} `cmd:"" name:"kill-server" help:"Kill the cy server."`
 
 	Test struct {
-		Files []string `arg:"" help:"Janet test files to run." type:"existingfile"`
+		Files []string `arg:"" optional:"" help:"Janet test files to run." type:"existingfile"`
 	} `cmd:"" help:"Run Janet test files."`
 }
 
@@ -92,7 +92,7 @@ func main() {
 	}
 
 	switch ctx.Command() {
-	case "test <files>":
+	case "test", "test <files>":
 		err := testCommand()
 		if err != nil {
 			writeError(err)

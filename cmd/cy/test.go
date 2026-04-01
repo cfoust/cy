@@ -8,8 +8,19 @@ import (
 )
 
 func testCommand() error {
+	files := CLI.Test.Files
+	if len(files) == 0 {
+		config, ok := cy.FindConfig()
+		if !ok {
+			return fmt.Errorf(
+				"no test files provided and no configuration file found",
+			)
+		}
+		files = []string{config}
+	}
+
 	var allFailures []cy.TestFailure
-	for _, file := range CLI.Test.Files {
+	for _, file := range files {
 		failures, err := cy.RunTestFile(file)
 		if err != nil {
 			return fmt.Errorf("%s: %s", file, err)

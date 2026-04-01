@@ -92,6 +92,11 @@ Test macros like `test`, `test-no-context`, and `expect-error` are silently igno
 ```
 
 ```bash
+# Run with no arguments to test your configuration file
+# (uses the same discovery logic as `cy connect`)
+cy test
+
+# Or specify files explicitly
 cy test ~/.cyrc.janet
 cy test file1.janet file2.janet
 ```

@@ -173,8 +173,8 @@ func (c *Cy) loadConfig() error {
 }
 
 func (c *Cy) reloadConfig() error {
-	path := FindConfig()
-	if len(path) == 0 {
+	path, ok := FindConfig()
+	if !ok {
 		return nil
 	}
 

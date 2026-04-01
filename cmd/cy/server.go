@@ -146,7 +146,8 @@ func getConfig() (string, error) {
 		}
 		return CLI.Connect.Config, nil
 	}
-	return cy.FindConfig(), nil
+	config, _ := cy.FindConfig()
+	return config, nil
 }
 
 func serve(path string) error {

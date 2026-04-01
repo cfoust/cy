@@ -14,7 +14,7 @@ func fileExists(path string) bool {
 
 // TODO(cfoust): 09/17/23 support XDG_CONFIG_DIRS and XDG_DATA_DIRS
 
-func FindConfig() string {
+func FindConfig() (string, bool) {
 	roots := make([]string, 0)
 
 	if xdgConfig, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
@@ -31,19 +31,19 @@ func FindConfig() string {
 
 	for _, root := range roots {
 		if path := filepath.Join(root, "cy", "cyrc.janet"); fileExists(path) {
-			return path
+			return path, true
 		}
 
 		if path := filepath.Join(root, "cyrc.janet"); fileExists(path) {
-			return path
+			return path, true
 		}
 
 		if path := filepath.Join(root, ".cy.janet"); fileExists(path) {
-			return path
+			return path, true
 		}
 	}
 
-	return ""
+	return "", false
 }
 
 func FindDataDir() string {
