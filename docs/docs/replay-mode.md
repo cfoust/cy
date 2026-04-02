@@ -15,7 +15,8 @@ The history of a pane is not only stored in memory; it is also written to a file
 By default, `cy` records all of the activity that occurs in a terminal session to `.borg` files, which it stores in one of the following locations:
 
 1.  `$XDG_DATA_HOME/cy` (if `$XDG_DATA_HOME` is set)
-1.  `$HOME/.local/share/cy` (if it's not)
+1.  The first directory in `$XDG_DATA_DIRS` (defaulting to `/usr/local/share:/usr/share`) containing a `cy` subdirectory
+1.  `$HOME/.local/share/cy` (if neither is set)
 
 The directory will be created if it does not exist.
 

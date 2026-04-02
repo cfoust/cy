@@ -12,7 +12,26 @@ func fileExists(path string) bool {
 	return false
 }
 
-// TODO(cfoust): 09/17/23 support XDG_CONFIG_DIRS and XDG_DATA_DIRS
+// xdgDirs returns the directories from the given XDG environment
+// variable, falling back to defaultDirs if the variable is unset or
+// empty.
+func xdgDirs(envVar string, defaultDirs string) []string {
+	var raw []string
+	if dirs, ok := os.LookupEnv(envVar); ok && dirs != "" {
+		raw = filepath.SplitList(dirs)
+	} else if defaultDirs != "" {
+		raw = filepath.SplitList(defaultDirs)
+	}
+
+	// Per the XDG spec, relative paths must be ignored.
+	result := make([]string, 0, len(raw))
+	for _, dir := range raw {
+		if filepath.IsAbs(dir) {
+			result = append(result, dir)
+		}
+	}
+	return result
+}
 
 func FindConfig() (string, bool) {
 	roots := make([]string, 0)
@@ -28,6 +47,8 @@ func FindConfig() (string, bool) {
 			filepath.Join(home, ".config"),
 		)
 	}
+
+	roots = append(roots, xdgDirs("XDG_CONFIG_DIRS", "/etc/xdg")...)
 
 	for _, root := range roots {
 		if path := filepath.Join(root, "cy", "cyrc.janet"); fileExists(path) {
@@ -50,6 +71,17 @@ func FindDataDir() string {
 	if xdgData, ok := os.LookupEnv("XDG_DATA_HOME"); ok {
 		return filepath.Join(xdgData, "cy")
 	}
+
+	for _, dir := range xdgDirs(
+		"XDG_DATA_DIRS",
+		"/usr/local/share:/usr/share",
+	) {
+		path := filepath.Join(dir, "cy")
+		if info, err := os.Stat(path); err == nil && info.IsDir() {
+			return path
+		}
+	}
+
 	home, ok := os.LookupEnv("HOME")
 	if !ok {
 		home = "~"
@@ -73,6 +105,13 @@ func FindPluginDir() string {
 			candidates,
 			filepath.Join(home, ".cy", "plugins"),
 			filepath.Join(home, ".config", "cy", "plugins"),
+		)
+	}
+
+	for _, dir := range xdgDirs("XDG_CONFIG_DIRS", "/etc/xdg") {
+		candidates = append(
+			candidates,
+			filepath.Join(dir, "cy", "plugins"),
 		)
 	}
 

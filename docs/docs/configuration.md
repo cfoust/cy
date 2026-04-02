@@ -33,6 +33,7 @@ On startup, `cy` will search for and execute the first file containing Janet sou
 1. `$HOME/.config/cy/cyrc.janet`
 1. `$HOME/.config/cyrc.janet`
 1. `$HOME/.config/.cy.janet`
+1. `$XDG_CONFIG_DIRS/cy/cyrc.janet` (each directory in `$XDG_CONFIG_DIRS`, defaulting to `/etc/xdg`)
 
 You can reload your configuration at any time using {{api action/reload-config}}, which by default is bound to {{bind :root ctrl+a r}}.
 
@@ -103,6 +104,7 @@ If `hook/init` is not defined, no error occurs; hooks are optional.
 1. `$XDG_CONFIG_HOME/cy/plugins/`
 1. `$HOME/.cy/plugins/`
 1. `$HOME/.config/cy/plugins/`
+1. `$XDG_CONFIG_DIRS/cy/plugins/` (each directory in `$XDG_CONFIG_DIRS`, defaulting to `/etc/xdg`)
 
 If one does, it executes all plugins it finds in that directory. Plugins are loaded in alphabetical order. Your `cy.janet` (or `.cyrc.janet`) runs last.
 
