@@ -58,6 +58,38 @@ func FindDataDir() string {
 	return filepath.Join(home, ".local", "share", "cy")
 }
 
+func FindPluginDir() string {
+	candidates := make([]string, 0)
+
+	if xdgConfig, ok := os.LookupEnv("XDG_CONFIG_HOME"); ok {
+		candidates = append(
+			candidates,
+			filepath.Join(xdgConfig, "cy", "plugins"),
+		)
+	}
+
+	if home, ok := os.LookupEnv("HOME"); ok {
+		candidates = append(
+			candidates,
+			filepath.Join(home, ".cy", "plugins"),
+			filepath.Join(home, ".config", "cy", "plugins"),
+		)
+	}
+
+	for _, dir := range candidates {
+		if info, err := os.Stat(dir); err == nil && info.IsDir() {
+			return dir
+		}
+	}
+
+	// Default even if it doesn't exist yet
+	if home, ok := os.LookupEnv("HOME"); ok {
+		return filepath.Join(home, ".config", "cy", "plugins")
+	}
+
+	return ""
+}
+
 func FindStateDir() string {
 	if xdgState, ok := os.LookupEnv("XDG_STATE_HOME"); ok {
 		return filepath.Join(xdgState, "cy")

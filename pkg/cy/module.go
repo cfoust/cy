@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
+	"sort"
 	"sync/atomic"
 	"time"
 
@@ -170,6 +172,46 @@ func (c *Cy) loadConfig() error {
 	)
 	c.toast.Error(message)
 	return err
+}
+
+func (c *Cy) loadPlugins() {
+	pluginDir := FindPluginDir()
+
+	entries, err := os.ReadDir(pluginDir)
+	if err != nil {
+		return
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Name() < entries[j].Name()
+	})
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		init := filepath.Join(
+			pluginDir,
+			entry.Name(),
+			"init.janet",
+		)
+		if !fileExists(init) {
+			continue
+		}
+
+		if err := c.ExecuteJanet(init); err != nil {
+			c.log.Warn().
+				Err(err).
+				Str("plugin", entry.Name()).
+				Msg("failed to load plugin")
+			c.toast.Error(fmt.Sprintf(
+				"plugin %s: %s",
+				entry.Name(),
+				err.Error(),
+			))
+		}
+	}
 }
 
 func (c *Cy) reloadConfig() error {
@@ -532,6 +574,8 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 			err,
 		)
 	}
+
+	cy.loadPlugins()
 
 	if len(options.Config) != 0 {
 		_ = cy.loadConfig()
