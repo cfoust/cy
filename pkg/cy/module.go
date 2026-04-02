@@ -34,6 +34,9 @@ import (
 type Options struct {
 	// The initial Janet script, typically ~/.cyrc.janet.
 	Config string
+	// The directory containing plugins. Each subdirectory with an
+	// init.janet will be sourced on startup.
+	PluginDir string
 	// The default directory in which to store data (e.g. recorded
 	// sessions).
 	DataDir string
@@ -175,7 +178,10 @@ func (c *Cy) loadConfig() error {
 }
 
 func (c *Cy) loadPlugins() {
-	pluginDir := FindPluginDir()
+	pluginDir := c.options.PluginDir
+	if pluginDir == "" {
+		return
+	}
 
 	entries, err := os.ReadDir(pluginDir)
 	if err != nil {

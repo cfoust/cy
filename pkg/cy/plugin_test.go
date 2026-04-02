@@ -1,6 +1,7 @@
 package cy
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,8 +10,7 @@ import (
 )
 
 func TestLoadPlugins(t *testing.T) {
-	d := t.TempDir()
-	pluginDir := filepath.Join(d, "cy", "plugins")
+	pluginDir := t.TempDir()
 
 	// Create two plugins in alphabetical order
 	for _, name := range []string{"alpha", "beta"} {
@@ -36,10 +36,11 @@ func TestLoadPlugins(t *testing.T) {
 		0o644,
 	))
 
-	// Point FindPluginDir() at our temp directory
-	t.Setenv("XDG_CONFIG_HOME", d)
-
-	server, _, err := NewTestServer()
+	server, err := Start(context.Background(), Options{
+		Shell:     "/bin/bash",
+		SkipInput: true,
+		PluginDir: pluginDir,
+	})
 	require.NoError(t, err)
 	defer server.Cancel()
 
@@ -52,19 +53,17 @@ func TestLoadPlugins(t *testing.T) {
 }
 
 func TestLoadPluginsEmpty(t *testing.T) {
-	d := t.TempDir()
-
-	// Plugin directory doesn't exist — should not error
-	t.Setenv("XDG_CONFIG_HOME", d)
-
-	server, _, err := NewTestServer()
+	// Empty PluginDir — should not error
+	server, err := Start(context.Background(), Options{
+		Shell:     "/bin/bash",
+		SkipInput: true,
+	})
 	require.NoError(t, err)
 	defer server.Cancel()
 }
 
 func TestLoadPluginError(t *testing.T) {
-	d := t.TempDir()
-	pluginDir := filepath.Join(d, "cy", "plugins")
+	pluginDir := t.TempDir()
 
 	// Create a plugin with a syntax error
 	badDir := filepath.Join(pluginDir, "bad-plugin")
@@ -84,10 +83,12 @@ func TestLoadPluginError(t *testing.T) {
 		0o644,
 	))
 
-	t.Setenv("XDG_CONFIG_HOME", d)
-
 	// Server should still start — bad plugin is skipped
-	server, _, err := NewTestServer()
+	server, err := Start(context.Background(), Options{
+		Shell:     "/bin/bash",
+		SkipInput: true,
+		PluginDir: pluginDir,
+	})
 	require.NoError(t, err)
 	defer server.Cancel()
 

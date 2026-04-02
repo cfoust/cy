@@ -98,32 +98,13 @@ If `hook/init` is not defined, no error occurs; hooks are optional.
 
 ## Plugins
 
-On startup, before loading your configuration file, `cy` scans the plugin directory for subdirectories containing an `init.janet` file and sources each one. `cy` checks the following locations and uses the first that exists:
+`cy` has a rudimentary plugin system. A plugin is any directory with an `init.janet` at its root. On startup, `cy` checks whether one of these directories exists:
 
 1. `$XDG_CONFIG_HOME/cy/plugins/`
 1. `$HOME/.cy/plugins/`
 1. `$HOME/.config/cy/plugins/`
 
-A plugin is any directory with an `init.janet` at its root. This file can do anything you would normally do in your `cyrc.janet`: register actions, set key bindings, define functions, and so on. Plugins are loaded in alphabetical order, and your `cyrc.janet` always runs last.
-
-### Writing a plugin
-
-A minimal plugin looks like this:
-
-```
-~/.config/cy/plugins/my-plugin/
-  init.janet
-```
-
-The `init.janet` file is just Janet code:
-
-```janet
-# ignore
-(key/action
-  action/my-plugin-hello
-  "Say hello from my-plugin."
-  (msg/toast :info "Hello from my-plugin!"))
-```
+If one does, it executes all plugins it finds in that directory. Plugins are loaded in alphabetical order. Your `cy.janet` (or `.cyrc.janet`) runs last.
 
 ## Error handling
 

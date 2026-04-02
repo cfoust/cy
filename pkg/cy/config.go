@@ -82,11 +82,6 @@ func FindPluginDir() string {
 		}
 	}
 
-	// Default even if it doesn't exist yet
-	if home, ok := os.LookupEnv("HOME"); ok {
-		return filepath.Join(home, ".config", "cy", "plugins")
-	}
-
 	return ""
 }
 

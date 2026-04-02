@@ -180,6 +180,7 @@ func serve(path string) error {
 		SocketPath: path,
 		SocketName: CLI.Socket,
 		Config:     config,
+		PluginDir:  cy.FindPluginDir(),
 		DataDir:    cy.FindDataDir(),
 		StateDir:   cy.FindStateDir(),
 		Shell:      getShell(),
