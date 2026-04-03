@@ -37,6 +37,97 @@ var CLI struct {
 	Test struct {
 		Files []string `arg:"" optional:"" help:"Janet test files to run." type:"existingfile"`
 	} `cmd:"" help:"Run Janet test files."`
+
+	// tmux-compatible commands for use with tools like mngr
+	NewSession struct {
+		Detached    bool     `short:"d" help:"Create in detached mode." default:"true"`
+		SessionName string   `short:"s" help:"Session name." required:""`
+		Width       int      `short:"x" help:"Window width." optional:"" default:"200"`
+		Height      int      `short:"y" help:"Window height." optional:"" default:"50"`
+		Command     []string `arg:"" optional:"" help:"Command to run."`
+	} `cmd:"" name:"new-session" help:"Create a new session (tmux-compatible)."`
+
+	HasSession struct {
+		Target string `short:"t" help:"Target session." required:""`
+	} `cmd:"" name:"has-session" help:"Check if session exists (tmux-compatible)."`
+
+	SendKeys struct {
+		Target  string   `short:"t" help:"Target pane." required:""`
+		Literal bool     `short:"l" help:"Send keys literally."`
+		Keys    []string `arg:"" optional:"" help:"Keys to send."`
+	} `cmd:"" name:"send-keys" help:"Send keys to a pane (tmux-compatible)."`
+
+	CapturePane struct {
+		Target     string `short:"t" help:"Target pane." required:""`
+		Print      bool   `short:"p" help:"Output to stdout." default:"true"`
+		Scrollback string `short:"S" help:"Start line." optional:""`
+	} `cmd:"" name:"capture-pane" help:"Capture pane contents (tmux-compatible)."`
+
+	ListPanes struct {
+		Target   string `short:"t" help:"Target window or session." optional:""`
+		Format   string `short:"F" help:"Output format string." optional:""`
+		AllPanes bool   `short:"s" help:"List all panes in session."`
+	} `cmd:"" name:"list-panes" help:"List panes (tmux-compatible)."`
+
+	KillSession struct {
+		Target string `short:"t" help:"Target session." required:""`
+	} `cmd:"" name:"kill-session" help:"Kill a session (tmux-compatible)."`
+
+	RenameSession struct {
+		Target  string `short:"t" help:"Target session." required:""`
+		NewName string `arg:"" help:"New session name."`
+	} `cmd:"" name:"rename-session" help:"Rename a session (tmux-compatible)."`
+
+	LoadBuffer struct {
+		BufferName string `short:"b" help:"Buffer name." required:""`
+		File       string `arg:"" help:"File to load."`
+	} `cmd:"" name:"load-buffer" help:"Load file into paste buffer (tmux-compatible)."`
+
+	PasteBuffer struct {
+		BufferName string `short:"b" help:"Buffer name." required:""`
+		Target     string `short:"t" help:"Target pane." required:""`
+	} `cmd:"" name:"paste-buffer" help:"Paste buffer to pane (tmux-compatible)."`
+
+	DeleteBuffer struct {
+		BufferName string `short:"b" help:"Buffer name." required:""`
+	} `cmd:"" name:"delete-buffer" help:"Delete a paste buffer (tmux-compatible)."`
+
+	SetOption struct {
+		Target string   `short:"t" help:"Target session." optional:""`
+		Args   []string `arg:"" optional:""`
+	} `cmd:"" name:"set-option" help:"Set option (tmux-compatible, no-op)."`
+
+	SetHook struct {
+		Target string   `short:"t" help:"Target session." optional:""`
+		Args   []string `arg:"" optional:""`
+	} `cmd:"" name:"set-hook" help:"Set hook (tmux-compatible, no-op)."`
+
+	SetEnvironment struct {
+		Target string   `short:"t" help:"Target session." optional:""`
+		Args   []string `arg:"" optional:""`
+	} `cmd:"" name:"set-environment" help:"Set environment variable (tmux-compatible, no-op)."`
+
+	ListWindows struct {
+		Target string `short:"t" help:"Target session." required:""`
+		Format string `short:"F" help:"Output format string." optional:""`
+	} `cmd:"" name:"list-windows" help:"List windows (tmux-compatible)."`
+
+	ResizeWindow struct {
+		Target    string `short:"t" help:"Target window." required:""`
+		Automatic bool   `short:"A" help:"Resize to fit."`
+	} `cmd:"" name:"resize-window" help:"Resize window (tmux-compatible, no-op)."`
+
+	WaitFor struct {
+		Channel string `arg:"" help:"Channel name."`
+	} `cmd:"" name:"wait-for" help:"Wait for channel (tmux-compatible, no-op)."`
+
+	DisplayPopup struct {
+		Args []string `arg:"" optional:""`
+	} `cmd:"" name:"display-popup" help:"Display popup (tmux-compatible, no-op)."`
+
+	DetachClient struct {
+		Target string `short:"t" help:"Target session." optional:""`
+	} `cmd:"" name:"detach-client" help:"Detach client (tmux-compatible, no-op)."`
 }
 
 func writeError(err error) {
@@ -105,33 +196,60 @@ func main() {
 			Msg("invalid socket name, the socket name must be alphanumeric")
 	}
 
+	var err error
 	switch ctx.Command() {
-	case "exec":
-		fallthrough
-	case "exec <file>":
-		err := execCommand()
-		if err != nil {
-			writeError(err)
-		}
+	case "exec", "exec <file>":
+		err = execCommand()
 	case "recall <reference>":
 		ref := CLI.Recall.Reference
 		if ref[0] == '!' {
 			ref = ref[1:]
 		}
-
-		err := recallCommand(ref)
-		if err != nil {
-			writeError(err)
-		}
+		err = recallCommand(ref)
 	case "connect":
-		err := connectCommand()
-		if err != nil {
-			writeError(err)
-		}
+		err = connectCommand()
 	case "kill-server":
-		err := killServerCommand()
-		if err != nil {
-			writeError(err)
-		}
+		err = killServerCommand()
+	// tmux-compatible commands
+	case "new-session", "new-session <command>":
+		err = newSessionCommand()
+	case "has-session":
+		err = hasSessionCommand()
+	case "send-keys", "send-keys <keys>":
+		err = sendKeysCommand()
+	case "capture-pane":
+		err = capturePaneCommand()
+	case "list-panes":
+		err = listPanesCommand()
+	case "kill-session":
+		err = killSessionCommand()
+	case "rename-session", "rename-session <new-name>":
+		err = renameSessionCommand()
+	case "load-buffer", "load-buffer <file>":
+		err = loadBufferCommand()
+	case "paste-buffer":
+		err = pasteBufferCommand()
+	case "delete-buffer":
+		err = deleteBufferCommand()
+	case "set-option", "set-option <args>":
+		err = setOptionCommand()
+	case "set-hook", "set-hook <args>":
+		err = setHookCommand()
+	case "set-environment", "set-environment <args>":
+		err = setEnvironmentCommand()
+	case "list-windows":
+		err = listWindowsCommand()
+	case "resize-window":
+		err = resizeWindowCommand()
+	case "wait-for", "wait-for <channel>":
+		err = waitForCommand()
+	case "display-popup", "display-popup <args>":
+		err = displayPopupCommand()
+	case "detach-client":
+		err = detachClientCommand()
+	}
+
+	if err != nil {
+		writeError(err)
 	}
 }
