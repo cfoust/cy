@@ -283,3 +283,82 @@ func TestClipboardOSC52Passthrough(t *testing.T) {
 	require.Equal(t, "hello-passthrough", val,
 		"OSC 52 passthrough did not reach clipboard")
 }
+
+// TestClipboardCopyEventDefaultPath tests the full CopyEvent "+" pipeline
+// with UseSystemClipboard=false (the production default). In this mode,
+// clipboard/set writes an OSC 52 escape sequence through the renderer pipe
+// to the client's terminal. We verify the sequence appears in client output.
+func TestClipboardCopyEventDefaultPath(t *testing.T) {
+	ctx := context.Background()
+	cy, err := Start(ctx, Options{
+		Shell:     "/bin/bash",
+		SkipInput: true,
+		StateDir:  "",
+	})
+	require.NoError(t, err)
+	defer cy.Cancel()
+
+	require.False(t, cy.defaultParams.UseSystemClipboard(),
+		"production default should be UseSystemClipboard=false")
+
+	client, err := cy.NewClient(ctx, ClientOptions{
+		Env: map[string]string{
+			"TERM": "xterm-256color",
+		},
+		Size: geom.DEFAULT_SIZE,
+	})
+	require.NoError(t, err)
+	defer client.Cancel()
+
+	// Drain renderer output in background
+	output := make(chan []byte, 100)
+	go func() {
+		buf := make([]byte, 4096)
+		for {
+			n, err := client.Read(buf)
+			if err != nil {
+				return
+			}
+			data := make([]byte, n)
+			copy(data, buf[:n])
+			output <- data
+		}
+	}()
+
+	// Let initial rendering settle
+	time.Sleep(200 * time.Millisecond)
+
+	// Publish a CopyEvent with register "+" on the pane's screen,
+	// mimicking what happens when the user presses "+y in replay mode.
+	node := client.Node()
+	require.NotNil(t, node)
+	pane := node.(*T.Pane)
+	screen := pane.Screen()
+	r, ok := screen.(*replayable.Replayable)
+	require.True(t, ok)
+
+	t.Log("publishing CopyEvent{Register:\"+\"} on pane screen...")
+	r.Publish(replay.CopyEvent{
+		Register: "+",
+		Text:     "copy-default-path",
+	})
+
+	// Look for OSC 52 in client output
+	deadline := time.After(3 * time.Second)
+	found := false
+	for !found {
+		select {
+		case data := <-output:
+			if containsOSC52(string(data)) {
+				t.Log("found OSC 52 sequence in client output!")
+				found = true
+			}
+		case <-deadline:
+			t.Log("timed out waiting for OSC 52")
+			goto done
+		}
+	}
+done:
+	require.True(t, found,
+		"CopyEvent with register + did not produce OSC 52 in client output when UseSystemClipboard=false")
+}
