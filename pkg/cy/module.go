@@ -221,6 +221,12 @@ func (c *Cy) loadPlugins() {
 }
 
 func (c *Cy) reloadConfig() error {
+	c.Lock()
+	c.options.PluginDir = FindPluginDir()
+	c.Unlock()
+
+	c.loadPlugins()
+
 	path, ok := FindConfig()
 	if !ok {
 		return nil
