@@ -24,6 +24,12 @@ type ExitEvent struct {
 	Code    int
 }
 
+// ClipboardEvent is published when a program inside a pane writes an
+// OSC 52 clipboard sequence.
+type ClipboardEvent struct {
+	Text string
+}
+
 type Terminal struct {
 	deadlock.RWMutex
 	*mux.UpdatePublisher
@@ -156,9 +162,19 @@ func (t *Terminal) Send(msg mux.Msg) {
 func (t *Terminal) Write(p []byte) (n int, err error) {
 	t.Lock()
 	n, syncing, err := t.terminal.WriteSync(p)
+	clipboardWrites := t.terminal.Changes().ClipboardWrites
+	var clips []string
+	if len(clipboardWrites) > 0 {
+		clips = make([]string, len(clipboardWrites))
+		copy(clips, clipboardWrites)
+	}
 	t.Unlock()
 	if err != nil {
 		return 0, err
+	}
+
+	for _, text := range clips {
+		t.Publish(ClipboardEvent{Text: text})
 	}
 
 	if syncing {

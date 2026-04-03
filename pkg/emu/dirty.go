@@ -53,6 +53,10 @@ type Dirty struct {
 	// SemanticPrompts contains OSC 133 semantic prompt events since the
 	// last Reset().
 	SemanticPrompts []SemanticPromptEvent
+
+	// ClipboardWrites contains decoded text from OSC 52 clipboard
+	// sequences since the last Reset().
+	ClipboardWrites []string
 }
 
 func (t *State) Changes() *Dirty {
@@ -103,6 +107,7 @@ func (d *Dirty) Reset() {
 	d.Cleared = false
 
 	d.SemanticPrompts = d.SemanticPrompts[:0]
+	d.ClipboardWrites = d.ClipboardWrites[:0]
 }
 
 func (d *Dirty) ScreenChanged() bool {

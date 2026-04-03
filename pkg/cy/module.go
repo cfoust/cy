@@ -16,6 +16,7 @@ import (
 	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/events"
 	"github.com/cfoust/cy/pkg/janet"
+	"github.com/cfoust/cy/pkg/mux/screen"
 	"github.com/cfoust/cy/pkg/mux/screen/server"
 	"github.com/cfoust/cy/pkg/mux/screen/toasts"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -433,6 +434,26 @@ func (c *Cy) pollNodeEvents(ctx context.Context, events <-chan events.Msg) {
 					Error().
 					Err(err).Msg(
 					"error setting register",
+				)
+			case screen.ClipboardEvent:
+				err := c.ExecuteFunction(
+					ctx,
+					client,
+					janet.Params{
+						Dyns: c.logPipe.Dyns(),
+					},
+					"register/set",
+					"+",
+					event.Text,
+				)
+				if err == nil {
+					continue
+				}
+
+				c.log.
+					Error().
+					Err(err).Msg(
+					"error writing clipboard from OSC 52",
 				)
 			case bind.BindEvent:
 				go client.runAction(event)

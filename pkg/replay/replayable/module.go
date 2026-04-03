@@ -213,6 +213,12 @@ func (r *Replayable) poll(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-terminalEvents.Recv():
+			// Always forward clipboard events from the
+			// terminal, even in replay mode.
+			if _, ok := event.(S.ClipboardEvent); ok {
+				r.Publish(event)
+				continue
+			}
 			if r.isReplayMode() {
 				continue
 			}

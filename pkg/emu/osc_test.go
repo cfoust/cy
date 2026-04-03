@@ -129,6 +129,35 @@ func TestOSC133WriteID(t *testing.T) {
 	require.Equal(t, dirty.LastWrite(), prompts[0].WriteID)
 }
 
+func TestOSC52Clipboard(t *testing.T) {
+	term := New()
+	// "hello" base64 encoded is "aGVsbG8="
+	_, _ = term.Write([]byte("\x1b]52;c;aGVsbG8=\x07"))
+
+	dirty := term.Changes()
+	require.Len(t, dirty.ClipboardWrites, 1)
+	require.Equal(t, "hello", dirty.ClipboardWrites[0])
+}
+
+func TestOSC52ClipboardReset(t *testing.T) {
+	term := New()
+	_, _ = term.Write([]byte("\x1b]52;c;aGVsbG8=\x07"))
+
+	dirty := term.Changes()
+	require.Len(t, dirty.ClipboardWrites, 1)
+
+	dirty.Reset()
+	require.Empty(t, dirty.ClipboardWrites)
+}
+
+func TestOSC52InvalidBase64(t *testing.T) {
+	term := New()
+	_, _ = term.Write([]byte("\x1b]52;c;not-valid-base64!!!\x07"))
+
+	dirty := term.Changes()
+	require.Empty(t, dirty.ClipboardWrites)
+}
+
 func TestOSC133Reset(t *testing.T) {
 	term := New()
 	_, _ = term.Write([]byte("\x1b]133;A\x1b\\"))
