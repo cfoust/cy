@@ -47,7 +47,8 @@ func (c *Cy) initAPI() error {
 			Tree:            c.tree,
 			PersistentStore: c.persistParams,
 		},
-		"path": &api.PathModule{},
+		"path":   &api.PathModule{},
+		"signal": &api.SignalModule{Signals: c.signals},
 		"replay": &api.ReplayModule{
 			Lifetime:  util.NewLifetime(c.Ctx()),
 			Tree:      c.tree,

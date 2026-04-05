@@ -31,33 +31,6 @@ Get version information about the cy server. Returns a struct with the following
 - `:git-commit`: The Git commit hash of the build.
 - `:build-time`: The time the server was built.
 
-# doc: Signal
-
-(cy/signal name)
-
-Signal all goroutines waiting on the named channel `name`. Any call to {{api cy/wait-for}} with the same name will unblock. If no one is waiting, the signal is silently dropped.
-
-This is useful for inter-process coordination, for example between a `cy exec` script and a running pane.
-
-```janet
-# Signal from one process
-(cy/signal "my-channel")
-```
-
-# doc: WaitFor
-
-(cy/wait-for name &named timeout)
-
-Block until the named channel `name` is signaled via {{api cy/signal}}. Multiple goroutines can wait on the same channel; all will be woken when the channel is signaled.
-
-Optional named parameters:
-- `:timeout` (number, default 0): Maximum number of seconds to wait. A value of 0 means wait indefinitely. Returns an error if the timeout is reached.
-
-```janet
-# Wait with a 10-second timeout
-(cy/wait-for "my-channel" :timeout 10)
-```
-
 # doc: Id
 
 Get the unique integer identifier for the current client.

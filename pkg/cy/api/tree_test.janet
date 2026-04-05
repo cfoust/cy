@@ -34,3 +34,18 @@
 
 (test "(tree/id) bad path"
   (expect-error (tree/id :root "foo")))
+
+(test "(tree/exists?) true for existing path"
+  (group/mkdir :root "/foo/bar")
+  (assert (tree/exists? :root "/foo/bar")))
+
+(test "(tree/exists?) true for pane"
+  (group/mkdir :root "/test")
+  (cmd/new (tree/id :root "/test") :name "mypane")
+  (assert (tree/exists? :root "/test/mypane")))
+
+(test "(tree/exists?) false for missing path"
+  (assert (not (tree/exists? :root "/nonexistent/path"))))
+
+(test "(tree/exists?) false for bad path"
+  (assert (not (tree/exists? :root "badpath"))))
