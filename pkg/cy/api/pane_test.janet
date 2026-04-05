@@ -57,6 +57,24 @@
   (action/prev-pane)
   (assert (= (pane/current) cmd2)))
 
+(test "(pane/screen) returns struct"
+  (def pane (cmd/new :root))
+  (def result (pane/screen pane))
+  (assert (dictionary? result))
+  (assert (indexed? (result :lines)))
+  (assert (boolean? (result :is-alt))))
+
+(test "(pane/screen) is-alt false for normal shell"
+  (def pane (cmd/new :root))
+  (def result (pane/screen pane))
+  (assert (not (result :is-alt))))
+
+(test "(pane/screen) with scrollback"
+  (def pane (cmd/new :root))
+  (def result (pane/screen pane :scrollback true))
+  (assert (dictionary? result))
+  (assert (indexed? (result :lines))))
+
 (test "(pane/send-keys)"
   (def cmd (cmd/new :root))
   (pane/send-keys cmd @["test"

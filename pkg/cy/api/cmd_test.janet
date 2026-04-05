@@ -63,3 +63,19 @@
   (def pane (cmd/new :root :command "true" :temp true))
   (def result (cmd/wait pane :remove true))
   (assert (= (result :exit-code) 0)))
+
+(test "(cmd/status) healthy for running command"
+  (def pane (cmd/new :root))
+  (def status (cmd/status pane))
+  (assert (or (= status "starting") (= status "healthy")))
+  (cmd/kill pane))
+
+(test "(cmd/status) complete after exit"
+  (def pane (cmd/new :root :command "true" :temp true))
+  (cmd/wait pane)
+  (assert (= "complete" (cmd/status pane))))
+
+(test "(cmd/status) failed after non-zero exit"
+  (def pane (cmd/new :root :command "sh" :args @["-c" "exit 1"] :temp true))
+  (cmd/wait pane)
+  (assert (= "failed" (cmd/status pane))))
