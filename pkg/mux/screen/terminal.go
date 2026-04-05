@@ -120,6 +120,29 @@ func (t *Terminal) IsAltMode() bool {
 	return t.terminal.IsAltMode()
 }
 
+// FlowLines returns all lines (history + screen) using the flow
+// system for correct line wrapping at the terminal's current width.
+func (t *Terminal) FlowLines() []emu.Line {
+	t.RLock()
+	size := t.terminal.Size()
+	root := t.terminal.Root()
+	numLines := t.terminal.Flow(size, root).NumLines
+	lines := t.terminal.GetLines(0, numLines-1)
+	t.RUnlock()
+	return lines
+}
+
+// ScreenLines returns just the visible screen lines using the flow
+// system.
+func (t *Terminal) ScreenLines() []emu.Line {
+	t.RLock()
+	lines := t.terminal.Screen()
+	t.RUnlock()
+	result := make([]emu.Line, len(lines))
+	copy(result, lines)
+	return result
+}
+
 func (t *Terminal) Title() string {
 	return t.terminal.Title()
 }

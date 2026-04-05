@@ -10,9 +10,29 @@ Get the [NodeID](/api.md#nodeid) of the current pane. When called from `cy exec`
 
 # doc: Screen
 
-(pane/screen pane)
+(pane/screen pane &named scrollback)
 
-Get the visible screen lines of the pane referred to by [NodeID](/api.md#nodeid). Returns an array of strings.
+Get the contents of the pane referred to by [NodeID](/api.md#nodeid).
+
+Returns a struct with:
+- `:lines` (array of strings): The screen content.
+- `:is-alt` (boolean): Whether the terminal is in alternate screen mode (e.g., when running vim, htop, or other fullscreen applications).
+
+By default, only the visible screen lines are returned. If `:scrollback` is `true`, the full scrollback buffer is included (prepended before the visible screen lines).
+
+```janet
+# {
+(def pane (cmd/new :root))
+# }
+
+# Get just the visible screen
+(def result (pane/screen pane))
+(print (result :lines))
+(print (result :is-alt))
+
+# Get the full scrollback + visible screen
+(def result (pane/screen pane :scrollback true))
+```
 
 # doc: HistoryForward
 

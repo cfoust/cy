@@ -66,6 +66,21 @@ func (r *Replayable) Screen() mux.Screen {
 	return r.terminal
 }
 
+func (r *Replayable) IsAltMode() bool {
+	return r.terminal.IsAltMode()
+}
+
+// FlowLines returns all lines (history + screen) using the flow
+// system for correct line wrapping.
+func (r *Replayable) FlowLines() []emu.Line {
+	return r.terminal.FlowLines()
+}
+
+// ScreenLines returns just the visible screen lines.
+func (r *Replayable) ScreenLines() []emu.Line {
+	return r.terminal.ScreenLines()
+}
+
 func (r *Replayable) Commands() []detect.Command {
 	return r.player.Commands()
 }

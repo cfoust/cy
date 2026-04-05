@@ -10,6 +10,18 @@ Return `true` if `node` is a group, `false` otherwise. `node` is a [NodeID](/api
 
 Return `true` if `node` is a pane, `false` otherwise. `node` is a [NodeID](/api.md#nodeid).
 
+# doc: Exists
+
+(tree/exists? group path)
+
+Return `true` if a node exists at the end of `path` from the perspective of `group`, `false` otherwise. Unlike {{api tree/id}}, this does not throw an error if the path does not exist.
+
+```janet
+# Check if a node exists before creating it
+(if (not (tree/exists? :root "/agents/my-agent"))
+  (group/mkdir :root "/agents/my-agent"))
+```
+
 # doc: SetName
 
 (tree/set-name node name)

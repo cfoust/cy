@@ -1,6 +1,7 @@
 package cy
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"os"
@@ -209,6 +210,23 @@ func (c *CyModule) Id(user interface{}) (int, error) {
 	}
 
 	return int(client.id), nil
+}
+
+type WaitForParams struct {
+	Timeout float64
+}
+
+func (c *CyModule) Signal(name string) {
+	c.cy.signals.Signal(name)
+}
+
+func (c *CyModule) WaitFor(
+	ctx context.Context,
+	name string,
+	params *janet.Named[WaitForParams],
+) error {
+	values := params.Values()
+	return c.cy.signals.WaitFor(ctx, name, values.Timeout)
 }
 
 func (c *CyModule) Paste(user interface{}, register string) error {
