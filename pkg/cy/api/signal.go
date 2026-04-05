@@ -15,8 +15,8 @@ type SignalModule struct {
 	Signals SignalSender
 }
 
-func (s *SignalModule) Send(name string) {
-	s.Signals.Signal(name)
+func (s *SignalModule) Send(name janet.Keyword) {
+	s.Signals.Signal(string(name))
 }
 
 type SignalWaitParams struct {
@@ -25,9 +25,9 @@ type SignalWaitParams struct {
 
 func (s *SignalModule) Wait(
 	ctx context.Context,
-	name string,
+	name janet.Keyword,
 	params *janet.Named[SignalWaitParams],
 ) error {
 	values := params.Values()
-	return s.Signals.WaitFor(ctx, name, values.Timeout)
+	return s.Signals.WaitFor(ctx, string(name), values.Timeout)
 }
