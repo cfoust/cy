@@ -155,6 +155,30 @@ func (c *CmdModule) Pid(id *janet.Value) (*int, error) {
 	return &pid, nil
 }
 
+func (c *CmdModule) Status(id *janet.Value) (string, error) {
+	defer id.Free()
+
+	cmd, err := resolveCmd(c.Tree, id)
+	if err != nil {
+		return "", err
+	}
+
+	switch cmd.Status() {
+	case stream.CmdStatusStarting:
+		return "starting", nil
+	case stream.CmdStatusHealthy:
+		return "healthy", nil
+	case stream.CmdStatusFailed:
+		return "failed", nil
+	case stream.CmdStatusComplete:
+		return "complete", nil
+	case stream.CmdStatusKilled:
+		return "killed", nil
+	default:
+		return "unknown", nil
+	}
+}
+
 func (c *CmdModule) Kill(id *janet.Value) error {
 	defer id.Free()
 

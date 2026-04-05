@@ -13,8 +13,9 @@ type TreeModule struct {
 
 func (t *TreeModule) Renames() map[string]string {
 	return map[string]string{
-		"Group": "group?",
-		"Pane":  "pane?",
+		"Group":  "group?",
+		"Pane":   "pane?",
+		"Exists": "exists?",
 	}
 }
 
@@ -30,6 +31,38 @@ func (t *TreeModule) Pane(id *janet.Value) bool {
 	defer id.Free()
 	_, err := resolvePane(t.Tree, id)
 	return err == nil
+}
+
+func (t *TreeModule) Exists(
+	parentId *janet.Value,
+	path string,
+) bool {
+	defer parentId.Free()
+
+	group, err := resolveGroup(t.Tree, parentId)
+	if err != nil {
+		return false
+	}
+
+	parts, err := validatePath(path)
+	if err != nil {
+		return false
+	}
+
+	var current tree.Node = group
+	for _, part := range parts {
+		parent, ok := current.(*tree.Group)
+		if !ok {
+			return false
+		}
+
+		current, ok = parent.ChildByName(part)
+		if !ok {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (t *TreeModule) SetName(id *janet.Value, name string) error {

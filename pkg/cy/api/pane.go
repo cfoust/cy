@@ -1,9 +1,11 @@
 package api
 
 import (
+	"github.com/cfoust/cy/pkg/emu"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
+	"github.com/cfoust/cy/pkg/replay/replayable"
 	"github.com/cfoust/cy/pkg/taro"
 )
 
@@ -66,21 +68,62 @@ func (p *PaneModule) Current(context interface{}) *tree.NodeID {
 	return &id
 }
 
-func (p *PaneModule) Screen(id *janet.Value) ([]string, error) {
+type ScreenResult struct {
+	Lines []string `janet:"lines"`
+	IsAlt bool     `janet:"is-alt"`
+}
+
+func linesToStrings(lines []emu.Line) []string {
+	strs := make([]string, len(lines))
+	for i, line := range lines {
+		strs[i] = line.String()
+	}
+	return strs
+}
+
+type ScreenParams struct {
+	Scrollback bool
+}
+
+func (p *PaneModule) Screen(
+	id *janet.Value,
+	params *janet.Named[ScreenParams],
+) (ScreenResult, error) {
 	defer id.Free()
 
 	pane, err := resolvePane(p.Tree, id)
 	if err != nil {
-		return nil, err
+		return ScreenResult{}, err
 	}
 
-	state := pane.Screen().State()
-	lines := make([]string, len(state.Image))
-	for _, line := range state.Image {
-		lines = append(lines, line.String())
+	values := params.Values()
+
+	r, ok := pane.Screen().(*replayable.Replayable)
+	if !ok {
+		// Non-replayable pane: just return the tty state
+		state := pane.Screen().State()
+		lines := make([]string, 0, len(state.Image))
+		for _, line := range state.Image {
+			lines = append(lines, line.String())
+		}
+		return ScreenResult{
+			Lines: lines,
+		}, nil
 	}
 
-	return lines, nil
+	isAlt := r.IsAltMode()
+
+	if values.Scrollback {
+		return ScreenResult{
+			Lines: linesToStrings(r.FlowLines()),
+			IsAlt: isAlt,
+		}, nil
+	}
+
+	return ScreenResult{
+		Lines: linesToStrings(r.ScreenLines()),
+		IsAlt: isAlt,
+	}, nil
 }
 
 func (p *PaneModule) SendKeys(id *janet.Value, keys []string) error {

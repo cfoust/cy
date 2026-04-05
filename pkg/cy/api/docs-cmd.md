@@ -46,6 +46,21 @@ Get the commands executed in a particular pane. Returns an array of [Commands](/
 
 Query all of the commands stored in the [command database](/command-history.md).
 
+# doc: Status
+
+(cmd/status target)
+
+Get the current lifecycle status of the command running in the pane specified by `target`. `target` is a [NodeID](/api.md#nodeid).
+
+Returns one of the following strings:
+- `"starting"`: The command is starting up.
+- `"healthy"`: The command is running normally.
+- `"failed"`: The command exited with a non-zero exit code.
+- `"complete"`: The command exited successfully.
+- `"killed"`: The command was killed.
+
+Unlike {{api cmd/wait}}, this function returns immediately without blocking.
+
 # doc: Kill
 
 (cmd/kill target)

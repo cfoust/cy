@@ -107,6 +107,8 @@ type Cy struct {
 	toast        *ToastLogger
 	queuedToasts []toasts.Toast
 
+	signals *signalRegistry
+
 	// Every time a client writes to or visits a node, we make a note of it
 	// so we can infer who last used it
 	// (tmux does the same thing)
@@ -488,6 +490,7 @@ func Start(ctx context.Context, options Options) (*Cy, error) {
 		muxServer:     server.New(),
 		options:       options,
 		searchBinds:   searchBinds,
+		signals:       newSignalRegistry(),
 		timeBinds:     timeBinds,
 		tree:          t,
 		visits:        make(chan historyEvent),
