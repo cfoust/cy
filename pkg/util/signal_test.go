@@ -1,4 +1,4 @@
-package cy
+package util
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 )
 
 func TestSignalBasic(t *testing.T) {
-	reg := newSignalRegistry()
+	reg := NewSignalRegistry()
 
 	type result struct {
 		value interface{}
@@ -26,7 +26,6 @@ func TestSignalBasic(t *testing.T) {
 		done <- result{v, err}
 	}()
 
-	// Give the waiter time to register
 	time.Sleep(10 * time.Millisecond)
 	reg.Signal("test", "hello")
 
@@ -40,7 +39,7 @@ func TestSignalBasic(t *testing.T) {
 }
 
 func TestSignalMultipleWaiters(t *testing.T) {
-	reg := newSignalRegistry()
+	reg := NewSignalRegistry()
 
 	var mu sync.Mutex
 	var wg sync.WaitGroup
@@ -74,7 +73,7 @@ func TestSignalMultipleWaiters(t *testing.T) {
 }
 
 func TestSignalNilValue(t *testing.T) {
-	reg := newSignalRegistry()
+	reg := NewSignalRegistry()
 
 	type result struct {
 		value interface{}
@@ -103,7 +102,7 @@ func TestSignalNilValue(t *testing.T) {
 }
 
 func TestSignalTimeout(t *testing.T) {
-	reg := newSignalRegistry()
+	reg := NewSignalRegistry()
 
 	_, err := reg.WaitFor(
 		context.Background(),
@@ -121,7 +120,7 @@ func TestSignalTimeout(t *testing.T) {
 }
 
 func TestSignalContextCancel(t *testing.T) {
-	reg := newSignalRegistry()
+	reg := NewSignalRegistry()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -147,12 +146,10 @@ func TestSignalContextCancel(t *testing.T) {
 }
 
 func TestSignalSendBeforeWait(t *testing.T) {
-	reg := newSignalRegistry()
+	reg := NewSignalRegistry()
 
-	// Signal with no waiters should not panic or error
 	reg.Signal("nobody", "lost")
 
-	// A subsequent wait should still block (signal was lost)
 	_, err := reg.WaitFor(
 		context.Background(),
 		"nobody",
@@ -163,7 +160,7 @@ func TestSignalSendBeforeWait(t *testing.T) {
 }
 
 func TestSignalIndependentChannels(t *testing.T) {
-	reg := newSignalRegistry()
+	reg := NewSignalRegistry()
 
 	type result struct {
 		value interface{}
@@ -180,18 +177,14 @@ func TestSignalIndependentChannels(t *testing.T) {
 	}()
 
 	time.Sleep(10 * time.Millisecond)
-
-	// Signaling a different channel should not wake the waiter
 	reg.Signal("channel-b", "wrong")
 
 	select {
 	case <-done:
 		t.Fatal("waiter on channel-a woke from signal to channel-b")
 	case <-time.After(50 * time.Millisecond):
-		// Good, still waiting
 	}
 
-	// Now signal the correct channel
 	reg.Signal("channel-a", "right")
 
 	select {
