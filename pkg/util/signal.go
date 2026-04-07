@@ -1,4 +1,4 @@
-package cy
+package util
 
 import (
 	"context"
@@ -12,20 +12,20 @@ type signalWaiter struct {
 	ch chan interface{}
 }
 
-type signalRegistry struct {
+type SignalRegistry struct {
 	deadlock.Mutex
 	channels map[string][]*signalWaiter
 }
 
-func newSignalRegistry() *signalRegistry {
-	return &signalRegistry{
+func NewSignalRegistry() *SignalRegistry {
+	return &SignalRegistry{
 		channels: make(map[string][]*signalWaiter),
 	}
 }
 
 // Signal wakes all goroutines waiting on the named channel,
 // delivering the given value to each.
-func (s *signalRegistry) Signal(name string, value interface{}) {
+func (s *SignalRegistry) Signal(name string, value interface{}) {
 	s.Lock()
 	waiters := s.channels[name]
 	delete(s.channels, name)
@@ -40,7 +40,7 @@ func (s *signalRegistry) Signal(name string, value interface{}) {
 // WaitFor blocks until the named channel is signaled or the context
 // is canceled. An optional timeout (in seconds) limits how long to
 // wait; 0 means no timeout. Returns the value passed to Signal.
-func (s *signalRegistry) WaitFor(
+func (s *SignalRegistry) WaitFor(
 	ctx context.Context,
 	name string,
 	timeoutSecs float64,

@@ -111,17 +111,18 @@ func (p *PaneModule) Screen(
 		}, nil
 	}
 
-	isAlt := r.IsAltMode()
+	term := r.Terminal()
+	isAlt := term.IsAltMode()
 
 	if values.Scrollback {
 		return ScreenResult{
-			Lines: linesToStrings(r.FlowLines()),
+			Lines: linesToStrings(term.FlowLines()),
 			IsAlt: isAlt,
 		}, nil
 	}
 
 	return ScreenResult{
-		Lines: linesToStrings(r.ScreenLines()),
+		Lines: linesToStrings(term.ScreenLines()),
 		IsAlt: isAlt,
 	}, nil
 }
