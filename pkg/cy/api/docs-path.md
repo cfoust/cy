@@ -21,3 +21,9 @@ Join the elements of the string array `paths` with the OS's file path separator.
 (path/glob pattern)
 
 Return an array of all files matching `pattern`. Calls Go's [`path/filepath.Glob`](https://pkg.go.dev/path/filepath#Glob).
+
+# doc: Expand
+
+(path/expand path)
+
+Replace a leading `~` or `~/` in `path` with the current user's home directory. Paths that do not start with `~` are returned unchanged. `~user` (expansion of another user's home) is not supported.

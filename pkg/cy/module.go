@@ -193,15 +193,13 @@ func (c *Cy) loadPlugins() {
 	})
 
 	for _, entry := range entries {
-		if !entry.IsDir() {
+		path := filepath.Join(pluginDir, entry.Name())
+		info, err := os.Stat(path)
+		if err != nil || !info.IsDir() {
 			continue
 		}
 
-		init := filepath.Join(
-			pluginDir,
-			entry.Name(),
-			"init.janet",
-		)
+		init := filepath.Join(path, "init.janet")
 		if !fileExists(init) {
 			continue
 		}

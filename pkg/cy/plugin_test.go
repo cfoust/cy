@@ -36,6 +36,21 @@ func TestLoadPlugins(t *testing.T) {
 		0o644,
 	))
 
+	// Create a plugin outside the plugin dir and symlink it in —
+	// symlinked plugin directories should be followed.
+	externalDir := t.TempDir()
+	gammaDir := filepath.Join(externalDir, "gamma")
+	require.NoError(t, os.MkdirAll(gammaDir, 0o755))
+	require.NoError(t, os.WriteFile(
+		filepath.Join(gammaDir, "init.janet"),
+		[]byte(`(defn gamma/hello [] "gamma")`),
+		0o644,
+	))
+	require.NoError(t, os.Symlink(
+		gammaDir,
+		filepath.Join(pluginDir, "gamma"),
+	))
+
 	server, err := Start(context.Background(), Options{
 		Shell:     "/bin/bash",
 		SkipInput: true,
@@ -44,10 +59,11 @@ func TestLoadPlugins(t *testing.T) {
 	require.NoError(t, err)
 	defer server.Cancel()
 
-	// Both plugins should have been loaded
+	// All three plugins should have been loaded
 	err = server.Execute(server.Ctx(), `
 (assert (= "alpha" (alpha/hello)))
 (assert (= "beta" (beta/hello)))
+(assert (= "gamma" (gamma/hello)))
 `)
 	require.NoError(t, err)
 }
