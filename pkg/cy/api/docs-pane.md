@@ -10,28 +10,39 @@ Get the [NodeID](/api.md#nodeid) of the current pane. When called from `cy exec`
 
 # doc: Screen
 
-(pane/screen pane &named scrollback)
+(pane/screen pane)
 
-Get the contents of the pane referred to by [NodeID](/api.md#nodeid).
+Get a snapshot of the visible grid of the pane referred to by [NodeID](/api.md#nodeid). This is what is displayed on screen right now; for the full logical history, use {{api pane/scrollback}}.
 
 Returns a struct with:
-- `:lines` (array of strings): The screen content.
+- `:lines` (array of strings): The visible screen lines, one per row of the terminal.
 - `:is-alt` (boolean): Whether the terminal is in alternate screen mode (e.g., when running vim, htop, or other fullscreen applications).
-
-By default, only the visible screen lines are returned. If `:scrollback` is `true`, the full scrollback buffer is included (prepended before the visible screen lines).
 
 ```janet
 # {
 (def pane (cmd/new :root))
 # }
 
-# Get just the visible screen
 (def result (pane/screen pane))
 (print (result :lines))
 (print (result :is-alt))
+```
 
-# Get the full scrollback + visible screen
-(def result (pane/screen pane :scrollback true))
+# doc: Scrollback
+
+(pane/scrollback pane)
+
+Get the full logical history of the pane referred to by [NodeID](/api.md#nodeid): the scrollback buffer plus the current screen, reflowed at the pane's current width. Returns an array of strings.
+
+Unlike {{api pane/screen}}, blank padding rows are collapsed and there is no alternate-screen indicator. This is the right call for capturing the complete output of a command, while `pane/screen` is better for snapshotting a fullscreen application.
+
+```janet
+# {
+(def pane (cmd/new :root))
+# }
+
+(def lines (pane/scrollback pane))
+(print (string/join lines "\n"))
 ```
 
 # doc: HistoryForward

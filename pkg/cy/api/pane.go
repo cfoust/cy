@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/cfoust/cy/pkg/emu"
+	"github.com/cfoust/cy/pkg/geom/tty"
 	"github.com/cfoust/cy/pkg/janet"
 	"github.com/cfoust/cy/pkg/keys"
 	"github.com/cfoust/cy/pkg/mux/screen/tree"
@@ -81,14 +82,21 @@ func linesToStrings(lines []emu.Line) []string {
 	return strs
 }
 
-type ScreenParams struct {
-	Scrollback bool
+// imageToStrings renders the visible grid of a non-replayable pane,
+// which is the only state such panes expose.
+func imageToStrings(state *tty.State) []string {
+	lines := make([]string, 0, len(state.Image))
+	for _, line := range state.Image {
+		lines = append(lines, line.String())
+	}
+	return lines
 }
 
-func (p *PaneModule) Screen(
-	id *janet.Value,
-	params *janet.Named[ScreenParams],
-) (ScreenResult, error) {
+// Screen returns the visible grid of the pane along with whether the
+// pane is currently in alternate screen mode (e.g. running vim or
+// htop). This is a snapshot of what is displayed right now; for the
+// full logical scrollback, use Scrollback.
+func (p *PaneModule) Screen(id *janet.Value) (ScreenResult, error) {
 	defer id.Free()
 
 	pane, err := resolvePane(p.Tree, id)
@@ -96,35 +104,42 @@ func (p *PaneModule) Screen(
 		return ScreenResult{}, err
 	}
 
-	values := params.Values()
-
 	r, ok := pane.Screen().(*replayable.Replayable)
 	if !ok {
-		// Non-replayable pane: just return the tty state
-		state := pane.Screen().State()
-		lines := make([]string, 0, len(state.Image))
-		for _, line := range state.Image {
-			lines = append(lines, line.String())
-		}
+		// Non-replayable pane: just return the tty state.
 		return ScreenResult{
-			Lines: lines,
+			Lines: imageToStrings(pane.Screen().State()),
 		}, nil
 	}
 
 	term := r.Terminal()
-	isAlt := term.IsAltMode()
-
-	if values.Scrollback {
-		return ScreenResult{
-			Lines: linesToStrings(term.FlowLines()),
-			IsAlt: isAlt,
-		}, nil
-	}
-
 	return ScreenResult{
 		Lines: linesToStrings(term.ScreenLines()),
-		IsAlt: isAlt,
+		IsAlt: term.IsAltMode(),
 	}, nil
+}
+
+// Scrollback returns the full logical history of the pane (scrollback
+// plus the current screen) as a flat array of lines, reflowed at the
+// pane's current width. Unlike Screen, blank padding rows are
+// collapsed and there is no alternate-screen indicator: this is the
+// line-reading counterpart to Screen's grid snapshot.
+func (p *PaneModule) Scrollback(id *janet.Value) ([]string, error) {
+	defer id.Free()
+
+	pane, err := resolvePane(p.Tree, id)
+	if err != nil {
+		return nil, err
+	}
+
+	r, ok := pane.Screen().(*replayable.Replayable)
+	if !ok {
+		// Non-replayable pane has no history; fall back to the
+		// visible grid.
+		return imageToStrings(pane.Screen().State()), nil
+	}
+
+	return linesToStrings(r.Terminal().FlowLines()), nil
 }
 
 func (p *PaneModule) SendKeys(id *janet.Value, keys []string) error {

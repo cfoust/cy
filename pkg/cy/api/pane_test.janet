@@ -62,18 +62,19 @@
   (def result (pane/screen pane))
   (assert (dictionary? result))
   (assert (indexed? (result :lines)))
-  (assert (boolean? (result :is-alt))))
+  (assert (boolean? (result :is-alt)))
+  (assert (all string? (result :lines))))
 
 (test "(pane/screen) is-alt false for normal shell"
   (def pane (cmd/new :root))
   (def result (pane/screen pane))
   (assert (not (result :is-alt))))
 
-(test "(pane/screen) with scrollback"
+(test "(pane/scrollback) returns array of strings"
   (def pane (cmd/new :root))
-  (def result (pane/screen pane :scrollback true))
-  (assert (dictionary? result))
-  (assert (indexed? (result :lines))))
+  (def lines (pane/scrollback pane))
+  (assert (indexed? lines))
+  (assert (all string? lines)))
 
 (test "(pane/send-keys)"
   (def cmd (cmd/new :root))
