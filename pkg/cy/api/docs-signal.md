@@ -23,6 +23,7 @@ Optional named parameters:
 - `:timeout` (number, default 0): Maximum number of seconds to wait. A value of 0 means wait indefinitely. Returns an error if the timeout is reached.
 
 ```janet
+# ignore
 # Wait with a 10-second timeout
 (def result (signal/wait :my-channel :timeout 10))
 (print result)

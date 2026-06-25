@@ -46,6 +46,15 @@ docs-build-assets:
   rm -rf docs/.docusaurus
   cd docs && npm run build
 
+# Validate the Janet code examples embedded in the docs, the same check
+# CI runs. Clears the Docusaurus/webpack caches first so the markdown
+# preprocessor actually re-runs (otherwise cached output is reused and
+# the examples are silently skipped). Skips story asset generation for
+# speed.
+docs-validate:
+  rm -rf docs/.docusaurus docs/node_modules/.cache
+  cd docs && CY_SKIP_ASSETS=1 npm run build
+
 api:
   go run ./cmd/docs/main.go
 

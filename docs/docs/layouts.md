@@ -85,7 +85,7 @@ This example uses the following code:
 
 (defn
   border-title
-  [layout]
+  [size layout]
   # Get the NodeID of the node the user is attached to
   (def node (layout/attach-id layout))
   (if
