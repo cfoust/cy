@@ -19,7 +19,7 @@ the screen. Positions on the plane are measured in typographic points,
 Any interface that draws to the screen using types from the geom package
 scales the number of pixels to maintain a Pt as 1/72 of an inch.
 */
-package geom // import "golang.org/x/mobile/geom"
+package geom
 
 /*
 Notes on the various underlying coordinate systems.
@@ -74,7 +74,7 @@ import "fmt"
 //
 // The unit Pt is a typographical point, 1/72 of an inch (0.3527 mm).
 //
-// It can be be converted to a length in current device pixels by
+// It can be converted to a length in current device pixels by
 // multiplying with PixelsPerPt after app initialization is complete.
 type Pt float32
 

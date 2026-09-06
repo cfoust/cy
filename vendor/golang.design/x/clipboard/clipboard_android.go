@@ -5,7 +5,6 @@
 // Written by Changkun Ou <changkun.de>
 
 //go:build android
-// +build android
 
 package clipboard
 
@@ -29,6 +28,10 @@ import (
 
 func initialize() error { return nil }
 
+// enumerateFormats reports the formats on the clipboard. The Android bridge
+// exposes only text and no enumeration API, so Formats() returns empty.
+func enumerateFormats() []Format { return nil }
+
 func read(t Format) (buf []byte, err error) {
 	switch t {
 	case FmtText:
@@ -49,6 +52,8 @@ func read(t Format) (buf []byte, err error) {
 	case FmtImage:
 		return nil, errUnsupported
 	default:
+		// The Android bridge handles only text; images and custom MIME
+		// formats registered via Register degrade to nil here.
 		return nil, errUnsupported
 	}
 }
@@ -73,6 +78,8 @@ func write(t Format, buf []byte) (<-chan struct{}, error) {
 	case FmtImage:
 		return nil, errUnsupported
 	default:
+		// The Android bridge handles only text; images and custom MIME
+		// formats registered via Register degrade to a no-op here.
 		return nil, errUnsupported
 	}
 }
@@ -82,6 +89,7 @@ func watch(ctx context.Context, t Format) <-chan []byte {
 	ti := time.NewTicker(time.Second)
 	last := Read(t)
 	go func() {
+		defer ti.Stop()
 		for {
 			select {
 			case <-ctx.Done():
@@ -92,9 +100,14 @@ func watch(ctx context.Context, t Format) <-chan []byte {
 				if b == nil {
 					continue
 				}
-				if bytes.Compare(last, b) != 0 {
-					recv <- b
-					last = b
+				if !bytes.Equal(last, b) {
+					select {
+					case recv <- b:
+						last = b
+					case <-ctx.Done():
+						close(recv)
+						return
+					}
 				}
 			}
 		}

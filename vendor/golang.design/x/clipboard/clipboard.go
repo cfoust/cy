@@ -6,7 +6,7 @@
 
 /*
 Package clipboard provides cross platform clipboard access and supports
-macOS/Linux/Windows/Android/iOS platform. Before interacting with the
+macOS/Linux/Windows/BSD/Android/iOS platform. Before interacting with the
 clipboard, one must call Init to assert if it is possible to use this
 package:
 
@@ -50,14 +50,64 @@ clipboard data is changed, use the watcher API:
 	ch := clipboard.Watch(context.TODO(), clipboard.FmtText)
 	for data := range ch {
 		// print out clipboard data whenever it is changed
-		println(string(data))
+		println(string(data.Bytes))
 	}
+
+Watch is variadic and each value is tagged with its format, so a single
+call can observe more than one format at once (passing no format watches
+all supported ones):
+
+	ch := clipboard.Watch(context.TODO())
+	for data := range ch {
+		switch data.Format {
+		case clipboard.FmtText:
+			println("text:", string(data.Bytes))
+		case clipboard.FmtImage:
+			println("image bytes:", len(data.Bytes))
+		}
+	}
+
+Besides the built-in FmtText and FmtImage, Register maps a MIME type to a
+custom Format token usable with Read, Write, and Watch. Custom formats are
+raw passthrough: the exact bytes are exchanged under that MIME type with no
+conversion. Use ReadAs to decode into a typed value. Custom formats are
+supported on the desktop backends (macOS, Windows, Linux/X11, BSD/X11, and
+Linux/Wayland for cross-application exchange); on iOS, Android, and
+CGO-disabled builds they degrade gracefully like the rest of the API.
+
+To discover what is currently on the clipboard, Formats reports the available
+formats (registering any custom MIME types it finds on demand), and
+Format.MIME reports a token's MIME identity. Enumeration works on the desktop
+backends and returns an empty slice on iOS, Android, and CGO-disabled builds.
+
+# Platform-specific caveats
+
+On Linux/X11 the clipboard follows the X11 selection-ownership model:
+the process that calls Write owns the selection and serves its content
+to other applications on demand. This means the written data only stays
+available for as long as the writing process is alive, unless a
+clipboard manager is running to take over ownership when the process
+exits. In practice plain text often survives because most clipboard
+managers cache it, whereas larger image data is usually dropped. To keep
+data available after your program exits, keep the process running (the
+channel returned by Write reports when the data is no longer needed) or
+rely on a clipboard manager.
+
+Also on Linux/X11, only the CLIPBOARD selection (the Ctrl+C/Ctrl+V
+clipboard) is accessed; the PRIMARY selection (middle-click paste) is
+not supported. Wayland sessions are not supported natively and require an
+XWayland bridge with DISPLAY set.
 */
 package clipboard // import "golang.design/x/clipboard"
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"image"
+	"image/png"
+	"os"
 	"sync"
 )
 
@@ -66,6 +116,7 @@ var (
 	debug          = false
 	errUnavailable = errors.New("clipboard unavailable")
 	errUnsupported = errors.New("unsupported format")
+	errNoCgo       = errors.New("clipboard: cannot use when CGO_ENABLED=0")
 )
 
 // Format represents the format of clipboard data.
@@ -98,8 +149,12 @@ var (
 //		panic(err)
 //	}
 //
-// If Init returns an error, any subsequent Read/Write/Watch call
-// may result in an unrecoverable panic.
+// If Init returns an error because of a runtime dependency failure
+// (such as a missing libx11-dev), any subsequent Read/Write/Watch call
+// may result in an unrecoverable panic. In a CGO-disabled build
+// (CGO_ENABLED=0), Init returns an error and Read/Write/Watch degrade
+// gracefully instead of panicking: Read and Write return nil, and
+// Watch returns a closed channel.
 func Init() error {
 	initOnce.Do(func() {
 		initError = initialize()
@@ -113,34 +168,113 @@ func Read(t Format) []byte {
 	lock.Lock()
 	defer lock.Unlock()
 
-	buf, _ := read(t)
+	buf, err := read(t)
+	if err != nil {
+		if debug {
+			fmt.Fprintf(os.Stderr, "read clipboard err: %v\n", err)
+		}
+		return nil
+	}
 	return buf
 }
 
-func ReadErr(t Format) ([]byte, error) {
-	lock.Lock()
-	defer lock.Unlock()
-	return read(t)
-}
-
 // Write writes a given buffer to the clipboard in a specified format.
-// Write returned a receive-only channel can receive an empty struct
-// as a signal, which indicates the clipboard has been overwritten from
-// this write.
-// If format t indicates an image, then the given buf assumes
-// the image data is PNG encoded.
-func Write(t Format, buf []byte) error {
+//
+// The data is on the clipboard as soon as Write returns; consuming the
+// returned channel is optional. That channel receives a single empty
+// struct, and is then closed, only when the clipboard is later overwritten
+// by another writer (detected via the platform clipboard sequence number).
+// If nothing else ever overwrites the clipboard, the channel never fires —
+// so do not block on it expecting it to report that this write completed.
+//
+// If format t indicates an image, buf is normalized to PNG before being placed
+// on the clipboard. PNG input is stored as-is; other formats are accepted if the
+// program has registered the matching image decoder (e.g. blank-import
+// _ "image/jpeg" or _ "golang.org/x/image/webp"), and undecodable input passes
+// through unchanged. The clipboard therefore always serves PNG, regardless of
+// the input encoding.
+func Write(t Format, buf []byte) <-chan struct{} {
 	lock.Lock()
 	defer lock.Unlock()
 
-	_, err := write(t, buf)
-	return err
+	if t == FmtImage {
+		buf = toPNG(buf)
+	}
+	changed, err := write(t, buf)
+	if err != nil {
+		if debug {
+			fmt.Fprintf(os.Stderr, "write to clipboard err: %v\n", err)
+		}
+		return nil
+	}
+	return changed
 }
 
-// Watch returns a receive-only channel that received the clipboard data
-// whenever any change of clipboard data in the desired format happens.
+// toPNG normalizes an FmtImage payload to canonical PNG: the clipboard stores
+// and serves PNG so consumers get a consistent, alpha-aware encoding. If buf is
+// already PNG (or not a decodable image) it is returned unchanged; otherwise it
+// is decoded and re-encoded as PNG.
 //
-// The returned channel will be closed if the given context is canceled.
-func Watch(ctx context.Context, t Format) <-chan []byte {
-	return watch(ctx, t)
+// Decoding relies on the image decoders the importing program has registered, so
+// no decoder is a mandatory dependency of this package: to accept JPEG/GIF/WebP
+// input, blank-import the corresponding decoder (e.g. _ "image/jpeg",
+// _ "golang.org/x/image/webp"). Unknown or undecodable input passes through
+// unchanged, preserving the previous bytes-in behavior.
+func toPNG(buf []byte) []byte {
+	// Cheap path: already PNG (avoid a needless decode/encode round-trip).
+	if len(buf) >= 8 && bytes.Equal(buf[:8], []byte("\x89PNG\r\n\x1a\n")) {
+		return buf
+	}
+	img, _, err := image.Decode(bytes.NewReader(buf))
+	if err != nil {
+		return buf // not a decodable image (or its decoder isn't registered)
+	}
+	var out bytes.Buffer
+	if err := png.Encode(&out, img); err != nil {
+		return buf
+	}
+	return out.Bytes()
+}
+
+// Data is a single observed clipboard change: the format the change was
+// detected in, together with the raw bytes encoded the same way Read
+// returns them (UTF-8 for FmtText, PNG for FmtImage).
+type Data struct {
+	Format Format
+	Bytes  []byte
+}
+
+// Watch returns a receive-only channel that receives the clipboard data
+// whenever any change of clipboard data in one of the desired formats
+// happens. Each received value carries the format it was detected in, so a
+// single Watch call can observe multiple formats at once. If no format is
+// given, all supported formats (FmtText and FmtImage) are observed.
+//
+// The returned channel will be closed once the given context is canceled.
+func Watch(ctx context.Context, t ...Format) <-chan Data {
+	if len(t) == 0 {
+		t = []Format{FmtText, FmtImage}
+	}
+
+	out := make(chan Data)
+	var wg sync.WaitGroup
+	for _, f := range t {
+		in := watch(ctx, f)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for b := range in {
+				select {
+				case out <- Data{Format: f, Bytes: b}:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
+	}
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
 }
