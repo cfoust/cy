@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Native Wayland clipboard support (via `golang.design/x/clipboard` v0.8.0); building on Linux no longer needs `libx11-dev`
+
 ## 1.12.0 - 2026-03-27
 
 - Layout `pane` node renamed to `view`

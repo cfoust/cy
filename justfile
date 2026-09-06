@@ -68,3 +68,11 @@ ci:
   just lint
   just build
   just test-race
+
+# Regenerate the vendor directory and re-apply cy's local patches to
+# vendored modules. Always use this instead of `go mod vendor` directly,
+# since `go mod vendor` overwrites the patched files. See patches/README.md.
+vendor:
+  go mod tidy
+  go mod vendor
+  git apply patches/*.patch
