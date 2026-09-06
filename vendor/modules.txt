@@ -136,6 +136,14 @@ github.com/davecgh/go-spew/spew
 ## explicit; go 1.13
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
+# github.com/ebitengine/purego v0.10.1
+## explicit; go 1.18
+github.com/ebitengine/purego
+github.com/ebitengine/purego/internal/cgo
+github.com/ebitengine/purego/internal/fakecgo
+github.com/ebitengine/purego/internal/strings
+github.com/ebitengine/purego/internal/xreflect
+github.com/ebitengine/purego/objc
 # github.com/fatih/color v1.18.0
 ## explicit; go 1.17
 github.com/fatih/color
@@ -332,16 +340,19 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.design/x/clipboard v0.7.0
-## explicit; go 1.17
+# golang.design/x/clipboard v0.8.0
+## explicit; go 1.24
 golang.design/x/clipboard
+# golang.design/x/x11 v0.2.0
+## explicit; go 1.23
+golang.design/x/x11
 # golang.org/x/crypto v0.40.0
 ## explicit; go 1.23.0
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
 ## explicit; go 1.22.0
-# golang.org/x/exp/shiny v0.0.0-20240909161429-701f63a606c0
-## explicit; go 1.18
+# golang.org/x/exp/shiny v0.0.0-20250606033433-dcc06ee1d476
+## explicit; go 1.23.0
 golang.org/x/exp/shiny/driver/gldriver
 golang.org/x/exp/shiny/driver/internal/drawer
 golang.org/x/exp/shiny/driver/internal/errscreen
@@ -350,13 +361,16 @@ golang.org/x/exp/shiny/driver/internal/lifecycler
 golang.org/x/exp/shiny/driver/internal/win32
 golang.org/x/exp/shiny/driver/internal/x11key
 golang.org/x/exp/shiny/screen
-# golang.org/x/image v0.14.0
-## explicit; go 1.18
+# golang.org/x/image v0.28.0
+## explicit; go 1.23.0
 golang.org/x/image/bmp
+golang.org/x/image/ccitt
 golang.org/x/image/math/f64
+golang.org/x/image/tiff
+golang.org/x/image/tiff/lzw
 golang.org/x/image/vector
-# golang.org/x/mobile v0.0.0-20231127183840-76ac6878050a
-## explicit; go 1.18
+# golang.org/x/mobile v0.0.0-20250606033058-a2a15c67f36f
+## explicit; go 1.23.0
 golang.org/x/mobile/app
 golang.org/x/mobile/app/internal/callfn
 golang.org/x/mobile/event/key

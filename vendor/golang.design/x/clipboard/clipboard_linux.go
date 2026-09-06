@@ -5,45 +5,27 @@
 // Written by Changkun Ou <changkun.de>
 
 //go:build linux && !android
-// +build linux,!android
 
 package clipboard
 
-/*
-#cgo LDFLAGS: -ldl
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
+// Linux clipboard dispatch. Both backends are pure Go: the native Wayland
+// backend (clipboard_wayland_linux.go) when a data-control manager is present,
+// otherwise the X11 backend (clipboard_x11_linux.go). Neither needs Cgo, so the
+// package builds and runs on Linux with CGO_ENABLED=0 and no C toolchain.
 
-int clipboard_test();
-int clipboard_write(
-	char*          typ,
-	unsigned char* buf,
-	size_t         n,
-	uintptr_t      handle
-);
-unsigned long clipboard_read(char* typ, char **out);
-*/
-import "C"
 import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
-	"runtime"
-	"runtime/cgo"
 	"time"
-	"unsafe"
 )
 
-var helpmsg = `%w: Failed to initialize the X11 display, and the clipboard package
-will not work properly. Install the following dependency may help:
+var helpmsg = `%w: Failed to connect to the X11 display, so the clipboard
+package will not work properly. Make sure an X server is running and the
+DISPLAY environment variable is set.
 
-	apt install -y libx11-dev
-
-If the clipboard package is in an environment without a frame buffer,
-such as a cloud server, it may also be necessary to install xvfb:
+If the clipboard package runs in an environment without a frame buffer,
+such as a cloud server, it may be necessary to install xvfb:
 
 	apt install -y xvfb
 
@@ -56,89 +38,75 @@ Then this package should be ready to use.
 `
 
 func initialize() error {
-	ok := C.clipboard_test()
-	if ok != 0 {
+	// Prefer the native Wayland backend when running under a Wayland session
+	// that exposes a data-control manager; this avoids the XWayland bridge and
+	// works without an X server. Fall back to X11 otherwise (including Wayland
+	// sessions whose compositor lacks data-control, via XWayland).
+	if wlAvailable() {
+		useWayland = true
+		return nil
+	}
+	if err := x11Test(); err != nil {
 		return fmt.Errorf(helpmsg, errUnavailable)
 	}
 	return nil
 }
 
+// enumerateFormats reports the formats currently on the clipboard, via the
+// Wayland data-control offer or the X11 TARGETS list.
+func enumerateFormats() []Format {
+	if useWayland {
+		return wlEnumerateFormats()
+	}
+	return x11EnumerateFormats()
+}
+
 func read(t Format) (buf []byte, err error) {
+	if useWayland {
+		return wlRead(t)
+	}
 	switch t {
 	case FmtText:
-		return readc("UTF8_STRING")
+		return x11Read("UTF8_STRING")
 	case FmtImage:
-		return readc("image/png")
-	}
-	return nil, errUnsupported
-}
-
-func readc(t string) ([]byte, error) {
-	ct := C.CString(t)
-	defer C.free(unsafe.Pointer(ct))
-
-	var data *C.char
-	n := C.clipboard_read(ct, &data)
-	if data == nil {
-		return nil, errUnavailable
-	}
-	defer C.free(unsafe.Pointer(data))
-	switch {
-	case n == 0:
-		return nil, nil
+		return x11Read("image/png")
 	default:
-		return C.GoBytes(unsafe.Pointer(data), C.int(n)), nil
+		mime, ok := formatMIME(t)
+		if !ok {
+			return nil, errUnsupported
+		}
+		// On X11 a MIME type is used directly as the target atom.
+		return x11Read(mime)
 	}
 }
 
-// write writes the given data to clipboard and
-// returns true if success or false if failed.
 func write(t Format, buf []byte) (<-chan struct{}, error) {
-	var s string
+	if useWayland {
+		return wlWrite(t, buf)
+	}
 	switch t {
 	case FmtText:
-		s = "UTF8_STRING"
+		return x11Write("UTF8_STRING", buf)
 	case FmtImage:
-		s = "image/png"
-	}
-
-	start := make(chan int)
-	done := make(chan struct{}, 1)
-
-	go func() { // serve as a daemon until the ownership is terminated.
-		runtime.LockOSThread()
-		defer runtime.UnlockOSThread()
-
-		cs := C.CString(s)
-		defer C.free(unsafe.Pointer(cs))
-
-		h := cgo.NewHandle(start)
-		var ok C.int
-		if len(buf) == 0 {
-			ok = C.clipboard_write(cs, nil, 0, C.uintptr_t(h))
-		} else {
-			ok = C.clipboard_write(cs, (*C.uchar)(unsafe.Pointer(&(buf[0]))), C.size_t(len(buf)), C.uintptr_t(h))
+		return x11Write("image/png", buf)
+	default:
+		mime, ok := formatMIME(t)
+		if !ok {
+			return nil, errUnsupported
 		}
-		if ok != C.int(0) {
-			fmt.Fprintf(os.Stderr, "write failed with status: %d\n", int(ok))
-		}
-		done <- struct{}{}
-		close(done)
-	}()
-
-	status := <-start
-	if status < 0 {
-		return nil, errUnavailable
+		return x11Write(mime, buf)
 	}
-	// wait until enter event loop
-	return done, nil
 }
 
 func watch(ctx context.Context, t Format) <-chan []byte {
+	if useWayland {
+		return wlWatch(ctx, t)
+	}
 	recv := make(chan []byte, 1)
 	ti := time.NewTicker(time.Second)
 	last := Read(t)
 	go func() {
+		defer ti.Stop()
 		for {
 			select {
 			case <-ctx.Done():
@@ -150,22 +118,16 @@ func watch(ctx context.Context, t Format) <-chan []byte {
 					continue
 				}
 				if !bytes.Equal(last, b) {
-					recv <- b
-					last = b
+					select {
+					case recv <- b:
+						last = b
+					case <-ctx.Done():
+						close(recv)
+						return
+					}
 				}
 			}
 		}
 	}()
 	return recv
-}
-
-type syncChan struct {
-	c chan int
-}
-
-//export syncStatus
-func syncStatus(h uintptr, val int) {
-	v := cgo.Handle(h).Value().(chan int)
-	v <- val
-	cgo.Handle(h).Delete()
 }
