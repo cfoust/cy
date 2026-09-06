@@ -178,14 +178,20 @@ func Read(t Format) []byte {
 	return buf
 }
 
+// ReadErr is like Read, but reports the underlying error instead of
+// swallowing it. (cy patch)
+func ReadErr(t Format) ([]byte, error) {
+	lock.Lock()
+	defer lock.Unlock()
+	return read(t)
+}
+
 // Write writes a given buffer to the clipboard in a specified format.
 //
-// The data is on the clipboard as soon as Write returns; consuming the
-// returned channel is optional. That channel receives a single empty
-// struct, and is then closed, only when the clipboard is later overwritten
-// by another writer (detected via the platform clipboard sequence number).
-// If nothing else ever overwrites the clipboard, the channel never fires —
-// so do not block on it expecting it to report that this write completed.
+// The data is on the clipboard as soon as Write returns. Upstream returns
+// a channel that fires when the clipboard is later overwritten; cy patches
+// this to return the write error instead, since it never used the
+// channel and needs to surface failures to the user. (cy patch)
 //
 // If format t indicates an image, buf is normalized to PNG before being placed
 // on the clipboard. PNG input is stored as-is; other formats are accepted if the
@@ -193,21 +199,15 @@ func Read(t Format) []byte {
 // _ "image/jpeg" or _ "golang.org/x/image/webp"), and undecodable input passes
 // through unchanged. The clipboard therefore always serves PNG, regardless of
 // the input encoding.
-func Write(t Format, buf []byte) <-chan struct{} {
+func Write(t Format, buf []byte) error {
 	lock.Lock()
 	defer lock.Unlock()
 
 	if t == FmtImage {
 		buf = toPNG(buf)
 	}
-	changed, err := write(t, buf)
-	if err != nil {
-		if debug {
-			fmt.Fprintf(os.Stderr, "write to clipboard err: %v\n", err)
-		}
-		return nil
-	}
-	return changed
+	_, err := write(t, buf)
+	return err
 }
 
 // toPNG normalizes an FmtImage payload to canonical PNG: the clipboard stores

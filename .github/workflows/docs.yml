@@ -47,7 +47,7 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -qqy vim htop libx11-dev just
+          sudo apt-get install -qqy vim htop just
 
       - name: Build Docusaurus site
         run: just docs-build-assets

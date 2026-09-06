@@ -38,14 +38,13 @@ type SystemClipboard struct {
 }
 
 func (c *SystemClipboard) Write(text string) error {
-	clipboard.Write(clipboard.FmtText, []byte(text))
-	return nil
+	return clipboard.Write(clipboard.FmtText, []byte(text))
 }
 
 func (c *SystemClipboard) Read() (string, error) {
-	buf := clipboard.Read(clipboard.FmtText)
-	if buf == nil {
-		return "", clipboard.ErrNoData
+	buf, err := clipboard.ReadErr(clipboard.FmtText)
+	if err != nil {
+		return "", err
 	}
 
 	return string(buf), nil

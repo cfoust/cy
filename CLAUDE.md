@@ -52,6 +52,10 @@ just api
 
 # Generate sqlc code
 just sqlc
+
+# Regenerate vendor/ and re-apply local patches to vendored modules
+# (never run `go mod vendor` directly; see patches/README.md)
+just vendor
 ```
 
 ### Running Individual Tests
@@ -66,6 +70,10 @@ go test ./pkg/mux/...
 # Run Janet API tests (tests in *_test.janet files)
 go test -v ./pkg/cy -run TestAPI
 ```
+
+### Vendored dependencies
+
+`vendor/` is checked in and a few vendored modules carry local patches (listed in `patches/README.md`). Running `go mod vendor` directly discards those patches. Use `just vendor` instead, which re-applies them, and regenerate the affected patch file when bumping a patched module.
 
 ### Building
 
