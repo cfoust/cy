@@ -1,8 +1,10 @@
 # Changelog
 
-## Unreleased
+## 1.12.1 - 2026-09-07
 
 - Native Wayland clipboard support (via `golang.design/x/clipboard` v0.8.0); building on Linux no longer needs `libx11-dev`
+- Fix: the server no longer refuses to start on headless machines without a display; it falls back to an in-memory clipboard with a warning
+- Fix: a client attaching with a 0x0 terminal no longer crashes the server
 
 ## 1.12.0 - 2026-03-27
 

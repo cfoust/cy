@@ -23,6 +23,13 @@ const CY_LOGO = `
 `
 
 func generateBackground(render *taro.Renderer, size geom.Size) image.Image {
+	// A client can attach with a 0x0 terminal (e.g. a pty with no size
+	// set). rand.Intn panics on a zero argument, so clamp to at least
+	// 1x1.
+	size = geom.Size{
+		R: geom.Max(size.R, 1),
+		C: geom.Max(size.C, 1),
+	}
 	state := image.New(size)
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))

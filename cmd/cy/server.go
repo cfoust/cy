@@ -12,6 +12,7 @@ import (
 	P "github.com/cfoust/cy/pkg/io/protocol"
 	"github.com/cfoust/cy/pkg/io/ws"
 
+	"github.com/rs/zerolog/log"
 	"github.com/sevlyar/go-daemon"
 )
 
@@ -171,9 +172,16 @@ func serve(path string) error {
 		return err
 	}
 
-	clipboard, err := clipboard.NewSystemClipboard()
+	// The system clipboard is opt-in (OSC-52 is the default), so a
+	// headless box with no display should not prevent the server from
+	// starting. Fall back to an in-memory clipboard instead.
+	var clip clipboard.Clipboard
+	clip, err = clipboard.NewSystemClipboard()
 	if err != nil {
-		return err
+		log.Warn().
+			Err(err).
+			Msg("system clipboard unavailable, using in-memory clipboard")
+		clip = &clipboard.MemoryClipboard{}
 	}
 
 	cy, err := cy.Start(context.Background(), cy.Options{
@@ -184,7 +192,7 @@ func serve(path string) error {
 		DataDir:    cy.FindDataDir(),
 		StateDir:   cy.FindStateDir(),
 		Shell:      getShell(),
-		Clipboard:  clipboard,
+		Clipboard:  clip,
 		Cwd:        cwd,
 	})
 	if err != nil {

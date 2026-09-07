@@ -163,3 +163,17 @@ func TestCwd(t *testing.T) {
 	options := cmd.Options()
 	require.Equal(t, dir, options.Directory)
 }
+
+// A client attaching from a pty with no size set (0x0) used to panic in
+// the splash screen and take the whole server down.
+func TestZeroSizeClient(t *testing.T) {
+	server, _ := setup(t)
+	client, err := server.NewClient(server.Ctx(), ClientOptions{
+		Env: map[string]string{
+			"TERM": "xterm-256color",
+		},
+		Size: geom.Size{},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, client)
+}
