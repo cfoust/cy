@@ -55,8 +55,9 @@ func parseBracketedPaste(b []byte) (key Key, width int, ok bool) {
 	width = pasteEnd + len(bracketedPasteEnd)
 
 	return Key{
-		Code: KeyText,
-		Text: pastedText,
+		Code:  KeyText,
+		Text:  pastedText,
+		Paste: true,
 	}, width, true
 }
 
@@ -568,6 +569,7 @@ func Read(b []byte) (event any, w int) {
 		if alt {
 			// We only support a single rune after an escape alt
 			// modifier.
+			i += rw
 			break
 		}
 	}
@@ -598,7 +600,7 @@ func Read(b []byte) (event any, w int) {
 			Code: KeyText,
 			Mod:  modifiers,
 			Text: string(runes),
-		}, i + 1
+		}, i
 	}
 
 	key = Key{
@@ -620,6 +622,6 @@ func Read(b []byte) (event any, w int) {
 		key.Text = string(key.Shifted)
 	}
 
-	return key, i + 1
+	return key, i
 
 }

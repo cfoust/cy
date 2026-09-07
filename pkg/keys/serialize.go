@@ -1,6 +1,8 @@
 package keys
 
 import (
+	"unicode/utf8"
+
 	"github.com/cfoust/cy/pkg/emu"
 )
 
@@ -158,8 +160,8 @@ func (k Key) legacyBytes() (data []byte, ok bool) {
 
 	if len(k.Text) > 0 {
 		data = append(data, []byte(k.Text)...)
-	} else {
-		data = append(data, byte(code))
+	} else if code != KeyText {
+		data = utf8.AppendRune(data, code)
 	}
 
 	return data, true
@@ -183,7 +185,7 @@ func (k Key) Bytes(
 
 	// Wrap text in bracketed paste markers if the target terminal has
 	// bracketed paste mode enabled and there's actual text to paste
-	if k.Code == KeyText && len(k.Text) > 0 &&
+	if k.Paste && len(k.Text) > 0 &&
 		mode&emu.ModeBracketedPaste != 0 {
 		data = append(
 			append([]byte("\x1b[200~"), data...),

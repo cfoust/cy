@@ -237,8 +237,9 @@ func (c *CyModule) Paste(user interface{}, register string) error {
 	}
 
 	client.renderer.Send(taro.KittyKeyMsg{
-		Code: keys.KeyText,
-		Text: text,
+		Code:  keys.KeyText,
+		Text:  text,
+		Paste: true,
 	})
 	return nil
 }

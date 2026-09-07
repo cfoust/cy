@@ -82,6 +82,7 @@ type Key struct {
 	Type    KeyEventType // Press/repeat/release
 	Mod     KeyModifiers // Combined modifier flags
 	Text    string
+	Paste   bool
 }
 
 // IsPress returns true if this is a key press event (default for legacy keys)

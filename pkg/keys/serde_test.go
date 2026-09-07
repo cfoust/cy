@@ -82,20 +82,23 @@ func TestDeserialize(t *testing.T) {
 		}),
 		// bracketed paste
 		de("bracketed paste", "\x1b[200~hello world\x1b[201~", Key{
-			Code: KeyText,
-			Text: "hello world",
+			Code:  KeyText,
+			Text:  "hello world",
+			Paste: true,
 		}),
 		de(
 			"bracketed paste with newlines",
 			"\x1b[200~line1\nline2\nline3\x1b[201~",
 			Key{
-				Code: KeyText,
-				Text: "line1\nline2\nline3",
+				Code:  KeyText,
+				Text:  "line1\nline2\nline3",
+				Paste: true,
 			},
 		),
 		de("bracketed paste empty", "\x1b[200~\x1b[201~", Key{
-			Code: KeyText,
-			Text: "",
+			Code:  KeyText,
+			Text:  "",
+			Paste: true,
 		}),
 		// kitty
 		de("ru: л", "\x1b[1083::107u", Key{
@@ -248,6 +251,29 @@ func TestSerialize(t *testing.T) {
 			disambiguate, "\x1b[99;5u",
 			all, "\x1b[99;5u",
 			all|text|types, "\x1b[99;5;99u",
+		),
+		se(
+			"non-latin key without text",
+			Key{
+				Code: 'л',
+				Base: 'k',
+			},
+			legacy, "л",
+		),
+		se(
+			"cjk key without text",
+			Key{
+				Code: '中',
+			},
+			legacy, "中",
+		),
+		se(
+			"cjk key with text",
+			Key{
+				Code: '中',
+				Text: "中",
+			},
+			legacy, "中",
 		),
 		se(
 			"ctrl+[ (escape)",
@@ -558,8 +584,9 @@ func TestSerialize(t *testing.T) {
 
 func TestBracketedPasteSerialization(t *testing.T) {
 	textKey := Key{
-		Code: KeyText,
-		Text: "hello world",
+		Code:  KeyText,
+		Text:  "hello world",
+		Paste: true,
 	}
 
 	// Without bracketed paste mode, text should be returned as-is
@@ -595,8 +622,9 @@ func TestBracketedPasteSerialization(t *testing.T) {
 	// Empty text should not be wrapped (nothing to paste)
 	t.Run("empty text with bracketed paste mode", func(t *testing.T) {
 		emptyKey := Key{
-			Code: KeyText,
-			Text: "",
+			Code:  KeyText,
+			Text:  "",
+			Paste: true,
 		}
 		data, ok := emptyKey.Bytes(emu.ModeBracketedPaste, emu.KeyLegacy)
 		assert.True(t, ok)
@@ -607,8 +635,9 @@ func TestBracketedPasteSerialization(t *testing.T) {
 	// Text with newlines should be wrapped
 	t.Run("text with newlines and bracketed paste mode", func(t *testing.T) {
 		multilineKey := Key{
-			Code: KeyText,
-			Text: "line1\nline2\nline3",
+			Code:  KeyText,
+			Text:  "line1\nline2\nline3",
+			Paste: true,
 		}
 		data, ok := multilineKey.Bytes(
 			emu.ModeBracketedPaste,
@@ -653,4 +682,87 @@ func TestHasIncompleteBracketedPaste(t *testing.T) {
 	assert.False(t, HasIncompleteBracketedPaste(
 		[]byte("abc\x1b[200~hello\x1b[201~"),
 	))
+}
+
+func TestReadWidth(t *testing.T) {
+	cases := []struct {
+		name  string
+		input string
+		width int
+	}{
+		{"ascii", "a", 1},
+		{"cjk", "你", 3},
+		{"cyrillic", "ж", 2},
+		{"text", "abc", 3},
+		{"cjk text", "你好", 6},
+		{"alt+letter", "\x1bo", 2},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			_, width := Read([]byte(test.input))
+			assert.Equal(t, test.width, width)
+		})
+	}
+}
+
+func TestReadTrailingKey(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    string
+		expected []any
+	}{
+		{
+			"cjk then up",
+			"你\x1b[A",
+			[]any{
+				Key{Code: '你', Text: "你"},
+				Key{Code: KittyKeyUp},
+			},
+		},
+		{
+			"text then ctrl+c",
+			"abc\x03",
+			[]any{
+				Key{Code: KeyText, Text: "abc"},
+				kMod('c', KeyModCtrl),
+			},
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			var (
+				b      = []byte(test.input)
+				actual []any
+			)
+			for i, w := 0, 0; i < len(b); i += w {
+				var msg any
+				msg, w = Read(b[i:])
+				actual = append(actual, msg)
+			}
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestTypedTextIsNotAPaste(t *testing.T) {
+	typed, _ := Read([]byte("你好"))
+	key, ok := typed.(Key)
+	assert.True(t, ok)
+	assert.Equal(t, rune(KeyText), key.Code)
+	assert.False(t, key.Paste, "typed text must not be marked as a paste")
+
+	data, ok := key.Bytes(emu.ModeBracketedPaste, emu.KeyLegacy)
+	assert.True(t, ok)
+	assert.Equal(t, []byte("你好"), data)
+
+	pasted, _ := Read([]byte("\x1b[200~你好\x1b[201~"))
+	pasteKey, ok := pasted.(Key)
+	assert.True(t, ok)
+	assert.True(t, pasteKey.Paste)
+
+	data, ok = pasteKey.Bytes(emu.ModeBracketedPaste, emu.KeyLegacy)
+	assert.True(t, ok)
+	assert.Equal(t, []byte("\x1b[200~你好\x1b[201~"), data)
 }

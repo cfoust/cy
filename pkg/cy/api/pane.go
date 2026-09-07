@@ -166,8 +166,9 @@ func (p *PaneModule) SendText(id *janet.Value, text string) error {
 	}
 
 	pane.Screen().Send(taro.KittyKeyMsg{
-		Code: keys.KeyText,
-		Text: text,
+		Code:  keys.KeyText,
+		Text:  text,
+		Paste: true,
 	})
 
 	return nil
