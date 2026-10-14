@@ -187,6 +187,7 @@ func (v *VM) runFiber(params Params, fiber *Fiber, in *Value) {
 // handleCallback invokes a callback defined in Go.
 func (v *VM) handleCallback(params Params, fiber *Fiber, out C.Janet) {
 	if C.janet_checktype(out, C.JANET_TUPLE) == 0 {
+		fiber.unroot()
 		params.Error(fmt.Errorf("(signal) called with non-tuple"))
 		return
 	}
@@ -204,6 +205,7 @@ func (v *VM) handleCallback(params Params, fiber *Fiber, out C.Janet) {
 
 	partial, err := v.setupCallback(params, args)
 	if err != nil {
+		fiber.unroot()
 		params.Error(err)
 		return
 	}
@@ -216,6 +218,8 @@ func (v *VM) handleCallback(params Params, fiber *Fiber, out C.Janet) {
 		select {
 		case <-params.Context.Done():
 			params.Error(params.Context.Err())
+			// Not on the VM thread: queue the unroot.
+			fiber.Free()
 			return
 		case out := <-outc:
 			v.requests <- resolveRequest{
@@ -241,6 +245,12 @@ func (v *VM) continueFiber(params Params, fiber *Fiber, in *Value) {
 		arg,
 		&out,
 	)
+
+	// The fiber was rooted in createFiber. Once it stops for any reason
+	// other than a Go callback (USER5), nothing resumes it again.
+	if signal != C.JANET_SIGNAL_USER5 {
+		defer fiber.unroot()
+	}
 
 	switch signal {
 	case C.JANET_SIGNAL_OK:

@@ -86,6 +86,9 @@ func (v *VM) handleCodeResult(call Call, out *Value) error {
 	if resultType == C.JANET_STRING {
 		var message string
 		err := v.unmarshal(result, &message)
+		// handleCodeResult runs off the VM thread; root bookkeeping must
+		// go through the VM (Free queues the unroot there).
+		out.Free()
 		if err != nil {
 			return err
 		}
@@ -94,20 +97,22 @@ func (v *VM) handleCodeResult(call Call, out *Value) error {
 	}
 
 	if resultType != C.JANET_TABLE {
+		out.Free()
 		return fmt.Errorf("evaluate returned unexpected type")
 	}
 
 	if call.Options.UpdateEnv {
 		if v.env != nil {
-			v.env.unroot()
+			v.env.Free()
 		}
 
+		// Keep the root taken on the VM thread in continueFiber.
 		v.env = &Table{
-			Value: v.value(result),
+			Value: out,
 			table: C.janet_unwrap_table(result),
 		}
 	} else {
-		out.unroot()
+		out.Free()
 	}
 
 	return nil
@@ -347,11 +352,14 @@ func (v *VM) ExecuteFunction(
 		return err
 	}
 
+	defer out.Yield.Free()
+
 	var fun *Function
 	err = out.Yield.Unmarshal(&fun)
 	if err != nil {
 		return err
 	}
+	defer fun.Free()
 
 	return fun.Call(ctx, user, params, args...)
 }
